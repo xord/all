@@ -1,0 +1,21 @@
+name: build and test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: clean
+      run: rake clean
+    - name: lib
+      run: rake lib
+    - name: ext
+      run: rake ext
+    - name: test
+      run: rake test
