@@ -11,21 +11,21 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: ruby 2.6
-      uses: actions/setup-ruby@v1
-      with:
-        ruby-version: 2.6.x
+      - name: ruby 2.6
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 2.6.x
 
-    - name: clean
-      run: rake clean
+      - name: clean
+        run: rake clean
 
-    - name: lib
-      run: rake lib
+      - name: lib
+        run: rake lib
 
-    - name: ext
-      run: rake ext
+      - name: ext
+        run: rake ext
 
-    - name: test
-      run: rake test
+      - name: test
+        run: rake test
