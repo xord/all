@@ -1,0 +1,20 @@
+name: Subtree Push
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  subtree-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: ruby 3.0
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 3.0.x
+
+      - name: subtree-push
+        run: rake subtree:push
