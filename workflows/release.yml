@@ -12,10 +12,10 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
 
-      - name: ruby 3.1
+      - name: ruby 3.2
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.1
+          ruby-version: 3.2
 
       - name: test
         run: rake clean test
