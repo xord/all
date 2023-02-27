@@ -1,0 +1,27 @@
+name: Subtree Push
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  subtree-push:
+    runs-on: macos-latest
+
+    steps:
+      - name: ruby 3.2
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - name: test
+        run: rake quiet test
+
+      - name: subtree push
+        run: rake subtree:push
