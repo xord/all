@@ -1,0 +1,62 @@
+#!/usr/bin/ruby
+
+def ls_files(regexp)
+  `git ls-files`
+    .lines(chomp: true)
+    .select {|path| path =~ regexp}
+end
+
+def get_version(path)
+  File.read(path)[/[\d\.]+/]
+end
+
+def changelog_latest_version(path)
+  diff = `git diff --cached #{path}`
+  diff[/^\+\s*##\s*\[v(\d[\d\.]+\d)\]\s*-\s*\d{4}-\d{2}-\d{2}\s*$/, 1]
+end
+
+begin
+  changelog_and_version_paths = ls_files(%r|/VERSION$|)
+    .map    {|path| [path.sub(%r|/VERSION$|, '/ChangeLog.md'), path]}
+    .select {|paths| paths.all? {|path| File.exist? path}}
+    .to_h
+
+  changelog_and_version_paths.each do |changelog, version|
+    ver = changelog_latest_version changelog
+    if ver && ver != get_version(version)
+      raise "modified VERSION(s) exist" unless
+        changelog_and_version_paths.values.all? {|path| `git diff #{path}`.empty?}
+
+      File.write version, ver
+      `git add #{version}`
+    end
+  end
+end
+
+begin
+  gemspec_paths = ls_files /\.gemspec$/
+  versions      = ls_files(%r|/VERSION$|)
+    .map {|path| [path[%r|(\w+)/VERSION$|, 1], get_version(path)]}
+    .to_h
+    .transform_values {|ver| ver.split('.').map &:to_i}
+    .transform_values {|nums| nums.slice(0, nums.first < 1 ? 3 : 2).join('.')}
+
+
+  gemspec_paths.each do |path|
+    gemspec = File.read path
+    old     = gemspec.dup
+
+    versions.each do |name, ver|
+      re = /add_runtime_dependency\s*['"]#{name}['"]\s*,\s*['"]\s*~>\s*[\d\.]+\s*['"]\s*$/
+      gemspec.sub!(re) {|s| s.sub /[\d\.]+/, ver}
+    end
+
+    if gemspec != old
+      raise "modified gemspec(s) exist" unless
+        gemspec_paths.all? {|path| `git diff #{path}`.empty?}
+
+      File.write path, gemspec
+      `git add #{path}`
+    end
+  end
+end
