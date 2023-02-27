@@ -1,0 +1,116 @@
+#!/usr/bin/env ruby
+
+
+class Parser
+
+  def initialize(lines)
+    @funs = {}
+    @lines = lines
+  end
+
+  def parse()
+    parse_functions @lines
+    parse_Init @lines
+    @lines
+  end
+
+  private
+
+    def process_lines(lines, regexp, &block)
+      lines.gsub! regexp do |str|
+        params = $~[1..-1]
+        params.unshift str
+        block.call *params
+      end
+    end
+
+    def parse_functions(lines)
+      re = %r{
+        (?:RUCY_)?DEF(\d+|N|_ALLOC)\( (\w+) \s* ((?:\, \s* \w+)*) \s* \) \s*
+        (\{ \s*
+          .*?
+        \}) \s*
+        (?:RUCY_)?END
+      }mx
+      process_lines lines, re do |all, type, name, params, body|
+        type = '-1' if type == 'N'
+        params.gsub! /\,/, ', VALUE'
+        params = '' unless params
+        if type == '_ALLOC'
+          params.gsub! /^\,\s*/, ''
+        else
+          params = 'VALUE self' + params
+        end
+        @funs[name] = {
+          :type   => type,
+          :params => params,
+          :body   => body
+        }
+        "VALUE #{name}(#{params})\n#{body}"
+      end
+    end
+
+    def parse_Init(lines)
+      re = %r{
+        Init_(\w*) \s* \( \s* \) \s*
+        \{ \s*
+          .*?
+        \} \s*
+      }mx
+      process_lines lines, re do |all, name|
+        parse_module_and_class all
+        parse_methods all
+        all
+      end
+    end
+
+    def parse_module_and_class(lines)
+      re = %r{
+        (\w+) \s* \= \s*
+          (?: (\w+) \s* \. )? \s* (define_(?:module|class)) \s*
+            \( \s* (\"\w+\") \s* (?: \, \s* (\w+) )? \s* \) \s* ;
+      }mx
+      process_lines lines, re do |all, var, recv, define, name, super_|
+        define += '_under' if recv
+        recv += ', ' if recv
+        super_ = 'rb_cObject' if !super_ && define =~ /class/
+        super_ = ', ' + super_ if super_
+        "#{var} = rb_#{define}(#{recv}#{name}#{super_});"
+      end
+    end
+
+    def parse_methods(lines)
+      re = %r{
+        (\w+) \s* \. \s* (define_\w+) \s*
+          \( \s* (?: (\"\w+(?:\=|\?\!)?\") \s* \, \s* )? (\w+) \s* \) \s* ;
+      }mx
+      process_lines lines, re do |all, obj, define, symbol, name|
+        fun = @funs[name]
+        next unless fun
+
+        type = fun[:type]
+        if type == '_ALLOC'
+          "rb_#{define}(#{obj}, #{name});"
+        else
+          "rb_#{define}(#{obj}, #{symbol}, RUBY_METHOD_FUNC(#{name}), #{type});"
+        end
+      end
+    end
+
+end# Parser
+
+
+def usage()
+  "rucy2rdoc FILE"
+end
+
+def main(argv)
+  if path = argv.shift
+    print Parser.new(File.read path).parse
+  else
+    puts usage
+  end
+end
+
+
+main ARGV.dup

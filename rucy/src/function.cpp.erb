@@ -1,0 +1,66 @@
+// -*- c++ -*-
+#include "rucy/function.h"
+
+
+#include "rucy/exception.h"
+
+
+#ifndef TAG_RAISE
+	#define TAG_RAISE 0x6
+#endif
+
+
+namespace Rucy
+{
+
+
+	Value
+	call (Symbol name, int argc, const Value* argv)
+	{
+		return protect(
+			rb_funcall2, nil().value(), name.symbol(), argc, (const RubyValue*) argv);
+	}
+%	NTIMES.each do |n|
+
+	Value
+	call (Symbol name<%= params(n) {|i| ", Value v#{i}"} %>)
+	{
+		const RubyValue args[] = {<%= params(n, ', ') {|i| "v#{i}.value()"} %>};
+		return protect(
+			rb_funcall2, nil().value(), name.symbol(), <%= n %>, args);
+	}
+%	end
+
+
+	Value
+	eval (const char* format, ...)
+	{
+		RUCY_SYM(eval);
+		XOT_STRINGF(format, s);
+		return call(eval, s.c_str());
+	}
+
+
+	Value
+	call_protect (RubyValue (*fun)(RubyValue), RubyValue data)
+	{
+		int state = 0;
+		RubyValue ret = rb_protect(fun, data, &state);
+
+		if (state != 0)
+		{
+			RubyValue exception = rb_errinfo();
+			if (state == TAG_RAISE && RTEST(exception))
+			{
+				rb_set_errinfo(nil().value());
+				throw RubyException(exception);
+			}
+
+			throw RubyJumpTag(state);
+		}
+
+		return ret;
+	}
+
+
+}// Rucy

@@ -1,0 +1,58 @@
+// -*- c++ -*-
+#pragma once
+#ifndef __RUCY_FUNCTION_H__
+#define __RUCY_FUNCTION_H__
+
+
+#include <rucy/value.h>
+
+
+namespace Rucy
+{
+
+
+	typedef RubyValue (*RubyFunctionN) (int argc, const Value* argv, Value self);
+%	NTIMES.each do |n|
+
+	typedef RubyValue (*RubyFunction<%= n %>) (Value self<%= params(n) {|i| ", Value v#{i}"} %>);
+%	end
+
+
+	Value call (Symbol name, int argc, const Value* argv);
+%	NTIMES.each do |n|
+
+	Value call (Symbol name<%= params(n) {|i| ", Value v#{i}"} %>);
+%	end
+
+
+	Value eval (const char* format, ...);
+
+
+	Value call_protect (RubyValue (*fun)(RubyValue), RubyValue arg);
+
+%	NTIMES.each do |n|
+	template <typename F<%= params(n) {|i| ", typename V#{i}"} %>>
+	struct ProtectFunction<%= n %>
+	{
+		F f; <%= params(n, ' ') {|i| "V#{i}* v#{i};"} %>
+		ProtectFunction<%= n %> (F f<%= params(n) {|i| ", V#{i}& v#{i}"} %>) : f(f)<%= params(n) {|i| ", v#{i}(&v#{i})"} %> {}
+		static RubyValue apply (ProtectFunction<%= n %>* fun) {return (*fun->f)(<%= params(n, ', ') {|i| "*fun->v#{i}"} %>);}
+	};
+
+%	end
+
+%	NTIMES.each do |n|
+	template <typename F<%= params(n) {|i| ", typename V#{i}"} %>>
+	inline Value protect (F f<%= params(n) {|i| ", V#{i} v#{i}"} %>)
+	{
+		typedef ProtectFunction<%= n %><F<%= params(n) {|i| ", V#{i}"} %>> Fun;
+		Fun fun(f<%= params(n) {|i| ", v#{i}"} %>);
+		return call_protect((RubyValue(*)(RubyValue)) Fun::apply, (RubyValue) &fun);
+	}
+
+%	end
+
+}// Rucy
+
+
+#endif//EOH

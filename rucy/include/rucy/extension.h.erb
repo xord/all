@@ -1,0 +1,458 @@
+// -*- c++ -*-
+#pragma once
+#ifndef __RUCY_EXTENSION_H__
+#define __RUCY_EXTENSION_H__
+
+
+#include <xot/ref.h>
+#include <xot/string.h>
+#include <rucy/rucy.h>
+#include <rucy/value.h>
+#include <rucy/exception.h>
+
+
+#define RUCY_DECLARE_VALUE_FROM(native_class) \
+	namespace Rucy \
+	{ \
+		Value value (const native_class& obj); \
+		Value value (const native_class* obj); \
+	}
+
+#define RUCY_DECLARE_VALUE_TO(native_class) \
+	namespace Rucy \
+	{ \
+		template <>       native_class* value_to<      native_class*> (Value value, bool); \
+		template <> const native_class* value_to<const native_class*> (Value value, bool); \
+		template <>       native_class& value_to<      native_class&> (Value value, bool convert); \
+		template <> const native_class& value_to<const native_class&> (Value value, bool convert); \
+	}
+
+#define RUCY_DECLARE_ARRAY_TO(native_class) \
+	namespace Rucy \
+	{ \
+		template <> native_class value_to<native_class> (Value value, bool convert); \
+		template <> native_class value_to<native_class> (int argc, const Value* argv, bool convert); \
+	}
+
+#define RUCY_DECLARE_CONVERT_TO(native_type) \
+	RUCY_DECLARE_ARRAY_TO(native_type)
+
+#define RUCY_DECLARE_VALUE_OR_ARRAY_TO(native_class) \
+	RUCY_DECLARE_VALUE_TO(native_class) \
+	RUCY_DECLARE_ARRAY_TO(native_class)
+
+#define RUCY_DECLARE_WRAPPER_VALUE_FROM(native_class) \
+	namespace Rucy \
+	{ \
+		Value value (native_class* obj); \
+		Value value (native_class* obj, Value klass); \
+	}
+
+#define RUCY_DECLARE_WRAPPER_VALUE_TO(native_class) \
+	namespace Rucy \
+	{ \
+		template <>       native_class* value_to<      native_class*> (Value value, bool convert); \
+		template <> const native_class* value_to<const native_class*> (Value value, bool convert); \
+	}
+
+#define RUCY_DEFINE_VALUE_FROM(native_class) \
+	namespace Rucy \
+	{ \
+		Value \
+		value (const native_class& obj) \
+		{ \
+			return new_type(get_ruby_class<native_class>(), new native_class(obj)); \
+		} \
+		Value \
+		value (const native_class* obj) \
+		{ \
+			return obj ? value(*obj) : nil(); \
+		} \
+	}
+
+#define RUCY_DEFINE_VALUE_TO(native_class) \
+	namespace Rucy \
+	{ \
+		template <> native_class* \
+		value_to<native_class*> (Value value, bool) \
+		{ \
+			return get_type_ptr<native_class>(value, get_ruby_class<native_class>()); \
+		} \
+		template <> const native_class* \
+		value_to<const native_class*> (Value value, bool convert) \
+		{ \
+			return (const native_class*) value_to<native_class*>(value, convert); \
+		} \
+		template <> native_class& \
+		value_to<native_class&> (Value value, bool convert) \
+		{ \
+			native_class* obj = value_to<native_class*>(value, convert); \
+			if (!obj) \
+				rucy_error(__FILE__, __LINE__, "failed to convert from/to %s.", #native_class); \
+			return *obj; \
+		} \
+		template <> const native_class& \
+		value_to<const native_class&> (Value value, bool convert) \
+		{ \
+			return (const native_class&) value_to<native_class&>(value, convert); \
+		} \
+	}
+
+#define RUCY_DEFINE_ARRAY_TO(native_class) \
+	namespace Rucy \
+	{ \
+		template <> native_class \
+		value_to<native_class> (Value value, bool convert) \
+		{ \
+			if (value.is_array()) \
+				return value_to<native_class>(value.size(), value.as_array(), convert); \
+			else \
+				return value_to<native_class>(1, &value, convert); \
+		} \
+	}
+
+#define RUCY_DEFINE_CONVERT_TO(native_type) \
+	RUCY_DEFINE_ARRAY_TO(native_type)
+
+#define RUCY_DEFINE_VALUE_OR_ARRAY_TO(native_class) \
+	RUCY_DEFINE_VALUE_TO(native_class) \
+	RUCY_DEFINE_ARRAY_TO(native_class)
+
+#define RUCY_DEFINE_WRAPPER_VALUE_FROM(native_class) \
+	namespace Rucy \
+	{ \
+		Value \
+		value (native_class* obj) \
+		{ \
+			return value(obj, get_ruby_class<native_class>()); \
+		} \
+		Value \
+		value (native_class* obj, Value klass) \
+		{ \
+			if (!obj) return nil(); \
+			GlobalValue* wrapped = (GlobalValue*) obj->rucy_wrapper_value(); \
+			if (!wrapped) return new_ref(klass, obj); \
+			if (wrapped->is_nil()) *wrapped = new_wrapper(klass, obj); \
+			return *wrapped; \
+		} \
+	}
+
+#define RUCY_DEFINE_WRAPPER_VALUE_TO(native_class) \
+	namespace Rucy \
+	{ \
+		template <> native_class* \
+		value_to<native_class*> (Value value, bool) \
+		{ \
+			return get_type_ptr<native_class>(value, get_ruby_class<native_class>()); \
+		} \
+		template <> const native_class* \
+		value_to<const native_class*> (Value value, bool convert) \
+		{ \
+			return (const native_class*) value_to<native_class*>(value, convert); \
+		} \
+	}
+
+#define RUCY_DECLARE_VALUE_FROM_TO(native_class) \
+	RUCY_DECLARE_VALUE_FROM(native_class) \
+	RUCY_DECLARE_VALUE_TO(native_class)
+
+#define RUCY_DEFINE_VALUE_FROM_TO(native_class) \
+	RUCY_DEFINE_VALUE_FROM(native_class) \
+	RUCY_DEFINE_VALUE_TO(native_class)
+
+#define RUCY_VALUE_FROM_TO(native_class) \
+	RUCY_DECLARE_VALUE_FROM_TO(native_class) \
+	RUCY_DEFINE_VALUE_FROM_TO(native_class)
+
+#define RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(native_class) \
+	RUCY_DECLARE_VALUE_FROM(native_class) \
+	RUCY_DECLARE_VALUE_OR_ARRAY_TO(native_class)
+
+#define RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(native_class) \
+	RUCY_DEFINE_VALUE_FROM(native_class) \
+	RUCY_DEFINE_VALUE_OR_ARRAY_TO(native_class)
+
+#define RUCY_VALUE_OR_ARRAY_FROM_TO(native_class) \
+	RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(native_class) \
+	RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(native_class)
+
+#define RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(native_class) \
+	RUCY_DECLARE_WRAPPER_VALUE_FROM(native_class) \
+	RUCY_DECLARE_WRAPPER_VALUE_TO(native_class)
+
+#define RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(native_class) \
+	RUCY_DEFINE_WRAPPER_VALUE_FROM(native_class) \
+	RUCY_DEFINE_WRAPPER_VALUE_TO(native_class)
+
+#define RUCY_WRAPPER_VALUE_FROM_TO(native_class) \
+	RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(native_class) \
+	RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(native_class)
+
+
+#define RUCY_TRY \
+	Rucy::RubyValue RUCY__rubyexception__ = Rucy::nil(); \
+	int RUCY__rubyjumptag__ = 0; \
+	 \
+	goto RUCY__ruby_try_start__; \
+	 \
+	RUCY__ruby_jump_tag__: \
+	if (RUCY__rubyjumptag__) rb_jump_tag(RUCY__rubyjumptag__); \
+	RUCY_GOTO_RAISE(rb_exc_new2(Rucy::native_error_class(), "Bad jump tag.")); \
+	 \
+	RUCY__ruby_raise_exception__: \
+	rb_exc_raise(RUCY__rubyexception__); \
+	 \
+	RUCY__ruby_try_start__: \
+	try \
+	{
+
+#define RUCY_CATCH \
+	} \
+	catch (const Rucy::RubyJumpTag& e) \
+	{ \
+		RUCY__rubyjumptag__ = e.tag; \
+		goto RUCY__ruby_jump_tag__; \
+	} \
+	catch (const Rucy::RubyException& e) \
+	{ \
+		RUCY_GOTO_RAISE(e.value()); \
+	} \
+	catch (const std::invalid_argument& e) \
+	{ \
+		RUCY_GOTO_RAISE(rb_exc_new2(rb_eArgError, e.what())); \
+	} \
+	catch (const std::exception& e) \
+	{ \
+		Xot::String text = e.what(), type = typeid(e).name(); \
+		if (!type.empty()) \
+		{ \
+			if (!text.empty()) text += " "; \
+			text += "[" + type + "]"; \
+		} \
+		RUCY_GOTO_RAISE(rb_exc_new2(Rucy::native_error_class(), text.c_str())); \
+	} \
+	catch (const std::string& s) \
+	{ \
+		RUCY_GOTO_RAISE(rb_exc_new2(Rucy::native_error_class(), s.c_str())); \
+	} \
+	catch (const char* s) \
+	{ \
+		RUCY_GOTO_RAISE(rb_exc_new2(Rucy::native_error_class(), s)); \
+	} \
+	catch (...) \
+	{ \
+		RUCY_GOTO_RAISE(rb_exc_new2( \
+			Rucy::native_error_class(), "Unknown C++ exception was thrown.")); \
+	}
+
+#define RUCY_GOTO_RAISE(exception) \
+	RUCY__rubyexception__ = (exception); \
+	goto RUCY__ruby_raise_exception__
+
+#define RUCY_RAISE(ruby_error_class, message) \
+	rb_exc_raise(rb_exc_new2(ruby_error_class, message))
+
+
+#define RUCY_DEF_ALLOC(name, klass) \
+	Rucy::RubyValue name (Rucy::Value klass) \
+	{ \
+		RUCY_TRY
+
+#define RUCY_DEFN(name) \
+	Rucy::RubyValue name (int argc, const Rucy::Value* argv, Rucy::Value self) \
+	{ \
+		RUCY_TRY
+
+%	NTIMES.each do |n|
+#define RUCY_DEF<%= n %>(name<%= params(n) {|i| ", v#{i}"} %>) \
+	Rucy::RubyValue name (Rucy::Value self<%= params(n) {|i| ", Rucy::Value v#{i}"} %>) \
+	{ \
+		RUCY_TRY
+%	end
+
+#define RUCY_DEF_END \
+		RUCY_CATCH \
+		return Rucy::nil(); \
+	}
+
+
+#define RUCY_CHECK_OBJ(native_class, obj) \
+	do \
+	{ \
+		native_class* p = \
+			Rucy::get_type_ptr<native_class>(obj, Rucy::get_ruby_class<native_class>()); \
+		if (!p) Rucy::invalid_object_error(__FILE__, __LINE__); \
+	} \
+	while(0)
+
+#define RUCY_CHECK_OBJECT(native_class, obj) \
+	do \
+	{ \
+		native_class* p = \
+			Rucy::get_type_ptr<native_class>(obj, Rucy::get_ruby_class<native_class>()); \
+		if (!p || !*p) Rucy::invalid_object_error(__FILE__, __LINE__); \
+	} \
+	while(0)
+
+#define RUCY_CALL_SUPER(obj, fun) \
+	((obj)->rucy_disable_override() ? (obj)->fun : (obj)->fun)
+
+
+namespace Rucy
+{
+
+
+	void check_class (Value obj, Value klass);
+
+	void check_arg_count (
+		const char* file, int line,
+		const char* method, int nargs, int nargs_expected_n0,
+		int n1 = -1, int n2 = -1, int n3 = -1, int n4 = -1, int n5 = -1,
+		int n6 = -1, int n7 = -1, int n8 = -1, int n9 = -1, int n10 = -1);
+
+
+	template <typename T> Class get_ruby_class ();
+
+
+	template <typename RefCountableT>
+	class ClassWrapper : public RefCountableT
+	{
+
+		typedef ClassWrapper  This;
+
+		typedef RefCountableT RucyWrapped;
+
+		public:
+
+			GlobalValue value;
+
+			ClassWrapper ()
+			:	value(nil(), true), overridable(true)
+			{
+			}
+
+			void retain (intptr_t by_ruby) const override
+			{
+				if (!by_ruby) value.disable_gc();
+				RucyWrapped::retain();
+			}
+
+			void release (intptr_t by_ruby) const override
+			{
+				if (!by_ruby) value.enable_gc();
+				RucyWrapped::release();
+			}
+
+			virtual bool is_overridable () const
+			{
+				if (value.is_nil())
+					return false;
+
+				if (!overridable)
+				{
+					overridable = true;
+					return false;
+				}
+
+				return true;
+			}
+
+			void* rucy_wrapper_value () const override
+			{
+				return (void*) &value;
+			}
+
+			bool rucy_disable_override () const override
+			{
+				overridable = false;
+				return true;
+			}
+
+		private:
+
+			mutable bool overridable;
+
+	};// ClassWrapper
+
+
+	template <typename T> inline void delete_type (void* p)
+	{
+		delete (T*) p;
+	}
+
+	template <typename T> inline void release_ref (void* p)
+	{
+		if (p) ((T*) p)->release();
+	}
+
+	template <typename T> inline void release_wrapper (void* p)
+	{
+		if (p) ((T*) p)->release(true);
+	}
+
+
+	template <typename T> inline Value new_type (
+		Value klass, T* ptr,
+		RUBY_DATA_FUNC mark = NULL,
+		RUBY_DATA_FUNC free = delete_type<T>)
+	{
+		if (!ptr) return nil();
+		return Data_Wrap_Struct(klass, mark, free, ptr);
+	}
+
+	template <typename T> inline Value new_type (
+		Value klass,
+		RUBY_DATA_FUNC mark = NULL,
+		RUBY_DATA_FUNC free = delete_type<T>)
+	{
+		return new_type(klass, new T, mark, free);
+	}
+
+	template <typename T> inline Value new_ref (
+		Value klass, T* ptr,
+		RUBY_DATA_FUNC mark = NULL,
+		RUBY_DATA_FUNC free = release_ref<T>)
+	{
+		if (ptr) ptr->retain();
+		return new_type(klass, ptr, mark, free);
+	}
+
+	template <typename T> inline Value new_ref (
+		Value klass,
+		RUBY_DATA_FUNC mark = NULL,
+		RUBY_DATA_FUNC free = release_ref<T>)
+	{
+		return new_ref(klass, new T, mark, free);
+	}
+
+	template <typename T> inline Value new_wrapper (
+		Value klass, T* ptr,
+		RUBY_DATA_FUNC mark = NULL,
+		RUBY_DATA_FUNC free = release_wrapper<T>)
+	{
+		if (ptr) ptr->retain(true);
+		return new_type(klass, ptr, mark, free);
+	}
+
+	template <typename T> inline Value new_wrapper (
+		Value klass,
+		RUBY_DATA_FUNC mark = NULL,
+		RUBY_DATA_FUNC free = release_wrapper<T>)
+	{
+		return new_wrapper(klass, new T, mark, free);
+	}
+
+
+	template <typename T> inline T* get_type_ptr (Value obj, Value klass = nil())
+	{
+		if (!klass.is_nil()) check_class(obj, klass);
+		T* p = NULL;
+		Data_Get_Struct(obj.value(), T, p);
+		return p;
+	}
+
+
+}// Rucy
+
+
+#endif//EOH

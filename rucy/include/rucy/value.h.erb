@@ -1,0 +1,266 @@
+// -*- c++ -*-
+#pragma once
+#ifndef __RUCY_VALUE_H__
+#define __RUCY_VALUE_H__
+
+
+#include <rucy/ruby.h>
+#include <rucy/symbol.h>
+
+
+namespace Rucy
+{
+
+
+	class Value
+	{
+
+		public:
+
+			Value ();
+
+			Value (bool b);
+
+			Value (         int n);
+
+			Value (unsigned int n);
+
+			Value (float n);
+
+			Value (double n);
+
+			Value (const char* s);
+
+			Value (const char* s, size_t len);
+
+			Value (size_t size, const Value* array);
+
+			Value (RubyValue v);
+
+			bool is_i () const;
+
+			bool is_f () const;
+
+			bool is_num () const;
+
+			bool is_s () const;
+
+			bool is_sym () const;
+
+			bool is_array () const;
+
+			bool is_hash () const;
+
+			bool is_nil () const;
+
+			int          as_i (bool convert = false) const;
+
+			double       as_f (bool convert = false) const;
+
+			const char*  as_s (bool convert = false) const;
+
+			Symbol       as_sym (bool convert = false) const;
+
+			      Value* as_array (bool convert = false);
+
+			const Value* as_array (bool convert = false) const;
+
+			Value to_i () const;
+
+			Value to_f () const;
+
+			Value to_s () const;
+
+			Value to_sym () const;
+
+			Value to_array () const;
+
+			template <typename T> T as (bool convert = false) const;
+
+%			["call", "operator ()"].each do |op|
+			Value <%= op %> (Symbol name, int argc, const Value* argv) const;
+%				NTIMES.each do |n|
+			Value <%= op %> (Symbol name<%= params(n) {|i| ", Value v#{i}"} %>) const;
+%				end
+%			end
+
+			void mark () const;
+
+			RubyValue value () const;
+
+			RubyValueType type () const;
+
+			operator RubyValue () const;
+
+			operator bool () const;
+
+			bool operator ! () const;
+
+			bool operator == (const Value& rhs) const;
+
+			bool operator == (RubyValue rhs) const;
+
+			bool operator != (const Value& rhs) const;
+
+			bool operator != (RubyValue rhs) const;
+
+			// Object
+
+			Value klass () const;
+
+			bool is_kind_of (Value klass) const;
+
+			Value inspect () const;
+
+			// Array
+
+			Value push (Value obj);
+
+			Value pop ();
+
+			Value shift ();
+
+			Value unshift (Value obj);
+
+			      Value& operator [] (size_t i);
+
+			const Value& operator [] (size_t i) const;
+
+			// String
+
+			const char* c_str () const;
+
+			// Array / String
+
+			int length () const;
+
+			int size () const;
+
+			bool empty () const;
+
+		protected:
+
+			RubyValue val;
+
+	};// Value
+
+
+	class GlobalValue : public Value
+	{
+
+		typedef       Value Super;
+
+		typedef GlobalValue This;
+
+		public:
+
+			GlobalValue ();// gc = false
+
+			GlobalValue (bool b, bool gc = false);
+
+			GlobalValue (         int n, bool gc = false);
+
+			GlobalValue (unsigned int n, bool gc = false);
+
+			GlobalValue (float n, bool gc = false);
+
+			GlobalValue (double n, bool gc = false);
+
+			GlobalValue (const char* s, bool gc = false);
+
+			GlobalValue (const char* s, size_t len, bool gc = false);
+
+			GlobalValue (size_t size, const Value* array, bool gc = false);
+
+			GlobalValue (RubyValue v, bool gc = false);
+
+			GlobalValue (const Value& v, bool gc = false);
+
+			GlobalValue (const This& obj, bool gc = false);
+
+			GlobalValue& operator = (const Value& v);
+
+			GlobalValue& operator = (const This& obj);
+
+			~GlobalValue ();
+
+			void  enable_gc () const;
+
+			void disable_gc () const;
+
+		private:
+
+			mutable int gc_disable_count;
+
+			void init (bool gc);
+
+	};// GlobalValue
+
+
+	Value nil ();
+
+	Value value (bool b);
+
+	Value value (         char n);
+
+	Value value (unsigned char n);
+
+	Value value (         short n);
+
+	Value value (unsigned short n);
+
+	Value value (         int n);
+
+	Value value (unsigned int n);
+
+	Value value (         long n);
+
+	Value value (unsigned long n);
+
+	Value value (         long long n);
+
+	Value value (unsigned long long n);
+
+	Value value (float n);
+
+	Value value (double n);
+
+	Value value (const char* s);
+
+	Value value (const char* s, size_t len);
+
+	Value value (size_t size, const Value* array);
+%	(1..16).each do |n|
+
+	Value array (<%= params(n, ', ') {|i| "Value v#{i}"} %>);
+%	end
+
+
+	template <typename T> T
+	value_to (Value obj, bool convert = true);
+
+	template <typename T> inline T
+	to       (Value obj, bool convert = true)
+	{
+		return value_to<T>(obj, convert);
+	}
+
+	template <typename T> T
+	value_to (int argc, const Value* argv, bool convert = true);
+
+	template <typename T> inline T
+	to       (int argc, const Value* argv, bool convert = true)
+	{
+		return value_to<T>(argc, argv, convert);
+	}
+
+	template <typename T> inline T Value::as (bool convert) const
+	{
+		return value_to<T>(*this, convert);
+	}
+
+
+}// Rucy
+
+
+#endif//EOH

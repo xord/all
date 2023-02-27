@@ -1,0 +1,115 @@
+// -*- c++ -*-
+#include "rucy/module.h"
+
+
+#include "rucy/class.h"
+
+
+namespace Rucy
+{
+
+
+	Module::Module (RubyValue v)
+	:	Super(v)
+	{
+	}
+
+	Module
+	Module::define_module (const char* name)
+	{
+		return rb_define_module_under(value(), name);
+	}
+
+	Class
+	Module::define_class (const char* name, Value super)
+	{
+		if (super.is_nil()) super = rb_cObject;
+		return rb_define_class_under(value(), name, super);
+	}
+
+	void
+	Module::define_const (const char* name, Value val)
+	{
+		rb_define_const(value(), name, val);
+	}
+
+	void
+	Module::define_attr (const char* name, bool read, bool write)
+	{
+		rb_define_attr(value(), name, read, write);
+	}
+
+	void
+	Module::define_alias (const char* new_, const char* old)
+	{
+		rb_define_alias(value(), new_, old);
+	}
+
+	void
+	Module::undef_method (const char* name)
+	{
+		rb_undef_method(value(), name);
+	}
+
+	void
+	Module::include_module (Value module)
+	{
+		rb_include_module(value(), module);
+	}
+
+%	[
+%		['define_module_function',  'rb_define_module_function'],
+%		['define_method',           'rb_define_method'],
+%		['define_private_method',   'rb_define_private_method'],
+%		['define_singleton_method', 'rb_define_singleton_method']
+%	].each do |(op, rb_op)|
+	void
+	Module::<%= op %> (const char* name, RubyFunctionN fun)
+	{
+		<%= rb_op %>(value(), name, RUBY_METHOD_FUNC(fun), -1);
+	}
+%		NTIMES.each do |n|
+	void
+	Module::<%= op %> (const char* name, RubyFunction<%= n %> fun)
+	{
+		<%= rb_op %>(value(), name, RUBY_METHOD_FUNC(fun), <%= n %>);
+	}
+%		end
+%	end
+
+
+	Module
+	define_module (const char* name)
+	{
+		return rb_define_module(name);
+	}
+
+	Class
+	define_class (const char* name, Value super)
+	{
+		if (super.is_nil()) super = rb_cObject;
+		return rb_define_class(name, super);
+	}
+
+	void
+	define_const (const char* name, Value val)
+	{
+		rb_define_global_const(name, val);
+	}
+
+	void
+	define_function (const char* name, RubyFunctionN fun)
+	{
+		rb_define_global_function(name, RUBY_METHOD_FUNC(fun), -1);
+	}
+%	NTIMES.each do |n|
+
+	void
+	define_function (const char* name, RubyFunction<%= n %> fun)
+	{
+		rb_define_global_function(name, RUBY_METHOD_FUNC(fun), <%= n %>);
+	}
+%	end
+
+
+}// Rucy

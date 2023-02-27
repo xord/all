@@ -1,0 +1,753 @@
+// -*- c++ -*-
+#include "rucy/value.h"
+
+
+#include <assert.h>
+#include <ruby/encoding.h>
+#include "rucy/function.h"
+#include "rucy/exception.h"
+#include "rucy/debug.h"
+
+
+namespace Rucy
+{
+
+
+	static void
+	check_type (RubyValue value, RubyValueType type)
+	{
+		return rb_check_type(value, type);
+	}
+
+	static bool
+	test_value (RubyValue value)
+	{
+		return RTEST(value); //!NIL_P(v) && v != Qfalse;
+	}
+
+
+	Value::Value ()
+	:	val(nil())
+	{
+	}
+
+	Value::Value (bool b)
+	:	val(b ? Qtrue : Qfalse)
+	{
+	}
+
+	Value::Value (int n)
+	:	val(INT2NUM(n))
+	{
+	}
+
+	Value::Value (unsigned int n)
+	:	val(UINT2NUM(n))
+	{
+	}
+
+	Value::Value (float n)
+	:	val(rb_float_new(n))
+	{
+	}
+
+	Value::Value (double n)
+	:	val(rb_float_new(n))
+	{
+	}
+
+	static VALUE
+	str_new (const char* s)
+	{
+		rb_encoding* e = rb_default_internal_encoding();
+		return e ? rb_enc_str_new_cstr(s, e) : rb_str_new_cstr(s);
+	}
+
+	static VALUE
+	str_new (const char* s, size_t len)
+	{
+		rb_encoding* e = rb_default_internal_encoding();
+		return e ? rb_enc_str_new(s, len, e) : rb_str_new(s, len);
+	}
+
+	Value::Value (const char* s)
+	:	val(s ? str_new(s) : Qnil)
+	{
+		if (!s)
+			argument_error(__FILE__, __LINE__);
+	}
+
+	Value::Value (const char* s, size_t len)
+	:	val(s ? str_new(s, len) : Qnil)
+	{
+		if (!s)
+			argument_error(__FILE__, __LINE__);
+	}
+
+	Value::Value (size_t size, const Value* array)
+	{
+		if (size == 0)
+		{
+			val = rb_ary_new();
+		}
+		else if (array)
+		{
+			val = rb_ary_new4(size, (const RubyValue*) array);
+		}
+		else
+		{
+			val = rb_ary_new2(size);
+		}
+	}
+
+	Value::Value (RubyValue v)
+	:	val(v)
+	{
+	}
+
+	bool
+	Value::is_i () const
+	{
+		return FIXNUM_P(val) || type() == RUBY_T_BIGNUM || is_kind_of(rb_cInteger);
+	}
+
+	bool
+	Value::is_f () const
+	{
+		return RB_FLOAT_TYPE_P(val) || is_kind_of(rb_cFloat);
+	}
+
+	bool
+	Value::is_num () const
+	{
+		return is_i() || is_f();
+	}
+
+	bool
+	Value::is_s () const
+	{
+		return type() == RUBY_T_STRING || is_kind_of(rb_cString);
+	}
+
+	bool
+	Value::is_sym () const
+	{
+		return SYMBOL_P(val) || is_kind_of(rb_cSymbol);
+	}
+
+	bool
+	Value::is_array () const
+	{
+		return type() == RUBY_T_ARRAY || is_kind_of(rb_cArray);
+	}
+
+	bool
+	Value::is_hash () const
+	{
+		return type() == RUBY_T_HASH || is_kind_of(rb_cHash);
+	}
+
+	bool
+	Value::is_nil () const
+	{
+		return NIL_P(val);
+	}
+
+	int
+	Value::as_i (bool convert) const
+	{
+		return as<int>(convert);
+	}
+
+	double
+	Value::as_f (bool convert) const
+	{
+		return as<double>(convert);
+	}
+
+	const char*
+	Value::as_s (bool convert) const
+	{
+		return as<const char*>(convert);
+	}
+
+	Symbol
+	Value::as_sym (bool convert) const
+	{
+		return as<Symbol>(convert);
+	}
+
+	Value*
+	Value::as_array (bool convert)
+	{
+		return as<Value*>(convert);
+	}
+
+	const Value*
+	Value::as_array (bool convert) const
+	{
+		return as<const Value*>(convert);
+	}
+
+	Value
+	Value::to_i () const
+	{
+		if (is_i()) return *this;
+		RUCY_SYM(to_i);
+		return call(to_i);
+	}
+
+	Value
+	Value::to_f () const
+	{
+		if (is_f()) return *this;
+		RUCY_SYM(to_f);
+		return call(to_f);
+	}
+
+	Value
+	Value::to_s () const
+	{
+		if (is_s()) return *this;
+		RUCY_SYM(to_s);
+		return call(to_s);
+	}
+
+	Value
+	Value::to_sym () const
+	{
+		if (is_sym()) return *this;
+		RUCY_SYM(to_sym);
+		return call(to_sym);
+	}
+
+	Value
+	Value::to_array () const
+	{
+		if (is_array()) return *this;
+		RUCY_SYM(to_a);
+		return call(to_a);
+	}
+
+%	["call", "operator ()"].each do |op|
+	Value
+	Value::<%= op %> (Symbol name, int argc, const Value* argv) const
+	{
+		return protect(rb_funcall2, val, name.symbol(), argc, (const RubyValue*) argv);
+	}
+%		NTIMES.each do |n|
+	Value
+	Value::<%= op %> (Symbol name<%= params(n) {|i| ", Value v#{i}"} %>) const
+	{
+		const RubyValue args[] = {<%= params(n, ', ') {|i| "v#{i}"} %>};
+		return protect(rb_funcall2, val, name.symbol(), <%= n %>, args);
+	}
+%		end
+%	end
+
+	void
+	Value::mark () const
+	{
+		rb_gc_mark(val);
+	}
+
+	RubyValue
+	Value::value () const
+	{
+		return val;
+	}
+
+	RubyValueType
+	Value::type () const
+	{
+		return TYPE(val);
+	}
+
+	Value::operator RubyValue () const
+	{
+		return val;
+	}
+
+	Value::operator bool () const
+	{
+		return test_value(val);
+	}
+
+	bool
+	Value::operator ! () const
+	{
+		return !operator bool();
+	}
+
+	bool
+	Value::operator == (const Value& rhs) const
+	{
+		return operator==(rhs.val);
+	}
+
+	bool
+	Value::operator == (RubyValue rhs) const
+	{
+		return val == rhs;// test_value(rb_obj_equal(val, rhs);
+	}
+
+	bool
+	Value::operator != (const Value& rhs) const
+	{
+		return !operator==(rhs);
+	}
+
+	bool
+	Value::operator != (RubyValue rhs) const
+	{
+		return !operator==(rhs);
+	}
+
+	Value
+	Value::klass () const
+	{
+		return RBASIC(val)->klass;
+	}
+
+	bool
+	Value::is_kind_of (Value klass) const
+	{
+		return rb_obj_is_kind_of(val, klass);
+	}
+
+	Value
+	Value::inspect () const
+	{
+		RUCY_SYM(inspect);
+		return call(inspect);
+	}
+
+	Value
+	Value::push (Value obj)
+	{
+		return rb_ary_push(value(), obj.value());
+	}
+
+	Value
+	Value::pop ()
+	{
+		return rb_ary_pop(value());
+	}
+
+	Value
+	Value::shift ()
+	{
+		return rb_ary_shift(value());
+	}
+
+	Value
+	Value::unshift (Value obj)
+	{
+		return rb_ary_unshift(value(), obj.value());
+	}
+
+	Value&
+	Value::operator [] (size_t i)
+	{
+		return as_array()[i];
+	}
+
+	const Value&
+	Value::operator [] (size_t i) const
+	{
+		return const_cast<Value*>(this)->operator[](i);
+	}
+
+	const char*
+	Value::c_str () const
+	{
+		return as_s(true);
+	}
+
+	static int
+	get_length (const Value& value, RubySymbol symbol)
+	{
+		if (value.type() == RUBY_T_ARRAY)
+			return (int) RARRAY_LEN(value.value());
+		else if (value.type() == RUBY_T_STRING)
+			return (int) RSTRING_LEN(value.value());
+		else
+			return value.call(symbol);
+	}
+
+	int
+	Value::length () const
+	{
+		RUCY_SYM(length);
+		return get_length(*this, length);
+	}
+
+	int
+	Value::size () const
+	{
+		RUCY_SYM(size);
+		return get_length(*this, size);
+	}
+
+	bool
+	Value::empty () const
+	{
+		return size() <= 0;
+	}
+
+
+	GlobalValue::GlobalValue ()
+	{
+		init(false);
+	}
+
+	GlobalValue::GlobalValue (bool b, bool gc_)
+	:	Super(b)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (int n, bool gc_)
+	:	Super(n)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (unsigned int n, bool gc_)
+	:	Super(n)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (float n, bool gc_)
+	:	Super(n)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (double n, bool gc_)
+	:	Super(n)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (const char* s, bool gc_)
+	:	Super(s)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (const char* s, size_t len, bool gc_)
+	:	Super(s, len)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (size_t size, const Value* array, bool gc_)
+	:	Super(size, array)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (RubyValue v, bool gc_)
+	:	Super(v)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (const Value& v, bool gc_)
+	:	Super(v)
+	{
+		init(gc_);
+	}
+
+	GlobalValue::GlobalValue (const This& obj, bool gc_)
+	:	Super(obj)
+	{
+		init(gc_);
+	}
+
+	GlobalValue&
+	GlobalValue::operator = (const Value& v)
+	{
+		Super::operator=(v);
+		return *this;
+	}
+
+	GlobalValue&
+	GlobalValue::operator = (const This& obj)
+	{
+		Super::operator=(obj);
+		return *this;
+	}
+
+	GlobalValue::~GlobalValue ()
+	{
+		if (gc_disable_count > 0)
+			rb_gc_unregister_address(&val);
+	}
+
+	void
+	GlobalValue::enable_gc () const
+	{
+		if (--gc_disable_count == 0)
+			rb_gc_unregister_address(const_cast<RubyValue*>(&val));
+	}
+
+	void
+	GlobalValue::disable_gc () const
+	{
+		if (++gc_disable_count == 1)
+			rb_gc_register_address(const_cast<RubyValue*>(&val));
+	}
+
+	void
+	GlobalValue::init (bool gc_)
+	{
+		gc_disable_count = 0;
+		if (!gc_) disable_gc();
+	}
+
+
+	Value
+	nil ()
+	{
+		return Qnil;
+	}
+
+	Value
+	value (bool b)
+	{
+		return b;
+	}
+
+	Value
+	value (char n)
+	{
+		return (int) n;
+	}
+
+	Value
+	value (unsigned char n)
+	{
+		return (unsigned int) n;
+	}
+
+	Value
+	value (short n)
+	{
+		return (int) n;
+	}
+
+	Value
+	value (unsigned short n)
+	{
+		return (unsigned int) n;
+	}
+
+	Value
+	value (int n)
+	{
+		return n;
+	}
+
+	Value
+	value (unsigned int n)
+	{
+		return n;
+	}
+
+	Value
+	value (long n)
+	{
+		return LONG2NUM(n);
+	}
+
+	Value
+	value (unsigned long n)
+	{
+		return ULONG2NUM(n);
+	}
+
+	Value
+	value (long long n)
+	{
+		return LL2NUM(n);
+	}
+
+	Value
+	value (unsigned long long n)
+	{
+		return ULL2NUM(n);
+	}
+
+	Value
+	value (float n)
+	{
+		return n;
+	}
+
+	Value
+	value (double n)
+	{
+		return n;
+	}
+
+	Value
+	value (const char* s)
+	{
+		return Value(s);
+	}
+
+	Value
+	value (const char* s, size_t len)
+	{
+		return Value(s, len);
+	}
+
+	Value
+	value (size_t size, const Value* array)
+	{
+		return Value(size, array);
+	}
+%	(1..16).each do |n|
+
+	Value
+	array (<%= params(n, ', ') {|i| "Value v#{i}"} %>)
+	{
+		Value tmp[] = {<%= params(n, ', ') {|i| "v#{i}"} %>};
+		return value(<%= n %>, tmp);
+	}
+%	end
+
+
+	template <> bool
+	value_to<bool> (Value obj, bool convert)
+	{
+		return (bool) obj;
+	}
+
+	template <> int
+	value_to<int> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_i();
+		return NUM2INT(obj.value());
+	}
+
+	template <> unsigned int
+	value_to<unsigned int> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_i();
+		return NUM2UINT(obj.value());
+	}
+
+	template <> char
+	value_to<char> (Value obj, bool convert)
+	{
+		return (char) value_to<int>(obj, convert);
+	}
+
+	template <> unsigned char
+	value_to<unsigned char> (Value obj, bool convert)
+	{
+		return (unsigned char) value_to<unsigned int>(obj, convert);
+	}
+
+	template <> short
+	value_to<short> (Value obj, bool convert)
+	{
+		return (short) value_to<int>(obj, convert);
+	}
+
+	template <> unsigned short
+	value_to<unsigned short> (Value obj, bool convert)
+	{
+		return (unsigned short) value_to<unsigned int>(obj, convert);
+	}
+
+	template <> long
+	value_to<long> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_i();
+		return NUM2LONG(obj.value());
+	}
+
+	template <> unsigned long
+	value_to<unsigned long> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_i();
+		return NUM2ULONG(obj.value());
+	}
+
+	template <> long long
+	value_to<long long> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_i();
+		return NUM2LL(obj.value());
+	}
+
+	template <> unsigned long long
+	value_to<unsigned long long> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_i();
+		return NUM2ULL(obj.value());
+	}
+
+	template <> double
+	value_to<double> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_f();
+		check_type(obj, RUBY_T_FLOAT);
+
+		return RFLOAT_VALUE(obj.value());
+	}
+
+	template <> float
+	value_to<float> (Value obj, bool convert)
+	{
+		return (float) value_to<double>(obj, convert);
+	}
+
+	template <> char*
+	value_to<char*> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_s();
+		RubyValue s = obj.value();
+		return StringValueCStr(s);
+	}
+
+	template <> const char*
+	value_to<const char*> (Value obj, bool convert)
+	{
+		return value_to<char*>(obj, convert);
+	}
+
+	template <> Symbol
+	value_to<Symbol> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_sym();
+		check_type(obj, RUBY_T_SYMBOL);
+
+		return SYM2ID(obj.value());
+	}
+
+	template <> Value*
+	value_to<Value*> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_array();
+		check_type(obj, RUBY_T_ARRAY);
+
+		return (Value*) RARRAY_PTR(obj.value());
+	}
+
+	template <> const Value*
+	value_to<const Value*> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_array();
+		check_type(obj, RUBY_T_ARRAY);
+
+		return (const Value*) RARRAY_PTR(obj.value());
+	}
+
+
+}// Rucy

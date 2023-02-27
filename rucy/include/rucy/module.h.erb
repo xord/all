@@ -1,0 +1,75 @@
+// -*- c++ -*-
+#pragma once
+#ifndef __RUCY_MODULE_H__
+#define __RUCY_MODULE_H__
+
+
+#include <rucy/value.h>
+#include <rucy/function.h>
+
+
+namespace Rucy
+{
+
+
+	class Class;
+
+
+	class Module : public Value
+	{
+
+		typedef Value Super;
+
+		public:
+
+			Module (RubyValue v = nil());
+
+			Module define_module (const char* name);
+
+			Class define_class (const char* name, Value super = nil());
+
+			void define_const (const char* name, Value val);
+
+			void define_attr (const char* name, bool read = true, bool write = true);
+
+			void define_alias (const char* new_, const char* old);
+
+			void undef_method (const char* name);
+
+			void include_module (Value module);
+
+			void extend_module (Value module);
+
+%			[
+%				'define_module_function',
+%				'define_method',
+%				'define_private_method',
+%				'define_singleton_method',
+%			].each do |op|
+			void <%= op %> (const char* name, RubyFunctionN fun);
+
+%				NTIMES.each do |n|
+			void <%= op %> (const char* name, RubyFunction<%= n %> fun);
+
+%				end
+%			end
+	};// Module
+
+
+	Module define_module (const char* name);
+
+	Class define_class (const char* name, Value super = nil());
+
+	void define_const (const char* name, Value val);
+
+	void define_function (const char* name, RubyFunctionN fun);
+%	NTIMES.each do |n|
+
+	void define_function (const char* name, RubyFunction<%= n %> fun);
+%	end
+
+
+}// Rucy
+
+
+#endif//EOH
