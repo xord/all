@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
 
+RENAMES = {reflex: 'reflexion'}
+
 def ls_files(regexp)
   `git ls-files`
     .lines(chomp: true)
@@ -47,7 +49,8 @@ begin
     old     = gemspec.dup
 
     versions.each do |name, ver|
-      re = /add_runtime_dependency\s*['"]#{name}['"]\s*,\s*['"]\s*~>\s*[\d\.]+\s*['"]\s*$/
+      gem = RENAMES[name.to_sym].then {|s| s || name}
+      re  = /add_runtime_dependency.*['"]#{gem}['"].*['"]\s*~>\s*[\d\.]+\s*['"]/
       gemspec.sub!(re) {|s| s.sub /[\d\.]+/, ver}
     end
 
