@@ -11,7 +11,8 @@ require 'xot/rake/util'
 include Xot::Rake
 
 
-GEMS  = %i[xot rucy beeps rays reflex processing rubysketch]
+EXTS  = %i[xot rucy beeps rays reflex]
+GEMS  = EXTS + %i[processing rubysketch]
 REPOS = %i[cruby] + GEMS
 TASKS = %i[vendor erb lib ext test gem install uninstall upload clean clobber]
 
@@ -46,6 +47,10 @@ end
 
 task :all do
   append_target *REPOS
+end
+
+task :exts do
+  append_target *EXTS
 end
 
 task :gems do
