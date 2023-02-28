@@ -21,7 +21,7 @@ jobs:
         run: "ruby -I.github/workflows -rutils -e 'setup_dependencies'"
 
       - name: test
-        run: rake test
+        run: rake quiet test
 
       - name: upload to rubygems
         env:
