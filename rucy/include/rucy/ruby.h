@@ -4,7 +4,10 @@
 #define __RUCY_RUBY_H__
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundef"
 #include <ruby.h>
+#pragma clang diagnostic pop
 
 
 #ifdef memcpy
