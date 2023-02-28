@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]*']
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: xcode
+        run: |
+          sudo xcode-select -s '/Applications/Xcode_13.4.1.app/Contents/Developer'
+          xcodebuild -version
+
+      - name: ruby 3.2
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+
+      - name: setup rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile:   minimal
+          toolchain: stable
+          default:   true
+          override:  true
+
+      - name: setup rust targets
+        run: |
+          rustup target list | grep apple | grep -v '(installed)' | xargs rustup target add
+
+      - name: version
+        id: version
+        run: |
+          echo value=$(ruby -e 'print "${{ github.ref }}"[/\/v([\w\.\-]+)/, 1]') >> $GITHUB_OUTPUT
+
+      - name: build
+        run: rake build
+
+      - name: check outputs
+        run: |
+          find CRuby/ -iname '*.a' | xargs ls -lh
+          find CRuby/ -iname '*.a' | xargs lipo -info
+
+      - name: archive
+        run: rake archive
+
+      - name: check archive
+        run: |
+          find . -iname 'CRuby_prebuilt*.tar.gz' | xargs ls -lh
+
+      - name: create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./CRuby_prebuilt-${{ steps.version.outputs.value }}.tar.gz
+          asset_name:   CRuby_prebuilt-${{ steps.version.outputs.value }}.tar.gz
+          asset_content_type: application/zip
