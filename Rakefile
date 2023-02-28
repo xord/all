@@ -11,14 +11,20 @@ require 'xot/rake/util'
 include Xot::Rake
 
 
-EXTENSIONS = %i[xot rucy beeps rays reflex processing rubysketch]
-TASKS      = %i[vendor erb lib ext test gem install uninstall upload clean clobber]
+GEMS  = %i[xot rucy beeps rays reflex processing rubysketch]
+REPOS = %i[cruby] + GEMS
+TASKS = %i[vendor erb lib ext test gem install uninstall upload clean clobber]
 
 TARGETS = []
 
 
 def targets ()
-  TARGETS.empty? ? EXTENSIONS : TARGETS
+  TARGETS.empty? ? GEMS : TARGETS
+end
+
+def append_target (*targets)
+  TARGETS.concat targets.flatten
+  TARGETS.uniq!
 end
 
 def sh_each_target (cmd)
@@ -39,12 +45,16 @@ task :debug do
 end
 
 task :all do
-  TARGETS.concat EXTENSIONS
+  append_target *REPOS
 end
 
-EXTENSIONS.each do |ext|
-  task ext do
-    TARGETS << ext
+task :gems do
+  append_target *GEMS
+end
+
+REPOS.each do |repo|
+  task repo do
+    append_target repo
   end
 end
 
@@ -64,23 +74,23 @@ task :scripts => 'scripts:build'
 
 namespace :subtree do
   github = 'https://github.com/xord'
+  branch = ENV['branch'] || 'master'
   opts   = actions? ? '-q' : ''
 
   task :import do
-    targets.each do |t|
-      sh %( git subtree add #{opts} --prefix=#{t} #{github}/#{t} master )
-    end
+    name = ENV['name'] or raise
+    sh %( git subtree add #{opts} --prefix=#{name} #{github}/#{name} #{branch} )
   end
 
   task :push do
     targets.each do |t|
-      sh %( git subtree push #{opts} --prefix=#{t} #{github}/#{t} master )
+      sh %( git subtree push #{opts} --prefix=#{t} #{github}/#{t} #{branch} )
     end
   end
 
   task :pull do
     targets.each do |t|
-      sh %( git subtree pull #{opts} --prefix=#{t} #{github}/#{t} master )
+      sh %( git subtree pull #{opts} --prefix=#{t} #{github}/#{t} #{branch} )
     end
   end
 end
@@ -108,9 +118,10 @@ namespace :scripts do
       .map {|path| [path, ".github/workflows/#{File.basename path}"]}
       .to_h
 
-    EXTENSIONS.each do |ext|
+    REPOS.each do |repo|
       yamls.each do |from, to|
-        path = "#{ext}/#{to}"
+        path = "#{repo}/#{to}"
+        next unless File.exist?(path)
 
         task :build => path
 
