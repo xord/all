@@ -254,11 +254,16 @@ module Xot
       s
     end
 
-    def debug(state)
-      ENV['DEBUG'] = state.to_s
+    def verbose?(state = nil)
+      if state != nil
+        ::Rake.verbose state
+        ENV['VERBOSE'] = (!!state).to_s
+      end
+      ::Rake.verbose
     end
 
-    def debug?()
+    def debug?(state = nil)
+      ENV['DEBUG'] = (!!state).to_s if state != nil
       env :DEBUG, false
     end
 

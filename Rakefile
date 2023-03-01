@@ -6,9 +6,7 @@
   .each {|s| $:.unshift s if !$:.include?(s) && File.directory?(s)}
 
 
-require 'xot/rake/util'
-
-include Xot::Rake
+require 'xot/rake'
 
 
 EXTS  = %i[xot rucy beeps rays reflex]
@@ -35,15 +33,7 @@ def sh_each_target (cmd)
 end
 
 
-task :default
-
-task :quiet do
-  ENV['RAKEOPT'] = '--quiet'
-end
-
-task :debug do
-  debug true
-end
+default_tasks
 
 task :all do
   append_target *REPOS

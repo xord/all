@@ -13,9 +13,8 @@ require 'xot/extension'
 EXTENSIONS = [Xot]
 DLNAME     = 'tester'
 
+default_tasks :ext
 build_native_library
 build_ruby_extension dlname: DLNAME, liboutput: false
 test_ruby_extension
 build_ruby_gem
-
-task :default => :ext
