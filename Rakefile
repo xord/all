@@ -59,6 +59,12 @@ TASKS.each do |task_|
   end
 end
 
+task :ext => :clean_bundles
+
+task :clean_bundles do
+  sh %( find . -iname 'native.bundle' | xargs rm )
+end
+
 task :run do
   raise unless name = env(:sample)
   sh %{ ruby reflex/samples/#{name}.rb }
