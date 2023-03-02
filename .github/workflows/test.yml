@@ -20,10 +20,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: lib
-        run: rake verbose lib
+        run: rake lib
 
       - name: ext
-        run: rake verbose ext
+        run: rake ext
 
       - name: test
-        run: rake verbose test
+        run: rake test

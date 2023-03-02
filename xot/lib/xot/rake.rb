@@ -56,7 +56,7 @@ module Xot
     end
 
     def default_tasks(default = nil)
-      verbose? env(:VERBOSE, false)
+      verbose? env(:VERBOSE, true)
 
       if default
         task :default => default
@@ -64,8 +64,8 @@ module Xot
         task :default
       end
 
-      task :verbose do
-        verbose? true
+      task :quiet do
+        verbose? false
       end
 
       task :debug do
