@@ -316,8 +316,10 @@ module Xot
                 sh post_submodules if post_submodules
               end
             end
-            vendor_srcs_map(srcdir).each do |src, obj|
-              sh %( #{cxx} -c #{cppflags} #{cxxflags} -o #{obj} #{src} )
+            unless env :VENDOR_NOCOMPILE, false
+              vendor_srcs_map(srcdir).each do |src, obj|
+                sh %( #{cxx} -c #{cppflags} #{cxxflags} -o #{obj} #{src} )
+              end
             end
           end
 
