@@ -368,6 +368,9 @@ module Xot
 
       desc "setup all external libraries"
       alias_task :vendor
+
+      desc "convert erb files"
+      alias_task :erb
     end
 
 
