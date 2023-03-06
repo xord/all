@@ -16,7 +16,6 @@ require 'reflex/extension'
 Xot::ExtConf.new Xot, Rucy, Rays, Reflex do
   setup do
     headers    << 'ruby.h'
-    local_libs << 'rucy'
     libs.unshift 'gdi21', 'opengl32' if win32?
     frameworks << 'Cocoa' if osx?
     $LDFLAGS   << ' -Wl,--out-implib=native.dll.a' if cygwin?

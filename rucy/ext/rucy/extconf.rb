@@ -13,8 +13,7 @@ require 'rucy/extension'
 
 Xot::ExtConf.new Xot, Rucy do
   setup do
-    headers    << 'ruby.h'
-    local_libs << 'rucy'
+    headers << 'ruby.h'
   end
 
   create_makefile 'rucy/tester'
