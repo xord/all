@@ -50,8 +50,8 @@ module Xot
     end
 
     def create_makefile(*args)
-      extensions.each do |x|
-        dir_config x.name.downcase, x.inc_dir, x.lib_dir
+      extensions.each do |ext|
+        dir_config ext.name.downcase, ext.inc_dir, ext.lib_dir
       end
 
       exit 1 unless headers.all? {|s| have_header s}
