@@ -239,7 +239,7 @@ namespace Reflex
 
 			UPDATE_POLYGON = Xot::bit(0),
 
-			DEFAULT_FLAGS  = 0
+			DEFAULT_FLAGS  = UPDATE_POLYGON
 
 		};// Flags
 
@@ -269,7 +269,7 @@ namespace Reflex
 			else
 				pframe.reset(new Bounds(frame));
 
-			update_polygon_on_next_update();
+			update_polygon_later();
 		}
 
 		virtual Bounds get_frame () const
@@ -287,7 +287,7 @@ namespace Reflex
 			return (bool) pframe;
 		}
 
-		void update_polygon_on_next_update ()
+		void update_polygon_later ()
 		{
 			if (!owner) return;
 
@@ -298,6 +298,9 @@ namespace Reflex
 		void update_polygon (Shape* shape, bool force = false)
 		{
 			assert(shape);
+
+			bool update = Xot::check_and_remove_flag(&flags, UPDATE_POLYGON);
+			if (!update && !force) return;
 
 			if (!owner || !View_is_active(*owner))
 				polygon = Polygon();
@@ -364,6 +367,10 @@ namespace Reflex
 			if (!owner)
 				invalid_state_error(__FILE__, __LINE__);
 
+			// if the view has been added to the window but on_update() has not yet
+			// been called, update_polygon() has also never been called.
+			update_polygon(shape);
+
 			Polygon polygon = get_polygon_for_fixtures();
 			if (!polygon || polygon.empty())
 				return NULL;
@@ -424,11 +431,7 @@ namespace Reflex
 		if (!shape)
 			argument_error(__FILE__, __LINE__);
 
-		bool update = Xot::check_and_remove_flag(
-			&shape->self->flags, Shape::Data::UPDATE_POLYGON);
-
-		if (update || force)
-			shape->self->update_polygon(shape, force);
+		shape->self->update_polygon(shape, force);
 	}
 
 	void
@@ -594,7 +597,7 @@ namespace Reflex
 	Shape::on_resize (FrameEvent* e)
 	{
 		if (!self->has_frame())
-			self->update_polygon_on_next_update();
+			self->update_polygon_later();
 	}
 
 	void
@@ -695,7 +698,7 @@ namespace Reflex
 	{
 		get_data(*this).polygon = polygon;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	const Polygon&
@@ -771,7 +774,7 @@ namespace Reflex
 	{
 		get_data(*this).points.emplace_back(point);
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	void
@@ -780,7 +783,7 @@ namespace Reflex
 		auto& array = get_data(*this).points;
 		array.insert(array.end(), points, points + size);
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	void
@@ -875,7 +878,7 @@ namespace Reflex
 		data.round_left_bottom  = left_bottom;
 		data.round_right_bottom = right_bottom;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	void
@@ -883,7 +886,7 @@ namespace Reflex
 	{
 		get_data(*this).round_left_top = round;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	coord
@@ -897,7 +900,7 @@ namespace Reflex
 	{
 		get_data(*this).round_right_top = round;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	coord
@@ -911,7 +914,7 @@ namespace Reflex
 	{
 		get_data(*this).round_left_bottom = round;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	coord
@@ -925,7 +928,7 @@ namespace Reflex
 	{
 		get_data(*this).round_right_bottom = round;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	coord
@@ -939,7 +942,7 @@ namespace Reflex
 	{
 		get_data(*this).nsegment = nsegment;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	uint
@@ -1054,7 +1057,7 @@ namespace Reflex
 	{
 		get_data(*this).hole_size.reset(width, height);
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	void
@@ -1074,7 +1077,7 @@ namespace Reflex
 	{
 		get_data(*this).angle_from = degree;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	float
@@ -1088,7 +1091,7 @@ namespace Reflex
 	{
 		get_data(*this).angle_to = degree;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	float
@@ -1102,7 +1105,7 @@ namespace Reflex
 	{
 		get_data(*this).nsegment = num_of_segments;
 
-		self->update_polygon_on_next_update();
+		self->update_polygon_later();
 	}
 
 	uint
