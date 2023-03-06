@@ -161,7 +161,8 @@ module Xot
 
         desc "build #{extout}"
         file extout => [:lib, makefile] do
-          sh %( cd #{ext_dir} && make )
+          opts = ::Rake.verbose ? 'V=1' : ''
+          sh %( cd #{ext_dir} && make #{opts} )
         end
 
         desc "create #{makefile}"
