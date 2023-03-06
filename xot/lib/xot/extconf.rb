@@ -28,10 +28,16 @@ module Xot
     def setup()
       yield if block_given?
 
-      extensions.each do |x|
-        name = x.name.downcase
+      extensions.each do |ext|
+        name = ext.name.downcase
         headers << "#{name}.h"
         libs << name
+      end
+
+      ldflags = $LDFLAGS.dup
+      if osx?
+        opt = '-Wl,-undefined,dynamic_lookup'
+        ldflags << " #{opt}" unless ($DLDFLAGS || '').include?(opt)
       end
 
       local_libs << (clang? ? 'c++' : 'stdc++')
@@ -39,7 +45,7 @@ module Xot
       $CPPFLAGS = make_cppflags $CPPFLAGS, defs, inc_dirs
       $CFLAGS   = make_cflags   $CFLAGS   + ' -x c++'
       $CXXFLAGS = make_cflags   $CXXFLAGS + ' -x c++' if $CXXFLAGS
-      $LDFLAGS  = make_ldflags  $LDFLAGS, lib_dirs, frameworks
+      $LDFLAGS  = make_ldflags  ldflags, lib_dirs, frameworks
       $LOCAL_LIBS << local_libs.map {|s| " -l#{s}"}.join
     end
 
