@@ -160,6 +160,14 @@ RUCY_DEF1(on_draw, event)
 RUCY_END
 
 static
+RUCY_DEF1(will_contact, shape)
+{
+	CHECK;
+	return value(CALL(will_contact(to<Reflex::Shape*>(shape))));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_contact, event)
 {
 	CHECK;
@@ -208,7 +216,8 @@ Init_reflex_shape ()
 	cShape.define_method("category_bits",   get_category_bits);
 	cShape.define_method("collision_mask=", set_collision_mask);
 	cShape.define_method("collision_mask",  get_collision_mask);
-	cShape.define_method("on_draw",          on_draw);
+	cShape.define_method("on_draw", on_draw);
+	cShape.define_method(        "will_contact?",     will_contact);
 	cShape.define_private_method("call_contact!",       on_contact);
 	cShape.define_private_method("call_contact_begin!", on_contact_begin);
 	cShape.define_private_method("call_contact_end!",   on_contact_end);

@@ -147,11 +147,13 @@ namespace Reflex
 		self->ppm = pixels_per_meter;
 
 		self->b2world.SetContactListener(this);
+		self->b2world.SetContactFilter(this);
 	}
 
 	World::~World ()
 	{
 		self->b2world.SetContactListener(NULL);
+		self->b2world.SetContactFilter(NULL);
 	}
 
 	void
@@ -237,6 +239,26 @@ namespace Reflex
 		self->debug_draw->begin(painter);
 		self->b2world.DrawDebugData();
 		self->debug_draw->end();
+	}
+
+	bool
+	World::ShouldCollide (b2Fixture* f1, b2Fixture* f2)
+	{
+		Shape* s1 = (Shape*) f1->GetUserData();
+		Shape* s2 = (Shape*) f2->GetUserData();
+		if (!s1 || !s2)
+			return false;
+
+		View* v1 = s1->owner();
+		View* v2 = s2->owner();
+		if (!v1 || !v2 || !View_is_active(*v1) || !View_is_active(*v2))
+			return false;
+
+		return
+			s1->will_contact(s2) &&
+			s2->will_contact(s1) &&
+			v1->will_contact(v2) &&
+			v2->will_contact(v1);
 	}
 
 	void

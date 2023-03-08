@@ -58,6 +58,15 @@ namespace Reflex
 					Super::on_draw(e);
 			}
 
+			virtual bool will_contact (Shape* s)
+			{
+				RUCY_SYM_Q(will_contact);
+				if (this->is_overridable())
+					return this->value.call(will_contact, Rucy::value(s));
+				else
+					return Super::will_contact(s);
+			}
+
 			virtual void on_contact (ContactEvent* e)
 			{
 				RUCY_SYM_B(on_contact);

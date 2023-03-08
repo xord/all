@@ -600,6 +600,12 @@ namespace Reflex
 			self->update_polygon_later();
 	}
 
+	bool
+	Shape::will_contact (Shape* s)
+	{
+		return true;
+	}
+
 	void
 	Shape::on_contact (ContactEvent* e)
 	{

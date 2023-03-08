@@ -380,11 +380,13 @@ namespace Reflex
 
 			virtual void on_timer (TimerEvent* e);
 
-			virtual void on_contact       (ContactEvent* e);
+			virtual bool will_contact (View* v);
 
-			virtual void on_contact_begin (ContactEvent* e);
+			virtual void   on_contact       (ContactEvent* e);
 
-			virtual void on_contact_end   (ContactEvent* e);
+			virtual void   on_contact_begin (ContactEvent* e);
+
+			virtual void   on_contact_end   (ContactEvent* e);
 
 			virtual operator bool () const;
 

@@ -1115,6 +1115,14 @@ RUCY_DEF1(on_timer, event)
 RUCY_END
 
 static
+RUCY_DEF1(will_contact, view)
+{
+	CHECK;
+	return value(CALL(will_contact(to<Reflex::View*>(view))));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_contact, event)
 {
 	CHECK;
@@ -1251,26 +1259,27 @@ Init_reflex_view ()
 
 	cView.define_method("on_attach", on_attach);
 	cView.define_method("on_detach", on_detach);
-	cView.define_method("on_show", on_show);
-	cView.define_method("on_hide", on_hide);
+	cView.define_method("on_show",   on_show);
+	cView.define_method("on_hide",   on_hide);
 	cView.define_method("on_update", on_update);
 	cView.define_method("on_draw",   on_draw);
 	cView.define_method("on_move",   on_move);
 	cView.define_method("on_resize", on_resize);
 	cView.define_method("on_rotate", on_rotate);
 	cView.define_method("on_scroll", on_scroll);
-	cView.define_method("on_focus", on_focus);
+	cView.define_method("on_focus",  on_focus);
 	cView.define_method("on_key",      on_key);
 	cView.define_method("on_key_down", on_key_down);
 	cView.define_method("on_key_up",   on_key_up);
-	cView.define_method("on_pointer",      on_pointer);
+	cView.define_method("on_pointer",        on_pointer);
 	cView.define_method("on_pointer_down",   on_pointer_down);
 	cView.define_method("on_pointer_up",     on_pointer_up);
 	cView.define_method("on_pointer_move",   on_pointer_move);
 	cView.define_method("on_pointer_cancel", on_pointer_cancel);
-	cView.define_method("on_wheel", on_wheel);
+	cView.define_method("on_wheel",   on_wheel);
 	cView.define_method("on_capture", on_capture);
-	cView.define_method("on_timer", on_timer);
+	cView.define_method("on_timer",   on_timer);
+	cView.define_method(        "will_contact?",     will_contact);
 	cView.define_private_method("call_contact!",       on_contact);
 	cView.define_private_method("call_contact_begin!", on_contact_begin);
 	cView.define_private_method("call_contact_end!",   on_contact_end);

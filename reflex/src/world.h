@@ -24,7 +24,7 @@ namespace Reflex
 	class Body;
 
 
-	class World : public Xot::NonCopyable, private b2ContactListener
+	class World : public Xot::NonCopyable, private b2ContactFilter, b2ContactListener
 	{
 
 		public:
@@ -64,9 +64,11 @@ namespace Reflex
 
 		protected:
 
-			virtual void BeginContact (b2Contact* contact);
+			virtual bool ShouldCollide (b2Fixture* f1, b2Fixture* f2) override;
 
-			virtual void   EndContact (b2Contact* contact);
+			virtual void BeginContact (b2Contact* contact) override;
+
+			virtual void   EndContact (b2Contact* contact) override;
 
 	};// World
 

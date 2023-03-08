@@ -239,6 +239,15 @@ namespace Reflex
 					Super::on_timer(e);
 			}
 
+			virtual bool will_contact (View* v)
+			{
+				RUCY_SYM_Q(will_contact);
+				if (this->is_overridable())
+					return this->value.call(will_contact, Rucy::value(v));
+				else
+					return Super::will_contact(v);
+			}
+
 			virtual void on_contact (ContactEvent* e)
 			{
 				RUCY_SYM_B(on_contact);

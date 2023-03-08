@@ -73,11 +73,13 @@ namespace Reflex
 
 			virtual void on_resize (FrameEvent* e);
 
-			virtual void on_contact       (ContactEvent* e);
+			virtual bool will_contact (Shape* s);
 
-			virtual void on_contact_begin (ContactEvent* e);
+			virtual void   on_contact       (ContactEvent* e);
 
-			virtual void on_contact_end   (ContactEvent* e);
+			virtual void   on_contact_begin (ContactEvent* e);
+
+			virtual void   on_contact_end   (ContactEvent* e);
 
 			struct Data;
 

@@ -2613,6 +2613,12 @@ namespace Reflex
 	{
 	}
 
+	bool
+	View::will_contact (View* v)
+	{
+		return true;
+	}
+
 	void
 	View::on_contact (ContactEvent* e)
 	{

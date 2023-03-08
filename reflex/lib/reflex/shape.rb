@@ -18,6 +18,7 @@ module Reflex
     include HasFrame
     include HasTags
 
+    alias view    owner
     alias sensor? sensor
 
     universal_accessor :name, :selector,
