@@ -9,6 +9,13 @@
 #include <rays/rays.h>
 
 
+RUCY_DECLARE_CONVERT_TO(Rays::CapType)
+
+RUCY_DECLARE_CONVERT_TO(Rays::JoinType)
+
+RUCY_DECLARE_CONVERT_TO(Rays::BlendMode)
+
+
 namespace Rays
 {
 
@@ -18,13 +25,6 @@ namespace Rays
 
 
 }// Rays
-
-
-RUCY_DECLARE_CONVERT_TO(Rays::CapType)
-
-RUCY_DECLARE_CONVERT_TO(Rays::JoinType)
-
-RUCY_DECLARE_CONVERT_TO(Rays::BlendMode)
 
 
 #endif//EOH

@@ -9,6 +9,9 @@
 #include <reflex/pointer.h>
 
 
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::Pointer)
+
+
 namespace Reflex
 {
 
@@ -18,9 +21,6 @@ namespace Reflex
 
 
 }// Reflex
-
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::Pointer)
 
 
 namespace Rucy

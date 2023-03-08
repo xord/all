@@ -9,6 +9,9 @@
 #include <rays/shader.h>
 
 
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Shader)
+
+
 namespace Rays
 {
 
@@ -18,9 +21,6 @@ namespace Rays
 
 
 }// Rays
-
-
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Shader)
 
 
 namespace Rucy

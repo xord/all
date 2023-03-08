@@ -10,6 +10,9 @@
 #include <reflex/ruby/event.h>
 
 
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Window)
+
+
 namespace Reflex
 {
 
@@ -174,9 +177,6 @@ namespace Reflex
 
 
 }// Reflex
-
-
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Window)
 
 
 namespace Rucy

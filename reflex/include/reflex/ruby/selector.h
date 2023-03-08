@@ -9,6 +9,9 @@
 #include <reflex/selector.h>
 
 
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Reflex::Selector)
+
+
 namespace Reflex
 {
 
@@ -18,9 +21,6 @@ namespace Reflex
 
 
 }// Reflex
-
-
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Reflex::Selector)
 
 
 namespace Rucy

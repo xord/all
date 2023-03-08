@@ -9,6 +9,9 @@
 #include <reflex/timer.h>
 
 
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Timer)
+
+
 namespace Reflex
 {
 
@@ -40,9 +43,6 @@ namespace Reflex
 
 
 }// Reflex
-
-
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Timer)
 
 
 namespace Rucy

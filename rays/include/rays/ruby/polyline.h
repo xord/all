@@ -9,6 +9,9 @@
 #include <rays/polyline.h>
 
 
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Polyline)
+
+
 namespace Rays
 {
 
@@ -18,9 +21,6 @@ namespace Rays
 
 
 }// Rays
-
-
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Polyline)
 
 
 namespace Rucy

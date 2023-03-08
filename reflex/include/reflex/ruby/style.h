@@ -9,6 +9,11 @@
 #include <reflex/style.h>
 
 
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Reflex::StyleLength)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::Style)
+
+
 namespace Reflex
 {
 
@@ -21,11 +26,6 @@ namespace Reflex
 
 
 }// Reflex
-
-
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Reflex::StyleLength)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::Style)
 
 
 namespace Rucy

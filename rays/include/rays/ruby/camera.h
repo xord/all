@@ -9,6 +9,9 @@
 #include <rays/camera.h>
 
 
+RUCY_DECLARE_VALUE_FROM_TO(Rays::Camera)
+
+
 namespace Rays
 {
 
@@ -18,9 +21,6 @@ namespace Rays
 
 
 }// Rays
-
-
-RUCY_DECLARE_VALUE_FROM_TO(Rays::Camera)
 
 
 namespace Rucy

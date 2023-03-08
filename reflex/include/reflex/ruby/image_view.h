@@ -8,6 +8,9 @@
 #include <reflex/ruby/view.h>
 
 
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::ImageView)
+
+
 namespace Reflex
 {
 
@@ -17,9 +20,6 @@ namespace Reflex
 
 
 }// Reflex
-
-
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::ImageView)
 
 
 namespace Rucy

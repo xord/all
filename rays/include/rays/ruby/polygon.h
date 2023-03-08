@@ -9,6 +9,11 @@
 #include <rays/polygon.h>
 
 
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Polygon)
+
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Polygon::Line)
+
+
 namespace Rays
 {
 
@@ -21,11 +26,6 @@ namespace Rays
 
 
 }// Rays
-
-
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Polygon)
-
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Polygon::Line)
 
 
 namespace Rucy

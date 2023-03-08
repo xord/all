@@ -9,6 +9,33 @@
 #include <reflex/event.h>
 
 
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::Event)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::UpdateEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::DrawEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::FrameEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::ScrollEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::FocusEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::KeyEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::PointerEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::WheelEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::CaptureEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::TimerEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::ContactEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(Reflex::MotionEvent)
+
+
 namespace Reflex
 {
 
@@ -54,33 +81,6 @@ namespace Reflex
 
 
 }// Reflex
-
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::Event)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::UpdateEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::DrawEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::FrameEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::ScrollEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::FocusEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::KeyEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::PointerEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::WheelEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::CaptureEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::TimerEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::ContactEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::MotionEvent)
 
 
 namespace Rucy

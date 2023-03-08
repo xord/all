@@ -10,6 +10,9 @@
 #include <rays/ruby/point.h>
 
 
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Bounds)
+
+
 namespace Rays
 {
 
@@ -19,9 +22,6 @@ namespace Rays
 
 
 }// Rays
-
-
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Bounds)
 
 
 namespace Rucy

@@ -10,6 +10,17 @@
 #include <reflex/ruby/event.h>
 
 
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Shape)
+
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::PolygonShape)
+
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::LineShape)
+
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::RectShape)
+
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::EllipseShape)
+
+
 namespace Reflex
 {
 
@@ -78,17 +89,6 @@ namespace Reflex
 
 
 }// Reflex
-
-
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Shape)
-
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::PolygonShape)
-
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::LineShape)
-
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::RectShape)
-
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::EllipseShape)
 
 
 namespace Rucy
