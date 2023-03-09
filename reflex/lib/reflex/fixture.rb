@@ -12,8 +12,7 @@ module Reflex
 
     include Xot::Setter
 
-    universal_accessor :density, :friction, :restitution,
-      :sensor, :category, :collision
+    universal_accessor :density, :friction, :restitution, :sensor
 
   end# Fixture
 

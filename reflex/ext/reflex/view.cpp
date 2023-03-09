@@ -771,40 +771,6 @@ RUCY_DEF0(is_sensor)
 RUCY_END
 
 static
-RUCY_DEF1(set_category_bits, bits)
-{
-	CHECK;
-	THIS->set_category_bits(to<uint>(bits));
-	return bits;
-}
-RUCY_END
-
-static
-RUCY_DEF0(get_category_bits)
-{
-	CHECK;
-	return value(THIS->category_bits());
-}
-RUCY_END
-
-static
-RUCY_DEF1(set_collision_mask, mask)
-{
-	CHECK;
-	THIS->set_collision_mask(to<uint>(mask));
-	return mask;
-}
-RUCY_END
-
-static
-RUCY_DEF0(get_collision_mask)
-{
-	CHECK;
-	return value(THIS->collision_mask());
-}
-RUCY_END
-
-static
 RUCY_DEFN(set_linear_velocity)
 {
 	CHECK;
@@ -1236,10 +1202,6 @@ Init_reflex_view ()
 	cView.define_method("restitution",  get_restitution);
 	cView.define_method("sensor=",      set_sensor);
 	cView.define_method("sensor?",       is_sensor);
-	cView.define_private_method("set_category_bits",  set_category_bits);
-	cView.define_private_method("get_category_bits",  get_category_bits);
-	cView.define_private_method("set_collision_mask", set_collision_mask);
-	cView.define_private_method("get_collision_mask", get_collision_mask);
 	cView.define_method("linear_velocity=",  set_linear_velocity);
 	cView.define_method("linear_velocity",   get_linear_velocity);
 	cView.define_method("angular_velocity=", set_angular_velocity);

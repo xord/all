@@ -102,58 +102,6 @@ namespace Reflex
 		return b2fixture->IsSensor();
 	}
 
-	void
-	Fixture::set_category_bits (uint bits)
-	{
-		if (bits > USHRT_MAX)
-		{
-			argument_error(
-				__FILE__, __LINE__, "category_bits must be less then USHRT_MAX.");
-		}
-
-		if (bits == category_bits())
-			return;
-
-		for (Fixture* p = this; p; p = p->pnext.get())
-		{
-			b2Filter f = p->b2fixture->GetFilterData();
-			f.categoryBits = bits;
-			p->b2fixture->SetFilterData(f);
-		}
-	}
-
-	uint
-	Fixture::category_bits () const
-	{
-		return b2fixture->GetFilterData().categoryBits;
-	}
-
-	void
-	Fixture::set_collision_mask (uint mask)
-	{
-		if (mask > USHRT_MAX)
-		{
-			argument_error(
-				__FILE__, __LINE__, "collision_mask must be less then USHRT_MAX.");
-		}
-
-		if (mask == collision_mask())
-			return;
-
-		for (Fixture* p = this; p; p = p->pnext.get())
-		{
-			b2Filter f = b2fixture->GetFilterData();
-			f.maskBits = mask;
-			b2fixture->SetFilterData(f);
-		}
-	}
-
-	uint
-	Fixture::collision_mask () const
-	{
-		return b2fixture->GetFilterData().maskBits;
-	}
-
 	b2Fixture*
 	Fixture::b2ptr ()
 	{
@@ -194,12 +142,10 @@ namespace Reflex
 		if (!to)
 			return;
 
-		to->set_density(       from.density());
-		to->set_friction(      from.friction());
-		to->set_restitution(   from.restitution());
-		to->set_sensor(        from.is_sensor());
-		to->set_category_bits( from.category_bits());
-		to->set_collision_mask(from.collision_mask());
+		to->set_density(    from.density());
+		to->set_friction(   from.friction());
+		to->set_restitution(from.restitution());
+		to->set_sensor(     from.is_sensor());
 	}
 
 	static Body*

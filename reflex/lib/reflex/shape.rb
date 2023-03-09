@@ -22,8 +22,7 @@ module Reflex
     alias sensor? sensor
 
     universal_accessor :name, :selector,
-      :density, :friction, :restitution, :sensor,
-      :category_bits, :collision_mask
+      :density, :friction, :restitution, :sensor
 
     def initialize(options = nil, &block)
       super()

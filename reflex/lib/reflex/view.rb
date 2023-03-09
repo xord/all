@@ -100,26 +100,6 @@ module Reflex
       to_enum :each_shape
     end
 
-    def categories()
-      @categories ||= Xot::BitFlag.new(auto: true, all: 1)
-    end
-
-    def category=(*symbols)
-      set_category_bits parent_categories.symbols2bits(*symbols)
-    end
-
-    def category()
-      parent_categories.bits2symbols get_category_bits
-    end
-
-    def collision=(*categories)
-      set_collision_mask parent_categories.symbols2bits(*categories)
-    end
-
-    def collision()
-      parent_categories.bits2symbols get_collision_mask
-    end
-
     def capturing?(*args)
       cap = capture
       args.all? {|type| cap.include? type}
@@ -135,7 +115,7 @@ module Reflex
     end
 
     universal_accessor :shape, :name, :selector, :frame, :angle, :zoom, :capture,
-      :density, :friction, :restitution, :category, :collision,
+      :density, :friction, :restitution,
       :linear_velocity, :angular_velocity, :gravity_scale,
       :gravity, :time_scale,
       clip:          {reader: :clip?},
@@ -160,13 +140,6 @@ module Reflex
     def self.has_model()
       include ModelView
     end
-
-    protected
-
-      def parent_categories()
-        raise InvalidStateError unless parent
-        parent.categories
-      end
 
     private
 

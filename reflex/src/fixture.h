@@ -45,14 +45,6 @@ namespace Reflex
 
 			bool  is_sensor () const;
 
-			void set_category_bits (uint bits);
-
-			uint     category_bits () const;
-
-			void set_collision_mask (uint mask);
-
-			uint     collision_mask () const;
-
 			      b2Fixture* b2ptr ();
 
 			const b2Fixture* b2ptr () const;

@@ -61,14 +61,6 @@ namespace Reflex
 
 			virtual bool  is_sensor () const;
 
-			virtual void set_category_bits (uint bits);
-
-			virtual uint     category_bits () const;
-
-			virtual void set_collision_mask (uint mask);
-
-			virtual uint     collision_mask () const;
-
 			virtual void on_draw   (DrawEvent* e);
 
 			virtual void on_resize (FrameEvent* e);

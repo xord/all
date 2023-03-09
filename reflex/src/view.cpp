@@ -2323,40 +2323,6 @@ namespace Reflex
 	}
 
 	void
-	View::set_category_bits (uint bits)
-	{
-		Shape* s = shape();
-		if (!s)
-			invalid_state_error(__FILE__, __LINE__, "view has no shape.");
-
-		s->set_category_bits(bits);
-	}
-
-	uint
-	View::category_bits () const
-	{
-		const Shape* s = self->pshape.get();
-		return s ? s->category_bits() : 0x1;
-	}
-
-	void
-	View::set_collision_mask (uint mask)
-	{
-		Shape* s = shape();
-		if (!s)
-			invalid_state_error(__FILE__, __LINE__, "view has no shape.");
-
-		s->set_collision_mask(mask);
-	}
-
-	uint
-	View::collision_mask () const
-	{
-		const Shape* s = self->pshape.get();
-		return s ? s->collision_mask() : 0xffff;
-	}
-
-	void
 	View::set_linear_velocity (coord x, coord y)
 	{
 		self->body().set_linear_velocity(x, y);

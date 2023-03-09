@@ -46,26 +46,4 @@ class TestShape < Test::Unit::TestCase
     assert_equal false, s.sensor?
   end
 
-  def test_category()
-    s = shape
-    assert_equal 0b1,    s.category_bits
-    s.category_bits  =  0b1010
-    assert_equal 0b1010, s.category_bits
-    s.category_bits |=  0b100
-    assert_equal 0b1110, s.category_bits
-    s.category_bits &= ~0b10
-    assert_equal 0b1100, s.category_bits
-  end
-
-  def test_collision()
-    s = shape
-    assert_equal 0xffff, s.collision_mask
-    s.collision_mask  =  0b1010
-    assert_equal 0b1010, s.collision_mask
-    s.collision_mask |=  0b100
-    assert_equal 0b1110, s.collision_mask
-    s.collision_mask &= ~0b10
-    assert_equal 0b1100, s.collision_mask
-  end
-
 end# TestShape

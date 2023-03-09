@@ -285,16 +285,4 @@ class TestView < Test::Unit::TestCase
     assert_equal false, v.sensor?
   end
 
-  def test_category()
-    p, v = view, view
-    p.add v
-    assert_equal [:all], v.category
-  end
-
-  def test_collision()
-    p, v = view, view
-    p.add v
-    #assert_equal [:all], v.collision
-  end
-
 end# TestView

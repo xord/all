@@ -556,36 +556,6 @@ namespace Reflex
 	}
 
 	void
-	Shape::set_category_bits (uint bits)
-	{
-		if (bits == category_bits()) return;
-
-		self->fixtures(this).set_category_bits(bits);
-	}
-
-	uint
-	Shape::category_bits () const
-	{
-		const Fixture* f = self->pfixtures.get();
-		return f ? f->category_bits() : 0x1;
-	}
-
-	void
-	Shape::set_collision_mask (uint mask)
-	{
-		if (mask == collision_mask()) return;
-
-		self->fixtures(this).set_collision_mask(mask);
-	}
-
-	uint
-	Shape::collision_mask () const
-	{
-		const Fixture* f = self->pfixtures.get();
-		return f ? f->collision_mask() : 0xffff;
-	}
-
-	void
 	Shape::on_draw (DrawEvent* e)
 	{
 		assert(e && e->painter());

@@ -118,40 +118,6 @@ RUCY_DEF0(is_sensor)
 RUCY_END
 
 static
-RUCY_DEF1(set_category_bits, bits)
-{
-	CHECK;
-	THIS->set_category_bits(to<uint>(bits));
-	return bits;
-}
-RUCY_END
-
-static
-RUCY_DEF0(get_category_bits)
-{
-	CHECK;
-	return value(THIS->category_bits());
-}
-RUCY_END
-
-static
-RUCY_DEF1(set_collision_mask, mask)
-{
-	CHECK;
-	THIS->set_collision_mask(to<uint>(mask));
-	return mask;
-}
-RUCY_END
-
-static
-RUCY_DEF0(get_collision_mask)
-{
-	CHECK;
-	return value(THIS->collision_mask());
-}
-RUCY_END
-
-static
 RUCY_DEF1(on_draw, event)
 {
 	CHECK;
@@ -212,10 +178,6 @@ Init_reflex_shape ()
 	cShape.define_method("restitution",  get_restitution);
 	cShape.define_method("sensor=",      set_sensor);
 	cShape.define_method("sensor",        is_sensor);
-	cShape.define_method("category_bits=",  set_category_bits);
-	cShape.define_method("category_bits",   get_category_bits);
-	cShape.define_method("collision_mask=", set_collision_mask);
-	cShape.define_method("collision_mask",  get_collision_mask);
 	cShape.define_method("on_draw", on_draw);
 	cShape.define_method(        "will_contact?",     will_contact);
 	cShape.define_private_method("call_contact!",       on_contact);
