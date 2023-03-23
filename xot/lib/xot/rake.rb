@@ -263,7 +263,8 @@ module Xot
     def use_external_library(
       repos, branch: nil, tag: nil, commit: nil,
       incdirs: nil, srcdirs: nil, excludes: [],
-      submodules: [], post_submodules: nil)
+      submodules: [], post_submodules: nil,
+      &after_clone_block)
 
       name     = repos[%r{/([^/]+?)(:?\.git)?$}, 1]
       dir      = "#{vendor_dir}/#{name}"
@@ -302,6 +303,7 @@ module Xot
                 sh post_submodules if post_submodules
               end
             end
+            Dir.chdir(dir) {after_clone_block.call} if after_clone_block
             unless env :VENDOR_NOCOMPILE, false
               vendor_srcs_map(*srcdirs).each do |src, obj|
                 sh %( #{cxx} -c #{cppflags} #{cxxflags false} -o #{obj} #{src} )
