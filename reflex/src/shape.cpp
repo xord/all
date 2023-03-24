@@ -1,12 +1,12 @@
 #include "shape.h"
 
 
-#include <Box2D/Dynamics/b2Body.h>
-#include <Box2D/Dynamics/b2Fixture.h>
-#include <Box2D/Collision/Shapes/b2CircleShape.h>
-#include <Box2D/Collision/Shapes/b2EdgeShape.h>
-#include <Box2D/Collision/Shapes/b2ChainShape.h>
-#include <Box2D/Collision/Shapes/b2PolygonShape.h>
+#include <box2d/b2_body.h>
+#include <box2d/b2_fixture.h>
+#include <box2d/b2_circle_shape.h>
+#include <box2d/b2_edge_shape.h>
+#include <box2d/b2_chain_shape.h>
+#include <box2d/b2_polygon_shape.h>
 #include <rays/polygon.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
@@ -209,9 +209,15 @@ namespace Reflex
 
 		b2ChainShape b2shape;
 		if (polyline.loop())
-			b2shape.CreateLoop( &(*buffer)[0], (int32) buffer->size());
+			b2shape.CreateLoop(&(*buffer)[0], (int32) buffer->size());
 		else
-			b2shape.CreateChain(&(*buffer)[0], (int32) buffer->size());
+		{
+			b2shape.CreateChain(
+				&(*buffer)[0],
+				(int32) buffer->size(),
+				(*buffer)[0],
+				(*buffer)[buffer->size() - 1]);
+		}
 
 		builder->add(&b2shape);
 	}

@@ -261,19 +261,18 @@ module Xot
     end
 
     def use_external_library(
-      repos, branch: nil, tag: nil,
-      incdir: nil, srcdir: nil, excludes: [],
+      repos, branch: nil, tag: nil, commit: nil,
+      incdirs: nil, srcdirs: nil, excludes: [],
       submodules: [], post_submodules: nil)
 
+      name     = repos[%r{/([^/]+?)(:?\.git)?$}, 1]
+      dir      = "#{vendor_dir}/#{name}"
+      incdirs  = [incdirs].flatten.map {|s| s ? "#{dir}/#{s}" : dir}
+      srcdirs  = [srcdirs].flatten.map {|s| s ? "#{dir}/#{s}" : dir}
       excludes = [excludes].flatten
 
-      name   = repos[%r{/([^/]+?)(:?\.git)?$}, 1]
-      dir    = "#{vendor_dir}/#{name}"
-      incdir = dir + (incdir ? "/#{incdir}" : '')
-      srcdir = dir + (srcdir ? "/#{srcdir}" : '')
-
-      append_env 'INCDIRS',  incdir
-      append_env 'SRCDIRS',  srcdir
+      append_env 'INCDIRS',  incdirs
+      append_env 'SRCDIRS',  srcdirs
       append_env 'EXCLUDES', excludes unless excludes.empty?
 
       alias_task :vendor  => "vendor:#{name}"
@@ -290,6 +289,10 @@ module Xot
             opts += " --branch=#{branch || tag}" if branch || tag
             opts += " --recursive"               if submodules.empty?
             sh %( git clone #{opts} #{repos} #{dir} )
+            Dir.chdir dir do
+              sh %( git fetch --depth 1 origin #{commit} )
+              sh %( git checkout #{commit} )
+            end if commit
             unless submodules.empty?
               Dir.chdir dir do
                 submodules.each do |path|
@@ -300,7 +303,7 @@ module Xot
               end
             end
             unless env :VENDOR_NOCOMPILE, false
-              vendor_srcs_map(srcdir).each do |src, obj|
+              vendor_srcs_map(*srcdirs).each do |src, obj|
                 sh %( #{cxx} -c #{cppflags} #{cxxflags} -o #{obj} #{src} )
               end
             end
@@ -322,7 +325,7 @@ module Xot
       use_external_library 'https://github.com/boostorg/boost',
         branch:          branch,
         tag:             tag,
-        srcdir:          'NOSRC',
+        srcdirs:         'NOSRC',
         submodules:      default_modules | modules.map {|mod| "libs/#{mod}"},
         post_submodules: './bootstrap.sh && ./b2 headers'
     end

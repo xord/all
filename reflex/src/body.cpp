@@ -2,8 +2,8 @@
 
 
 #include <assert.h>
-#include <Box2D/Dynamics/b2Body.h>
-#include <Box2D/Dynamics/b2World.h>
+#include <box2d/b2_body.h>
+#include <box2d/b2_world.h>
 #include <xot/util.h>
 #include "reflex/exception.h"
 #include "world.h"

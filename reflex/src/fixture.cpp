@@ -2,8 +2,8 @@
 
 
 #include <assert.h>
-#include <Box2D/Dynamics/b2Fixture.h>
-#include <Box2D/Collision/Shapes/b2CircleShape.h>
+#include <box2d/b2_fixture.h>
+#include <box2d/b2_circle_shape.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "view.h"
@@ -27,12 +27,12 @@ namespace Reflex
 		if (!b2fixture)
 			system_error(__FILE__, __LINE__);
 
-		b2fixture->SetUserData(userdata);
+		b2fixture->GetUserData().pointer = (uintptr_t) userdata;
 	}
 
 	Fixture::~Fixture ()
 	{
-		b2fixture->SetUserData(NULL);
+		b2fixture->GetUserData().pointer = (uintptr_t) NULL;
 		b2fixture->GetBody()->DestroyFixture(b2fixture);
 	}
 

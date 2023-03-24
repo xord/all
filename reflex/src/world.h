@@ -4,8 +4,8 @@
 #define __REFLEX_SRC_WORLD_H__
 
 
-#include <Box2D/Common/b2Math.h>
-#include <Box2D/Dynamics/b2WorldCallbacks.h>
+#include <box2d/b2_math.h>
+#include <box2d/b2_world_callbacks.h>
 #include <xot/noncopyable.h>
 #include <xot/pimpl.h>
 #include <rays/point.h>
@@ -74,7 +74,7 @@ namespace Reflex
 
 
 	template <typename T>
-	inline float32
+	inline float
 	to_b2coord (T t, float scale)
 	{
 		return t / scale;
@@ -99,7 +99,7 @@ namespace Reflex
 	}
 
 	inline coord
-	to_coord (float32 t, float scale)
+	to_coord (float t, float scale)
 	{
 		return t * scale;
 	}

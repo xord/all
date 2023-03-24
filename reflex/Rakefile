@@ -17,10 +17,10 @@ EXTENSIONS  = [Xot, Rucy, Rays, Reflex]
 GEMNAME     = 'reflexion'
 TESTS_ALONE = ['test/test_reflex.rb']
 
-use_external_library 'https://github.com/erincatto/Box2D',
-  tag:    'v2.3.1',
-  incdir: 'Box2D',
-  srcdir: 'Box2D/Box2D'
+use_external_library 'https://github.com/erincatto/box2d',
+  tag:    'v2.4.1',
+  incdirs: %w[include src],
+  srcdirs: 'src'
 
 default_tasks :ext
 build_native_library

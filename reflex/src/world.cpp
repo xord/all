@@ -3,9 +3,9 @@
 
 #include <assert.h>
 #include <memory>
-#include <Box2D/Common/b2Draw.h>
-#include <Box2D/Dynamics/b2World.h>
-#include <Box2D/Dynamics/Contacts/b2Contact.h>
+#include <box2d/b2_draw.h>
+#include <box2d/b2_world.h>
+#include <box2d/b2_contact.h>
 #include "reflex/event.h"
 #include "reflex/exception.h"
 #include "shape.h"
@@ -80,7 +80,7 @@ namespace Reflex
 			}
 
 			void DrawCircle (
-				const b2Vec2& center, float32 radius, const b2Color& color)
+				const b2Vec2& center, float radius, const b2Color& color)
 			{
 				assert(painter);
 
@@ -90,7 +90,7 @@ namespace Reflex
 			}
 
 			void DrawSolidCircle (
-				const b2Vec2& center, float32 radius, const b2Vec2& axis, const b2Color& color)
+				const b2Vec2& center, float radius, const b2Vec2& axis, const b2Color& color)
 			{
 				assert(painter);
 
@@ -107,6 +107,15 @@ namespace Reflex
 				painter->no_fill();
 				painter->set_stroke(color.r, color.g, color.b, color.a * 0.5);
 				painter->line(to_point(p1, ppm), to_point(p2, ppm));
+			}
+
+			void DrawPoint (const b2Vec2& center, float size, const b2Color& color)
+			{
+				assert(painter);
+
+				painter->set_fill(color.r, color.g, color.b, color.a * 0.5);
+				painter->no_stroke();
+				painter->ellipse(to_point(center, ppm), to_coord(size / 2, ppm));
 			}
 
 			void DrawTransform (const b2Transform& transform)
@@ -237,15 +246,15 @@ namespace Reflex
 		if (!self->debug_draw) return;
 
 		self->debug_draw->begin(painter);
-		self->b2world.DrawDebugData();
+		self->b2world.DebugDraw();
 		self->debug_draw->end();
 	}
 
 	bool
 	World::ShouldCollide (b2Fixture* f1, b2Fixture* f2)
 	{
-		Shape* s1 = (Shape*) f1->GetUserData();
-		Shape* s2 = (Shape*) f2->GetUserData();
+		Shape* s1 = (Shape*) f1->GetUserData().pointer;
+		Shape* s2 = (Shape*) f2->GetUserData().pointer;
 		if (!s1 || !s2)
 			return false;
 
@@ -264,10 +273,10 @@ namespace Reflex
 	void
 	World::BeginContact (b2Contact* contact)
 	{
-		Shape* s1 = (Shape*) contact->GetFixtureA()->GetUserData();
+		Shape* s1 = (Shape*) contact->GetFixtureA()->GetUserData().pointer;
 		if (!s1) return;
 
-		Shape* s2 = (Shape*) contact->GetFixtureB()->GetUserData();
+		Shape* s2 = (Shape*) contact->GetFixtureB()->GetUserData().pointer;
 		if (!s2) return;
 
 		if (!View_is_active(*s1->owner()) || !View_is_active(*s2->owner()))
@@ -281,10 +290,10 @@ namespace Reflex
 	void
 	World::EndContact (b2Contact* contact)
 	{
-		Shape* s1 = (Shape*) contact->GetFixtureA()->GetUserData();
+		Shape* s1 = (Shape*) contact->GetFixtureA()->GetUserData().pointer;
 		if (!s1) return;
 
-		Shape* s2 = (Shape*) contact->GetFixtureB()->GetUserData();
+		Shape* s2 = (Shape*) contact->GetFixtureB()->GetUserData().pointer;
 		if (!s2) return;
 
 		if (!View_is_active(*s1->owner()) || !View_is_active(*s2->owner()))

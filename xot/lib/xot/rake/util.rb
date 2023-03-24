@@ -202,7 +202,7 @@ module Xot
     end
 
     def append_env(name, *args)
-      ENV[name] = (ENV[name] || '') + " #{args.join ' '}"
+      ENV[name] = (ENV[name] || '') + " #{args.flatten.join ' '}"
     end
 
     def make_cppflags(flags = '', defs = [], incdirs = [])
