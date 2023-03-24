@@ -55,24 +55,6 @@ module Xot
       env :TESTS_EXCLUDE, []
     end
 
-    def default_tasks(default = nil)
-      verbose? env(:VERBOSE, true)
-
-      if default
-        task :default => default
-      else
-        task :default
-      end
-
-      task :quiet do
-        verbose? false
-      end
-
-      task :debug do
-        debug? true
-      end
-    end
-
     def build_native_library()
       outname = "lib#{target_name}.a"
       out     = File.join lib_dir, outname
