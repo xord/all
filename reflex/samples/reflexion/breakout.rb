@@ -8,7 +8,7 @@
 require 'reflexion/include'
 
 
-$hit, $bang = [880, 440].map {|n| Sound.new SineWave.new(freq: n), 0.1}
+$hit, $bang = [880, 440].map {|n| Sound.new Oscillator.new(freq: n), 0.1}
 
 def add_shape (klass: RectShape, frame: [0, 0, 100, 100], color: :white, type: :static)
   window.add View.new {
