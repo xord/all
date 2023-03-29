@@ -160,7 +160,7 @@ module Xot
     end
 
     def compile_erb_str(str)
-      ERB.new(str, nil, '%').result binding
+      ERB.new(str, trim_mode: '%').result binding
     end
 
     def params(max, sep = '', &block)
