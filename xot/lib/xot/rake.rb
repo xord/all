@@ -304,7 +304,7 @@ module Xot
             end
             unless env :VENDOR_NOCOMPILE, false
               vendor_srcs_map(*srcdirs).each do |src, obj|
-                sh %( #{cxx} -c #{cppflags} #{cxxflags} -o #{obj} #{src} )
+                sh %( #{cxx} -c #{cppflags} #{cxxflags false} -o #{obj} #{src} )
               end
             end
           end
