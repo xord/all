@@ -207,8 +207,9 @@ module Xot
 
     def make_cppflags(flags = '', defs = [], incdirs = [])
       s  = flags.dup
-      s += make_cppflags_defs(defs)      .map {|s| " -D#{s}"}.join
-      s += make_cppflags_incdirs(incdirs).map {|s| " -I#{s}"}.join
+      s += make_cppflags_defs(defs)          .map {|s| " -D#{s}"}.join
+      s += make_cppflags_incdirs(incdirs)    .map {|s| " -I#{s}"}.join
+      s += make_cppflags_sys_incdirs(incdirs).map {|s| " -isystem#{s}"}.join
       s
     end
 
@@ -223,7 +224,11 @@ module Xot
     end
 
     def make_cppflags_incdirs(dirs = [])
-      dirs.dup + ruby_inc_dirs
+      dirs.reject {|dir| dir =~ %r|vendor/|}
+    end
+
+    def make_cppflags_sys_incdirs(dirs = [])
+      dirs.select {|dir| dir =~ %r|vendor/|} + ruby_inc_dirs
     end
 
     def ruby_inc_dirs()
