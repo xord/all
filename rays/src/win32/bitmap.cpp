@@ -98,7 +98,7 @@ namespace Rays
 	static void
 	setup_bitmap (Bitmap* this_, const Texture& tex)
 	{
-		not_implement_error(__FILE__, __LINE__);
+		not_implemented_error(__FILE__, __LINE__);
 	}
 
 	Bitmap
