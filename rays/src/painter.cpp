@@ -1092,7 +1092,7 @@ namespace Rays
 		coord x, coord y, coord str_width, coord str_height)
 	{
 #if 0
-		save_image(painter->self->text_image, "/tmp/font.png");
+		painter->self->text_image.save("/tmp/font.png");
 
 		painter->push_state();
 		{

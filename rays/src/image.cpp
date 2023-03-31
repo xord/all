@@ -138,15 +138,6 @@ namespace Rays
 		return Image_get_texture(const_cast<Image&>(image));
 	}
 
-	void
-	save_image (const Image& image, const char* path)
-	{
-		if (!image)
-			argument_error(__FILE__, __LINE__);
-
-		return Bitmap_save(image.bitmap(), path);
-	}
-
 	Image
 	load_image (const char* path)
 	{
@@ -195,6 +186,15 @@ namespace Rays
 	Image::dup () const
 	{
 		return Image(bitmap().dup(), pixel_density());
+	}
+
+	void
+	Image::save (const char* path)
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		Bitmap_save(bitmap(), path);
 	}
 
 	coord

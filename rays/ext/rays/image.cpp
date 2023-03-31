@@ -64,6 +64,15 @@ RUCY_DEF1(initialize_copy, obj)
 RUCY_END
 
 static
+RUCY_DEF1(save, path)
+{
+	CHECK;
+	THIS->save(path.c_str());
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF0(width)
 {
 	CHECK;
@@ -112,21 +121,9 @@ RUCY_DEF0(bitmap)
 RUCY_END
 
 static
-RUCY_DEF1(save, path)
+RUCY_DEF1(load, path)
 {
-	CHECK;
-	Rays::save_image(*THIS, path.c_str());
-	return self;
-}
-RUCY_END
-
-
-static
-RUCY_DEFN(load)
-{
-	check_arg_count(__FILE__, __LINE__, "Image.load", argc, 1);
-
-	return value(Rays::load_image(argv[0].c_str()));
+	return value(Rays::load_image(path.c_str()));
 }
 RUCY_END
 
@@ -142,13 +139,13 @@ Init_rays_image ()
 	cImage.define_alloc_func(alloc);
 	cImage.define_private_method("initialize",      initialize);
 	cImage.define_private_method("initialize_copy", initialize_copy);
+	cImage.define_method("save", save);
 	cImage.define_method("width",  width);
 	cImage.define_method("height", height);
 	cImage.define_method("color_space", color_space);
 	cImage.define_method("pixel_density", pixel_density);
 	cImage.define_method("painter", painter);
 	cImage.define_method("bitmap", bitmap);
-	cImage.define_method("save", save);
 	cImage.define_module_function("load", load);
 }
 

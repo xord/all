@@ -35,6 +35,8 @@ namespace Rays
 
 			Image dup () const;
 
+			void save (const char* path);
+
 			coord width () const;
 
 			coord height () const;
@@ -59,8 +61,6 @@ namespace Rays
 
 	};// Image
 
-
-	void save_image (const Image& image, const char* path);
 
 	Image load_image (const char* path);
 
