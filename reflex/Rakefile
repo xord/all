@@ -15,7 +15,7 @@ require 'reflex/extension'
 
 EXTENSIONS  = [Xot, Rucy, Rays, Reflex]
 GEMNAME     = 'reflexion'
-TESTS_ALONE = ['test/test_reflex.rb']
+TESTS_ALONE = ['test/test_reflex_init.rb']
 
 use_external_library 'https://github.com/erincatto/box2d',
   tag:    'v2.4.1',

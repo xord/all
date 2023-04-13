@@ -13,7 +13,7 @@ require 'rays/extension'
 
 
 EXTENSIONS  = [Xot, Rucy, Rays]
-TESTS_ALONE = ['test/test_rays.rb']
+TESTS_ALONE = ['test/test_rays_init.rb']
 
 use_external_library 'https://github.com/g-truc/glm',
   tag:     '0.9.9.8',

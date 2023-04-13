@@ -9,7 +9,7 @@ require_relative 'helper'
 
 class TestReflexInit < Test::Unit::TestCase
 
-  def test_init()
+  def test_init!()
     assert_raise(Reflex::ReflexError) {Reflex.fin!}
     assert Reflex.init!
     assert_raise(Reflex::ReflexError) {Reflex.init!}
@@ -17,4 +17,3 @@ class TestReflexInit < Test::Unit::TestCase
   end
 
 end# TestReflexInit
-
