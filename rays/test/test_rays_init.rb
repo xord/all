@@ -6,7 +6,7 @@ $RAYS_NOAUTOINIT = true
 require_relative 'helper'
 
 
-class TestRays < Test::Unit::TestCase
+class TestRaysInit < Test::Unit::TestCase
 
   def test_init!()
     assert_raise(Rays::RaysError) {Rays.fin!}
@@ -15,4 +15,4 @@ class TestRays < Test::Unit::TestCase
     assert Rays.fin!
   end
 
-end# TestRays
+end# TestRaysInit

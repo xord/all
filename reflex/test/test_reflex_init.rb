@@ -7,7 +7,7 @@ $REFLEX_NOAUTOINIT = true
 require_relative 'helper'
 
 
-class TestReflex < Test::Unit::TestCase
+class TestReflexInit < Test::Unit::TestCase
 
   def test_init()
     assert_raise(Reflex::ReflexError) {Reflex.fin!}
@@ -16,4 +16,5 @@ class TestReflex < Test::Unit::TestCase
     assert Reflex.fin!
   end
 
-end# TestReflex
+end# TestReflexInit
+
