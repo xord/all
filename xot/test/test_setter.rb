@@ -27,7 +27,13 @@ class TestSetter < Test::Unit::TestCase
 
   def test_set_by_hash()
     o = temp
-    o.set :x => 1, :y => 2
+    o.set x: 1, y: 2
+    assert_equal [1, 2], [o.x, o.y]
+  end
+
+  def test_set_by_kwargs()
+    o = temp
+    o.set **{x: 1, y: 2}
     assert_equal [1, 2], [o.x, o.y]
   end
 
