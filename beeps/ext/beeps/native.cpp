@@ -4,13 +4,17 @@
 void Init_beeps ();
 void Init_beeps_exception ();
 
+void Init_beeps_sound ();
+void Init_beeps_sound_player ();
 void Init_beeps_processor ();
-void Init_beeps_sine_wave ();
-void Init_beeps_square_wave ();
-void Init_beeps_sawtooth_wave ();
+
+void Init_beeps_oscillator ();
 void Init_beeps_file_in ();
 
-void Init_beeps_sound ();
+void Init_beeps_gain ();
+void Init_beeps_adsr ();
+void Init_beeps_time_stretch ();
+void Init_beeps_pitch_shift ();
 
 
 extern "C" void
@@ -27,13 +31,17 @@ extern "C" void
 	Init_beeps();
 	Init_beeps_exception();
 
+	Init_beeps_sound();
+	Init_beeps_sound_player();
 	Init_beeps_processor();
-	Init_beeps_sine_wave();
-	Init_beeps_square_wave();
-	Init_beeps_sawtooth_wave();
+
+	Init_beeps_oscillator();
 	Init_beeps_file_in();
 
-	Init_beeps_sound();
+	Init_beeps_gain();
+	Init_beeps_adsr();
+	Init_beeps_time_stretch();
+	Init_beeps_pitch_shift();
 
 	RUCY_CATCH
 }

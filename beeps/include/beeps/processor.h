@@ -4,6 +4,7 @@
 #define __BEEPS_PROCESSOR_H__
 
 
+#include <xot/ref.h>
 #include <xot/pimpl.h>
 #include <beeps/defs.h>
 
@@ -15,124 +16,86 @@ namespace Beeps
 	class Signals;
 
 
-	class Processor
+	class Processor : public Xot::RefCountable<>
 	{
+
+		typedef Processor This;
 
 		public:
 
+			class Context {};
+
+			typedef Xot::Ref<This> Ref;
+
 			virtual ~Processor ();
 
-			virtual void process (Signals* signals);
+			virtual void reset ();
+
+			virtual void         set_input (Processor* input);
+
+			virtual       Processor* input ();
+
+			virtual const Processor* input () const;
 
 			virtual operator bool () const;
 
 			virtual bool operator ! () const;
 
+			struct Data;
+
+			Xot::PImpl<Data> self;
+
 		protected:
 
-			Processor ();
+			Processor (bool generator = false);
+
+			virtual void process (Context* context, Signals* signals, uint* offset) final;
+
+			virtual void generate (Context* context, Signals* signals, uint* offset);
+
+			virtual void filter (Context* context, Signals* signals, uint* offset);
+
+			virtual void set_updated ();
+
+			friend class ProcessorContext;
 
 	};// Processor
 
 
-	class SineWave : public Processor
+	class Generator : public Processor
 	{
 
 		typedef Processor Super;
 
-		public:
+		protected:
 
-			SineWave ();
+			Generator ();
 
-			virtual ~SineWave ();
+		private:
 
-			virtual void set_frequency (float frequency);
+			void filter (
+				Context* context, Signals* signals, uint* offset) override final;
 
-			virtual float    frequency () const;
-
-			virtual void process (Signals* signals);
-
-			struct Data;
-
-			Xot::PSharedImpl<Data> self;
-
-	};// SineWave
+	};// Generator
 
 
-	class SquareWave : public Processor
+	class Filter : public Processor
 	{
 
 		typedef Processor Super;
 
-		public:
+		protected:
 
-			SquareWave ();
+			Filter (Processor* input = NULL);
 
-			virtual ~SquareWave ();
+			void set_buffering_seconds (float seconds);
 
-			virtual void set_frequency (float frequency);
+		private:
 
-			virtual float    frequency () const;
+			void generate (
+				Context* context, Signals* signals, uint* offset) override final;
 
-			virtual void process (Signals* signals);
-
-			struct Data;
-
-			Xot::PSharedImpl<Data> self;
-
-	};// SquareWave
-
-
-	class SawtoothWave : public Processor
-	{
-
-		typedef Processor Super;
-
-		public:
-
-			SawtoothWave ();
-
-			virtual ~SawtoothWave ();
-
-			virtual void set_frequency (float frequency);
-
-			virtual float    frequency () const;
-
-			virtual void process (Signals* signals);
-
-			struct Data;
-
-			Xot::PSharedImpl<Data> self;
-
-	};// SawtoothWave
-
-
-	class FileIn : public Processor
-	{
-
-		typedef Processor Super;
-
-		public:
-
-			FileIn (const char* path = NULL);
-
-			virtual ~FileIn ();
-
-			virtual void process (Signals* signals);
-
-			virtual uint sampling_rate () const;
-
-			virtual uint nchannels () const;
-
-			virtual float seconds () const;
-
-			virtual operator bool () const;
-
-			struct Data;
-
-			Xot::PSharedImpl<Data> self;
-
-	};// FileIn
+	};// Filter
 
 
 }// Beeps

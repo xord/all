@@ -1,12 +1,16 @@
-#include "beeps/sound.h"
+#include "sound.h"
 
 
 #include <limits.h>
+#include <memory>
+#include <algorithm>
 #include "Stk.h"
+#include "beeps/beeps.h"
 #include "beeps/exception.h"
+#include "beeps/generator.h"
 #include "openal.h"
-#include "signals.h"
 #include "processor.h"
+#include "signals.h"
 
 
 #if 0
@@ -20,71 +24,65 @@ namespace Beeps
 {
 
 
-	static ALuint get_buffer_id (const Sound& sound);
-
-
-	struct SoundSource
+	struct SoundBuffer
 	{
 
-		typedef SoundSource This;
-
-		typedef std::shared_ptr<This> Ptr;
-
-		ALint id;
-
-		static Ptr create ()
+		SoundBuffer (bool create = false)
 		{
-			ALuint id_;
-			alGenSources(1, &id_);
-			if (!OpenAL_no_error()) return Ptr();
-
-			return Ptr(new This(id_));
+			if (create) self->create();
 		}
 
-		~SoundSource ()
+		SoundBuffer (const Signals& signals)
 		{
-			if (!*this) return;
-
-			ALuint id_ = id;
-			alDeleteSources(1, &id_);
-			OpenAL_check_error(__FILE__, __LINE__);
+			self->create();
+			write(signals);
 		}
 
-		void play (const Sound& sound)
+		SoundBuffer (ALint id)
 		{
-			assert(sound);
+			self->id = id;
+		}
+
+		void clear ()
+		{
+			self->clear();
+		}
+
+		uint write (const Signals& signals)
+		{
+			assert(signals);
 
 			if (!*this)
 				invalid_state_error(__FILE__, __LINE__);
 
-			alSourcei(id, AL_BUFFER, get_buffer_id(sound));
-			alSourcePlay(id);
+			double sample_rate = signals.sample_rate();
+			uint nchannels     = signals.nchannels();
+			uint nsamples      = signals.nsamples();
+			assert(sample_rate > 0 && nchannels > 0 && nsamples > 0);
+
+			const Frames* frames = Signals_get_frames(&signals);
+			assert(frames);
+
+			std::vector<short> buffer;
+			buffer.reserve(nsamples * nchannels);
+			for (uint sample = 0; sample < nsamples; ++sample)
+				for (uint channel = 0; channel < nchannels; ++channel)
+					buffer.push_back((*frames)(sample, channel) * SHRT_MAX);
+
+			alBufferData(
+				self->id,
+				nchannels == 2 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16,
+				&buffer[0],
+				sizeof(short) * nsamples * nchannels,
+				sample_rate);
 			OpenAL_check_error(__FILE__, __LINE__);
-		}
 
-		void stop ()
-		{
-			if (!*this)
-				invalid_state_error(__FILE__, __LINE__);
-
-			alSourceStop(id);
-			OpenAL_check_error(__FILE__, __LINE__);
-		}
-
-		bool is_playing () const
-		{
-			if (!*this) return false;
-
-			ALint state = 0;
-			alGetSourcei(id, AL_SOURCE_STATE, &state);
-			OpenAL_check_error(__FILE__, __LINE__);
-
-			return state == AL_PLAYING;
+			return nsamples;
 		}
 
 		operator bool () const
 		{
-			return id >= 0;
+			return self->is_valid();
 		}
 
 		bool operator ! () const
@@ -92,123 +90,706 @@ namespace Beeps
 			return !operator bool();
 		}
 
-		private:
+		struct Data
+		{
 
-			SoundSource (ALint id = -1)
-			:	id(id)
+			ALint id   = -1;
+
+			bool owner = false;
+
+			~Data ()
 			{
+				clear();
 			}
+
+			void create ()
+			{
+				clear();
+
+				ALuint id_ = 0;
+				alGenBuffers(1, &id_);
+				OpenAL_check_error(__FILE__, __LINE__);
+
+				id    = id_;
+				owner = true;
+			}
+
+			void clear ()
+			{
+				if (owner && id >= 0)
+				{
+					ALuint id_ = id;
+					alDeleteBuffers(1, &id_);
+					OpenAL_check_error(__FILE__, __LINE__);
+				}
+
+				id    = -1;
+				owner = false;
+			}
+
+			bool is_valid () const
+			{
+				return id >= 0;
+			}
+
+		};// Data
+
+		Xot::PSharedImpl<Data> self;
+
+	};// SoundBuffer
+
+
+	struct SoundSource
+	{
+
+		void create ()
+		{
+			ALuint id_ = 0;
+			alGenSources(1, &id_);
+			if (OpenAL_no_error()) self->id = id_;
+		}
+
+		void clear ()
+		{
+			stop();
+			self->clear();
+		}
+
+		SoundSource reuse ()
+		{
+			stop();
+			set_gain(1);
+			set_loop(false);
+
+			SoundSource source;
+			source.self.swap(self);
+			return source;
+		}
+
+		void attach (const SoundBuffer& buffer)
+		{
+			assert(buffer);
+
+			if (!*this)
+				invalid_state_error(__FILE__, __LINE__);
+
+			alSourcei(self->id, AL_BUFFER, buffer.self->id);
+			OpenAL_check_error(__FILE__, __LINE__);
+		}
+
+		void queue (const SoundBuffer& buffer)
+		{
+			assert(buffer);
+
+			ALuint id = buffer.self->id;
+			alSourceQueueBuffers(self->id, 1, &id);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			LOG("queue: %d", buffer.self->id);
+		}
+
+		bool unqueue (SoundBuffer* buffer = NULL)
+		{
+			ALint count = 0;
+			alGetSourcei(self->id, AL_BUFFERS_PROCESSED, &count);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			if (count <= 0) return false;
+
+			ALuint id = 0;
+			alSourceUnqueueBuffers(self->id, 1, &id);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			if (buffer) *buffer = SoundBuffer((ALint) id);
+			return true;
+		}
+
+		void play ()
+		{
+			if (!*this)
+				invalid_state_error(__FILE__, __LINE__);
+
+			alSourcePlay(self->id);
+			OpenAL_check_error(__FILE__, __LINE__);
+		}
+
+		void pause ()
+		{
+			if (!*this) return;
+
+			alSourcePause(self->id);
+			OpenAL_check_error(__FILE__, __LINE__);
+		}
+
+		void rewind ()
+		{
+			if (!*this) return;
+
+			alSourceRewind(self->id);
+			OpenAL_check_error(__FILE__, __LINE__);
+		}
+
+		void stop ()
+		{
+			if (!*this) return;
+
+			alSourceStop(self->id);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			ALint type = 0;
+			alGetSourcei(self->id, AL_SOURCE_TYPE, &type);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			if (type == AL_STREAMING)
+				while (unqueue());
+			else if (type == AL_STATIC)
+			{
+				alSourcei(self->id, AL_BUFFER, 0);
+				OpenAL_check_error(__FILE__, __LINE__);
+			}
+		}
+
+		bool is_playing () const
+		{
+			if (!*this) return false;
+
+			ALint state = 0;
+			alGetSourcei(self->id, AL_SOURCE_STATE, &state);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			return state == AL_PLAYING;
+		}
+
+		bool is_paused () const
+		{
+			if (!*this) return false;
+
+			ALint state = 0;
+			alGetSourcei(self->id, AL_SOURCE_STATE, &state);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			return state == AL_PAUSED;
+		}
+
+		bool is_stopped () const
+		{
+			if (!*this) return true;
+
+			ALint state = 0;
+			alGetSourcei(self->id, AL_SOURCE_STATE, &state);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			return state == AL_STOPPED;
+		}
+
+		void set_gain (float gain)
+		{
+			if (gain < 0)
+				argument_error(__FILE__, __LINE__);
+
+			if (!*this) return;
+
+			alSourcef(self->id, AL_GAIN, gain);
+			OpenAL_check_error(__FILE__, __LINE__);
+		}
+
+		float gain () const
+		{
+			float gain = 1;
+			if (!*this) return gain;
+
+			alGetSourcef(self->id, AL_GAIN, &gain);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			return gain;
+		}
+
+		void set_loop (bool loop)
+		{
+			if (!*this) return;
+
+			alSourcei(self->id, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
+			OpenAL_check_error(__FILE__, __LINE__);
+		}
+
+		bool loop () const
+		{
+			if (!*this) return false;
+
+			ALint loop = AL_FALSE;
+			alGetSourcei(self->id, AL_LOOPING, &loop);
+			OpenAL_check_error(__FILE__, __LINE__);
+
+			return loop != AL_FALSE;
+		}
+
+		operator bool () const
+		{
+			return self->id >= 0;
+		}
+
+		bool operator ! () const
+		{
+			return !operator bool();
+		}
+
+		struct Data
+		{
+
+			ALint id = -1;
+
+			~Data ()
+			{
+				clear();
+			}
+
+			void clear ()
+			{
+				if (id < 0) return;
+
+				ALuint id_ = id;
+				alDeleteSources(1, &id_);
+				OpenAL_check_error(__FILE__, __LINE__);
+
+				id = -1;
+			}
+
+		};// Data
+
+		Xot::PSharedImpl<Data> self;
 
 	};// SoundSource
 
 
-	typedef std::vector<SoundSource::Ptr> SoundSourceList;
+	struct SoundPlayer::Data
+	{
+
+		SoundSource source;
+
+		std::vector<SoundBuffer> buffers;
+
+		Processor::Ref processor;
+
+		std::unique_ptr<ProcessorContext> processor_context;
+
+		void clear ()
+		{
+			source.clear();
+
+			for (auto& buffer : buffers) buffer.clear();
+			buffers.clear();
+		}
+
+		void attach_signals (const Signals& signals)
+		{
+			assert(signals);
+
+			SoundBuffer buffer(signals);
+			source.attach(buffer);
+			buffers.emplace_back(buffer);
+		}
+
+		void attach_stream (
+			Processor* processor, uint nchannels, double sample_rate)
+		{
+			assert(processor && *processor && nchannels > 0 && sample_rate > 0);
+
+			this->processor = processor;
+			processor_context.reset(
+				new ProcessorContext(sample_rate / 10, nchannels, sample_rate));
+
+			for (int i = 0; i < 2; ++i)
+			{
+				SoundBuffer buffer(true);
+				if (!process_stream(&buffer)) break;
+
+				source.queue(buffer);
+				buffers.emplace_back(buffer);
+			}
+		}
+
+		bool process_stream (SoundBuffer* buffer)
+		{
+			assert(buffer && processor && processor_context);
+
+			Signals signals = processor_context->process_signals(processor);
+			if (!signals) return false;
+
+			if (processor_context->is_finished())
+				processor_context.reset();
+
+			return buffer->write(signals) > 0;
+		}
+
+		void process_and_queue_stream_buffers ()
+		{
+			SoundBuffer buffer;
+			while (is_streaming())
+			{
+				if (!source.unqueue(&buffer))
+					return;
+
+				if (!process_stream(&buffer))
+					return;
+
+				source.queue(buffer);
+				if (source.is_stopped()) source.play();
+			}
+		}
+
+		bool is_streaming () const
+		{
+			return processor && processor_context && *processor_context;
+		}
+
+	};// SoundPlayer::Data
+
+
+	static SoundPlayer
+	create_player ()
+	{
+		SoundPlayer player;
+		player.self->source.create();
+		return player;
+	}
+
+	static SoundPlayer
+	reuse_player (SoundPlayer* player)
+	{
+		SoundPlayer newplayer;
+		newplayer.self->source = player->self->source.reuse();
+		player->self->clear();
+		return newplayer;
+	}
 
 
 	namespace global
 	{
 
-		static SoundSourceList sources;
+		static std::vector<SoundPlayer> players;
 
 	}// global
 
 
+	static void
+	remove_inactive_players ()
+	{
+		auto it = std::remove_if(
+			global::players.begin(), global::players.end(),
+			[](auto& player) {return !player || player.is_stopped();});
+
+		for (auto jt = it; jt != global::players.end(); ++jt)
+			jt->self->clear();
+
+		global::players.erase(it, global::players.end());
+	}
+
+	static SoundPlayer
+	get_next_player ()
+	{
+		SoundPlayer player = create_player();
+
+		if (player)
+			LOG("new player");
+
+		if (!player)
+		{
+			for (auto& p : global::players)
+			{
+				if (p && p.is_stopped())
+				{
+					player = reuse_player(&p);
+					LOG("reuse stopped player");
+					break;
+				}
+			}
+		}
+
+		if (!player && !global::players.empty())
+		{
+			player = reuse_player(&global::players.front());
+			LOG("reuse oldest player");
+		}
+
+		remove_inactive_players();
+
+		if (player)
+			global::players.emplace_back(player);
+
+		return player;
+	}
+
 	void
-	Sound_cleanup_sources ()
+	SoundPlayer_process_streams ()
 	{
-		global::sources.clear();
+		for (auto& player : global::players)
+		{
+			if (player.self->is_streaming())
+				player.self->process_and_queue_stream_buffers();
+		}
 	}
 
-	static SoundSource*
-	get_next_source ()
+	void
+	SoundPlayer_clear_all ()
 	{
-		SoundSource::Ptr source;
+		for (auto& player : global::players)
+			player.self->clear();
 
-		auto end = global::sources.end();
-		for (auto it = global::sources.begin(); it != end; ++it)
-		{
-			const SoundSource::Ptr& p = *it;
-			if (p && *p && !p->is_playing())
-			{
-				source = p;
-				global::sources.erase(it);
-				LOG("reuse source");
-				break;
-			}
-		}
+		global::players.clear();
+	}
 
-		if (!source)
-		{
-			source = SoundSource::create();
-			LOG("new source");
-		}
-
-		if (!source)
-		{
-			source = *global::sources.begin();
-			if (source) source->stop();
-			global::sources.erase(global::sources.begin());
-			LOG("stop and reuse oldest source");
-		}
-
-		if (!source)
-			return NULL;
-
-		global::sources.push_back(source);
-		return source.get();
+	void
+	stop_all_sound_players ()
+	{
+		for (auto& player : global::players)
+			player.stop();
 	}
 
 
-	struct Sound::Data
+	SoundPlayer::SoundPlayer ()
 	{
+	}
 
-		ALint id;
+	SoundPlayer::~SoundPlayer ()
+	{
+	}
 
-		Data ()
-		:	id(-1)
+	void
+	SoundPlayer::play ()
+	{
+		self->source.play();
+	}
+
+	void
+	SoundPlayer::pause ()
+	{
+		self->source.pause();
+	}
+
+	void
+	SoundPlayer::rewind ()
+	{
+		not_implemented_error(__FILE__, __LINE__);
+	}
+
+	void
+	SoundPlayer::stop ()
+	{
+		self->source.stop();
+	}
+
+	bool
+	SoundPlayer::is_playing () const
+	{
+		return
+			self->source.is_playing() ||
+			(self->is_streaming() && self->source.is_stopped());
+	}
+
+	bool
+	SoundPlayer::is_paused () const
+	{
+		return self->source.is_paused();
+	}
+
+	bool
+	SoundPlayer::is_stopped () const
+	{
+		return self->source.is_stopped() && !self->is_streaming();
+	}
+
+	void
+	SoundPlayer::set_gain (float gain)
+	{
+		self->source.set_gain(gain);
+	}
+
+	float
+	SoundPlayer::gain () const
+	{
+		return self->source.gain();
+	}
+
+	void
+	SoundPlayer::set_loop (bool loop)
+	{
+		self->source.set_loop(loop);
+	}
+
+	bool
+	SoundPlayer::loop () const
+	{
+		return self->source.loop();
+	}
+
+	SoundPlayer::operator bool () const
+	{
+		return self->source;
+	}
+
+	bool
+	SoundPlayer::operator ! () const
+	{
+		return !operator bool();
+	}
+
+
+	struct Sound::Data {
+
+		float gain = 1;
+
+		bool loop  = false;
+
+		virtual ~Data ()
 		{
 		}
 
-		~Data ()
+		virtual void attach_to (SoundPlayer* player)
 		{
-			clear();
+			not_implemented_error(__FILE__, __LINE__);
 		}
 
-		void create ()
+		virtual void save (const char* path) const
 		{
-			if (is_valid()) return;
-
-			ALuint id_ = 0;
-			alGenBuffers(1, &id_);
-			OpenAL_check_error(__FILE__, __LINE__);
-
-			id = id_;
+			not_implemented_error(__FILE__, __LINE__);
 		}
 
-		void clear ()
+		virtual double sample_rate () const
 		{
-			if (id >= 0)
-			{
-				ALuint id_ = id;
-				alDeleteBuffers(1, &id_);
-				OpenAL_check_error(__FILE__, __LINE__);
-			}
-
-			id = -1;
+			return 0;
 		}
 
-		bool is_valid () const
+		virtual uint nchannels () const
 		{
-			return id >= 0;
+			return 0;
+		}
+
+		virtual float seconds () const
+		{
+			return 0;
+		}
+
+		virtual bool is_valid () const
+		{
+			return false;
 		}
 
 	};// Sound::Data
 
 
-	ALuint
-	get_buffer_id (const Sound& sound)
+	struct SoundData : public Sound::Data
 	{
-		return sound.self->id;
+
+		typedef Sound::Data Super;
+
+		Signals signals;
+
+		SoundData (
+			Processor* processor, float seconds, uint nchannels, double sample_rate)
+		{
+			assert(
+				processor && *processor &&
+				seconds > 0 && nchannels > 0 && sample_rate > 0);
+
+			ProcessorContext context(seconds * sample_rate, nchannels, sample_rate);
+			Signals signals = context.process_signals(processor);
+			if (!signals)
+				beeps_error(__FILE__, __LINE__, "failed to process signals");
+
+			this->signals = signals;
+		}
+
+		void attach_to (SoundPlayer* player) override
+		{
+			assert(player && *player);
+
+			player->self->attach_signals(signals);
+		}
+
+		void save (const char* path) const override
+		{
+			if (!signals)
+				invalid_state_error(__FILE__, __LINE__);
+
+			Signals_save(signals, path);
+		}
+
+		double sample_rate () const override
+		{
+			return signals ? signals.sample_rate() : Super::sample_rate();
+		}
+
+		uint nchannels () const override
+		{
+			return signals ? signals.nchannels() : Super::nchannels();
+		}
+
+		float seconds () const override
+		{
+			return signals ? Signals_get_seconds(signals) : Super::seconds();
+		}
+
+		bool is_valid () const override
+		{
+			return signals;
+		}
+
+	};// SoundData
+
+
+	struct StreamSoundData : public Sound::Data
+	{
+
+		Processor::Ref processor;
+
+		double sample_rate_ = 0;
+
+		uint  nchannels_ = 0;
+
+		StreamSoundData (Processor* processor, uint nchannels, double sample_rate)
+		{
+			assert(processor && *processor && nchannels > 0 && sample_rate > 0);
+
+			this->processor    = processor;
+			this->sample_rate_ = sample_rate;
+			this->nchannels_   = nchannels;
+		}
+
+		void attach_to (SoundPlayer* player) override
+		{
+			assert(player && *player);
+
+			player->self->attach_stream(processor, nchannels_, sample_rate_);
+		}
+
+		double sample_rate () const override
+		{
+			return sample_rate_;
+		}
+
+		uint nchannels () const override
+		{
+			return nchannels_;
+		}
+
+		float seconds () const override
+		{
+			return -1;
+		}
+
+		bool is_valid () const override
+		{
+			return processor && sample_rate_ > 0 && nchannels_ > 0;
+		}
+
+	};// StreamSoundData
+
+
+	Sound
+	load_sound (const char* path)
+	{
+		FileIn* f = new FileIn(path);
+		return Sound(f, f->seconds(), f->nchannels(), f->sample_rate());
 	}
 
 
@@ -217,61 +798,97 @@ namespace Beeps
 	}
 
 	Sound::Sound (
-		Processor* processor, float seconds, uint nchannels, uint sampling_rate)
+		Processor* processor, float seconds, uint nchannels, double sample_rate)
 	{
-		if (!processor || !*processor || seconds < 0 || nchannels < 1 || 2 < nchannels)
+		Processor::Ref ref = processor;
+
+		if (!processor || !*processor)
 			argument_error(__FILE__, __LINE__);
 
-		self->create();
+		if (sample_rate <= 0) sample_rate = Beeps::sample_rate();
 
-		Signals signals = Signals_create(seconds, nchannels, sampling_rate);
-		processor->process(&signals);
-
-		stk::StkFrames* frames = Signals_get_frames(&signals);
-		if (!frames)
-			invalid_state_error(__FILE__, __LINE__);
-
-		ALsizei size = frames->frames();
-		if (size <= 0)
-			invalid_state_error(__FILE__, __LINE__);
-
-		std::vector<short> buffer;
-		buffer.reserve(size * nchannels);
-		for (ALsizei frame = 0; frame < size; ++frame)
-			for (uint channel = 0; channel < nchannels; ++channel)
-				buffer.push_back((*frames)(frame, channel) * SHRT_MAX);
-
-		alBufferData(
-			self->id,
-			nchannels == 2 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16,
-			&buffer[0],
-			sizeof(short) * size,
-			frames->dataRate());
-		OpenAL_check_error(__FILE__, __LINE__);
+		if (seconds > 0)
+			self.reset(new SoundData(processor, seconds, nchannels, sample_rate));
+		else
+			self.reset(new StreamSoundData(processor, nchannels, sample_rate));
 	}
 
 	Sound::~Sound ()
 	{
 	}
 
-	void
+	SoundPlayer
 	Sound::play ()
 	{
-		if (!*this)
+		SoundPlayer player = get_next_player();
+		if (!player)
 			invalid_state_error(__FILE__, __LINE__);
 
-		SoundSource* source = get_next_source();
-		if (!source || !*source)
-			invalid_state_error(__FILE__, __LINE__);
+		player.set_gain(gain());
+		player.set_loop(loop());
 
-		source->play(*this);
+		self->attach_to(&player);
+		player.play();
 
 #if 0
 		std::string ox = "";
-		for (size_t i = 0; i < global::sources.size(); ++i)
-			ox += global::sources[i]->is_playing() ? 'o' : 'x';
-		LOG("playing with %d sources. (%s)", global::sources.size(), ox.c_str());
+		for (auto& player : global::players)
+			ox += player.is_playing() ? 'o' : 'x';
+		LOG("%d players. (%s)", global::players.size(), ox.c_str());
 #endif
+
+		return player;
+	}
+
+	void
+	Sound::save (const char* path) const
+	{
+		self->save(path);
+	}
+
+	double
+	Sound::sample_rate () const
+	{
+		return self->sample_rate();
+	}
+
+	uint
+	Sound::nchannels () const
+	{
+		return self->nchannels();
+	}
+
+	float
+	Sound::seconds () const
+	{
+		return self->seconds();
+	}
+
+	void
+	Sound::set_gain (float gain)
+	{
+		if (gain < 0)
+			argument_error(__FILE__, __LINE__);
+
+		self->gain = gain;
+	}
+
+	float
+	Sound::gain () const
+	{
+		return self->gain;
+	}
+
+	void
+	Sound::set_loop (bool loop)
+	{
+		self->loop = loop;
+	}
+
+	bool
+	Sound::loop () const
+	{
+		return self->loop;
 	}
 
 	Sound::operator bool () const

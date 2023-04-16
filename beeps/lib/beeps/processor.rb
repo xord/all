@@ -2,6 +2,7 @@
 
 
 require 'xot/setter'
+require 'xot/const_symbol_accessor'
 require 'xot/universal_accessor'
 require 'xot/block_util'
 require 'beeps/ext'
@@ -20,37 +21,119 @@ module Beeps
       Xot::BlockUtil.instance_eval_or_block_call self, &block if block
     end
 
+    def >>(o)
+      o.input = self
+      o
+    end
+
+    def <<(o)
+      self.input = o
+      o
+    end
+
+    universal_accessor :input
+
   end# Processor
 
 
-  class SineWave
+  class Oscillator
+
+    const_symbol_accessor :type, **{
+      none:     NONE,
+      sine:     SINE,
+      triangle: TRIANGLE,
+      square:   SQUARE,
+      sawtooth: SAWTOOTH
+    }
+
+    def initialize(type = :sine, *args, **kwargs, &block)
+      super(*args, **kwargs, &block)
+      self.type = type
+    end
 
     alias freq= frequency=
     alias freq  frequency
 
-    universal_accessor :frequency, :freq
+    universal_accessor :type, :frequency, :freq
 
-  end# SineWave
-
-
-  class SquareWave
-
-    alias freq= frequency=
-    alias freq  frequency
-
-    universal_accessor :frequency, :freq
-
-  end# SquareWave
+  end# Oscillator
 
 
-  class SawtoothWave
+  class FileIn
 
-    alias freq= frequency=
-    alias freq  frequency
+    def initialize(path = nil, *args, **kwargs, &block)
+      super(*args, **kwargs, &block)
+      self.path = path if path
+    end
 
-    universal_accessor :frequency, :freq
+    universal_accessor :path
 
-  end# SawtoothWave
+  end# FileIn
+
+
+  class Gain
+
+    def initialize(input = nil, *args, **kwargs, &block)
+      super(*args, **kwargs, &block)
+      self.input = input
+    end
+
+    universal_accessor :gain
+
+  end# Gain
+
+
+  class ADSR
+
+    def initialize(input = nil, *args, **kwargs, &block)
+      super(*args, **kwargs, &block)
+      self.input = input
+    end
+
+    def note_on(delay = 0)
+      note_on! delay
+    end
+
+    def note_off(delay = 0)
+      note_off! delay
+    end
+
+    universal_accessor :attack_time, :decay_time, :sustain_level, :release_time
+
+    alias  attack=  attack_time=
+    alias  attack   attack_time
+    alias   decay=   decay_time=
+    alias   decay    decay_time
+    alias sustain= sustain_level=
+    alias sustain  sustain_level
+    alias release= release_time=
+    alias release  release_time
+
+  end# ADSR
+
+
+  class TimeStretch
+
+    def initialize(input = nil, *args, **kwargs, &block)
+      super(*args, **kwargs, &block)
+      self.input = input
+    end
+
+    universal_accessor :scale
+
+  end# TimeStretch
+
+
+  class PitchShift
+
+    def initialize(input = nil, *args, **kwargs, &block)
+      super(*args, **kwargs, &block)
+      self.input = input
+    end
+
+    universal_accessor :shift
+
+  end# PitchShift
 
 
 end# Beeps

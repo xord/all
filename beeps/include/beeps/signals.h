@@ -23,15 +23,13 @@ namespace Beeps
 
 			Signals dup () const;
 
-			void clear ();
-
-			uint sampling_rate () const;
-
-			uint nsamples () const;
+			double sample_rate () const;
 
 			uint nchannels () const;
 
-			float seconds () const;
+			uint nsamples () const;
+
+			uint capacity () const;
 
 			operator bool () const;
 

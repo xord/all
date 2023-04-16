@@ -35,10 +35,15 @@ module Beeps
       beep_sound(2).play
     end
 
+    def beep_processor=(processor)
+      @beep_processor = processor
+    end
+
     private
 
       def beep_sound(time)
-        Sound.new SquareWave.new, time
+        @beep_processor ||= Oscillator.new(:square)
+        Sound.new @beep_processor, time
       end
 
     self

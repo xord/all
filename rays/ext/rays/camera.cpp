@@ -25,7 +25,7 @@ RUCY_DEF5(setup, device_name, min_width, min_height, resize, crop)
 	RUCY_CHECK_OBJ(Rays::Camera, self);
 
 	*THIS = Rays::Camera(
-		device_name ? to<const char*>(device_name) : NULL,
+		device_name ? device_name.c_str() : NULL,
 		to<int>(min_width), to<int>(min_height),
 		to<bool>(resize), to<bool>(crop));
 	return self;

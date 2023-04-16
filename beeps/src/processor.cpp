@@ -1,10 +1,7 @@
 #include "processor.h"
 
 
-#include "SineWave.h"
-#include "BlitSaw.h"
-#include "BlitSquare.h"
-#include "FileWvIn.h"
+#include "xot/time.h"
 #include "beeps/exception.h"
 
 
@@ -12,8 +9,44 @@ namespace Beeps
 {
 
 
-	Processor::Processor ()
+	static ProcessorContext*
+	get_context(Processor::Context* context)
 	{
+		return (ProcessorContext*) context;
+	}
+
+
+	struct Processor::Data
+	{
+
+		bool generator = false;
+
+		float buffering_seconds = 0;
+
+		double last_update_time = 0;
+
+		Processor::Ref input;
+
+		bool has_generator () const
+		{
+			return generator || (input && input->self->has_generator());
+		}
+
+	};// Processor::Data
+
+
+	float
+	Processor_get_buffering_seconds (Processor* processor)
+	{
+		assert(processor);
+
+		return processor->self->buffering_seconds;
+	}
+
+
+	Processor::Processor (bool generator)
+	{
+		self->generator = generator;
 	}
 
 	Processor::~Processor ()
@@ -21,18 +54,39 @@ namespace Beeps
 	}
 
 	void
-	Processor::process (Signals* signals)
+	Processor::reset ()
 	{
-		if (!signals || !*signals)
-			argument_error(__FILE__, __LINE__);
+		if (self->input) self->input->reset();
 
-		if (!*this)
-			invalid_state_error(__FILE__, __LINE__);
+		set_updated();
+	}
+
+	void
+	Processor::set_input (Processor* input)
+	{
+		if (input && self->generator)
+			invalid_state_error(__FILE__, __LINE__, "generator cannot have inputs");
+
+		self->input = input;
+
+		set_updated();
+	}
+
+	Processor*
+	Processor::input ()
+	{
+		return self->input;
+	}
+
+	const Processor*
+	Processor::input () const
+	{
+		return const_cast<Processor*>(this)->input();
 	}
 
 	Processor::operator bool () const
 	{
-		return true;
+		return self->has_generator();
 	}
 
 	bool
@@ -41,176 +95,220 @@ namespace Beeps
 		return !operator bool();
 	}
 
-
-	struct SineWave::Data
+	void
+	Processor::process (Context* context, Signals* signals, uint* offset)
 	{
-
-		stk::SineWave oscillator;
-
-		float frequency;
-
-	};// SineWave::Data
-
-
-	SineWave::SineWave ()
-	{
-		set_frequency(440);
+		if (self->generator)
+			generate(context, signals, offset);
+		else
+			filter(context, signals, offset);
 	}
 
-	SineWave::~SineWave ()
+	void
+	Processor::generate (Context* context, Signals* signals, uint* offset)
+	{
+		if (!context || !signals || !*signals || signals->nsamples() > 0 || !offset)
+			argument_error(__FILE__, __LINE__);
+
+		if (!*this || self->input)
+			invalid_state_error(__FILE__, __LINE__);
+	}
+
+	void
+	Processor::filter (Context* context, Signals* signals, uint* offset)
+	{
+		if (!context || !signals || !*signals || !offset)
+			argument_error(__FILE__, __LINE__);
+
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		if (self->input)
+			get_context(context)->process(self->input, signals, offset);
+	}
+
+	void
+	Processor::set_updated ()
+	{
+		self->last_update_time = Xot::time();
+	}
+
+
+	Generator::Generator ()
+	:	Super(true)
 	{
 	}
 
 	void
-	SineWave::set_frequency (float frequency)
+	Generator::filter (Context* context, Signals* signals, uint* offset)
 	{
-		self->frequency = frequency;
-		self->oscillator.setFrequency(frequency);
-	}
-
-	float
-	SineWave::frequency () const
-	{
-		return self->frequency;
-	}
-
-	void
-	SineWave::process (Signals* signals)
-	{
-		Super::process(signals);
-
-		self->oscillator.tick(*Signals_get_frames(signals));
+		beeps_error(__FILE__, __LINE__);
 	}
 
 
-	struct SquareWave::Data
+	Filter::Filter (Processor* input)
+	:	Super(false)
 	{
-
-		stk::BlitSquare oscillator;
-
-		float frequency;
-
-	};// SquareWave::Data
-
-
-	SquareWave::SquareWave ()
-	{
-		set_frequency(440);
-	}
-
-	SquareWave::~SquareWave ()
-	{
+		if (input) set_input(input);
 	}
 
 	void
-	SquareWave::set_frequency (float frequency)
+	Filter::set_buffering_seconds (float seconds)
 	{
-		self->frequency = frequency;
-		self->oscillator.setFrequency(frequency);
-	}
+		Super::self->buffering_seconds = seconds;
 
-	float
-	SquareWave::frequency () const
-	{
-		return self->frequency;
+		set_updated();
 	}
 
 	void
-	SquareWave::process (Signals* signals)
+	Filter::generate (Context* context, Signals* signals, uint* offset)
 	{
-		Super::process(signals);
-
-		self->oscillator.tick(*Signals_get_frames(signals));
+		beeps_error(__FILE__, __LINE__);
 	}
 
 
-	struct SawtoothWave::Data
+	SignalsBuffer::SignalsBuffer (
+		uint nsamples_per_block, uint nchannels, double sample_rate)
 	{
-
-		stk::BlitSaw oscillator;
-
-		float frequency;
-
-	};// SawtoothWave::Data
-
-
-	SawtoothWave::SawtoothWave ()
-	{
-		set_frequency(440);
-	}
-
-	SawtoothWave::~SawtoothWave ()
-	{
+		buffer = Signals_create(nsamples_per_block, nchannels, sample_rate);
+		assert(*this);
 	}
 
 	void
-	SawtoothWave::set_frequency (float frequency)
+	SignalsBuffer::process (
+		ProcessorContext* context,
+		Processor* processor, Signals* signals, uint* offset)
 	{
-		self->frequency = frequency;
-		self->oscillator.setFrequency(frequency);
+		assert(processor && context && signals && offset);
+
+		if (
+			last_update_time < processor->self->last_update_time ||
+			*offset < buffer_offset)
+		{
+			clear();
+		}
+
+		if (buffer.nsamples() == 0)
+			buffer_next(context, processor, *offset);
+
+		while (true)
+		{
+			*offset += Signals_copy(signals, buffer, *offset - buffer_offset);
+
+			bool signals_full = signals->nsamples() == signals->capacity();
+			bool  buffer_full =   buffer.nsamples() ==   buffer.capacity();
+			if (signals_full || !buffer_full)
+				break;
+
+			buffer_next(context, processor, buffer_offset + buffer.nsamples());
+		}
 	}
 
-	float
-	SawtoothWave::frequency () const
+	SignalsBuffer::operator bool () const
 	{
-		return self->frequency;
+		return buffer;
+	}
+
+	bool
+	SignalsBuffer::operator ! () const
+	{
+		return !operator bool();
 	}
 
 	void
-	SawtoothWave::process (Signals* signals)
+	SignalsBuffer::buffer_next (
+		ProcessorContext* context, Processor* processor, uint offset)
 	{
-		Super::process(signals);
+		Signals_clear(&buffer);
+		buffer_offset = offset;
+		context->process(processor, &buffer, &offset, true);
 
-		self->oscillator.tick(*Signals_get_frames(signals));
-	}
-
-
-	struct FileIn::Data
-	{
-
-		Signals signals;
-
-	};// FileIn::Data
-
-
-	FileIn::FileIn (const char* path)
-	{
-		if (path) self->signals = load_file(path);
-	}
-
-	FileIn::~FileIn ()
-	{
+		last_update_time = Xot::time();
 	}
 
 	void
-	FileIn::process (Signals* signals)
+	SignalsBuffer::clear ()
 	{
-		Super::process(signals);
-
-		Signals_copy(signals, self->signals);
+		Signals_clear(&buffer);
+		buffer_offset = 0;
 	}
 
-	uint
-	FileIn::sampling_rate () const
+
+	ProcessorContext::ProcessorContext (
+		uint nsamples_per_process, uint nchannels, double sample_rate)
+	:	signals(Signals_create(nsamples_per_process, nchannels, sample_rate))
 	{
-		return self->signals.sampling_rate();
+		assert(*this);
 	}
 
-	uint
-	FileIn::nchannels () const
+	Signals
+	ProcessorContext::process_signals (Processor* processor)
 	{
-		return self->signals.nchannels();
+		assert(result && processor);
+
+		Signals_clear(&signals);
+		process(processor, &signals, &offset);
+
+		if (signals.nsamples() < signals.capacity())
+			finished = true;
+
+		return signals.nsamples() > 0 ? signals : Signals();
 	}
 
-	float
-	FileIn::seconds () const
+	void
+	ProcessorContext::process (
+		Processor* processor, Signals* signals, uint* offset, bool ignore_buffer)
 	{
-		return self->signals.seconds();
+		assert(processor);
+
+		SignalsBuffer* buffer = NULL;
+		if (!ignore_buffer && (buffer = get_buffer(processor)))
+			buffer->process(this, processor, signals, offset);
+		else
+			processor->process(this, signals, offset);
 	}
 
-	FileIn::operator bool () const
+	bool
+	ProcessorContext::is_finished () const
 	{
-		return self->signals;
+		return finished;
+	}
+
+	ProcessorContext::operator bool () const
+	{
+		return signals && !finished;
+	}
+
+	bool
+	ProcessorContext::operator ! () const
+	{
+		return !operator bool();
+	}
+
+	static uintptr_t
+	get_buffer_key (Processor* processor)
+	{
+		assert(processor);
+
+		return (uintptr_t) processor->self.get();
+	}
+
+	SignalsBuffer*
+	ProcessorContext::get_buffer (Processor* processor)
+	{
+		float buffering_sec = Processor_get_buffering_seconds(processor);
+		if (buffering_sec <= 0) return NULL;
+
+		uintptr_t key = get_buffer_key(processor);
+		auto it       = buffers.find(key);
+		if (it != buffers.end()) return it->second.get();
+
+		SignalsBuffer* buffer = new SignalsBuffer(
+			buffering_sec * signals.sample_rate(),
+			signals.nchannels(), signals.sample_rate());
+
+		buffers.emplace(key, buffer);
+		return buffer;
 	}
 
 

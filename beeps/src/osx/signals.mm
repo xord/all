@@ -1,5 +1,5 @@
 // -*- c++ -*-
-#include "../processor.h"
+#include "../signals.h"
 
 
 #import <AVFoundation/AVFoundation.h>
@@ -14,6 +14,9 @@ namespace Beeps
 	void
 	objc_error (const char* file, int line, NSError* error, const char* format = NULL, ...)
 	{
+		if (!error)
+			argument_error(__FILE__, __LINE__);
+
 		XOT_STRINGF(format, s);
 		beeps_error(
 			file, line,
@@ -56,7 +59,7 @@ namespace Beeps
 	}
 
 	Signals
-	load_file (const char* path)
+	Signals_load (const char* path)
 	{
 		AVAudioPCMBuffer* buffer = load_buffer(path);
 		if (!buffer) return Signals();

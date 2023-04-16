@@ -5,6 +5,7 @@
 #include "Stk.h"
 #include "beeps/exception.h"
 #include "openal.h"
+#include "sound.h"
 
 
 namespace Beeps
@@ -25,8 +26,14 @@ namespace Beeps
 		OpenAL_fin();
 	}
 
-	uint
-	sampling_rate ()
+	void
+	process_streams ()
+	{
+		SoundPlayer_process_streams();
+	}
+
+	double
+	sample_rate ()
 	{
 		return stk::Stk::sampleRate();
 	}
