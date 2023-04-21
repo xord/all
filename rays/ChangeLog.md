@@ -1,6 +1,12 @@
 # rays ChangeLog
 
 
+## [v0.1.33] - 2023-04-22
+
+- Update external libraries
+- save_image(image, path) -> Image::save(path)
+
+
 ## [v0.1.32] - 2023-03-01
 
 - fix bugs

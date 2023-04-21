@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.1.33] - 2023-04-22
+
+- update dependencies
+
+
 ## [v0.1.32] - 2023-03-01
 
 - fix bugs
