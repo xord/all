@@ -1,6 +1,15 @@
 # xot ChangeLog
 
 
+## [v0.1.33] - 2023-04-22
+
+- use '-isystem' option for vendor headers
+- disable warnings on compiling vendor sources
+- OSX: add '-Wl,-undefined,dynamic_lookup' to ldflags
+- add VENDOR_NOCOMPILE option
+- Rakefile: add 'quiet' option
+
+
 ## [v0.1.32] - 2023-03-01
 
 - fix bugs
