@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.34] - 2023-04-25
+
+- Update beeps to v0.1.34
+
+
 ## [v0.1.33] - 2023-04-22
 
 - Add will_contact?()
