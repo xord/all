@@ -74,6 +74,47 @@ end
 task :scripts => 'scripts:build'
 
 
+namespace :changelog do
+  def changelogs(target)
+    version = "#{target}/VERSION"
+    return [] unless File.exist?(version)
+
+    hash = `git log -1 #{version}`.lines(chomp: true).first.split[1]
+    `git log #{hash}..HEAD #{target}/`
+      .split(/commit.*\nAuthor:.*\nDate:.*\n/)
+      .map {|commit| commit.lines.select {|line| line =~ /^ /}.join}
+      .reject {|s| s.strip.empty?}
+  end
+
+  task :check do
+    targets.each do |target|
+      changes = changelogs target
+      next if changes.empty?
+
+      puts "# #{target}"
+      puts changes
+    end
+  end
+
+  task :update do
+    targets.each do |target|
+      changes = changelogs target
+      next if changes.empty?
+
+      ver     = File.readlines("#{target}/VERSION", chomp: true)
+        .first
+        .sub(/.$/, '_')
+      date    = Time.now.strftime '%Y-%m-%d'
+      changes = changes.join.gsub /^ {4}/, '- '
+
+      filter_file "#{target}/ChangeLog.md" do |body|
+        body.sub "##", "## [v#{ver}] - #{date}\n\n#{changes}\n\n##"
+      end
+    end
+  end
+end
+
+
 namespace :subtree do
   github = 'https://github.com/xord'
   branch = ENV['branch'] || 'master'
