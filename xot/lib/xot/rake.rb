@@ -286,8 +286,8 @@ module Xot
         namespace name do
           desc "clone #{name}"
           file dir do
-            opts  = '--depth=1'
-            opts += " --branch=#{branch || tag}" if branch || tag
+            opts  = '-c advice.detachedHead=false --depth 1'
+            opts += " --branch #{branch || tag}" if branch || tag
             opts += " --recursive"               if submodules.empty?
             sh %( git clone #{opts} #{repos} #{dir} )
             Dir.chdir dir do
