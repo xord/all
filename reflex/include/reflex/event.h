@@ -116,10 +116,12 @@ namespace Reflex
 				const Bounds& frame,
 				coord dx,     coord dy,
 				coord dwidth, coord dheight,
-				float angle,  float dangle);
+				float zoom  = 1,  float dzoom  = 0,
+				float angle = 0,  float dangle = 0);
 
 			FrameEvent (
 				const Bounds& frame, const Bounds& prev_frame,
+				float zoom,  float prev_zoom,
 				float angle, float prev_angle);
 
 			FrameEvent dup () const;
@@ -134,6 +136,10 @@ namespace Reflex
 
 			coord dheight () const;
 
+			float zoom () const;
+
+			float dzoom () const;
+
 			float angle () const;
 
 			float dangle () const;
@@ -141,6 +147,8 @@ namespace Reflex
 			bool is_move () const;
 
 			bool is_resize () const;
+
+			bool is_zoom () const;
 
 			bool is_rotate () const;
 

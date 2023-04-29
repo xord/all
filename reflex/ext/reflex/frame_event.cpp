@@ -21,7 +21,7 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF7(initialize, frame, dx, dy, dwidth, dheight, angle, dangle)
+RUCY_DEF9(initialize, frame, dx, dy, dwidth, dheight, zoom, dzoom, angle, dangle)
 {
 	CHECK;
 
@@ -29,6 +29,7 @@ RUCY_DEF7(initialize, frame, dx, dy, dwidth, dheight, angle, dangle)
 		to<Rays::Bounds>(frame),
 		to<coord>(dx),     to<coord>(dy),
 		to<coord>(dwidth), to<coord>(dheight),
+		to<float>(zoom),   to<float>(dzoom),
 		to<float>(angle),  to<float>(dangle));
 
 	return rb_call_super(0, NULL);
@@ -101,6 +102,22 @@ RUCY_DEF0(dsize)
 RUCY_END
 
 static
+RUCY_DEF0(zoom)
+{
+	CHECK;
+	return value(THIS->zoom());
+}
+RUCY_END
+
+static
+RUCY_DEF0(dzoom)
+{
+	CHECK;
+	return value(THIS->dzoom());
+}
+RUCY_END
+
+static
 RUCY_DEF0(angle)
 {
 	CHECK;
@@ -133,6 +150,14 @@ RUCY_DEF0(is_resize)
 RUCY_END
 
 static
+RUCY_DEF0(is_zoom)
+{
+	CHECK;
+	return value(THIS->is_zoom());
+}
+RUCY_END
+
+static
 RUCY_DEF0(is_rotate)
 {
 	CHECK;
@@ -153,16 +178,19 @@ Init_reflex_frame_event ()
 	cFrameEvent.define_private_method("initialize",      initialize);
 	cFrameEvent.define_private_method("initialize_copy", initialize_copy);
 	cFrameEvent.define_method("frame", frame);
-	cFrameEvent.define_method("dx", dx);
-	cFrameEvent.define_method("dy", dy);
-	cFrameEvent.define_method("dwidth",  dwidth);
-	cFrameEvent.define_method("dheight", dheight);
+	cFrameEvent.define_method("dx",        dx);
+	cFrameEvent.define_method("dy",        dy);
+	cFrameEvent.define_method("dwidth",    dwidth);
+	cFrameEvent.define_method("dheight",   dheight);
 	cFrameEvent.define_method("dposition", dposition);
 	cFrameEvent.define_method("dsize",     dsize);
+	cFrameEvent.define_method( "zoom",   zoom);
+	cFrameEvent.define_method("dzoom",  dzoom);
 	cFrameEvent.define_method( "angle",  angle);
 	cFrameEvent.define_method("dangle", dangle);
 	cFrameEvent.define_method("move?",   is_move);
 	cFrameEvent.define_method("resize?", is_resize);
+	cFrameEvent.define_method("zoom?",   is_zoom);
 	cFrameEvent.define_method("rotate?", is_rotate);
 }
 

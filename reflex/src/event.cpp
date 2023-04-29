@@ -221,13 +221,17 @@ namespace Reflex
 
 		coord dx, dy, dw, dh;
 
+		float zoom, dzoom;
+
 		float angle, dangle;
 
 		Data (
 			const Bounds& frame = 0,
 			coord dx = 0, coord dy = 0, coord dw = 0, coord dh = 0,
+			float zoom  = 0, float dzoom  = 0,
 			float angle = 0, float dangle = 0)
-		:	frame(frame), dx(dx), dy(dy), dw(dw), dh(dh), angle(angle), dangle(dangle)
+		:	frame(frame), dx(dx), dy(dy), dw(dw), dh(dh),
+			zoom(zoom), dzoom(dzoom), angle(angle), dangle(dangle)
 		{
 		}
 
@@ -240,18 +244,19 @@ namespace Reflex
 
 	FrameEvent::FrameEvent (
 		const Bounds& frame, coord dx, coord dy, coord dwidth, coord dheight,
-		float angle, float dangle)
-	:	self(new Data(frame, dx, dy, dwidth, dheight, angle, dangle))
+		float zoom, float dzoom, float angle, float dangle)
+	:	self(new Data(frame, dx, dy, dwidth, dheight, zoom, dzoom, angle, dangle))
 	{
 	}
 
 	FrameEvent::FrameEvent (
 		const Bounds& frame, const Bounds& prev_frame,
-		float angle, float prev_angle)
+		float zoom, float prev_zoom, float angle, float prev_angle)
 	:	self(new Data(
 			frame,
 			frame.x - prev_frame.x, frame.y - prev_frame.y,
 			frame.w - prev_frame.w, frame.h - prev_frame.h,
+			zoom,  zoom  - prev_zoom,
 			angle, angle - prev_angle))
 	{
 	}
@@ -298,6 +303,18 @@ namespace Reflex
 	}
 
 	float
+	FrameEvent::zoom () const
+	{
+		return self->zoom;
+	}
+
+	float
+	FrameEvent::dzoom () const
+	{
+		return self->dzoom;
+	}
+
+	float
 	FrameEvent::angle () const
 	{
 		return self->angle;
@@ -319,6 +336,12 @@ namespace Reflex
 	FrameEvent::is_resize () const
 	{
 		return self->dw != 0 || self->dh != 0;
+	}
+
+	bool
+	FrameEvent::is_zoom () const
+	{
+		return self->dzoom != 0;
 	}
 
 	bool

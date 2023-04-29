@@ -288,7 +288,7 @@ update_pixel_density (Reflex::Window* window)
 
 		if (dpos != 0 || dsize != 0)
 		{
-			Reflex::FrameEvent e(b, dpos.x, dpos.y, dsize.x, dsize.y, 0, 0);
+			Reflex::FrameEvent e(b, dpos.x, dpos.y, dsize.x, dsize.y);
 			if (dpos  != 0) win->on_move(&e);
 			if (dsize != 0)
 			{

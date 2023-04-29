@@ -969,6 +969,14 @@ RUCY_DEF1(on_resize, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_zoom, event)
+{
+	CHECK;
+	CALL(on_zoom(to<Reflex::FrameEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_rotate, event)
 {
 	CHECK;
@@ -1227,6 +1235,7 @@ Init_reflex_view ()
 	cView.define_method("on_draw",   on_draw);
 	cView.define_method("on_move",   on_move);
 	cView.define_method("on_resize", on_resize);
+	cView.define_method("on_zoom",   on_zoom);
 	cView.define_method("on_rotate", on_rotate);
 	cView.define_method("on_scroll", on_scroll);
 	cView.define_method("on_focus",  on_focus);

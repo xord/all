@@ -113,6 +113,15 @@ namespace Reflex
 					Super::on_resize(e);
 			}
 
+			virtual void on_zoom (FrameEvent* e)
+			{
+				RUCY_SYM(on_zoom);
+				if (this->is_overridable())
+					this->value.call(on_zoom, Rucy::value(e));
+				else
+					Super::on_zoom(e);
+			}
+
 			virtual void on_rotate (FrameEvent* e)
 			{
 				RUCY_SYM(on_rotate);

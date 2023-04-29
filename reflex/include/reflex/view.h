@@ -209,6 +209,10 @@ namespace Reflex
 
 			virtual void fit_to_content ();
 
+			virtual void set_zoom (float zoom);
+
+			virtual float    zoom () const;
+
 			virtual void set_angle (float degree);
 
 			virtual float    angle () const;
@@ -222,10 +226,6 @@ namespace Reflex
 			virtual void         scroll_by (const Point& dscroll);
 
 			virtual const Point& scroll () const;
-
-			virtual void set_zoom (float zoom);
-
-			virtual float    zoom () const;
 
 			virtual void set_capture (uint types);
 
@@ -343,6 +343,8 @@ namespace Reflex
 			virtual void on_move   (FrameEvent* e);
 
 			virtual void on_resize (FrameEvent* e);
+
+			virtual void on_zoom   (FrameEvent* e);
 
 			virtual void on_rotate (FrameEvent* e);
 

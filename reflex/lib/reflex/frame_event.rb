@@ -33,7 +33,8 @@ module Reflex
     alias h height
 
     def inspect()
-      "#<Reflex::FrameEvent x:#{x} y:#{y} w:#{w} h:#{h} dx:#{dx} dy:#{dy} dw:#{dw} dh:#{dh}>"
+      "#<Reflex::FrameEvent x:%g(%g) y:%g(%g) w:%g(%g) h:%g(%g) zoom:%g(%g) angle:%g(%g)>" %
+        [x, dx, y, dy, w, dw, h, dh, zoom, dzoom, angle, dangle]
     end
 
   end# FrameEvent

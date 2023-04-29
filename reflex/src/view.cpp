@@ -52,19 +52,21 @@ namespace Reflex
 
 		};// Flag
 
-		Window* window;
+		Window* window   = NULL;
 
-		View* parent;
+		View* parent     = NULL;
 
 		Bounds frame;
 
-		float zoom, angle;
+		float zoom       = 1;
 
-		ushort capture;
+		float angle      = 0;
 
-		short hide_count;
+		ushort capture   = CAPTURE_NONE;
 
-		uint flags;
+		short hide_count = 0;
+
+		uint flags = FLAG_CLIP | FLAG_RESIZE_TO_FIT | REDRAW | UPDATE_LAYOUT | UPDATE_STYLE;
 
 		std::unique_ptr<Point>       pscroll;
 
@@ -91,17 +93,6 @@ namespace Reflex
 		std::unique_ptr<World>       pchild_world;
 
 		std::unique_ptr<ChildList>   pchildren;
-
-		Data ()
-		:	window(NULL), parent(NULL),
-			zoom(1), angle(0), capture(CAPTURE_NONE), hide_count(0),
-			flags(FLAG_CLIP | FLAG_RESIZE_TO_FIT | REDRAW | UPDATE_LAYOUT | UPDATE_STYLE)
-		{
-		}
-
-		~Data ()
-		{
-		}
 
 		Point& scroll ()
 		{
@@ -654,37 +645,41 @@ namespace Reflex
 
 	static void
 	update_view_frame (
-		View* view, const Bounds& frame, float angle, bool update_body)
+		View* view, const Bounds& frame, float zoom, float angle,
+		bool update_body = true)
 	{
 		assert(view);
 		View::Data* self = view->self.get();
 
-		if (frame == self->frame && angle == self->angle)
+		if (frame == self->frame && zoom == self->zoom && angle == self->angle)
 			return;
 
-		FrameEvent event(frame, self->frame, angle, self->angle);
+		FrameEvent event(frame, self->frame, zoom, self->zoom, angle, self->angle);
 		self->frame = frame;
+		self->zoom  = zoom;
 		self->angle = angle;
 
-		bool move   = event.is_move();
-		bool resize = event.is_resize();
-		bool rotate = event.is_rotate();
+		bool moved   = event.is_move();
+		bool resized = event.is_resize();
+		bool zoomed  = event.is_zoom();
+		bool rotated = event.is_rotate();
 
-		if (move)   view->on_move(&event);
-		if (resize) view->on_resize(&event);
-		if (rotate) view->on_rotate(&event);
+		if (moved)   view->on_move(&event);
+		if (resized) view->on_resize(&event);
+		if (zoomed)  view->on_zoom(&event);
+		if (rotated) view->on_rotate(&event);
 
-		if (resize)
+		if (resized)
 		{
 			view->self->resize_shapes(&event);
 			apply_style_to_children_have_variable_lengths(view);
 			update_view_layout(view, true);
 		}
 
-		if (update_body && (move || rotate) && self->pbody)
+		if (update_body && (moved || rotated) && self->pbody)
 			self->update_body_frame();
 
-		if ((move || resize) && self->parent)
+		if ((moved || resized) && self->parent)
 			self->parent->self->add_flag(View::Data::FIT_TO_CONTENT);
 
 		view->redraw();
@@ -696,7 +691,7 @@ namespace Reflex
 		if (!view)
 			argument_error(__FILE__, __LINE__);
 
-		update_view_frame(view, frame, view->self->angle, true);
+		update_view_frame(view, frame, view->zoom(), view->angle());
 	}
 
 	const Style&
@@ -808,7 +803,7 @@ namespace Reflex
 
 		Bounds frame = view->frame();
 		frame.move_to(body->position());
-		update_view_frame(view, frame, body->angle(), false);
+		update_view_frame(view, frame, view->zoom(), body->angle(), false);
 	}
 
 	static void
@@ -2046,9 +2041,27 @@ namespace Reflex
 	}
 
 	void
+	View::set_zoom (float zoom)
+	{
+		if (zoom == self->zoom) return;
+
+		if (zoom == 0)
+			argument_error(__FILE__, __LINE__);
+
+		update_view_frame(this, self->frame, zoom, self->angle);
+		redraw();
+	}
+
+	float
+	View::zoom () const
+	{
+		return self->zoom;
+	}
+
+	void
 	View::set_angle (float degree)
 	{
-		update_view_frame(this, self->frame, degree, true);
+		update_view_frame(this, self->frame, self->zoom, degree);
 	}
 
 	float
@@ -2101,24 +2114,6 @@ namespace Reflex
 			return self->scroll();
 		else
 			return ZERO_SCROLL;
-	}
-
-	void
-	View::set_zoom (float zoom)
-	{
-		if (zoom == self->zoom) return;
-
-		if (zoom == 0)
-			argument_error(__FILE__, __LINE__);
-
-		self->zoom = zoom;
-		redraw();
-	}
-
-	float
-	View::zoom () const
-	{
-		return self->zoom;
 	}
 
 	void
@@ -2505,6 +2500,11 @@ namespace Reflex
 
 	void
 	View::on_resize (FrameEvent* e)
+	{
+	}
+
+	void
+	View::on_zoom (FrameEvent* e)
 	{
 	}
 
