@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.1.34] - 2023-04-30
+
+- NPARAM_MAX: 8 -> 10
+
+
 ## [v0.1.33] - 2023-04-22
 
 - update dependencies

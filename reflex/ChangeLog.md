@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.35] - 2023-04-30
+
+- Add View#on_zoom(e)
+
+
 ## [v0.1.34] - 2023-04-25
 
 - Update beeps to v0.1.34

@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.34] - 2023-04-30
+
+- Test Image#size
+
+
 ## [v0.1.33] - 2023-04-22
 
 - Update external libraries
