@@ -30,7 +30,7 @@ namespace Reflex
 
 			~Event ();
 
-			void block ();
+			void block (bool parent = false);
 
 			bool is_blocked () const;
 

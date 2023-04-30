@@ -26,10 +26,10 @@ namespace Reflex
 		{
 		}
 
-		void block ()
+		void block (bool parent)
 		{
 			blocked = true;
-			if (parent) parent->block();
+			if (parent && this->parent) this->parent->block();
 		}
 
 	};// Event::Data
@@ -50,9 +50,9 @@ namespace Reflex
 	}
 
 	void
-	Event::block ()
+	Event::block (bool parent)
 	{
-		self->block();
+		self->block(parent);
 	}
 
 	bool
