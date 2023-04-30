@@ -23,8 +23,9 @@ class TestImage < Test::Unit::TestCase
   end
 
   def test_initialize()
-    assert_equal 10, image(10, 20).width
-    assert_equal 10, image(20, 10).height
+    assert_equal 10,       image(10, 20).width
+    assert_equal 20,       image(10, 20).height
+    assert_equal [10, 20], image(10, 20).size
   end
 
   def test_dup()
