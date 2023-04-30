@@ -29,7 +29,7 @@ namespace Reflex
 		void block (bool parent)
 		{
 			blocked = true;
-			if (parent && this->parent) this->parent->block();
+			if (parent && this->parent) this->parent->block(true);
 		}
 
 	};// Event::Data
