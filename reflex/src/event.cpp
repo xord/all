@@ -662,11 +662,13 @@ namespace Reflex
 		if (!pthis || !view)
 			argument_error(__FILE__, __LINE__);
 
+		const Bounds& frame = view->frame();
 		const Point& offset = frame.position();
 		Bounds bounds       = frame.dup().move_to(0, 0);
+		float angle         = view->angle();
 
 		std::vector<Pointer> pointers;
-		for (const auto& pointer : event->self->pointers)
+		for (const auto& pointer : pthis->self->pointers)
 		{
 			pointers.emplace_back(pointer);
 			Pointer_update_positions(&pointers.back(), [&](Point* pos)
@@ -678,7 +680,7 @@ namespace Reflex
 			if (!bounds.is_include(pointers.back().position()))
 				pointers.pop_back();
 		}
-		event->self->pointers = pointers;
+		pthis->self->pointers = pointers;
 
 		scroll_and_zoom_pointer_positions(pthis, view->scroll(), view->zoom());
 	}
