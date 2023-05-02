@@ -635,32 +635,6 @@ namespace Reflex
 	}
 
 	static void
-	filter_and_offset_pointer_positions (
-		PointerEvent* event, const Bounds& frame, float angle)
-	{
-		assert(event);
-
-		const Point& offset = frame.position();
-		Bounds bounds       = frame.dup().move_to(0, 0);
-
-		std::vector<Pointer> pointers;
-		for (const auto& pointer : event->self->pointers)
-		{
-			pointers.emplace_back(pointer);
-			Pointer_update_positions(&pointers.back(), [&](Point* pos)
-			{
-				*pos -= offset;
-				pos->rotate(-angle);
-			});
-
-			if (!bounds.is_include(pointers.back().position()))
-				pointers.pop_back();
-		}
-
-		event->self->pointers = pointers;
-	}
-
-	static void
 	scroll_and_zoom_pointer_positions (
 		PointerEvent* event, const Point& scroll, float zoom)
 	{
@@ -688,7 +662,24 @@ namespace Reflex
 		if (!pthis || !view)
 			argument_error(__FILE__, __LINE__);
 
-		filter_and_offset_pointer_positions(pthis, view->frame(), view->angle());
+		const Point& offset = frame.position();
+		Bounds bounds       = frame.dup().move_to(0, 0);
+
+		std::vector<Pointer> pointers;
+		for (const auto& pointer : event->self->pointers)
+		{
+			pointers.emplace_back(pointer);
+			Pointer_update_positions(&pointers.back(), [&](Point* pos)
+			{
+				*pos -= offset;
+				pos->rotate(-angle);
+			});
+
+			if (!bounds.is_include(pointers.back().position()))
+				pointers.pop_back();
+		}
+		event->self->pointers = pointers;
+
 		scroll_and_zoom_pointer_positions(pthis, view->scroll(), view->zoom());
 	}
 
