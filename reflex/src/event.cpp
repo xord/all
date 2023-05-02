@@ -635,23 +635,26 @@ namespace Reflex
 	}
 
 	static void
-	filter_and_offset_pointer_positions (PointerEvent* event, const Bounds& frame)
+	filter_and_offset_pointer_positions (
+		PointerEvent* event, const Bounds& frame, float angle)
 	{
 		assert(event);
 
 		const Point& offset = frame.position();
+		Bounds bounds       = frame.dup().move_to(0, 0);
 
 		std::vector<Pointer> pointers;
 		for (const auto& pointer : event->self->pointers)
 		{
-			if (!frame.is_include(pointer.position()))
-				continue;
-
 			pointers.emplace_back(pointer);
 			Pointer_update_positions(&pointers.back(), [&](Point* pos)
 			{
 				*pos -= offset;
+				pos->rotate(-angle);
 			});
+
+			if (!bounds.is_include(pointers.back().position()))
+				pointers.pop_back();
 		}
 
 		event->self->pointers = pointers;
@@ -685,7 +688,7 @@ namespace Reflex
 		if (!pthis || !view)
 			argument_error(__FILE__, __LINE__);
 
-		filter_and_offset_pointer_positions(pthis, view->frame());
+		filter_and_offset_pointer_positions(pthis, view->frame(), view->angle());
 		scroll_and_zoom_pointer_positions(pthis, view->scroll(), view->zoom());
 	}
 
@@ -695,11 +698,14 @@ namespace Reflex
 		if (!pthis || !view)
 			argument_error(__FILE__, __LINE__);
 
+		float angle = view->angle();
+
 		for (auto& pointer : pthis->self->pointers)
 		{
 			Pointer_update_positions(&pointer, [=](Point* pos)
 			{
 				*pos = view->from_window(*pos);
+				pos->rotate(-angle);
 			});
 		}
 
