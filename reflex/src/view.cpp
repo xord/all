@@ -1285,6 +1285,9 @@ namespace Reflex
 	{
 		assert(view && event);
 
+		if (view->self->pbody)
+			view->self->pbody->awake();
+
 		view->on_pointer(event);
 
 		switch ((*event)[0].action())

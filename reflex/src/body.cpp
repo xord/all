@@ -126,6 +126,14 @@ namespace Reflex
 		self->b2body->ApplyAngularImpulse(impulse, true);
 	}
 
+	void
+	Body::awake ()
+	{
+		validate(this);
+
+		self->b2body->SetAwake(true);
+	}
+
 	float
 	Body::meter2pixel (float meter) const
 	{

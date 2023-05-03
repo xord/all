@@ -41,6 +41,8 @@ namespace Reflex
 
 			void apply_angular_impulse (float impulse);
 
+			void awake ();
+
 			float meter2pixel (float meter = 1) const;
 
 			void set_transform (coord x, coord y, float degree);
