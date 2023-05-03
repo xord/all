@@ -176,7 +176,7 @@ namespace Reflex
 
 		for (auto& [view, targets] : window->self->captures)
 		{
-			if (!is_capturing(view.get(), targets, View::CAPTURE_KEY))
+			if (!view->window() || !is_capturing(view.get(), targets, View::CAPTURE_KEY))
 				continue;
 
 			KeyEvent e = event->dup();
@@ -256,7 +256,7 @@ namespace Reflex
 
 		for (auto& [view, targets] : window->self->captures)
 		{
-			if (targets.empty()) continue;
+			if (!view->window() || targets.empty()) continue;
 
 			PointerEvent event;
 			PointerEvent_set_captured(&event, true);
@@ -300,6 +300,8 @@ namespace Reflex
 
 		for (auto& view : views_capturing_all)
 		{
+			if (!view->window()) continue;
+
 			PointerEvent e = event.dup();
 			PointerEvent_update_for_capturing_view(&e, view);
 			View_call_pointer_event(const_cast<View*>(view.get()), &e);
