@@ -94,4 +94,8 @@ class TestWindow < Test::Unit::TestCase
     assert_equal w,      w.root.window
   end
 
+  def test_inspect()
+    assert_match %r|#<Reflex::Window:0x\w{16}>|, win.inspect
+  end
+
 end# TestWindow

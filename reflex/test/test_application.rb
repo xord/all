@@ -14,4 +14,8 @@ class TestApplication < Test::Unit::TestCase
     assert_equal 'AppName', @@app.name
   end
 
+  def test_inspect()
+    assert_match %r|#<Reflex::Application:0x\w{16}>|, @@app.inspect
+  end
+
 end# TestApplication
