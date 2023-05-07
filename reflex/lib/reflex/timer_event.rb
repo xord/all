@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'forwardable'
 require 'reflex/ext'
 

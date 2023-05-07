@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'xot/extension'
 
 require 'xot/bit_flag'

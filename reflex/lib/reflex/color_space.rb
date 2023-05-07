@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'rays/color_space'
 
 

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'reflex/image'
 require 'reflex/bitmap'
 require 'reflex/view'

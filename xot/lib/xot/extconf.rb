@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'xot/rake/util'
 require 'xot/block_util'
 

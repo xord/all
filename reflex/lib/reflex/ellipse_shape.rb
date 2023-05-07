@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'xot/universal_accessor'
 require 'reflex/shape'
 

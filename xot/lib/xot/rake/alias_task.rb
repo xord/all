@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'rake/task'
 require 'rake/dsl_definition'
 

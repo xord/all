@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'forwardable'
 require 'xot/setter'
 require 'xot/bit_flag_accessor'

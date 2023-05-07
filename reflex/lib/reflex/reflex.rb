@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'reflex/ext'
 require 'reflex/window'
 

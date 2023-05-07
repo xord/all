@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 $RAYS_NOAUTOINIT = true
 
 require_relative 'helper'

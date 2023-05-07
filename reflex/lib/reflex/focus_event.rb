@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'xot/const_symbol_accessor'
 require 'reflex/ext'
 

@@ -1,4 +1,4 @@
-# -*- mode: ruby; coding: utf-8 -*-
+# -*- mode: ruby -*-
 
 
 File.expand_path('../bin', __dir__).tap do |path|

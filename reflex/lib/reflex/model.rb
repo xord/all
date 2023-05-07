@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'xot/invoker'
 require 'xot/setter'
 require 'xot/block_util'

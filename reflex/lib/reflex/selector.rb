@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'xot/setter'
 require 'xot/block_util'
 require 'reflex/ext'

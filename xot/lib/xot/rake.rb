@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'rbconfig'
 require 'rake'
 require 'rake/loaders/makefile'

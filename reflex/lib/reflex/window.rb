@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 require 'forwardable'
 require 'xot/setter'
 require 'xot/universal_accessor'
