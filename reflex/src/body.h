@@ -47,6 +47,8 @@ namespace Reflex
 
 			void set_transform (coord x, coord y, float degree);
 
+			void set_transform (const Point& position, float degree);
+
 			Point position () const;
 
 			float angle () const;

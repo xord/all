@@ -100,6 +100,14 @@ module Reflex
       to_enum :each_shape
     end
 
+    def pivot=(arg)
+      case arg
+      when Point then set_pivot! arg.x, arg.y, arg.z
+      when Array then set_pivot! arg[0], arg[1], arg[2] || 0
+      else raise ArgumentError
+      end
+    end
+
     def capturing?(*args)
       cap = capture
       args.all? {|type| cap.include? type}
@@ -114,7 +122,8 @@ module Reflex
     def on_contact_end(e)
     end
 
-    universal_accessor :shape, :name, :selector, :frame, :angle, :zoom, :capture,
+    universal_accessor :shape, :name, :selector,
+      :frame, :angle, :pivot, :zoom, :capture,
       :density, :friction, :restitution,
       :linear_velocity, :angular_velocity, :gravity_scale,
       :gravity, :time_scale,

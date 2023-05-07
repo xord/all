@@ -217,6 +217,12 @@ namespace Reflex
 
 			virtual float    angle () const;
 
+			virtual void     set_pivot (float x, float y, float z = 0);
+
+			virtual void     set_pivot (const Point& pivot);
+
+			virtual const Point& pivot () const;
+
 			virtual void         scroll_to (coord x, coord y, coord z = 0);
 
 			virtual void         scroll_to (const Point& scroll);

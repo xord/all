@@ -242,6 +242,43 @@ class TestView < Test::Unit::TestCase
     v.frame = [bounds(1, 2, 3, 4, 5, 6)]; assert_equal [1, 2, 3, 4, 5, 6], v.frame.to_a(3)
   end
 
+  def test_angle()
+    v = view
+    assert_equal 0,   v.angle
+
+    v.angle =    1
+    assert_equal 1,   v.angle
+
+    v.angle =    -1
+    assert_equal -1,  v.angle
+
+    v.angle =    359
+    assert_equal 359, v.angle
+
+    v.angle =    360
+    assert_equal 360, v.angle
+
+    v.angle =    361
+    assert_equal 361, v.angle
+  end
+
+  def test_pivot()
+    v = view
+    assert_equal point(0, 0, 0),       v.pivot
+
+    v.pivot =    point 0.1, 0.2
+    assert_equal point(0.1, 0.2, 0),   v.pivot
+
+    v.pivot =    point 0.4, 0.5, 0.6
+    assert_equal point(0.4, 0.5, 0.6), v.pivot
+
+    v.pivot =         [0.7, 0.8]
+    assert_equal point(0.7, 0.8),      v.pivot
+
+    v.pivot =         [0.9, 1.0]
+    assert_equal point(0.9, 1.0),      v.pivot
+  end
+
   def test_parent()
     parent, child = view, view
     parent.add_child child

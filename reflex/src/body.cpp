@@ -149,6 +149,12 @@ namespace Reflex
 			to_b2vec2(x, y, self->ppm), Xot::deg2rad(degree));
 	}
 
+	void
+	Body::set_transform (const Point& position, float degree)
+	{
+		set_transform(position.x, position.y, degree);
+	}
+
 	Point
 	Body::position () const
 	{

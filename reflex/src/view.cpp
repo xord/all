@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <memory>
 #include <algorithm>
+#include <rays/matrix.h>
 #include "reflex/timer.h"
 #include "reflex/filter.h"
 #include "reflex/exception.h"
@@ -24,6 +25,8 @@ namespace Reflex
 
 
 	static const char* WALL_NAME = "__WALL__";
+
+	static const Point ZERO      = 0;
 
 
 	struct View::Data
@@ -68,6 +71,8 @@ namespace Reflex
 
 		uint flags = FLAG_CLIP | FLAG_RESIZE_TO_FIT | REDRAW | UPDATE_LAYOUT | UPDATE_STYLE;
 
+		std::unique_ptr<Point>       ppivot;
+
 		std::unique_ptr<Point>       pscroll;
 
 		SelectorPtr                  pselector;
@@ -93,6 +98,12 @@ namespace Reflex
 		std::unique_ptr<World>       pchild_world;
 
 		std::unique_ptr<ChildList>   pchildren;
+
+		Point& pivot ()
+		{
+			if (!ppivot) ppivot.reset(new Point);
+			return *ppivot;
+		}
 
 		Point& scroll ()
 		{
@@ -195,7 +206,40 @@ namespace Reflex
 		{
 			if (!pbody) return;
 
-			pbody->set_transform(frame.x, frame.y, angle);
+			auto* pivot = ppivot.get();
+			if (pivot && (pivot->x != 0 || pivot->y != 0) && angle != 0)
+			{
+				Matrix m;
+				get_view2body_matrix(&m);
+				pbody->set_transform(m * Point(0), angle);
+			}
+			else
+				pbody->set_transform(frame.x, frame.y, angle);
+		}
+
+		void
+		get_view2body_matrix (Matrix* m)
+		{
+			assert(m && ppivot && *m == Matrix(1));
+
+			Point pivot = *ppivot * frame.size();
+			m->translate(frame.position() + pivot)
+				.rotate(angle)
+				.translate(-pivot);
+		}
+
+		void
+		get_body2view_matrix (Matrix* m)
+		{
+			assert(m && ppivot && ppbody && *m == Matrix(1));
+
+			Point pivot = *ppivot * frame.size();
+			float angle = pbody->angle();
+			m->translate(pbody->position())
+				.rotate(angle)
+				.translate( pivot)
+				.rotate(-angle)
+				.translate(-pivot);
 		}
 
 		void update_body_and_shapes ()
@@ -797,12 +841,23 @@ namespace Reflex
 	update_view_body (View* view)
 	{
 		assert(view);
+		View::Data* self = view->self.get();
 
-		Body* body = view->self->pbody.get();
+		Body* body = self->pbody.get();
 		if (!body) return;
 
 		Bounds frame = view->frame();
-		frame.move_to(body->position());
+
+		auto* pivot = self->ppivot.get();
+		if (pivot && (pivot->x != 0 || pivot->y != 0) && self->angle != 0)
+		{
+			Matrix m;
+			self->get_body2view_matrix(&m);
+			frame.set_position(m * Point(0));
+		}
+		else
+			frame.set_position(body->position());
+
 		update_view_frame(view, frame, view->zoom(), body->angle(), false);
 	}
 
@@ -1083,7 +1138,7 @@ namespace Reflex
 
 		if (event->is_blocked()) return;
 
-		View::ChildList* pchildren = view->self->pchildren.get();
+		View::ChildList* pchildren = self->pchildren.get();
 		if (pchildren)
 		{
 			for (auto& pchild : *pchildren)
@@ -1093,7 +1148,7 @@ namespace Reflex
 			}
 		}
 
-		World* child_world = view->self->pchild_world.get();
+		World* child_world = self->pchild_world.get();
 		if (child_world)
 		{
 			p->push_state();
@@ -1177,7 +1232,7 @@ namespace Reflex
 		Point pos     = bounds.position();
 		Bounds clip2  = bounds.dup().move_by(offset) & clip;
 
-		bounds.move_to(0, 0, bounds.z);
+		bounds.set_position(0, 0, bounds.z);
 		if (self->pscroll)
 		{
 			bounds.move_by(-*self->pscroll);
@@ -1190,7 +1245,12 @@ namespace Reflex
 
 		float angle = self->angle;
 		if (angle != 0)
+		{
+			const Point* pivot = self->ppivot.get();
+			if (pivot) p->translate(pivot->x *  bounds.width, pivot->y *  bounds.height);
 			p->rotate(angle);
+			if (pivot) p->translate(pivot->x * -bounds.width, pivot->y * -bounds.height);
+		}
 
 		float zoom = self->zoom;
 		if (zoom != 1 && zoom > 0)
@@ -2073,7 +2133,23 @@ namespace Reflex
 		return self->angle;
 	}
 
-	static const Point ZERO_SCROLL;
+	void
+	View::set_pivot (float x, float y, float z)
+	{
+		self->pivot().reset(x, y, z);
+	}
+
+	void
+	View::set_pivot (const Point& pivot)
+	{
+		set_pivot(pivot.x, pivot.y, pivot.z);
+	}
+
+	const Point&
+	View::pivot () const
+	{
+		return self->ppivot ? self->pivot() : ZERO;
+	}
 
 	void
 	View::scroll_to (coord x, coord y, coord z)
@@ -2113,10 +2189,7 @@ namespace Reflex
 	const Point&
 	View::scroll () const
 	{
-		if (self->pscroll)
-			return self->scroll();
-		else
-			return ZERO_SCROLL;
+		return self->pscroll ? self->scroll() : ZERO;
 	}
 
 	void

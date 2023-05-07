@@ -446,6 +446,23 @@ RUCY_DEF0(get_angle)
 RUCY_END
 
 static
+RUCY_DEF3(set_pivot, x, y, z)
+{
+	CHECK;
+	THIS->set_pivot(to<float>(x), to<float>(y), to<float>(z));
+	return value(THIS->pivot());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_pivot)
+{
+	CHECK;
+	return value(THIS->pivot());
+}
+RUCY_END
+
+static
 RUCY_DEFN(scroll_to)
 {
 	CHECK;
@@ -1176,6 +1193,8 @@ Init_reflex_view ()
 	cView.define_method("fit_to_content", fit_to_content);
 	cView.define_method("angle=", set_angle);
 	cView.define_method("angle",  get_angle);
+	cView.define_private_method("set_pivot!", set_pivot);
+	cView.define_method(            "pivot",  get_pivot);
 	cView.define_method("scroll_to", scroll_to);
 	cView.define_method("scroll_by", scroll_by);
 	cView.define_method("scroll", get_scroll);
