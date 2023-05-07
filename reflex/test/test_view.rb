@@ -244,22 +244,22 @@ class TestView < Test::Unit::TestCase
 
   def test_angle()
     v = view
-    assert_equal 0,   v.angle
+    assert_equal 0,    v.angle
 
     v.angle =    1
-    assert_equal 1,   v.angle
+    assert_equal 1,    v.angle
 
-    v.angle =    -1
-    assert_equal -1,  v.angle
+    v.angle =     -1
+    assert_equal (-1), v.angle
 
     v.angle =    359
-    assert_equal 359, v.angle
+    assert_equal 359,  v.angle
 
     v.angle =    360
-    assert_equal 360, v.angle
+    assert_equal 360,  v.angle
 
     v.angle =    361
-    assert_equal 361, v.angle
+    assert_equal 361,  v.angle
   end
 
   def test_pivot()
