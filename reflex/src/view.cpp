@@ -1247,9 +1247,9 @@ namespace Reflex
 		if (angle != 0)
 		{
 			const Point* pivot = self->ppivot.get();
-			if (pivot) p->translate(pivot->x *  bounds.width, pivot->y *  bounds.height);
+			if (pivot) p->translate( pivot->x * bounds.width,  pivot->y * bounds.height);
 			p->rotate(angle);
-			if (pivot) p->translate(pivot->x * -bounds.width, pivot->y * -bounds.height);
+			if (pivot) p->translate(-pivot->x * bounds.width, -pivot->y * bounds.height);
 		}
 
 		float zoom = self->zoom;
