@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.35] - 2023-05-08
+
+- Update dependencies
+
+
 ## [v0.1.34] - 2023-04-30
 
 - Test Image#size

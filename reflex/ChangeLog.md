@@ -1,6 +1,16 @@
 # reflex ChangeLog
 
 
+## [v0.1.36] - 2023-05-08
+
+- Add inspect()
+- Add View#pivot accessor
+- Awake view body on every pointer event
+- Disable blocking event escalation
+- Check is view valid before calling event handlers
+- Fix pointer position for rotated view
+
+
 ## [v0.1.35] - 2023-04-30
 
 - Add View#on_zoom(e)

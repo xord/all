@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.1.35] - 2023-05-08
+
+- add xot/inspectable.rb
+
+
 ## [v0.1.34] - 2023-04-30
 
 - Fix bugs
