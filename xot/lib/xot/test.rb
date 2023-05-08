@@ -11,6 +11,12 @@ module Xot
       assert !collection.include?(obj), *args
     end
 
+    def assert_each_in_epsilon(expected, actual, *args)
+      expected.zip(actual) do |e, a|
+        assert_in_epsilon e, a, *args
+      end
+    end
+
   end# Test
 
 

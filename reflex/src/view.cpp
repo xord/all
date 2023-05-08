@@ -220,7 +220,7 @@ namespace Reflex
 		void
 		get_view2body_matrix (Matrix* m)
 		{
-			assert(m && ppivot && *m == Matrix(1));
+			assert(m && *m == 1 && ppivot && *ppivot != 0);
 
 			Point pivot = *ppivot * frame.size();
 			m->translate(frame.position() + pivot)
@@ -231,7 +231,7 @@ namespace Reflex
 		void
 		get_body2view_matrix (Matrix* m)
 		{
-			assert(m && ppivot && ppbody && *m == Matrix(1));
+			assert(m && *m == 1 && ppivot && *ppivot != 0 && pbody);
 
 			Point pivot = *ppivot * frame.size();
 			float angle = pbody->angle();
@@ -1243,12 +1243,11 @@ namespace Reflex
 		p->push_matrix();
 		p->translate(pos);
 
-		float angle = self->angle;
-		if (angle != 0)
+		if (self->angle != 0)
 		{
 			const Point* pivot = self->ppivot.get();
 			if (pivot) p->translate( pivot->x * bounds.width,  pivot->y * bounds.height);
-			p->rotate(angle);
+			p->rotate(self->angle);
 			if (pivot) p->translate(-pivot->x * bounds.width, -pivot->y * bounds.height);
 		}
 
