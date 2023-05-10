@@ -152,6 +152,11 @@ class TestPoint < Test::Unit::TestCase
     assert o > point(0, 2, 3)
     assert o > point(1, 1, 3)
     assert o > point(1, 2, 2)
+
+    assert_not o == nil
+    assert     o != nil
+    assert_raise {o < nil}
+    assert_raise {o > nil}
   end
 
   def test_negate()

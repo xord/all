@@ -40,6 +40,7 @@ module Rays
     end
 
     def <=>(o)
+      return nil unless o
       ret = x <=> o.x; return ret if ret != 0
       ret = y <=> o.y; return ret if ret != 0
             z <=> o.z
