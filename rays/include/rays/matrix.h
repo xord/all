@@ -83,6 +83,10 @@ namespace Rays
 
 		This  operator *  (const This&  rhs) const;
 
+		friend bool operator == (const This& lhs, const This& rhs);
+
+		friend bool operator != (const This& lhs, const This& rhs);
+
 	};// Matrix
 
 

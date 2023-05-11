@@ -172,5 +172,17 @@ namespace Rays
 		return to_rays(to_glm(*this) * to_glm(rhs));
 	}
 
+	bool
+	operator == (const Matrix& lhs, const Matrix& rhs)
+	{
+		return to_glm(lhs) == to_glm(rhs);
+	}
+
+	bool
+	operator != (const Matrix& lhs, const Matrix& rhs)
+	{
+		return to_glm(lhs) != to_glm(rhs);
+	}
+
 
 }// Rays
