@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.36] - 2023-05-11
+
+- Fix a few minor problems
+
+
 ## [v0.1.35] - 2023-05-08
 
 - Update dependencies

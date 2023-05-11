@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.37] - 2023-05-11
+
+- Update dependencies
+
+
 ## [v0.1.36] - 2023-05-08
 
 - Add inspect()
