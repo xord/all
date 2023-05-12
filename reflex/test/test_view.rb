@@ -50,8 +50,8 @@ class TestView < Test::Unit::TestCase
     v1 = view   x: 10,  y: 20
     v2 = view   x: 1,   y: 2
 
-    assert_raise(Rucy::NativeError) {v2.from_parent 0}
-    assert_raise(Rucy::NativeError) {v2.  to_parent 0}
+    assert_nothing_raised           {v2.from_parent 0}
+    assert_nothing_raised           {v2.  to_parent 0}
     assert_raise(Rucy::NativeError) {v2.from_window 0}
     assert_raise(Rucy::NativeError) {v2.  to_window 0}
     assert_raise(Rucy::NativeError) {v2.from_screen 0}
@@ -66,6 +66,22 @@ class TestView < Test::Unit::TestCase
     assert_equal [61,  72],  v2.  to_window(50) .to_a
     assert_equal [389, 278], v2.from_screen(500).to_a
     assert_equal [611, 722], v2.  to_screen(500).to_a
+  end
+
+  def test_complex_coord_conversion()
+    w  = window(x: 100, y: 200, size: 500, zoom: 2)                                {scroll_to 100, 200}
+    v1 = view(  x: 10,  y: 20,  size: 50,  zoom: 3, angle: 90,  pivot: [0.1, 0.2]) {scroll_to 10,  20}
+    v2 = view(  x: 1,   y: 2,   size: 5,   zoom: 4, angle: 180, pivot: [0.3, 0.4]) {scroll_to 1,   2}
+
+    w .add v1
+    v1.add v2
+
+    assert_each_in_epsilon [1,        1.75],    v2.from_parent(1)  .to_a
+    assert_each_in_epsilon [1,        4],       v2.  to_parent(1)  .to_a
+    assert_each_in_epsilon [4.583,    -0.5],    v2.from_window(10) .to_a
+    assert_each_in_epsilon [262,      -120],    v2.  to_window(10) .to_a
+    assert_each_in_epsilon [-99.1666, -196.75], v2.from_screen(100).to_a
+    assert_each_in_epsilon [2522,     -2080],   v2.  to_screen(100).to_a
   end
 
   def test_add_child()
@@ -261,19 +277,86 @@ class TestView < Test::Unit::TestCase
 
   def test_pivot()
     v = view
-    assert_equal point(0, 0, 0),       v.pivot
+    assert_each_in_epsilon [0, 0, 0],          v.pivot.to_a(3)
 
-    v.pivot =    point 0.1, 0.2
-    assert_equal point(0.1, 0.2, 0),   v.pivot
+    v.pivot = point         0.1, 0.2
+    assert_each_in_epsilon [0.1, 0.2, 0],      v.pivot.to_a(3)
 
-    v.pivot =    point 0.4, 0.5, 0.6
-    assert_equal point(0.4, 0.5, 0.6), v.pivot
+    v.pivot = point         0.3, 0.4, 0.5
+    assert_each_in_epsilon [0.3, 0.4, 0.5],    v.pivot.to_a(3)
 
-    v.pivot =         [0.7, 0.8]
-    assert_equal point(0.7, 0.8),      v.pivot
+    v.pivot =              [0.6, 0.7]
+    assert_each_in_epsilon [0.6, 0.7, 0.5],    v.pivot.to_a(3)
 
-    v.pivot =         [0.9, 1.0]
-    assert_equal point(0.9, 1.0),      v.pivot
+    v.pivot =              [0.8, 0.9, 1.0]
+    assert_each_in_epsilon [0.8, 0.9, 1.0],    v.pivot.to_a(3)
+
+    v.pivot                 1.1, 1.2
+    assert_each_in_epsilon [1.1, 1.2, 1.0],    v.pivot.to_a(3)
+
+    v.pivot                 1.3, 1.4, 1.5
+    assert_each_in_epsilon [1.3, 1.4, 1.5],    v.pivot.to_a(3)
+
+    v.pivot(                -1.6, -1.7, -1.8)
+    assert_each_in_epsilon [-1.6, -1.7, -1.8], v.pivot.to_a(3)
+
+    assert_raise(ArgumentError) {v.pivot 2.0}
+  end
+
+  def test_scroll_to()
+    v = view
+    assert_each_in_epsilon [0, 0, 0],       v.scroll.to_a(3)
+
+    v.scroll_to       point(1, 2)
+    assert_each_in_epsilon [1, 2, 0],       v.scroll.to_a(3)
+
+    v.scroll_to       point(3, 4, 5)
+    assert_each_in_epsilon [3, 4, 5],       v.scroll.to_a(3)
+
+    v.scroll_to            [6, 7]
+    assert_each_in_epsilon [6, 7, 5],       v.scroll.to_a(3)
+
+    v.scroll_to            [8, 9, 10]
+    assert_each_in_epsilon [8, 9, 10],      v.scroll.to_a(3)
+
+    v.scroll_to             11, 12
+    assert_each_in_epsilon [11, 12, 10],    v.scroll.to_a(3)
+
+    v.scroll_to             13, 14, 15
+    assert_each_in_epsilon [13, 14, 15],    v.scroll.to_a(3)
+
+    v.scroll_to(            -16, -17, -18)
+    assert_each_in_epsilon [-16, -17, -18], v.scroll.to_a(3)
+
+    assert_raise(ArgumentError) {v.scroll_to 100}
+  end
+
+  def test_scroll_by()
+    v = view
+    assert_each_in_epsilon [0, 0, 0],       v.scroll.to_a(3)
+
+    v.scroll_by       point(1, 2)
+    assert_each_in_epsilon [1, 2, 0],       v.scroll.to_a(3)
+
+    v.scroll_by       point(3, 4, 5)
+    assert_each_in_epsilon [4, 6, 5],       v.scroll.to_a(3)
+
+    v.scroll_by            [6,  7]
+    assert_each_in_epsilon [10, 13, 5],     v.scroll.to_a(3)
+
+    v.scroll_by            [8,  9,  10]
+    assert_each_in_epsilon [18, 22, 15],    v.scroll.to_a(3)
+
+    v.scroll_by             11, 12
+    assert_each_in_epsilon [29, 34, 15],    v.scroll.to_a(3)
+
+    v.scroll_by             13, 14, 15
+    assert_each_in_epsilon [42, 48, 30],    v.scroll.to_a(3)
+
+    v.scroll_by(            -16, -17, -18)
+    assert_each_in_epsilon [ 26,  31,  12], v.scroll.to_a(3)
+
+    assert_raise(ArgumentError) {v.scroll_by 100}
   end
 
   def test_parent()

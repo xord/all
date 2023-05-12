@@ -97,14 +97,6 @@ module Reflex
       to_enum :each_shape
     end
 
-    def pivot=(arg)
-      case arg
-      when Point then set_pivot! arg.x, arg.y, arg.z
-      when Array then set_pivot! arg[0], arg[1], arg[2] || 0
-      else raise ArgumentError
-      end
-    end
-
     def capturing?(*args)
       cap = capture
       args.all? {|type| cap.include? type}

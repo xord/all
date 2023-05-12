@@ -634,38 +634,14 @@ namespace Reflex
 		pthis->self->captured = captured;
 	}
 
-	static void
-	scroll_and_zoom_pointer_positions (
-		PointerEvent* event, const Point& scroll, float zoom)
-	{
-		assert(event);
-
-		if (zoom == 0)
-			argument_error(__FILE__, __LINE__);
-
-		if (scroll == 0 && zoom == 1)
-			return;
-
-		for (auto& pointer : event->self->pointers)
-		{
-			Pointer_update_positions(&pointer, [=](Point* pos)
-			{
-				*pos -= scroll;
-				*pos /= zoom;
-			});
-		}
-	}
-
 	void
-	PointerEvent_update_for_child_view (PointerEvent* pthis, const View* view)
+	PointerEvent_update_for_child_view (PointerEvent* pthis, const View* child)
 	{
-		if (!pthis || !view)
+		if (!pthis || !child)
 			argument_error(__FILE__, __LINE__);
 
-		const Bounds& frame = view->frame();
-		const Point& offset = frame.position();
+		const Bounds& frame = child->frame();
 		Bounds bounds       = frame.dup().move_to(0, 0);
-		float angle         = view->angle();
 
 		std::vector<Pointer> pointers;
 		for (const auto& pointer : pthis->self->pointers)
@@ -673,16 +649,13 @@ namespace Reflex
 			pointers.emplace_back(pointer);
 			Pointer_update_positions(&pointers.back(), [&](Point* pos)
 			{
-				*pos -= offset;
-				pos->rotate(-angle);
+				*pos = child->from_parent(*pos);
 			});
 
 			if (!bounds.is_include(pointers.back().position()))
 				pointers.pop_back();
 		}
 		pthis->self->pointers = pointers;
-
-		scroll_and_zoom_pointer_positions(pthis, view->scroll(), view->zoom());
 	}
 
 	void
@@ -691,18 +664,13 @@ namespace Reflex
 		if (!pthis || !view)
 			argument_error(__FILE__, __LINE__);
 
-		float angle = view->angle();
-
 		for (auto& pointer : pthis->self->pointers)
 		{
 			Pointer_update_positions(&pointer, [=](Point* pos)
 			{
 				*pos = view->from_window(*pos);
-				pos->rotate(-angle);
 			});
 		}
-
-		scroll_and_zoom_pointer_positions(pthis, view->scroll(), view->zoom());
 	}
 
 

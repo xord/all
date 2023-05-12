@@ -105,10 +105,20 @@ namespace Reflex
 			return *ppivot;
 		}
 
+		bool has_pivot () const
+		{
+			return ppivot && *ppivot != ZERO;
+		}
+
 		Point& scroll ()
 		{
 			if (!pscroll) pscroll.reset(new Point);
 			return *pscroll;
+		}
+
+		bool has_scroll () const
+		{
+			return pscroll && *pscroll != ZERO;
 		}
 
 		Selector& selector ()
@@ -1246,9 +1256,9 @@ namespace Reflex
 		if (self->angle != 0)
 		{
 			const Point* pivot = self->ppivot.get();
-			if (pivot) p->translate( pivot->x * bounds.width,  pivot->y * bounds.height);
+			if (pivot) p->translate( pivot->x * bounds.w,  pivot->y * bounds.h);
 			p->rotate(self->angle);
-			if (pivot) p->translate(-pivot->x * bounds.width, -pivot->y * bounds.height);
+			if (pivot) p->translate(-pivot->x * bounds.w, -pivot->y * bounds.h);
 		}
 
 		float zoom = self->zoom;
@@ -1571,22 +1581,76 @@ namespace Reflex
 		redraw();
 	}
 
+	static void
+	get_from_parent_matrix (Matrix* m, const View* view)
+	{
+		assert(m && view);
+		View::Data* self = view->self.get();
+
+		const auto& frame  = self->frame;
+		const auto* scroll = self->has_scroll() ? self->pscroll.get() : NULL;
+		auto angle         = self->angle;
+		auto zoom          = self->zoom;
+
+		if (zoom != 1 && zoom > 0) m->scale(1 / zoom, 1 / zoom);
+		if (angle != 0)
+		{
+			const auto* pivot = self->has_pivot() ? self->ppivot.get() : NULL;
+			if (pivot) m->translate( pivot->x * frame.w,  pivot->y * frame.h);
+			m->rotate(-angle);
+			if (pivot) m->translate(-pivot->x * frame.w, -pivot->y * frame.h);
+		}
+		m->translate(-frame.position());
+		if (scroll) m->translate(-*scroll);
+	}
+
+	static void
+	get_to_parent_matrix (Matrix* m, const View* view)
+	{
+		assert(m && view);
+		View::Data* self = view->self.get();
+
+		const auto& frame  = self->frame;
+		const auto* scroll = self->has_scroll() ? self->pscroll.get() : NULL;
+		auto angle         = self->angle;
+		auto zoom          = self->zoom;
+
+		if (scroll) m->translate(*scroll);
+		m->translate(frame.position());
+		if (angle != 0)
+		{
+			const auto* pivot = self->has_pivot() ? self->ppivot.get() : NULL;
+			if (pivot) m->translate( pivot->x * frame.w,  pivot->y * frame.h);
+			m->rotate(angle);
+			if (pivot) m->translate(-pivot->x * frame.w, -pivot->y * frame.h);
+		}
+		if (zoom != 1 && zoom > 0) m->scale(zoom, zoom);
+	}
+
 	Point
 	View::from_parent (const Point& point) const
 	{
-		if (!parent())
-			invalid_state_error(__FILE__, __LINE__);
-
-		return point - frame().position();
+		if (self->zoom == 1 && self->angle == 0 && !self->has_scroll())
+			return point - self->frame.position();
+		else
+		{
+			Matrix m(1);
+			get_from_parent_matrix(&m, this);
+			return m * point;
+		}
 	}
 
 	Point
 	View::to_parent (const Point& point) const
 	{
-		if (!parent())
-			invalid_state_error(__FILE__, __LINE__);
-
-		return point + frame().position();
+		if (self->zoom == 1 && self->angle == 0 && !self->has_scroll())
+			return point + self->frame.position();
+		else
+		{
+			Matrix m(1);
+			get_to_parent_matrix(&m, this);
+			return m * point;
+		}
 	}
 
 	Point
@@ -1595,10 +1659,8 @@ namespace Reflex
 		if (!window())
 			invalid_state_error(__FILE__, __LINE__);
 
-		Point p = point;
-		for (const View* v = this; v; v = v->parent())
-			p -= v->frame().position();
-		return p;
+		const auto* parent = self->parent;
+		return from_parent(parent ? parent->from_window(point) : point);
 	}
 
 	Point
@@ -1607,10 +1669,8 @@ namespace Reflex
 		if (!window())
 			invalid_state_error(__FILE__, __LINE__);
 
-		Point p = point;
-		for (const View* v = this; v; v = v->parent())
-			p += v->frame().position();
-		return p;
+		const auto* parent = self->parent;
+		return parent ? parent->to_window(to_parent(point)) : to_parent(point);
 	}
 
 	Point
