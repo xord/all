@@ -446,10 +446,32 @@ RUCY_DEF0(get_angle)
 RUCY_END
 
 static
-RUCY_DEF3(set_pivot, x, y, z)
+RUCY_DEFN(set_pivot)
 {
 	CHECK;
-	THIS->set_pivot(to<float>(x), to<float>(y), to<float>(z));
+
+	if (argv[0].is_kind_of(Rays::point_class()))
+	{
+		check_arg_count(__FILE__, __LINE__, "View#pivot=(Point)", argc, 1);
+
+		THIS->set_pivot(to<Rays::Point&>(argv[0]));
+	}
+	else
+	{
+		if (argv[0].is_array())
+		{
+			argc = argv[0].size();
+			argv = &argv[0][0];
+		}
+		check_arg_count(__FILE__, __LINE__, "View#pivot=(Numeric, ...)", argc, 2, 3);
+
+		const Rays::Point& p = THIS->pivot();
+		float x =                          to<float>(argv[0]);
+		float y =                          to<float>(argv[1]);
+		float z = (argc >= 3 && argv[2]) ? to<float>(argv[2]) : p.z;
+		THIS->set_pivot(x, y, z);
+	}
+
 	return value(THIS->pivot());
 }
 RUCY_END
@@ -1193,8 +1215,8 @@ Init_reflex_view ()
 	cView.define_method("fit_to_content", fit_to_content);
 	cView.define_method("angle=", set_angle);
 	cView.define_method("angle",  get_angle);
-	cView.define_private_method("set_pivot!", set_pivot);
-	cView.define_method(            "pivot",  get_pivot);
+	cView.define_method("pivot=", set_pivot);
+	cView.define_method("pivot",  get_pivot);
 	cView.define_method("scroll_to", scroll_to);
 	cView.define_method("scroll_by", scroll_by);
 	cView.define_method("scroll", get_scroll);

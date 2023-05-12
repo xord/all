@@ -261,19 +261,30 @@ class TestView < Test::Unit::TestCase
 
   def test_pivot()
     v = view
-    assert_equal point(0, 0, 0),       v.pivot
+    assert_each_in_epsilon [0, 0, 0],          v.pivot.to_a(3)
 
-    v.pivot =    point 0.1, 0.2
-    assert_equal point(0.1, 0.2, 0),   v.pivot
+    v.pivot = point         0.1, 0.2
+    assert_each_in_epsilon [0.1, 0.2, 0],      v.pivot.to_a(3)
 
-    v.pivot =    point 0.4, 0.5, 0.6
-    assert_equal point(0.4, 0.5, 0.6), v.pivot
+    v.pivot = point         0.3, 0.4, 0.5
+    assert_each_in_epsilon [0.3, 0.4, 0.5],    v.pivot.to_a(3)
 
-    v.pivot =         [0.7, 0.8]
-    assert_equal point(0.7, 0.8),      v.pivot
+    v.pivot =              [0.6, 0.7]
+    assert_each_in_epsilon [0.6, 0.7, 0.5],    v.pivot.to_a(3)
 
-    v.pivot =         [0.9, 1.0]
-    assert_equal point(0.9, 1.0),      v.pivot
+    v.pivot =              [0.8, 0.9, 1.0]
+    assert_each_in_epsilon [0.8, 0.9, 1.0],    v.pivot.to_a(3)
+
+    v.pivot                 1.1, 1.2
+    assert_each_in_epsilon [1.1, 1.2, 1.0],    v.pivot.to_a(3)
+
+    v.pivot                 1.3, 1.4, 1.5
+    assert_each_in_epsilon [1.3, 1.4, 1.5],    v.pivot.to_a(3)
+
+    v.pivot                 -1.6, -1.7, -1.8
+    assert_each_in_epsilon [-1.6, -1.7, -1.8], v.pivot.to_a(3)
+
+    assert_raise(ArgumentError) {v.pivot 2.0}
   end
 
   def test_parent()
