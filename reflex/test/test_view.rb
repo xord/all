@@ -281,7 +281,7 @@ class TestView < Test::Unit::TestCase
     v.pivot                 1.3, 1.4, 1.5
     assert_each_in_epsilon [1.3, 1.4, 1.5],    v.pivot.to_a(3)
 
-    v.pivot                 -1.6, -1.7, -1.8
+    v.pivot(                -1.6, -1.7, -1.8)
     assert_each_in_epsilon [-1.6, -1.7, -1.8], v.pivot.to_a(3)
 
     assert_raise(ArgumentError) {v.pivot 2.0}
@@ -309,7 +309,7 @@ class TestView < Test::Unit::TestCase
     v.scroll_to             13, 14, 15
     assert_each_in_epsilon [13, 14, 15],    v.scroll.to_a(3)
 
-    v.scroll_to             -16, -17, -18
+    v.scroll_to(            -16, -17, -18)
     assert_each_in_epsilon [-16, -17, -18], v.scroll.to_a(3)
 
     assert_raise(ArgumentError) {v.scroll_to 100}
@@ -337,7 +337,7 @@ class TestView < Test::Unit::TestCase
     v.scroll_by             13, 14, 15
     assert_each_in_epsilon [42, 48, 30],    v.scroll.to_a(3)
 
-    v.scroll_by             -16, -17, -18
+    v.scroll_by(            -16, -17, -18)
     assert_each_in_epsilon [ 26,  31,  12], v.scroll.to_a(3)
 
     assert_raise(ArgumentError) {v.scroll_by 100}
