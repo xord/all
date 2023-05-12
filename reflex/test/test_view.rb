@@ -287,6 +287,62 @@ class TestView < Test::Unit::TestCase
     assert_raise(ArgumentError) {v.pivot 2.0}
   end
 
+  def test_scroll_to()
+    v = view
+    assert_each_in_epsilon [0, 0, 0],       v.scroll.to_a(3)
+
+    v.scroll_to       point(1, 2)
+    assert_each_in_epsilon [1, 2, 0],       v.scroll.to_a(3)
+
+    v.scroll_to       point(3, 4, 5)
+    assert_each_in_epsilon [3, 4, 5],       v.scroll.to_a(3)
+
+    v.scroll_to            [6, 7]
+    assert_each_in_epsilon [6, 7, 5],       v.scroll.to_a(3)
+
+    v.scroll_to            [8, 9, 10]
+    assert_each_in_epsilon [8, 9, 10],      v.scroll.to_a(3)
+
+    v.scroll_to             11, 12
+    assert_each_in_epsilon [11, 12, 10],    v.scroll.to_a(3)
+
+    v.scroll_to             13, 14, 15
+    assert_each_in_epsilon [13, 14, 15],    v.scroll.to_a(3)
+
+    v.scroll_to             -16, -17, -18
+    assert_each_in_epsilon [-16, -17, -18], v.scroll.to_a(3)
+
+    assert_raise(ArgumentError) {v.scroll_to 100}
+  end
+
+  def test_scroll_by()
+    v = view
+    assert_each_in_epsilon [0, 0, 0],       v.scroll.to_a(3)
+
+    v.scroll_by       point(1, 2)
+    assert_each_in_epsilon [1, 2, 0],       v.scroll.to_a(3)
+
+    v.scroll_by       point(3, 4, 5)
+    assert_each_in_epsilon [4, 6, 5],       v.scroll.to_a(3)
+
+    v.scroll_by            [6,  7]
+    assert_each_in_epsilon [10, 13, 5],     v.scroll.to_a(3)
+
+    v.scroll_by            [8,  9,  10]
+    assert_each_in_epsilon [18, 22, 15],    v.scroll.to_a(3)
+
+    v.scroll_by             11, 12
+    assert_each_in_epsilon [29, 34, 15],    v.scroll.to_a(3)
+
+    v.scroll_by             13, 14, 15
+    assert_each_in_epsilon [42, 48, 30],    v.scroll.to_a(3)
+
+    v.scroll_by             -16, -17, -18
+    assert_each_in_epsilon [ 26,  31,  12], v.scroll.to_a(3)
+
+    assert_raise(ArgumentError) {v.scroll_by 100}
+  end
+
   def test_parent()
     parent, child = view, view
     parent.add_child child

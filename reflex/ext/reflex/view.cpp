@@ -488,12 +488,22 @@ static
 RUCY_DEFN(scroll_to)
 {
 	CHECK;
-	check_arg_count(__FILE__, __LINE__, "View#scroll_to", argc, 1, 2, 3);
 
 	if (argv[0].is_kind_of(Rays::point_class()))
+	{
+		check_arg_count(__FILE__, __LINE__, "View#scroll_to(Point)", argc, 1);
+
 		THIS->scroll_to(to<Rays::Point&>(argv[0]));
+	}
 	else
 	{
+		if (argv[0].is_array())
+		{
+			argc = argv[0].size();
+			argv = &argv[0][0];
+		}
+		check_arg_count(__FILE__, __LINE__, "View#scroll_to(Numeric, ...)", argc, 2, 3);
+
 		const Rays::Point& p = THIS->scroll();
 		coord x = (argc >= 1 && argv[0]) ? to<coord>(argv[0]) : p.x;
 		coord y = (argc >= 2 && argv[1]) ? to<coord>(argv[1]) : p.y;
@@ -509,12 +519,22 @@ static
 RUCY_DEFN(scroll_by)
 {
 	CHECK;
-	check_arg_count(__FILE__, __LINE__, "View#scroll_by", argc, 1, 2, 3);
 
 	if (argv[0].is_kind_of(Rays::point_class()))
+	{
+		check_arg_count(__FILE__, __LINE__, "View#scroll_by", argc, 1);
+
 		THIS->scroll_by(to<Rays::Point&>(argv[0]));
+	}
 	else
 	{
+		if (argv[0].is_array())
+		{
+			argc = argv[0].size();
+			argv = &argv[0][0];
+		}
+		check_arg_count(__FILE__, __LINE__, "View#scroll_by(Numeric, ...)", argc, 2, 3);
+
 		coord x = (argc >= 1 && argv[0]) ? to<coord>(argv[0]) : 0;
 		coord y = (argc >= 2 && argv[1]) ? to<coord>(argv[1]) : 0;
 		coord z = (argc >= 3 && argv[2]) ? to<coord>(argv[2]) : 0;
