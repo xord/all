@@ -50,8 +50,8 @@ class TestView < Test::Unit::TestCase
     v1 = view   x: 10,  y: 20
     v2 = view   x: 1,   y: 2
 
-    assert_raise(Rucy::NativeError) {v2.from_parent 0}
-    assert_raise(Rucy::NativeError) {v2.  to_parent 0}
+    assert_nothing_raised           {v2.from_parent 0}
+    assert_nothing_raised           {v2.  to_parent 0}
     assert_raise(Rucy::NativeError) {v2.from_window 0}
     assert_raise(Rucy::NativeError) {v2.  to_window 0}
     assert_raise(Rucy::NativeError) {v2.from_screen 0}
@@ -66,6 +66,22 @@ class TestView < Test::Unit::TestCase
     assert_equal [61,  72],  v2.  to_window(50) .to_a
     assert_equal [389, 278], v2.from_screen(500).to_a
     assert_equal [611, 722], v2.  to_screen(500).to_a
+  end
+
+  def test_complex_coord_conversion()
+    w  = window(x: 100, y: 200, size: 500, zoom: 2)                                {scroll_to 100, 200}
+    v1 = view(  x: 10,  y: 20,  size: 50,  zoom: 3, angle: 90,  pivot: [0.1, 0.2]) {scroll_to 10,  20}
+    v2 = view(  x: 1,   y: 2,   size: 5,   zoom: 4, angle: 180, pivot: [0.3, 0.4]) {scroll_to 1,   2}
+
+    w .add v1
+    v1.add v2
+
+    assert_each_in_epsilon [1,        1.75],    v2.from_parent(1)  .to_a
+    assert_each_in_epsilon [1,        4],       v2.  to_parent(1)  .to_a
+    assert_each_in_epsilon [4.583,    -0.5],    v2.from_window(10) .to_a
+    assert_each_in_epsilon [262,      -120],    v2.  to_window(10) .to_a
+    assert_each_in_epsilon [-99.1666, -196.75], v2.from_screen(100).to_a
+    assert_each_in_epsilon [2522,     -2080],   v2.  to_screen(100).to_a
   end
 
   def test_add_child()
