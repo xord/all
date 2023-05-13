@@ -20,10 +20,15 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF0(block)
+RUCY_DEFN(block)
 {
 	CHECK;
-	THIS->block();
+	check_arg_count(__FILE__, __LINE__, "Event#block", argc, 0, 1);
+
+	if (argc >= 1)
+		THIS->block((bool) argv[0]);
+	else
+		THIS->block();
 }
 RUCY_END
 

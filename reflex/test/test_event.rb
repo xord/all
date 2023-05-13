@@ -18,24 +18,27 @@ class TestEvent < Test::Unit::TestCase
   end
 
   def test_block()
-    e = event
-    assert_false e.blocked?
-    e.block
-    assert_true  e.blocked?
-  end
+    events = -> {
+      e1 = event
+      e2 = e1.dup
+      e3 = e2.dup
+      return e1, e2, e3
+    }
 
-  def _test_block_propagation()
-    e1 = event
-    e2 = e1.dup
-    e3 = e2.dup
-    assert_false e1.blocked?
-    assert_false e2.blocked?
-    assert_false e3.blocked?
+    e1, e2, e3 = events.call
+    assert_equal [false, false, false], [e1.blocked?, e2.blocked?, e3.blocked?]
 
+    e1, e2, e3 = events.call
     e2.block
-    assert_true  e1.blocked?
-    assert_true  e2.blocked?
-    assert_false e3.blocked?
+    assert_equal [true,  true,  false], [e1.blocked?, e2.blocked?, e3.blocked?]
+
+    e1, e2, e3 = events.call
+    e2.block false
+    assert_equal [false, true,  false], [e1.blocked?, e2.blocked?, e3.blocked?]
+
+    e1, e2, e3 = events.call
+    e2.block true
+    assert_equal [true,  true,  false], [e1.blocked?, e2.blocked?, e3.blocked?]
   end
 
   def test_time()
