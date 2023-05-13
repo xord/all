@@ -563,9 +563,11 @@ namespace Reflex
 
 		std::vector<Pointer> pointers;
 
+		uint index;
+
 		bool captured;
 
-		Data (bool captured = false)
+		Data (uint index = 0, bool captured = false)
 		:	captured(captured)
 		{
 		}
@@ -678,10 +680,11 @@ namespace Reflex
 	{
 	}
 
-	PointerEvent::PointerEvent (const Pointer* pointers, size_t size)
+	PointerEvent::PointerEvent (const Pointer* pointers, size_t size, uint index)
 	{
 		for (size_t i = 0; i < size; ++i)
 			self->pointers.emplace_back(pointers[i]);
+		self->index = index;
 	}
 
 	PointerEvent::PointerEvent (const PointerEvent* src)
@@ -705,6 +708,12 @@ namespace Reflex
 	PointerEvent::empty () const
 	{
 		return size() == 0;
+	}
+
+	uint
+	PointerEvent::index () const
+	{
+		return self->index;
 	}
 
 	bool

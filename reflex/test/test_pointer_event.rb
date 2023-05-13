@@ -11,8 +11,8 @@ class TestPointerEvent < Test::Unit::TestCase
   DOWN        = Reflex::Pointer::DOWN
   UP          = Reflex::Pointer::UP
 
-  def event(*args)
-    Reflex::PointerEvent.new(*args)
+  def event(*args, **kwargs)
+    Reflex::PointerEvent.new(*args, **kwargs)
   end
 
   def pointer(
@@ -25,9 +25,9 @@ class TestPointerEvent < Test::Unit::TestCase
   end
 
   def test_initialize()
-    assert_nothing_raised       {event pointer}
-    assert_nothing_raised       {event pointer, pointer}
-    assert_raise(ArgumentError) {event}
+    assert_nothing_raised       {event pointer,          index: 0}
+    assert_nothing_raised       {event pointer, pointer, index: 0}
+    assert_raise(ArgumentError) {event                   index: 0}
 
     p1 = pointer(
       id: 1,  type: TOUCH, action: DOWN,
@@ -37,11 +37,12 @@ class TestPointerEvent < Test::Unit::TestCase
       id: 10, type: PEN,   action: UP,
       position: [20, 30], modifiers: 40, click_count: 50, drag: false,
       time: 60)
-    e = event p1, p2
+    e = event p1, p2, index: 9
 
     assert_equal [p1, p2], e.pointers.to_a
     assert_equal 2,        e.size
     assert_equal false,    e.empty?
+    assert_equal 9,        e.index
     assert_equal false,    e.captured?
 
     assert_equal 1,        p1.id
@@ -58,7 +59,7 @@ class TestPointerEvent < Test::Unit::TestCase
   end
 
   def test_dup()
-    e1 = event pointer
+    e1 = event pointer, index: 0
     e2 = e1.dup
     e1.block
     e3 = e1.dup
@@ -68,19 +69,25 @@ class TestPointerEvent < Test::Unit::TestCase
   end
 
   def test_size()
-    assert_equal 1, event(pointer         ).size
-    assert_equal 2, event(pointer, pointer).size
+    assert_equal 1, event(pointer,          index: 0).size
+    assert_equal 2, event(pointer, pointer, index: 0).size
   end
 
   def test_empty?()
-    assert_equal false, event(pointer).empty?
+    assert_equal false, event(pointer, index: 0).empty?
+  end
+
+  def test_index()
+    assert_equal 0,              event(pointer, index: 0).index
+    assert_equal 1,              event(pointer, index: 1).index
+    assert_raise(ArgumentError) {event pointer, index: -1}
   end
 
   def test_get_at()
     p1 = pointer position: 1
     p2 = pointer position: 2
     p3 = pointer position: 3
-    e  = event p1, p2, p3
+    e  = event p1, p2, p3, index: 0
 
     assert_equal p1, e[0]
     assert_equal p3, e[2]
