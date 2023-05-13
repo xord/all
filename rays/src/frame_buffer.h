@@ -5,7 +5,7 @@
 
 
 #include <xot/pimpl.h>
-#include <rays/defs.h>
+#include "rays/defs.h"
 #include "opengl.h"
 
 

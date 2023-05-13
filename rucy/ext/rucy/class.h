@@ -6,7 +6,7 @@
 
 #include <xot/ref.h>
 #include <xot/string.h>
-#include <rucy/extension.h>
+#include "rucy/extension.h"
 #include "tester.h"
 
 

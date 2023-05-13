@@ -4,7 +4,7 @@
 #define __REFLEX_EXT_SELECTOR_H__
 
 
-#include <reflex/ruby/selector.h>
+#include "reflex/ruby/selector.h"
 
 
 template <typename T>

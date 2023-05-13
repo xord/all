@@ -10,7 +10,7 @@
 #include <xot/pimpl.h>
 #include <rays/point.h>
 #include <rays/painter.h>
-#include <reflex/defs.h>
+#include "reflex/defs.h"
 
 
 class b2World;

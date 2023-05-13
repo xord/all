@@ -1,7 +1,7 @@
 #include "reflex/ruby/shape.h"
 
 
-#include "rays/ruby/polygon.h"
+#include <rays/ruby/polygon.h>
 #include "defs.h"
 
 

@@ -4,7 +4,7 @@
 #define __RAYS_SRC_BITMAP_H__
 
 
-#include <rays/bitmap.h>
+#include "rays/bitmap.h"
 
 
 namespace Rays

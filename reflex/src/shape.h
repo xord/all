@@ -5,7 +5,7 @@
 
 
 #include <xot/util.h>
-#include <reflex/shape.h>
+#include "reflex/shape.h"
 
 
 class b2Shape;

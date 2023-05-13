@@ -4,7 +4,7 @@
 #define __RAYS_SRC_SHADER_H__
 
 
-#include <rays/shader.h>
+#include "rays/shader.h"
 
 
 namespace Rays

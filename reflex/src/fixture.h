@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <xot/noncopyable.h>
-#include <reflex/defs.h>
+#include "reflex/defs.h"
 
 
 class b2Fixture;

@@ -5,7 +5,7 @@
 
 
 #include <glm/mat4x4.hpp>
-#include <rays/matrix.h>
+#include "rays/matrix.h"
 
 
 namespace Rays

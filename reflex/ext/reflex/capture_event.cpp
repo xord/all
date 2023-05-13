@@ -1,7 +1,7 @@
 #include "reflex/ruby/event.h"
 
 
-#include "rays/ruby/point.h"
+#include <rays/ruby/point.h>
 #include "defs.h"
 
 

@@ -5,8 +5,8 @@
 
 
 #include <xot/pimpl.h>
-#include <rays/defs.h>
-#include <rays/coord.h>
+#include "rays/defs.h"
+#include "rays/coord.h"
 #include "opengl.h"
 
 

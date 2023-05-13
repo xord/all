@@ -6,8 +6,8 @@
 
 #include <float.h>
 #include <clipper.hpp>
-#include <rays/polyline.h>
-#include <rays/exception.h>
+#include "rays/polyline.h"
+#include "rays/exception.h"
 
 
 namespace Rays

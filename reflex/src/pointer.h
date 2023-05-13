@@ -5,7 +5,7 @@
 
 
 #include <functional>
-#include <reflex/pointer.h>
+#include "reflex/pointer.h"
 
 
 namespace Reflex

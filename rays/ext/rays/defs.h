@@ -6,9 +6,9 @@
 
 #include <vector>
 #include <rucy.h>
-#include <rays/defs.h>
-#include <rays/point.h>
-#include <rays/ruby/defs.h>
+#include "rays/defs.h"
+#include "rays/point.h"
+#include "rays/ruby/defs.h"
 
 
 using namespace Rucy;

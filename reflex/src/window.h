@@ -9,8 +9,8 @@
 #include <xot/time.h>
 #include <rays/point.h>
 #include <rays/painter.h>
-#include <reflex/window.h>
-#include <reflex/view.h>
+#include "reflex/window.h"
+#include "reflex/view.h"
 #include "pointer.h"
 
 

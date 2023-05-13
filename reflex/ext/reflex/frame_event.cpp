@@ -1,8 +1,8 @@
 #include "reflex/ruby/event.h"
 
 
-#include "rays/ruby/point.h"
-#include "rays/ruby/bounds.h"
+#include <rays/ruby/point.h>
+#include <rays/ruby/bounds.h>
 #include "defs.h"
 
 

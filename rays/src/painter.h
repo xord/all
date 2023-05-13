@@ -4,7 +4,7 @@
 #define __RAYS_SRC_PAINTER_H__
 
 
-#include <rays/painter.h>
+#include "rays/painter.h"
 #include "opengl.h"
 
 

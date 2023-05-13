@@ -1,8 +1,8 @@
 #include "reflex/ruby/style.h"
 
 
-#include "rays/ruby/color.h"
-#include "rays/ruby/image.h"
+#include <rays/ruby/color.h>
+#include <rays/ruby/image.h>
 #include "reflex/ruby/selector.h"
 #include "defs.h"
 #include "selector.h"

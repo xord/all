@@ -6,7 +6,7 @@
 
 #include <windows.h>
 #include <xot/pimpl.h>
-#include <rays/defs.h>
+#include "rays/defs.h"
 
 
 namespace Rays

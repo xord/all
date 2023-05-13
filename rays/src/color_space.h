@@ -4,7 +4,7 @@
 #define __RAYS_SRC_COLOR_SPACE_H__
 
 
-#include <rays/color_space.h>
+#include "rays/color_space.h"
 #include "opengl.h"
 
 

@@ -5,7 +5,7 @@
 
 
 #include <windows.h>
-#include <reflex/defs.h>
+#include "reflex/defs.h"
 
 
 namespace Reflex

@@ -4,7 +4,7 @@
 #define __RAYS_SRC_IMAGE_H__
 
 
-#include <rays/image.h>
+#include "rays/image.h"
 
 
 namespace Rays

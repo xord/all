@@ -4,8 +4,8 @@
 #define __RAYS_SRC_WIN32_FONT_H__
 
 
-#include <rays/defs.h>
-#include <rays/font.h>
+#include "rays/defs.h"
+#include "rays/font.h"
 #include "gdi.h"
 
 

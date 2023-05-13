@@ -4,7 +4,7 @@
 #define __REFLEX_SRC_STYLE_H__
 
 
-#include <reflex/style.h>
+#include "reflex/style.h"
 
 
 namespace Reflex

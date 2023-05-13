@@ -5,7 +5,7 @@
 
 
 #include <vector>
-#include <rays/polygon.h>
+#include "rays/polygon.h"
 
 
 namespace Rays

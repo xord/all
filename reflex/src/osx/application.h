@@ -4,7 +4,7 @@
 #define __REFLEX_SRC_OSX_APPLICATION_H__
 
 
-#include <reflex/application.h>
+#include "reflex/application.h"
 
 
 @class ReflexAppDelegate;

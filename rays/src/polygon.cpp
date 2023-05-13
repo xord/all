@@ -6,7 +6,7 @@
 #include <utility>
 #include <poly2tri.h>
 #include <Splines.h>
-#include "xot/util.h"
+#include <xot/util.h>
 #include "rays/color.h"
 #include "rays/exception.h"
 #include "rays/debug.h"

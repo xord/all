@@ -7,7 +7,7 @@
 #include <xot/noncopyable.h>
 #include <xot/pimpl.h>
 #include <rays/point.h>
-#include <reflex/defs.h>
+#include "reflex/defs.h"
 
 
 class b2Body;
