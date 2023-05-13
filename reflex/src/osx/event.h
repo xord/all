@@ -12,18 +12,22 @@ namespace Reflex
 {
 
 
-	struct NativeKeyEvent : public KeyEvent
+	class NativeKeyEvent : public KeyEvent
 	{
 
-		NativeKeyEvent (NSEvent* event, Action action);
+		public:
+
+			NativeKeyEvent (NSEvent* event, Action action);
 
 	};// NativeKeyEvent
 
 
-	struct NativeFlagKeyEvent : public KeyEvent
+	class NativeFlagKeyEvent : public KeyEvent
 	{
 
-		NativeFlagKeyEvent (NSEvent* event);
+		public:
+
+			NativeFlagKeyEvent (NSEvent* event);
 
 	};// NativeFlagKeyEvent
 
@@ -39,10 +43,12 @@ namespace Reflex
 	};// NativePointerEvent
 
 
-	struct NativeWheelEvent : public WheelEvent
+	class NativeWheelEvent : public WheelEvent
 	{
 
-		NativeWheelEvent (NSEvent* event, NSView* view);
+		public:
+
+			NativeWheelEvent (NSEvent* event, NSView* view);
 
 	};// NativeWheelEvent
 

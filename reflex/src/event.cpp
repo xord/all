@@ -992,9 +992,39 @@ namespace Reflex
 	}
 
 
-	MotionEvent::MotionEvent (const Point& gravity)
-	:	gravity(gravity)
+	struct MotionEvent::Data
 	{
+
+		Point gravity;
+
+		Data (const Point& gravity)
+		:	gravity(gravity)
+		{
+		}
+
+	};// MotionEvent::Data
+
+
+	MotionEvent::MotionEvent (const Point& gravity)
+	:	self(new Data(gravity))
+	{
+	}
+
+	MotionEvent::MotionEvent (const MotionEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	MotionEvent
+	MotionEvent::dup () const
+	{
+		return MotionEvent(this);
+	}
+
+	const Point&
+	MotionEvent::gravity () const
+	{
+		return self->gravity;
 	}
 
 

@@ -163,7 +163,7 @@ namespace Reflex
 	};// FrameEvent
 
 
-	struct ScrollEvent : public Event
+	class ScrollEvent : public Event
 	{
 
 		public:
@@ -193,7 +193,7 @@ namespace Reflex
 	};// ScrollEvent
 
 
-	struct FocusEvent : public Event
+	class FocusEvent : public Event
 	{
 
 		public:
@@ -223,7 +223,7 @@ namespace Reflex
 	};// FocusEvent
 
 
-	struct KeyEvent : public Event
+	class KeyEvent : public Event
 	{
 
 		public:
@@ -291,7 +291,7 @@ namespace Reflex
 	};// PointerEvent
 
 
-	struct WheelEvent : public Event
+	class WheelEvent : public Event
 	{
 
 		public:
@@ -325,7 +325,7 @@ namespace Reflex
 	};// WheelEvent
 
 
-	struct CaptureEvent : public Event
+	class CaptureEvent : public Event
 	{
 
 		public:
@@ -351,7 +351,7 @@ namespace Reflex
 	};// CaptureEvent
 
 
-	struct TimerEvent : public Event
+	class TimerEvent : public Event
 	{
 
 		public:
@@ -387,7 +387,7 @@ namespace Reflex
 	};// TimerEvent
 
 
-	struct ContactEvent : public Event
+	class ContactEvent : public Event
 	{
 
 		public:
@@ -421,12 +421,24 @@ namespace Reflex
 	};// ContactEvent
 
 
-	struct MotionEvent : public Event
+	class MotionEvent : public Event
 	{
 
-		Point gravity;
+		public:
 
-		MotionEvent (const Point& gravity = Point(0, 9.8));
+			MotionEvent (const Point& gravity = Point(0, 9.8));
+
+			MotionEvent dup () const;
+
+			const Point& gravity () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			MotionEvent (const MotionEvent* src);
 
 	};// MotionEvent
 

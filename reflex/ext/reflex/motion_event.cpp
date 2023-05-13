@@ -24,7 +24,7 @@ RUCY_DEF1(initialize, gravity)
 {
 	CHECK;
 
-	THIS->gravity = to<Rays::Point>(gravity);
+	*THIS = Reflex::MotionEvent(to<Rays::Point>(gravity));
 
 	return rb_call_super(0, NULL);
 }
@@ -34,7 +34,7 @@ static
 RUCY_DEF1(initialize_copy, obj)
 {
 	CHECK;
-	*THIS = to<Reflex::MotionEvent&>(obj);
+	*THIS = to<Reflex::MotionEvent&>(obj).dup();
 	return self;
 }
 RUCY_END
@@ -43,7 +43,7 @@ static
 RUCY_DEF0(gravity)
 {
 	CHECK;
-	return value(THIS->gravity);
+	return value(THIS->gravity());
 }
 RUCY_END
 
