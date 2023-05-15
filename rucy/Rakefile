@@ -12,7 +12,7 @@ require 'rucy/extension'
 
 
 EXTENSIONS = [Xot, Rucy]
-NPARAM_MAX = 10
+NPARAM_MAX = 12
 NTIMES     = (0..NPARAM_MAX)
 
 default_tasks :ext

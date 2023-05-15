@@ -219,7 +219,7 @@ namespace Reflex
 
 		Bounds frame;
 
-		coord dx, dy, dw, dh;
+		coord dx, dy, dz, dw, dh, dd;
 
 		float zoom, dzoom;
 
@@ -227,10 +227,11 @@ namespace Reflex
 
 		Data (
 			const Bounds& frame = 0,
-			coord dx = 0, coord dy = 0, coord dw = 0, coord dh = 0,
+			coord dx = 0, coord dy = 0, coord dz = 0,
+			coord dw = 0, coord dh = 0, coord dd = 0,
 			float zoom  = 0, float dzoom  = 0,
 			float angle = 0, float dangle = 0)
-		:	frame(frame), dx(dx), dy(dy), dw(dw), dh(dh),
+		:	frame(frame), dx(dx), dy(dy), dz(dz), dw(dw), dh(dh), dd(dd),
 			zoom(zoom), dzoom(dzoom), angle(angle), dangle(dangle)
 		{
 		}
@@ -243,9 +244,11 @@ namespace Reflex
 	}
 
 	FrameEvent::FrameEvent (
-		const Bounds& frame, coord dx, coord dy, coord dwidth, coord dheight,
+		const Bounds& frame,
+		coord dx, coord dy, coord dz, coord dwidth, coord dheight, coord ddepth,
 		float zoom, float dzoom, float angle, float dangle)
-	:	self(new Data(frame, dx, dy, dwidth, dheight, zoom, dzoom, angle, dangle))
+	:	self(new Data(
+			frame, dx, dy, dz, dwidth, dheight, ddepth, zoom, dzoom, angle, dangle))
 	{
 	}
 
@@ -254,8 +257,8 @@ namespace Reflex
 		float zoom, float prev_zoom, float angle, float prev_angle)
 	:	self(new Data(
 			frame,
-			frame.x - prev_frame.x, frame.y - prev_frame.y,
-			frame.w - prev_frame.w, frame.h - prev_frame.h,
+			frame.x - prev_frame.x, frame.y - prev_frame.y, frame.z - prev_frame.z,
+			frame.w - prev_frame.w, frame.h - prev_frame.h, frame.d - prev_frame.d,
 			zoom,  zoom  - prev_zoom,
 			angle, angle - prev_angle))
 	{
@@ -291,6 +294,12 @@ namespace Reflex
 	}
 
 	coord
+	FrameEvent::dz () const
+	{
+		return self->dz;
+	}
+
+	coord
 	FrameEvent::dwidth () const
 	{
 		return self->dw;
@@ -300,6 +309,12 @@ namespace Reflex
 	FrameEvent::dheight () const
 	{
 		return self->dh;
+	}
+
+	coord
+	FrameEvent::ddepth () const
+	{
+		return self->dd;
 	}
 
 	float
@@ -329,13 +344,13 @@ namespace Reflex
 	bool
 	FrameEvent::is_move () const
 	{
-		return self->dx != 0 || self->dy != 0;
+		return self->dx != 0 || self->dy != 0 || self->dz != 0;
 	}
 
 	bool
 	FrameEvent::is_resize () const
 	{
-		return self->dw != 0 || self->dh != 0;
+		return self->dw != 0 || self->dh != 0 || self->dd != 0;
 	}
 
 	bool

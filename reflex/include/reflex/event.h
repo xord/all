@@ -114,8 +114,8 @@ namespace Reflex
 
 			FrameEvent (
 				const Bounds& frame,
-				coord dx,     coord dy,
-				coord dwidth, coord dheight,
+				coord dx,     coord dy,      coord dz,
+				coord dwidth, coord dheight, coord ddepth,
 				float zoom  = 1,  float dzoom  = 0,
 				float angle = 0,  float dangle = 0);
 
@@ -132,9 +132,13 @@ namespace Reflex
 
 			coord dy () const;
 
+			coord dz () const;
+
 			coord dwidth () const;
 
 			coord dheight () const;
+
+			coord ddepth () const;
 
 			float zoom () const;
 

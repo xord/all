@@ -21,14 +21,15 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF9(initialize, frame, dx, dy, dwidth, dheight, zoom, dzoom, angle, dangle)
+RUCY_DEF11(initialize,
+	frame, dx, dy, dz, dwidth, dheight, ddepth, zoom, dzoom, angle, dangle)
 {
 	CHECK;
 
 	*THIS = Reflex::FrameEvent(
 		to<Rays::Bounds>(frame),
-		to<coord>(dx),     to<coord>(dy),
-		to<coord>(dwidth), to<coord>(dheight),
+		to<coord>(dx),     to<coord>(dy),      to<coord>(dz),
+		to<coord>(dwidth), to<coord>(dheight), to<coord>(ddepth),
 		to<float>(zoom),   to<float>(dzoom),
 		to<float>(angle),  to<float>(dangle));
 
@@ -70,6 +71,14 @@ RUCY_DEF0(dy)
 RUCY_END
 
 static
+RUCY_DEF0(dz)
+{
+	CHECK;
+	return value(THIS->dz());
+}
+RUCY_END
+
+static
 RUCY_DEF0(dwidth)
 {
 	CHECK;
@@ -86,10 +95,18 @@ RUCY_DEF0(dheight)
 RUCY_END
 
 static
+RUCY_DEF0(ddepth)
+{
+	CHECK;
+	return value(THIS->ddepth());
+}
+RUCY_END
+
+static
 RUCY_DEF0(dposition)
 {
 	CHECK;
-	return value(Rays::Point(THIS->dx(), THIS->dy()));
+	return value(Rays::Point(THIS->dx(), THIS->dy(), THIS->dz()));
 }
 RUCY_END
 
@@ -97,7 +114,7 @@ static
 RUCY_DEF0(dsize)
 {
 	CHECK;
-	return value(Rays::Point(THIS->dwidth(), THIS->dheight()));
+	return value(Rays::Point(THIS->dwidth(), THIS->dheight(), THIS->ddepth()));
 }
 RUCY_END
 
@@ -180,8 +197,10 @@ Init_reflex_frame_event ()
 	cFrameEvent.define_method("frame", frame);
 	cFrameEvent.define_method("dx",        dx);
 	cFrameEvent.define_method("dy",        dy);
+	cFrameEvent.define_method("dz",        dz);
 	cFrameEvent.define_method("dwidth",    dwidth);
 	cFrameEvent.define_method("dheight",   dheight);
+	cFrameEvent.define_method("ddepth",    ddepth);
 	cFrameEvent.define_method("dposition", dposition);
 	cFrameEvent.define_method("dsize",     dsize);
 	cFrameEvent.define_method( "zoom",   zoom);
