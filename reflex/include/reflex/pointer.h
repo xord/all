@@ -63,8 +63,8 @@ namespace Reflex
 
 			Pointer (
 				ID id, uint type, Action action,
-				const Point& position, uint modifiers, uint click_count, bool drag,
-				double time);
+				const Point& position, uint modifiers, bool drag,
+				uint click_count, uint layer, double time);
 
 			Pointer (const This& obj);
 
@@ -82,9 +82,11 @@ namespace Reflex
 
 			uint modifiers () const;
 
+			bool is_drag () const;
+
 			uint click_count () const;
 
-			bool is_drag () const;
+			uint layer () const;
 
 			double time () const;
 

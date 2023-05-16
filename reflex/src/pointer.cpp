@@ -1,6 +1,7 @@
 #include "pointer.h"
 
 
+#include <limits.h>
 #include <xot/time.h>
 #include "reflex/exception.h"
 
@@ -43,7 +44,9 @@ namespace Reflex
 
 		Point position;
 
-		uint modifiers, click_count, flags;
+		uint modifiers, flags;
+
+		ushort click_count, layer;
 
 		double time;
 
@@ -51,14 +54,16 @@ namespace Reflex
 
 		Data (
 			ID id = -1, uint type = TYPE_NONE, Action action = ACTION_NONE,
-			const Point& position = 0, uint modifiers = 0, uint click_count = 0,
+			const Point& position = 0, uint modifiers = 0,
 			bool drag = false, bool enter = false, bool exit = false,
-			double time = 0)
+			uint click_count = 0, uint layer = 0, double time = 0)
 		:	id(id), type(type), action(action),
-			position(position), modifiers(modifiers), click_count(click_count),
+			position(position), modifiers(modifiers),
 			flags(make_flags(drag, enter, exit)),
-			time(time)
+			click_count(click_count), layer(layer), time(time)
 		{
+			if (layer >= USHRT_MAX)
+				argument_error(__FILE__, __LINE__);
 		}
 
 		uint make_flags (bool drag, bool enter, bool exit)
@@ -75,8 +80,6 @@ namespace Reflex
 	void
 	Pointer_update_positions (Pointer* pthis, std::function<void(Point*)> fun)
 	{
-		assert(pthis);
-
 		auto& self = pthis->self;
 		fun(&self->position);
 		if (self->prev)
@@ -87,6 +90,15 @@ namespace Reflex
 	Pointer_set_id (Pointer* pthis, Pointer::ID id)
 	{
 		pthis->self->id = id;
+	}
+
+	void
+	Pointer_set_layer (Pointer* pthis, uint layer)
+	{
+		if (layer >= USHRT_MAX)
+			argument_error(__FILE__, __LINE__);
+
+		pthis->self->layer = layer;
 	}
 
 	void
@@ -105,12 +117,12 @@ namespace Reflex
 
 	Pointer::Pointer (
 		ID id, uint type, Action action,
-		const Point& position, uint modifiers, uint click_count, bool drag,
-		double time)
+		const Point& position, uint modifiers, bool drag,
+		uint click_count, uint layer, double time)
 	:	self(new Data(
 			id, type, action,
-			position, modifiers, click_count, drag, false, false,
-			time))
+			position, modifiers, drag, false, false,
+			click_count, layer, time))
 	{
 	}
 
@@ -160,16 +172,22 @@ namespace Reflex
 		return self->modifiers;
 	}
 
+	bool
+	Pointer::is_drag () const
+	{
+		return self->flags & Data::DRAG;
+	}
+
 	uint
 	Pointer::click_count () const
 	{
 		return self->click_count;
 	}
 
-	bool
-	Pointer::is_drag () const
+	uint
+	Pointer::layer () const
 	{
-		return self->flags & Data::DRAG;
+		return self->layer;
 	}
 
 	double

@@ -23,11 +23,11 @@ class TestPointer < Test::Unit::TestCase
 
   def pointer(
     id: 0, type: TYPE_NONE, action: ACTION_NONE,
-    position: 0, modifiers: 0, click_count: 0, drag: false,
+    position: 0, modifiers: 0, drag: false, click_count: 0, layer: 0,
     time: 0)
 
     Reflex::Pointer.new(
-      id, type, action, position, modifiers, click_count, drag, time)
+      id, type, action, position, modifiers, drag, click_count, layer, time)
   end
 
   def test_initialize()
@@ -35,18 +35,21 @@ class TestPointer < Test::Unit::TestCase
 
     p = pointer(
       id: 1, type: TOUCH, action: DOWN,
-      position: [2, 3], modifiers: 4, click_count: 5, drag: true,
-      time: 6)
+      position: [2, 3], modifiers: 4, drag: true, click_count: 5, layer: 6,
+      time: 7)
 
-    assert_equal    1,             p.id
-    assert_equal    [:touch],      p.types
-    assert_equal    :down,         p.action
-    assert_equal    [2, 3],        p.position.to_a
-    assert_equal    4,             p.modifiers
-    assert_equal    5,             p.click_count
-    assert_equal    true,          p.drag?
-    assert_equal    6,             p.time
-    assert_nil                     p.prev
+    assert_equal 1,        p.id
+    assert_equal [:touch], p.types
+    assert_equal :down,    p.action
+    assert_equal [2, 3],   p.position.to_a
+    assert_equal 2,        p.x
+    assert_equal 3,        p.y
+    assert_equal 4,        p.modifiers
+    assert_equal true,     p.drag?
+    assert_equal 5,        p.click_count
+    assert_equal 6,        p.layer
+    assert_equal 7,        p.time
+    assert_nil             p.prev
   end
 
   def test_types()
@@ -138,9 +141,10 @@ class TestPointer < Test::Unit::TestCase
     assert_not_equal pointer, pointer(action:      Reflex::Pointer::UP)
     assert_not_equal pointer, pointer(position:    2)
     assert_not_equal pointer, pointer(modifiers:   3)
-    assert_not_equal pointer, pointer(click_count: 4)
     assert_not_equal pointer, pointer(drag:        true)
-    assert_not_equal pointer, pointer(time:        5)
+    assert_not_equal pointer, pointer(click_count: 4)
+    assert_not_equal pointer, pointer(layer:       5)
+    assert_not_equal pointer, pointer(time:        6)
   end
 
 end# TestPointer
