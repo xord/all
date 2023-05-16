@@ -1,6 +1,7 @@
 #include "view.h"
 
 
+#include <limits.h>
 #include <assert.h>
 #include <memory>
 #include <algorithm>
@@ -47,29 +48,34 @@ namespace Reflex
 
 			UPDATE_LAYOUT        = Xot::bit(5, FLAG_LAST),
 
-			FIT_TO_CONTENT       = Xot::bit(6, FLAG_LAST),
+			SORT_CHILDREN        = Xot::bit(6, FLAG_LAST),
 
-			HAS_VARIABLE_LENGTHS = Xot::bit(7, FLAG_LAST),
+			FIT_TO_CONTENT       = Xot::bit(7, FLAG_LAST),
 
-			NO_SHAPE             = Xot::bit(8, FLAG_LAST),
+			HAS_VARIABLE_LENGTHS = Xot::bit(8, FLAG_LAST),
+
+			NO_SHAPE             = Xot::bit(9, FLAG_LAST),
 
 		};// Flag
 
-		Window* window   = NULL;
+		Window* window     = NULL;
 
-		View* parent     = NULL;
+		View* parent       = NULL;
 
 		Bounds frame;
 
-		float zoom       = 1;
+		float zoom         = 1;
 
-		float angle      = 0;
+		float angle        = 0;
 
-		ushort capture   = CAPTURE_NONE;
+		ushort capture     = CAPTURE_NONE;
 
-		short hide_count = 0;
+		short hide_count   = 0;
 
-		uint flags = FLAG_CLIP | FLAG_RESIZE_TO_FIT | REDRAW | UPDATE_LAYOUT | UPDATE_STYLE;
+		ushort child_index = 0;
+
+		uint flags         =
+			FLAG_CLIP | FLAG_RESIZE_TO_FIT | REDRAW | UPDATE_LAYOUT | UPDATE_STYLE;
 
 		std::unique_ptr<Point>       ppivot;
 
@@ -98,6 +104,8 @@ namespace Reflex
 		std::unique_ptr<World>       pchild_world;
 
 		std::unique_ptr<ChildList>   pchildren;
+
+		std::unique_ptr<ChildList>   pchildren_sorted;
 
 		Point& pivot ()
 		{
@@ -243,9 +251,10 @@ namespace Reflex
 		{
 			assert(m && *m == 1 && ppivot && *ppivot != 0 && pbody);
 
+			Point pos   = pbody->position();
 			Point pivot = *ppivot * frame.size();
 			float angle = pbody->angle();
-			m->translate(pbody->position())
+			m->translate(pos.x, pos.y, frame.z)
 				.rotate(angle)
 				.translate( pivot)
 				.rotate(-angle)
@@ -304,10 +313,24 @@ namespace Reflex
 				view->remove_child(wall.get());
 		}
 
-		ChildList& children ()
+		ChildList* children (bool create = false, bool sort = false)
 		{
-			if (!pchildren) pchildren.reset(new ChildList);
-			return *pchildren;
+			if (!pchildren)
+			{
+				if (!create) return NULL;
+				pchildren.reset(new ChildList);
+			}
+
+			if (sort && check_and_remove_flag(SORT_CHILDREN))
+				do_sort_children();
+
+			return sort && pchildren_sorted ? pchildren_sorted.get() : pchildren.get();
+		}
+
+		void sort_children (bool order_only = false)
+		{
+			add_flag(SORT_CHILDREN);
+			if (!order_only && pchildren_sorted) pchildren_sorted.reset();
 		}
 
 		void add_flag (uint flag)
@@ -330,6 +353,50 @@ namespace Reflex
 			return Xot::check_and_remove_flag(&flags, flag);
 		}
 
+		private:
+
+			void do_sort_children ()
+			{
+				assert(pchildren);
+
+				auto& children = *pchildren;
+
+				size_t size = children.size();
+				if (size >= USHRT_MAX)
+					invalid_state_error(__FILE__, __LINE__, "too many children");
+
+				ushort index = 0;
+				bool have_z  = false;
+				for (auto& child : children)
+				{
+					child->self->child_index = index++;
+					have_z                  |= child->frame().z != 0;
+				}
+
+				if (!have_z)
+				{
+					pchildren_sorted.reset();
+					return;
+				}
+
+				if (!pchildren_sorted)
+				{
+					pchildren_sorted.reset(
+						new ChildList(children.begin(), children.end()));
+				}
+
+				std::sort(
+					pchildren_sorted->begin(), pchildren_sorted->end(),
+					[](const auto& a, const auto& b)
+					{
+						auto *aa = a->self.get(), *bb = b->self.get();
+						if (aa->frame.z != bb->frame.z)
+							return aa->frame.z     < bb->frame.z;
+						else
+							return aa->child_index < bb->child_index;
+					});
+			}
+
 	};// View::Data
 
 
@@ -351,8 +418,8 @@ namespace Reflex
 
 			void place_children ()
 			{
-				View::ChildList* pchildren = parent->self->pchildren.get();
-				if (!pchildren || pchildren->empty())
+				View::ChildList* children = parent->self->children();
+				if (!children || children->empty())
 					return;
 
 				bool leftward = flow_main_h < 0 || flow_sub_h < 0;
@@ -362,7 +429,7 @@ namespace Reflex
 					upward   ? parent_frame.height : 0);
 				Point position = start_position;
 
-				for (iterator begin = pchildren->begin(), end = pchildren->end(); true;)
+				for (iterator begin = children->begin(), end = children->end(); true;)
 				{
 					iterator line_end;
 					coord main_fill_size = 0;
@@ -653,11 +720,11 @@ namespace Reflex
 		view->self->window = window;
 		view->self->update_body_and_shapes();
 
-		View::ChildList* pchildren = view->self->pchildren.get();
-		if (pchildren)
+		View::ChildList* children = view->self->children();
+		if (children)
 		{
-			for (auto& pchild : *pchildren)
-				View_set_window(pchild.get(), window);
+			for (auto& child : *children)
+				View_set_window(child.get(), window);
 		}
 
 		if (view->self->window)
@@ -673,15 +740,15 @@ namespace Reflex
 	{
 		assert(parent);
 
-		View::ChildList* pchildren = parent->self->pchildren.get();
-		if (!pchildren) return;
+		View::ChildList* children = parent->self->children();
+		if (!children) return;
 
-		for (auto& pchild : *pchildren)
+		for (auto& child : *children)
 		{
-			assert(pchild);
+			assert(child);
 
-			if (pchild->self->has_flag(View::Data::HAS_VARIABLE_LENGTHS))
-				pchild->self->add_flag(View::Data::APPLY_STYLE);
+			if (child->self->has_flag(View::Data::HAS_VARIABLE_LENGTHS))
+				child->self->add_flag(View::Data::APPLY_STYLE);
 		}
 	}
 
@@ -733,6 +800,9 @@ namespace Reflex
 		if (update_body && (moved || rotated) && self->pbody)
 			self->update_body_frame();
 
+		if (moved && event.dz() != 0 && self->parent)
+			self->parent->self->sort_children(true);
+
 		if ((moved || resized) && self->parent)
 			self->parent->self->add_flag(View::Data::FIT_TO_CONTENT);
 
@@ -779,19 +849,19 @@ namespace Reflex
 	{
 		assert(result && view);
 
-		View::ChildList* pchildren = view->self->pchildren.get();
-		if (!pchildren) return;
+		View::ChildList* children = view->self->children();
+		if (!children) return;
 
-		for (auto& pchild : *pchildren)
+		for (auto& child : *children)
 		{
-			if (!pchild)
+			if (!child)
 				invalid_state_error(__FILE__, __LINE__);
 
-			if (pchild->selector().contains(selector))
-				result->push_back(pchild);
+			if (child->selector().contains(selector))
+				result->push_back(child);
 
 			if (recursive)
-				find_all_children(result, pchild.get(), selector, true);
+				find_all_children(result, child.get(), selector, true);
 		}
 	}
 
@@ -814,11 +884,11 @@ namespace Reflex
 
 		if (!recursive) return;
 
-		View::ChildList* pchildren = view->self->pchildren.get();
-		if (pchildren)
+		View::ChildList* children = view->self->children();
+		if (children)
 		{
-			for (auto& pchild : *pchildren)
-				find_all_styles(result, pchild.get(), selector, true);
+			for (auto& child : *children)
+				find_all_styles(result, child.get(), selector, true);
 		}
 	}
 
@@ -866,7 +936,10 @@ namespace Reflex
 			frame.set_position(m * Point(0));
 		}
 		else
-			frame.set_position(body->position());
+		{
+			Point pos = body->position();
+			frame.set_position(pos.x, pos.y, frame.z);
+		}
 
 		update_view_frame(view, frame, view->zoom(), body->angle(), false);
 	}
@@ -882,11 +955,11 @@ namespace Reflex
 
 		child_world->on_update(dt);
 
-		View::ChildList* pchildren = self->pchildren.get();
-		if (pchildren)
+		View::ChildList* children = self->children();
+		if (children)
 		{
-			for (auto& pchild : *pchildren)
-				update_view_body(pchild.get());
+			for (auto& child : *children)
+				update_view_body(child.get());
 		}
 	}
 
@@ -910,8 +983,8 @@ namespace Reflex
 
 			children.clear();
 			find_all_children(&children, view, sel, true);
-			for (auto& pchild : children)
-				pchild->self->add_flag(View::Data::UPDATE_STYLE);
+			for (auto& child : children)
+				child->self->add_flag(View::Data::UPDATE_STYLE);
 		}
 
 		sels->clear();
@@ -1010,11 +1083,11 @@ namespace Reflex
 
 		fire_timers(view, event.now());
 
-		View::ChildList* pchildren = self->pchildren.get();
-		if (pchildren)
+		View::ChildList* children = self->children();
+		if (children)
 		{
-			for (auto& pchild : *pchildren)
-				View_update_tree(pchild.get(), event);
+			for (auto& child : *children)
+				View_update_tree(child.get(), event);
 		}
 
 		update_view_shapes(view);
@@ -1148,13 +1221,13 @@ namespace Reflex
 
 		if (event->is_blocked()) return;
 
-		View::ChildList* pchildren = self->pchildren.get();
-		if (pchildren)
+		View::ChildList* children = self->children(false, true);
+		if (children)
 		{
-			for (auto& pchild : *pchildren)
+			for (auto& child : *children)
 			{
-				if (event->bounds() & pchild->self->frame)
-					View_draw_tree(pchild.get(), event, offset, clip);
+				if (event->bounds() & child->self->frame)
+					View_draw_tree(child.get(), event, offset, clip);
 			}
 		}
 
@@ -1321,15 +1394,14 @@ namespace Reflex
 	}
 
 	static void
-	call_children (View* parent, std::function<bool(View*)> fun)
+	call_children (View* parent, std::function<bool(View*)> fun, bool sort = true)
 	{
 		assert(parent);
 
-		auto* pchildren = parent->self->pchildren.get();
-		if (!pchildren) return;
+		auto* children = parent->self->children(false, sort);
+		if (!children) return;
 
-		auto end = pchildren->rend();
-		for (auto it = pchildren->rbegin(); it != end; ++it)
+		for (auto it = children->rbegin(), end = children->rend(); it != end; ++it)
 		{
 			if (!fun(it->get()))
 				break;
@@ -1710,7 +1782,7 @@ namespace Reflex
 	{
 		assert(parent && child);
 
-		View::ChildList* children = parent->self->pchildren.get();
+		View::ChildList* children = parent->self->children();
 		if (!children) return;
 
 		auto end = children->end();
@@ -1719,7 +1791,10 @@ namespace Reflex
 
 		children->erase(it);
 		if (children->empty())
+		{
 			parent->self->pchildren.reset();
+			parent->self->pchildren_sorted.reset();
+		}
 	}
 
 	void
@@ -1735,13 +1810,15 @@ namespace Reflex
 		else if (found != belong)
 			invalid_state_error(__FILE__, __LINE__);
 
-		self->children().push_back(child);
+		self->children(true)->push_back(child);
 
 		View* prev_parent = child->parent();
 		set_parent(child, this);
 
 		if (prev_parent)
 			erase_child_from_children(prev_parent, child);
+
+		self->sort_children();
 
 		update_view_layout(this);
 	}
@@ -1763,16 +1840,18 @@ namespace Reflex
 
 		erase_child_from_children(this, child);
 
+		self->sort_children();
+
 		update_view_layout(this);
 	}
 
 	void
 	View::clear_children ()
 	{
-		if (!self->pchildren || self->pchildren->empty()) return;
+		auto* children = self->children();
+		if (!children || children->empty()) return;
 
-		auto children = *self->pchildren;
-		for (auto& child : children)
+		for (auto& child : *children)
 			remove_child(child);
 	}
 
