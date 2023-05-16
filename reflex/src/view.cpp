@@ -1439,6 +1439,8 @@ namespace Reflex
 			case Pointer::CANCEL: view->on_pointer_cancel(event); break;
 			default: break;
 		}
+
+		PointerEvent_increment_index(event);
 	}
 
 	static void

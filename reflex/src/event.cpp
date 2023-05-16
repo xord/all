@@ -19,10 +19,10 @@ namespace Reflex
 
 		double time;
 
-		Xot::PSharedImpl<Data> parent;
+		Data* parent = NULL;
 
 		Data (bool blocked = false, double time = Xot::time())
-		:	blocked(blocked), time(time), parent(NULL)
+		:	blocked(blocked), time(time)
 		{
 		}
 
@@ -42,7 +42,7 @@ namespace Reflex
 	Event::Event (const Event* src)
 	:	self(new Data(*src->self))
 	{
-		self->parent = src->self;
+		self->parent = src->self.get();
 	}
 
 	Event::~Event ()
@@ -578,13 +578,21 @@ namespace Reflex
 
 		std::vector<Pointer> pointers;
 
-		uint index;
+		uint index   = 0;
 
 		bool captured;
 
-		Data (uint index = 0, bool captured = false)
+		Data* parent = NULL;
+
+		Data (bool captured = false)
 		:	captured(captured)
 		{
+		}
+
+		void increment_index ()
+		{
+			++index;
+			if (parent) parent->increment_index();
 		}
 
 	};// PointerEvent::Data
@@ -640,6 +648,15 @@ namespace Reflex
 
 		for (const auto& pointer : pthis->self->pointers)
 			fun(pointer);
+	}
+
+	void
+	PointerEvent_increment_index (PointerEvent* pthis)
+	{
+		if (!pthis)
+			argument_error(__FILE__, __LINE__);
+
+		pthis->self->increment_index();
 	}
 
 	void
@@ -705,6 +722,7 @@ namespace Reflex
 	PointerEvent::PointerEvent (const PointerEvent* src)
 	:	Event(src), self(new Data(*src->self))
 	{
+		self->parent = src->self.get();
 	}
 
 	PointerEvent

@@ -31,6 +31,8 @@ namespace Reflex
 	void PointerEvent_each_pointer (
 		const PointerEvent* pthis, std::function<void(const Pointer&)> fun);
 
+	void PointerEvent_increment_index (PointerEvent* pthis);
+
 	void PointerEvent_set_captured (PointerEvent* pthis, bool captured);
 
 	void PointerEvent_update_for_child_view (PointerEvent* pthis, const View* view);
