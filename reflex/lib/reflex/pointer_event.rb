@@ -9,10 +9,6 @@ module Reflex
 
     extend Forwardable
 
-    def initialize(*pointers, index:)
-      setup pointers.flatten, index
-    end
-
     def_delegators :first,
       :id,
       :types, :mouse?, :touch?, :pen?,

@@ -712,11 +712,10 @@ namespace Reflex
 	{
 	}
 
-	PointerEvent::PointerEvent (const Pointer* pointers, size_t size, uint index)
+	PointerEvent::PointerEvent (const Pointer* pointers, size_t size)
 	{
 		for (size_t i = 0; i < size; ++i)
 			self->pointers.emplace_back(pointers[i]);
-		self->index = index;
 	}
 
 	PointerEvent::PointerEvent (const PointerEvent* src)
@@ -741,12 +740,6 @@ namespace Reflex
 	PointerEvent::empty () const
 	{
 		return size() == 0;
-	}
-
-	uint
-	PointerEvent::index () const
-	{
-		return self->index;
 	}
 
 	bool
