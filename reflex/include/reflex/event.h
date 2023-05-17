@@ -272,15 +272,13 @@ namespace Reflex
 
 			PointerEvent ();
 
-			PointerEvent (const Pointer* pointers, size_t size, uint index);
+			PointerEvent (const Pointer* pointers, size_t size);
 
 			PointerEvent dup () const;
 
 			size_t size () const;
 
 			bool empty () const;
-
-			uint index () const;
 
 			bool is_captured () const;
 

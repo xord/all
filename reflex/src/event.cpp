@@ -578,8 +578,6 @@ namespace Reflex
 
 		std::vector<Pointer> pointers;
 
-		uint index   = 0;
-
 		bool captured;
 
 		Data* parent = NULL;
@@ -589,22 +587,28 @@ namespace Reflex
 		{
 		}
 
-		void increment_index ()
+		void increment_view_indices ()
 		{
-			++index;
-			if (parent) parent->increment_index();
+			for (auto& pointer : pointers)
+				Pointer_set_view_index(&pointer, pointer.view_index() + 1);
+
+			if (parent) parent->increment_view_indices();
 		}
 
 	};// PointerEvent::Data
 
 
 	void
-	PointerEvent_add_pointer (PointerEvent* pthis, const Pointer& pointer)
+	PointerEvent_add_pointer (
+		PointerEvent* pthis, const Pointer& pointer,
+		std::function<void(Pointer*)> fun)
 	{
 		if (!pthis)
 			argument_error(__FILE__, __LINE__);
 
 		pthis->self->pointers.emplace_back(pointer);
+
+		if (fun) fun(&pthis->self->pointers.back());
 	}
 
 	void
@@ -651,12 +655,12 @@ namespace Reflex
 	}
 
 	void
-	PointerEvent_increment_index (PointerEvent* pthis)
+	PointerEvent_increment_view_indices (PointerEvent* pthis)
 	{
 		if (!pthis)
 			argument_error(__FILE__, __LINE__);
 
-		pthis->self->increment_index();
+		pthis->self->increment_view_indices();
 	}
 
 	void
@@ -712,11 +716,10 @@ namespace Reflex
 	{
 	}
 
-	PointerEvent::PointerEvent (const Pointer* pointers, size_t size, uint index)
+	PointerEvent::PointerEvent (const Pointer* pointers, size_t size)
 	{
 		for (size_t i = 0; i < size; ++i)
 			self->pointers.emplace_back(pointers[i]);
-		self->index = index;
 	}
 
 	PointerEvent::PointerEvent (const PointerEvent* src)
@@ -741,12 +744,6 @@ namespace Reflex
 	PointerEvent::empty () const
 	{
 		return size() == 0;
-	}
-
-	uint
-	PointerEvent::index () const
-	{
-		return self->index;
 	}
 
 	bool
