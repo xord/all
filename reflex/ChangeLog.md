@@ -1,6 +1,14 @@
 # reflex ChangeLog
 
 
+## [v0.1.39] - 2023-05-18
+
+- Event#block has a bool parameter, which defaults to true
+- Add z and depth value to FrameEvent class
+- Sort child views by z position
+- Add Pointer#view_index
+
+
 ## [v0.1.38] - 2023-05-13
 
 - View: Reimplemented from_parent(), to_parent(), from_window(), to_window(), from_screen(), and to_screen() to account for rotation, zoom, and scrolling during coordinate transformation
@@ -40,17 +48,17 @@
 
 ## [v0.1.32] - 2023-03-01
 
-- fix bugs
+- Fix bugs
 
 
 ## [v0.1.31] - 2023-02-27
 
-- add ChangeLog.md file
-- add test.yml, tag.yaml, and release.yml
-- requires ruby 2.7.0 or later
+- Add ChangeLog.md file
+- Add test.yml, tag.yaml, and release.yml
+- Requires ruby 2.7.0 or later
 
 
 ## [v0.1.30] - 2023-02-09
 
-- fix conflicting reflex's Init_exception() and others Init_exception()
-- refactoring
+- Fix conflicting reflex's Init_exception() and others Init_exception()
+- Refactoring

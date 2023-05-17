@@ -1,9 +1,14 @@
 # rucy ChangeLog
 
 
+## [v0.1.36] - 2023-05-18
+
+- Update dependencies
+
+
 ## [v0.1.35] - 2023-05-08
 
-- update dependencies
+- Update dependencies
 
 
 ## [v0.1.34] - 2023-04-30
@@ -13,21 +18,21 @@
 
 ## [v0.1.33] - 2023-04-22
 
-- update dependencies
+- Update dependencies
 
 
 ## [v0.1.32] - 2023-03-01
 
-- fix bugs
+- Fix bugs
 
 
 ## [v0.1.31] - 2023-02-27
 
-- add ChangeLog.md file
-- add test.yml, tag.yaml, and release.yml
-- requires ruby 2.7.0 or later
+- Add ChangeLog.md file
+- Add test.yml, tag.yaml, and release.yml
+- Requires ruby 2.7.0 or later
 
 
 ## [v0.1.30] - 2023-02-09
 
-- refactoring
+- Refactoring

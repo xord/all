@@ -75,7 +75,7 @@ task :scripts => 'scripts:build'
 
 
 namespace :changelog do
-  def changelogs(target)
+  changelogs = -> target do
     version = "#{target}/VERSION"
     return [] unless File.exist?(version)
 
@@ -88,7 +88,7 @@ namespace :changelog do
 
   task :check do
     targets.each do |target|
-      changes = changelogs target
+      changes = changelogs.call target
       next if changes.empty?
 
       puts "# #{target}"
@@ -98,7 +98,7 @@ namespace :changelog do
 
   task :update do
     targets.each do |target|
-      changes = changelogs target
+      changes = changelogs.call target
       next if changes.empty?
 
       ver     = File.readlines("#{target}/VERSION", chomp: true)
