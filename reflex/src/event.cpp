@@ -578,8 +578,6 @@ namespace Reflex
 
 		std::vector<Pointer> pointers;
 
-		uint index   = 0;
-
 		bool captured;
 
 		Data* parent = NULL;
@@ -589,10 +587,12 @@ namespace Reflex
 		{
 		}
 
-		void increment_index ()
+		void increment_layer_indices ()
 		{
-			++index;
-			if (parent) parent->increment_index();
+			for (auto& pointer : pointers)
+				Pointer_set_layer_index(&pointer, pointer.layer_index() + 1);
+
+			if (parent) parent->increment_layer_indices();
 		}
 
 	};// PointerEvent::Data
@@ -651,12 +651,12 @@ namespace Reflex
 	}
 
 	void
-	PointerEvent_increment_index (PointerEvent* pthis)
+	PointerEvent_increment_layer_indices (PointerEvent* pthis)
 	{
 		if (!pthis)
 			argument_error(__FILE__, __LINE__);
 
-		pthis->self->increment_index();
+		pthis->self->increment_layer_indices();
 	}
 
 	void

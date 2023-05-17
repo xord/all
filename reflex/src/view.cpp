@@ -1440,7 +1440,7 @@ namespace Reflex
 			default: break;
 		}
 
-		PointerEvent_increment_index(event);
+		PointerEvent_increment_layer_indices(event);
 	}
 
 	static void
