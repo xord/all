@@ -27,9 +27,9 @@ namespace Reflex
 		struct PointerData
 		{
 
-			uint layer_index;
+			uint view_index;
 
-			PointerData (uint layer_index);
+			PointerData (uint view_index);
 
 		};// PointerData
 
@@ -101,7 +101,7 @@ namespace Reflex
 	void Window_set_focus (Window* window, View* view);
 
 	void Window_register_capture (
-		Window* window, View* view, Pointer::ID target, uint layer_index = 0);
+		Window* window, View* view, Pointer::ID target, uint view_index = 0);
 
 	void Window_unregister_capture (
 		Window* window, View* view, Pointer::ID target);

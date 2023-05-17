@@ -22,8 +22,8 @@ namespace Reflex
 	using TargetPointerMap      = Window::Data::TargetPointerMap;
 
 
-	Window::Data::PointerData::PointerData (uint layer_index)
-	:	layer_index(layer_index)
+	Window::Data::PointerData::PointerData (uint view_index)
+	:	view_index(view_index)
 	{
 	}
 
@@ -77,7 +77,7 @@ namespace Reflex
 
 	void
 	Window_register_capture (
-		Window* window, View* view, Pointer::ID target, uint layer_index)
+		Window* window, View* view, Pointer::ID target, uint view_index)
 	{
 		assert(window);
 
@@ -93,7 +93,7 @@ namespace Reflex
 		if (targets.find(target) != targets.end())
 			return;
 
-		targets.insert(std::make_pair(target, PointerData(layer_index)));
+		targets.insert(std::make_pair(target, PointerData(view_index)));
 	}
 
 	void
@@ -231,11 +231,11 @@ namespace Reflex
 	static void
 	extract_pointer (
 		PointerEvent* event, ExtractedPointerIDSet* extracteds,
-		const Pointer& pointer, uint layer_index = 0)
+		const Pointer& pointer, uint view_index = 0)
 	{
 		PointerEvent_add_pointer(event, pointer, [&](auto* p)
 		{
-			Pointer_set_layer_index(p, layer_index);
+			Pointer_set_view_index(p, view_index);
 		});
 
 		extracteds->insert(pointer.id());
@@ -252,7 +252,7 @@ namespace Reflex
 		{
 			auto it = pointers.find(pointer_id);
 			if (it != pointers.end())
-				extract_pointer(event, extracteds, it->second, data.layer_index);
+				extract_pointer(event, extracteds, it->second, data.view_index);
 		}
 	}
 

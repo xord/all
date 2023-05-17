@@ -21,7 +21,7 @@ RUCY_END
 
 static
 RUCY_DEF9(initialize,
-	id, type, action, position, modifiers, drag, click_count, layer_index, time)
+	id, type, action, position, modifiers, drag, click_count, view_index, time)
 {
 	CHECK;
 
@@ -33,7 +33,7 @@ RUCY_DEF9(initialize,
 		to<uint>(modifiers),
 		to<bool>(drag),
 		to<uint>(click_count),
-		to<uint>(layer_index),
+		to<uint>(view_index),
 		to<double>(time));
 	return self;
 }
@@ -105,10 +105,10 @@ RUCY_DEF0(get_click_count)
 RUCY_END
 
 static
-RUCY_DEF0(get_layer_index)
+RUCY_DEF0(get_view_index)
 {
 	CHECK;
-	return value(THIS->layer_index());
+	return value(THIS->view_index());
 }
 RUCY_END
 
@@ -147,7 +147,7 @@ Init_reflex_pointer ()
 	cPointer.define_method("modifiers",          get_modifiers);
 	cPointer.define_method("drag?",              is_drag);
 	cPointer.define_method("click_count",        get_click_count);
-	cPointer.define_method("layer_index",        get_layer_index);
+	cPointer.define_method("view_index",         get_view_index);
 	cPointer.define_method("time",               get_time);
 	cPointer.define_method("prev",               get_prev);
 	cPointer.define_const("TYPE_NONE",    Reflex::Pointer::TYPE_NONE);

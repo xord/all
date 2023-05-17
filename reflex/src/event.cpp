@@ -587,12 +587,12 @@ namespace Reflex
 		{
 		}
 
-		void increment_layer_indices ()
+		void increment_view_indices ()
 		{
 			for (auto& pointer : pointers)
-				Pointer_set_layer_index(&pointer, pointer.layer_index() + 1);
+				Pointer_set_view_index(&pointer, pointer.view_index() + 1);
 
-			if (parent) parent->increment_layer_indices();
+			if (parent) parent->increment_view_indices();
 		}
 
 	};// PointerEvent::Data
@@ -655,12 +655,12 @@ namespace Reflex
 	}
 
 	void
-	PointerEvent_increment_layer_indices (PointerEvent* pthis)
+	PointerEvent_increment_view_indices (PointerEvent* pthis)
 	{
 		if (!pthis)
 			argument_error(__FILE__, __LINE__);
 
-		pthis->self->increment_layer_indices();
+		pthis->self->increment_view_indices();
 	}
 
 	void

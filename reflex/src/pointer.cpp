@@ -46,7 +46,7 @@ namespace Reflex
 
 		uint modifiers, flags;
 
-		ushort click_count, layer_index;
+		ushort click_count, view_index;
 
 		double time;
 
@@ -56,13 +56,13 @@ namespace Reflex
 			ID id = -1, uint type = TYPE_NONE, Action action = ACTION_NONE,
 			const Point& position = 0, uint modifiers = 0,
 			bool drag = false, bool enter = false, bool exit = false,
-			uint click_count = 0, uint layer_index = 0, double time = 0)
+			uint click_count = 0, uint view_index = 0, double time = 0)
 		:	id(id), type(type), action(action),
 			position(position), modifiers(modifiers),
 			flags(make_flags(drag, enter, exit)),
-			click_count(click_count), layer_index(layer_index), time(time)
+			click_count(click_count), view_index(view_index), time(time)
 		{
-			if (layer_index >= USHRT_MAX)
+			if (view_index >= USHRT_MAX)
 				argument_error(__FILE__, __LINE__);
 		}
 
@@ -93,12 +93,12 @@ namespace Reflex
 	}
 
 	void
-	Pointer_set_layer_index (Pointer* pthis, uint layer_index)
+	Pointer_set_view_index (Pointer* pthis, uint view_index)
 	{
-		if (layer_index >= USHRT_MAX)
+		if (view_index >= USHRT_MAX)
 			argument_error(__FILE__, __LINE__);
 
-		pthis->self->layer_index = layer_index;
+		pthis->self->view_index = view_index;
 	}
 
 	void
@@ -118,11 +118,11 @@ namespace Reflex
 	Pointer::Pointer (
 		ID id, uint type, Action action,
 		const Point& position, uint modifiers, bool drag,
-		uint click_count, uint layer_index, double time)
+		uint click_count, uint view_index, double time)
 	:	self(new Data(
 			id, type, action,
 			position, modifiers, drag, false, false,
-			click_count, layer_index, time))
+			click_count, view_index, time))
 	{
 	}
 
@@ -185,9 +185,9 @@ namespace Reflex
 	}
 
 	uint
-	Pointer::layer_index () const
+	Pointer::view_index () const
 	{
-		return self->layer_index;
+		return self->view_index;
 	}
 
 	double

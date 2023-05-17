@@ -17,11 +17,11 @@ class TestPointerEvent < Test::Unit::TestCase
 
   def pointer(
     id: 0, type: TYPE_NONE, action: ACTION_NONE,
-    position: 0, modifiers: 0, drag: false, click_count: 0, layer_index: 0,
+    position: 0, modifiers: 0, drag: false, click_count: 0, view_index: 0,
     time: 0)
 
     Reflex::Pointer.new(
-      id, type, action, position, modifiers, drag, click_count, layer_index, time)
+      id, type, action, position, modifiers, drag, click_count, view_index, time)
   end
 
   def test_initialize()
@@ -31,12 +31,12 @@ class TestPointerEvent < Test::Unit::TestCase
 
     p1 = pointer(
       id: 1,  type: TOUCH, action: DOWN,
-      position: [2,  3],  modifiers: 4,  drag: true,
-      click_count: 5,  layer_index: 6, time: 7)
+      position: [2,  3],  modifiers: 4,  drag: true,  click_count: 5,  view_index: 6,
+      time: 7)
     p2 = pointer(
       id: 10, type: PEN,   action: UP,
-      position: [20, 30], modifiers: 40, drag: false,
-      click_count: 50, layer_index: 60, time: 70)
+      position: [20, 30], modifiers: 40, drag: false, click_count: 50, view_index: 60,
+      time: 70)
     e = event p1, p2
 
     assert_equal [p1, p2], e.pointers.to_a
@@ -53,7 +53,7 @@ class TestPointerEvent < Test::Unit::TestCase
     assert_equal 4,        e.modifiers
     assert_equal true,     e.drag?
     assert_equal 5,        e.click_count
-    assert_equal 6,        e.layer_index
+    assert_equal 6,        e.view_index
     assert_equal 7,        e.time
   end
 
