@@ -115,16 +115,14 @@ namespace Reflex
 	}
 
 	Pointer::Pointer (const This& obj)
-	:	self(new Data(*obj.self))
+	:	self(obj.self)
 	{
 	}
 
 	Pointer&
 	Pointer::operator = (const This& obj)
 	{
-		if (&obj == this) return *this;
-
-		*self = *obj.self;
+		self.operator=(obj.self);
 		return *this;
 	}
 

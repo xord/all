@@ -34,7 +34,7 @@ namespace Xot
 			{
 				if (&obj == this) return *this;
 
-				this->reset(obj ? new T(*obj) : NULL);
+				*this->get() = *obj.get();
 				return *this;
 			}
 
