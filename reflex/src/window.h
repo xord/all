@@ -24,9 +24,18 @@ namespace Reflex
 	struct Window::Data
 	{
 
-		typedef std::vector<Pointer::ID>                 CaptureTargetIDList;
+		struct PointerData
+		{
 
-		typedef std::map<View::Ref, CaptureTargetIDList> CaptureMap;
+			uint layer_index;
+
+			PointerData (uint layer_index);
+
+		};// PointerData
+
+		typedef std::map<Pointer::ID, PointerData>    TargetPointerMap;
+
+		typedef std::map<View::Ref, TargetPointerMap> CaptureMap;
 
 		int hide_count = 1;
 
@@ -92,10 +101,10 @@ namespace Reflex
 	void Window_set_focus (Window* window, View* view);
 
 	void Window_register_capture (
-		Window* window, View* view, Pointer::ID target = CAPTURE_ALL);
+		Window* window, View* view, Pointer::ID target, uint layer_index = 0);
 
 	void Window_unregister_capture (
-		Window* window, View* view, Pointer::ID target = CAPTURE_ALL);
+		Window* window, View* view, Pointer::ID target);
 
 	void Window_call_draw_event    (Window* window, DrawEvent*    event);
 

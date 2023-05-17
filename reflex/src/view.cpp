@@ -1440,7 +1440,8 @@ namespace Reflex
 			default: break;
 		}
 
-		PointerEvent_increment_layer_indices(event);
+		if (!event->is_captured())
+			PointerEvent_increment_layer_indices(event);
 	}
 
 	static void
@@ -1455,7 +1456,7 @@ namespace Reflex
 		PointerEvent_each_pointer(&event, [&](const auto& pointer)
 		{
 			if (pointer.action() == Pointer::DOWN)
-				Window_register_capture(win, view, pointer.id());
+				Window_register_capture(win, view, pointer.id(), pointer.layer_index());
 		});
 	}
 
@@ -2345,9 +2346,9 @@ namespace Reflex
 		bool capture    = types != CAPTURE_NONE;
 
 		if (capture && !registered)
-			Window_register_capture(w, this);
+			Window_register_capture(w, this, CAPTURE_ALL);
 		else if (!capture && registered)
-			Window_unregister_capture(w, this);
+			Window_unregister_capture(w, this, CAPTURE_ALL);
 
 		CaptureEvent e(~old & types, old & ~types);
 		on_capture(&e);

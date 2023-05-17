@@ -17,7 +17,15 @@ namespace Reflex
 
 	using ExtractedPointerIDSet = std::set<Pointer::ID>;
 
-	using CaptureTargetIDList   = Window::Data::CaptureTargetIDList;
+	using PointerData           = Window::Data::PointerData;
+
+	using TargetPointerMap      = Window::Data::TargetPointerMap;
+
+
+	Window::Data::PointerData::PointerData (uint layer_index)
+	:	layer_index(layer_index)
+	{
+	}
 
 
 	void
@@ -68,7 +76,8 @@ namespace Reflex
 	}
 
 	void
-	Window_register_capture (Window* window, View* view, Pointer::ID target)
+	Window_register_capture (
+		Window* window, View* view, Pointer::ID target, uint layer_index)
 	{
 		assert(window);
 
@@ -81,12 +90,10 @@ namespace Reflex
 		if (target < 0) return;
 
 		auto& targets = window->self->captures[view];
-		if (std::find(targets.begin(), targets.end(), target) != targets.end())
+		if (targets.find(target) != targets.end())
 			return;
 
-		targets.insert(
-			target == CAPTURE_ALL ? targets.begin() : targets.end(),
-			target);
+		targets.insert(std::make_pair(target, PointerData(layer_index)));
 	}
 
 	void
@@ -101,7 +108,7 @@ namespace Reflex
 		if (captures_it == window->self->captures.end()) return;
 
 		auto& targets   = captures_it->second;
-		auto targets_it = std::find(targets.begin(), targets.end(), target);
+		auto targets_it = targets.find(target);
 		if (targets_it == targets.end()) return;
 
 		targets.erase(targets_it);
@@ -149,11 +156,11 @@ namespace Reflex
 
 	static bool
 	is_capturing (
-		const View* view, const CaptureTargetIDList& targets, View::Capture type)
+		const View* view, const TargetPointerMap& targets, View::Capture type)
 	{
 		return
 			!targets.empty() &&
-			targets[0] == CAPTURE_ALL &&
+			targets.find(CAPTURE_ALL) != targets.end() &&
 			(view->capture() & type) == type;
 	}
 
@@ -224,26 +231,28 @@ namespace Reflex
 	static void
 	extract_pointer (
 		PointerEvent* event, ExtractedPointerIDSet* extracteds,
-		const Pointer& pointer)
+		const Pointer& pointer, uint layer_index = 0)
 	{
-		assert(event && extracteds);
+		PointerEvent_add_pointer(event, pointer, [&](auto* p)
+		{
+			Pointer_set_layer_index(p, layer_index);
+		});
 
-		PointerEvent_add_pointer(event, pointer);
 		extracteds->insert(pointer.id());
 	}
 
 	static void
 	extract_targeted_pointers (
 		PointerEvent* event, ExtractedPointerIDSet* extracteds,
-		const CaptureTargetIDList& targets, const PointerMap& pointers)
+		const TargetPointerMap& targets, const PointerMap& pointers)
 	{
-		assert(event && event->empty() && extracteds);
+		assert(event->empty());
 
-		for (auto pointer_id : targets)
+		for (auto& [pointer_id, data] : targets)
 		{
 			auto it = pointers.find(pointer_id);
 			if (it != pointers.end())
-				extract_pointer(event, extracteds, it->second);
+				extract_pointer(event, extracteds, it->second, data.layer_index);
 		}
 	}
 

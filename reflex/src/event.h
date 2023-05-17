@@ -22,9 +22,11 @@ namespace Reflex
 	void KeyEvent_set_captured (KeyEvent* pthis, bool captured);
 
 
-	void PointerEvent_add_pointer    (PointerEvent* pthis, const Pointer& pointer);
+	void PointerEvent_add_pointer (
+		PointerEvent* pthis, const Pointer& pointer,
+		std::function<void(Pointer*)> fun = NULL);
 
-	void PointerEvent_erase_pointer  (PointerEvent* pthis, Pointer::ID id);
+	void PointerEvent_erase_pointer (PointerEvent* pthis, Pointer::ID id);
 
 	Pointer& PointerEvent_pointer_at (PointerEvent* pthis, size_t index);
 
@@ -35,9 +37,11 @@ namespace Reflex
 
 	void PointerEvent_set_captured (PointerEvent* pthis, bool captured);
 
-	void PointerEvent_update_for_child_view (PointerEvent* pthis, const View* view);
+	void PointerEvent_update_for_child_view (
+		PointerEvent* pthis, const View* view);
 
-	void PointerEvent_update_for_capturing_view (PointerEvent* pthis, const View* view);
+	void PointerEvent_update_for_capturing_view (
+		PointerEvent* pthis, const View* view);
 
 
 	void WheelEvent_set_position (WheelEvent* pthis, const Point& position);

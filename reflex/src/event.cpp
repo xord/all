@@ -599,12 +599,16 @@ namespace Reflex
 
 
 	void
-	PointerEvent_add_pointer (PointerEvent* pthis, const Pointer& pointer)
+	PointerEvent_add_pointer (
+		PointerEvent* pthis, const Pointer& pointer,
+		std::function<void(Pointer*)> fun)
 	{
 		if (!pthis)
 			argument_error(__FILE__, __LINE__);
 
 		pthis->self->pointers.emplace_back(pointer);
+
+		if (fun) fun(&pthis->self->pointers.back());
 	}
 
 	void
