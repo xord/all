@@ -15,7 +15,9 @@ namespace Reflex
 	void Pointer_update_positions (
 		Pointer* pthis, std::function<void(Point*)> fun);
 
-	void Pointer_set_id   (Pointer* pthis, Pointer::ID id);
+	void Pointer_set_id (Pointer* pthis, Pointer::ID id);
+
+	void Pointer_set_layer_index (Pointer* pthis, uint layer_index);
 
 	void Pointer_set_prev (Pointer* pthis, const Pointer* prev);
 
