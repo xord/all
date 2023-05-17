@@ -79,8 +79,6 @@ namespace Reflex
 	Window_register_capture (
 		Window* window, View* view, Pointer::ID target, uint view_index)
 	{
-		assert(window);
-
 		if (!view)
 			argument_error(__FILE__, __LINE__);
 
@@ -99,8 +97,6 @@ namespace Reflex
 	void
 	Window_unregister_capture (Window* window, View* view, Pointer::ID target)
 	{
-		assert(window);
-
 		if (!view)
 			argument_error(__FILE__, __LINE__);
 
@@ -261,8 +257,6 @@ namespace Reflex
 		ExtractedPointerIDSet* extracteds,
 		Window* window, const PointerMap& pointers)
 	{
-		assert(extracteds && window);
-
 		for (auto& [view, targets] : window->self->captures)
 		{
 			if (!view->window() || targets.empty()) continue;
