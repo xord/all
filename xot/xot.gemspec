@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
   s.homepage    = "https://github.com/xord/xot"
 
   s.platform              = Gem::Platform::RUBY
-  s.required_ruby_version = '>= 2.7.0'
+  s.required_ruby_version = '>= 3.0.0'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'test-unit'
