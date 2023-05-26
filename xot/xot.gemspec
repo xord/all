@@ -17,13 +17,13 @@ Gem::Specification.new do |s|
   rdocs = glob.call *%w[README]
 
   s.name        = name
+  s.version     = ext.version
+  s.license     = 'MIT'
   s.summary     = 'A Utility library for C++ developemt.'
   s.description = 'This library include some useful utility classes and functions for development with C++.'
-  s.version     = ext.version
-
-  s.authors  = %w[xordog]
-  s.email    = 'xordog@gmail.com'
-  s.homepage = "https://github.com/xord/xot"
+  s.authors     = %w[xordog]
+  s.email       = 'xordog@gmail.com'
+  s.homepage    = "https://github.com/xord/xot"
 
   s.platform              = Gem::Platform::RUBY
   s.required_ruby_version = '>= 2.7.0'

@@ -17,13 +17,13 @@ Gem::Specification.new do |s|
   rdocs = glob.call *%w[README .doc/ext/**/*.cpp]
 
   s.name        = name
+  s.version     = ext.version
+  s.license     = 'MIT'
   s.summary     = 'A Ruby C++ Extension Helper Library.'
   s.description = 'This library helps you to develop Ruby Extension by C++.'
-  s.version     = ext.version
-
-  s.authors  = %w[xordog]
-  s.email    = 'xordog@gmail.com'
-  s.homepage = "https://github.com/xord/rucy"
+  s.authors     = %w[xordog]
+  s.email       = 'xordog@gmail.com'
+  s.homepage    = "https://github.com/xord/rucy"
 
   s.platform              = Gem::Platform::RUBY
   s.required_ruby_version = '>= 2.7.0'

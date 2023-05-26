@@ -17,13 +17,13 @@ Gem::Specification.new do |s|
   rdocs = glob.call *%w[README .doc/ext/**/*.cpp]
 
   s.name        = "#{name}ion"
+  s.version     = ext.version
+  s.license     = 'MIT'
   s.summary     = 'A Graphical User Interface Tool Kit.'
   s.description = 'This library helps you to develop interactive graphical user interface.'
-  s.version     = ext.version
-
-  s.authors  = %w[xordog]
-  s.email    = 'xordog@gmail.com'
-  s.homepage = "https://github.com/xord/reflex"
+  s.authors     = %w[xordog]
+  s.email       = 'xordog@gmail.com'
+  s.homepage    = "https://github.com/xord/reflex"
 
   s.platform              = Gem::Platform::RUBY
   s.required_ruby_version = '>= 2.7.0'
