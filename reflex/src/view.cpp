@@ -268,7 +268,7 @@ namespace Reflex
 				.translate(-pivot);
 		}
 
-		void update_body_and_shapes ()
+		void setup_body_and_shapes ()
 		{
 			std::unique_ptr<Body> old_body;
 			if (pbody)
@@ -725,7 +725,7 @@ namespace Reflex
 		}
 
 		view->self->window = window;
-		view->self->update_body_and_shapes();
+		view->self->setup_body_and_shapes();
 
 		View::ChildList* children = view->self->children();
 		if (children)
