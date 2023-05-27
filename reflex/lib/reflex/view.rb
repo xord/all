@@ -126,9 +126,9 @@ module Reflex
       sensor:        {reader: :sensor?},
       debug:         {reader: :debug?}
 
-    alias add    add_child
+    alias add       add_child
     alias remove remove_child
-    alias find   find_child
+    alias find     find_child
 
     alias apply_impulse apply_linear_impulse
     alias velocity=     linear_velocity=

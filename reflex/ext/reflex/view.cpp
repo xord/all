@@ -1228,25 +1228,25 @@ Init_reflex_view ()
 	cView.define_method("from_screen", from_screen);
 	cView.define_method(  "to_screen",   to_screen);
 
-	cView.define_method("add_child",      add_child);
+	cView.define_method(   "add_child",      add_child);
 	cView.define_method("remove_child",   remove_child);
-	cView.define_method("clear_children", clear_children);
-	cView.define_method("find_children",  find_children);
-	cView.define_method("each_child",     each_child);
+	cView.define_method( "clear_children", clear_children);
+	cView.define_method(  "find_children",  find_children);
+	cView.define_method(  "each_child",     each_child);
 
-	cView.define_method("add_style",    add_style);
+	cView.define_method(   "add_style",    add_style);
 	cView.define_method("remove_style", remove_style);
-	cView.define_method("get_style",    get_style);
-	cView.define_method("find_styles",  find_styles);
-	cView.define_method("each_style",   each_style);
+	cView.define_method(   "get_style",    get_style);
+	cView.define_method(  "find_styles",  find_styles);
+	cView.define_method(  "each_style",   each_style);
 
-	cView.define_method("shape=",       set_shape);
-	cView.define_method("shape",        get_shape);
-	cView.define_method("add_shape",    add_shape);
+	cView.define_method(       "shape=",   set_shape);
+	cView.define_method(       "shape",    get_shape);
+	cView.define_method(   "add_shape",    add_shape);
 	cView.define_method("remove_shape", remove_shape);
-	cView.define_method("clear_shapes", clear_shapes);
-	cView.define_method("find_shapes",  find_shapes);
-	cView.define_method("each_shape",   each_shape);
+	cView.define_method( "clear_shapes", clear_shapes);
+	cView.define_method(  "find_shapes",  find_shapes);
+	cView.define_method(  "each_shape",   each_shape);
 
 	cView.define_method("filter=", set_filter);
 	cView.define_method("filter",  get_filter);
