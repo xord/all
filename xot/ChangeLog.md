@@ -1,6 +1,12 @@
 # xot ChangeLog
 
 
+## [v0.1.37] - 2023-05-27
+
+- required_ruby_version >= 3.0.0
+- Add spec.license
+
+
 ## [v0.1.36] - 2023-05-18
 
 - Fix crash on copying to null pimpl

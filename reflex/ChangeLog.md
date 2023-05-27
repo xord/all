@@ -1,6 +1,14 @@
 # reflex ChangeLog
 
 
+## [v0.1.40] - 2023-05-27
+
+- required_ruby_version >= 3.0.0
+- Add FLAG_FIX_ANGLE
+- Add spec.license
+- Fix crash on calling ContactEvent#inspect
+
+
 ## [v0.1.39] - 2023-05-18
 
 - Event#block has a bool parameter, which defaults to true
