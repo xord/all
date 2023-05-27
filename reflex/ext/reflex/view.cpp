@@ -676,6 +676,28 @@ RUCY_DEF0(get_scroll_to_fit)
 RUCY_END
 
 static
+RUCY_DEF1(set_fix_angle, fix)
+{
+	CHECK;
+
+	if (fix)
+		THIS->   add_flag(Reflex::View::FLAG_FIX_ANGLE);
+	else
+		THIS->remove_flag(Reflex::View::FLAG_FIX_ANGLE);
+
+	return fix;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_fix_angle)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::View::FLAG_FIX_ANGLE));
+}
+RUCY_END
+
+static
 RUCY_DEF0(parent)
 {
 	CHECK;
@@ -1252,6 +1274,8 @@ Init_reflex_view ()
 	cView.define_method("resize_to_fit?", get_resize_to_fit);
 	cView.define_method("scroll_to_fit=", set_scroll_to_fit);
 	cView.define_method("scroll_to_fit?", get_scroll_to_fit);
+	cView.define_method("fix_angle=", set_fix_angle);
+	cView.define_method("fix_angle?", get_fix_angle);
 	cView.define_method("parent", parent);
 	cView.define_method("window", window);
 

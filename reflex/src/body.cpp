@@ -248,6 +248,20 @@ namespace Reflex
 	}
 
 	void
+	Body::fix_rotation (bool state)
+	{
+		validate(this);
+
+		self->b2body->SetFixedRotation(state);
+	}
+
+	bool
+	Body::is_rotation_fixed () const
+	{
+		return self->b2body->IsFixedRotation();
+	}
+
+	void
 	Body::set_gravity_scale (float scale)
 	{
 		validate(this);

@@ -67,7 +67,9 @@ namespace Reflex
 
 				FLAG_SCROLL_TO_FIT  = Xot::bit(3),
 
-				FLAG_LAST           = FLAG_SCROLL_TO_FIT
+				FLAG_FIX_ANGLE      = Xot::bit(4),
+
+				FLAG_LAST           = FLAG_FIX_ANGLE
 
 			};// Flag
 

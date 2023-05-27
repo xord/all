@@ -67,6 +67,10 @@ namespace Reflex
 
 			float    angular_velocity () const;
 
+			void fix_rotation (bool state = true);
+
+			bool  is_rotation_fixed () const;
+
 			void set_gravity_scale (float scale);
 
 			float    gravity_scale () const;

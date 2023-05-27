@@ -275,6 +275,20 @@ class TestView < Test::Unit::TestCase
     assert_equal 361,  v.angle
   end
 
+  def test_fix_angle()
+    v = view
+    assert_false v.fix_angle?
+    assert_false v.fix_angle
+
+    v.fix_angle = true
+    assert_true v.fix_angle?
+    assert_true v.fix_angle
+
+    v.fix_angle false
+    assert_false v.fix_angle?
+    assert_false v.fix_angle
+  end
+
   def test_pivot()
     v = view
     assert_each_in_epsilon [0, 0, 0],          v.pivot.to_a(3)

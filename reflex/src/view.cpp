@@ -216,6 +216,7 @@ namespace Reflex
 
 				pbody.reset(b);
 				update_body_frame();
+				update_body_states();
 			}
 			return *pbody;
 		}
@@ -233,6 +234,12 @@ namespace Reflex
 			}
 			else
 				pbody->set_transform(frame.x, frame.y, angle);
+		}
+
+		void update_body_states ()
+		{
+			if (pbody && pbody->is_rotation_fixed() != has_flag(View::FLAG_FIX_ANGLE))
+				pbody->fix_rotation(has_flag(View::FLAG_FIX_ANGLE));
 		}
 
 		void
@@ -2364,12 +2371,16 @@ namespace Reflex
 	View::add_flag (uint flags)
 	{
 		self->add_flag(flags);
+
+		self->update_body_states();
 	}
 
 	void
 	View::remove_flag (uint flags)
 	{
 		self->remove_flag(flags);
+
+		self->update_body_states();
 	}
 
 	bool

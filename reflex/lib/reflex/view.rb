@@ -120,6 +120,7 @@ module Reflex
       cache:         {reader: :cache?},
       resize_to_fit: {reader: :resize_to_fit?},
       scroll_to_fit: {reader: :scroll_to_fit?},
+      fix_angle:     {reader: :fix_angle?},
       static:        {reader: :static?},
       dynamic:       {reader: :dynamic?},
       sensor:        {reader: :sensor?},
