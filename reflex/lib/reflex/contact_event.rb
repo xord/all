@@ -24,7 +24,7 @@ module Reflex
     end
 
     def inspect()
-      "#<Reflex::ContactEvent type:#{type} shape:#{shape} view:#{view}>"
+      "#<Reflex::ContactEvent #{action} shape:#{shape} view:#{view}>"
     end
 
   end# ContactEvent
