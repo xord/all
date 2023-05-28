@@ -61,6 +61,8 @@ namespace Rays
 
 			void end ();
 
+			bool painting () const;
+
 			void clear ();
 
 			void polygon (const Polygon& polygon);

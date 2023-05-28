@@ -113,6 +113,14 @@ RUCY_DEF0(end_paint)
 RUCY_END
 
 static
+RUCY_DEF0(is_painting)
+{
+	CHECK;
+	return value(THIS->painting());
+}
+RUCY_END
+
+static
 RUCY_DEF0(clear)
 {
 	CHECK;
@@ -667,8 +675,9 @@ Init_rays_painter ()
 	cPainter.define_method("bounds", bounds);
 	cPainter.define_method("pixel_density", pixel_density);
 
-	cPainter.define_private_method("begin_paint", begin_paint);
-	cPainter.define_private_method(  "end_paint",   end_paint);
+	cPainter.define_private_method("begin_paint",  begin_paint);
+	cPainter.define_private_method(  "end_paint",    end_paint);
+	cPainter.define_method(              "painting?", is_painting);
 	cPainter.define_method("clear",   clear);
 	cPainter.define_method("polygon", polygon);
 	cPainter.define_private_method("draw_line",     line);

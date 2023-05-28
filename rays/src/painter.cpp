@@ -755,6 +755,12 @@ namespace Rays
 		}
 	}
 
+	bool
+	Painter::painting () const
+	{
+		return self->painting;
+	}
+
 	void
 	Painter::clear ()
 	{

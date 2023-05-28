@@ -41,6 +41,15 @@ class TestPainter < Test::Unit::TestCase
     Rays::Color.set_palette_color :rgb001, color(0, 0, 1)
   end
 
+  def test_painting?()
+    pa = image.painter
+    assert_false pa.painting?
+    pa.send :begin_paint
+    assert_true  pa.painting?
+    pa.send :end_paint
+    assert_false pa.painting?
+  end
+
   def test_background_accessor()
     pa = painter
     pa.background = 1
