@@ -4,6 +4,7 @@
 
 #import <Cocoa/Cocoa.h>
 #include "reflex/exception.h"
+#include "screen.h"
 #import "native_window.h"
 
 
@@ -110,6 +111,15 @@ namespace Reflex
 			rect.origin.y,
 			rect.size.width,
 			rect.size.height);
+	}
+
+	Screen
+	Window_get_screen (const Window& window)
+	{
+		Screen s;
+		NativeWindow* native = get_native(&window);
+		if (native && native.screen) Screen_initialize(&s, native.screen);
+		return s;
 	}
 
 	void

@@ -83,6 +83,10 @@ class TestWindow < Test::Unit::TestCase
     assert_true  w.resizable?
   end
 
+  def test_screen()
+    assert_not_nil win.screen
+  end
+
   def test_root()
     w = win
     assert_not_nil       w.root

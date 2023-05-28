@@ -3,6 +3,7 @@
 
 #include <rays/ruby/bounds.h>
 #include <rays/ruby/painter.h>
+#include "reflex/ruby/screen.h"
 #include "reflex/ruby/view.h"
 #include "defs.h"
 
@@ -135,7 +136,15 @@ RUCY_DEF0(hidden)
 RUCY_END
 
 static
-RUCY_DEF0(root)
+RUCY_DEF0(get_screen)
+{
+	CHECK;
+	return value(THIS->screen());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_root)
 {
 	CHECK;
 	return value(THIS->root());
@@ -143,7 +152,7 @@ RUCY_DEF0(root)
 RUCY_END
 
 static
-RUCY_DEF0(focus)
+RUCY_DEF0(get_focus)
 {
 	CHECK;
 	return value(THIS->focus());
@@ -151,7 +160,7 @@ RUCY_DEF0(focus)
 RUCY_END
 
 static
-RUCY_DEF0(painter)
+RUCY_DEF0(get_painter)
 {
 	CHECK;
 	return value(THIS->painter());
@@ -313,9 +322,10 @@ Init_reflex_window ()
 	cWindow.define_method("resizable=", set_resizable);
 	cWindow.define_method("resizable?",  is_resizable);
 	cWindow.define_method("hidden", hidden);
-	cWindow.define_method("root", root);
-	cWindow.define_method("focus", focus);
-	cWindow.define_method("painter", painter);
+	cWindow.define_method("screen",  get_screen);
+	cWindow.define_method("root",    get_root);
+	cWindow.define_method("focus",   get_focus);
+	cWindow.define_method("painter", get_painter);
 	cWindow.define_method("on_show",  on_show);
 	cWindow.define_method("on_hide",  on_hide);
 	cWindow.define_method("on_close", on_close);

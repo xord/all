@@ -47,6 +47,7 @@ require 'reflex/model'
 require 'reflex/model_owner'
 
 require 'reflex/application'
+require 'reflex/screen'
 require 'reflex/window'
 require 'reflex/view'
 

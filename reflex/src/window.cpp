@@ -529,6 +529,12 @@ namespace Reflex
 		return self->hide_count > 0;
 	}
 
+	Screen
+	Window::screen () const
+	{
+		return Window_get_screen(*this);
+	}
+
 	View*
 	Window::root ()
 	{

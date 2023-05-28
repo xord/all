@@ -32,6 +32,7 @@ void Init_reflex_rect_shape ();
 void Init_reflex_ellipse_shape ();
 
 void Init_reflex_application ();
+void Init_reflex_screen ();
 void Init_reflex_window ();
 void Init_reflex_view ();
 
@@ -80,6 +81,7 @@ extern "C" void
 	Init_reflex_ellipse_shape();
 
 	Init_reflex_application();
+	Init_reflex_screen();
 	Init_reflex_window();
 	Init_reflex_view();
 

@@ -11,6 +11,7 @@
 #include <rays/painter.h>
 #include <reflex/defs.h>
 #include <reflex/event.h>
+#include <reflex/screen.h>
 
 
 namespace Reflex
@@ -58,6 +59,8 @@ namespace Reflex
 			virtual bool  is_resizable () const;
 
 			virtual bool hidden () const;
+
+			virtual Screen screen () const;
 
 			virtual       View* root ();
 

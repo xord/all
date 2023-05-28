@@ -7,6 +7,10 @@ class TestEvent < Test::Unit::TestCase
     Reflex::UpdateEvent.new 0, 0
   end
 
+  def test_initialize()
+    assert_raise(Reflex::ReflexError) {Reflex::Event.new}
+  end
+
   def test_dup()
     e1 = event
     e2 = e1.dup
