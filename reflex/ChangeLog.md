@@ -1,6 +1,13 @@
 # reflex ChangeLog
 
 
+## [v0.1.41] - 2023-05-29
+
+- Add Reflex::Screen class
+- Add Window#closable and Window#minimizable accessors
+- Fix that non-closable, non-minimizable, or non-resizable buttons raise error on clicking them
+
+
 ## [v0.1.40] - 2023-05-27
 
 - required_ruby_version >= 3.0.0

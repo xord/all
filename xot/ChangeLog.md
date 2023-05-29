@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.1.38] - 2023-05-29
+
+- Refactoring
+
+
 ## [v0.1.37] - 2023-05-27
 
 - required_ruby_version >= 3.0.0
