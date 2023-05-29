@@ -121,6 +121,23 @@ class TestWindow < Test::Unit::TestCase
     assert_true  w.resizable?
   end
 
+  def test_fullscreen?()
+    w = win
+    assert_false w.fullscreen?
+
+    w.fullscreen = true
+    assert_true  w.fullscreen?
+
+    w.fullscreen = false
+    assert_false w.fullscreen?
+
+    w.fullscreen true
+    assert_true  w.fullscreen?
+
+    w.fullscreen false
+    assert_false w.fullscreen?
+  end
+
   def test_orientations()
     w = win
     assert_equal [], w.orientations
