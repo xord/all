@@ -62,7 +62,9 @@ module Reflex
       :restitution=, :restitution
 
     universal_accessor :title, :frame,
-      resizable: {reader: :resizable?}
+      closable:    {reader: :closable?},
+      minimizable: {reader: :minimizable?},
+      resizable:   {reader: :resizable?}
 
     def initialize(options = nil, &block)
       super()

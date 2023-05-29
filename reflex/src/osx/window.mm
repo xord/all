@@ -32,6 +32,27 @@ namespace Reflex
 		return Window_get_data(const_cast<Window*>(window));
 	}
 
+	NSWindowStyleMask
+	Window_make_style_mask (uint flags, NSWindowStyleMask styleMask)
+	{
+		if (Xot::has_flag(flags, Window::FLAG_CLOSABLE))
+			styleMask |=  NSWindowStyleMaskClosable;
+		else
+			styleMask &= ~NSWindowStyleMaskClosable;
+
+		if (Xot::has_flag(flags, Window::FLAG_MINIMIZABLE))
+			styleMask |=  NSWindowStyleMaskMiniaturizable;
+		else
+			styleMask &= ~NSWindowStyleMaskMiniaturizable;
+
+		if (Xot::has_flag(flags, Window::FLAG_RESIZABLE))
+			styleMask |=  NSWindowStyleMaskResizable;
+		else
+			styleMask &= ~NSWindowStyleMaskResizable;
+
+		return styleMask;
+	}
+
 	static NativeWindow*
 	get_native (const Window* window)
 	{
@@ -113,6 +134,17 @@ namespace Reflex
 			rect.size.height);
 	}
 
+	void
+	Window_set_flags (Window* window, uint flags)
+	{
+		NativeWindow* native        = get_native(window);
+		NSWindowStyleMask styleMask =
+			Window_make_style_mask(window->self->flags, native.styleMask);
+
+		if (styleMask != native.styleMask)
+			native.styleMask = styleMask;
+	}
+
 	Screen
 	Window_get_screen (const Window& window)
 	{
@@ -120,22 +152,6 @@ namespace Reflex
 		NativeWindow* native = get_native(&window);
 		if (native && native.screen) Screen_initialize(&s, native.screen);
 		return s;
-	}
-
-	void
-	Window_set_resizable (Window* window, bool state)
-	{
-		NativeWindow* native = get_native(window);
-		if (state)
-			native.styleMask |= NSResizableWindowMask;
-		else
-			native.styleMask &= ~NSResizableWindowMask;
-	}
-
-	bool
-	Window_is_resizable (const Window& window)
-	{
-		return get_native(&window).styleMask & NSResizableWindowMask;
 	}
 
 	float

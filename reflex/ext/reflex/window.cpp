@@ -111,11 +111,60 @@ RUCY_DEF0(get_frame)
 RUCY_END
 
 static
+RUCY_DEF1(set_closable, state)
+{
+	CHECK;
+
+	if (state)
+		THIS->   add_flag(Reflex::Window::FLAG_CLOSABLE);
+	else
+		THIS->remove_flag(Reflex::Window::FLAG_CLOSABLE);
+
+	return state;
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_closable)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::Window::FLAG_CLOSABLE));
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_minimizable, state)
+{
+	CHECK;
+
+	if (state)
+		THIS->   add_flag(Reflex::Window::FLAG_MINIMIZABLE);
+	else
+		THIS->remove_flag(Reflex::Window::FLAG_MINIMIZABLE);
+
+	return state;
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_minimizable)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::Window::FLAG_MINIMIZABLE));
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_resizable, state)
 {
 	CHECK;
-	THIS->set_resizable(to<bool>(state));
-	return value(THIS->is_resizable());
+
+	if (state)
+		THIS->   add_flag(Reflex::Window::FLAG_RESIZABLE);
+	else
+		THIS->remove_flag(Reflex::Window::FLAG_RESIZABLE);
+
+	return state;
 }
 RUCY_END
 
@@ -123,7 +172,7 @@ static
 RUCY_DEF0(is_resizable)
 {
 	CHECK;
-	return value(THIS->is_resizable());
+	return value(THIS->has_flag(Reflex::Window::FLAG_RESIZABLE));
 }
 RUCY_END
 
@@ -319,8 +368,12 @@ Init_reflex_window ()
 	cWindow.define_method("title", get_title);
 	cWindow.define_method("frame=", set_frame);
 	cWindow.define_method("frame",  get_frame);
-	cWindow.define_method("resizable=", set_resizable);
-	cWindow.define_method("resizable?",  is_resizable);
+	cWindow.define_method("closable=",    set_closable);
+	cWindow.define_method("closable?",     is_closable);
+	cWindow.define_method("minimizable=", set_minimizable);
+	cWindow.define_method("minimizable?",  is_minimizable);
+	cWindow.define_method("resizable=",   set_resizable);
+	cWindow.define_method("resizable?",    is_resizable);
 	cWindow.define_method("hidden", hidden);
 	cWindow.define_method("screen",  get_screen);
 	cWindow.define_method("root",    get_root);

@@ -12,13 +12,13 @@
 #import "opengl_view.h"
 
 
-static const NSUInteger WINDOW_STYLE_MASK =
-	NSTitledWindowMask |
-	NSClosableWindowMask |
-	NSMiniaturizableWindowMask |
-	NSResizableWindowMask |
-	0;//NSTexturedBackgroundWindowMask
-
+static NSWindowStyleMask
+default_style_mask ()
+{
+	return Window_make_style_mask(
+		Reflex::Window::Data::FLAG_DEFAULT,
+		NSTitledWindowMask | NSTexturedBackgroundWindowMask);
+}
 
 static int
 count_mouse_buttons (const Reflex::PointerEvent& e)
@@ -67,7 +67,7 @@ update_pixel_density (Reflex::Window* window)
 	{
 		self = [super
 			initWithContentRect: NSMakeRect(0, 0, 0, 0)
-			styleMask: WINDOW_STYLE_MASK
+			styleMask: default_style_mask()
 			backing: NSBackingStoreBuffered
 			defer: NO];
 		if (!self) return nil;
@@ -420,7 +420,7 @@ update_pixel_density (Reflex::Window* window)
 	{
 		return [NSWindow
 			frameRectForContentRect: contentRect
-			styleMask: WINDOW_STYLE_MASK];
+			styleMask: default_style_mask()];
 	}
 
 @end// NativeWindow

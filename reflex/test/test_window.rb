@@ -66,6 +66,40 @@ class TestWindow < Test::Unit::TestCase
     w.frame = [bounds(1, 2, 3, 4, 5, 6)]; assert_equal [1, 2, 0, 4, 5, 0], w.frame.to_a(3)
   end
 
+  def test_closable?()
+    w = win
+    assert_true  w.closable?
+
+    w.closable = false
+    assert_false w.closable?
+
+    w.closable = true
+    assert_true  w.closable?
+
+    w.closable false
+    assert_false w.closable?
+
+    w.closable true
+    assert_true  w.closable?
+  end
+
+  def test_minimizable?()
+    w = win
+    assert_true  w.minimizable?
+
+    w.minimizable = false
+    assert_false w.minimizable?
+
+    w.minimizable = true
+    assert_true  w.minimizable?
+
+    w.minimizable false
+    assert_false w.minimizable?
+
+    w.minimizable true
+    assert_true  w.minimizable?
+  end
+
   def test_resizable?()
     w = win
     assert_true  w.resizable?

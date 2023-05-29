@@ -30,6 +30,19 @@ namespace Reflex
 
 			typedef Xot::Ref<This> Ref;
 
+			enum Flag
+			{
+
+				FLAG_CLOSABLE    = Xot::bit(0),
+
+				FLAG_MINIMIZABLE = Xot::bit(1),
+
+				FLAG_RESIZABLE   = Xot::bit(2),
+
+				FLAG_LAST        = FLAG_RESIZABLE
+
+			};// Flag
+
 			Window ();
 
 			virtual void show ();
@@ -54,9 +67,11 @@ namespace Reflex
 
 			virtual Bounds   frame () const;
 
-			virtual void set_resizable (bool state = true);
+			virtual void    add_flag (uint flags);
 
-			virtual bool  is_resizable () const;
+			virtual void remove_flag (uint flags);
+
+			virtual bool    has_flag (uint flags) const;
 
 			virtual bool hidden () const;
 

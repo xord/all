@@ -4,6 +4,7 @@
 #define __REFLEX_SRC_OSX_WINDOW_H__
 
 
+#import <AppKit/NSWindow.h>
 #include "../window.h"
 
 
@@ -34,6 +35,9 @@ namespace Reflex
 	      WindowData& Window_get_data (Window* window);
 
 	const WindowData& Window_get_data (const Window* window);
+
+	NSWindowStyleMask Window_make_style_mask (
+		uint flags, NSWindowStyleMask styleMask = 0);
 
 
 }// Reflex

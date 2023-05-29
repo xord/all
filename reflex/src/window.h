@@ -37,6 +37,8 @@ namespace Reflex
 
 		typedef std::map<View::Ref, TargetPointerMap> CaptureMap;
 
+		enum {FLAG_DEFAULT = FLAG_CLOSABLE | FLAG_MINIMIZABLE | FLAG_RESIZABLE};
+
 		int hide_count = 1;
 
 		bool redraw = true;
@@ -50,6 +52,8 @@ namespace Reflex
 		double prev_time_update, prev_time_draw, prev_fps = 0;
 
 		CaptureMap captures;
+
+		uint flags = FLAG_DEFAULT;
 
 		Data ()
 		{
@@ -96,9 +100,7 @@ namespace Reflex
 
 	Screen Window_get_screen (const Window& window);
 
-	void Window_set_resizable (Window* window, bool state);
-
-	bool Window_is_resizable (const Window& window);
+	void Window_set_flags (Window* window, uint flags);
 
 	void Window_set_focus (Window* window, View* view);
 

@@ -512,15 +512,25 @@ namespace Reflex
 	}
 
 	void
-	Window::set_resizable (bool state)
+	Window::add_flag (uint flags)
 	{
-		Window_set_resizable(this, state);
+		Xot::add_flag(&self->flags, flags);
+
+		Window_set_flags(this, self->flags);
+	}
+
+	void
+	Window::remove_flag (uint flags)
+	{
+		Xot::remove_flag(&self->flags, flags);
+
+		Window_set_flags(this, self->flags);
 	}
 
 	bool
-	Window::is_resizable () const
+	Window::has_flag (uint flags) const
 	{
-		return Window_is_resizable(*this);
+		return Xot::has_flag(self->flags, flags);
 	}
 
 	bool
