@@ -43,6 +43,14 @@ RUCY_DEF0(hide)
 RUCY_END
 
 static
+RUCY_DEF0(hidden)
+{
+	CHECK;
+	return value(THIS->hidden());
+}
+RUCY_END
+
+static
 RUCY_DEF0(close)
 {
 	CHECK;
@@ -173,14 +181,6 @@ RUCY_DEF0(is_resizable)
 {
 	CHECK;
 	return value(THIS->has_flag(Reflex::Window::FLAG_RESIZABLE));
-}
-RUCY_END
-
-static
-RUCY_DEF0(hidden)
-{
-	CHECK;
-	return value(THIS->hidden());
 }
 RUCY_END
 

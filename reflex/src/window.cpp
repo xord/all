@@ -450,6 +450,12 @@ namespace Reflex
 		self->hide_count = new_count;
 	}
 
+	bool
+	Window::hidden () const
+	{
+		return self->hide_count > 0;
+	}
+
 	void
 	Window::close (bool force)
 	{
@@ -531,12 +537,6 @@ namespace Reflex
 	Window::has_flag (uint flags) const
 	{
 		return Xot::has_flag(self->flags, flags);
-	}
-
-	bool
-	Window::hidden () const
-	{
-		return self->hide_count > 0;
 	}
 
 	Screen

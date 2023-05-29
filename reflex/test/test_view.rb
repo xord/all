@@ -28,21 +28,21 @@ class TestView < Test::Unit::TestCase
 
   def test_show_hide_hidden()
     v = view
-    assert_equal false, v.hidden?
+    assert_false v.hidden?
     v.hide
-    assert_equal true, v.hidden?
+    assert_true  v.hidden?
     v.show
-    assert_equal false, v.hidden?
+    assert_false v.hidden?
   end
 
   def test_hidden_count()
     v = view
     v.show
-    assert_equal false, v.hidden?
+    assert_false v.hidden?
     v.hide
-    assert_equal false, v.hidden?
+    assert_false v.hidden?
     v.hide
-    assert_equal true, v.hidden?
+    assert_true v.hidden?
   end
 
   def test_coord_conversion()

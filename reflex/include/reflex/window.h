@@ -49,6 +49,8 @@ namespace Reflex
 
 			virtual void hide ();
 
+			virtual bool hidden () const;
+
 			virtual void close (bool force = false);
 
 			virtual void redraw ();
@@ -72,8 +74,6 @@ namespace Reflex
 			virtual void remove_flag (uint flags);
 
 			virtual bool    has_flag (uint flags) const;
-
-			virtual bool hidden () const;
 
 			virtual Screen screen () const;
 
