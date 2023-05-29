@@ -368,7 +368,7 @@ update_pixel_density (Reflex::Window* window)
 		if (clicking_count == 0)
 			++pointer_id;
 		else if (clicking_count < 0)
-			Reflex::invalid_state_error(__FILE__, __LINE__);
+			return;//Reflex::invalid_state_error(__FILE__, __LINE__);
 
 		Window_call_pointer_event(win, &e);
 	}
