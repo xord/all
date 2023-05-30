@@ -3,6 +3,7 @@
 
 
 #include "reflex/exception.h"
+#include "screen.h"
 #import "view_controller.h"
 
 
@@ -137,7 +138,7 @@ namespace Reflex
 		return Bounds(b.origin.x, b.origin.y, b.size.width, b.size.height);
 	}
 
-	bool
+	void
 	Window_set_flags (Window* window, uint flags)
 	{
 		if (Xot::has_flag(flags, Window::FLAG_CLOSABLE))
@@ -150,12 +151,26 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__, "FLAG_RESIZABLE is not supported");
 	}
 
+	static UIScreen*
+	get_screen (const Window& window)
+	{
+		UIWindow* w = get_vc(&window).view.window;
+		if (@available(iOS 13.0, *))
+		{
+			return w.windowScene.screen;
+		}
+		else
+		{
+			return w.screen;
+		}
+	}
+
 	Screen
 	Window_get_screen (const Window& window)
 	{
 		Screen s;
-		UIScreen* screen = get_vc(&window).windowScene.screen;
-		if (screen) Screen_initialize(&s, screen);
+		UIScreen* screen = get_screen(window);
+		Screen_initialize(&s, screen ? screen : UIScreen.mainScreen);
 		return s;
 	}
 
