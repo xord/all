@@ -126,12 +126,8 @@ namespace Reflex
 	Window_get_frame (const Window& window)
 	{
 		NativeWindow* native = get_native(&window);
-		NSRect rect = [native contentRectForFrameRect: [native frame]];
-		return Bounds(
-			rect.origin.x,
-			rect.origin.y,
-			rect.size.width,
-			rect.size.height);
+		NSRect r = [native contentRectForFrameRect: [native frame]];
+		return Bounds(r.origin.x, r.origin.y, r.size.width, r.size.height);
 	}
 
 	void
@@ -158,12 +154,6 @@ namespace Reflex
 	Window_get_pixel_density (const Window& window)
 	{
 		return get_native(&window).backingScaleFactor;
-	}
-
-
-	WindowData::WindowData ()
-	{
-		native = nil;
 	}
 
 

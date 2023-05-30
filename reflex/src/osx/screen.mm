@@ -2,6 +2,9 @@
 #include "screen.h"
 
 
+#include "reflex/exception.h"
+
+
 namespace Reflex
 {
 
@@ -37,10 +40,11 @@ namespace Reflex
 	Bounds
 	Screen::frame () const
 	{
-		NSRect frame = self->screen.frame;
-		return Bounds(
-			frame.origin.x,   frame.origin.y,
-			frame.size.width, frame.size.height);
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		NSRect f = self->screen.frame;
+		return Bounds(f.origin.x, f.origin.y, f.size.width, f.size.height);
 	}
 
 	Screen::operator bool () const

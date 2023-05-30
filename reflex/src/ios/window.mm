@@ -127,12 +127,8 @@ namespace Reflex
 	Bounds
 	Window_get_frame (const Window& window)
 	{
-		CGRect rect = get_vc(&window).reflexView.bounds;
-		return Bounds(
-			rect.origin.x,
-			rect.origin.y,
-			rect.size.width,
-			rect.size.height);
+		CGRect b = get_vc(&window).reflexView.bounds;
+		return Bounds(b.origin.x, b.origin.y, b.size.width, b.size.height);
 	}
 
 	void
@@ -151,12 +147,6 @@ namespace Reflex
 	Window_get_pixel_density (const Window& window)
 	{
 		return UIScreen.mainScreen.scale;
-	}
-
-
-	WindowData::WindowData ()
-	{
-		view_controller = nil;
 	}
 
 

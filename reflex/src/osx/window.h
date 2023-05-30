@@ -18,11 +18,9 @@ namespace Reflex
 	struct WindowData : public Window::Data
 	{
 
-		NativeWindow* native;
+		NativeWindow* native = nil;
 
 		mutable String title_tmp;
-
-		WindowData ();
 
 		bool is_valid () const
 		{

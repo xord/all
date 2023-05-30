@@ -17,9 +17,7 @@ namespace Reflex
 	struct WindowData : public Window::Data
 	{
 
-		ReflexViewController* view_controller;
-
-		WindowData ();
+		ReflexViewController* view_controller = nil;
 
 		bool is_valid () const
 		{
