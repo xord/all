@@ -150,6 +150,15 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__, "FLAG_RESIZABLE is not supported");
 	}
 
+	Screen
+	Window_get_screen (const Window& window)
+	{
+		Screen s;
+		UIScreen* screen = get_vc(&window).windowScene.screen;
+		if (screen) Screen_initialize(&s, screen);
+		return s;
+	}
+
 	float
 	Window_get_pixel_density (const Window& window)
 	{

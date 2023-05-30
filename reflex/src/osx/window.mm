@@ -154,8 +154,8 @@ namespace Reflex
 	Window_get_screen (const Window& window)
 	{
 		Screen s;
-		NativeWindow* native = get_native(&window);
-		if (native && native.screen) Screen_initialize(&s, native.screen);
+		NSScreen* screen = get_native(&window).screen;
+		if (screen) Screen_initialize(&s, screen);
 		return s;
 	}
 
