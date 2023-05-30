@@ -22,6 +22,17 @@ namespace Reflex
 	using TargetPointerMap      = Window::Data::TargetPointerMap;
 
 
+	Window::Data::Data ()
+	:	flags(Window_default_flags())
+	{
+		prev_time_update = prev_time_draw = Xot::time();
+	}
+
+	Window::Data::~Data ()
+	{
+	}
+
+
 	Window::Data::PointerData::PointerData (uint view_index)
 	:	view_index(view_index)
 	{
@@ -520,17 +531,23 @@ namespace Reflex
 	void
 	Window::add_flag (uint flags)
 	{
-		Xot::add_flag(&self->flags, flags);
+		uint value = self->flags;
+		Xot::add_flag(&value, flags);
 
-		Window_set_flags(this, self->flags);
+		Window_set_flags(this, value);
+
+		self->flags = value;
 	}
 
 	void
 	Window::remove_flag (uint flags)
 	{
-		Xot::remove_flag(&self->flags, flags);
+		uint value = self->flags;
+		Xot::remove_flag(&value, flags);
 
-		Window_set_flags(this, self->flags);
+		Window_set_flags(this, value);
+
+		self->flags = value;
 	}
 
 	bool

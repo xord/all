@@ -70,6 +70,15 @@ namespace Reflex
 		return new WindowData();
 	}
 
+	uint
+	Window_default_flags ()
+	{
+		return
+			Window::FLAG_CLOSABLE    |
+			Window::FLAG_MINIMIZABLE |
+			Window::FLAG_RESIZABLE;
+	}
+
 	void
 	Window_initialize (Window* window)
 	{

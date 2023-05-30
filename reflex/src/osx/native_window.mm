@@ -15,8 +15,8 @@
 static NSWindowStyleMask
 default_style_mask ()
 {
-	return Window_make_style_mask(
-		Reflex::Window::Data::FLAG_DEFAULT,
+	return Reflex::Window_make_style_mask(
+		Reflex::Window_default_flags(),
 		NSTitledWindowMask | NSTexturedBackgroundWindowMask);
 }
 

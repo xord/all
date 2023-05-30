@@ -37,8 +37,6 @@ namespace Reflex
 
 		typedef std::map<View::Ref, TargetPointerMap> CaptureMap;
 
-		enum {FLAG_DEFAULT = FLAG_CLOSABLE | FLAG_MINIMIZABLE | FLAG_RESIZABLE};
-
 		int hide_count = 1;
 
 		bool redraw = true;
@@ -53,16 +51,11 @@ namespace Reflex
 
 		CaptureMap captures;
 
-		uint flags = FLAG_DEFAULT;
+		uint flags;
 
-		Data ()
-		{
-			prev_time_update = prev_time_draw = Xot::time();
-		}
+		Data ();
 
-		virtual ~Data ()
-		{
-		}
+		virtual ~Data ();
 
 		virtual bool is_valid () const = 0;
 
@@ -80,6 +73,8 @@ namespace Reflex
 
 
 	Window::Data* Window_create_data ();
+
+	uint Window_default_flags ();
 
 	void Window_initialize (Window* window);
 

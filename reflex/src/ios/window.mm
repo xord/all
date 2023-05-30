@@ -48,6 +48,12 @@ namespace Reflex
 		return new WindowData();
 	}
 
+	uint
+	Window_default_flags ()
+	{
+		return 0;
+	}
+
 	void
 	Window_initialize (Window* window)
 	{
@@ -131,16 +137,17 @@ namespace Reflex
 		return Bounds(b.origin.x, b.origin.y, b.size.width, b.size.height);
 	}
 
-	void
-	Window_set_resizable (Window* window, bool state)
-	{
-		//not_implemented_error(__FILE__, __LINE__);
-	}
-
 	bool
-	Window_is_resizable (const Window& window)
+	Window_set_flags (Window* window, uint flags)
 	{
-		return false;
+		if (Xot::has_flag(flags, Window::FLAG_CLOSABLE))
+			argument_error(__FILE__, __LINE__, "FLAG_CLOSABLE is not supported");
+
+		if (Xot::has_flag(flags, Window::FLAG_MINIMIZABLE))
+			argument_error(__FILE__, __LINE__, "FLAG_MINIMIZABLE is not supported");
+
+		if (Xot::has_flag(flags, Window::FLAG_RESIZABLE))
+			argument_error(__FILE__, __LINE__, "FLAG_RESIZABLE is not supported");
 	}
 
 	float
