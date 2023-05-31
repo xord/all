@@ -293,6 +293,12 @@ ReflexViewController_get_show_fun ()
 		[super viewDidDisappear: animated];
 	}
 
+	- (void)viewDidLayoutSubviews
+	{
+		[super viewDidLayoutSubviews];
+		self.reflexView.frame = self.view.bounds;
+	}
+
 	- (void) startTimer
 	{
 		[self startTimer: 60];
