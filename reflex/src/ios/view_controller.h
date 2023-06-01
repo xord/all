@@ -17,6 +17,8 @@
 
 	- (void) stopTimer;
 
+	- (void) update;
+
 	- (void) viewDidResize;
 
 	- (void) titleDidChange;
