@@ -1,6 +1,14 @@
 # reflex ChangeLog
 
 
+## [v0.1.42] - 2023-06-02
+
+- Implement the Screen class for iOS
+- Implement Window_get_screen() for iOS
+- Implement window flags for iOS
+- Update reflexView's size on viewDidLayoutSubviews
+
+
 ## [v0.1.41] - 2023-05-29
 
 - Add Reflex::Screen class
