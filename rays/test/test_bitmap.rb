@@ -34,8 +34,21 @@ class TestBitmap < Test::Unit::TestCase
   def test_at()
     o       = bitmap
     assert_equal color(0, 0, 0, 0), o[0, 0]
-    o[0, 0] = 1
+
+    o[0, 0] =          1
     assert_equal color(1, 1, 1, 1), o[0, 0]
+
+    o[0, 0] =         [0, 1, 0]
+    assert_equal color(0, 1, 0, 1), o[0, 0]
+
+    o[0, 0] =         [0, 1, 0, 0]
+    assert_equal color(0, 1, 0, 0), o[0, 0]
+
+    o[0, 0] =    color(0, 0, 1)
+    assert_equal color(0, 0, 1, 1), o[0, 0]
+
+    o[0, 0] =    color(0, 0, 1, 0)
+    assert_equal color(0, 0, 1, 0), o[0, 0]
   end
 
   def test_to_a()

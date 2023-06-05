@@ -73,17 +73,17 @@ RUCY_DEF0(color_space)
 RUCY_END
 
 static
-RUCY_DEFN(set_at)
+RUCY_DEF3(set_at, x, y, color)
 {
 	CHECK;
-	check_arg_count(__FILE__, __LINE__, "Bitmap#set_at", argc, 3, 4, 5, 6);
 
-	int x = to<int>(argv[0]);
-	int y = to<int>(argv[1]);
-	Rays::Color color = to<Rays::Color>(argc - 2, argv + 2);
+	bool is_array     = color.is_array();
+	size_t argc       = is_array ? color.size()     : 1;
+	const Value* argv = is_array ? color.as_array() : &color;
+	to<Rays::Color>(argc, argv)
+		.get(THIS->at<void>(to<int>(x), to<int>(y)), THIS->color_space());
 
-	color.get(THIS->at<void>(x, y), THIS->color_space());
-	return value(color);
+	return color;
 }
 RUCY_END
 
