@@ -89,6 +89,10 @@ namespace Reflex
 
 			virtual const Painter* painter () const;
 
+			virtual void on_activate   (Event* e);
+
+			virtual void on_deactivate (Event* e);
+
 			virtual void on_show (Event* e);
 
 			virtual void on_hide (Event* e);

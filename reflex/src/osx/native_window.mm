@@ -242,6 +242,9 @@ update_pixel_density (Reflex::Window* window)
 
 	- (void) windowWillClose: (NSNotification*) notification
 	{
+		if (self.isKeyWindow)
+			Window_call_deactivate_event(self.window);
+
 		[self stopTimer];
 		[self unbind];
 		[self setDelegate: nil];
@@ -304,6 +307,16 @@ update_pixel_density (Reflex::Window* window)
 				win->on_resize(&e);
 			}
 		}
+	}
+
+	- (void) windowDidBecomeKey: (NSNotification*) notification
+	{
+		Window_call_activate_event(self.window);
+	}
+
+	- (void) windowDidResignKey: (NSNotification*) notification
+	{
+		Window_call_deactivate_event(self.window);
 	}
 
 	- (void) keyDown: (NSEvent*) event

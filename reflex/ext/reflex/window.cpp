@@ -217,6 +217,22 @@ RUCY_DEF0(get_painter)
 RUCY_END
 
 static
+RUCY_DEF1(on_activate, event)
+{
+	CHECK;
+	CALL(on_activate(to<Reflex::Event*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_deactivate, event)
+{
+	CHECK;
+	CALL(on_deactivate(to<Reflex::Event*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_show, event)
 {
 	CHECK;
@@ -379,6 +395,8 @@ Init_reflex_window ()
 	cWindow.define_method("root",    get_root);
 	cWindow.define_method("focus",   get_focus);
 	cWindow.define_method("painter", get_painter);
+	cWindow.define_method("on_activate",   on_activate);
+	cWindow.define_method("on_deactivate", on_deactivate);
 	cWindow.define_method("on_show",  on_show);
 	cWindow.define_method("on_hide",  on_hide);
 	cWindow.define_method("on_close", on_close);

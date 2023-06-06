@@ -135,6 +135,24 @@ namespace Reflex
 	}
 
 	void
+	Window_call_activate_event (Reflex::Window* window)
+	{
+		if (!window) return;
+
+		Reflex::Event e;
+		window->on_activate(&e);
+	}
+
+	void
+	Window_call_deactivate_event (Reflex::Window* window)
+	{
+		if (!window) return;
+
+		Reflex::Event e;
+		window->on_deactivate(&e);
+	}
+
+	void
 	Window_call_draw_event (Window* window, DrawEvent* event)
 	{
 		if (!window || !event)
@@ -596,6 +614,16 @@ namespace Reflex
 	Window::painter () const
 	{
 		return const_cast<Window*>(this)->painter();
+	}
+
+	void
+	Window::on_activate (Event* e)
+	{
+	}
+
+	void
+	Window::on_deactivate (Event* e)
+	{
 	}
 
 	void

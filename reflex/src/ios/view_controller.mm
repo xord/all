@@ -285,12 +285,46 @@ ReflexViewController_get_show_fun ()
 	{
 		[super viewDidAppear: animated];
 		[self startTimer];
+
+		Window_call_activate_event(self.window);
+
+		[NSNotificationCenter.defaultCenter
+			addObserver: self
+			selector: @selector(didBecomeActive)
+			name: UIApplicationDidBecomeActiveNotification
+			object: nil];
+		[NSNotificationCenter.defaultCenter
+			addObserver: self
+			selector: @selector(willResignActive)
+			name: UIApplicationWillResignActiveNotification
+			object: nil];
 	}
 
 	- (void) viewDidDisappear: (BOOL) animated
 	{
+		[NSNotificationCenter.defaultCenter
+			removeObserver: self
+			name: UIApplicationDidBecomeActiveNotification
+			object: nil];
+		[NSNotificationCenter.defaultCenter
+			removeObserver: self
+			name: UIApplicationWillResignActiveNotification
+			object: nil];
+
+		Window_ca__deactivate_event(self.window);
+
 		[self stopTimer];
 		[super viewDidDisappear: animated];
+	}
+
+	- (void) didBecomeActive
+	{
+		Window_call_activate_event(self.window);
+	}
+
+	- (void) willResignActive
+	{
+		Window_call_deactivate_event(self.window);
 	}
 
 	- (void)viewDidLayoutSubviews

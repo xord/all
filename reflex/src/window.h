@@ -105,13 +105,17 @@ namespace Reflex
 	void Window_unregister_capture (
 		Window* window, View* view, Pointer::ID target);
 
-	void Window_call_draw_event    (Window* window, DrawEvent*    event);
+	void Window_call_activate_event   (Window* window);
 
-	void Window_call_key_event     (Window* window, KeyEvent*     event);
+	void Window_call_deactivate_event (Window* window);
 
-	void Window_call_pointer_event (Window* window, PointerEvent* event);
+	void Window_call_draw_event       (Window* window, DrawEvent*    event);
 
-	void Window_call_wheel_event   (Window* window, WheelEvent*   event);
+	void Window_call_key_event        (Window* window, KeyEvent*     event);
+
+	void Window_call_pointer_event    (Window* window, PointerEvent* event);
+
+	void Window_call_wheel_event      (Window* window, WheelEvent*   event);
 
 	float Window_get_pixel_density (const Window& window);
 
