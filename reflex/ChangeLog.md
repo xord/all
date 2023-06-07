@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.43] - 2023-06-07
+
+- Add on_activate() and on_deactivate() to Window class
+
+
 ## [v0.1.42] - 2023-06-02
 
 - Implement the Screen class for iOS

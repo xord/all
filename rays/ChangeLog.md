@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.40] - 2023-06-07
+
+- Redesign parameters for Bitmap#[]=
+
+
 ## [v0.1.39] - 2023-05-29
 
 - Add Painter#painting?
