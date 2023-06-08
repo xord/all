@@ -15,7 +15,7 @@ module Reflex
       :mouse_left?, :left?, :mouse_right?, :right?, :mouse_middle?, :middle?,
       :action, :down?, :up?, :move?, :cancel?, :stay?,
       :position, :pos, :x, :y, :modifiers, :drag?, :click_count, :view_index,
-      :time, :prev
+      :time, :prev, :down
 
     def pointers()
       to_enum :each

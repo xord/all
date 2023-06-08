@@ -362,7 +362,7 @@ update_pixel_density (Reflex::Window* window)
 			return;
 		}
 
-		[self attachAndUpdatePrevPointer: &e];
+		[self attachAndUpdatePastPointers: &e];
 
 		clicking_count += count_mouse_buttons(e);
 
@@ -375,7 +375,10 @@ update_pixel_density (Reflex::Window* window)
 		if (!win) return;
 
 		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::UP);
-		[self attachAndUpdatePrevPointer: &e];
+		[self attachAndUpdatePastPointers: &e];
+
+		if (prev_pointer && prev_pointer.down())
+			Pointer_set_down(&prev_pointer, NULL);
 
 		clicking_count -= count_mouse_buttons(e);
 		if (clicking_count == 0)
@@ -392,7 +395,7 @@ update_pixel_density (Reflex::Window* window)
 		if (!win) return;
 
 		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::MOVE);
-		[self attachAndUpdatePrevPointer: &e];
+		[self attachAndUpdatePastPointers: &e];
 
 		Window_call_pointer_event(win, &e);
 	}
@@ -403,18 +406,24 @@ update_pixel_density (Reflex::Window* window)
 		if (!win) return;
 
 		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::MOVE);
-		[self attachAndUpdatePrevPointer: &e];
+		[self attachAndUpdatePastPointers: &e];
 
 		Window_call_pointer_event(win, &e);
 	}
 
-	- (void) attachAndUpdatePrevPointer: (Reflex::PointerEvent*) e
+	- (void) attachAndUpdatePastPointers: (Reflex::PointerEvent*) e
 	{
 		assert(e->size() == 1);
 
 		Reflex::Pointer& pointer = Reflex::PointerEvent_pointer_at(e, 0);
+
 		if (prev_pointer)
 			Reflex::Pointer_set_prev(&pointer, &prev_pointer);
+
+		if (pointer.action() == Reflex::Pointer::DOWN)
+			Reflex::Pointer_set_down(&pointer, &pointer);
+		else if (prev_pointer && prev_pointer.down())
+			Reflex::Pointer_set_down(&pointer, prev_pointer.down());
 
 		prev_pointer = pointer;
 		Reflex::Pointer_set_prev(&prev_pointer, NULL);

@@ -92,6 +92,8 @@ namespace Reflex
 
 			const Pointer* prev () const;
 
+			const Pointer* down () const;
+
 			operator bool () const;
 
 			bool operator ! () const;

@@ -50,7 +50,7 @@ namespace Reflex
 
 		double time;
 
-		PrevPointerPtr prev;
+		PrevPointerPtr prev, down;
 
 		Data (
 			ID id = -1, uint type = TYPE_NONE, Action action = ACTION_NONE,
@@ -82,8 +82,8 @@ namespace Reflex
 	{
 		auto& self = pthis->self;
 		fun(&self->position);
-		if (self->prev)
-			fun(&self->prev->self->position);
+		if (self->prev) fun(&self->prev->self->position);
+		if (self->down) fun(&self->down->self->position);
 	}
 
 	void
@@ -104,10 +104,13 @@ namespace Reflex
 	void
 	Pointer_set_prev (Pointer* pthis, const Pointer* prev)
 	{
-		if (prev)
-			pthis->self->prev.reset(new Pointer(*prev));
-		else
-			pthis->self->prev.reset();
+		pthis->self->prev.reset(prev ? new Pointer(*prev) : NULL);
+	}
+
+	void
+	Pointer_set_down (Pointer* pthis, const Pointer* down)
+	{
+		pthis->self->down.reset(down ? new Pointer(*down) : NULL);
 	}
 
 
@@ -200,6 +203,12 @@ namespace Reflex
 	Pointer::prev () const
 	{
 		return self->prev.get();
+	}
+
+	const Pointer*
+	Pointer::down () const
+	{
+		return self->down.get();
 	}
 
 	Pointer::operator bool () const

@@ -70,30 +70,34 @@ namespace Reflex
 	}
 
 	static void
+	set_pasts (Pointer* pointer, const Pointer* prev)
+	{
+		Pointer_set_prev(pointer, prev);
+		if (prev && prev->down())
+			Pointer_set_down(pointer, prev->down());
+	}
+
+	static void
 	attach_prev_pointer (
 		Pointer* pointer, PrevPointerList* prev_pointers, const Point& prev_position)
 	{
-		assert(pointer && prev_pointers);
-
 		auto it = std::find_if(
 			prev_pointers->begin(), prev_pointers->end(),
-			[&](const Reflex::Pointer& p) {return p.position() == prev_position;});
+			[&](const Pointer& p) {return p.position() == prev_position;});
 
 		if (it != prev_pointers->end())
 		{
-			Reflex::Pointer_set_prev(pointer, &*it);
+			set_pasts(pointer, &*it);
 			prev_pointers->erase(it);
 		}
 		else if (prev_pointers->size() == 1)
 		{
-			Reflex::Pointer_set_prev(pointer, &prev_pointers->front());
+			set_pasts(pointer, &prev_pointers->front());
 			prev_pointers->clear();
 		}
-		else
-			Reflex::Pointer_set_prev(pointer, NULL);
 
 		if (pointer->prev())
-			Reflex::Pointer_set_id(pointer, pointer->prev()->id());
+			Pointer_set_id(pointer, pointer->prev()->id());
 	}
 
 	static Pointer
@@ -101,8 +105,8 @@ namespace Reflex
 		UITouch* touch, UIEvent* event, UIView* view, double time,
 		Pointer::ID pointer_id, PrevPointerList* prev_pointers)
 	{
-		Reflex::Pointer::Action action = get_action(touch);
-		Reflex::Pointer pointer(
+		Pointer::Action action = get_action(touch);
+		Pointer pointer(
 			pointer_id,
 			get_type(touch),
 			action,
@@ -119,6 +123,8 @@ namespace Reflex
 				&pointer, prev_pointers,
 				to_point([touch previousLocationInView: view]));
 		}
+		else
+			Pointer_set_down(&pointer, &pointer);
 
 		return pointer;
 	}

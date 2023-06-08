@@ -128,6 +128,14 @@ RUCY_DEF0(get_prev)
 }
 RUCY_END
 
+static
+RUCY_DEF0(get_down)
+{
+	CHECK;
+	return value(THIS->down());
+}
+RUCY_END
+
 
 static Class cPointer;
 
@@ -150,6 +158,7 @@ Init_reflex_pointer ()
 	cPointer.define_method("view_index",         get_view_index);
 	cPointer.define_method("time",               get_time);
 	cPointer.define_method("prev",               get_prev);
+	cPointer.define_method("down",               get_down);
 	cPointer.define_const("TYPE_NONE",    Reflex::Pointer::TYPE_NONE);
 	cPointer.define_const("MOUSE",        Reflex::Pointer::MOUSE);
 	cPointer.define_const("MOUSE_LEFT",   Reflex::Pointer::MOUSE_LEFT);

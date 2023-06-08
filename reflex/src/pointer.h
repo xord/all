@@ -21,6 +21,8 @@ namespace Reflex
 
 	void Pointer_set_prev (Pointer* pthis, const Pointer* prev);
 
+	void Pointer_set_down (Pointer* pthis, const Pointer* down);
+
 
 }// Reflex
 

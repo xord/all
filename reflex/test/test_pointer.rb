@@ -50,6 +50,7 @@ class TestPointer < Test::Unit::TestCase
     assert_equal 6,        p.view_index
     assert_equal 7,        p.time
     assert_nil             p.prev
+    assert_nil             p.down
   end
 
   def test_types()

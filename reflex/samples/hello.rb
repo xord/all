@@ -26,6 +26,12 @@ class HelloWindow < Reflex::Window
     redraw
   end
 
+  def on_pointer(e)
+    p e
+    p e.prev
+    p e.down
+  end
+
   def draw_grid (painter)
     painter.push do |p|
       w, h = frame.size.to_a

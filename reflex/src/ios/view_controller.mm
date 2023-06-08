@@ -495,6 +495,9 @@ ReflexViewController_get_show_fun ()
 		for (size_t i = 0; i < size; ++i)
 		{
 			prev_pointers.emplace_back(event[i]);
+			if (prev_pointers.size() > 10)
+				invalid_state_error(__FILE__, __LINE__);
+
 			Reflex::Pointer_set_prev(&prev_pointers.back(), NULL);
 		}
 	}
