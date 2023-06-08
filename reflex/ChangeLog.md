@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.44] - 2023-06-08
+
+- Fix compile error
+
+
 ## [v0.1.43] - 2023-06-07
 
 - Add on_activate() and on_deactivate() to Window class

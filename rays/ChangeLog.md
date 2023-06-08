@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.41] - 2023-06-08
+
+- Point#normal() does not check 'length == 0'
+
+
 ## [v0.1.40] - 2023-06-07
 
 - Redesign parameters for Bitmap#[]=
