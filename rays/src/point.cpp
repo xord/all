@@ -86,9 +86,6 @@ namespace Rays
 	Point
 	Point::normal () const
 	{
-		if (dot(*this, *this) == 0)
-			invalid_state_error(__FILE__, __LINE__);
-
 		return to_rays<Point>(glm::normalize(to_glm(*this)));
 	}
 
