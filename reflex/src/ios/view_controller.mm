@@ -311,7 +311,7 @@ ReflexViewController_get_show_fun ()
 			name: UIApplicationWillResignActiveNotification
 			object: nil];
 
-		Window_ca__deactivate_event(self.window);
+		Window_call_deactivate_event(self.window);
 
 		[self stopTimer];
 		[super viewDidDisappear: animated];
