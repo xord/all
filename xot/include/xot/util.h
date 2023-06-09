@@ -74,11 +74,18 @@ namespace Xot
 	}
 
 	template <typename T>
+	inline uint
+	mask_flag (T value, uint mask)
+	{
+		return value & mask;
+	}
+
+	template <typename T>
 	inline bool
 	has_flag (T value, uint flag)
 	{
 		if (flag == 0) return false;
-		return (value & flag) == flag;
+		return mask_flag(value, flag) == flag;
 	}
 
 	template <typename T>

@@ -28,11 +28,11 @@ namespace Reflex
 		enum Flag
 		{
 
-			DRAG  = Xot::bit(0),
+			DRAG  = Xot::bit(0, TYPE_LAST),
 
-			ENTER = Xot::bit(1),
+			ENTER = Xot::bit(1, TYPE_LAST),
 
-			EXIT  = Xot::bit(2),
+			EXIT  = Xot::bit(2, TYPE_LAST),
 
 		};// Flag
 
@@ -78,39 +78,57 @@ namespace Reflex
 
 
 	void
-	Pointer_update_positions (Pointer* pthis, std::function<void(Point*)> fun)
+	Pointer_update_positions (Pointer* it, std::function<void(Point*)> fun)
 	{
-		auto& self = pthis->self;
+		auto& self = it->self;
 		fun(&self->position);
 		if (self->prev) fun(&self->prev->self->position);
 		if (self->down) fun(&self->down->self->position);
 	}
 
 	void
-	Pointer_set_id (Pointer* pthis, Pointer::ID id)
+	Pointer_set_id (Pointer* it, Pointer::ID id)
 	{
-		pthis->self->id = id;
+		it->self->id = id;
 	}
 
 	void
-	Pointer_set_view_index (Pointer* pthis, uint view_index)
+	Pointer_set_view_index (Pointer* it, uint view_index)
 	{
 		if (view_index >= USHRT_MAX)
 			argument_error(__FILE__, __LINE__);
 
-		pthis->self->view_index = view_index;
+		it->self->view_index = view_index;
 	}
 
 	void
-	Pointer_set_prev (Pointer* pthis, const Pointer* prev)
+	Pointer_add_flag (Pointer* it, uint flag)
 	{
-		pthis->self->prev.reset(prev ? new Pointer(*prev) : NULL);
+		Xot::add_flag(&it->self->flags, flag);
 	}
 
 	void
-	Pointer_set_down (Pointer* pthis, const Pointer* down)
+	Pointer_remove_flag (Pointer* it, uint flag)
 	{
-		pthis->self->down.reset(down ? new Pointer(*down) : NULL);
+		Xot::remove_flag(&it->self->flags, flag);
+	}
+
+	uint
+	Pointer_mask_flag (const Pointer& it, uint mask)
+	{
+		return Xot::mask_flag(it.self->flags, mask);
+	}
+
+	void
+	Pointer_set_prev (Pointer* it, const Pointer* prev)
+	{
+		it->self->prev.reset(prev ? new Pointer(*prev) : NULL);
+	}
+
+	void
+	Pointer_set_down (Pointer* it, const Pointer* down)
+	{
+		it->self->down.reset(down ? new Pointer(*down) : NULL);
 	}
 
 
@@ -178,7 +196,7 @@ namespace Reflex
 	bool
 	Pointer::is_drag () const
 	{
-		return self->flags & Data::DRAG;
+		return Xot::has_flag(self->flags, Data::DRAG);
 	}
 
 	uint

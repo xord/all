@@ -40,6 +40,8 @@ namespace Reflex
 
 				PEN          = Xot::bit(5),
 
+				TYPE_LAST    = PEN
+
 			};// Type
 
 			enum Action

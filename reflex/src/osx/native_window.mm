@@ -12,26 +12,18 @@
 #import "opengl_view.h"
 
 
+static const uint MOUSE_BUTTONS =
+	Reflex::Pointer::MOUSE_LEFT  |
+	Reflex::Pointer::MOUSE_RIGHT |
+	Reflex::Pointer::MOUSE_MIDDLE;
+
+
 static NSWindowStyleMask
 default_style_mask ()
 {
 	return Reflex::Window_make_style_mask(
 		Reflex::Window_default_flags(),
 		NSTitledWindowMask | NSTexturedBackgroundWindowMask);
-}
-
-static int
-count_mouse_buttons (const Reflex::PointerEvent& e)
-{
-	uint nbuttons = 0;
-	PointerEvent_each_pointer(&e, [&](const auto& pointer) {
-		uint t = pointer.type();
-		nbuttons +=
-			(t & Reflex::Pointer::MOUSE_LEFT   ? 1 : 0) +
-			(t & Reflex::Pointer::MOUSE_RIGHT  ? 1 : 0) +
-			(t & Reflex::Pointer::MOUSE_MIDDLE ? 1 : 0);
-	});
-	return nbuttons;
 }
 
 static void
@@ -58,7 +50,6 @@ update_pixel_density (Reflex::Window* window)
 		OpenGLView* view;
 		NSTimer* timer;
 		int update_count;
-		int clicking_count;
 		Reflex::Pointer::ID pointer_id;
 		Reflex::Pointer prev_pointer;
 	}
@@ -77,7 +68,6 @@ update_pixel_density (Reflex::Window* window)
 		view            = nil;
 		timer           = nil;
 		update_count    = 0;
-		clicking_count  = 0;
 		pointer_id      = 0;
 
 		[self setDelegate: self];
@@ -351,7 +341,8 @@ update_pixel_density (Reflex::Window* window)
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		if (clicking_count == 0) ++pointer_id;
+		if (Reflex::Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0)
+			++pointer_id;
 
 		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::DOWN);
 
@@ -364,8 +355,6 @@ update_pixel_density (Reflex::Window* window)
 
 		[self attachAndUpdatePastPointers: &e];
 
-		clicking_count += count_mouse_buttons(e);
-
 		Window_call_pointer_event(win, &e);
 	}
 
@@ -377,14 +366,11 @@ update_pixel_density (Reflex::Window* window)
 		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::UP);
 		[self attachAndUpdatePastPointers: &e];
 
-		if (prev_pointer && prev_pointer.down())
-			Pointer_set_down(&prev_pointer, NULL);
-
-		clicking_count -= count_mouse_buttons(e);
-		if (clicking_count == 0)
+		if (prev_pointer && Reflex::Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0)
+		{
 			++pointer_id;
-		else if (clicking_count < 0)
-			return;//Reflex::invalid_state_error(__FILE__, __LINE__);
+			Pointer_set_down(&prev_pointer, NULL);
+		}
 
 		Window_call_pointer_event(win, &e);
 	}
@@ -413,17 +399,33 @@ update_pixel_density (Reflex::Window* window)
 
 	- (void) attachAndUpdatePastPointers: (Reflex::PointerEvent*) e
 	{
+		using namespace Reflex;
+
 		assert(e->size() == 1);
 
-		Reflex::Pointer& pointer = Reflex::PointerEvent_pointer_at(e, 0);
+		Pointer& pointer = PointerEvent_pointer_at(e, 0);
 
 		if (prev_pointer)
+		{
+			Pointer_add_flag(&pointer, Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS));
 			Reflex::Pointer_set_prev(&pointer, &prev_pointer);
+		}
 
-		if (pointer.action() == Reflex::Pointer::DOWN)
-			Reflex::Pointer_set_down(&pointer, &pointer);
-		else if (prev_pointer && prev_pointer.down())
+		switch (pointer.action())
+		{
+			case Pointer::DOWN:
+				Pointer_add_flag(&pointer, pointer.type());
+				break;
+
+			case Pointer::UP:
+				Pointer_remove_flag(&pointer, pointer.type());
+				break;
+		}
+
+		if (prev_pointer && prev_pointer.down())
 			Reflex::Pointer_set_down(&pointer, prev_pointer.down());
+		else if (pointer.action() == Reflex::Pointer::DOWN)
+			Reflex::Pointer_set_down(&pointer, &pointer);
 
 		prev_pointer = pointer;
 		Reflex::Pointer_set_prev(&prev_pointer, NULL);
