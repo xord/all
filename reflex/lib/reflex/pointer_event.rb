@@ -7,6 +7,8 @@ module Reflex
 
   class PointerEvent < Event
 
+    include Enumerable
+
     extend Forwardable
 
     def_delegators :first,
@@ -23,12 +25,6 @@ module Reflex
 
     def inspect()
       "#<Reflex::PointerEvent id:#{id} #{types} #{action} (#{x.round 2}, #{y.round 2}) mod:#{modifiers} drag:#{drag?} click:#{click_count} view:#{view_index} time:#{time.round 2}>"
-    end
-
-    private
-
-    def first()
-      self[0]
     end
 
   end# PointerEvent
