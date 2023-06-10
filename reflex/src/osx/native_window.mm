@@ -414,11 +414,11 @@ update_pixel_density (Reflex::Window* window)
 		switch (pointer.action())
 		{
 			case Pointer::DOWN:
-				Pointer_add_flag(&pointer, pointer.type());
+				Pointer_add_flag(&pointer, pointer.types());
 				break;
 
 			case Pointer::UP:
-				Pointer_remove_flag(&pointer, pointer.type());
+				Pointer_remove_flag(&pointer, pointer.types());
 				break;
 		}
 

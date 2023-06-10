@@ -38,7 +38,7 @@ namespace Reflex
 
 		ID id;
 
-		uint type;
+		uint types;
 
 		Action action;
 
@@ -53,11 +53,11 @@ namespace Reflex
 		PrevPointerPtr prev, down;
 
 		Data (
-			ID id = -1, uint type = TYPE_NONE, Action action = ACTION_NONE,
+			ID id = -1, uint types = TYPE_NONE, Action action = ACTION_NONE,
 			const Point& position = 0, uint modifiers = 0,
 			bool drag = false, bool enter = false, bool exit = false,
 			uint click_count = 0, uint view_index = 0, double time = 0)
-		:	id(id), type(type), action(action),
+		:	id(id), types(types), action(action),
 			position(position), modifiers(modifiers),
 			flags(make_flags(drag, enter, exit)),
 			click_count(click_count), view_index(view_index), time(time)
@@ -137,11 +137,11 @@ namespace Reflex
 	}
 
 	Pointer::Pointer (
-		ID id, uint type, Action action,
+		ID id, uint types, Action action,
 		const Point& position, uint modifiers, bool drag,
 		uint click_count, uint view_index, double time)
 	:	self(new Data(
-			id, type, action,
+			id, types, action,
 			position, modifiers, drag, false, false,
 			click_count, view_index, time))
 	{
@@ -170,9 +170,9 @@ namespace Reflex
 	}
 
 	uint
-	Pointer::type () const
+	Pointer::types () const
 	{
-		return self->type;
+		return self->types;
 	}
 
 	Pointer::Action
@@ -232,7 +232,7 @@ namespace Reflex
 	Pointer::operator bool () const
 	{
 		return
-			self->type != TYPE_NONE &&
+			self->types != TYPE_NONE &&
 			ACTION_NONE < self->action && self->action <= STAY;
 	}
 

@@ -10,7 +10,7 @@ module Reflex
 
     include Comparable
 
-    alias types  get_type
+    alias types  get_types
     alias action get_action
 
     bit_flag_reader :types, **{
@@ -33,19 +33,19 @@ module Reflex
     }
 
     def mouse?()
-      (get_type & MOUSE) != 0
+      (get_types & MOUSE) != 0
     end
 
     def mouse_left?()
-      (get_type & MOUSE_LEFT) != 0
+      (get_types & MOUSE_LEFT) != 0
     end
 
     def mouse_right?()
-      (get_type & MOUSE_RIGHT) != 0
+      (get_types & MOUSE_RIGHT) != 0
     end
 
     def mouse_middle?()
-      (get_type & MOUSE_MIDDLE) != 0
+      (get_types & MOUSE_MIDDLE) != 0
     end
 
     alias left?   mouse_left?
@@ -53,11 +53,11 @@ module Reflex
     alias middle? mouse_middle?
 
     def touch?()
-      (get_type & TOUCH) != 0
+      (get_types & TOUCH) != 0
     end
 
     def pen?()
-      (get_type & PEN) != 0
+      (get_types & PEN) != 0
     end
 
     def down?()

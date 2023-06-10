@@ -22,19 +22,19 @@ class TestPointer < Test::Unit::TestCase
   F = false
 
   def pointer(
-    id: 0, type: TYPE_NONE, action: ACTION_NONE,
+    id: 0, types: TYPE_NONE, action: ACTION_NONE,
     position: 0, modifiers: 0, drag: false, click_count: 0, view_index: 0,
     time: 0)
 
     Reflex::Pointer.new(
-      id, type, action, position, modifiers, drag, click_count, view_index, time)
+      id, types, action, position, modifiers, drag, click_count, view_index, time)
   end
 
   def test_initialize()
     assert_nothing_raised {pointer}
 
     p = pointer(
-      id: 1, type: TOUCH, action: DOWN,
+      id: 1, types: TOUCH, action: DOWN,
       position: [2, 3], modifiers: 4, drag: true, click_count: 5, view_index: 6,
       time: 7)
 
@@ -55,7 +55,7 @@ class TestPointer < Test::Unit::TestCase
 
   def test_types()
     def create(t)
-      pointer(type: t).tap do |o|
+      pointer(types: t).tap do |o|
         def o.test()
           [types, mouse?, left?, right?, middle?, touch?, pen?]
         end
@@ -138,7 +138,7 @@ class TestPointer < Test::Unit::TestCase
     assert_equal pointer, pointer
 
     assert_not_equal pointer, pointer(id:          1)
-    assert_not_equal pointer, pointer(type:        Reflex::Pointer::PEN)
+    assert_not_equal pointer, pointer(types:       Reflex::Pointer::PEN)
     assert_not_equal pointer, pointer(action:      Reflex::Pointer::UP)
     assert_not_equal pointer, pointer(position:    2)
     assert_not_equal pointer, pointer(modifiers:   3)

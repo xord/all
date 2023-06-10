@@ -64,7 +64,7 @@ namespace Reflex
 			Pointer ();
 
 			Pointer (
-				ID id, uint type, Action action,
+				ID id, uint types, Action action,
 				const Point& position, uint modifiers, bool drag,
 				uint click_count, uint view_index, double time);
 
@@ -76,7 +76,7 @@ namespace Reflex
 
 			ID id () const;
 
-			uint type () const;
+			uint types () const;
 
 			Action action () const;
 

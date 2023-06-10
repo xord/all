@@ -21,13 +21,13 @@ RUCY_END
 
 static
 RUCY_DEF9(initialize,
-	id, type, action, position, modifiers, drag, click_count, view_index, time)
+	id, types, action, position, modifiers, drag, click_count, view_index, time)
 {
 	CHECK;
 
 	*THIS = Reflex::Pointer(
 		to<Reflex::Pointer::ID>(id),
-		to<uint>(type),
+		to<uint>(types),
 		(Reflex::Pointer::Action) to<int>(action),
 		to<Rays::Point>(position),
 		to<uint>(modifiers),
@@ -57,10 +57,10 @@ RUCY_DEF0(get_id)
 RUCY_END
 
 static
-RUCY_DEF0(get_type)
+RUCY_DEF0(get_types)
 {
 	CHECK;
-	return value(THIS->type());
+	return value(THIS->types());
 }
 RUCY_END
 
@@ -149,7 +149,7 @@ Init_reflex_pointer ()
 	cPointer.define_private_method("initialize",      initialize);
 	cPointer.define_private_method("initialize_copy", initialize_copy);
 	cPointer.define_method("id",                 get_id);
-	cPointer.define_private_method("get_type",   get_type);
+	cPointer.define_private_method("get_types",  get_types);
 	cPointer.define_private_method("get_action", get_action);
 	cPointer.define_method("position",           get_position);
 	cPointer.define_method("modifiers",          get_modifiers);
