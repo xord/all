@@ -1,6 +1,13 @@
 # reflex ChangeLog
 
 
+## [v0.1.45] - 2023-06-11
+
+- Add Pointer#down() which saves the first 'pointer_down' pointer
+- PointerEvent includes Enumerable
+- Rename Pointer#type to Pointer#types
+
+
 ## [v0.1.44] - 2023-06-08
 
 - Fix compile error

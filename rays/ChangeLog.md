@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.42] - 2023-06-11
+
+- Point#normal() checks 'length == 0' again
+
+
 ## [v0.1.41] - 2023-06-08
 
 - Point#normal() does not check 'length == 0'

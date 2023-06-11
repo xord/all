@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.1.39] - 2023-06-11
+
+- Add mask_flag()
+
+
 ## [v0.1.38] - 2023-05-29
 
 - Refactoring
