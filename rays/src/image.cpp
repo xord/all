@@ -155,13 +155,8 @@ namespace Rays
 		if (pixel_density <= 0)
 			argument_error(__FILE__, __LINE__, "invalid pixel_density.");
 
-		coord w = width  * pixel_density;
-		coord h = height * pixel_density;
-		if ((w - (int) w) != 0 || (h - (int) h) != 0)
-			argument_error(__FILE__, __LINE__, "invalid size for image.");
-
-		self->width         = w;
-		self->height        = h;
+		self->width         = (int) (width  * pixel_density);
+		self->height        = (int) (height * pixel_density);
 		self->color_space   = cs;
 		self->pixel_density = pixel_density;
 	}

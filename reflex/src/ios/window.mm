@@ -177,7 +177,7 @@ namespace Reflex
 	float
 	Window_get_pixel_density (const Window& window)
 	{
-		return UIScreen.mainScreen.scale;
+		return UIScreen.mainScreen.nativeScale;
 	}
 
 
