@@ -14,7 +14,7 @@ end
 
 def changelog_latest_version(path)
   diff = `git diff --cached #{path}`
-  diff[/^\s*##\s*\[v(\d[\d\.]+\d)\]\s*-\s*\d{4}-\d{2}-\d{2}\s*$/, 1]
+  diff[/^\+\s*##\s*\[v(\d[\d\.]+\d)\]\s*-\s*\d{4}-\d{2}-\d{2}\s*$/, 1]
 end
 
 begin
