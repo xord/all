@@ -1,6 +1,12 @@
 # reflex ChangeLog
 
 
+## [v0.1.46] - 2023-06-22
+
+- Use UIScreen's 'nativeScale' instead of 'scale'
+- Fix invalid dz value for FrameEvent
+
+
 ## [v0.1.45] - 2023-06-11
 
 - Add Pointer#down() which saves the first 'pointer_down' pointer

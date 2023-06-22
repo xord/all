@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.43] - 2023-06-22
+
+- Image.new can take pixel density with decimal point
+
+
 ## [v0.1.42] - 2023-06-11
 
 - Point#normal() checks 'length == 0' again
