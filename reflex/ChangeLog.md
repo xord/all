@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.47] - 2023-06-27
+
+- NONE -> TYPE_NONE
+
+
 ## [v0.1.46] - 2023-06-22
 
 - Use UIScreen's 'nativeScale' instead of 'scale'
