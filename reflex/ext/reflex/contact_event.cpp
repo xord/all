@@ -82,6 +82,7 @@ Init_reflex_contact_event ()
 	cContactEvent.define_method("action", get_action);
 	cContactEvent.define_method("shape",  get_shape);
 	cContactEvent.define_method("view",   get_view);
+
 	cContactEvent.define_const("ACTION_NONE", Reflex::ContactEvent::ACTION_NONE);
 	cContactEvent.define_const("BEGIN",       Reflex::ContactEvent::BEGIN);
 	cContactEvent.define_const("END",         Reflex::ContactEvent::END);

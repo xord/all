@@ -308,6 +308,7 @@ Init_reflex_key_event ()
 	cKeyEvent.define_method("modifiers", get_modifiers);
 	cKeyEvent.define_method("repeat",    get_repeat);
 	cKeyEvent.define_method("captured?", is_captured);
+
 	cKeyEvent.define_const("ACTION_NONE", Reflex::KeyEvent::ACTION_NONE);
 	cKeyEvent.define_const("DOWN",        Reflex::KeyEvent::DOWN);
 	cKeyEvent.define_const("UP",          Reflex::KeyEvent::UP);

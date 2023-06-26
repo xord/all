@@ -81,6 +81,7 @@ Init_reflex_focus_event ()
 	cFocusEvent.define_method("action",  get_action);
 	cFocusEvent.define_method("current", get_current);
 	cFocusEvent.define_method("last",    get_last);
+
 	cFocusEvent.define_const("ACTION_NONE", Reflex::FocusEvent::ACTION_NONE);
 	cFocusEvent.define_const("FOCUS",       Reflex::FocusEvent::FOCUS);
 	cFocusEvent.define_const("BLUR",        Reflex::FocusEvent::BLUR);

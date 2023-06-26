@@ -159,6 +159,7 @@ Init_reflex_pointer ()
 	cPointer.define_method("time",               get_time);
 	cPointer.define_method("prev",               get_prev);
 	cPointer.define_method("down",               get_down);
+
 	cPointer.define_const("TYPE_NONE",    Reflex::Pointer::TYPE_NONE);
 	cPointer.define_const("MOUSE",        Reflex::Pointer::MOUSE);
 	cPointer.define_const("MOUSE_LEFT",   Reflex::Pointer::MOUSE_LEFT);
@@ -166,6 +167,7 @@ Init_reflex_pointer ()
 	cPointer.define_const("MOUSE_MIDDLE", Reflex::Pointer::MOUSE_MIDDLE);
 	cPointer.define_const("TOUCH",        Reflex::Pointer::TOUCH);
 	cPointer.define_const("PEN",          Reflex::Pointer::PEN);
+
 	cPointer.define_const("ACTION_NONE", Reflex::Pointer::ACTION_NONE);
 	cPointer.define_const("DOWN",        Reflex::Pointer::DOWN);
 	cPointer.define_const("UP",          Reflex::Pointer::UP);
