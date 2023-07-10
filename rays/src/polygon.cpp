@@ -844,7 +844,7 @@ namespace Rays
 	}
 
 	Polygon
-	create_rect(const Bounds& bounds, coord round, uint nsegment)
+	create_rect (const Bounds& bounds, coord round, uint nsegment)
 	{
 		return create_rect(
 			bounds.x, bounds.y, bounds.width, bounds.height,
