@@ -795,28 +795,28 @@ namespace Reflex
 
 		Fixture* create_fixtures (Shape* shape) override
 		{
-			if (!has_rounds())
-				return create_rect_fixture(shape);
-			else if (nsegment <= 1)
-				return create_rect_fixture_without_division(shape);
+			Bounds frame = get_frame();
+			bool rect    = frame.size() != 0;
+			if (rect && !has_rounds())
+				return create_rect_fixture(shape, frame);
+			else if (rect && nsegment <= 1)
+				return create_rect_fixture_without_division(shape, frame);
 			else
 				return Super::create_fixtures(shape);
 		}
 
-		Fixture* create_rect_fixture (Shape* shape)
+		Fixture* create_rect_fixture (Shape* shape, const Bounds& frame)
 		{
 			assert(shape);
 
 			if (!owner)
 				invalid_state_error(__FILE__, __LINE__);
 
-			Bounds f  = get_frame();
 			float ppm = owner->meter2pixel();
-
-			coord l = to_b2coord(f.x,       ppm);
-			coord t = to_b2coord(f.y,       ppm);
-			coord r = to_b2coord(f.x + f.w, ppm);
-			coord b = to_b2coord(f.x + f.h, ppm);
+			coord l   = to_b2coord(frame.x,           ppm);
+			coord t   = to_b2coord(frame.y,           ppm);
+			coord r   = to_b2coord(frame.x + frame.w, ppm);
+			coord b   = to_b2coord(frame.x + frame.h, ppm);
 			b2Vec2 b2points[] = {{l, t}, {l, b}, {r, b}, {r, t}};
 
 			b2PolygonShape b2shape;
@@ -825,23 +825,22 @@ namespace Reflex
 			return FixtureBuilder(shape, &b2shape).fixtures();
 		}
 
-		Fixture* create_rect_fixture_without_division (Shape* shape)
+		Fixture* create_rect_fixture_without_division (
+			Shape* shape, const Bounds& frame)
 		{
 			assert(shape);
 
 			if (!owner)
 				invalid_state_error(__FILE__, __LINE__);
 
-			Bounds f  = get_frame();
-			float ppm = owner->meter2pixel();
-
 			Polygon polygon = Rays::create_rect(
-				f.x, f.y, f.width, f.height,
+				frame.x, frame.y, frame.width, frame.height,
 				round_left_top,    round_right_top,
 				round_left_bottom, round_right_bottom,
 				1);
 			assert(polygon.size() == 1);
 
+			float ppm                = owner->meter2pixel();
 			const Polyline& polyline = polygon[0];
 			assert(polyline[0].size() <= 8);
 
@@ -1030,10 +1029,10 @@ namespace Reflex
 
 		Fixture* create_fixtures (Shape* shape) override
 		{
-			Bounds f    = get_frame();
-			bool circle = f.size() != 0 && f.width == f.height;
+			Bounds frame = get_frame();
+			bool circle  = frame.size() != 0 && frame.width == frame.height;
 			if (circle && !has_angle() && !has_hole() && has_fill(shape))
-				return create_circle_fixture(shape, f);
+				return create_circle_fixture(shape, frame);
 			else
 				return Super::create_fixtures(shape);
 		}
