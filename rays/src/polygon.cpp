@@ -480,7 +480,7 @@ namespace Rays
 				round_left_top    == 0 && round_right_top    == 0 &&
 				round_left_bottom == 0 && round_right_bottom == 0)
 			{
-				setup_rect(x, y, width, height, nsegment);
+				setup_rect(x, y, width, height);
 			}
 			else
 			{
@@ -509,9 +509,7 @@ namespace Rays
 				coord x, y, offset_sign_x, offset_sign_y, round;
 			};
 
-			void setup_rect (
-				coord x, coord y, coord width, coord height,
-				uint nsegment)
+			void setup_rect (coord x, coord y, coord width, coord height)
 			{
 				const Point points[] = {
 					Point(x,         y),
