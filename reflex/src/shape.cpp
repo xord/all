@@ -793,6 +793,68 @@ namespace Reflex
 
 		uint nsegment = 0;
 
+		Fixture* create_fixtures (Shape* shape) override
+		{
+			if (!has_rounds())
+				return create_rect_fixture(shape);
+			else if (nsegment <= 1)
+				return create_rect_fixture_without_division(shape);
+			else
+				return Super::create_fixtures(shape);
+		}
+
+		Fixture* create_rect_fixture (Shape* shape)
+		{
+			assert(shape);
+
+			if (!owner)
+				invalid_state_error(__FILE__, __LINE__);
+
+			Bounds f  = get_frame();
+			float ppm = owner->meter2pixel();
+
+			coord l = to_b2coord(f.x,       ppm);
+			coord t = to_b2coord(f.y,       ppm);
+			coord r = to_b2coord(f.x + f.w, ppm);
+			coord b = to_b2coord(f.x + f.h, ppm);
+			b2Vec2 b2points[] = {{l, t}, {l, b}, {r, b}, {r, t}};
+
+			b2PolygonShape b2shape;
+			b2shape.Set(&b2points[0], 4);
+
+			return FixtureBuilder(shape, &b2shape).fixtures();
+		}
+
+		Fixture* create_rect_fixture_without_division (Shape* shape)
+		{
+			assert(shape);
+
+			if (!owner)
+				invalid_state_error(__FILE__, __LINE__);
+
+			Bounds f  = get_frame();
+			float ppm = owner->meter2pixel();
+
+			Polygon polygon = Rays::create_rect(
+				f.x, f.y, f.width, f.height,
+				round_left_top,    round_right_top,
+				round_left_bottom, round_right_bottom,
+				1);
+			assert(polygon.size() == 1);
+
+			const Polyline& polyline = polygon[0];
+			assert(polyline[0].size() <= 8);
+
+			b2Vec2 b2points[8];
+			for (size_t i = 0; i < polyline.size(); ++i)
+				b2points[i] = to_b2vec2(polyline[i], ppm);
+
+			b2PolygonShape b2shape;
+			b2shape.Set(&b2points[0], polyline.size());
+
+			return FixtureBuilder(shape, &b2shape).fixtures();
+		}
+
 		Polygon get_polygon_for_shape () const override
 		{
 			return Rays::create_rect(
