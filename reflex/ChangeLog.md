@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.48] - 2023-07-10
+
+- Fix a problem that a rectangle shape would be split into 2 triangles for physics
+
+
 ## [v0.1.47] - 2023-06-27
 
 - NONE -> TYPE_NONE
