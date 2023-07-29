@@ -20,6 +20,8 @@
 #include <reflex/window.h>
 #include <reflex/view.h>
 
+#include <reflex/device.h>
+
 #include <reflex/image_view.h>
 
 

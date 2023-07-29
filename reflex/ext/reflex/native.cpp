@@ -36,6 +36,8 @@ void Init_reflex_screen ();
 void Init_reflex_window ();
 void Init_reflex_view ();
 
+void Init_reflex_device ();
+
 void Init_reflex_image_view ();
 
 
@@ -84,6 +86,8 @@ extern "C" void
 	Init_reflex_screen();
 	Init_reflex_window();
 	Init_reflex_view();
+
+	Init_reflex_device();
 
 	Init_reflex_image_view();
 
