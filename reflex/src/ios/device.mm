@@ -24,7 +24,7 @@ namespace Reflex
 	}
 
 	void
-	viberate ()
+	vibrate ()
 	{
 		//[get_feedback_generator() prepare];
 		[get_feedback_generator() impactOccurred];
