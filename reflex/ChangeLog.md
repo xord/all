@@ -1,10 +1,15 @@
 # reflex ChangeLog
 
 
+## [v0.1.51] - 2023-07-30
+
+- Fix typo
+
+
 ## [v0.1.50] - 2023-07-30
 
-- add Window::FLAG_PORTRAIT and Window::FLAG_LANDSCAPE
-- add Reflex.vibrate()
+- Add Window::FLAG_PORTRAIT and Window::FLAG_LANDSCAPE
+- Add Reflex.vibrate()
 
 
 ## [v0.1.49] - 2023-07-11
