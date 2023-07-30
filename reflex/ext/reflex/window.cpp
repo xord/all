@@ -184,6 +184,33 @@ RUCY_DEF0(is_resizable)
 }
 RUCY_END
 
+static const uint ORIENTATION_MASK =
+	Reflex::Window::FLAG_PORTRAIT | Reflex::Window::FLAG_LANDSCAPE;
+
+static
+RUCY_DEF1(set_orientations, orientations)
+{
+	using namespace Reflex;
+
+	CHECK;
+
+	uint flags = to<uint>(orientations);
+	THIS->set_flag(
+		(      flags   &  ORIENTATION_MASK) |
+		(THIS->flags() & ~ORIENTATION_MASK));
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_orientations)
+{
+	using namespace Reflex;
+
+	CHECK;
+	return value(THIS->flags() & ORIENTATION_MASK);
+}
+RUCY_END
+
 static
 RUCY_DEF0(get_screen)
 {
@@ -384,12 +411,14 @@ Init_reflex_window ()
 	cWindow.define_method("title", get_title);
 	cWindow.define_method("frame=", set_frame);
 	cWindow.define_method("frame",  get_frame);
-	cWindow.define_method("closable=",    set_closable);
-	cWindow.define_method("closable?",     is_closable);
-	cWindow.define_method("minimizable=", set_minimizable);
-	cWindow.define_method("minimizable?",  is_minimizable);
-	cWindow.define_method("resizable=",   set_resizable);
-	cWindow.define_method("resizable?",    is_resizable);
+	cWindow.define_method("closable=",     set_closable);
+	cWindow.define_method("closable?",      is_closable);
+	cWindow.define_method("minimizable=",  set_minimizable);
+	cWindow.define_method("minimizable?",   is_minimizable);
+	cWindow.define_method("resizable=",    set_resizable);
+	cWindow.define_method("resizable?",     is_resizable);
+	cWindow.define_method("orientations=", set_orientations);
+	cWindow.define_method("orientations",  get_orientations);
 	cWindow.define_method("hidden", hidden);
 	cWindow.define_method("screen",  get_screen);
 	cWindow.define_method("root",    get_root);
@@ -413,6 +442,9 @@ Init_reflex_window ()
 	cWindow.define_method("on_pointer_move",   on_pointer_move);
 	cWindow.define_method("on_pointer_cancel", on_pointer_cancel);
 	cWindow.define_method("on_wheel", on_wheel);
+
+	cWindow.define_const("ORIENTATION_PORTRAIT",  Reflex::Window::FLAG_PORTRAIT);
+	cWindow.define_const("ORIENTATION_LANDSCAPE", Reflex::Window::FLAG_LANDSCAPE);
 }
 
 

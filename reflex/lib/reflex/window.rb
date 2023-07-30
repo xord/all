@@ -1,5 +1,6 @@
 require 'forwardable'
 require 'xot/setter'
+require 'xot/bit_flag_accessor'
 require 'xot/universal_accessor'
 require 'xot/block_util'
 require 'xot/inspectable'
@@ -18,6 +19,11 @@ module Reflex
     include HasFrame
 
     extend Forwardable
+
+    bit_flag_accessor :orientations do
+      flag :portrait,  ORIENTATION_PORTRAIT
+      flag :landscape, ORIENTATION_LANDSCAPE
+    end
 
     def_delegators :root,
       :add_child,    :add,

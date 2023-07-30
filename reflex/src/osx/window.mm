@@ -142,6 +142,12 @@ namespace Reflex
 	void
 	Window_set_flags (Window* window, uint flags)
 	{
+		if (Xot::has_flag(flags, Window::FLAG_PORTRAIT))
+			argument_error(__FILE__, __LINE__, "FLAG_PORTRAIT is not supported");
+
+		if (Xot::has_flag(flags, Window::FLAG_LANDSCAPE))
+			argument_error(__FILE__, __LINE__, "FLAG_LANDSCAPE is not supported");
+
 		NativeWindow* native        = get_native(window);
 		NSWindowStyleMask styleMask =
 			Window_make_style_mask(window->self->flags, native.styleMask);
