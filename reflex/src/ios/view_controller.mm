@@ -440,6 +440,37 @@ ReflexViewController_get_show_fun ()
 		}
 	}
 
+#if 0
+	- (BOOL)shouldAutorotate
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return [super shouldAutorotate];
+
+		return win->has_flag(Reflex::Window::FLAG_RESIZABLE);
+	}
+
+	- (UIInterfaceOrientationMask)supportedInterfaceOrientations
+	{
+		Reflex::Window* win = self.window;
+		if (!win || !win->has_flag(Reflex::Window::FLAG_RESIZABLE))
+			return UIInterfaceOrientationMaskAll;
+
+		UIInterfaceOrientationMask mask = 0;
+
+		if (win->has_flag(Reflex::Window::FLAG_PORTRAIT))
+		{
+			mask |=
+				UIInterfaceOrientationMaskPortrait |
+				UIInterfaceOrientationMaskPortraitUpsideDown;
+		}
+
+		if (win->has_flag(Reflex::Window::FLAG_LANDSCAPE))
+			mask |= UIInterfaceOrientationMaskLandscape;
+
+		return mask;
+	}
+#endif
+
 	- (void) titleDidChange
 	{
 	}

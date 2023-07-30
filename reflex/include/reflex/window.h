@@ -39,7 +39,11 @@ namespace Reflex
 
 				FLAG_RESIZABLE   = Xot::bit(2),
 
-				FLAG_LAST        = FLAG_RESIZABLE
+				FLAG_PORTRAIT    = Xot::bit(3),
+
+				FLAG_LANDSCAPE   = Xot::bit(4),
+
+				FLAG_LAST        = FLAG_LANDSCAPE
 
 			};// Flag
 
@@ -68,6 +72,10 @@ namespace Reflex
 			virtual void set_frame (const Bounds& bounds);
 
 			virtual Bounds   frame () const;
+
+			virtual void    set_flag (uint flags);
+
+			virtual uint        flags () const;
 
 			virtual void    add_flag (uint flags);
 

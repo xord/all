@@ -547,6 +547,20 @@ namespace Reflex
 	}
 
 	void
+	Window::set_flag (uint flags)
+	{
+		Window_set_flags(this, flags);
+
+		self->flags = flags;
+	}
+
+	uint
+	Window::flags () const
+	{
+		return self->flags;
+	}
+
+	void
 	Window::add_flag (uint flags)
 	{
 		uint value = self->flags;
