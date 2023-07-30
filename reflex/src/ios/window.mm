@@ -251,13 +251,9 @@ namespace Reflex
 	{
 		UIWindow* w = get_vc(&window).view.window;
 		if (@available(iOS 13.0, *))
-		{
 			return w.windowScene.screen;
-		}
 		else
-		{
 			return w.screen;
-		}
 	}
 
 	Screen
