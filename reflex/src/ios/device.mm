@@ -9,24 +9,18 @@ namespace Reflex
 {
 
 
-	namespace global
-	{
-
-		static UIImpactFeedbackGenerator* feedback_generator = nil;
-
-	}// global
-
+	static UIImpactFeedbackGenerator* g_feedback_generator = nil;
 
 	static UIImpactFeedbackGenerator*
 	get_feedback_generator ()
 	{
-		if (global::feedback_generator == nil)
+		if (g_feedback_generator == nil)
 		{
-			global::feedback_generator =
+			g_feedback_generator =
 				[[UIImpactFeedbackGenerator alloc]
 					initWithStyle: UIImpactFeedbackStyleLight];
 		}
-		return global::feedback_generator;
+		return g_feedback_generator;
 	}
 
 	void
