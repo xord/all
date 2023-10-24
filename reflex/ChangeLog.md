@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.52] - 2023-10-25
+
+- Add '#include <assert.h>' to Fix compile errors
+
+
 ## [v0.1.51] - 2023-07-30
 
 - Fix typo

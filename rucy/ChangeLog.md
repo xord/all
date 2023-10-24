@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.1.40] - 2023-10-25
+
+- Add '#include <assert.h>' to Fix compile errors
+
+
 ## [v0.1.39] - 2023-05-29
 
 - Update dependencies

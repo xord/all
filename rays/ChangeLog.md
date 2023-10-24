@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.44] - 2023-10-25
+
+- Add '#include <assert.h>' to Fix compile errors
+
+
 ## [v0.1.43] - 2023-06-22
 
 - Image.new can take pixel density with decimal point
