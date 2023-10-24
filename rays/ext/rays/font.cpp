@@ -1,6 +1,7 @@
 #include "rays/ruby/font.h"
 
 
+#include <assert.h>
 #include "defs.h"
 
 

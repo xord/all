@@ -2,6 +2,7 @@
 #import "rays/camera.h"
 
 
+#include <assert.h>
 #import <AVFoundation/AVFoundation.h>
 #include "rays/exception.h"
 #include "bitmap.h"

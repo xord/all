@@ -1,6 +1,7 @@
 #include "window.h"
 
 
+#include <assert.h>
 #include <set>
 #include "reflex/exception.h"
 #include "view.h"

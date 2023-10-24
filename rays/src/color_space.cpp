@@ -1,7 +1,6 @@
 #include "color_space.h"
 
 
-#include <assert.h>
 #include <xot/util.h>
 #include "rays/exception.h"
 

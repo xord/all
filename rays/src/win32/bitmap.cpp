@@ -1,6 +1,7 @@
 #include "../bitmap.h"
 
 
+#include <assert.h>
 #include "font.h"
 #include "gdi.h"
 

@@ -2,6 +2,7 @@
 #import "view_controller.h"
 
 
+#include <assert.h>
 #include <rays/opengl.h>
 #include "reflex/exception.h"
 #include "../view.h"

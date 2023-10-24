@@ -1,6 +1,7 @@
 #include "rays/ruby/polygon.h"
 
 
+#include <assert.h>
 #include "rays/ruby/polyline.h"
 #include "defs.h"
 

@@ -2,7 +2,6 @@
 #include "application.h"
 
 
-#include <assert.h>
 #import <AppKit/NSApplication.h>
 #include "reflex/exception.h"
 #import "app_delegate.h"

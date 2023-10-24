@@ -2,7 +2,6 @@
 #include "application.h"
 
 
-#include <assert.h>
 #include "reflex/exception.h"
 #import "app_delegate.h"
 

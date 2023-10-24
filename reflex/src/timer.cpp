@@ -2,6 +2,7 @@
 #include "timer.h"
 
 
+#include <assert.h>
 #include "reflex/view.h"
 #include "reflex/event.h"
 #include "reflex/exception.h"

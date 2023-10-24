@@ -1,6 +1,7 @@
 #include "style.h"
 
 
+#include <assert.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "view.h"

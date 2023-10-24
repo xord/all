@@ -1,6 +1,7 @@
 #include "rays/ruby/polygon.h"
 
 
+#include <assert.h>
 #include <vector>
 #include <functional>
 #include "rays/ruby/bounds.h"

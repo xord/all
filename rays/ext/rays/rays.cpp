@@ -1,6 +1,7 @@
 #include "rays/ruby/rays.h"
 
 
+#include <assert.h>
 #include <vector>
 #include "defs.h"
 

@@ -1,6 +1,7 @@
 #include "rays/ruby/bounds.h"
 
 
+#include <assert.h>
 #include "rays/ruby/point.h"
 #include "defs.h"
 

@@ -1,6 +1,7 @@
 #include "reflex/ruby/style.h"
 
 
+#include <assert.h>
 #include "defs.h"
 
 

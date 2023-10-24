@@ -2,6 +2,7 @@
 #import "bitmap.h"
 
 
+#include <assert.h>
 #import <Cocoa/Cocoa.h>
 #include "rays/exception.h"
 #include "../color_space.h"

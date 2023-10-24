@@ -1,6 +1,7 @@
 #include "rays/ruby/color_space.h"
 
 
+#include <assert.h>
 #include "defs.h"
 
 

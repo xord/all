@@ -1,6 +1,7 @@
 #include "shape.h"
 
 
+#include <assert.h>
 #include <box2d/b2_body.h>
 #include <box2d/b2_fixture.h>
 #include <box2d/b2_circle_shape.h>

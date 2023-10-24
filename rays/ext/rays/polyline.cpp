@@ -1,6 +1,7 @@
 #include "rays/ruby/polyline.h"
 
 
+#include <assert.h>
 #include <vector>
 #include "rays/ruby/point.h"
 #include "rays/ruby/bounds.h"

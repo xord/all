@@ -2,6 +2,7 @@
 #import "bitmap.h"
 
 
+#include <assert.h>
 #import <ImageIO/CGImageDestination.h>
 #import <MobileCoreServices/UTCoreTypes.h>
 #include "rays/exception.h"

@@ -1,6 +1,7 @@
 #include "shader.h"
 
 
+#include <assert.h>
 #include <regex>
 #include "rays/exception.h"
 #include "opengl.h"

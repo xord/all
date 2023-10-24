@@ -1,6 +1,7 @@
 #include "gdi.h"
 
 
+#include <assert.h>
 #include <vector>
 
 

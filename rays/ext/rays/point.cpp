@@ -1,6 +1,7 @@
 #include "rays/ruby/point.h"
 
 
+#include <assert.h>
 #include "defs.h"
 
 

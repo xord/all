@@ -1,6 +1,7 @@
 #include "rays/ruby/shader.h"
 
 
+#include <assert.h>
 #include "rays/ruby/image.h"
 #include "defs.h"
 

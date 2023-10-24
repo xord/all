@@ -1,6 +1,7 @@
 #include "reflex/ruby/selector.h"
 
 
+#include <assert.h>
 #include "defs.h"
 
 

@@ -1,6 +1,7 @@
 #include "rays/ruby/color.h"
 
 
+#include <assert.h>
 #include <map>
 #include "defs.h"
 
