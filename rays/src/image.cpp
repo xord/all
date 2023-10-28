@@ -31,6 +31,15 @@ namespace Rays
 
 
 	static void
+	clear_modified_flags (Image* image)
+	{
+		Image::Data* self = image->self.get();
+
+		if (self->bitmap)  Bitmap_set_modified(&self->bitmap, false);
+		if (self->texture) self->texture.set_modified(false);
+	}
+
+	static void
 	invalidate_texture (Image* image)
 	{
 		image->bitmap();// update bitmap
@@ -76,6 +85,7 @@ namespace Rays
 				self->bitmap = Bitmap_from(self->texture);
 			else
 				self->bitmap = Bitmap(self->width, self->height, self->color_space);
+			clear_modified_flags(image);
 		}
 		else if (
 			self->texture &&
@@ -83,10 +93,8 @@ namespace Rays
 			!Bitmap_get_modified(self->bitmap))
 		{
 			self->bitmap = Bitmap_from(self->texture);
+			clear_modified_flags(image);
 		}
-
-		if (self->bitmap)  Bitmap_set_modified(&self->bitmap, false);
-		if (self->texture) self->texture.set_modified(false);
 
 		return self->bitmap;
 	}
@@ -117,6 +125,7 @@ namespace Rays
 				p.clear();
 				p.end();
 			}
+			clear_modified_flags(&image);
 		}
 		else if (
 			self->bitmap &&
@@ -124,10 +133,8 @@ namespace Rays
 			!self->texture.modified())
 		{
 			self->texture = Texture(self->bitmap);
+			clear_modified_flags(&image);
 		}
-
-		if (self->bitmap)  Bitmap_set_modified(&self->bitmap, false);
-		if (self->texture) self->texture.set_modified(false);
 
 		return self->texture;
 	}
