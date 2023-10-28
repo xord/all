@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.1.45] - 2023-10-29
+
+- Fixed Image class to clear the update flag only when one of the bitmap and texture is being updated
+
+
 ## [v0.1.44] - 2023-10-25
 
 - Add '#include <assert.h>' to Fix compile errors
