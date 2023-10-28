@@ -73,7 +73,7 @@ namespace Rays
 
 		Image::Data* self = image->self.get();
 
-		if (!image)
+		if (!*image)
 		{
 			assert(!self->bitmap);
 			return self->bitmap;
