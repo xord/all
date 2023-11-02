@@ -29,7 +29,12 @@ namespace Rays
 
 			Polyline ();
 
-			Polyline (const Point* points, size_t size, bool loop = false);
+			Polyline (
+				const Point* points, size_t size, bool loop = false);
+
+			Polyline (
+				DrawMode mode,
+				const Point* points, size_t size, bool loop = false);
 
 			~Polyline ();
 
@@ -40,9 +45,11 @@ namespace Rays
 				JoinType join     = JOIN_DEFAULT,
 				coord miter_limit = JOIN_DEFAULT_MITER_LIMIT) const;
 
-			Bounds bounds () const;
+			DrawMode mode () const;
 
 			bool loop () const;
+
+			Bounds bounds () const;
 
 			size_t size () const;
 

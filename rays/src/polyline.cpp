@@ -12,26 +12,69 @@ namespace Rays
 {
 
 
+	static const char*
+	get_mode_name (DrawMode mode)
+	{
+		switch (mode)
+		{
+			case DRAW_POLYGON:        return "DRAW_POLYGON";
+			case DRAW_POINTS:         return "DRAW_POINTS";
+			case DRAW_LINES:          return "DRAW_LINES";
+			case DRAW_LINE_STRIP:     return "DRAW_LINE_STRIP";
+			case DRAW_LINE_LOOP:      return "DRAW_LINE_LOOP";
+			case DRAW_TRIANGLES:      return "DRAW_TRIANGLES";
+			case DRAW_TRIANGLE_STRIP: return "DRAW_TRIANGLE_STRIP";
+			case DRAW_TRIANGLE_FAN:   return "DRAW_TRIANGLE_FAN";
+			case DRAW_QUADS:          return "DRAW_QUADS";
+			case DRAW_QUAD_STRIP:     return "DRAW_QUAD_STRIP";
+			default: argument_error(__FILE__, __LINE__, "unknown draw mode");
+		}
+	}
+
 	struct Polyline::Data
 	{
 
+		DrawMode mode = DRAW_NONE;
+
+		bool loop     = false;
+
 		PointList points;
 
-		bool loop = false;
-
 		template <typename I, typename FUN>
-		void reset (I begin, I end, bool loop_, FUN to_point_fun)
+		void reset (DrawMode mode_, I begin, I end, bool loop_, FUN to_point_fun)
 		{
-			size_t size = end - begin;
-			if (0 < size && size < 3 && loop_)
+			if (!is_valid_mode(mode_))
+			{
+				argument_error(
+					__FILE__, __LINE__,
+					Xot::stringf("polyline does not support '%s'", get_mode_name(mode_)));
+			}
+
+			if (begin > end)
 				argument_error(__FILE__, __LINE__);
 
 			points.clear();
-			points.reserve(size);
+			points.reserve(end - begin);
 			for (auto it = begin; it != end; ++it)
 				points.emplace_back(to_point_fun(*it));
 
-			loop = loop_ && size > 0;
+			mode = mode_;
+			loop = loop_;
+		}
+
+		bool is_valid () const
+		{
+			return is_valid_mode(mode) && !points.empty();
+		}
+
+		static bool is_valid_mode (DrawMode mode)
+		{
+			return
+				mode != DRAW_NONE      &&
+				mode != DRAW_POINTS    &&
+				mode != DRAW_LINES     &&
+				mode != DRAW_TRIANGLES &&
+				mode != DRAW_QUADS;
 		}
 
 	};// Polyline::Data
@@ -41,16 +84,16 @@ namespace Rays
 	Polyline_create (
 		Polyline* polyline, const Path& path, bool loop, bool reverse)
 	{
-		assert(polyline);
+		Polyline::Data* self = polyline->self.get();
 
 		Path cleaned;
 		ClipperLib::CleanPolygon(path, cleaned);
 
 		auto to_point = [](const IntPoint& point) {return from_clipper(point);};
 		if (reverse)
-			polyline->self->reset(cleaned.rbegin(), cleaned.rend(), loop, to_point);
+			self->reset(DRAW_POLYGON, cleaned.rbegin(), cleaned.rend(), loop, to_point);
 		else
-			polyline->self->reset(cleaned. begin(), cleaned. end(), loop, to_point);
+			self->reset(DRAW_POLYGON, cleaned. begin(), cleaned. end(), loop, to_point);
 	}
 
 	template <typename I>
@@ -81,7 +124,16 @@ namespace Rays
 
 	Polyline::Polyline (const Point* points, size_t size, bool loop)
 	{
-		self->reset(points, points + size, loop, [](const Point& p) {return p;});
+		self->reset(
+			DRAW_POLYGON, points, points + size, loop,
+			[](const Point& p) {return p;});
+	}
+
+	Polyline::Polyline (DrawMode mode, const Point* points, size_t size, bool loop)
+	{
+		self->reset(
+			mode, points, points + size, loop,
+			[](const Point& p) {return p;});
 	}
 
 	Polyline::~Polyline ()
@@ -106,6 +158,12 @@ namespace Rays
 		for (auto end = this->end(); it != end; ++it)
 			b |= *it;
 		return b;
+	}
+
+	DrawMode
+	Polyline::mode () const
+	{
+		return self->mode;
 	}
 
 	bool
@@ -146,8 +204,7 @@ namespace Rays
 
 	Polyline::operator bool () const
 	{
-		size_t s = size();
-		return !((s == 1 || s == 2) && self->loop);
+		return self->is_valid();
 	}
 
 	bool

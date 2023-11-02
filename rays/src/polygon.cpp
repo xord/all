@@ -1090,6 +1090,14 @@ namespace Rays
 		self->append(Polyline(points, size, loop));
 	}
 
+	Polygon::Polygon (DrawMode mode, const Point* points, size_t size, bool loop)
+	:	self(new PolygonData())
+	{
+		if (!points || size <= 0) return;
+
+		self->append(Polyline(mode, points, size, loop));
+	}
+
 	Polygon::Polygon (const Polyline& polyline)
 	:	self(new PolygonData())
 	{
