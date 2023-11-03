@@ -227,6 +227,17 @@ RUCY_DEF7(create_ellipse,
 RUCY_END
 
 static
+RUCY_DEF2(create_polygon, mode, points)
+{
+	std::vector<Rays::Point> array;
+	get_line_args(&array, points.size(), points.as_array());
+
+	return value(Rays::create_polygon(
+		to<Rays::DrawMode>(mode), &array[0], array.size()));
+}
+RUCY_END
+
+static
 RUCY_DEF2(create_curve, args, loop)
 {
 	std::vector<Rays::Point> points;
@@ -270,6 +281,7 @@ Init_rays_polygon ()
 	cPolygon.define_method("^", op_xor);
 	cPolygon.define_singleton_method("create_rect",    create_rect);
 	cPolygon.define_singleton_method("create_ellipse", create_ellipse);
+	cPolygon.define_singleton_method("create_polygon", create_polygon);
 	cPolygon.define_singleton_method("create_curve",   create_curve);
 	cPolygon.define_singleton_method("create_bezier",  create_bezier);
 }

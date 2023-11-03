@@ -9,6 +9,8 @@
 #include <rays/rays.h>
 
 
+RUCY_DECLARE_CONVERT_TO(Rays::DrawMode)
+
 RUCY_DECLARE_CONVERT_TO(Rays::CapType)
 
 RUCY_DECLARE_CONVERT_TO(Rays::JoinType)

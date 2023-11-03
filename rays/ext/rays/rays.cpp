@@ -6,6 +6,7 @@
 #include "defs.h"
 
 
+RUCY_DEFINE_CONVERT_TO(Rays::DrawMode)
 RUCY_DEFINE_CONVERT_TO(Rays::CapType)
 RUCY_DEFINE_CONVERT_TO(Rays::JoinType)
 RUCY_DEFINE_CONVERT_TO(Rays::BlendMode)

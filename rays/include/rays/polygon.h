@@ -164,6 +164,9 @@ namespace Rays
 		uint nsegment            = 0);
 
 
+	Polygon create_polygon (DrawMode mode, const Point* points, size_t size);
+
+
 	Polygon create_curve (
 		coord x1, coord y1, coord x2, coord y2,
 		coord x3, coord y3, coord x4, coord y4,

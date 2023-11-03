@@ -41,6 +41,10 @@ module Rays
       create_ellipse args, center, radius, hole, from, to, nsegment
     end
 
+    def self.polygon(mode, *points)
+      create_polygon mode, points
+    end
+
     def self.curve(*args, loop: false)
       create_curve args, loop
     end

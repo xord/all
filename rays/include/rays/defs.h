@@ -26,9 +26,7 @@ namespace Rays
 	enum DrawMode
 	{
 
-		DRAW_NONE = 0,
-
-		DRAW_POINTS,
+		DRAW_POINTS = 0,
 
 		DRAW_LINES,
 
