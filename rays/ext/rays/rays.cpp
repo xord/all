@@ -6,7 +6,6 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_CONVERT_TO(Rays::DrawMode)
 RUCY_DEFINE_CONVERT_TO(Rays::CapType)
 RUCY_DEFINE_CONVERT_TO(Rays::JoinType)
 RUCY_DEFINE_CONVERT_TO(Rays::BlendMode)
@@ -19,19 +18,6 @@ struct EnumType
 	const char* short_name;
 	T value;
 };
-
-static std::vector<EnumType<Rays::DrawMode>> DRAW_MODES({
-	{"DRAW_POINTS",         "POINTS",         Rays::DRAW_POINTS},
-	{"DRAW_LINES",          "LINES",          Rays::DRAW_LINES},
-	{"DRAW_LINE_STRIP",     "LINE_STRIP",     Rays::DRAW_LINE_STRIP},
-	{"DRAW_LINE_LOOP",      "LINE_LOOP",      Rays::DRAW_LINE_LOOP},
-	{"DRAW_TRIANGLES",      "TRIANGLES",      Rays::DRAW_TRIANGLES},
-	{"DRAW_TRIANGLE_STRIP", "TRIANGLE_STRIP", Rays::DRAW_TRIANGLE_STRIP},
-	{"DRAW_TRIANGLE_FAN",   "TRIANGLE_FAN",   Rays::DRAW_TRIANGLE_FAN},
-	{"DRAW_QUADS",          "QUADS",          Rays::DRAW_QUADS},
-	{"DRAW_QUAD_STRIP",     "QUAD_STRIP",     Rays::DRAW_QUAD_STRIP},
-	{"DRAW_POLYGON",        "POLYGON",        Rays::DRAW_POLYGON},
-});
 
 static std::vector<EnumType<Rays::CapType>> CAP_TYPES({
 	{"CAP_BUTT",   "BUTT",   Rays::CAP_BUTT},
@@ -85,9 +71,6 @@ Init_rays ()
 	mRays.define_singleton_method("init!", init);
 	mRays.define_singleton_method("fin!", fin);
 
-	for (auto it = DRAW_MODES.begin(); it != DRAW_MODES.end(); ++it)
-		mRays.define_const(it->name, it->value);
-
 	for (auto it = CAP_TYPES.begin(); it != CAP_TYPES.end(); ++it)
 		mRays.define_const(it->name, it->value);
 
@@ -101,37 +84,6 @@ Init_rays ()
 
 namespace Rucy
 {
-
-
-	template <> Rays::DrawMode
-	value_to<Rays::DrawMode> (int argc, const Value* argv, bool convert)
-	{
-		assert(argc > 0 && argv);
-
-		if (convert)
-		{
-			if (argv->is_s() || argv->is_sym())
-			{
-				const char* str = argv->c_str();
-				for (auto it = DRAW_MODES.begin(); it != DRAW_MODES.end(); ++it)
-				{
-					if (
-						strcasecmp(str, it->name)       == 0 ||
-						strcasecmp(str, it->short_name) == 0)
-					{
-						return it->value;
-					}
-				}
-				argument_error(__FILE__, __LINE__, "invalid draw mode -- %s", str);
-			}
-		}
-
-		int mode = value_to<int>(*argv, convert);
-		if (mode < 0 || Rays::DRAW_MAX <= mode)
-			argument_error(__FILE__, __LINE__, "invalid draw mode -- %d", mode);
-
-		return (Rays::DrawMode) mode;
-	}
 
 
 	template <> Rays::CapType
