@@ -56,6 +56,8 @@ namespace Rays
 
 			Polygon (const Point* points, size_t size, bool loop = true);
 
+			Polygon (DrawMode mode, const Point* points, size_t size);
+
 			Polygon (const Polyline& polyline);
 
 			Polygon (const Line* lines, size_t size);
@@ -162,9 +164,6 @@ namespace Rays
 		float angle_from         = 0,
 		float angle_to           = 360,
 		uint nsegment            = 0);
-
-
-	Polygon create_polygon (DrawMode mode, const Point* points, size_t size);
 
 
 	Polygon create_curve (

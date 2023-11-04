@@ -24,33 +24,58 @@ module Rays
       !(self & obj).empty?
     end
 
+    def self.points(*args)
+      points! args
+    end
+
+    def self.lines(*args)
+      lines! args
+    end
+
     def self.line(*args, loop: false)
-      new(*args, loop: loop)
+      line! args, loop
+    end
+
+    def self.triangles(*args)
+      triangles! args
+    end
+
+    def self.triangle_strip(*args)
+      triangle_strip! args
+    end
+
+    def self.triangle_fan(*args)
+      triangle_fan! args
+    end
+
+    def self.quads(*args)
+      quads! args
+    end
+
+    def self.quad_strip(*args)
+      quad_strip! args
     end
 
     def self.rect(
-      *args, round: nil, lt: nil, rt: nil, lb: nil, rb: nil, nsegment: nil)
+      *args, round: nil, lt: nil, rt: nil, lb: nil, rb: nil,
+      nsegment: nil)
 
-      create_rect args, round, lt, rt, lb, rb, nsegment
+      rect! args, round, lt, rt, lb, rb, nsegment
     end
 
     def self.ellipse(
       *args, center: nil, radius: nil, hole: nil, from: nil, to: nil,
       nsegment: nil)
 
-      create_ellipse args, center, radius, hole, from, to, nsegment
-    end
-
-    def self.polygon(mode, *points)
-      create_polygon mode, points
+      ellipse! args, center, radius, hole, from, to, nsegment
     end
 
     def self.curve(*args, loop: false)
-      create_curve args, loop
+      curve! args, loop
     end
 
     def self.bezier(*args, loop: false)
-      create_bezier args, loop
+      bezier! args, loop
     end
 
   end# Polygon

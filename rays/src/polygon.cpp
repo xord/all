@@ -808,6 +808,133 @@ namespace Rays
 	};// EllipseData
 
 
+	static const char*
+	get_draw_mode_name (DrawMode mode)
+	{
+		switch (mode)
+		{
+			case DRAW_POINTS:         return "DRAW_POINTS";
+			case DRAW_LINES:          return "DRAW_LINES";
+			case DRAW_LINE_STRIP:     return "DRAW_LINE_STRIP";
+			case DRAW_LINE_LOOP:      return "DRAW_LINE_LOOP";
+			case DRAW_TRIANGLES:      return "DRAW_TRIANGLES";
+			case DRAW_TRIANGLE_STRIP: return "DRAW_TRIANGLE_STRIP";
+			case DRAW_TRIANGLE_FAN:   return "DRAW_TRIANGLE_FAN";
+			case DRAW_QUADS:          return "DRAW_QUADS";
+			case DRAW_QUAD_STRIP:     return "DRAW_QUAD_STRIP";
+			case DRAW_POLYGON:        return "DRAW_POLYGON";
+			default: argument_error(__FILE__, __LINE__, "unknown draw mode");
+		}
+	}
+
+	static void
+	create_polygon (Polygon* polygon, const Point* points, size_t size)
+	{
+		polygon->self->append(Polyline(points, size, true));
+	}
+
+	static void
+	create_points (Polygon* polygon, const Point* points, size_t size)
+	{
+		for (size_t i = 0; i < size; ++i)
+			polygon->self->append(Polyline(&points[i], 1));
+	}
+
+	static void
+	create_lines (Polygon* polygon, const Point* points, size_t size)
+	{
+		for (size_t i = 0; i + 1 < size; i += 2)
+			polygon->self->append(Polyline(&points[i], 2));
+	}
+
+	static void
+	create_line_strip (Polygon* polygon, const Point* points, size_t size)
+	{
+		polygon->self->append(Polyline(points, size));
+	}
+
+	static void
+	create_line_loop (Polygon* polygon, const Point* points, size_t size)
+	{
+		if (size < 3)
+			return create_line_strip(polygon, points, size);
+
+		std::vector<Point> array;
+		array.reserve(size + 1);
+		array.insert(array.begin(), points, points + size);
+		array.emplace_back(points[0]);
+		polygon->self->append(Polyline(&array[0], array.size()));
+	}
+
+	static void
+	create_triangles (Polygon* polygon, const Point* points, size_t size)
+	{
+		for (size_t i = 0; i + 2 < size; i += 3)
+			polygon->self->append(Polyline(&points[i], 3, true));
+	}
+
+	static void
+	create_triangle_strip (Polygon* polygon, const Point* points, size_t size)
+	{
+		if (size < 3) return;
+
+		size_t     last = size - 1;
+		size_t  in_last = last % 2 == 0 ? last - 1 : last;
+		size_t out_last = last % 2 == 0 ? last     : last - 1;
+
+		std::vector<Point> array;
+		array.emplace_back(points[0]);
+		for (size_t i = 1; i <= in_last; i += 2)
+			array.emplace_back(points[i]);
+		for (size_t i = out_last; i >= 2; i -= 2)
+			array.emplace_back(points[i]);
+
+		polygon->self->append(Polyline(&array[0], array.size(), true));
+		if (size >= 4)
+			polygon->self->append(Polyline(&points[1], size - 2));
+	}
+
+	static void
+	create_triangle_fan (Polygon* polygon, const Point* points, size_t size)
+	{
+		create_polygon(polygon, points, size);
+
+		Point array[2];
+		array[0] = points[0];
+		for (size_t i = 2; i < size - 1; ++i)
+		{
+			array[1] = points[i];
+			polygon->self->append(Polyline(&array[0], 2));
+		}
+	}
+
+	static void
+	create_quads (Polygon* polygon, const Point* points, size_t size)
+	{
+		for (size_t i = 0; i + 3 < size; i += 4)
+			polygon->self->append(Polyline(&points[i], 4, true));
+	}
+
+	static void
+	create_quad_strip (Polygon* polygon, const Point* points, size_t size)
+	{
+		if (size < 4) return;
+
+		if (size % 2 != 0) --size;
+		size_t  in_last = size - 2;
+		size_t out_last = size - 1;
+
+		std::vector<Point> array;
+		for (size_t i = 0; i <= in_last; i += 2)
+			array.emplace_back(points[i]);
+		for (int i = (int) out_last; i >= 1; i -= 2)
+			array.emplace_back(points[i]);
+
+		polygon->self->append(Polyline(&array[0], array.size(), true));
+		for (size_t i = 2; i < in_last; i += 2)
+			polygon->self->append(Polyline(&points[i], 2));
+	}
+
 	Polygon
 	create_line (coord x1, coord y1, coord x2, coord y2)
 	{
@@ -923,152 +1050,6 @@ namespace Rays
 			center.x - radius.x, center.y - radius.y,
 			radius.x * 2,        radius.y * 2,
 			hole_radius * 2, angle_from, angle_to, nsegment);
-	}
-
-	static Polygon
-	create_points (const Point* points, size_t size)
-	{
-		Polygon polygon;
-		for (size_t i = 0; i < size; ++i)
-			polygon.self->append(Polyline(&points[i], 1));
-		return polygon;
-	}
-
-	static Polygon
-	create_lines (const Point* points, size_t size)
-	{
-		Polygon polygon;
-		for (size_t i = 0; i + 1 < size; i += 2)
-			polygon.self->append(Polyline(&points[i], 2));
-		return polygon;
-	}
-
-	static Polygon
-	create_line_loop (const Point* points, size_t size)
-	{
-		std::vector<Point> array;
-		array.reserve(size + 1);
-		array.insert(array.begin(), points, points + size);
-		if (size >= 3) array.emplace_back(points[0]);
-		return Polyline(&array[0], array.size());
-	}
-
-	static Polygon
-	create_triangles (const Point* points, size_t size)
-	{
-		Polygon polygon;
-		for (size_t i = 0; i + 2 < size; i += 3)
-			polygon.self->append(Polyline(&points[i], 3, true));
-		return polygon;
-	}
-
-	static Polygon
-	create_triangle_strip (const Point* points, size_t size)
-	{
-		Polygon polygon;
-		if (size < 3) return polygon;
-
-		size_t     last = size - 1;
-		size_t  in_last = last % 2 == 0 ? last - 1 : last;
-		size_t out_last = last % 2 == 0 ? last     : last - 1;
-
-		std::vector<Point> array;
-		array.emplace_back(points[0]);
-		for (size_t i = 1; i <= in_last; i += 2)
-			array.emplace_back(points[i]);
-		for (size_t i = out_last; i >= 2; i -= 2)
-			array.emplace_back(points[i]);
-
-		polygon.self->append(Polyline(&array[0], array.size(), true));
-		if (size >= 4)
-			polygon.self->append(Polyline(&points[1], size - 2));
-		return polygon;
-	}
-
-	static Polygon
-	create_triangle_fan (const Point* points, size_t size)
-	{
-		Polygon polygon(points, size);
-		Point array[2];
-		array[0] = points[0];
-		for (size_t i = 2; i < size - 1; ++i)
-		{
-			array[1] = points[i];
-			polygon.self->append(Polyline(&array[0], 2));
-		}
-		return polygon;
-	}
-
-	static Polygon
-	create_quads (const Point* points, size_t size)
-	{
-		Polygon polygon;
-		for (size_t i = 0; i + 3 < size; i += 4)
-			polygon.self->append(Polyline(&points[i], 4, true));
-		return polygon;
-	}
-
-	static Polygon
-	create_quad_strip (const Point* points, size_t size)
-	{
-		Polygon polygon;
-		if (size < 4) return polygon;
-
-		if (size % 2 != 0) --size;
-		size_t  in_last = size - 2;
-		size_t out_last = size - 1;
-
-		std::vector<Point> array;
-		for (size_t i = 0; i <= in_last; i += 2)
-			array.emplace_back(points[i]);
-		for (int i = (int) out_last; i >= 1; i -= 2)
-			array.emplace_back(points[i]);
-
-		polygon.self->append(Polyline(&array[0], array.size(), true));
-		for (size_t i = 2; i < in_last; i += 2)
-			polygon.self->append(Polyline(&points[i], 2));
-		return polygon;
-	}
-
-	static const char*
-	get_draw_mode_name (DrawMode mode)
-	{
-		switch (mode)
-		{
-			case DRAW_POINTS:         return "DRAW_POINTS";
-			case DRAW_LINES:          return "DRAW_LINES";
-			case DRAW_LINE_STRIP:     return "DRAW_LINE_STRIP";
-			case DRAW_LINE_LOOP:      return "DRAW_LINE_LOOP";
-			case DRAW_TRIANGLES:      return "DRAW_TRIANGLES";
-			case DRAW_TRIANGLE_STRIP: return "DRAW_TRIANGLE_STRIP";
-			case DRAW_TRIANGLE_FAN:   return "DRAW_TRIANGLE_FAN";
-			case DRAW_QUADS:          return "DRAW_QUADS";
-			case DRAW_QUAD_STRIP:     return "DRAW_QUAD_STRIP";
-			case DRAW_POLYGON:        return "DRAW_POLYGON";
-			default: argument_error(__FILE__, __LINE__, "unknown draw mode");
-		}
-	}
-
-	Polygon
-	create_polygon (DrawMode mode, const Point* points, size_t size)
-	{
-		switch (mode)
-		{
-			case DRAW_POINTS:         return create_points(        points, size);
-			case DRAW_LINES:          return create_lines(         points, size);
-			case DRAW_LINE_STRIP:     return Polyline(             points, size);
-			case DRAW_LINE_LOOP:      return create_line_loop(     points, size);
-			case DRAW_TRIANGLES:      return create_triangles(     points, size);
-			case DRAW_TRIANGLE_STRIP: return create_triangle_strip(points, size);
-			case DRAW_TRIANGLE_FAN:   return create_triangle_fan(  points, size);
-			case DRAW_QUADS:          return create_quads(         points, size);
-			case DRAW_QUAD_STRIP:     return create_quad_strip(    points, size);
-			case DRAW_POLYGON:        return Polygon(              points, size);
-			default:
-				argument_error(
-					__FILE__, __LINE__,
-					Xot::stringf("unknown draw mode '%s'", get_draw_mode_name(mode)));
-		}
 	}
 
 	static inline const SplineLib::Vec3f&
@@ -1235,7 +1216,34 @@ namespace Rays
 	{
 		if (!points || size <= 0) return;
 
-		self->append(Polyline(points, size, loop));
+		if (loop)
+			create_polygon(this, points, size);
+		else
+			create_line_strip(this, points, size);
+	}
+
+	Polygon::Polygon (DrawMode mode, const Point* points, size_t size)
+	:	self(new PolygonData())
+	{
+		if (!points || size <= 0) return;
+
+		switch (mode)
+		{
+			case DRAW_POINTS:         create_points(        this, points, size); break;
+			case DRAW_LINES:          create_lines(         this, points, size); break;
+			case DRAW_LINE_STRIP:     create_line_strip(    this, points, size); break;
+			case DRAW_LINE_LOOP:      create_line_loop(     this, points, size); break;
+			case DRAW_TRIANGLES:      create_triangles(     this, points, size); break;
+			case DRAW_TRIANGLE_STRIP: create_triangle_strip(this, points, size); break;
+			case DRAW_TRIANGLE_FAN:   create_triangle_fan(  this, points, size); break;
+			case DRAW_QUADS:          create_quads(         this, points, size); break;
+			case DRAW_QUAD_STRIP:     create_quad_strip(    this, points, size); break;
+			case DRAW_POLYGON:        create_polygon(       this, points, size); break;
+			default:
+				argument_error(
+					__FILE__, __LINE__,
+					Xot::stringf("unknown draw mode '%s'", get_draw_mode_name(mode)));
+		}
 	}
 
 	Polygon::Polygon (const Polyline& polyline)
