@@ -73,7 +73,7 @@ RUCY_DEF0(size)
 RUCY_END
 
 static
-RUCY_DEF0(empty)
+RUCY_DEF0(is_empty)
 {
 	CHECK;
 	return value(THIS->empty());
@@ -260,7 +260,7 @@ Init_rays_polygon ()
 	cPolygon.define_method("expand", expand);
 	cPolygon.define_method("bounds", bounds);
 	cPolygon.define_method("size", size);
-	cPolygon.define_method("empty?", empty);
+	cPolygon.define_method("empty?", is_empty);
 	cPolygon.define_method("[]", get_at);
 	cPolygon.define_method("each", each);
 	cPolygon.define_method("+", op_or);

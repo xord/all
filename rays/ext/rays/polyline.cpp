@@ -76,7 +76,7 @@ RUCY_DEF0(size)
 RUCY_END
 
 static
-RUCY_DEF0(empty)
+RUCY_DEF0(is_empty)
 {
 	CHECK;
 	return value(THIS->empty());
@@ -126,7 +126,7 @@ Init_rays_polyline ()
 	cPolyline.define_method("bounds", bounds);
 	cPolyline.define_method("loop?", loop);
 	cPolyline.define_method("size", size);
-	cPolyline.define_method("empty?", empty);
+	cPolyline.define_method("empty?", is_empty);
 	cPolyline.define_method("[]", get_at);
 	cPolyline.define_method("each", each);
 }
