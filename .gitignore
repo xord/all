@@ -28,7 +28,7 @@ rucy/src/function.cpp
 rucy/src/module.cpp
 rucy/src/value.cpp
 
-processing/test/p5rb
+processing/test/draw/p5rb
 
 **/*.xcodeproj/*
 !**/*.xcodeproj/project.pbxproj
