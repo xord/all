@@ -13,7 +13,7 @@ include Xot::Rake
 EXTS  = %i[xot rucy beeps rays reflex]
 GEMS  = EXTS + %i[processing rubysketch]
 REPOS = %i[cruby] + GEMS
-TASKS = %i[vendor erb lib ext test gem install uninstall upload clean clobber]
+TASKS = %i[bundle vendor erb lib ext test gem install uninstall upload clean clobber]
 
 TARGETS = []
 

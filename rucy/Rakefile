@@ -16,6 +16,7 @@ NPARAM_MAX = 12
 NTIMES     = (0..NPARAM_MAX)
 
 default_tasks :ext
+use_bundler
 build_native_library
 build_ruby_extension dlname: :tester, liboutput: false
 test_ruby_extension

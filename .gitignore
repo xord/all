@@ -18,7 +18,6 @@ vendor/
 .DS_Store
 Makefile
 depend.mf
-Gemfile.lock
 .vscode
 
 rucy/include/rucy/extension.h

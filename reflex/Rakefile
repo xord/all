@@ -23,6 +23,7 @@ use_external_library 'https://github.com/erincatto/box2d',
   srcdirs: 'src'
 
 default_tasks :ext
+use_bundler
 build_native_library
 build_ruby_extension
 test_ruby_extension

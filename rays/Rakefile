@@ -35,6 +35,7 @@ use_external_library 'https://github.com/andrewwillmott/splines-lib',
   excludes: 'Test\.cpp'
 
 default_tasks :ext
+use_bundler
 build_native_library
 build_ruby_extension
 test_ruby_extension

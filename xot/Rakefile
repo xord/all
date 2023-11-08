@@ -14,6 +14,7 @@ EXTENSIONS = [Xot]
 DLNAME     = 'tester'
 
 default_tasks :ext
+use_bundler
 build_native_library
 build_ruby_extension dlname: DLNAME, liboutput: false
 test_ruby_extension

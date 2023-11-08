@@ -52,6 +52,22 @@ module Xot
       env :TESTS_EXCLUDE, []
     end
 
+    def use_bundler()
+      task :clobber => 'bundle:clobber'
+
+      task :bundle => 'bundle:install'
+
+      namespace :bundle do
+        task :clobber do
+          sh %( rm -rf vendor/bundle )
+        end
+
+        task :install do
+          sh %( bundle install )
+        end
+      end
+    end
+
     def build_native_library()
       outname = "lib#{target_name}.a"
       out     = File.join lib_dir, outname
