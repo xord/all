@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.1.40] - 2023-11-09
+
+- Use Gemfile to install gems for development instead of add_development_dependency in gemspec
+
+
 ## [v0.1.39] - 2023-06-11
 
 - Add mask_flag()

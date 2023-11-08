@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.1.41] - 2023-11-09
+
+- Use Gemfile to install gems for development instead of add_development_dependency in gemspec
+
+
 ## [v0.1.40] - 2023-10-25
 
 - Add '#include <assert.h>' to Fix compile errors

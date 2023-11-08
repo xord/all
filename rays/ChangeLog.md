@@ -1,6 +1,12 @@
 # rays ChangeLog
 
 
+## [v0.1.46] - 2023-11-09
+
+- Use Gemfile to install gems for development instead of add_development_dependency in gemspec
+- empty -> is_empty
+
+
 ## [v0.1.45] - 2023-10-29
 
 - Fixed Image class to clear the update flag only when one of the bitmap and texture is being updated

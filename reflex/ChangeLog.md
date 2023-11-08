@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.54] - 2023-11-09
+
+- Use Gemfile to install gems for development instead of add_development_dependency in gemspec
+
+
 ## [v0.1.53] - 2023-10-29
 
 - Update dependencies
