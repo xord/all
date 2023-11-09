@@ -394,6 +394,23 @@ RUCY_DEF0(get_stroke_width)
 RUCY_END
 
 static
+RUCY_DEF1(set_stroke_outset, outset)
+{
+	CHECK;
+	THIS->set_stroke_outset(to<float>(outset));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_stroke_outset)
+{
+	CHECK;
+	return value(THIS->stroke_outset());
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_stroke_cap, cap)
 {
 	CHECK;
@@ -698,12 +715,14 @@ Init_rays_painter ()
 	cPainter.define_method(   "stroke=",       set_stroke);
 	cPainter.define_method(   "stroke",        get_stroke);
 	cPainter.define_method("no_stroke",         no_stroke);
-	cPainter.define_method(   "stroke_width=", set_stroke_width);
-	cPainter.define_method(   "stroke_width",  get_stroke_width);
-	cPainter.define_method(   "stroke_cap=",   set_stroke_cap);
-	cPainter.define_method(   "stroke_cap",    get_stroke_cap);
-	cPainter.define_method(   "stroke_join=",  set_stroke_join);
-	cPainter.define_method(   "stroke_join",   get_stroke_join);
+	cPainter.define_method(   "stroke_width=",  set_stroke_width);
+	cPainter.define_method(   "stroke_width",   get_stroke_width);
+	cPainter.define_method(   "stroke_outset=", set_stroke_outset);
+	cPainter.define_method(   "stroke_outset",  get_stroke_outset);
+	cPainter.define_method(   "stroke_cap=",    set_stroke_cap);
+	cPainter.define_method(   "stroke_cap",     get_stroke_cap);
+	cPainter.define_method(   "stroke_join=",   set_stroke_join);
+	cPainter.define_method(   "stroke_join",    get_stroke_join);
 	cPainter.define_method("miter_limit=", set_miter_limit);
 	cPainter.define_method("miter_limit",  get_miter_limit);
 	cPainter.define_method("nsegment=", set_nsegment);

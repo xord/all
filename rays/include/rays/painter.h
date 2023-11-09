@@ -205,6 +205,10 @@ namespace Rays
 
 			coord    stroke_width () const;
 
+			void set_stroke_outset (float outset);
+
+			float    stroke_outset () const;
+
 			void set_stroke_cap (CapType cap);
 
 			CapType  stroke_cap () const;

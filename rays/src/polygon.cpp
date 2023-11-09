@@ -110,7 +110,10 @@ namespace Rays
 
 			coord stroke_width = painter->stroke_width();
 			if (stroke_width > 0)
-				stroke_with_width(polygon, painter, color, stroke_width);
+			{
+				stroke_with_width(
+					polygon, painter, color, stroke_width, painter->stroke_outset());
+			}
 			else
 				stroke_without_width(painter, color);
 		}
@@ -150,7 +153,7 @@ namespace Rays
 
 			void stroke_with_width (
 				const Polygon& polygon, Painter* painter,
-				const Color& color, coord stroke_width) const
+				const Color& color, coord stroke_width, float stroke_outset) const
 			{
 				assert(painter && color && stroke_width > 0);
 
@@ -163,28 +166,43 @@ namespace Rays
 				bool has_loop = false;
 				for (const auto& polyline : polygon)
 				{
-					if (!polyline || polyline.empty())
-						continue;
-
 					if (polyline.loop())
 					{
 						has_loop = true;
 						continue;
 					}
-
-					Polygon stroke;
-					if (!polyline.expand(&stroke, stroke_width / 2, cap, join, ml))
-						continue;
-
-					Polygon_fill(stroke, painter, color);
+					stroke_polyline(polyline, painter, color, stroke_width, cap, join, ml);
 				}
 
-				if (has_loop)
+				if (!has_loop) return;
+
+				coord inset = (-0.5 + stroke_outset) * stroke_width;
+				Polygon outline;
+				if (inset == 0)
+					outline = polygon;
+				else if (!polygon.expand(&outline, inset, cap, join, ml))
+					return;
+
+				for (const auto& polyline : outline)
 				{
-					Polygon hole;
-					if (polygon.expand(&hole, -stroke_width, cap, join, ml))
-						Polygon_fill(polygon - hole, painter, color);
+					if (polyline.loop())
+						stroke_polyline(polyline, painter, color, stroke_width, cap, join, ml);
 				}
+			}
+
+			void stroke_polyline (
+				const Polyline& polyline, Painter* painter,
+				const Color& color, coord stroke_width,
+				CapType cap, JoinType join, coord miter_limit) const
+			{
+				assert(stroke_width > 0);
+
+				if (!polyline || polyline.empty())
+					return;
+
+				Polygon stroke;
+				if (polyline.expand(&stroke, stroke_width / 2, cap, join, miter_limit))
+					Polygon_fill(stroke, painter, color);
 			}
 
 			void stroke_without_width (Painter* painter, const Color& color) const

@@ -49,6 +49,8 @@ namespace Rays
 
 		coord stroke_width;
 
+		float stroke_outset;
+
 		CapType stroke_cap;
 
 		JoinType stroke_join;
@@ -71,6 +73,7 @@ namespace Rays
 			colors[FILL]   .reset(1, 1);
 			colors[STROKE] .reset(1, 0);
 			stroke_width   = 0;
+			stroke_outset  = 0;
 			stroke_cap     = CAP_DEFAULT;
 			stroke_join    = JOIN_DEFAULT;
 			miter_limit    = JOIN_DEFAULT_MITER_LIMIT;
@@ -1308,6 +1311,18 @@ namespace Rays
 	Painter::stroke_width () const
 	{
 		return self->state.stroke_width;
+	}
+
+	void
+	Painter::set_stroke_outset (float outset)
+	{
+		self->state.stroke_outset = outset;
+	}
+
+	float
+	Painter::stroke_outset () const
+	{
+		return self->state.stroke_outset;
 	}
 
 	void
