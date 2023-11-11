@@ -14,7 +14,7 @@
 #include "painter.h"
 
 
-namespace clip = ClipperLib;
+namespace clip = Clipper2Lib;
 
 
 namespace mapbox
@@ -341,7 +341,7 @@ namespace Rays
 					return;
 
 				Polygon stroke;
-				if (polyline.expand(&stroke, stroke_width / 2, cap, join, miter_limit))
+				if (polyline.expand(&stroke, stroke_width, cap, join, miter_limit))
 					Polygon_fill(stroke, painter, color);
 			}
 
@@ -413,20 +413,24 @@ namespace Rays
 	}
 
 	static void
-	add_polygon_to_clipper (
-		clip::Clipper* clipper, const Polygon& polygon, clip::PolyType type)
+	add_polygon_to_clipper (Clipper* clipper, const Polygon& polygon, bool clip)
 	{
 		assert(clipper);
 
-		clip::Path path;
+		ClipperPaths paths {ClipperPath()};
 		for (const auto& line : polygon)
 		{
 			if (!line) continue;
 
-			Polyline_get_path(&path, line, line.hole());
-			if (path.empty()) continue;
+			Polyline_get_path(&paths[0], line, line.hole());
+			if (paths[0].empty()) continue;
 
-			clipper->AddPath(path, type, line.loop());
+			if (clip)
+				clipper->AddClip(paths);
+			else if (line.loop())
+				clipper->AddSubject(paths);
+			else
+				clipper->AddOpenSubject(paths);
 		}
 	}
 
@@ -435,31 +439,31 @@ namespace Rays
 	{
 		switch (join)
 		{
-			case JOIN_MITER:  return clip::jtMiter;
-			case JOIN_ROUND:  return clip::jtRound;
-			case JOIN_SQUARE: return clip::jtSquare;
+			case JOIN_MITER:  return clip::JoinType::Miter;
+			case JOIN_ROUND:  return clip::JoinType::Round;
+			case JOIN_SQUARE: return clip::JoinType::Square;
 			default:
 				argument_error(__FILE__, __LINE__, "invalid join type -- %d", join);
 		}
 
-		return clip::jtMiter;// to avoid compiler warning
+		return clip::JoinType::Miter;// to avoid compiler warning
 	}
 
 	static clip::EndType
 	get_end_type (const Polyline& polyline, CapType cap, bool fill)
 	{
 		if (polyline.loop())
-			return fill ? clip::etClosedPolygon : clip::etClosedLine;
+			return fill ? clip::EndType::Polygon : clip::EndType::Joined;
 		else switch (cap)
 		{
-			case CAP_BUTT:   return clip::etOpenButt;
-			case CAP_ROUND:  return clip::etOpenRound;
-			case CAP_SQUARE: return clip::etOpenSquare;
+			case CAP_BUTT:   return clip::EndType::Butt;
+			case CAP_ROUND:  return clip::EndType::Round;
+			case CAP_SQUARE: return clip::EndType::Square;
 			default:
 				argument_error(__FILE__, __LINE__, "invalid cap type -- %d", cap);
 		}
 
-		return clip::etOpenButt;// to avoid compiler warning
+		return clip::EndType::Butt;// to avoid compiler warning
 	}
 
 	static bool
@@ -471,7 +475,7 @@ namespace Rays
 
 		if (!polyline) return false;
 
-		clip::Path path;
+		ClipperPath path;
 		Polyline_get_path(&path, polyline, hole);
 		offsetter->AddPath(
 			path, get_join_type(join), get_end_type(polyline, cap, fill));
@@ -495,71 +499,56 @@ namespace Rays
 	}
 
 	static bool
-	append_outline (Polygon* polygon, const clip::PolyNode& node)
+	append_polyline (
+		Polygon* polygon, const ClipperPath& path, bool loop, bool hole)
 	{
 		assert(polygon);
 
-		if (node.Contour.empty() || node.IsHole())
+		if (path.empty())
 			return false;
 
 		Polyline polyline;
-		Polyline_create(&polyline, node.Contour, !node.IsOpen(), false);
+		Polyline_create(&polyline, path, loop, hole);
 		if (!polyline)
 			return false;
 
-		polygon->self->append(polyline, false);
+		polygon->self->append(polyline, hole);
 		return true;
 	}
 
 	static void
-	append_hole (Polygon* polygon, const clip::PolyNode& node)
+	append_polygons (Polygon* polygon, const ClipperPolyTree& tree)
 	{
 		assert(polygon);
 
-		for (const auto* child : node.Childs)
+		if (!tree.IsHole() && append_polyline(polygon, tree.Polygon(), true, false))
 		{
-			if (!child->IsHole())
-				return;
-
-			Polyline polyline;
-			Polyline_create(&polyline, child->Contour, !child->IsOpen(), true);
-			if (!polyline)
-				continue;
-
-			polygon->self->append(polyline, true);
+			for (const auto& child : tree)
+				append_polyline(polygon, child->Polygon(), true, true);
 		}
-	}
 
-	static void
-	get_polygon (Polygon* polygon, const clip::PolyNode& node)
-	{
-		assert(polygon);
-
-		if (append_outline(polygon, node))
-			append_hole(polygon, node);
-
-		for (const auto* child : node.Childs)
-			get_polygon(polygon, *child);
+		for (const auto& child : tree)
+			append_polygons(polygon, *child);
 	}
 
 	static Polygon
 	clip_polygons (
 		const Polygon& subject, const Polygon& clip, clip::ClipType type)
 	{
-		clip::Clipper c;
-		c.StrictlySimple(true);
+		Clipper c;
+		add_polygon_to_clipper(&c, subject, false);
+		add_polygon_to_clipper(&c, clip, true);
 
-		add_polygon_to_clipper(&c, subject, clip::ptSubject);
-		add_polygon_to_clipper(&c, clip,    clip::ptClip);
+		ClipperPolyTree closes;
+		ClipperPaths opens;
+		c.Execute(type, clip::FillRule::EvenOdd, closes, opens);
+		assert(tree.Polygon().empty());
 
-		clip::PolyTree tree;
-		c.Execute(type, tree);
-		assert(tree.Contour.empty());
+		Polygon polygon;
+		for (const auto& tree : closes) append_polygons(&polygon, *tree);
+		for (const auto& path : opens)  append_polyline(&polygon, path, false, false);
 
-		Polygon result;
-		get_polygon(&result, tree);
-
-		return result;
+		return polygon;
 	}
 
 	static bool
@@ -571,15 +560,15 @@ namespace Rays
 			return false;
 
 		clip::ClipperOffset co;
-		co.MiterLimit = miter_limit;
+		co.MiterLimit(miter_limit);
 		if (!add_polygon_to_offsetter(&co, polygon, cap, join))
 			return false;
 
-		clip::PolyTree tree;
-		co.Execute(tree, to_clipper(width));
-		assert(tree.Contour.empty());
+		ClipperPolyTree tree;
+		co.Execute(to_clipper(width), tree);
+		assert(tree.Polygon().empty());
 
-		get_polygon(result, tree);
+		append_polygons(result, tree);
 		return true;
 	}
 
@@ -592,15 +581,15 @@ namespace Rays
 			return false;
 
 		clip::ClipperOffset co;
-		co.MiterLimit = miter_limit;
+		co.MiterLimit(miter_limit);
 		if (!add_polyline_to_offsetter(&co, polyline, cap, join, false, false))
 			return false;
 
-		clip::PolyTree tree;
-		co.Execute(tree, to_clipper(width));
-		assert(tree.Contour.empty());
+		ClipperPolyTree tree;
+		co.Execute(to_clipper(width), tree);
+		assert(tree.Polygon().empty());
 
-		get_polygon(result, tree);
+		append_polygons(result, tree);
 		return true;
 	}
 
@@ -1490,7 +1479,7 @@ namespace Rays
 	{
 		if (lhs.self == rhs.self) return Polygon();
 
-		return clip_polygons(lhs, rhs, clip::ctDifference);
+		return clip_polygons(lhs, rhs, clip::ClipType::Difference);
 	}
 
 	Polygon
@@ -1498,7 +1487,7 @@ namespace Rays
 	{
 		if (lhs.self == rhs.self) return lhs;
 
-		return clip_polygons(lhs, rhs, clip::ctIntersection);
+		return clip_polygons(lhs, rhs, clip::ClipType::Intersection);
 	}
 
 	Polygon
@@ -1506,7 +1495,7 @@ namespace Rays
 	{
 		if (lhs.self == rhs.self) return lhs;
 
-		return clip_polygons(lhs, rhs, clip::ctUnion);
+		return clip_polygons(lhs, rhs, clip::ClipType::Union);
 	}
 
 	Polygon
@@ -1514,7 +1503,7 @@ namespace Rays
 	{
 		if (lhs.self == rhs.self) return Polygon();
 
-		return clip_polygons(lhs, rhs, clip::ctXor);
+		return clip_polygons(lhs, rhs, clip::ClipType::Xor);
 	}
 
 

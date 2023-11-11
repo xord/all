@@ -5,7 +5,7 @@
 
 
 #include <float.h>
-#include <clipper.hpp>
+#include <clipper2/clipper.h>
 #include "rays/polyline.h"
 #include "rays/exception.h"
 
@@ -14,17 +14,24 @@ namespace Rays
 {
 
 
+	typedef int64_t                 ClipperCoord;
+	typedef Clipper2Lib::Point64    ClipperPoint;
+	typedef Clipper2Lib::Path64     ClipperPath;
+	typedef Clipper2Lib::Paths64    ClipperPaths;
+	typedef Clipper2Lib::PolyTree64 ClipperPolyTree;
+	typedef Clipper2Lib::Clipper64  Clipper;
+
 	static const double CLIPPER_SCALE = 1000;
 
 
-	inline ClipperLib::cInt
+	inline ClipperCoord
 	to_clipper (coord value)
 	{
-		return (ClipperLib::cInt) (value * CLIPPER_SCALE);
+		return (ClipperCoord) (value * CLIPPER_SCALE);
 	}
 
 	inline coord
-	from_clipper (ClipperLib::cInt value)
+	from_clipper (ClipperCoord value)
 	{
 		double v = value / CLIPPER_SCALE;
 		if (v <= -FLT_MAX || FLT_MAX <= v)
@@ -33,30 +40,28 @@ namespace Rays
 		return (coord) v;
 	}
 
-	inline ClipperLib::IntPoint
+	inline ClipperPoint
 	to_clipper (const Point& point)
 	{
-		return ClipperLib::IntPoint(
+		return ClipperPoint(
 			to_clipper(point.x),
 			to_clipper(point.y));
 	}
 
 	inline Point
-	from_clipper (const ClipperLib::IntPoint& point)
+	from_clipper (const ClipperPoint& point)
 	{
 		return Point(
-			from_clipper(point.X),
-			from_clipper(point.Y));
+			from_clipper(point.x),
+			from_clipper(point.y));
 	}
 
 
 	void Polyline_create (
-		Polyline* polyline, const ClipperLib::Path& path, bool loop,
-		bool hole = false);
+		Polyline* polyline, const ClipperPath& path, bool loop, bool hole = false);
 
 	void Polyline_get_path (
-		ClipperLib::Path* path, const Polyline& polyline,
-		bool hole = false);
+		ClipperPath* path, const Polyline& polyline, bool hole = false);
 
 	bool Polyline_expand (
 		Polygon* result, const Polyline& polyline,
