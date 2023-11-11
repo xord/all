@@ -36,8 +36,8 @@ module Rays
       line! args, loop
     end
 
-    def self.triangles(*args)
-      triangles! args
+    def self.triangles(*args, loop: true)
+      triangles! args, loop
     end
 
     def self.triangle_strip(*args)
@@ -48,8 +48,8 @@ module Rays
       triangle_fan! args
     end
 
-    def self.quads(*args)
-      quads! args
+    def self.quads(*args, loop: true)
+      quads! args, loop
     end
 
     def self.quad_strip(*args)

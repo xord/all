@@ -31,6 +31,8 @@ namespace Rays
 
 			Polyline (const Point* points, size_t size, bool loop = false);
 
+			Polyline (const Point* points, size_t size, bool loop, bool fill);
+
 			~Polyline ();
 
 			bool expand (
@@ -43,6 +45,8 @@ namespace Rays
 			Bounds bounds () const;
 
 			bool loop () const;
+
+			bool fill () const;
 
 			size_t size () const;
 

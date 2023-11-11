@@ -54,9 +54,12 @@ namespace Rays
 
 			Polygon ();
 
-			Polygon (const Point* points, size_t size, bool loop = true);
+			Polygon (
+				const Point* points, size_t size, bool loop = true);
 
-			Polygon (DrawMode mode, const Point* points, size_t size);
+			Polygon (
+				DrawMode mode,
+				const Point* points, size_t size, bool loop = true);
 
 			Polygon (const Polyline& polyline);
 

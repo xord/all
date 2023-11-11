@@ -52,11 +52,11 @@ namespace Rays
 
 	void Polyline_create (
 		Polyline* polyline, const ClipperLib::Path& path, bool loop,
-		bool reverse = false);
+		bool hole = false);
 
 	void Polyline_get_path (
 		ClipperLib::Path* path, const Polyline& polyline,
-		bool reverse = false);
+		bool hole = false);
 
 	bool Polyline_expand (
 		Polygon* result, const Polyline& polyline,

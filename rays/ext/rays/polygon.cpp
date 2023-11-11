@@ -217,18 +217,18 @@ RUCY_DEF2(create_line, args, loop)
 {
 	std::vector<Rays::Point> points;
 	get_line_args(&points, args.size(), args.as_array());
-	return value(Rays::Polygon(
-		loop ? Rays::DRAW_LINE_LOOP : Rays::DRAW_LINE_STRIP,
-		&points[0], points.size()));
+	return value(
+		Rays::Polygon(Rays::DRAW_LINE_STRIP, &points[0], points.size(), loop));
 }
 RUCY_END
 
 static
-RUCY_DEF1(create_triangles, args)
+RUCY_DEF2(create_triangles, args, loop)
 {
 	std::vector<Rays::Point> points;
 	get_line_args(&points, args.size(), args.as_array());
-	return value(Rays::Polygon(Rays::DRAW_TRIANGLES, &points[0], points.size()));
+	return value(
+		Rays::Polygon(Rays::DRAW_TRIANGLES, &points[0], points.size(), loop));
 }
 RUCY_END
 
@@ -237,7 +237,8 @@ RUCY_DEF1(create_triangle_strip, args)
 {
 	std::vector<Rays::Point> points;
 	get_line_args(&points, args.size(), args.as_array());
-	return value(Rays::Polygon(Rays::DRAW_TRIANGLE_STRIP, &points[0], points.size()));
+	return value(
+		Rays::Polygon(Rays::DRAW_TRIANGLE_STRIP, &points[0], points.size()));
 }
 RUCY_END
 
@@ -246,16 +247,18 @@ RUCY_DEF1(create_triangle_fan, args)
 {
 	std::vector<Rays::Point> points;
 	get_line_args(&points, args.size(), args.as_array());
-	return value(Rays::Polygon(Rays::DRAW_TRIANGLE_FAN, &points[0], points.size()));
+	return value(
+		Rays::Polygon(Rays::DRAW_TRIANGLE_FAN, &points[0], points.size()));
 }
 RUCY_END
 
 static
-RUCY_DEF1(create_quads, args)
+RUCY_DEF2(create_quads, args, loop)
 {
 	std::vector<Rays::Point> points;
 	get_line_args(&points, args.size(), args.as_array());
-	return value(Rays::Polygon(Rays::DRAW_QUADS, &points[0], points.size()));
+	return value(
+		Rays::Polygon(Rays::DRAW_QUADS, &points[0], points.size(), loop));
 }
 RUCY_END
 

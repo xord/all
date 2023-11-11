@@ -65,12 +65,9 @@ namespace Rays
 
 			triangles->clear();
 
-			if (!can_triangulate())
-				return false;
-
-			size_t npoint = count_points();
+			size_t npoint = count_points_for_triangulation();
 			if (npoint <= 0)
-				return true;
+				return false;
 
 			std::unique_ptr<p2t::CDT> cdt;
 			std::vector<p2t::Point> points;
@@ -79,7 +76,8 @@ namespace Rays
 			points.reserve(npoint);
 			for (const auto& line : lines)
 			{
-				if (!line.loop()) continue;
+				if (!can_triangulate(line))
+					continue;
 
 				pointers.clear();
 				pointers.reserve(line.size());
@@ -122,22 +120,20 @@ namespace Rays
 
 		private:
 
-			bool can_triangulate () const
-			{
-				for (const auto& line : lines)
-				{
-					if (line.loop() && !line.hole() && !line.empty())
-						return true;
-				}
-				return false;
-			}
-
-			size_t count_points () const
+			size_t count_points_for_triangulation () const
 			{
 				size_t count = 0;
 				for (const auto& line : lines)
-					count += line.size();
+				{
+					if (can_triangulate(line))
+						count += line.size();
+				}
 				return count;
+			}
+
+			bool can_triangulate (const Line& line) const
+			{
+				return (line.fill() || line.hole()) && line.size() >= 3;
 			}
 
 			void triangulate (TrianglePointList* triangles, p2t::CDT* cdt) const
@@ -816,7 +812,6 @@ namespace Rays
 			case DRAW_POINTS:         return "DRAW_POINTS";
 			case DRAW_LINES:          return "DRAW_LINES";
 			case DRAW_LINE_STRIP:     return "DRAW_LINE_STRIP";
-			case DRAW_LINE_LOOP:      return "DRAW_LINE_LOOP";
 			case DRAW_TRIANGLES:      return "DRAW_TRIANGLES";
 			case DRAW_TRIANGLE_STRIP: return "DRAW_TRIANGLE_STRIP";
 			case DRAW_TRIANGLE_FAN:   return "DRAW_TRIANGLE_FAN";
@@ -828,49 +823,47 @@ namespace Rays
 	}
 
 	static void
-	create_polygon (Polygon* polygon, const Point* points, size_t size)
+	create_polygon (Polygon* polygon, const Point* points, size_t size, bool loop)
 	{
-		polygon->self->append(Polyline(points, size, true));
+		polygon->self->append(Polyline(points, size, loop, true));
 	}
 
 	static void
 	create_points (Polygon* polygon, const Point* points, size_t size)
 	{
 		for (size_t i = 0; i < size; ++i)
-			polygon->self->append(Polyline(&points[i], 1));
+			polygon->self->append(Polyline(&points[i], 1, false, false));
 	}
 
 	static void
 	create_lines (Polygon* polygon, const Point* points, size_t size)
 	{
 		for (size_t i = 0; i + 1 < size; i += 2)
-			polygon->self->append(Polyline(&points[i], 2));
+			polygon->self->append(Polyline(&points[i], 2, false, false));
 	}
 
 	static void
-	create_line_strip (Polygon* polygon, const Point* points, size_t size)
+	create_line_strip (
+		Polygon* polygon, const Point* points, size_t size, bool loop)
 	{
-		polygon->self->append(Polyline(points, size));
+		if (!loop || size < 3)
+			polygon->self->append(Polyline(points, size, loop, false));
+		else
+		{
+			std::vector<Point> array;
+			array.reserve(size + 1);
+			array.insert(array.begin(), points, points + size);
+			array.emplace_back(points[0]);
+			polygon->self->append(Polyline(&array[0], array.size(), true, false));
+		}
 	}
 
 	static void
-	create_line_loop (Polygon* polygon, const Point* points, size_t size)
-	{
-		if (size < 3)
-			return create_line_strip(polygon, points, size);
-
-		std::vector<Point> array;
-		array.reserve(size + 1);
-		array.insert(array.begin(), points, points + size);
-		array.emplace_back(points[0]);
-		polygon->self->append(Polyline(&array[0], array.size()));
-	}
-
-	static void
-	create_triangles (Polygon* polygon, const Point* points, size_t size)
+	create_triangles (
+		Polygon* polygon, const Point* points, size_t size, bool loop)
 	{
 		for (size_t i = 0; i + 2 < size; i += 3)
-			polygon->self->append(Polyline(&points[i], 3, true));
+			polygon->self->append(Polyline(&points[i], 3, loop, true));
 	}
 
 	static void
@@ -897,7 +890,7 @@ namespace Rays
 	static void
 	create_triangle_fan (Polygon* polygon, const Point* points, size_t size)
 	{
-		create_polygon(polygon, points, size);
+		create_polygon(polygon, points, size, true);
 
 		Point array[2];
 		array[0] = points[0];
@@ -909,10 +902,10 @@ namespace Rays
 	}
 
 	static void
-	create_quads (Polygon* polygon, const Point* points, size_t size)
+	create_quads (Polygon* polygon, const Point* points, size_t size, bool loop)
 	{
 		for (size_t i = 0; i + 3 < size; i += 4)
-			polygon->self->append(Polyline(&points[i], 4, true));
+			polygon->self->append(Polyline(&points[i], 4, loop, true));
 	}
 
 	static void
@@ -1216,29 +1209,25 @@ namespace Rays
 	{
 		if (!points || size <= 0) return;
 
-		if (loop)
-			create_polygon(this, points, size);
-		else
-			create_line_strip(this, points, size);
+		create_polygon(this, points, size, loop);
 	}
 
-	Polygon::Polygon (DrawMode mode, const Point* points, size_t size)
+	Polygon::Polygon (DrawMode mode, const Point* points, size_t size, bool loop)
 	:	self(new PolygonData())
 	{
 		if (!points || size <= 0) return;
 
 		switch (mode)
 		{
-			case DRAW_POINTS:         create_points(        this, points, size); break;
-			case DRAW_LINES:          create_lines(         this, points, size); break;
-			case DRAW_LINE_STRIP:     create_line_strip(    this, points, size); break;
-			case DRAW_LINE_LOOP:      create_line_loop(     this, points, size); break;
-			case DRAW_TRIANGLES:      create_triangles(     this, points, size); break;
-			case DRAW_TRIANGLE_STRIP: create_triangle_strip(this, points, size); break;
-			case DRAW_TRIANGLE_FAN:   create_triangle_fan(  this, points, size); break;
-			case DRAW_QUADS:          create_quads(         this, points, size); break;
-			case DRAW_QUAD_STRIP:     create_quad_strip(    this, points, size); break;
-			case DRAW_POLYGON:        create_polygon(       this, points, size); break;
+			case DRAW_POINTS:         create_points(        this, points, size);       break;
+			case DRAW_LINES:          create_lines(         this, points, size);       break;
+			case DRAW_LINE_STRIP:     create_line_strip(    this, points, size, loop); break;
+			case DRAW_TRIANGLES:      create_triangles(     this, points, size, loop); break;
+			case DRAW_TRIANGLE_STRIP: create_triangle_strip(this, points, size);       break;
+			case DRAW_TRIANGLE_FAN:   create_triangle_fan(  this, points, size);       break;
+			case DRAW_QUADS:          create_quads(         this, points, size, loop); break;
+			case DRAW_QUAD_STRIP:     create_quad_strip(    this, points, size);       break;
+			case DRAW_POLYGON:        create_polygon(       this, points, size, loop); break;
 			default:
 				argument_error(
 					__FILE__, __LINE__,
@@ -1422,10 +1411,7 @@ namespace Rays
 
 	Polygon::Line::operator bool () const
 	{
-		if (!Super::operator bool())
-			return false;
-
-		return loop() || !hole();
+		return Super::operator bool() && (loop() || !hole());
 	}
 
 	bool
