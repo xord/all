@@ -23,6 +23,32 @@ namespace Rays
 	typedef float coord;
 
 
+	enum DrawMode
+	{
+
+		DRAW_POINTS = 0,
+
+		DRAW_LINES,
+
+		DRAW_LINE_STRIP,
+
+		DRAW_TRIANGLES,
+
+		DRAW_TRIANGLE_STRIP,
+
+		DRAW_TRIANGLE_FAN,
+
+		DRAW_QUADS,
+
+		DRAW_QUAD_STRIP,
+
+		DRAW_POLYGON,
+
+		DRAW_MAX,
+
+	};// DrawMode
+
+
 	enum CapType
 	{
 

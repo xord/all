@@ -17,21 +17,24 @@ namespace Rays
 
 		PointList points;
 
-		bool loop = false;
+		bool loop = false, fill = false;
 
 		template <typename I, typename FUN>
-		void reset (I begin, I end, bool loop_, FUN to_point_fun)
+		void reset (I begin, I end, bool loop_, bool fill_, FUN to_point_fun)
 		{
-			size_t size = end - begin;
-			if (0 < size && size < 3 && loop_)
+			if (begin > end)
 				argument_error(__FILE__, __LINE__);
 
 			points.clear();
+			loop = loop_;
+			fill = fill_;
+
+			size_t size = end - begin;
+			if (size <= 0) return;
+
 			points.reserve(size);
 			for (auto it = begin; it != end; ++it)
 				points.emplace_back(to_point_fun(*it));
-
-			loop = loop_ && size > 0;
 		}
 
 	};// Polyline::Data
@@ -39,18 +42,16 @@ namespace Rays
 
 	void
 	Polyline_create (
-		Polyline* polyline, const Path& path, bool loop, bool reverse)
+		Polyline* polyline, const Path& path, bool loop, bool hole)
 	{
-		assert(polyline);
-
 		Path cleaned;
 		ClipperLib::CleanPolygon(path, cleaned);
 
-		auto to_point = [](const IntPoint& point) {return from_clipper(point);};
-		if (reverse)
-			polyline->self->reset(cleaned.rbegin(), cleaned.rend(), loop, to_point);
+		auto fun = [](const IntPoint& point) {return from_clipper(point);};
+		if (hole)
+			polyline->self->reset(cleaned.rbegin(), cleaned.rend(), loop, loop, fun);
 		else
-			polyline->self->reset(cleaned. begin(), cleaned. end(), loop, to_point);
+			polyline->self->reset(cleaned. begin(), cleaned. end(), loop, loop, fun);
 	}
 
 	template <typename I>
@@ -63,12 +64,12 @@ namespace Rays
 	}
 
 	void
-	Polyline_get_path (Path* path, const Polyline& polyline, bool reverse)
+	Polyline_get_path (Path* path, const Polyline& polyline, bool hole)
 	{
 		assert(path);
 
 		const auto& points = polyline.self->points;
-		if (reverse)
+		if (hole)
 			reset_path(path, points.rbegin(), points.rend());
 		else
 			reset_path(path, points. begin(), points. end());
@@ -81,7 +82,16 @@ namespace Rays
 
 	Polyline::Polyline (const Point* points, size_t size, bool loop)
 	{
-		self->reset(points, points + size, loop, [](const Point& p) {return p;});
+		self->reset(
+			points, points + size, loop, loop,
+			[](const Point& p) {return p;});
+	}
+
+	Polyline::Polyline (const Point* points, size_t size, bool loop, bool fill)
+	{
+		self->reset(
+			points, points + size, loop, fill,
+			[](const Point& p) {return p;});
 	}
 
 	Polyline::~Polyline ()
@@ -112,6 +122,12 @@ namespace Rays
 	Polyline::loop () const
 	{
 		return self->loop;
+	}
+
+	bool
+	Polyline::fill () const
+	{
+		return self->fill;
 	}
 
 	size_t
@@ -146,8 +162,7 @@ namespace Rays
 
 	Polyline::operator bool () const
 	{
-		size_t s = size();
-		return !((s == 1 || s == 2) && self->loop);
+		return true;
 	}
 
 	bool

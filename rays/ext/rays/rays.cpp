@@ -16,7 +16,7 @@ struct EnumType
 {
 	const char* name;
 	const char* short_name;
-	T type;
+	T value;
 };
 
 static std::vector<EnumType<Rays::CapType>> CAP_TYPES({
@@ -72,13 +72,13 @@ Init_rays ()
 	mRays.define_singleton_method("fin!", fin);
 
 	for (auto it = CAP_TYPES.begin(); it != CAP_TYPES.end(); ++it)
-		mRays.define_const(it->name, it->type);
+		mRays.define_const(it->name, it->value);
 
 	for (auto it = JOIN_TYPES.begin(); it != JOIN_TYPES.end(); ++it)
-		mRays.define_const(it->name, it->type);
+		mRays.define_const(it->name, it->value);
 
 	for (auto it = BLEND_MODES.begin(); it != BLEND_MODES.end(); ++it)
-		mRays.define_const(it->name, it->type);
+		mRays.define_const(it->name, it->value);
 }
 
 
@@ -102,7 +102,7 @@ namespace Rucy
 						strcasecmp(str, it->name)       == 0 ||
 						strcasecmp(str, it->short_name) == 0)
 					{
-						return it->type;
+						return it->value;
 					}
 				}
 				argument_error(__FILE__, __LINE__, "invalid cap type -- %s", str);
@@ -133,7 +133,7 @@ namespace Rucy
 						strcasecmp(str, it->name)       == 0 ||
 						strcasecmp(str, it->short_name) == 0)
 					{
-						return it->type;
+						return it->value;
 					}
 				}
 				argument_error(__FILE__, __LINE__, "invalid join type -- %s", str);
@@ -164,18 +164,18 @@ namespace Rucy
 						strcasecmp(str, it->name)       == 0 ||
 						strcasecmp(str, it->short_name) == 0)
 					{
-						return it->type;
+						return it->value;
 					}
 				}
 				argument_error(__FILE__, __LINE__, "invalid blend mode -- %s", str);
 			}
 		}
 
-		int type = value_to<int>(*argv, convert);
-		if (type < 0 || Rays::BLEND_MAX <= type)
-			argument_error(__FILE__, __LINE__, "invalid blend mode -- %d", type);
+		int mode = value_to<int>(*argv, convert);
+		if (mode < 0 || Rays::BLEND_MAX <= mode)
+			argument_error(__FILE__, __LINE__, "invalid blend mode -- %d", mode);
 
-		return (Rays::BlendMode) type;
+		return (Rays::BlendMode) mode;
 	}
 
 
