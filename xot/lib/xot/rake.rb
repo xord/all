@@ -100,7 +100,7 @@ module Xot
           sh %( #{cxx} -M #{cppflags} #{srcs.keys.join ' '} > #{depend} )
           input = open(depend) {|f| f.read}
           open(depend, 'w') do |output|
-            output << input.gsub(/\w+\.o/, src_dir + '/\0')
+            output << input.gsub(/\w+\.o\W/, src_dir + '/\0')
           end
         end
 
