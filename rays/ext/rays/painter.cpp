@@ -129,11 +129,29 @@ RUCY_DEF0(clear)
 RUCY_END
 
 static
-RUCY_DEF1(polygon, poly)
+RUCY_DEFN(polygon)
 {
 	CHECK;
+	check_arg_count(__FILE__, __LINE__, "Painter#polygon", argc, 1, 3, 5);
 
-	THIS->polygon(to<Rays::Polygon&>(poly));
+	const Rays::Polygon* polygon = to<Rays::Polygon*>(argv[0]);
+	if (!polygon)
+		argument_error(__FILE__, __LINE__, "%s is not a polygon.", argv[0].inspect().c_str());
+
+	if (argc == 1)
+		THIS->polygon(*polygon);
+	else if (argc == 3)
+	{
+		coord x = to<coord>(argv[1]), y = to<coord>(argv[2]);
+		THIS->polygon(*polygon, x, y);
+	}
+	else if (argc == 5)
+	{
+		coord x = to<coord>(argv[1]), w = to<coord>(argv[3]);
+		coord y = to<coord>(argv[2]), h = to<coord>(argv[4]);
+		THIS->polygon(*polygon, x, y, w, h);
+	}
+
 	return self;
 }
 RUCY_END
