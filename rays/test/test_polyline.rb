@@ -27,11 +27,11 @@ class TestPolyline < Test::Unit::TestCase
     assert_equal [[1, 1], [2, 2]], polyline(     [1],      [2]).dump
     assert_equal [[1, 1], [2, 2]], polyline(point(1), point(2)).dump
 
-    assert_equal false, polyline(1, 2, 3, 4, 5, 6             ).loop?
-    assert_equal true,  polyline(1, 2, 3, 4, 5, 6, loop: true ).loop?
-    assert_equal false, polyline(1, 2, 3, 4, 5, 6, loop: false).loop?
-    assert_equal true,  polyline(                  loop: true ).loop?
-    assert_equal false, polyline(                  loop: false).loop?
+    assert_false polyline(1, 2, 3, 4, 5, 6             ).loop?
+    assert_true  polyline(1, 2, 3, 4, 5, 6, loop: true ).loop?
+    assert_false polyline(1, 2, 3, 4, 5, 6, loop: false).loop?
+    assert_true  polyline(                  loop: true ).loop?
+    assert_false polyline(                  loop: false).loop?
 
     assert_nothing_raised       {polyline(                  loop: true)}
     assert_nothing_raised       {polyline(                  loop: false)}
