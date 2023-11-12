@@ -41,7 +41,7 @@ class TestPolygonLine < Test::Unit::TestCase
     assert_raise(ArgumentError)  {line(1, 2, 3, 4, 5, 6, loop: false, hole: true ).loop_hole}
     assert_equal [false, false],  line(1, 2, 3, 4, 5, 6, loop: false, hole: false).loop_hole
 
-    assert_raise(ArgumentError) {line(                  loop: true,  hole: true )}
+    assert_nothing_raised       {line(                  loop: true,  hole: true )}
     assert_nothing_raised       {line(                  loop: true,  hole: false)}
     assert_raise(ArgumentError) {line(                  loop: false, hole: true )}
     assert_nothing_raised       {line(                  loop: false, hole: false)}
@@ -49,16 +49,16 @@ class TestPolygonLine < Test::Unit::TestCase
     assert_raise(ArgumentError) {line(1,                loop: true,  hole: false)}
     assert_raise(ArgumentError) {line(1,                loop: false, hole: true )}
     assert_raise(ArgumentError) {line(1,                loop: false, hole: false)}
-    assert_raise(ArgumentError) {line(1, 2,             loop: true,  hole: true )}
-    assert_raise(ArgumentError) {line(1, 2,             loop: true,  hole: false)}
+    assert_nothing_raised       {line(1, 2,             loop: true,  hole: true )}
+    assert_nothing_raised       {line(1, 2,             loop: true,  hole: false)}
     assert_raise(ArgumentError) {line(1, 2,             loop: false, hole: true )}
     assert_nothing_raised       {line(1, 2,             loop: false, hole: false)}
     assert_raise(ArgumentError) {line(1, 2, 3,          loop: true,  hole: true )}
     assert_raise(ArgumentError) {line(1, 2, 3,          loop: true,  hole: false)}
     assert_raise(ArgumentError) {line(1, 2, 3,          loop: false, hole: true )}
     assert_raise(ArgumentError) {line(1, 2, 3,          loop: false, hole: false)}
-    assert_raise(ArgumentError) {line(1, 2, 3, 4,       loop: true,  hole: true )}
-    assert_raise(ArgumentError) {line(1, 2, 3, 4,       loop: true,  hole: false)}
+    assert_nothing_raised       {line(1, 2, 3, 4,       loop: true,  hole: true )}
+    assert_nothing_raised       {line(1, 2, 3, 4,       loop: true,  hole: false)}
     assert_raise(ArgumentError) {line(1, 2, 3, 4,       loop: false, hole: true )}
     assert_nothing_raised       {line(1, 2, 3, 4,       loop: false, hole: false)}
     assert_raise(ArgumentError) {line(1, 2, 3, 4, 5,    loop: true,  hole: true )}

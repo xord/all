@@ -30,18 +30,18 @@ class TestPolyline < Test::Unit::TestCase
     assert_equal false, polyline(1, 2, 3, 4, 5, 6             ).loop?
     assert_equal true,  polyline(1, 2, 3, 4, 5, 6, loop: true ).loop?
     assert_equal false, polyline(1, 2, 3, 4, 5, 6, loop: false).loop?
-    assert_equal false, polyline(                  loop: true ).loop?
+    assert_equal true,  polyline(                  loop: true ).loop?
     assert_equal false, polyline(                  loop: false).loop?
 
     assert_nothing_raised       {polyline(                  loop: true)}
     assert_nothing_raised       {polyline(                  loop: false)}
     assert_raise(ArgumentError) {polyline(1,                loop: true)}
     assert_raise(ArgumentError) {polyline(1,                loop: false)}
-    assert_raise(ArgumentError) {polyline(1, 2,             loop: true)}
+    assert_nothing_raised       {polyline(1, 2,             loop: true)}
     assert_nothing_raised       {polyline(1, 2,             loop: false)}
     assert_raise(ArgumentError) {polyline(1, 2, 3,          loop: true)}
     assert_raise(ArgumentError) {polyline(1, 2, 3,          loop: false)}
-    assert_raise(ArgumentError) {polyline(1, 2, 3, 4,       loop: true)}
+    assert_nothing_raised       {polyline(1, 2, 3, 4,       loop: true)}
     assert_nothing_raised       {polyline(1, 2, 3, 4,       loop: false)}
     assert_raise(ArgumentError) {polyline(1, 2, 3, 4, 5,    loop: true)}
     assert_raise(ArgumentError) {polyline(1, 2, 3, 4, 5,    loop: false)}

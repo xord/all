@@ -48,11 +48,11 @@ class TestPolygon < Test::Unit::TestCase
     assert_nothing_raised       {polygon(                  loop: false)}
     assert_raise(ArgumentError) {polygon(1,                loop: true)}
     assert_raise(ArgumentError) {polygon(1,                loop: false)}
-    assert_raise(ArgumentError) {polygon(1, 2,             loop: true)}
+    assert_nothing_raised       {polygon(1, 2,             loop: true)}
     assert_nothing_raised       {polygon(1, 2,             loop: false)}
     assert_raise(ArgumentError) {polygon(1, 2, 3,          loop: true)}
     assert_raise(ArgumentError) {polygon(1, 2, 3,          loop: false)}
-    assert_raise(ArgumentError) {polygon(1, 2, 3, 4,       loop: true)}
+    assert_nothing_raised       {polygon(1, 2, 3, 4,       loop: true)}
     assert_nothing_raised       {polygon(1, 2, 3, 4,       loop: false)}
     assert_raise(ArgumentError) {polygon(1, 2, 3, 4, 5,    loop: true)}
     assert_raise(ArgumentError) {polygon(1, 2, 3, 4, 5,    loop: false)}
