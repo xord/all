@@ -126,10 +126,10 @@ class TestWindow < Test::Unit::TestCase
     assert_equal [], w.orientations
 
     assert_raise(ArgumentError) {w.orientations = [:portrait]}.then do |e|
-      assert_match /portrait.*not supported/i, e.message
+      assert_match(/portrait.*not supported/i, e.message)
     end
     assert_raise(ArgumentError) {w.orientations = [:landscape]}.then do |e|
-      assert_match /landscape.*not supported/i, e.message
+      assert_match(/landscape.*not supported/i, e.message)
     end
   end
 
