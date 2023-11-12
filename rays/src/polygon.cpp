@@ -39,8 +39,29 @@ namespace Rays
 
 		LineList lines;
 
+		mutable std::unique_ptr<Bounds> pbounds;
+
 		virtual ~Data ()
 		{
+		}
+
+		const Bounds& bounds () const
+		{
+			if (!pbounds)
+			{
+				if (lines.empty())
+					pbounds.reset(new Bounds(-1, -1, -1));
+				else
+				{
+					pbounds.reset(new Bounds(lines[0][0], 0));
+					for (const auto& line : lines)
+					{
+						for (const auto& point : line)
+							*pbounds |= point;
+					}
+				}
+			}
+			return *pbounds;
 		}
 
 		void append (const Polyline& polyline, bool hole = false)
@@ -49,6 +70,7 @@ namespace Rays
 				return;
 
 			lines.emplace_back(Line(polyline, hole));
+			pbounds.reset();
 		}
 
 		void append (const Line& line)
@@ -57,6 +79,7 @@ namespace Rays
 				return;
 
 			lines.emplace_back(line);
+			pbounds.reset();
 		}
 
 		bool triangulate (TrianglePointList* triangles) const
@@ -1270,15 +1293,7 @@ namespace Rays
 	Bounds
 	Polygon::bounds () const
 	{
-		if (empty()) return Bounds(-1, -1, -1);
-
-		Bounds b(self->lines[0][0], 0);
-		for (const auto& line : *this)
-		{
-			for (const auto& point : line)
-				b |= point;
-		}
-		return b;
+		return self->bounds();
 	}
 
 	size_t
