@@ -32,6 +32,14 @@ namespace Rays
 		reset(elements, size);
 	}
 
+	Matrix::Matrix (void* null)
+	{
+		if (null != NULL)
+			argument_error(__FILE__, __LINE__);
+
+		// do nothing to avoid initialization
+	}
+
 	Matrix
 	Matrix::dup () const
 	{

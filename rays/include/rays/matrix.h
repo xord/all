@@ -43,6 +43,8 @@ namespace Rays
 
 		Matrix (const coord* elements, size_t size);
 
+		Matrix (void* null);
+
 		This dup () const;
 
 		This& reset (coord value = 1);
