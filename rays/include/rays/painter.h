@@ -65,7 +65,17 @@ namespace Rays
 
 			void clear ();
 
-			void polygon (const Polygon& polygon);
+			void polygon (
+				const Polygon& polygon, coord x = 0, coord y = 0);
+
+			void polygon (
+				const Polygon& polygon, const Point& position);
+
+			void polygon (
+				const Polygon& polygon, coord x, coord y, coord width, coord height);
+
+			void polygon (
+				const Polygon& polygon, const Bounds& bounds);
 
 			void line (coord x1, coord y1, coord x2, coord y2);
 

@@ -800,25 +800,77 @@ namespace Rays
 #endif
 	}
 
-	void
-	Painter::polygon (const Polygon& polygon)
+	static void
+	draw_polygon (
+		Painter* painter, const Polygon& polygon,
+		coord x, coord y, coord width = 0, coord height = 0, bool resize = false)
 	{
+		Painter::Data* self = painter->self.get();
+
 		if (!self->painting)
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		if (!self->state.has_color())
 			return;
 
+		bool translate = x != 0 || y != 0;
+		Matrix matrix(nullptr);
+		bool backup = false;
+
+		if (translate || resize)
+		{
+			matrix = self->position_matrix;
+			backup = true;
+
+			if (translate)
+				self->position_matrix.translate(x, y);
+
+			if (resize)
+			{
+				const Bounds& b = polygon.bounds();
+				self->position_matrix.scale(width / b.width, height / b.height);
+			}
+		}
+
 		Color color;
 
 		if (self->get_color(&color, FILL))
 		{
-			Polygon_fill(polygon, this, color);
-			debug_draw_triangulation(this, polygon, color);
+			Polygon_fill(polygon, painter, color);
+			debug_draw_triangulation(painter, polygon, color);
 		}
 
 		if (self->get_color(&color, STROKE))
-			Polygon_stroke(polygon, this, color);
+			Polygon_stroke(polygon, painter, color);
+
+		if (backup)
+			self->position_matrix = matrix;
+	}
+
+	void
+	Painter::polygon (const Polygon& polygon, const coord x, coord y)
+	{
+		draw_polygon(this, polygon, x, y);
+	}
+
+	void
+	Painter::polygon (const Polygon& polygon, const Point& position)
+	{
+		draw_polygon(this, polygon, position.x, position.y);
+	}
+
+	void
+	Painter::polygon (
+		const Polygon& polygon, coord x, coord y, coord width, coord height)
+	{
+		draw_polygon(this, polygon, x, y, width, height, true);
+	}
+
+	void
+	Painter::polygon (const Polygon& polygon, const Bounds& bounds)
+	{
+		draw_polygon(
+			this, polygon, bounds.x, bounds.y, bounds.width, bounds.height, true);
 	}
 
 	void
