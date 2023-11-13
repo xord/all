@@ -223,6 +223,38 @@ RUCY_DEF2(create_line_strip, args, loop)
 RUCY_END
 
 static
+RUCY_DEF7(create_rect,
+	args, round, lefttop, righttop, leftbottom, rightbottom, nsegment)
+{
+	coord x, y, w, h, lt, rt, lb, rb;
+	uint nseg;
+	get_rect_args(
+		&x, &y, &w, &h, &lt, &rt, &lb, &rb, &nseg,
+		args.size(), args.as_array(),
+		round, lefttop, righttop, leftbottom, rightbottom, nsegment);
+
+	return value(Rays::create_rect(x, y, w, h, lt, rt, lb, rb, nseg));
+}
+RUCY_END
+
+static
+RUCY_DEF7(create_ellipse,
+	args, center, radius, hole, angle_from, angle_to, nsegment)
+{
+	coord x, y, w, h;
+	Rays::Point hole_size;
+	float from, to_;
+	uint nseg;
+	get_ellipse_args(
+		&x, &y, &w, &h, &hole_size, &from, &to_, &nseg,
+		args.size(), args.as_array(),
+		center, radius, hole, angle_from, angle_to, nsegment);
+
+	return value(Rays::create_ellipse(x, y, w, h, hole_size, from, to_, nseg));
+}
+RUCY_END
+
+static
 RUCY_DEF2(create_triangles, args, loop)
 {
 	std::vector<Rays::Point> points;
@@ -272,38 +304,6 @@ RUCY_DEF1(create_quad_strip, args)
 RUCY_END
 
 static
-RUCY_DEF7(create_rect,
-	args, round, lefttop, righttop, leftbottom, rightbottom, nsegment)
-{
-	coord x, y, w, h, lt, rt, lb, rb;
-	uint nseg;
-	get_rect_args(
-		&x, &y, &w, &h, &lt, &rt, &lb, &rb, &nseg,
-		args.size(), args.as_array(),
-		round, lefttop, righttop, leftbottom, rightbottom, nsegment);
-
-	return value(Rays::create_rect(x, y, w, h, lt, rt, lb, rb, nseg));
-}
-RUCY_END
-
-static
-RUCY_DEF7(create_ellipse,
-	args, center, radius, hole, angle_from, angle_to, nsegment)
-{
-	coord x, y, w, h;
-	Rays::Point hole_size;
-	float from, to_;
-	uint nseg;
-	get_ellipse_args(
-		&x, &y, &w, &h, &hole_size, &from, &to_, &nseg,
-		args.size(), args.as_array(),
-		center, radius, hole, angle_from, angle_to, nsegment);
-
-	return value(Rays::create_ellipse(x, y, w, h, hole_size, from, to_, nseg));
-}
-RUCY_END
-
-static
 RUCY_DEF2(create_curve, args, loop)
 {
 	std::vector<Rays::Point> points;
@@ -348,13 +348,13 @@ Init_rays_polygon ()
 	cPolygon.define_singleton_method("points!",         create_points);
 	cPolygon.define_singleton_method("lines!",          create_lines);
 	cPolygon.define_singleton_method("line_strip!",     create_line_strip);
+	cPolygon.define_singleton_method("rect!",           create_rect);
+	cPolygon.define_singleton_method("ellipse!",        create_ellipse);
 	cPolygon.define_singleton_method("triangles!",      create_triangles);
 	cPolygon.define_singleton_method("triangle_strip!", create_triangle_strip);
 	cPolygon.define_singleton_method("triangle_fan!",   create_triangle_fan);
 	cPolygon.define_singleton_method("quads!",          create_quads);
 	cPolygon.define_singleton_method("quad_strip!",     create_quad_strip);
-	cPolygon.define_singleton_method("rect!",           create_rect);
-	cPolygon.define_singleton_method("ellipse!",        create_ellipse);
 	cPolygon.define_singleton_method("curve!",          create_curve);
 	cPolygon.define_singleton_method("bezier!",         create_bezier);
 }

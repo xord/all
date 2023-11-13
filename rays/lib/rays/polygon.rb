@@ -36,6 +36,20 @@ module Rays
       line_strip! args, loop
     end
 
+    def self.rect(
+      *args, round: nil, lt: nil, rt: nil, lb: nil, rb: nil,
+      nsegment: nil)
+
+      rect! args, round, lt, rt, lb, rb, nsegment
+    end
+
+    def self.ellipse(
+      *args, center: nil, radius: nil, hole: nil, from: nil, to: nil,
+      nsegment: nil)
+
+      ellipse! args, center, radius, hole, from, to, nsegment
+    end
+
     def self.triangles(*args, loop: true)
       triangles! args, loop
     end
@@ -54,20 +68,6 @@ module Rays
 
     def self.quad_strip(*args)
       quad_strip! args
-    end
-
-    def self.rect(
-      *args, round: nil, lt: nil, rt: nil, lb: nil, rb: nil,
-      nsegment: nil)
-
-      rect! args, round, lt, rt, lb, rb, nsegment
-    end
-
-    def self.ellipse(
-      *args, center: nil, radius: nil, hole: nil, from: nil, to: nil,
-      nsegment: nil)
-
-      ellipse! args, center, radius, hole, from, to, nsegment
     end
 
     def self.curve(*args, loop: false)
