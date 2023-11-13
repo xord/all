@@ -213,7 +213,7 @@ RUCY_DEF1(create_lines, args)
 RUCY_END
 
 static
-RUCY_DEF2(create_line, args, loop)
+RUCY_DEF2(create_line_strip, args, loop)
 {
 	std::vector<Rays::Point> points;
 	get_line_args(&points, args.size(), args.as_array());
@@ -347,7 +347,7 @@ Init_rays_polygon ()
 	cPolygon.define_method("^", op_xor);
 	cPolygon.define_singleton_method("points!",         create_points);
 	cPolygon.define_singleton_method("lines!",          create_lines);
-	cPolygon.define_singleton_method("line!",           create_line);
+	cPolygon.define_singleton_method("line_strip!",     create_line_strip);
 	cPolygon.define_singleton_method("triangles!",      create_triangles);
 	cPolygon.define_singleton_method("triangle_strip!", create_triangle_strip);
 	cPolygon.define_singleton_method("triangle_fan!",   create_triangle_fan);

@@ -32,8 +32,8 @@ module Rays
       lines! args
     end
 
-    def self.line(*args, loop: false)
-      line! args, loop
+    def self.line_strip(*args, loop: false)
+      line_strip! args, loop
     end
 
     def self.triangles(*args, loop: true)
