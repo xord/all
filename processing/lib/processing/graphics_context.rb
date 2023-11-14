@@ -45,15 +45,16 @@ module Processing
     #
     DEGREES = :degrees
 
-    # Mode for rectMode(), ellipseMode() and imageMode().
+    # Mode for rectMode(), ellipseMode(), imageMode(), and shapeMode().
     #
     CORNER  = :corner
 
-    # Mode for rectMode(), ellipseMode() and imageMode().
+    # Mode for rectMode(), ellipseMode(), imageMode(), and shapeMode().
     #
     CORNERS = :corners
 
-    # Mode for rectMode(), ellipseMode(), imageMode() and textAlign().
+    # Mode for rectMode(), ellipseMode(), imageMode(), shapeMode(),
+    # and textAlign().
     #
     CENTER  = :center
 
@@ -139,6 +140,24 @@ module Processing
 
     # Filter type for filter()
     BLUR      = :blur
+
+    # Shape mode for createShape()
+    LINE     = :line
+
+    # Shape mode for createShape()
+    RECT     = :rect
+
+    # Shape mode for createShape()
+    ELLIPSE  = :ellipse
+
+    # Shape mode for createShape()
+    ARC      = :arc
+
+    # Shape mode for createShape()
+    TRIANGLE = :triangle
+
+    # Shape mode for createShape()
+    QUAD     = :quad
 
     # Shape mode for beginShape()
     POINTS         = :points
@@ -236,6 +255,7 @@ module Processing
       @rectMode__    = nil
       @ellipseMode__ = nil
       @imageMode__   = nil
+      @shapeMode__   = nil
       @blendMode__   = nil
       @textAlignH__  = nil
       @textAlignV__  = nil
@@ -252,6 +272,7 @@ module Processing
       rectMode    CORNER
       ellipseMode CENTER
       imageMode   CORNER
+      shapeMode   CORNER
       blendMode   BLEND
       strokeCap   ROUND
       strokeJoin  MITER
@@ -530,6 +551,20 @@ module Processing
     #
     def imageMode(mode)
       @imageMode__ = mode
+    end
+
+    # Sets shape mode. Default is CORNER.
+    #
+    # CORNER  -> shape(shp, left, top, width, height)
+    # CORNERS -> shape(shp, left, top, right, bottom)
+    # CENTER  -> shape(shp, centerX, centerY, width, height)
+    #
+    # @param mode [CORNER, CORNERS, CENTER]
+    #
+    # @return [nil] nil
+    #
+    def shapeMode(mode)
+      @shapeMode__ = mode
     end
 
     # @private
@@ -1125,6 +1160,38 @@ module Processing
 
     alias drawImage image
 
+    # Draws a shape.
+    #
+    # The parameters a, b, c, and d are determined by shapeMode().
+    #
+    # @overload shape(img, a, b)
+    # @overload shape(img, a, b, c, d)
+    #
+    # @param shp [Shape] shape to draw
+    # @param a   [Numeric] horizontal position of the shape, by default
+    # @param b   [Numeric] vertical position of the shape, by default
+    # @param c   [Numeric] width of the shape, by default
+    # @param d   [Numeric] height of the shape, by default
+    #
+    # @return [nil] nil
+    #
+    def shape(shp, a = 0, b = 0, c = nil, d = nil)
+      assertDrawing__
+
+      shp.isVisible               or return nil
+      polygon = shp.getInternal__ or return nil
+
+      if c || d || @shapeMode__ != CORNER
+        x, y, w, h = toXYWH__ @shapeMode__, a, b, c || shp.width, d || shp.height
+        @painter__.polygon polygon, x, y, w, h
+      else
+        @painter__.polygon polygon, a, b
+      end
+      nil
+    end
+
+    alias drawShape shape
+
     # Begins drawing complex shapes.
     #
     # @param mode [POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, QUAD_STRIP, TESS]
@@ -1358,6 +1425,7 @@ module Processing
         @rectMode__,
         @ellipseMode__,
         @imageMode__,
+        @shapeMode__,
         @textAlignH__,
         @textAlignV__,
         @tint__,
@@ -1389,6 +1457,7 @@ module Processing
       @rectMode__,
       @ellipseMode__,
       @imageMode__,
+      @shapeMode__,
       @textAlignH__,
       @textAlignV__,
       @tint__ = @styleStack__.pop
@@ -1834,6 +1903,66 @@ module Processing
       colorspace = {RGB => Rays::RGB, RGBA => Rays::RGBA}[format]
       raise ArgumentError, "Unknown image format" unless colorspace
       Image.new Rays::Image.new(w, h, colorspace).paint {background 0, 0}
+    end
+
+    # Creates a new shape.
+    #
+    # @overload createShape()
+    # @overload createShape(LINE, x1, y1, x2, y2)
+    # @overload createShape(RECT, a, b, c, d)
+    # @overload createShape(ELLIPSE, a, b, c, d)
+    # @overload createShape(ARC, a, b, c, d, start, stop)
+    # @overload createShape(TRIANGLE, x1, y1, x2, y2, x3, y3)
+    # @overload createShape(QUAD, x1, y1, x2, y2, x3, y3, x4, y4)
+    # @overload createShape(GROUP)
+    #
+    # @param kind [LINE, RECT, ELLIPSE, ARC, TRIANGLE, QUAD, GROUP]
+    #
+    def createShape(kind = nil, *args)
+      case kind
+      when LINE     then createLineShape__(    *args)
+      when RECT     then createRectShape__(    *args)
+      when ELLIPSE  then createEllipseShape__( *args)
+      when ARC      then createArcShape__(     *args)
+      when TRIANGLE then createTriangleShape__(*args)
+      when QUAD     then createQuadShape__(    *args)
+      when nil      then Shape.new
+      else raise ArgumentError, "Unknown shape kind '#{kind}'"
+      end
+    end
+
+    # @private
+    def createLineShape__(x1, y1, x2, y2)
+      Shape.new Rays::Polygon.lines x1, y1, x2, y2
+    end
+
+    # @private
+    def createRectShape__(a, b, c, d)
+      x, y, w, h = toXYWH__ @rectMode__, a, b, c, d
+      Shape.new Rays::Polygon.rect x, y, w, h
+    end
+
+    # @private
+    def createEllipseShape__(a, b, c, d)
+      x, y, w, h = toXYWH__ @ellipseMode__, a, b, c, d
+      Shape.new Rays::Polygon.ellipse x, y, w, h
+    end
+
+    # @private
+    def createArcShape__(a, b, c, d, start, stop)
+      x, y, w, h = toXYWH__ @ellipseMode__, a, b, c, d
+      from, to   = toAngle__(-start), toAngle__(-stop)
+      Shape.new Rays::Polygon.ellipse x, y, w, h, from: from, to: to
+    end
+
+    # @private
+    def createTriangleShape__(x1, y1, x2, y2, x3, y3)
+      Shape.new Rays::Polygon.new x1, y1, x2, y2, x3, y3, loop: true
+    end
+
+    # @private
+    def createQuadShape__(x1, y1, x2, y2, x3, y3, x4, y4)
+      Shape.new Rays::Polygon.quads x1, y1, x2, y2, x3, y3, x4, y4
     end
 
     # Creates a new off-screen graphics context object.
