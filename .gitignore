@@ -10,7 +10,7 @@
 wget-log*
 
 */doc
-*/tmp
+**/tmp
 
 vendor/
 .doc
