@@ -72,6 +72,264 @@ RUCY_DEF0(color_space)
 }
 RUCY_END
 
+static inline Value
+to_rgb_value (uint8_t r, uint8_t g, uint8_t b)
+{
+	return value(
+		((uint) r) << 16 |
+		((uint) g) << 8  |
+		((uint) b));
+}
+
+static inline Value
+to_rgba_value (uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+	return value(
+		((uint) a) << 24 |
+		((uint) r) << 16 |
+		((uint) g) << 8  |
+		((uint) b));
+}
+
+static void
+get_pixels (auto* pixels, const Rays::Bitmap& bmp)
+{
+	int w = bmp.width(), h = bmp.height();
+
+	const auto& cs = bmp.color_space();
+	pixels->clear();
+	pixels->reserve(w * h * (cs.is_float() ? cs.Bpp() / cs.Bpc() : 1));
+
+	switch (cs.type())
+	{
+		case Rays::GRAY_8:
+		case Rays::ALPHA_8:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, ++p)
+					pixels->push_back(value(*p));
+			}
+			break;
+
+		case Rays::GRAY_16:
+		case Rays::ALPHA_16:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint16_t>(0, y);
+				for (int x = 0; x < w; ++x, ++p)
+					pixels->push_back(value(*p));
+			}
+			break;
+
+		case Rays::GRAY_32:
+		case Rays::ALPHA_32:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint32_t>(0, y);
+				for (int x = 0; x < w; ++x, ++p)
+					pixels->push_back(value(*p));
+			}
+			break;
+
+		case Rays::GRAY_float:
+		case Rays::ALPHA_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<float>(0, y);
+				for (int x = 0; x < w; ++x, ++p)
+					pixels->push_back(value(*p));
+			}
+			break;
+
+		case Rays::RGB_888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 3)
+					pixels->push_back(to_rgb_value(p[0], p[1], p[2]));
+			}
+			break;
+
+		case Rays::RGBA_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels->push_back(to_rgba_value(p[0], p[1], p[2], p[3]));
+			}
+			break;
+
+		case Rays::RGBX_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels->push_back(to_rgb_value(p[0], p[1], p[2]));
+			}
+			break;
+
+		case Rays::ARGB_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels->push_back(to_rgba_value(p[1], p[2], p[3], p[0]));
+			}
+			break;
+
+		case Rays::XRGB_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels->push_back(to_rgb_value(p[1], p[2], p[3]));
+			}
+			break;
+
+		case Rays::BGR_888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 3)
+					pixels->push_back(to_rgb_value(p[2], p[1], p[0]));
+			}
+			break;
+
+		case Rays::BGRA_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels->push_back(to_rgba_value(p[2], p[1], p[0], p[3]));
+			}
+			break;
+
+		case Rays::BGRX_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels->push_back(to_rgb_value(p[2], p[1], p[0]));
+			}
+			break;
+
+		case Rays::ABGR_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels->push_back(to_rgba_value(p[3], p[2], p[1], p[0]));
+			}
+			break;
+
+		case Rays::XBGR_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels->push_back(to_rgb_value(p[3], p[2], p[1]));
+			}
+			break;
+
+		case Rays::RGB_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 3)
+				{
+					pixels->push_back(value(p[0]));
+					pixels->push_back(value(p[1]));
+					pixels->push_back(value(p[2]));
+				}
+			}
+			break;
+
+		case Rays::RGBA_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+				{
+					pixels->push_back(value(p[0]));
+					pixels->push_back(value(p[1]));
+					pixels->push_back(value(p[2]));
+					pixels->push_back(value(p[3]));
+				}
+			}
+			break;
+
+		case Rays::ARGB_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+				{
+					pixels->push_back(value(p[1]));
+					pixels->push_back(value(p[2]));
+					pixels->push_back(value(p[3]));
+					pixels->push_back(value(p[0]));
+				}
+			}
+			break;
+
+		case Rays::BGR_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 3)
+				{
+					pixels->push_back(value(p[2]));
+					pixels->push_back(value(p[1]));
+					pixels->push_back(value(p[0]));
+				}
+			}
+			break;
+
+		case Rays::BGRA_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+				{
+					pixels->push_back(value(p[2]));
+					pixels->push_back(value(p[1]));
+					pixels->push_back(value(p[0]));
+					pixels->push_back(value(p[3]));
+				}
+			}
+			break;
+
+		case Rays::ABGR_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+				{
+					pixels->push_back(value(p[3]));
+					pixels->push_back(value(p[2]));
+					pixels->push_back(value(p[1]));
+					pixels->push_back(value(p[0]));
+				}
+			}
+			break;
+
+		default:
+			argument_error(__FILE__, __LINE__);
+	}
+}
+
+static
+RUCY_DEF0(pixels)
+{
+	CHECK;
+
+	std::vector<VALUE> pixels;
+	get_pixels(&pixels, *THIS);
+	return value(pixels.size(), (const Value*) &pixels[0]);
+}
+RUCY_END
+
 static
 RUCY_DEF3(set_at, x, y, color)
 {
@@ -113,6 +371,7 @@ Init_rays_bitmap ()
 	cBitmap.define_method("width",  width);
 	cBitmap.define_method("height", height);
 	cBitmap.define_method("color_space", color_space);
+	cBitmap.define_method("pixels", pixels);
 	cBitmap.define_method("[]=", set_at);
 	cBitmap.define_method("[]",  get_at);
 }

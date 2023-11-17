@@ -70,8 +70,8 @@ namespace Rays
 		static const int BPPS[] =
 		{
 			0,                     // UNKNOWN
-			8,  16, 24,  32,  32,  // GRAY
-			8,  16, 24,  32,  32,  // ALPHA
+			8,  16,  24,  32,  32, // GRAY
+			8,  16,  24,  32,  32, // ALPHA
 			24, 32,  32,  32,  32, // RGB(A)
 			24, 32,  32,  32,  32, // BGR(A)
 			96, 128, 128,          // RGB(A) float
