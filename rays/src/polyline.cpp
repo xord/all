@@ -2,6 +2,8 @@
 
 
 #include <assert.h>
+#include <memory>
+#include "rays/color.h"
 #include "rays/debug.h"
 
 
@@ -15,28 +17,100 @@ namespace Rays
 	struct Polyline::Data
 	{
 
+		typedef std::vector<Color>  ColorList;
+
+		typedef std::vector<Coord3> TexCoordList;
+
 		PointList points;
+
+		std::unique_ptr<ColorList>    pcolors;
+
+		std::unique_ptr<TexCoordList> ptexcoords;
 
 		bool loop = false, fill = false;
 
-		template <typename I, typename FUN>
-		void reset (I begin, I end, bool loop_, bool fill_, FUN to_point_fun)
+		void reset (
+			const auto* points_, const Color* colors_, const Coord3* texcoords_,
+			size_t size_, bool loop, bool fill, bool hole,
+			auto to_point_fun)
 		{
-			if (begin > end)
-				argument_error(__FILE__, __LINE__);
+			ColorList* colors       = colors_    ? &this->colors()    : NULL;
+			TexCoordList* texcoords = texcoords_ ? &this->texcoords() : NULL;
+			int size                = (int) size_;
+
+			this->loop = loop;
+			this->fill = fill;
 
 			points.clear();
-			loop = loop_;
-			fill = fill_;
-
-			size_t size = end - begin;
-			if (size <= 0) return;
-
 			points.reserve(size);
-			for (auto it = begin; it != end; ++it)
-				points.emplace_back(to_point_fun(*it));
+			if (hole)
+			{
+				for (int i = size - 1; i >= 0; --i)
+					points.emplace_back(to_point_fun(points_[i]));
+			}
+			else
+			{
+				for (int i = 0; i < size; ++i)
+					points.emplace_back(to_point_fun(points_[i]));
+			}
+
+			if (colors)
+			{
+				colors->clear();
+				colors->reserve(size);
+				if (hole)
+				{
+					for (int i = size - 1; i >= 0; --i)
+						colors->emplace_back(colors_[i]);
+				}
+				else
+				{
+					for (int i = 0; i < size; ++i)
+						colors->emplace_back(colors_[i]);
+				}
+			}
+
+			if (texcoords)
+			{
+				texcoords->clear();
+				texcoords->reserve(size);
+				if (hole)
+				{
+					for (int i = size - 1; i >= 0; --i)
+						texcoords->emplace_back(texcoords_[i]);
+				}
+				else
+				{
+					for (int i = 0; i < size; ++i)
+						texcoords->emplace_back(texcoords_[i]);
+				}
+			}
 		}
 
+		ColorList& colors ()
+		{
+			if (!pcolors) pcolors.reset(new ColorList());
+			return *pcolors;
+		}
+
+		TexCoordList& texcoords ()
+		{
+			if (!ptexcoords) ptexcoords.reset(new TexCoordList());
+			return *ptexcoords;
+		}
+
+		private:
+#if 0
+			void reset_values (size_t size_, bool hole, auto fun)
+			{
+				int size = (int) size_;
+
+				if (hole)
+					for (int i = size - 1; i >= 0;   --i) fun((size_t) i);
+				else
+					for (int i = 0;        i < size; ++i) fun((size_t) i);
+			}
+#endif
 	};// Polyline::Data
 
 
@@ -47,11 +121,9 @@ namespace Rays
 		Path cleaned;
 		ClipperLib::CleanPolygon(path, cleaned);
 
-		auto fun = [](const IntPoint& point) {return from_clipper(point);};
-		if (hole)
-			polyline->self->reset(cleaned.rbegin(), cleaned.rend(), loop, loop, fun);
-		else
-			polyline->self->reset(cleaned. begin(), cleaned. end(), loop, loop, fun);
+		polyline->self->reset(
+			&cleaned[0], NULL, NULL, cleaned.size(), loop, loop, hole,
+			[](const IntPoint& point) {return from_clipper(point);});
 	}
 
 	template <typename I>
@@ -80,17 +152,21 @@ namespace Rays
 	{
 	}
 
-	Polyline::Polyline (const Point* points, size_t size, bool loop)
+	Polyline::Polyline (
+		const Point* points, size_t size, bool loop,
+		const Color* colors, const Coord3* texcoords)
 	{
 		self->reset(
-			points, points + size, loop, loop,
+			points, colors, texcoords, size, loop, loop, false,
 			[](const Point& p) {return p;});
 	}
 
-	Polyline::Polyline (const Point* points, size_t size, bool loop, bool fill)
+	Polyline::Polyline (
+		const Point* points, size_t size, bool loop, bool fill,
+		const Color* colors, const Coord3* texcoords)
 	{
 		self->reset(
-			points, points + size, loop, fill,
+			points, colors, texcoords, size, loop, fill, false,
 			[](const Point& p) {return p;});
 	}
 
@@ -128,6 +204,27 @@ namespace Rays
 	Polyline::fill () const
 	{
 		return self->fill;
+	}
+
+	const Point*
+	Polyline::points () const
+	{
+		const auto& v = self->points;
+		return !v.empty() ? &v[0] : NULL;
+	}
+
+	const Color*
+	Polyline::colors () const
+	{
+		const auto& pv = self->pcolors;
+		return pv && !pv->empty() ? &(*pv)[0] : NULL;
+	}
+
+	const Coord3*
+	Polyline::texcoords () const
+	{
+		const auto& pv = self->ptexcoords;
+		return pv && !pv->empty() ? &(*pv)[0] : NULL;
 	}
 
 	size_t
