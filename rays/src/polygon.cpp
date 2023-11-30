@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <utility>
 #include <poly2tri.h>
+#include <earcut.hpp>
 #include <Splines.h>
 #include <xot/util.h>
 #include "rays/color.h"
@@ -15,6 +16,35 @@
 
 
 namespace clip = ClipperLib;
+
+
+namespace mapbox
+{
+
+	namespace util
+	{
+
+		template<>
+		struct nth<0, Rays::Point>
+		{
+			inline static auto get (const Rays::Point& p)
+			{
+				return p.x;
+			}
+		};
+
+		template<>
+		struct nth<1, Rays::Point>
+		{
+			inline static auto get (const Rays::Point& p)
+			{
+				return p.y;
+			}
+		};
+
+	}// util
+
+}// mapbox
 
 
 namespace Rays
@@ -34,12 +64,147 @@ namespace Rays
 	}
 
 
+	class Triangulator
+	{
+
+		public:
+
+			Triangulator (size_t npoints)
+			{
+				points.reserve(npoints);
+			}
+
+			size_t begin (bool hole = false)
+			{
+				segments.emplace_back(Segment(points.size(), 0, hole));
+				return segments.back().begin;
+			}
+
+			void end (size_t n)
+			{
+				if (segments.empty())
+					invalid_state_error(__FILE__, __LINE__);
+
+				auto& seg = segments.back();
+				if (n != seg.begin)
+					argument_error(__FILE__, __LINE__);
+
+				seg.end = points.size();
+
+				if (seg.empty()) segments.pop_back();
+			}
+
+			void append (const Point& point)
+			{
+				points.emplace_back(point);
+			}
+
+			void triangulate ()
+			{
+				if (segments.empty()) return;
+
+				PolylineList polylines;
+				size_t index_offset = 0;
+				for (const auto& seg : segments)
+				{
+					Polyline polyline(&points[0] + seg.begin, seg.end - seg.begin);
+					if (!seg.hole)
+					{
+						triangulate(polylines, index_offset);
+						polylines.clear();
+						index_offset = seg.begin;
+					}
+					polylines.emplace_back(polyline);
+				}
+				triangulate(polylines, index_offset);
+
+				segments.clear();
+				segments.shrink_to_fit();
+			}
+
+			bool get_triangles (Polygon::TrianglePointList* triangles) const
+			{
+				if (indices.empty()) return false;
+
+				triangles->reserve(triangles->size() + indices.size());
+				for (const auto& index : indices)
+					triangles->emplace_back(points[index]);
+				return true;
+			}
+
+		private:
+
+			struct Segment
+			{
+
+				size_t begin, end;
+
+				bool hole;
+
+				Segment (size_t begin, size_t end, bool hole = false)
+				:	begin(begin), end(end), hole(hole)
+				{
+				}
+
+				bool empty () const
+				{
+					return begin == end;
+				}
+
+			};// Segment
+
+			class Polyline
+			{
+
+				const Point* points;
+
+				size_t size_;
+
+				public:
+
+					typedef Point value_type;
+
+					Polyline (const Point* points, size_t size)
+					:	points(points), size_(size)
+					{
+					}
+
+					size_t size () const {return size_;}
+
+					bool empty () const {return size_ == 0;}
+
+					const Point& operator [] (size_t i) const {return points[i];}
+
+			};// Polyline
+
+			typedef std::vector<Polyline> PolylineList;
+
+			std::vector<Segment> segments;
+
+			std::vector<Point> points;
+
+			std::vector<uint32_t> indices;
+
+			void triangulate (const PolylineList& polylines, size_t index_offset)
+			{
+				if (polylines.empty()) return;
+
+				auto result = mapbox::earcut<uint32_t>(polylines);
+				for (const auto& index : result)
+					indices.emplace_back(index_offset + index);
+			}
+
+	};// Triangulator
+
+
 	struct Polygon::Data
 	{
 
 		LineList lines;
 
 		mutable std::unique_ptr<Bounds> pbounds;
+
+		mutable std::unique_ptr<Triangulator> ptriangulator;
 
 		virtual ~Data ()
 		{
@@ -83,6 +248,29 @@ namespace Rays
 		}
 
 		bool triangulate (TrianglePointList* triangles) const
+		{
+			assert(triangles);
+
+			if (!ptriangulator)
+			{
+				ptriangulator.reset(new Triangulator(count_points_for_triangulation()));
+				auto& t = *ptriangulator;
+
+				for (const auto& line : lines)
+				{
+					size_t n = t.begin(line.hole());
+					for (const auto& point : line)
+						t.append(point);
+					t.end(n);
+				}
+				t.triangulate();
+			}
+
+			triangles->clear();
+			return ptriangulator->get_triangles(triangles);
+		}
+
+		bool triangulate_old (TrianglePointList* triangles) const
 		{
 			assert(triangles);
 

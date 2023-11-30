@@ -30,6 +30,11 @@ use_external_library 'https://github.com/greenm01/poly2tri',
   incdirs: 'poly2tri',
   srcdirs: 'poly2tri'
 
+use_external_library 'https://github.com/mapbox/earcut.hpp',
+  tag:     'v2.2.4',
+  incdirs: 'include/mapbox',
+  srcdirs: 'NOSRC'
+
 use_external_library 'https://github.com/andrewwillmott/splines-lib',
   commit:   '11e7240d57b0d22871aec3308186a5fcf915ba77',
   excludes: 'Test\.cpp'
