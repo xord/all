@@ -25,11 +25,6 @@ use_external_library 'https://github.com/skyrpex/clipper',
   srcdirs:  'cpp',
   excludes: 'clipper/cpp/cpp_'
 
-use_external_library 'https://github.com/greenm01/poly2tri',
-  commit:  '88de49021b6d9bef6faa1bc94ceb3fbd85c3c204',
-  incdirs: 'poly2tri',
-  srcdirs: 'poly2tri'
-
 use_external_library 'https://github.com/mapbox/earcut.hpp',
   tag:     'v2.2.4',
   incdirs: 'include/mapbox',

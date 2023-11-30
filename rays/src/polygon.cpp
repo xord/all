@@ -4,7 +4,6 @@
 #include <math.h>
 #include <assert.h>
 #include <utility>
-#include <poly2tri.h>
 #include <earcut.hpp>
 #include <Splines.h>
 #include <xot/util.h>
@@ -49,19 +48,6 @@ namespace mapbox
 
 namespace Rays
 {
-
-
-	static inline p2t::Point
-	to_poly2tri (const Point& point)
-	{
-		return p2t::Point(point.x, point.y);
-	}
-
-	static inline Point
-	from_poly2tri (const p2t::Point& point)
-	{
-		return Point(point.x, point.y);
-	}
 
 
 	class Triangulator
@@ -270,48 +256,6 @@ namespace Rays
 			return ptriangulator->get_triangles(triangles);
 		}
 
-		bool triangulate_old (TrianglePointList* triangles) const
-		{
-			assert(triangles);
-
-			triangles->clear();
-
-			size_t npoint = count_points_for_triangulation();
-			if (npoint <= 0)
-				return false;
-
-			std::unique_ptr<p2t::CDT> cdt;
-			std::vector<p2t::Point> points;
-			std::vector<p2t::Point*> pointers;
-
-			points.reserve(npoint);
-			for (const auto& line : lines)
-			{
-				if (!can_triangulate(line))
-					continue;
-
-				pointers.clear();
-				pointers.reserve(line.size());
-				for (const auto& point : line)
-				{
-					points.emplace_back(to_poly2tri(point));
-					pointers.emplace_back(&points.back());
-				}
-
-				if (!line.hole())
-				{
-					if (cdt) triangulate(triangles, cdt.get());
-					cdt.reset(new p2t::CDT(pointers));
-				}
-				else if (cdt)
-					cdt->AddHole(pointers);
-			}
-
-			if (cdt) triangulate(triangles, cdt.get());
-
-			return true;
-		}
-
 		virtual void fill (Painter* painter, const Color& color) const = 0;
 
 		virtual void stroke (
@@ -345,19 +289,6 @@ namespace Rays
 			bool can_triangulate (const Line& line) const
 			{
 				return (line.fill() || line.hole()) && line.size() >= 3;
-			}
-
-			void triangulate (TrianglePointList* triangles, p2t::CDT* cdt) const
-			{
-				assert(triangles && cdt);
-
-				cdt->Triangulate();
-
-				for (auto* triangle : cdt->GetTriangles())
-				{
-					for (int i = 0; i < 3; ++i)
-						triangles->emplace_back(from_poly2tri(*triangle->GetPoint(i)));
-				}
 			}
 
 			void stroke_with_width (
