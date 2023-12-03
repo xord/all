@@ -118,7 +118,7 @@ end
 namespace :subtree do
   github = 'https://github.com/xord'
   branch = ENV['branch'] || 'master'
-  opts   = actions? ? '-q' : ''
+  opts   = ci? ? '-q' : ''
 
   task :import do
     name = ENV['name'] or raise

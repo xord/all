@@ -224,7 +224,11 @@ module Xot
       env :DEBUG, false
     end
 
-    def actions?()
+    def ci?()
+      github_actions?
+    end
+
+    def github_actions?()
       env :GITHUB_ACTIONS, false
     end
 
