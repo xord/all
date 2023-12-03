@@ -24,9 +24,9 @@ get_line_args (std::vector<Rays::Point>* points, int argc, const Value* argv)
 		points->reserve(argc / 2);
 		for (int i = 0; i < argc; i += 2)
 		{
-			coord x = to<coord>(argv[i + 0]);
-			coord y = to<coord>(argv[i + 1]);
-			points->emplace_back(Rays::Point(x, y));
+			points->emplace_back(
+				to<coord>(argv[i + 0]),
+				to<coord>(argv[i + 1]));
 		}
 	}
 	else

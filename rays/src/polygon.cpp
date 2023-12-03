@@ -62,7 +62,7 @@ namespace Rays
 
 			size_t begin (bool hole = false)
 			{
-				segments.emplace_back(Segment(points.size(), 0, hole));
+				segments.emplace_back(points.size(), 0, hole);
 				return segments.back().begin;
 			}
 
@@ -220,7 +220,7 @@ namespace Rays
 			if (polyline.empty())
 				return;
 
-			lines.emplace_back(Line(polyline, hole));
+			lines.emplace_back(polyline, hole);
 			pbounds.reset();
 		}
 
@@ -904,7 +904,7 @@ namespace Rays
 
 				if (!has_hole)
 				{
-					points.emplace_back(Point(x + width / 2, y + height / 2));
+					points.emplace_back(x + width / 2, y + height / 2);
 					mode = GL_TRIANGLE_FAN;
 				}
 
