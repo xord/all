@@ -600,9 +600,11 @@ namespace Rays
 	Painter_draw_polygon (
 		Painter* painter, GLenum mode, const Color& color,
 		const Coord3* points,  size_t npoints,
-		const uint*   indices, size_t nindices)
+		const uint*   indices, size_t nindices,
+		const Coord3* texcoords)
 	{
-		painter->self->draw_polygon(mode, color, points, npoints, indices, nindices);
+		painter->self->draw_polygon(
+			mode, color, points, npoints, indices, nindices, texcoords);
 	}
 
 

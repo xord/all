@@ -50,72 +50,80 @@ namespace Rays
 {
 
 
-	class Triangulator
+	class Triangles
 	{
 
 		public:
 
-			Triangulator (size_t npoints)
+			Triangles (size_t npoints)
 			{
 				points.reserve(npoints);
 			}
 
-			size_t begin (bool hole = false)
+			void append (const Polygon::Line& line)
 			{
-				segments.emplace_back(points.size(), 0, hole);
-				return segments.back().begin;
-			}
+				if (line.empty()) return;
 
-			void end (size_t n)
-			{
-				if (segments.empty())
-					invalid_state_error(__FILE__, __LINE__);
-
-				auto& seg = segments.back();
-				if (n != seg.begin)
+				const Point* points_     = line.points();
+				const Color* colors_     = line.colors();
+				const Coord3* texcoords_ = line.texcoords();
+				if (!points_)
 					argument_error(__FILE__, __LINE__);
 
-				seg.end = points.size();
-
-				if (seg.empty()) segments.pop_back();
-			}
-
-			void append (const Point& point)
-			{
-				points.emplace_back(point);
-			}
-
-			void triangulate ()
-			{
-				if (segments.empty()) return;
-
-				PolylineList polylines;
-				size_t index_offset = 0;
-				for (const auto& seg : segments)
+				if (
+					!points.empty() &&
+					(!colors_ != !pcolors || !texcoords_ != !ptexcoords))
 				{
-					Polyline polyline(&points[0] + seg.begin, seg.end - seg.begin);
-					if (!seg.hole)
-					{
-						triangulate(polylines, index_offset);
-						polylines.clear();
-						index_offset = seg.begin;
-					}
-					polylines.emplace_back(polyline);
+					argument_error(__FILE__, __LINE__);
 				}
-				triangulate(polylines, index_offset);
 
-				segments.clear();
-				segments.shrink_to_fit();
+				segments.emplace_back(points.size(), 0, line.hole());
+				points.insert(points.end(), points_, points_ + line.size());
+				segments.back().end = points.size();
+
+				if (colors_)
+				{
+					if (!pcolors)
+					{
+						pcolors.reset(new decltype(pcolors)::element_type());
+						pcolors->reserve(points.capacity());
+					}
+					pcolors->insert(pcolors->end(), colors_, colors_ + line.size());
+				}
+
+				if (texcoords_)
+				{
+					if (!ptexcoords)
+					{
+						ptexcoords.reset(new decltype(ptexcoords)::element_type());
+						ptexcoords->reserve(points.capacity());
+					}
+					ptexcoords->insert(
+						ptexcoords->end(), texcoords_, texcoords_ + line.size());
+				}
 			}
 
-			bool get_triangles (Polygon::TrianglePointList* triangles) const
+			bool get (Polygon::TrianglePointList* triangles) const
 			{
+				triangulate();
 				if (indices.empty()) return false;
 
 				triangles->reserve(triangles->size() + indices.size());
 				for (const auto& index : indices)
 					triangles->emplace_back(points[index]);
 				return true;
+			}
+
+			void draw (Painter* painter, const Color& color) const
+			{
+				triangulate();
+				if (indices.empty()) return;
+
+				Painter_draw_polygon(
+					painter, GL_TRIANGLES, color,
+					&points[0],  points.size(),
+					&indices[0], indices.size(),
+					ptexcoords ? &(*ptexcoords)[0] : NULL);
 			}
 
 		private:
@@ -165,13 +173,40 @@ namespace Rays
 
 			typedef std::vector<Polyline> PolylineList;
 
-			std::vector<Segment> segments;
-
 			std::vector<Point> points;
 
-			std::vector<uint32_t> indices;
+			std::unique_ptr<std::vector<Color>> pcolors;
 
-			void triangulate (const PolylineList& polylines, size_t index_offset)
+			std::unique_ptr<std::vector<Coord3>> ptexcoords;
+
+			mutable std::vector<Segment> segments;
+
+			mutable std::vector<uint32_t> indices;
+
+			void triangulate () const
+			{
+				if (segments.empty()) return;
+
+				PolylineList polylines;
+				size_t index_offset = 0;
+				for (const auto& seg : segments)
+				{
+					Polyline polyline(&points[0] + seg.begin, seg.end - seg.begin);
+					if (!seg.hole)
+					{
+						triangulate(polylines, index_offset);
+						polylines.clear();
+						index_offset = seg.begin;
+					}
+					polylines.emplace_back(polyline);
+				}
+				triangulate(polylines, index_offset);
+
+				segments.clear();
+				segments.shrink_to_fit();
+			}
+
+			void triangulate (const PolylineList& polylines, size_t index_offset) const
 			{
 				if (polylines.empty()) return;
 
@@ -180,7 +215,7 @@ namespace Rays
 					indices.emplace_back(index_offset + index);
 			}
 
-	};// Triangulator
+	};// Triangles
 
 
 	struct Polygon::Data
@@ -190,7 +225,7 @@ namespace Rays
 
 		mutable std::unique_ptr<Bounds> pbounds;
 
-		mutable std::unique_ptr<Triangulator> ptriangulator;
+		mutable std::unique_ptr<Triangles> ptriangles;
 
 		virtual ~Data ()
 		{
@@ -235,28 +270,14 @@ namespace Rays
 
 		bool triangulate (TrianglePointList* triangles) const
 		{
-			assert(triangles);
-
-			if (!ptriangulator)
-			{
-				ptriangulator.reset(new Triangulator(count_points_for_triangulation()));
-				auto& t = *ptriangulator;
-
-				for (const auto& line : lines)
-				{
-					size_t n = t.begin(line.hole());
-					for (const auto& point : line)
-						t.append(point);
-					t.end(n);
-				}
-				t.triangulate();
-			}
-
 			triangles->clear();
-			return ptriangulator->get_triangles(triangles);
+			return this->triangles().get(triangles);
 		}
 
-		virtual void fill (Painter* painter, const Color& color) const = 0;
+		virtual void fill (Painter* painter, const Color& color) const
+		{
+			triangles().draw(painter, color);
+		}
 
 		virtual void stroke (
 			const Polygon& polygon, Painter* painter, const Color& color) const
@@ -274,6 +295,17 @@ namespace Rays
 		}
 
 		private:
+
+			Triangles& triangles () const
+			{
+				if (!ptriangles)
+				{
+					ptriangles.reset(new Triangles(count_points_for_triangulation()));
+					for (const auto& line : lines)
+						ptriangles->append(line);
+				}
+				return *ptriangles;
+			}
 
 			size_t count_points_for_triangulation () const
 			{
@@ -605,26 +637,6 @@ namespace Rays
 	}
 
 
-	struct PolygonData : public Polygon::Data
-	{
-
-		mutable Polygon::TrianglePointList triangles;
-
-		void fill (Painter* painter, const Color& color) const
-		{
-			if (triangles.empty())
-			{
-				if (!triangulate(&triangles))
-					return;
-			}
-
-			Painter_draw_polygon(
-				painter, GL_TRIANGLES, color, &triangles[0], triangles.size());
-		}
-
-	};// PolygonData
-
-
 	struct RectData : public Polygon::Data
 	{
 
@@ -787,10 +799,10 @@ namespace Rays
 	};// RectData
 
 
-	struct EllipseData : public PolygonData
+	struct EllipseData : public Polygon::Data
 	{
 
-		typedef PolygonData Super;
+		typedef Polygon::Data Super;
 
 		GLenum mode = 0;
 
@@ -1342,12 +1354,10 @@ namespace Rays
 
 
 	Polygon::Polygon ()
-	:	self(new PolygonData())
 	{
 	}
 
 	Polygon::Polygon (const Point* points, size_t size, bool loop)
-	:	self(new PolygonData())
 	{
 		if (!points || size <= 0) return;
 
@@ -1355,7 +1365,6 @@ namespace Rays
 	}
 
 	Polygon::Polygon (DrawMode mode, const Point* points, size_t size, bool loop)
-	:	self(new PolygonData())
 	{
 		if (!points || size <= 0) return;
 
@@ -1378,13 +1387,11 @@ namespace Rays
 	}
 
 	Polygon::Polygon (const Polyline& polyline)
-	:	self(new PolygonData())
 	{
 		self->append(polyline);
 	}
 
 	Polygon::Polygon (const Line* lines, size_t size)
-	:	self(new PolygonData())
 	{
 		if (!lines || size <= 0) return;
 
