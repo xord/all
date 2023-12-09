@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.1.42] - 2023-12-09
+
+- Trigger github actions on all pull_request
+
+
 ## [v0.1.41] - 2023-11-09
 
 - Use Gemfile to install gems for development instead of add_development_dependency in gemspec

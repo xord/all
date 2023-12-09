@@ -1,6 +1,13 @@
 # xot ChangeLog
 
 
+## [v0.1.41] - 2023-12-09
+
+- Add ci?()
+- Trigger github actions on all pull_request
+- Fix breaking depend.mf
+
+
 ## [v0.1.40] - 2023-11-09
 
 - Use Gemfile to install gems for development instead of add_development_dependency in gemspec

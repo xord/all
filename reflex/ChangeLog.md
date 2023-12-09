@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.55] - 2023-12-09
+
+- Trigger github actions on all pull_request
+
+
 ## [v0.1.54] - 2023-11-09
 
 - Use Gemfile to install gems for development instead of add_development_dependency in gemspec

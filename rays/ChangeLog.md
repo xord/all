@@ -1,6 +1,21 @@
 # rays ChangeLog
 
 
+## [v0.1.47] - 2023-12-09
+
+- Add Polygon's singleton methods: points(), lines(), triangles(), triangle_strip(), triangle_fan(), quads(), quad_strip()
+- Add create_polygon(DrawMode, ...)
+- Add Painter#stroke_outset
+- Add Bitmap#pixels
+- Use earcut.hpp for polygon triangulation and delete poly2tri
+- Painter#polygon() can take x, y, width, and height
+- Polygon#bounds() caches bounds
+- Polygon.line() -> Polygon.line_strip()
+- Rays::Polygon.new() can take DrawMode
+- Matrix(nullptr) avoids initialization
+- Trigger github actions on all pull_request
+
+
 ## [v0.1.46] - 2023-11-09
 
 - Use Gemfile to install gems for development instead of add_development_dependency in gemspec
