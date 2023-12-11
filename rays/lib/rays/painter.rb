@@ -120,7 +120,7 @@ module Rays
 
     universal_accessor :background, :fill, :stroke, :color,
       :stroke_width, :stroke_outset, :stroke_cap, :stroke_join, :miter_limit,
-      :nsegment, :blend_mode, :shader, :clip, :font
+      :nsegment, :blend_mode, :texture, :shader, :clip, :font
 
     private
 

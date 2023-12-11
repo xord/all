@@ -559,6 +559,38 @@ RUCY_DEF0(get_font)
 RUCY_END
 
 static
+RUCY_DEF1(set_texture, image)
+{
+	CHECK;
+
+	if (!image)
+		THIS->no_texture();
+	else
+		THIS->set_texture(to<Rays::Image&>(image));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_texture)
+{
+	CHECK;
+
+	const Rays::Image& image = THIS->texture();
+	return image ? value(image) : nil();
+}
+RUCY_END
+
+static
+RUCY_DEF0(no_texture)
+{
+	CHECK;
+	THIS->no_texture();
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEFN(set_shader)
 {
 	CHECK;
@@ -752,6 +784,9 @@ Init_rays_painter ()
 	cPainter.define_method("no_clip",   no_clip);
 	cPainter.define_method("font=", set_font);
 	cPainter.define_method("font",  get_font);
+	cPainter.define_method(   "texture=", set_texture);
+	cPainter.define_method(   "texture",  get_texture);
+	cPainter.define_method("no_texture",   no_texture);
 	cPainter.define_private_method("set_shader", set_shader);
 	cPainter.define_method(            "shader", get_shader);
 	cPainter.define_method(         "no_shader",  no_shader);

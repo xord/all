@@ -65,6 +65,8 @@ namespace Rays
 
 		Font font;
 
+		Image texture;
+
 		Shader shader;
 
 		void init ()
@@ -81,6 +83,7 @@ namespace Rays
 			blend_mode     = BLEND_NORMAL;
 			clip           .reset(-1);
 			font           = default_font();
+			texture        = Image();
 			shader         = Shader();
 		}
 
@@ -324,13 +327,25 @@ namespace Rays
 			if (!painting)
 				invalid_state_error(__FILE__, __LINE__, "'painting' should be true.");
 
-			const Shader& shader         = state.shader ? state.shader : default_shader;
-			const ShaderProgram* program = Shader_get_program(shader);
+			const Shader* pdefault_shader = &default_shader;
+			const Texture* tex            =
+				state.texture ? &Image_get_texture(state.texture) : NULL;
+
+			std::unique_ptr<TextureInfo> ptexinfo;
+			if (!texinfo && tex)
+			{
+				ptexinfo.reset(new TextureInfo(*tex, 0, 0, tex->width(), tex->height()));
+				texinfo         = ptexinfo.get();
+				pdefault_shader = &Shader_get_default_shader_for_texture();
+			}
+
+			const Shader* shader         = state.shader ? &state.shader : pdefault_shader;
+			const ShaderProgram* program = Shader_get_program(*shader);
 			if (!program || !*program) return;
 
 			ShaderProgram_activate(*program);
 
-			const auto& names = Shader_get_builtin_variable_names(shader);
+			const auto& names = Shader_get_builtin_variable_names(*shader);
 			apply_builtin_uniforms(*program, names, texinfo);
 			apply_attributes(*program, names, points, npoints, texcoords, color);
 			draw_indices(mode, indices, nindices, npoints);
@@ -1545,6 +1560,24 @@ namespace Rays
 	Painter::font () const
 	{
 		return self->state.font;
+	}
+
+	void
+	Painter::set_texture (const Image& image)
+	{
+		self->state.texture = image;
+	}
+
+	void
+	Painter::no_texture ()
+	{
+		self->state.texture = Image();
+	}
+
+	const Image&
+	Painter::texture () const
+	{
+		return self->state.texture;
 	}
 
 	void
