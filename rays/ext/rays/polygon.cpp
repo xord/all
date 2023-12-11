@@ -9,6 +9,50 @@
 #include "defs.h"
 
 
+struct CreateParams
+{
+
+	std::vector<Rays::Point> points;
+
+	std::vector<Rays::Color> colors;
+
+	std::vector<Rays::Point> texcoords;
+
+	CreateParams (
+		const Value& points_, const Value& colors_, const Value& texcoords_)
+	{
+		get_points(&points, points_.size(), points_.as_array());
+
+		if (colors_)
+			get_colors(&colors, colors_.size(), colors_.as_array());
+
+		if (texcoords_)
+			get_points(&texcoords, texcoords_.size(), texcoords_.as_array());
+	}
+
+	const Rays::Point* ppoints () const
+	{
+		return points.empty() ? NULL : &points[0];
+	}
+
+	const Rays::Color* pcolors () const
+	{
+		return colors.empty() ? NULL : &colors[0];
+	}
+
+	const Rays::Point* ptexcoords () const
+	{
+		return texcoords.empty() ? NULL : &texcoords[0];
+	}
+
+	size_t size () const
+	{
+		return points.size();
+	}
+
+};// CreateParams
+
+
 RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Polygon)
 
 #define THIS  to<Rays::Polygon*>(self)
@@ -24,7 +68,7 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF2(setup, args, loop)
+RUCY_DEF4(setup, args, loop, colors, texcoords)
 {
 	CHECK;
 
@@ -32,9 +76,10 @@ RUCY_DEF2(setup, args, loop)
 		*THIS = to<Rays::Polygon>(args.size(), args.as_array());
 	else
 	{
-		std::vector<Rays::Point> points;
-		get_line_args(&points, args.size(), args.as_array());
-		*THIS = Rays::Polygon(&points[0], points.size(), loop);
+		CreateParams params(args, colors, texcoords);
+		*THIS = Rays::Polygon(
+			params.ppoints(), params.size(), loop,
+			params.pcolors(), params.ptexcoords());
 	}
 }
 RUCY_END
@@ -195,30 +240,29 @@ RUCY_DEF1(op_xor, obj)
 RUCY_END
 
 static
-RUCY_DEF1(create_points, args)
+RUCY_DEF1(create_points, points)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-	return value(Rays::Polygon(Rays::DRAW_POINTS, &points[0], points.size()));
+	CreateParams params(points, nil(), nil());
+	return value(Rays::Polygon(
+		Rays::DRAW_POINTS, params.ppoints(), params.size()));
 }
 RUCY_END
 
 static
-RUCY_DEF1(create_lines, args)
+RUCY_DEF1(create_lines, points)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-	return value(Rays::Polygon(Rays::DRAW_LINES, &points[0], points.size()));
+	CreateParams params(points, nil(), nil());
+	return value(Rays::Polygon(
+		Rays::DRAW_LINES, params.ppoints(), params.size()));
 }
 RUCY_END
 
 static
-RUCY_DEF2(create_line_strip, args, loop)
+RUCY_DEF2(create_line_strip, points, loop)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-	return value(
-		Rays::Polygon(Rays::DRAW_LINE_STRIP, &points[0], points.size(), loop));
+	CreateParams params(points, nil(), nil());
+	return value(Rays::Polygon(
+		Rays::DRAW_LINE_STRIP, params.ppoints(), params.size(), loop));
 }
 RUCY_END
 
@@ -255,71 +299,68 @@ RUCY_DEF7(create_ellipse,
 RUCY_END
 
 static
-RUCY_DEF2(create_triangles, args, loop)
+RUCY_DEF4(create_triangles, points, loop, colors, texcoords)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-	return value(
-		Rays::Polygon(Rays::DRAW_TRIANGLES, &points[0], points.size(), loop));
+	CreateParams params(points, colors, texcoords);
+	return value(Rays::Polygon(
+		Rays::DRAW_TRIANGLES, params.ppoints(), params.size(), loop,
+		params.pcolors(), params.ptexcoords()));
 }
 RUCY_END
 
 static
-RUCY_DEF1(create_triangle_strip, args)
+RUCY_DEF3(create_triangle_strip, points, colors, texcoords)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-	return value(
-		Rays::Polygon(Rays::DRAW_TRIANGLE_STRIP, &points[0], points.size()));
+	CreateParams params(points, colors, texcoords);
+	return value(Rays::Polygon(
+		Rays::DRAW_TRIANGLE_STRIP, params.ppoints(), params.size(), true,
+		params.pcolors(), params.ptexcoords()));
 }
 RUCY_END
 
 static
-RUCY_DEF1(create_triangle_fan, args)
+RUCY_DEF3(create_triangle_fan, points, colors, texcoords)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-	return value(
-		Rays::Polygon(Rays::DRAW_TRIANGLE_FAN, &points[0], points.size()));
+	CreateParams params(points, colors, texcoords);
+	return value(Rays::Polygon(
+		Rays::DRAW_TRIANGLE_FAN, params.ppoints(), params.size(), true,
+		params.pcolors(), params.ptexcoords()));
 }
 RUCY_END
 
 static
-RUCY_DEF2(create_quads, args, loop)
+RUCY_DEF4(create_quads, points, loop, colors, texcoords)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-	return value(
-		Rays::Polygon(Rays::DRAW_QUADS, &points[0], points.size(), loop));
+	CreateParams params(points, colors, texcoords);
+	return value(Rays::Polygon(
+		Rays::DRAW_QUADS, params.ppoints(), params.size(), loop,
+		params.pcolors(), params.ptexcoords()));
 }
 RUCY_END
 
 static
-RUCY_DEF1(create_quad_strip, args)
+RUCY_DEF3(create_quad_strip, points, colors, texcoords)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-	return value(Rays::Polygon(Rays::DRAW_QUAD_STRIP, &points[0], points.size()));
+	CreateParams params(points, colors, texcoords);
+	return value(Rays::Polygon(
+		Rays::DRAW_QUAD_STRIP, params.ppoints(), params.size(), true,
+		params.pcolors(), params.ptexcoords()));
 }
 RUCY_END
 
 static
-RUCY_DEF2(create_curve, args, loop)
+RUCY_DEF2(create_curve, points, loop)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-
-	return value(Rays::create_curve(&points[0], points.size(), loop));
+	CreateParams params(points, nil(), nil());
+	return value(Rays::create_curve(params.ppoints(), params.size(), loop));
 }
 RUCY_END
 
 static
-RUCY_DEF2(create_bezier, args, loop)
+RUCY_DEF2(create_bezier, points, loop)
 {
-	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
-
-	return value(Rays::create_bezier(&points[0], points.size(), loop));
+	CreateParams params(points, nil(), nil());
+	return value(Rays::create_bezier(params.ppoints(), points.size(), loop));
 }
 RUCY_END
 
@@ -386,7 +427,7 @@ namespace Rucy
 			else if (argv->is_num() || argv->is_array())
 			{
 				std::vector<Rays::Point> points;
-				get_line_args(&points, argc, argv);
+				get_points(&points, argc, argv);
 				return Rays::Polygon(&points[0], points.size());
 			}
 		}

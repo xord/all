@@ -30,9 +30,8 @@ namespace Rays
 					Line ();
 
 					Line (
-						const Point* points, size_t size,
-						bool loop = true,
-						bool hole = false);
+						const Point* points, size_t size, bool loop = true, bool hole = false,
+						const Color* colors = NULL, const Coord3* texcoords = NULL);
 
 					Line (const Polyline& polyline, bool hole = false);
 
@@ -55,11 +54,13 @@ namespace Rays
 			Polygon ();
 
 			Polygon (
-				const Point* points, size_t size, bool loop = true);
+				const Point* points, size_t size, bool loop = true,
+				const Color* colors = NULL, const Coord3* texcoords = NULL);
 
 			Polygon (
 				DrawMode mode,
-				const Point* points, size_t size, bool loop = true);
+				const Point* points, size_t size, bool loop = true,
+				const Color* colors = NULL, const Coord3* texcoords = NULL);
 
 			Polygon (const Polyline& polyline);
 

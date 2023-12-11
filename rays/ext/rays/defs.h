@@ -7,6 +7,7 @@
 #include <vector>
 #include <rucy.h>
 #include "rays/defs.h"
+#include "rays/color.h"
 #include "rays/point.h"
 #include "rays/ruby/defs.h"
 
@@ -16,9 +17,9 @@ using namespace Rucy;
 using Rays::coord;
 
 
-void get_line_args (
-	std::vector<Rays::Point>* points,
-	int argc, const Value* argv);
+void get_points (std::vector<Rays::Point>* points, int argc, const Value* argv);
+
+void get_colors (std::vector<Rays::Color>* colors, int argc, const Value* argv);
 
 void get_rect_args (
 	coord* x,  coord* y,  coord* w,  coord* h,

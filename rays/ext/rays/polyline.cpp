@@ -29,7 +29,7 @@ RUCY_DEF2(setup, points, loop)
 	CHECK;
 
 	std::vector<Rays::Point> array;
-	get_line_args(&array, points.size(), points.as_array());
+	get_points(&array, points.size(), points.as_array());
 	*THIS = Rays::Polyline(&array[0], array.size(), loop);
 }
 RUCY_END
@@ -148,7 +148,7 @@ namespace Rucy
 			else if (argv->is_num() || argv->is_array())
 			{
 				std::vector<Rays::Point> points;
-				get_line_args(&points, argc, argv);
+				get_points(&points, argc, argv);
 				return Rays::Polyline(&points[0], points.size());
 			}
 		}

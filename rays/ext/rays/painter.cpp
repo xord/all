@@ -162,7 +162,7 @@ RUCY_DEF2(line, args, loop)
 	CHECK;
 
 	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
+	get_points(&points, args.size(), args.as_array());
 
 	THIS->line(&points[0], points.size(), loop);
 	return self;
@@ -224,7 +224,7 @@ RUCY_DEF2(curve, args, loop)
 		argument_error(__FILE__, __LINE__);
 
 	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
+	get_points(&points, args.size(), args.as_array());
 
 	THIS->curve(&points[0], points.size(), loop);
 	return self;
@@ -240,7 +240,7 @@ RUCY_DEF2(bezier, args, loop)
 		argument_error(__FILE__, __LINE__);
 
 	std::vector<Rays::Point> points;
-	get_line_args(&points, args.size(), args.as_array());
+	get_points(&points, args.size(), args.as_array());
 
 	THIS->bezier(&points[0], points.size(), loop);
 	return self;

@@ -1,16 +1,14 @@
 #include "defs.h"
 
 
-#include <assert.h>
 #include "rays/ruby/bounds.h"
+#include "rays/ruby/color.h"
 #include "rays/ruby/point.h"
 
 
 void
-get_line_args (std::vector<Rays::Point>* points, int argc, const Value* argv)
+get_points (std::vector<Rays::Point>* points, int argc, const Value* argv)
 {
-	assert(points && argv);
-
 	points->clear();
 
 	if (argc <= 0)
@@ -37,6 +35,36 @@ get_line_args (std::vector<Rays::Point>* points, int argc, const Value* argv)
 	}
 }
 
+void
+get_colors (std::vector<Rays::Color>* colors, int argc, const Value* argv)
+{
+	colors->clear();
+
+	if (argc <= 0)
+		return;
+
+	if (argv[0].is_num())
+	{
+		if (argc % 3 != 0)
+			argument_error(__FILE__, __LINE__);
+
+		colors->reserve(argc / 3);
+		for (int i = 0; i < argc; i += 3)
+		{
+			colors->emplace_back(
+				to<float>(argv[i + 0]),
+				to<float>(argv[i + 1]),
+				to<float>(argv[i + 2]));
+		}
+	}
+	else
+	{
+		colors->reserve(argc);
+		for (int i = 0; i < argc; ++i)
+			colors->emplace_back(to<Rays::Color>(argv[i]));
+	}
+}
+
 static uint
 get_nsegment (Value nsegment)
 {
@@ -53,8 +81,6 @@ void get_rect_args (
 	Value round, Value lefttop, Value righttop, Value leftbottom, Value rightbottom,
 	Value nsegment)
 {
-	assert(x && y && w && h && lt && rt && lb && rb && nseg && argv);
-
 	if (argc <= 0)
 		argument_error(__FILE__, __LINE__);
 
@@ -124,8 +150,6 @@ void get_ellipse_args (
 	Value center, Value radius, Value hole, Value angle_from, Value angle_to,
 	Value nsegment)
 {
-	assert(x && y && w && h && hole_size && from && to_ && nseg && argv);
-
 	if (argc <= 0)
 	{
 		*x = *y = *w = *h = 0;

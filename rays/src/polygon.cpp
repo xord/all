@@ -977,9 +977,12 @@ namespace Rays
 	}
 
 	static void
-	create_polygon (Polygon* polygon, const Point* points, size_t size, bool loop)
+	create_polygon (
+		Polygon* polygon, const Point* points, size_t size, bool loop,
+		const Color* colors, const Coord3* texcoords)
 	{
-		polygon->self->append(Polyline(points, size, loop, true));
+		polygon->self->append(
+			Polyline(points, size, loop, true, colors, texcoords));
 	}
 
 	static void
@@ -1014,14 +1017,22 @@ namespace Rays
 
 	static void
 	create_triangles (
-		Polygon* polygon, const Point* points, size_t size, bool loop)
+		Polygon* polygon, const Point* points, size_t size, bool loop,
+		const Color* colors, const Coord3* texcoords)
 	{
 		for (size_t i = 0; i + 2 < size; i += 3)
-			polygon->self->append(Polyline(&points[i], 3, loop, true));
+		{
+			polygon->self->append(Polyline(
+				&points[i], 3, loop, true,
+				colors    ? &colors[i]    : NULL,
+				texcoords ? &texcoords[i] : NULL));
+		}
 	}
 
 	static void
-	create_triangle_strip (Polygon* polygon, const Point* points, size_t size)
+	create_triangle_strip (
+		Polygon* polygon, const Point* points, size_t size,
+		const Color* colors, const Coord3* texcoords)
 	{
 		if (size < 3) return;
 
@@ -1029,22 +1040,57 @@ namespace Rays
 		size_t  in_last = last % 2 == 0 ? last - 1 : last;
 		size_t out_last = last % 2 == 0 ? last     : last - 1;
 
-		std::vector<Point> array;
-		array.emplace_back(points[0]);
+		std::vector<Point> points_;
+		points_.reserve(size);
+		points_.emplace_back(points[0]);
 		for (size_t i = 1; i <= in_last; i += 2)
-			array.emplace_back(points[i]);
+			points_.emplace_back(points[i]);
 		for (size_t i = out_last; i >= 2; i -= 2)
-			array.emplace_back(points[i]);
+			points_.emplace_back(points[i]);
 
-		polygon->self->append(Polyline(&array[0], array.size(), true));
+		std::unique_ptr<std::vector<Color>> pcolors_;
+		if (colors)
+		{
+			pcolors_.reset(new decltype(pcolors_)::element_type());
+			pcolors_->reserve(size);
+			pcolors_->emplace_back(colors[0]);
+			for (size_t i = 1; i <= in_last; i += 2)
+				pcolors_->emplace_back(colors[i]);
+			for (size_t i = out_last; i >= 2; i -= 2)
+				pcolors_->emplace_back(colors[i]);
+		}
+
+		std::unique_ptr<std::vector<Coord3>> ptexcoords_;
+		if (texcoords)
+		{
+			ptexcoords_.reset(new decltype(ptexcoords_)::element_type());
+			ptexcoords_->reserve(size);
+			ptexcoords_->emplace_back(texcoords[0]);
+			for (size_t i = 1; i <= in_last; i += 2)
+				ptexcoords_->emplace_back(texcoords[i]);
+			for (size_t i = out_last; i >= 2; i -= 2)
+				ptexcoords_->emplace_back(texcoords[i]);
+		}
+
+		polygon->self->append(Polyline(
+			&points_[0], points_.size(), true,
+			pcolors_    ? &(*pcolors_)[0]    : NULL,
+			ptexcoords_ ? &(*ptexcoords_)[0] : NULL));
 		if (size >= 4)
-			polygon->self->append(Polyline(&points[1], size - 2));
+		{
+			polygon->self->append(Polyline(
+				&points[1], size - 2, false,
+				colors    ? &colors[1]    : NULL,
+				texcoords ? &texcoords[1] : NULL));
+		}
 	}
 
 	static void
-	create_triangle_fan (Polygon* polygon, const Point* points, size_t size)
+	create_triangle_fan (
+		Polygon* polygon, const Point* points, size_t size,
+		const Color* colors, const Coord3* texcoords)
 	{
-		create_polygon(polygon, points, size, true);
+		create_polygon(polygon, points, size, true, colors, texcoords);
 
 		Point array[2];
 		array[0] = points[0];
@@ -1056,14 +1102,23 @@ namespace Rays
 	}
 
 	static void
-	create_quads (Polygon* polygon, const Point* points, size_t size, bool loop)
+	create_quads (
+		Polygon* polygon, const Point* points, size_t size, bool loop,
+		const Color* colors, const Coord3* texcoords)
 	{
 		for (size_t i = 0; i + 3 < size; i += 4)
-			polygon->self->append(Polyline(&points[i], 4, loop, true));
+		{
+			polygon->self->append(Polyline(
+				&points[i], 4, loop, true,
+				colors    ? &colors[i]    : NULL,
+				texcoords ? &texcoords[i] : NULL));
+		}
 	}
 
 	static void
-	create_quad_strip (Polygon* polygon, const Point* points, size_t size)
+	create_quad_strip (
+		Polygon* polygon, const Point* points, size_t size,
+		const Color* colors, const Coord3* texcoords)
 	{
 		if (size < 4) return;
 
@@ -1071,13 +1126,39 @@ namespace Rays
 		size_t  in_last = size - 2;
 		size_t out_last = size - 1;
 
-		std::vector<Point> array;
+		std::vector<Point> points_;
+		points_.reserve(size);
 		for (size_t i = 0; i <= in_last; i += 2)
-			array.emplace_back(points[i]);
+			points_.emplace_back(points[i]);
 		for (int i = (int) out_last; i >= 1; i -= 2)
-			array.emplace_back(points[i]);
+			points_.emplace_back(points[i]);
 
-		polygon->self->append(Polyline(&array[0], array.size(), true));
+		std::unique_ptr<std::vector<Color>> pcolors_;
+		if (colors)
+		{
+			pcolors_.reset(new decltype(pcolors_)::element_type());
+			pcolors_->reserve(size);
+			for (size_t i = 0; i <= in_last; i += 2)
+				pcolors_->emplace_back(colors[i]);
+			for (int i = (int) out_last; i >= 1; i -= 2)
+				pcolors_->emplace_back(colors[i]);
+		}
+
+		std::unique_ptr<std::vector<Coord3>> ptexcoords_;
+		if (texcoords)
+		{
+			ptexcoords_.reset(new decltype(ptexcoords_)::element_type());
+			ptexcoords_->reserve(size);
+			for (size_t i = 0; i <= in_last; i += 2)
+				ptexcoords_->emplace_back(texcoords[i]);
+			for (size_t i = out_last; i >= 1; i -= 2)
+				ptexcoords_->emplace_back(texcoords[i]);
+		}
+
+		polygon->self->append(Polyline(
+			&points_[0], points_.size(), true,
+			pcolors_    ? &(*pcolors_)[0]    : NULL,
+			ptexcoords_ ? &(*ptexcoords_)[i] : NULL));
 		for (size_t i = 2; i < in_last; i += 2)
 			polygon->self->append(Polyline(&points[i], 2));
 	}
@@ -1357,28 +1438,59 @@ namespace Rays
 	{
 	}
 
-	Polygon::Polygon (const Point* points, size_t size, bool loop)
+	Polygon::Polygon (
+		const Point* points, size_t size, bool loop,
+		const Color* colors, const Coord3* texcoords)
 	{
 		if (!points || size <= 0) return;
 
-		create_polygon(this, points, size, loop);
+		create_polygon(this, points, size, loop, colors, texcoords);
 	}
 
-	Polygon::Polygon (DrawMode mode, const Point* points, size_t size, bool loop)
+	Polygon::Polygon (
+		DrawMode mode, const Point* points, size_t size, bool loop,
+		const Color* colors, const Coord3* texcoords)
 	{
 		if (!points || size <= 0) return;
 
 		switch (mode)
 		{
-			case DRAW_POINTS:         create_points(        this, points, size);       break;
-			case DRAW_LINES:          create_lines(         this, points, size);       break;
-			case DRAW_LINE_STRIP:     create_line_strip(    this, points, size, loop); break;
-			case DRAW_TRIANGLES:      create_triangles(     this, points, size, loop); break;
-			case DRAW_TRIANGLE_STRIP: create_triangle_strip(this, points, size);       break;
-			case DRAW_TRIANGLE_FAN:   create_triangle_fan(  this, points, size);       break;
-			case DRAW_QUADS:          create_quads(         this, points, size, loop); break;
-			case DRAW_QUAD_STRIP:     create_quad_strip(    this, points, size);       break;
-			case DRAW_POLYGON:        create_polygon(       this, points, size, loop); break;
+			case DRAW_POINTS:
+				create_points(this, points, size);
+				break;
+
+			case DRAW_LINES:
+				create_lines(this, points, size);
+				break;
+
+			case DRAW_LINE_STRIP:
+				create_line_strip(this, points, size, loop);
+				break;
+
+			case DRAW_TRIANGLES:
+				create_triangles(this, points, size, loop, colors, texcoords);
+				break;
+
+			case DRAW_TRIANGLE_STRIP:
+				create_triangle_strip(this, points, size, colors, texcoords);
+				break;
+
+			case DRAW_TRIANGLE_FAN:
+				create_triangle_fan(this, points, size, colors, texcoords);
+				break;
+
+			case DRAW_QUADS:
+				create_quads(this, points, size, loop, colors, texcoords);
+				break;
+
+			case DRAW_QUAD_STRIP:
+				create_quad_strip(this, points, size, colors, texcoords);
+				break;
+
+			case DRAW_POLYGON:
+				create_polygon(this, points, size, loop, colors, texcoords);
+				break;
+
 			default:
 				argument_error(
 					__FILE__, __LINE__,
@@ -1530,8 +1642,10 @@ namespace Rays
 	{
 	}
 
-	Polygon::Line::Line (const Point* points, size_t size, bool loop, bool hole)
-	:	Super(points, size, loop), hole_(hole)
+	Polygon::Line::Line (
+		const Point* points, size_t size, bool loop, bool hole,
+		const Color* colors, const Coord3* texcoords)
+	:	Super(points, size, loop, colors, texcoords), hole_(hole)
 	{
 		if (!*this)
 			argument_error(__FILE__, __LINE__);
