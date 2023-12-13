@@ -28,26 +28,12 @@ module Rays
       points! points
     end
 
+    def self.line(*points, loop: false)
+      line! points, loop
+    end
+
     def self.lines(*points)
       lines! points
-    end
-
-    def self.line_strip(*points, loop: false)
-      line_strip! points, loop
-    end
-
-    def self.rect(
-      *args, round: nil, lt: nil, rt: nil, lb: nil, rb: nil,
-      nsegment: nil)
-
-      rect! args, round, lt, rt, lb, rb, nsegment
-    end
-
-    def self.ellipse(
-      *args, center: nil, radius: nil, hole: nil, from: nil, to: nil,
-      nsegment: nil)
-
-      ellipse! args, center, radius, hole, from, to, nsegment
     end
 
     def self.triangles(*points, loop: true, colors: nil, texcoords: nil)
@@ -62,12 +48,26 @@ module Rays
       triangle_fan! points, colors, texcoords
     end
 
+    def self.rect(
+      *args, round: nil, lt: nil, rt: nil, lb: nil, rb: nil,
+      nsegment: nil)
+
+      rect! args, round, lt, rt, lb, rb, nsegment
+    end
+
     def self.quads(*points, loop: true, colors: nil, texcoords: nil)
       quads! points, loop, colors, texcoords
     end
 
     def self.quad_strip(*points, colors: nil, texcoords: nil)
       quad_strip! points, colors, texcoords
+    end
+
+    def self.ellipse(
+      *args, center: nil, radius: nil, hole: nil, from: nil, to: nil,
+      nsegment: nil)
+
+      ellipse! args, center, radius, hole, from, to, nsegment
     end
 
     def self.curve(*points, loop: false)
