@@ -154,7 +154,7 @@ RUCY_DEF0(each)
 RUCY_END
 
 static void
-each_polygon (const Value& value, std::function<void(const Rays::Polygon&)> fun)
+each_polygon (const Value& value, auto fun)
 {
 	int size           = value.size();
 	const Value* array = value.as_array();
