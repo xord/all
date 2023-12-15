@@ -313,7 +313,7 @@ namespace Rays
 			return true;
 		}
 
-		void draw_polygon (
+		void draw (
 			GLenum mode, const Color& color,
 			const Coord3* points,           size_t npoints,
 			const uint*   indices   = NULL, size_t nindices = 0,
@@ -572,53 +572,14 @@ namespace Rays
 	};// Painter::Data
 
 
-	static void
-	draw_polygon (
-		Painter* painter,
-		const GLenum* modes,
-		coord offset_x, coord offset_y,
-		bool nofill, bool nostroke,
-		const Coord3* points,           size_t npoints,
-		const uint*   indices   = NULL, size_t nindices = 0,
-		const Coord3* texcoords = NULL,
-		const Shader& default_shader = Shader_get_default_shader_for_shape(),
-		const TextureInfo* texinfo = NULL)
-	{
-		assert(painter);
-
-		bool offset = offset_x != 0 || offset_y != 0;
-		if (offset)
-		{
-			painter->push_matrix();
-			painter->translate(offset_x, offset_y);
-		}
-
-		Color color;
-		for (int type = COLOR_TYPE_BEGIN; type < COLOR_TYPE_END; ++type)
-		{
-			if ((nofill && type == FILL) || (nostroke && type == STROKE))
-				continue;
-
-			if (!painter->self->get_color(&color, (ColorType) type))
-				continue;
-
-			painter->self->draw_polygon(
-				modes[type], color, points, npoints, indices, nindices, texcoords,
-				default_shader, texinfo);
-		}
-
-		if (offset)
-			painter->pop_matrix();
-	}
-
 	void
-	Painter_draw_polygon (
+	Painter_draw (
 		Painter* painter, GLenum mode, const Color& color,
 		const Coord3* points,  size_t npoints,
 		const uint*   indices, size_t nindices,
 		const Coord3* texcoords)
 	{
-		painter->self->draw_polygon(
+		painter->self->draw(
 			mode, color, points, npoints, indices, nindices, texcoords);
 	}
 
@@ -809,10 +770,7 @@ namespace Rays
 		if (Polygon_triangulate(&triangles, polygon))
 		{
 			for (size_t i = 0; i < triangles.size(); i += 3)
-			{
-				painter->self->draw_polygon(
-					GL_LINE_LOOP, invert_color, &triangles[i], 3);
-			}
+				painter->self->draw(GL_LINE_LOOP, invert_color, &triangles[i], 3);
 		}
 #endif
 	}
@@ -1032,7 +990,8 @@ namespace Rays
 		Painter* painter, const Image& image,
 		coord src_x, coord src_y, coord src_w, coord src_h,
 		coord dst_x, coord dst_y, coord dst_w, coord dst_h,
-		bool nostroke = false, const Shader* shader = NULL)
+		bool nofill = false, bool nostroke = false,
+		const Shader* shader = NULL)
 	{
 		static const GLenum MODES[] = {GL_TRIANGLE_FAN, GL_LINE_LOOP};
 
@@ -1068,12 +1027,18 @@ namespace Rays
 
 		TextureInfo texinfo(texture, src_x, src_y, src_x + src_w, src_y + src_h);
 
-		if (!shader)
-			shader = &Shader_get_default_shader_for_texture();
+		Color color;
+		for (int type = COLOR_TYPE_BEGIN; type < COLOR_TYPE_END; ++type)
+		{
+			if ((nofill && type == FILL) || (nostroke && type == STROKE))
+				continue;
 
-		draw_polygon(
-			painter, MODES, 0, 0, false, nostroke, points, 4, NULL, 0, texcoords,
-			*shader, &texinfo);
+			if (!painter->self->get_color(&color, (ColorType) type))
+				continue;
+
+			painter->self->draw(
+				MODES[type], color, points, 4, NULL, 0, texcoords, &texinfo, shader);
+		}
 	}
 
 	void
@@ -1246,7 +1211,7 @@ namespace Rays
 			painter, self->text_image,
 			0, 0, str_w, str_h,
 			x, y, str_w, str_h,
-			true, &Shader_get_shader_for_text());
+			false, true, &Shader_get_shader_for_text());
 
 		debug_draw_text(painter, font, x, y, str_w / density, str_h / density);
 	}

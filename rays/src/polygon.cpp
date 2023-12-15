@@ -119,7 +119,7 @@ namespace Rays
 				triangulate();
 				if (indices.empty()) return;
 
-				Painter_draw_polygon(
+				Painter_draw(
 					painter, GL_TRIANGLES, color,
 					&points[0],  points.size(),
 					&indices[0], indices.size(),
@@ -383,7 +383,7 @@ namespace Rays
 
 				for (const auto& line : lines)
 				{
-					Painter_draw_polygon(
+					Painter_draw(
 						painter, line.loop() ? GL_LINE_LOOP : GL_LINE_STRIP, color,
 						&line[0], line.size());
 				}
@@ -668,7 +668,7 @@ namespace Rays
 				invalid_state_error(__FILE__, __LINE__);
 
 			const auto& outline = lines[0];
-			Painter_draw_polygon(
+			Painter_draw(
 				painter, GL_TRIANGLE_FAN, color, &outline[0], outline.size());
 		}
 
@@ -838,7 +838,7 @@ namespace Rays
 				invalid_state_error(__FILE__, __LINE__);
 
 			const auto& outline = lines[0];
-			Painter_draw_polygon(painter, mode, color, &outline[0], outline.size());
+			Painter_draw(painter, mode, color, &outline[0], outline.size());
 		}
 
 		private:
