@@ -19,11 +19,10 @@ use_external_library 'https://github.com/g-truc/glm',
   tag:     '0.9.9.8',
   srcdirs: 'NOSRC'
 
-use_external_library 'https://github.com/skyrpex/clipper',
-  tag:      '6.4.2',
-  incdirs:  'cpp',
-  srcdirs:  'cpp',
-  excludes: 'clipper/cpp/cpp_'
+use_external_library 'https://github.com/AngusJohnson/Clipper2.git',
+  tag:      'Clipper2_1.2.3',
+  incdirs:  'CPP/Clipper2Lib/include',
+  srcdirs:  'CPP/Clipper2Lib/src'
 
 use_external_library 'https://github.com/mapbox/earcut.hpp',
   tag:     'v2.2.4',

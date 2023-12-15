@@ -5,9 +5,6 @@
 #include "rays/debug.h"
 
 
-using namespace ClipperLib;
-
-
 namespace Rays
 {
 
@@ -42,21 +39,18 @@ namespace Rays
 
 	void
 	Polyline_create (
-		Polyline* polyline, const Path& path, bool loop, bool hole)
+		Polyline* polyline, const ClipperPath& path, bool loop, bool hole)
 	{
-		Path cleaned;
-		ClipperLib::CleanPolygon(path, cleaned);
-
-		auto fun = [](const IntPoint& point) {return from_clipper(point);};
+		auto to_point = [](const ClipperPoint& point) {return from_clipper(point);};
 		if (hole)
-			polyline->self->reset(cleaned.rbegin(), cleaned.rend(), loop, loop, fun);
+			polyline->self->reset(path.rbegin(), path.rend(), loop, loop, to_point);
 		else
-			polyline->self->reset(cleaned. begin(), cleaned. end(), loop, loop, fun);
+			polyline->self->reset(path. begin(), path. end(), loop, loop, to_point);
 	}
 
 	template <typename I>
 	static void
-	reset_path (Path* path, I begin, I end)
+	reset_path (ClipperPath* path, I begin, I end)
 	{
 		path->clear();
 		for (auto it = begin; it != end; ++it)
@@ -64,7 +58,7 @@ namespace Rays
 	}
 
 	void
-	Polyline_get_path (Path* path, const Polyline& polyline, bool hole)
+	Polyline_get_path (ClipperPath* path, const Polyline& polyline, bool hole)
 	{
 		assert(path);
 
