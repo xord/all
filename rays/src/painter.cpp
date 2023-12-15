@@ -318,8 +318,8 @@ namespace Rays
 			const Coord3* points,           size_t npoints,
 			const uint*   indices   = NULL, size_t nindices = 0,
 			const Coord3* texcoords = NULL,
-			const Shader& default_shader = Shader_get_default_shader_for_shape(),
-			const TextureInfo* texinfo = NULL)
+			const TextureInfo* texinfo = NULL,
+			const Shader* shader       = NULL)
 		{
 			if (!points || npoints <= 0)
 				argument_error(__FILE__, __LINE__);
@@ -327,19 +327,10 @@ namespace Rays
 			if (!painting)
 				invalid_state_error(__FILE__, __LINE__, "'painting' should be true.");
 
-			const Shader* pdefault_shader = &default_shader;
-			const Texture* tex            =
-				state.texture ? &Image_get_texture(state.texture) : NULL;
-
 			std::unique_ptr<TextureInfo> ptexinfo;
-			if (!texinfo && tex)
-			{
-				ptexinfo.reset(new TextureInfo(*tex, 0, 0, tex->width(), tex->height()));
-				texinfo         = ptexinfo.get();
-				pdefault_shader = &Shader_get_default_shader_for_texture();
-			}
+			texinfo = setup_texinfo(texinfo, ptexinfo);
+			shader  = setup_shader(shader, texinfo);
 
-			const Shader* shader         = state.shader ? &state.shader : pdefault_shader;
 			const ShaderProgram* program = Shader_get_program(*shader);
 			if (!program || !*program) return;
 
@@ -359,6 +350,27 @@ namespace Rays
 			std::vector<GLint> locations;
 
 			std::vector<GLuint> buffers;
+
+			const TextureInfo* setup_texinfo (const TextureInfo* texinfo, auto& ptr)
+			{
+				if (texinfo) return texinfo;
+
+				const Texture* tex =
+					state.texture ? &Image_get_texture(state.texture) : NULL;
+				if (!tex) return NULL;
+
+				ptr.reset(new TextureInfo(*tex, 0, 0, tex->width(), tex->height()));
+				return ptr.get();
+			}
+
+			const Shader* setup_shader (const Shader* shader, bool for_texture)
+			{
+				if (state.shader) return &state.shader;
+				if (shader)       return shader;
+				return for_texture
+					?	&Shader_get_default_shader_for_texture()
+					:	&Shader_get_default_shader_for_shape();
+			}
 
 			void apply_builtin_uniforms (
 				const ShaderProgram& program, const ShaderBuiltinVariableNames& names,
