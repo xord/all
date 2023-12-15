@@ -21,13 +21,14 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF3(setup, points, loop, hole)
+RUCY_DEF5(setup, points, loop, hole, colors, texcoords)
 {
 	CHECK;
 
-	std::vector<Rays::Point> array;
-	get_points(&array, points.size(), points.as_array());
-	*THIS = Rays::Polygon::Line(&array[0], array.size(), loop, hole);
+	CreateParams params(points, colors, texcoords);
+	*THIS = Rays::Polygon::Line(
+		params.ppoints(), params.size(), loop, hole,
+		params.pcolors(), params.ptexcoords());
 }
 RUCY_END
 

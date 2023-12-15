@@ -8,8 +8,8 @@ module Rays
 
     include Enumerable
 
-    def initialize(*points, loop: false)
-      setup points, loop
+    def initialize(*points, loop: false, colors: nil, texcoords: nil)
+      setup points, loop, colors, texcoords
     end
 
     def transform(matrix = nil, loop: loop?, &block)
