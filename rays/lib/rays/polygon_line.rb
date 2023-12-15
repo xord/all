@@ -9,8 +9,10 @@ module Rays
 
     class Line < Polyline
 
-      def initialize(*points, loop: true, hole: false)
-        setup points, loop, hole
+      def initialize(
+        *points, loop: true, hole: false, colors: nil, texcoords: nil)
+
+        setup points, loop, hole, colors, texcoords
       end
 
       def transform(matrix = nil, loop: loop?, hole: hole?, &block)

@@ -15,6 +15,7 @@ namespace Rays
 {
 
 
+	struct Color;
 	class Polygon;
 
 
@@ -29,9 +30,13 @@ namespace Rays
 
 			Polyline ();
 
-			Polyline (const Point* points, size_t size, bool loop = false);
+			Polyline (
+				const Point* points, size_t size, bool loop = false,
+				const Color* colors = NULL, const Coord3* texcoords = NULL);
 
-			Polyline (const Point* points, size_t size, bool loop, bool fill);
+			Polyline (
+				const Point* points, size_t size, bool loop, bool fill,
+				const Color* colors = NULL, const Coord3* texcoords = NULL);
 
 			~Polyline ();
 
@@ -47,6 +52,12 @@ namespace Rays
 			bool loop () const;
 
 			bool fill () const;
+
+			const Point* points () const;
+
+			const Color* colors () const;
+
+			const Coord3* texcoords () const;
 
 			size_t size () const;
 

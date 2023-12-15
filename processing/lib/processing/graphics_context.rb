@@ -807,6 +807,11 @@ module Processing
       @painter__.font = font
     end
 
+    def texture(image)
+      @painter__.texture image&.getInternal__
+      nil
+    end
+
     # Sets shader.
     #
     # @param shader [Shader] a shader to apply
@@ -1218,7 +1223,7 @@ module Processing
     # @see https://processing.org/reference/beginShape_.html
     #
     def beginShape(mode = nil)
-      @shapeMode__, @shapePoints__ = mode, []
+      @shapeMode__, @shapePoints__, @shapeTexCoords__ = mode, [], []
       nil
     end
 
@@ -1235,24 +1240,32 @@ module Processing
     #
     def endShape(mode = nil)
       raise "endShape() must be called after beginShape()" unless @shapePoints__
-      polygon = Shape.createPolygon__ @shapeMode__, @shapePoints__, mode == CLOSE
+      polygon = Shape.createPolygon__(
+        @shapeMode__, @shapePoints__, mode == CLOSE, @shapeTexCoords__)
       @painter__.polygon polygon if polygon
-      @shapeMode__ = @shapePoints__ = nil
+      @shapeMode__ = @shapePoints__ = @shapeTexCoords = nil
       nil
     end
 
     # Append vertex for shape polygon.
     #
+    # @overload vertex(x, y)
+    # @overload vertex(x, y, u, v)
+    #
     # @param x [Numeric] x position of vertex
     # @param y [Numeric] y position of vertex
+    # @param u [Numeric] u texture coordinate of vertex
+    # @param v [Numeric] v texture coordinate of vertex
     #
     # @return [nil] nil
     #
     # @see https://processing.org/reference/vertex_.html
     #
-    def vertex(x, y)
+    def vertex(x, y, u = nil, v = nil)
       raise "vertex() must be called after beginShape()" unless @shapePoints__
-      @shapePoints__ << x << y
+      raise "Either 'u' or 'v' is missing" if (u == nil) != (v == nil)
+      @shapePoints__    << x        << y
+      @shapeTexCoords__ << (u || x) << (v || y)
     end
 
     # Copies image.
@@ -1408,6 +1421,7 @@ module Processing
         @painter__.clip,
         @painter__.blend_mode,
         @painter__.font,
+        @painter__.texture,
         @painter__.shader,
         @hsbColor__,
         @colorMaxes__,
@@ -1440,6 +1454,7 @@ module Processing
       @painter__.clip,
       @painter__.blend_mode,
       @painter__.font,
+      @painter__.texture,
       @painter__.shader,
       @hsbColor__,
       @colorMaxes__,
@@ -1924,7 +1939,7 @@ module Processing
 
     # @private
     private def createLineShape__(x1, y1, x2, y2)
-      Shape.new Rays::Polygon.lines(x1, y1, x2, y2), context: self
+      Shape.new Rays::Polygon.line(x1, y1, x2, y2), context: self
     end
 
     # @private

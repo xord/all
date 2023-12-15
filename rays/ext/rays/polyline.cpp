@@ -24,13 +24,14 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF2(setup, points, loop)
+RUCY_DEF4(setup, points, loop, colors, texcoords)
 {
 	CHECK;
 
-	std::vector<Rays::Point> array;
-	get_line_args(&array, points.size(), points.as_array());
-	*THIS = Rays::Polyline(&array[0], array.size(), loop);
+	CreateParams params(points, colors, texcoords);
+	*THIS = Rays::Polyline(
+		params.ppoints(), params.size(), loop,
+		params.pcolors(), params.ptexcoords());
 }
 RUCY_END
 
@@ -148,7 +149,7 @@ namespace Rucy
 			else if (argv->is_num() || argv->is_array())
 			{
 				std::vector<Rays::Point> points;
-				get_line_args(&points, argc, argv);
+				get_points(&points, argc, argv);
 				return Rays::Polyline(&points[0], points.size());
 			}
 		}

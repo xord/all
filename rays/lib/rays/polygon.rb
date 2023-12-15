@@ -9,8 +9,8 @@ module Rays
 
     include Enumerable
 
-    def initialize(*args, loop: true)
-      setup args, loop
+    def initialize(*args, loop: true, colors: nil, texcoords: nil)
+      setup args, loop, colors, texcoords
     end
 
     def transform(matrix = nil, &block)
@@ -24,16 +24,28 @@ module Rays
       !(self & obj).empty?
     end
 
-    def self.points(*args)
-      points! args
+    def self.points(*points)
+      points! points
     end
 
-    def self.lines(*args)
-      lines! args
+    def self.line(*points, loop: false)
+      line! points, loop
     end
 
-    def self.line_strip(*args, loop: false)
-      line_strip! args, loop
+    def self.lines(*points)
+      lines! points
+    end
+
+    def self.triangles(*points, loop: true, colors: nil, texcoords: nil)
+      triangles! points, loop, colors, texcoords
+    end
+
+    def self.triangle_strip(*points, colors: nil, texcoords: nil)
+      triangle_strip! points, colors, texcoords
+    end
+
+    def self.triangle_fan(*points, colors: nil, texcoords: nil)
+      triangle_fan! points, colors, texcoords
     end
 
     def self.rect(
@@ -43,6 +55,14 @@ module Rays
       rect! args, round, lt, rt, lb, rb, nsegment
     end
 
+    def self.quads(*points, loop: true, colors: nil, texcoords: nil)
+      quads! points, loop, colors, texcoords
+    end
+
+    def self.quad_strip(*points, colors: nil, texcoords: nil)
+      quad_strip! points, colors, texcoords
+    end
+
     def self.ellipse(
       *args, center: nil, radius: nil, hole: nil, from: nil, to: nil,
       nsegment: nil)
@@ -50,32 +70,12 @@ module Rays
       ellipse! args, center, radius, hole, from, to, nsegment
     end
 
-    def self.triangles(*args, loop: true)
-      triangles! args, loop
+    def self.curve(*points, loop: false)
+      curve! points, loop
     end
 
-    def self.triangle_strip(*args)
-      triangle_strip! args
-    end
-
-    def self.triangle_fan(*args)
-      triangle_fan! args
-    end
-
-    def self.quads(*args, loop: true)
-      quads! args, loop
-    end
-
-    def self.quad_strip(*args)
-      quad_strip! args
-    end
-
-    def self.curve(*args, loop: false)
-      curve! args, loop
-    end
-
-    def self.bezier(*args, loop: false)
-      bezier! args, loop
+    def self.bezier(*points, loop: false)
+      bezier! points, loop
     end
 
   end# Polygon

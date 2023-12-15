@@ -253,6 +253,12 @@ namespace Rays
 
 			const Font& font () const;
 
+			void     set_texture (const Image& image);
+
+			void      no_texture ();
+
+			const Image& texture () const;
+
 			void      set_shader (const Shader& shader);
 
 			void       no_shader ();
