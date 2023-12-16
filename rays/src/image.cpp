@@ -30,6 +30,8 @@ namespace Rays
 
 		float pixel_density = 1;
 
+		bool smooth = false;
+
 		mutable Bitmap bitmap;
 
 		mutable Texture texture;
@@ -54,6 +56,13 @@ namespace Rays
 
 		if (self->bitmap)  Bitmap_set_modified(&self->bitmap, false);
 		if (self->texture) self->texture.set_modified(false);
+	}
+
+	static void
+	invalidate_texture (Image* image)
+	{
+		image->bitmap();// update bitmap
+		image->self->texture = Texture();
 	}
 
 	static Bitmap&
@@ -117,12 +126,13 @@ namespace Rays
 			if (self->bitmap)
 			{
 				PRINT_MODIFIED_FLAGS("new texture from bitmap");
-				self->texture = Texture(self->bitmap);
+				self->texture = Texture(self->bitmap, self->smooth);
 			}
 			else
 			{
 				PRINT_MODIFIED_FLAGS("new texture");
-				self->texture = Texture(self->width, self->height, self->color_space);
+				self->texture = Texture(
+					self->width, self->height, self->color_space, self->smooth);
 
 				Painter p = image.painter();
 				p.begin();
@@ -167,7 +177,8 @@ namespace Rays
 	}
 
 	Image::Image (
-		int width, int height, const ColorSpace& cs, float pixel_density)
+		int width, int height, const ColorSpace& cs,
+		float pixel_density, bool smooth)
 	{
 		if (pixel_density <= 0)
 			argument_error(__FILE__, __LINE__, "invalid pixel_density.");
@@ -176,9 +187,10 @@ namespace Rays
 		self->height        = (int) (height * pixel_density);
 		self->color_space   = cs;
 		self->pixel_density = pixel_density;
+		self->smooth        = smooth;
 	}
 
-	Image::Image (const Bitmap& bitmap, float pixel_density)
+	Image::Image (const Bitmap& bitmap, float pixel_density, bool smooth)
 	{
 		if (pixel_density <= 0)
 			argument_error(__FILE__, __LINE__, "invalid pixel_density.");
@@ -188,6 +200,7 @@ namespace Rays
 		self->height        = bitmap.height();
 		self->color_space   = bitmap.color_space();
 		self->pixel_density = pixel_density;
+		self->smooth        = smooth;
 	}
 
 	Image::~Image ()
@@ -231,6 +244,21 @@ namespace Rays
 	Image::pixel_density () const
 	{
 		return self->pixel_density;
+	}
+
+	void
+	Image::set_smooth (bool smooth)
+	{
+		if (smooth == self->smooth) return;
+
+		self->smooth = smooth;
+		invalidate_texture(this);
+	}
+
+	bool
+	Image::smooth () const
+	{
+		return self->smooth;
 	}
 
 	Painter

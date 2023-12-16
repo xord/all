@@ -23,7 +23,7 @@ namespace Rays
 
 		ColorSpace color_space;
 
-		bool modified;
+		bool smooth, modified;
 
 		Data ()
 		{
@@ -44,6 +44,7 @@ namespace Rays
 			width_pow2  =
 			height_pow2 = 0;
 			color_space = COLORSPACE_UNKNOWN;
+			smooth      = false;
 			modified    = false;
 		}
 
@@ -171,7 +172,8 @@ namespace Rays
 
 	static void
 	setup_texture (
-		Texture::Data* self, int width, int height, const ColorSpace& cs,
+		Texture::Data* self,
+		int width, int height, const ColorSpace& cs, bool smooth = false,
 		const Bitmap* bitmap = NULL, bool npot = false)
 	{
 		assert(self && !self->has_id());
@@ -184,7 +186,8 @@ namespace Rays
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);//GL_LINEAR);
+		glTexParameteri(
+			GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smooth ? GL_LINEAR : GL_NEAREST);
 
 		GLenum format, type;
 		ColorSpace_get_gl_format_and_type(&format, &type, cs);
@@ -216,6 +219,7 @@ namespace Rays
 		self->width       = width;
 		self->height      = height;
 		self->color_space = cs;
+		self->smooth      = smooth;
 		self->modified    = true;
 	}
 
@@ -224,21 +228,21 @@ namespace Rays
 	{
 	}
 
-	Texture::Texture (int width, int height, const ColorSpace& cs)
+	Texture::Texture (int width, int height, const ColorSpace& cs, bool smooth)
 	{
 		if (width <= 0 || height <= 0 || !cs)
 			argument_error(__FILE__, __LINE__);
 
-		setup_texture(self.get(), width, height, cs);
+		setup_texture(self.get(), width, height, cs, smooth);
 	}
 
-	Texture::Texture (const Bitmap& bitmap)
+	Texture::Texture (const Bitmap& bitmap, bool smooth)
 	{
 		if (!bitmap)
 			argument_error(__FILE__, __LINE__);
 
 		setup_texture(
-			self.get(), bitmap.width(), bitmap.height(), bitmap.color_space(),
+			self.get(), bitmap.width(), bitmap.height(), bitmap.color_space(), smooth,
 			&bitmap);
 	}
 
@@ -295,6 +299,12 @@ namespace Rays
 	Texture::color_space () const
 	{
 		return self->color_space;
+	}
+
+	bool
+	Texture::smooth () const
+	{
+		return self->smooth;
 	}
 
 	GLuint

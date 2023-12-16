@@ -27,9 +27,11 @@ namespace Rays
 
 			Image (
 				int width, int height, const ColorSpace& cs = DEFAULT_COLOR_SPACE,
-				float pixel_density = 1);
+				float pixel_density = 1, bool smooth = false);
 
-			Image (const Bitmap& bitmap, float pixel_density = 1);
+			Image (
+				const Bitmap& bitmap,
+				float pixel_density = 1, bool smooth = false);
 
 			~Image ();
 
@@ -44,6 +46,10 @@ namespace Rays
 			const ColorSpace& color_space () const;
 
 			float pixel_density () const;
+
+			void set_smooth (bool smooth);
+
+			bool     smooth () const;
 
 			Painter painter ();
 

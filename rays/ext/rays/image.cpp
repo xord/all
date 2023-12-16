@@ -22,31 +22,28 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEFN(initialize)
+RUCY_DEF3(initialize, args, pixel_density, smooth)
 {
 	RUCY_CHECK_OBJ(Rays::Image, self);
-	check_arg_count(__FILE__, __LINE__, "Image#initialize", argc, 1, 2, 3, 4);
 
-	if (argv[0].is_kind_of(Rays::bitmap_class()))
+	size_t argc = args.size();
+	check_arg_count(__FILE__, __LINE__, "Image#initialize", argc, 1, 2, 3);
+
+	float pd = to<float>(pixel_density);
+	if (args[0].is_kind_of(Rays::bitmap_class()))
 	{
-		check_arg_count(__FILE__, __LINE__, "Image#initialize", argc, 1, 2);
-
-		const Rays::Bitmap* bitmap = to<Rays::Bitmap*>(argv[0]);
-		if (!bitmap)
+		const Rays::Bitmap* bmp = to<Rays::Bitmap*>(args[0]);
+		if (!bmp)
 			argument_error(__FILE__, __LINE__);
 
-		float pixel_density = (argc >= 2) ? to<float>(argv[1]) : 1;
-		*THIS = Rays::Image(*bitmap, pixel_density);
+		*THIS = Rays::Image(*bmp, pd, smooth);
 	}
 	else
 	{
-		check_arg_count(__FILE__, __LINE__, "Image#initialize", argc, 2, 3, 4);
-
-		int width           = to<int>(argv[0]);
-		int height          = to<int>(argv[1]);
-		Rays::ColorSpace cs = (argc >= 3) ? to<Rays::ColorSpace>(argv[2]) : Rays::RGBA;
-		float pixel_density = (argc >= 4) ? to<float>(argv[3]) : 1;
-		*THIS = Rays::Image(width, height, cs, pixel_density);
+		int width  = to<int>(args[0]);
+		int height = to<int>(args[1]);
+		auto cs    = (argc >= 3) ? to<Rays::ColorSpace>(args[2]) : Rays::RGBA;
+		*THIS = Rays::Image(width, height, cs, pd, smooth);
 	}
 
 	return self;
@@ -121,6 +118,23 @@ RUCY_DEF1(get_bitmap, modify)
 RUCY_END
 
 static
+RUCY_DEF1(set_smooth, smooth)
+{
+	CHECK;
+	THIS->set_smooth(smooth);
+	return smooth;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_smooth)
+{
+	CHECK;
+	return value(THIS->smooth());
+}
+RUCY_END
+
+static
 RUCY_DEF1(load, path)
 {
 	return value(Rays::load_image(path.c_str()));
@@ -137,7 +151,7 @@ Init_rays_image ()
 
 	cImage = mRays.define_class("Image");
 	cImage.define_alloc_func(alloc);
-	cImage.define_private_method("initialize",      initialize);
+	cImage.define_private_method("initialize!",     initialize);
 	cImage.define_private_method("initialize_copy", initialize_copy);
 	cImage.define_method("save", save);
 	cImage.define_method("width",  width);
@@ -146,6 +160,8 @@ Init_rays_image ()
 	cImage.define_method("pixel_density", pixel_density);
 	cImage.define_method("painter", painter);
 	cImage.define_private_method("get_bitmap", get_bitmap);
+	cImage.define_method("smooth=", set_smooth);
+	cImage.define_method("smooth",  get_smooth);
 	cImage.define_module_function("load", load);
 }
 

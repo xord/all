@@ -24,9 +24,11 @@ namespace Rays
 
 			Texture ();
 
-			Texture (int width, int height, const ColorSpace& cs = RGBA);
+			Texture (
+				int width, int height, const ColorSpace& cs = RGBA,
+				bool smooth = false);
 
-			Texture (const Bitmap& bitmap);
+			Texture (const Bitmap& bitmap, bool smooth = false);
 
 			Texture& operator = (const Bitmap& bitmap);
 
@@ -41,6 +43,8 @@ namespace Rays
 			int reserved_height () const;
 
 			const ColorSpace& color_space () const;
+
+			bool smooth () const;
 
 			GLuint id () const;
 

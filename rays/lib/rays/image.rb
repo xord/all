@@ -13,6 +13,10 @@ module Rays
 
     def_delegators :bitmap_for_write, :pixels=, :[]=
 
+    def initialize(*args, pixel_density: 1, smooth: false)
+      initialize! args, pixel_density, smooth
+    end
+
     def paint(&block)
       painter.paint self, &block
       self
