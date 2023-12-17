@@ -97,7 +97,30 @@ namespace Rays
 	}
 
 	static Shader
-	make_default_shader_for_texture ()
+	make_default_shader_for_texture_clamp ()
+	{
+		const ShaderBuiltinVariableNames& names =
+			ShaderEnv_get_builtin_variable_names(DEFAULT_ENV);
+		return Shader(
+			"varying vec4 "      + V_TEXCOORD + ";\n"
+			"varying vec4 "      + V_COLOR + ";\n"
+			"uniform vec3 "      + U_TEXCOORD_MIN + ";\n"
+			"uniform vec3 "      + U_TEXCOORD_MAX + ";\n"
+			"uniform vec3 "      + U_TEXCOORD_OFFSET + ";\n"
+			"uniform sampler2D " + U_TEXTURE + ";\n"
+			"void main ()\n"
+			"{\n"
+			"  vec2 texcoord__ = clamp(" +
+				V_TEXCOORD     + ".xy, " +
+				U_TEXCOORD_MIN + ".xy, " +
+				U_TEXCOORD_MAX + ".xy - " + U_TEXCOORD_OFFSET + ".xy);\n"
+			"  vec4 color__    = texture2D(" + U_TEXTURE + ", texcoord__);\n"
+			"  gl_FragColor    = " + V_COLOR + " * color__;\n"
+			"}\n");
+	}
+
+	static Shader
+	make_default_shader_for_texture_repeat ()
 	{
 		const ShaderBuiltinVariableNames& names =
 			ShaderEnv_get_builtin_variable_names(DEFAULT_ENV);
@@ -160,10 +183,19 @@ namespace Rays
 	}
 
 	const Shader&
-	Shader_get_default_shader_for_texture ()
+	Shader_get_default_shader_for_texture (TexCoordWrap wrap)
 	{
-		static const Shader SHADER = make_default_shader_for_texture();
-		return SHADER;
+		switch (wrap)
+		{
+			case TEXCOORD_REPEAT:
+				static const Shader REPEAT = make_default_shader_for_texture_repeat();
+				return REPEAT;
+
+			case TEXCOORD_CLAMP:
+			default:
+				static const Shader CLAMP = make_default_shader_for_texture_clamp();
+				return CLAMP;
+		}
 	}
 
 	const Shader&

@@ -118,9 +118,20 @@ module Rays
       replace:   BLEND_REPLACE
     }
 
+    const_symbol_accessor :texcoord_mode, **{
+      image:  TEXCOORD_IMAGE,
+      normal: TEXCOORD_NORMAL
+    }
+
+    const_symbol_accessor :texcoord_wrap, **{
+      clamp:  TEXCOORD_CLAMP,
+      repeat: TEXCOORD_REPEAT
+    }
+
     universal_accessor :background, :fill, :stroke, :color,
       :stroke_width, :stroke_outset, :stroke_cap, :stroke_join, :miter_limit,
-      :nsegment, :blend_mode, :texture, :shader, :clip, :font
+      :nsegment, :blend_mode, :texture, :texcoord_mode, :texcoord_wrap,
+      :shader, :clip, :font
 
     private
 
