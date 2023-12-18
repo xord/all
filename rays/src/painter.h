@@ -18,6 +18,13 @@ namespace Rays
 		const uint*   indices   = NULL, size_t nindices = 0,
 		const Coord3* texcoords = NULL);
 
+	void Painter_draw (
+		Painter* painter, GLenum mode,
+		const Coord3* points,           size_t npoints,
+		const uint*   indices   = NULL, size_t nindices = 0,
+		const Color*  colors    = NULL,
+		const Coord3* texcoords = NULL);
+
 
 }// Rays
 

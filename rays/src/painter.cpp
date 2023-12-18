@@ -320,9 +320,10 @@ namespace Rays
 		}
 
 		void draw (
-			GLenum mode, const Color& color,
+			GLenum mode, const Color* color,
 			const Coord3* points,           size_t npoints,
 			const uint*   indices   = NULL, size_t nindices = 0,
+			const Color*  colors    = NULL,
 			const Coord3* texcoords = NULL,
 			const TextureInfo* texinfo = NULL,
 			const Shader* shader       = NULL)
@@ -344,7 +345,7 @@ namespace Rays
 
 			const auto& names = Shader_get_builtin_variable_names(*shader);
 			apply_builtin_uniforms(*program, names, texinfo);
-			apply_attributes(*program, names, points, npoints, texcoords, color);
+			apply_attributes(*program, names, points, npoints, texcoords, color, colors);
 			draw_indices(mode, indices, nindices, npoints);
 			cleanup();
 
@@ -449,9 +450,10 @@ namespace Rays
 			void apply_attributes (
 				const ShaderProgram& program, const ShaderBuiltinVariableNames& names,
 				const Coord3* points, size_t npoints, const Coord3* texcoords,
-				const Color& color)
+				const Color* color, const Color* colors)
 			{
-				assert(points && npoints > 0);
+				assert(npoints > 0);
+				assert(!!color != !!colors);
 
 				apply_attribute(
 					program, names.attribute_position_names,
@@ -461,21 +463,30 @@ namespace Rays
 					program, names.attribute_texcoord_names,
 					texcoords ? texcoords : points, npoints);
 
-#if defined(GL_VERSION_2_1) && !defined(GL_VERSION_3_0)
-				// to fix that GL 2.1 with glVertexAttrib4fv() draws nothing
-				// with specific glsl 'attribute' name.
-				std::vector<Color> colors(npoints, color);
-				apply_attribute(
-					program, names.attribute_color_names,
-					(const Coord4*) &colors[0], npoints);
-#else
-				for (const auto& name : names.attribute_color_names)
+				if (colors)
 				{
-					apply_attribute(program, name, [&](GLint loc) {
-						glVertexAttrib4fv(loc, color.array);
-					});
+					apply_attribute(
+						program, names.attribute_color_names,
+						colors, npoints);
 				}
+				else if (color)
+				{
+#if defined(GL_VERSION_2_1) && !defined(GL_VERSION_3_0)
+					// to fix that GL 2.1 with glVertexAttrib4fv() draws nothing
+					// with specific glsl 'attribute' name.
+					std::vector<Color> colors_(npoints, *color);
+					apply_attribute(
+						program, names.attribute_color_names,
+						(const Coord4*) &colors_[0], npoints);
+#else
+					for (const auto& name : names.attribute_color_names)
+					{
+						apply_attribute(program, name, [&](GLint loc) {
+							glVertexAttrib4fv(loc, color->array);
+						});
+					}
 #endif
+				}
 			}
 
 			template <typename CoordN>
@@ -602,7 +613,19 @@ namespace Rays
 		const Coord3* texcoords)
 	{
 		painter->self->draw(
-			mode, color, points, npoints, indices, nindices, texcoords);
+			mode, &color, points, npoints, indices, nindices, NULL, texcoords);
+	}
+
+	void
+	Painter_draw (
+		Painter* painter, GLenum mode,
+		const Coord3* points,  size_t npoints,
+		const uint*   indices, size_t nindices,
+		const Color*  colors,
+		const Coord3* texcoords)
+	{
+		painter->self->draw(
+			mode, NULL, points, npoints, indices, nindices, colors, texcoords);
 	}
 
 
@@ -792,7 +815,7 @@ namespace Rays
 		if (Polygon_triangulate(&triangles, polygon))
 		{
 			for (size_t i = 0; i < triangles.size(); i += 3)
-				painter->self->draw(GL_LINE_LOOP, invert_color, &triangles[i], 3);
+				painter->self->draw(GL_LINE_LOOP, &invert_color, &triangles[i], 3);
 		}
 #endif
 	}
@@ -1059,7 +1082,8 @@ namespace Rays
 				continue;
 
 			painter->self->draw(
-				MODES[type], color, points, 4, NULL, 0, texcoords, &texinfo, shader);
+				MODES[type], &color, points, 4, NULL, 0, NULL, texcoords,
+				&texinfo, shader);
 		}
 	}
 
