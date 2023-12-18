@@ -9,6 +9,8 @@
 RUCY_DEFINE_CONVERT_TO(Rays::CapType)
 RUCY_DEFINE_CONVERT_TO(Rays::JoinType)
 RUCY_DEFINE_CONVERT_TO(Rays::BlendMode)
+RUCY_DEFINE_CONVERT_TO(Rays::TexCoordMode)
+RUCY_DEFINE_CONVERT_TO(Rays::TexCoordWrap)
 
 
 template <typename T>
@@ -41,6 +43,16 @@ static std::vector<EnumType<Rays::BlendMode>> BLEND_MODES({
 	{"BLEND_MULTIPLY",  "MULTIPLY",  Rays::BLEND_MULTIPLY},
 	{"BLEND_SCREEN",    "SCREEN",    Rays::BLEND_SCREEN},
 	{"BLEND_REPLACE",   "REPLACE",   Rays::BLEND_REPLACE},
+});
+
+static std::vector<EnumType<Rays::TexCoordMode>> TEXCOORD_MODES({
+	{"TEXCOORD_IMAGE",  "IMAGE",  Rays::TEXCOORD_IMAGE},
+	{"TEXCOORD_NORMAL", "NORMAL", Rays::TEXCOORD_NORMAL},
+});
+
+static std::vector<EnumType<Rays::TexCoordWrap>> TEXCOORD_WRAPS({
+	{"TEXCOORD_CLAMP",  "CLAMP",  Rays::TEXCOORD_CLAMP},
+	{"TEXCOORD_REPEAT", "REPEAT", Rays::TEXCOORD_REPEAT},
 });
 
 
@@ -78,6 +90,12 @@ Init_rays ()
 		mRays.define_const(it->name, it->value);
 
 	for (auto it = BLEND_MODES.begin(); it != BLEND_MODES.end(); ++it)
+		mRays.define_const(it->name, it->value);
+
+	for (auto it = TEXCOORD_MODES.begin(); it != TEXCOORD_MODES.end(); ++it)
+		mRays.define_const(it->name, it->value);
+
+	for (auto it = TEXCOORD_WRAPS.begin(); it != TEXCOORD_WRAPS.end(); ++it)
 		mRays.define_const(it->name, it->value);
 }
 
@@ -176,6 +194,68 @@ namespace Rucy
 			argument_error(__FILE__, __LINE__, "invalid blend mode -- %d", mode);
 
 		return (Rays::BlendMode) mode;
+	}
+
+
+	template <> Rays::TexCoordMode
+	value_to<Rays::TexCoordMode> (int argc, const Value* argv, bool convert)
+	{
+		assert(argc > 0 && argv);
+
+		if (convert)
+		{
+			if (argv->is_s() || argv->is_sym())
+			{
+				const char* str = argv->c_str();
+				for (auto it = TEXCOORD_MODES.begin(); it != TEXCOORD_MODES.end(); ++it)
+				{
+					if (
+						strcasecmp(str, it->name)       == 0 ||
+						strcasecmp(str, it->short_name) == 0)
+					{
+						return it->value;
+					}
+				}
+				argument_error(__FILE__, __LINE__, "invalid texcoord mode -- %s", str);
+			}
+		}
+
+		int mode = value_to<int>(*argv, convert);
+		if (mode < 0 || Rays::TEXCOORD_MODE_MAX <= mode)
+			argument_error(__FILE__, __LINE__, "invalid texcoord mode -- %d", mode);
+
+		return (Rays::TexCoordMode) mode;
+	}
+
+
+	template <> Rays::TexCoordWrap
+	value_to<Rays::TexCoordWrap> (int argc, const Value* argv, bool convert)
+	{
+		assert(argc > 0 && argv);
+
+		if (convert)
+		{
+			if (argv->is_s() || argv->is_sym())
+			{
+				const char* str = argv->c_str();
+				for (auto it = TEXCOORD_WRAPS.begin(); it != TEXCOORD_WRAPS.end(); ++it)
+				{
+					if (
+						strcasecmp(str, it->name)       == 0 ||
+						strcasecmp(str, it->short_name) == 0)
+					{
+						return it->value;
+					}
+				}
+				argument_error(__FILE__, __LINE__, "invalid texcoord wrap -- %s", str);
+			}
+		}
+
+		int wrap = value_to<int>(*argv, convert);
+		if (wrap < 0 || Rays::TEXCOORD_WRAP_MAX <= wrap)
+			argument_error(__FILE__, __LINE__, "invalid texcoord wrap -- %d", wrap);
+
+		return (Rays::TexCoordWrap) wrap;
 	}
 
 

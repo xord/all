@@ -82,6 +82,30 @@ namespace Rays
 	};// BlendMode
 
 
+	enum TexCoordMode
+	{
+
+		TEXCOORD_IMAGE = 0,
+
+		TEXCOORD_NORMAL,
+
+		TEXCOORD_MODE_MAX
+
+	};// TexCoordMode
+
+
+	enum TexCoordWrap
+	{
+
+		TEXCOORD_CLAMP = 0,
+
+		TEXCOORD_REPEAT,
+
+		TEXCOORD_WRAP_MAX
+
+	};// TexCoordWrap
+
+
 }// Rays
 
 

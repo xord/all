@@ -259,6 +259,14 @@ namespace Rays
 
 			const Image& texture () const;
 
+			void     set_texcoord_mode (TexCoordMode mode);
+
+			TexCoordMode texcoord_mode () const;
+
+			void     set_texcoord_wrap (TexCoordWrap wrap);
+
+			TexCoordWrap texcoord_wrap () const;
+
 			void      set_shader (const Shader& shader);
 
 			void       no_shader ();

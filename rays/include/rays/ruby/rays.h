@@ -15,6 +15,10 @@ RUCY_DECLARE_CONVERT_TO(Rays::JoinType)
 
 RUCY_DECLARE_CONVERT_TO(Rays::BlendMode)
 
+RUCY_DECLARE_CONVERT_TO(Rays::TexCoordMode)
+
+RUCY_DECLARE_CONVERT_TO(Rays::TexCoordWrap)
+
 
 namespace Rays
 {

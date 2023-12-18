@@ -57,7 +57,7 @@ namespace Rays
 
 	const Shader& Shader_get_default_shader_for_shape ();
 
-	const Shader& Shader_get_default_shader_for_texture ();
+	const Shader& Shader_get_default_shader_for_texture (TexCoordWrap wrap);
 
 	const Shader& Shader_get_shader_for_text ();
 

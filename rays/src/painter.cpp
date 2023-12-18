@@ -67,6 +67,10 @@ namespace Rays
 
 		Image texture;
 
+		TexCoordMode texcoord_mode;
+
+		TexCoordWrap texcoord_wrap;
+
 		Shader shader;
 
 		void init ()
@@ -84,6 +88,8 @@ namespace Rays
 			clip           .reset(-1);
 			font           = default_font();
 			texture        = Image();
+			texcoord_mode  = TEXCOORD_IMAGE;
+			texcoord_wrap  = TEXCOORD_CLAMP;
 			shader         = Shader();
 		}
 
@@ -100,7 +106,7 @@ namespace Rays
 
 		const Texture& texture;
 
-		Point texcoord_min, texcoord_max;
+		Point min, max;
 
 		TextureInfo (
 			const Texture& texture,
@@ -108,16 +114,16 @@ namespace Rays
 			coord x_max, coord y_max)
 		:	texture(texture)
 		{
-			texcoord_min.reset(x_min, y_min);
-			texcoord_max.reset(x_max, y_max);
+			min.reset(x_min, y_min);
+			max.reset(x_max, y_max);
 		}
 
 		operator bool () const
 		{
 			return
 				texture &&
-				texcoord_min.x < texcoord_max.x &&
-				texcoord_min.y < texcoord_max.y;
+				min.x < max.x &&
+				min.y < max.y;
 		}
 
 		bool operator ! () const
@@ -368,7 +374,7 @@ namespace Rays
 				if (state.shader) return &state.shader;
 				if (shader)       return shader;
 				return for_texture
-					?	&Shader_get_default_shader_for_texture()
+					?	&Shader_get_default_shader_for_texture(state.texcoord_wrap)
 					:	&Shader_get_default_shader_for_shape();
 			}
 
@@ -381,9 +387,10 @@ namespace Rays
 				Matrix texcoord_matrix(1);
 				if (texture && *texture)
 				{
+					bool normal = state.texcoord_mode == TEXCOORD_NORMAL;
 					texcoord_matrix.scale(
-						1.0 / texture->reserved_width(),
-						1.0 / texture->reserved_height());
+						(normal ? texture->width()  : 1.0) / texture->reserved_width(),
+						(normal ? texture->height() : 1.0) / texture->reserved_height());
 				}
 
 				for (const auto& name : names.uniform_position_matrix_names)
@@ -401,24 +408,27 @@ namespace Rays
 
 				if (!texinfo || !texture || !*texture) return;
 
+				coord tw = texture->reserved_width();
+				coord th = texture->reserved_height();
+				Point min(texinfo->min.x / tw, texinfo->min.y / th);
+				Point max(texinfo->max.x / tw, texinfo->max.y / th);
+				Point offset(          1 / tw,              1 / th);
+
 				for (const auto& name : names.uniform_texcoord_min_names)
 				{
 					apply_uniform(program, name, [&](GLint loc) {
-						Point min = texcoord_matrix * texinfo->texcoord_min;
 						glUniform3fv(loc, 1, min.array);
 					});
 				}
 				for (const auto& name : names.uniform_texcoord_max_names)
 				{
 					apply_uniform(program, name, [&](GLint loc) {
-						Point max = texcoord_matrix * texinfo->texcoord_max;
 						glUniform3fv(loc, 1, max.array);
 					});
 				}
 				for (const auto& name : names.uniform_texcoord_offset_names)
 				{
 					apply_uniform(program, name, [&](GLint loc) {
-						Point offset(1.0 / texture->width(), 1.0 / texture->height());
 						glUniform3fv(loc, 1, offset.array);
 					});
 				}
@@ -1555,6 +1565,30 @@ namespace Rays
 	Painter::texture () const
 	{
 		return self->state.texture;
+	}
+
+	void
+	Painter::set_texcoord_mode (TexCoordMode mode)
+	{
+		self->state.texcoord_mode = mode;
+	}
+
+	TexCoordMode
+	Painter::texcoord_mode () const
+	{
+		return self->state.texcoord_mode;
+	}
+
+	void
+	Painter::set_texcoord_wrap (TexCoordWrap wrap)
+	{
+		self->state.texcoord_wrap = wrap;
+	}
+
+	TexCoordWrap
+	Painter::texcoord_wrap () const
+	{
+		return self->state.texcoord_wrap;
 	}
 
 	void

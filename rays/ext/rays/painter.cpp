@@ -591,6 +591,44 @@ RUCY_DEF0(no_texture)
 RUCY_END
 
 static
+RUCY_DEF1(set_texcoord_mode, mode)
+{
+	CHECK;
+
+	THIS->set_texcoord_mode(to<Rays::TexCoordMode>(mode));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_texcoord_mode)
+{
+	CHECK;
+
+	return value(THIS->texcoord_mode());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_texcoord_wrap, wrap)
+{
+	CHECK;
+
+	THIS->set_texcoord_wrap(to<Rays::TexCoordWrap>(wrap));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_texcoord_wrap)
+{
+	CHECK;
+
+	return value(THIS->texcoord_wrap());
+}
+RUCY_END
+
+static
 RUCY_DEFN(set_shader)
 {
 	CHECK;
@@ -787,6 +825,10 @@ Init_rays_painter ()
 	cPainter.define_method(   "texture=", set_texture);
 	cPainter.define_method(   "texture",  get_texture);
 	cPainter.define_method("no_texture",   no_texture);
+	cPainter.define_method("texcoord_mode=", set_texcoord_mode);
+	cPainter.define_method("texcoord_mode",  get_texcoord_mode);
+	cPainter.define_method("texcoord_wrap=", set_texcoord_wrap);
+	cPainter.define_method("texcoord_wrap",  get_texcoord_wrap);
 	cPainter.define_private_method("set_shader", set_shader);
 	cPainter.define_method(            "shader", get_shader);
 	cPainter.define_method(         "no_shader",  no_shader);
