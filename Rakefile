@@ -63,7 +63,8 @@ end
 task :ext => :clean_bundles
 
 task :clean_bundles do
-  sh %( find . -iname 'native.bundle' | xargs rm )
+  exts = Dir.glob('*/ext/*/native.bundle')
+  sh %( rm #{exts.join ' '} )
 end
 
 task :run do
