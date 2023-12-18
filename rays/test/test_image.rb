@@ -11,7 +11,7 @@ class TestImage < Test::Unit::TestCase
     Rays::Image.load path
   end
 
-  def color(r = 0, g = 0, b = 0, a = 0)
+  def color(r, g, b, a)
     Rays::Color.new r, g, b, a
   end
 
@@ -52,24 +52,24 @@ class TestImage < Test::Unit::TestCase
   end
 
   def test_paint()
-    def paint(&block)
+    paint  = -> &block {
       Rays::Image.new(10, 10).paint(&block)
-    end
-    def fill(&block)
-      paint {|p| p.fill 1, 0, 0; p.stroke nil; block.call p}
-    end
-    def stroke(&block)
-      paint {|p| p.fill nil; p.stroke 1, 0, 0; block.call p}
-    end
-    def drawn(&block)
-      fill(&block).bitmap.to_a.reject {|o| o.transparent?}.uniq.size > 0
-    end
+    }
+    fill   = -> &block {
+      paint.call {|p| p.fill 1, 0, 0; p.stroke nil; block.call p}
+    }
+    stroke = -> &block {
+      paint.call {|p| p.fill nil; p.stroke 1, 0, 0; block.call p}
+    }
+    drawn  = -> &block {
+      fill[&block].bitmap.to_a.reject {|o| o.transparent?}.uniq.size > 0
+    }
 
-    assert_equal color(0, 0, 0, 0), fill   {|p| p.rect 1, 1, 8, 8}[0, 0]
-    assert_equal color(1, 0, 0, 1), fill   {|p| p.rect 1, 1, 8, 8}[1, 1]
-    assert_equal color(1, 0, 0, 1), stroke {|p| p.line 0, 0, 1, 1}[0, 0]
+    assert_equal color(0, 0, 0, 0), fill.call   {|p| p.rect 1, 1, 8, 8}[0, 0]
+    assert_equal color(1, 0, 0, 1), fill.call   {|p| p.rect 1, 1, 8, 8}[1, 1]
+    assert_equal color(1, 0, 0, 1), stroke.call {|p| p.line 0, 0, 1, 1}[0, 0]
 
-    assert drawn {|p| p.text "a"}
+    assert drawn.call {|p| p.text "a"}
   end
 
   def test_save_load()
