@@ -19,6 +19,10 @@ class TestImage < Test::Unit::TestCase
     Rays::Bounds.new(*args)
   end
 
+  def update_texture(img)
+    image(1, 1).paint {image img}
+  end
+
   def test_initialize()
     assert_equal 10,       image(10, 20).width
     assert_equal 20,       image(10, 20).height
@@ -40,6 +44,28 @@ class TestImage < Test::Unit::TestCase
   def test_bitmap()
     assert_equal 10, image(10, 20).bitmap.width
     assert_equal 10, image(20, 10).bitmap.height
+  end
+
+  def test_bitmap_with_modify_flag()
+    img1 = image 1, 1
+    update_texture img1
+    img1.bitmap(false).tap {|bmp| bmp[0, 0] = color 1, 0, 0, 1}
+
+    img2 = image 1, 1
+    update_texture img2
+    img2.bitmap(true) .tap {|bmp| bmp[0, 0] = color 0, 1, 0, 1}
+
+    assert_equal [0x00000000], image(1, 1).paint {image img1}.pixels
+    assert_equal [0xff00ff00], image(1, 1).paint {image img2}.pixels
+  end
+
+  def test_pixels()
+    img        = image 2, 1
+    assert_equal [0x00000000, 0x00000000], img.pixels
+
+    img.pixels = [0xffff0000, 0xff00ff00]
+    assert_equal [0xffff0000, 0xff00ff00], img.pixels
+    assert_equal [0xffff0000, 0xff00ff00], image(2, 1).paint {image img}.pixels
   end
 
   def test_painter()

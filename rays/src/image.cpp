@@ -271,8 +271,13 @@ namespace Rays
 	}
 
 	Bitmap&
-	Image::bitmap ()
+	Image::bitmap (bool modify)
 	{
+		if (modify)
+		{
+			if (!self->bitmap) get_bitmap(this);
+			Bitmap_set_modified(&self->bitmap);
+		}
 		return get_bitmap(this);
 	}
 

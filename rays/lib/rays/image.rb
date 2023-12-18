@@ -9,7 +9,9 @@ module Rays
 
     extend Forwardable
 
-    def_delegators :bitmap, :pixels=, :pixels, :[]=, :[]
+    def_delegators :bitmap,           :pixels,  :[]
+
+    def_delegators :bitmap_for_write, :pixels=, :[]=
 
     def paint(&block)
       painter.paint self, &block
@@ -22,6 +24,14 @@ module Rays
 
     def bounds()
       Bounds.new 0, 0, width, height
+    end
+
+    def bitmap(modify = false)
+      get_bitmap modify
+    end
+
+    private def bitmap_for_write()
+      get_bitmap true
     end
 
   end# Image

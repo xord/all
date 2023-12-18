@@ -47,7 +47,7 @@ namespace Rays
 
 			Painter painter ();
 
-			      Bitmap& bitmap ();
+			      Bitmap& bitmap (bool modify = false);
 
 			const Bitmap& bitmap () const;
 
