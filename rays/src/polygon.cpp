@@ -119,11 +119,23 @@ namespace Rays
 				triangulate();
 				if (indices.empty()) return;
 
-				Painter_draw(
-					painter, GL_TRIANGLES, color,
-					&points[0],  points.size(),
-					&indices[0], indices.size(),
-					ptexcoords ? &(*ptexcoords)[0] : NULL);
+				if (pcolors)
+				{
+					Painter_draw(
+						painter, GL_TRIANGLES,
+						&points[0],  points.size(),
+						&indices[0], indices.size(),
+						&(*pcolors)[0],
+						ptexcoords ? &(*ptexcoords)[0] : NULL);
+				}
+				else
+				{
+					Painter_draw(
+						painter, GL_TRIANGLES, color,
+						&points[0],  points.size(),
+						&indices[0], indices.size(),
+						ptexcoords ? &(*ptexcoords)[0] : NULL);
+				}
 			}
 
 		private:
