@@ -149,4 +149,8 @@ class TestColor < Test::Unit::TestCase
     assert_equal_color color(1, 0, 0, 1),   hsv(1, 1, 1, 1)
   end
 
+  def test_inspect()
+    assert_equal "#<Rays::Color 1.0 2.0 3.0 1.0>", color(1, 2, 3).inspect
+  end
+
 end# TestColor

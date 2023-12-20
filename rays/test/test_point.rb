@@ -179,7 +179,7 @@ class TestPoint < Test::Unit::TestCase
   end
 
   def test_inspect()
-    assert_equal "#<Rays::Point 1.0, 2.0, 3.0>", point(1, 2, 3).inspect
+    assert_equal "#<Rays::Point 1.0 2.0 3.0>", point(1, 2, 3).inspect
   end
 
   def test_dot()

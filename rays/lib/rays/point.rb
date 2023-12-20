@@ -47,7 +47,7 @@ module Rays
     end
 
     def inspect()
-      "#<Rays::Point #{to_a(3).join ', '}>"
+      "#<Rays::Point #{to_a(3).join ' '}>"
     end
 
   end# Point

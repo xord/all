@@ -82,7 +82,7 @@ module Rays
     end
 
     def inspect()
-      "#<#{self.class.name} #{to_s}>"
+      "#<#{self.class.name} #{to_a.join ' '}>"
     end
 
   end# Color
