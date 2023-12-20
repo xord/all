@@ -1,7 +1,6 @@
 #include "rays/ruby/polygon.h"
 
 
-#include <assert.h>
 #include <vector>
 #include <functional>
 #include "rays/ruby/bounds.h"
@@ -103,8 +102,8 @@ RUCY_DEF0(each)
 	CHECK;
 
 	Value ret = Qnil;
-	for (const auto& line : *THIS)
-		ret = rb_yield(value(line));
+	for (const auto& polyline : *THIS)
+		ret = rb_yield(value(polyline));
 	return ret;
 }
 RUCY_END
@@ -330,7 +329,7 @@ Init_rays_polygon ()
 	cPolygon.define_private_method("setup", setup);
 	cPolygon.define_method("expand", expand);
 	cPolygon.define_method("bounds", bounds);
-	cPolygon.define_method("size", size);
+	cPolygon.define_method("size",   size);
 	cPolygon.define_method("empty?", is_empty);
 	cPolygon.define_method("[]", get_at);
 	cPolygon.define_method("each", each);
@@ -361,22 +360,23 @@ namespace Rucy
 	template <> Rays::Polygon
 	value_to<Rays::Polygon> (int argc, const Value* argv, bool convert)
 	{
-		assert(argc == 0 || (argc > 0 && argv));
-
 		if (convert)
 		{
 			if (argc <= 0)
 				return Rays::Polygon();
-			else if (argv->is_kind_of(Rays::polygon_line_class()))
-			{
-				std::vector<Rays::Polygon::Line> lines;
-				lines.reserve(argc);
-				for (int i = 0; i < argc; ++i)
-					lines.emplace_back(to<Rays::Polygon::Line&>(argv[i]));
-				return Rays::Polygon(&lines[0], lines.size());
-			}
 			else if (argv->is_kind_of(Rays::polyline_class()))
-				return Rays::Polygon(to<Rays::Polyline&>(*argv));
+			{
+				if (argc == 1)
+					return Rays::Polygon(to<Rays::Polyline&>(*argv));
+				else
+				{
+					std::vector<Rays::Polyline> polylines;
+					polylines.reserve(argc);
+					for (int i = 0; i < argc; ++i)
+						polylines.emplace_back(to<Rays::Polyline&>(argv[i]));
+					return Rays::Polygon(&polylines[0], polylines.size());
+				}
+			}
 			else if (argv->is_num() || argv->is_array())
 			{
 				std::vector<Rays::Point> points;

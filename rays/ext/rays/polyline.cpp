@@ -78,6 +78,14 @@ RUCY_DEF0(is_fill)
 RUCY_END
 
 static
+RUCY_DEF0(is_hole)
+{
+	CHECK;
+	return value(THIS->hole());
+}
+RUCY_END
+
+static
 RUCY_DEF0(size)
 {
 	CHECK;
@@ -196,6 +204,7 @@ Init_rays_polyline ()
 	cPolyline.define_method("bounds", bounds);
 	cPolyline.define_method("loop?", is_loop);
 	cPolyline.define_method("fill?", is_fill);
+	cPolyline.define_method("hole?", is_hole);
 	cPolyline.define_method("size", size);
 	cPolyline.define_method("empty?", is_empty);
 	cPolyline.define_method("[]", get_at);

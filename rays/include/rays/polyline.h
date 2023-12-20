@@ -53,6 +53,8 @@ namespace Rays
 
 			bool fill () const;
 
+			bool hole () const;
+
 			const Point* points () const;
 
 			const Color* colors () const;

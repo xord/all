@@ -20,36 +20,9 @@ namespace Rays
 
 		public:
 
-			struct Line : public Polyline
-			{
+			typedef std::vector<Polyline>        PolylineList;
 
-				typedef Polyline Super;
-
-				public:
-
-					Line ();
-
-					Line (
-						const Point* points, size_t size, bool loop = true, bool hole = false,
-						const Color* colors = NULL, const Coord3* texcoords = NULL);
-
-					Line (const Polyline& polyline, bool hole = false);
-
-					bool hole () const;
-
-					operator bool () const;
-
-					bool operator ! () const;
-
-				private:
-
-					bool hole_;
-
-			};// Line
-
-			typedef std::vector<Line> LineList;
-
-			typedef LineList::const_iterator const_iterator;
+			typedef PolylineList::const_iterator const_iterator;
 
 			Polygon ();
 
@@ -59,7 +32,7 @@ namespace Rays
 
 			Polygon (const Polyline& polyline);
 
-			Polygon (const Line* lines, size_t size);
+			Polygon (const Polyline* polylines, size_t size);
 
 			~Polygon ();
 
@@ -80,7 +53,7 @@ namespace Rays
 
 			const_iterator end () const;
 
-			const Line& operator [] (size_t index) const;
+			const Polyline& operator [] (size_t index) const;
 
 			operator bool () const;
 

@@ -235,19 +235,19 @@ class TestPolyline < Test::Unit::TestCase
 
   def test_inspect()
     assert_equal(
-      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:false fill:false colors:0 texcoords:0>",
+      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:false fill:false hole:false colors:0 texcoords:0>",
       polyline(1,2, 3,4).inspect)
     assert_equal(
-      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:true fill:false colors:0 texcoords:0>",
+      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:true fill:false hole:false colors:0 texcoords:0>",
       polyline(1,2, 3,4, loop: true, fill: false).inspect)
     assert_equal(
-      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:false fill:true colors:0 texcoords:0>",
+      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:false fill:true hole:false colors:0 texcoords:0>",
       polyline(1,2, 3,4, loop: false, fill: true).inspect)
     assert_equal(
-      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:false fill:false colors:2 texcoords:0>",
+      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:false fill:false hole:false colors:2 texcoords:0>",
       polyline(1,2, 3,4, colors: [[1], [2]]).inspect)
     assert_equal(
-      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:false fill:false colors:0 texcoords:2>",
+      "#<Rays::Polyline [1.0,2.0, 3.0,4.0] loop:false fill:false hole:false colors:0 texcoords:2>",
       polyline(1,2, 3,4, texcoords: [1,2, 3,4]).inspect)
   end
 

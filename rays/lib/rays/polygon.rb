@@ -13,11 +13,9 @@ module Rays
       setup args, loop, colors, texcoords
     end
 
-    def transform(matrix = nil, &block)
-      lines = to_a
-      lines = lines.map {|line| line.transform matrix} if matrix
-      lines = block.call lines if block
-      self.class.new(*lines)
+    def transform(&block)
+      polylines = block.call to_a
+      self.class.new(*polylines)
     end
 
     def intersects(obj)

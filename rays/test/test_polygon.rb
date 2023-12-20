@@ -13,10 +13,6 @@ class TestPolygon < Test::Unit::TestCase
     Rays::Polygon.new(*args, **kwargs)
   end
 
-  def line(*args)
-    Rays::Polygon::Line.new(*args)
-  end
-
   def polyline(*args)
     Rays::Polyline.new(*args)
   end
@@ -71,43 +67,26 @@ class TestPolygon < Test::Unit::TestCase
     }
   end
 
-  def test_transform_with_matrix()
-    m = Rays::Matrix.translate 10, 10
-    assert_equal_polygon rect(20, 20, 50, 50), rect(10, 10, 50, 50).transform(m)
-
-    m = Rays::Matrix.scale 2
-    assert_equal_polygon rect(20, 20, 40, 40), rect(10, 10, 20, 20).transform(m)
-
-    m = Rays::Matrix.rotate 90
-    assert_equal_polygon rect(-10, 0, 10, 10), rect(0, 0, 10, 10).transform(m)
-  end
-
-  def test_transform_block()
+  def test_transform()
     o = rect(0, 0, 100, 100) - rect(10, 10, 50, 50)
     assert_equal 2, o.size
 
-    o.transform {|lines|
-      lines.map {|l| l.transform Rays::Matrix.translate 10, 10}
+    o.transform {|polylines|
+      m = Rays::Matrix.translate 10, 10
+      polylines.map {|pl| pl.dup points: pl.points.map {|p| m * p}}
     }.tap {|x|
       assert_equal_polygon (rect(10, 10, 100, 100) - rect(20, 20, 50, 50)), x
     }
 
-    o.transform {|lines|
-      lines.reject {|l| l.to_a.include? point(10, 10)}
+    o.transform {|polylines|
+      polylines.reject {|pl| pl.to_a.include? point(10, 10)}
     }.tap {|x|
       assert_equal 1, x.size
       assert_equal 2, o.size
     }
 
-    o.transform {|lines|
-      lines.reject {|l| l.to_a.include? point(10, 10)}
-    }.tap {|x|
-      assert_equal 1, x.size
-      assert_equal 2, o.size
-    }
-
-    o.transform {|lines|
-      lines + [line(1, 2, 3, 4, 5, 6)]
+    o.transform {|polylines|
+      polylines + [polyline(1, 2, 3, 4, 5, 6)]
     }.tap {|x|
       assert_equal 3, x.size
       assert_equal 2, o.size

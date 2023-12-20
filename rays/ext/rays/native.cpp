@@ -12,7 +12,6 @@ void Init_rays_matrix ();
 
 void Init_rays_painter ();
 void Init_rays_polyline ();
-void Init_rays_polygon_line ();
 void Init_rays_polygon ();
 void Init_rays_bitmap ();
 void Init_rays_image ();
@@ -45,7 +44,6 @@ extern "C" void
 
 	Init_rays_painter();
 	Init_rays_polyline();
-	Init_rays_polygon_line();
 	Init_rays_polygon();
 	Init_rays_bitmap();
 	Init_rays_image();

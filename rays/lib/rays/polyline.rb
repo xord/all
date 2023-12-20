@@ -17,7 +17,7 @@ module Rays
       points_, loop_, fill_, colors_, texcoords_ =
         kwargs.values_at :points, :loop, :fill, :colors, :texcoords
       self.class.new(
-        *(points_ || (points? ? points : [])),
+                 *(points_    || (points?    ? points    : [])),
         loop:      loop_ != nil ? loop_ : loop?,
         fill:      fill_ != nil ? fill_ : fill?,
         colors:    colors_    || (colors?    ? colors    : nil),
@@ -63,7 +63,7 @@ module Rays
     def inspect()
       p    = points.map {|o| o.to_a.join ','}.join ', '
       c, t = colors.size, texcoords.size
-      "#<Rays::Polyline [#{p}] loop:#{loop?} fill:#{fill?} colors:#{c} texcoords:#{t}>"
+      "#<Rays::Polyline [#{p}] loop:#{loop?} fill:#{fill?} hole:#{hole?} colors:#{c} texcoords:#{t}>"
     end
 
   end# Polyline
