@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <vector>
+#include "rays/ruby/color.h"
 #include "rays/ruby/point.h"
 #include "rays/ruby/bounds.h"
 #include "rays/ruby/polygon.h"
@@ -24,13 +25,13 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF4(setup, points, loop, colors, texcoords)
+RUCY_DEF5(setup, points, loop, fill, colors, texcoords)
 {
 	CHECK;
 
 	CreateParams params(points, colors, texcoords);
 	*THIS = Rays::Polyline(
-		params.ppoints(), params.size(), loop,
+		params.ppoints(), params.size(), loop, fill,
 		params.pcolors(), params.ptexcoords());
 }
 RUCY_END
@@ -61,10 +62,18 @@ RUCY_DEF0(bounds)
 RUCY_END
 
 static
-RUCY_DEF0(loop)
+RUCY_DEF0(is_loop)
 {
 	CHECK;
 	return value(THIS->loop());
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_fill)
+{
+	CHECK;
+	return value(THIS->fill());
 }
 RUCY_END
 
@@ -101,13 +110,73 @@ RUCY_DEF1(get_at, index)
 RUCY_END
 
 static
-RUCY_DEF0(each)
+RUCY_DEF0(has_points)
+{
+	CHECK;
+	return value(THIS->points() && !THIS->empty());
+}
+RUCY_END
+
+static
+RUCY_DEF0(has_colors)
+{
+	CHECK;
+	return value(THIS->colors() && !THIS->empty());
+}
+RUCY_END
+
+static
+RUCY_DEF0(has_texcoords)
+{
+	CHECK;
+	return value(THIS->texcoords() && !THIS->empty());
+}
+RUCY_END
+
+static
+RUCY_DEF0(each_point)
 {
 	CHECK;
 
 	Value ret = Qnil;
 	for (const auto& point : *THIS)
 		ret = rb_yield(value(point));
+	return ret;
+}
+RUCY_END
+
+static
+RUCY_DEF0(each_color)
+{
+	CHECK;
+
+	const Rays::Color* colors = THIS->colors();
+
+	Value ret = Qnil;
+	if (colors)
+	{
+		size_t size = THIS->size();
+		for (size_t i = 0; i < size; ++i)
+			ret = rb_yield(value(colors[i]));
+	}
+	return ret;
+}
+RUCY_END
+
+static
+RUCY_DEF0(each_texcoord)
+{
+	CHECK;
+
+	const Rays::Coord3* texcoords = THIS->texcoords();
+
+	Value ret = Qnil;
+	if (texcoords)
+	{
+		size_t size = THIS->size();
+		for (size_t i = 0; i < size; ++i)
+			ret = rb_yield(value(*(Rays::Point*) &texcoords[i]));
+	}
 	return ret;
 }
 RUCY_END
@@ -125,11 +194,17 @@ Init_rays_polyline ()
 	cPolyline.define_private_method("setup", setup);
 	cPolyline.define_method("expand", expand);
 	cPolyline.define_method("bounds", bounds);
-	cPolyline.define_method("loop?", loop);
+	cPolyline.define_method("loop?", is_loop);
+	cPolyline.define_method("fill?", is_fill);
 	cPolyline.define_method("size", size);
 	cPolyline.define_method("empty?", is_empty);
 	cPolyline.define_method("[]", get_at);
-	cPolyline.define_method("each", each);
+	cPolyline.define_method("points?",    has_points);
+	cPolyline.define_method("colors?",    has_colors);
+	cPolyline.define_method("texcoords?", has_texcoords);
+	cPolyline.define_private_method("each_point!",    each_point);
+	cPolyline.define_private_method("each_color!",    each_color);
+	cPolyline.define_private_method("each_texcoord!", each_texcoord);
 }
 
 

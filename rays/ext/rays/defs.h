@@ -51,10 +51,18 @@ struct CreateParams
 		get_points(&points, points_.size(), points_.as_array());
 
 		if (colors_)
+		{
 			get_colors(&colors, colors_.size(), colors_.as_array());
+			if (colors.size() != points.size())
+				argument_error(__FILE__, __LINE__, "colors.size() != points.size()");
+		}
 
 		if (texcoords_)
+		{
 			get_points(&texcoords, texcoords_.size(), texcoords_.as_array());
+			if (texcoords.size() != points.size())
+				argument_error(__FILE__, __LINE__, "texcoords.size() != points.size()");
+		}
 	}
 
 	const Rays::Point* ppoints () const
