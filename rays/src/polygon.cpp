@@ -60,13 +60,13 @@ namespace Rays
 				points.reserve(npoints);
 			}
 
-			void append (const Polygon::Line& line)
+			void append (const Polyline& polyline)
 			{
-				if (line.empty()) return;
+				if (polyline.empty()) return;
 
-				const Point* points_     = line.points();
-				const Color* colors_     = line.colors();
-				const Coord3* texcoords_ = line.texcoords();
+				const Point* points_     = polyline.points();
+				const Color* colors_     = polyline.colors();
+				const Coord3* texcoords_ = polyline.texcoords();
 				if (!points_)
 					argument_error(__FILE__, __LINE__);
 
@@ -77,8 +77,8 @@ namespace Rays
 					argument_error(__FILE__, __LINE__);
 				}
 
-				segments.emplace_back(points.size(), 0, line.hole());
-				points.insert(points.end(), points_, points_ + line.size());
+				segments.emplace_back(points.size(), 0, polyline.hole());
+				points.insert(points.end(), points_, points_ + polyline.size());
 				segments.back().end = points.size();
 
 				if (colors_)
@@ -88,7 +88,7 @@ namespace Rays
 						pcolors.reset(new decltype(pcolors)::element_type());
 						pcolors->reserve(points.capacity());
 					}
-					pcolors->insert(pcolors->end(), colors_, colors_ + line.size());
+					pcolors->insert(pcolors->end(), colors_, colors_ + polyline.size());
 				}
 
 				if (texcoords_)
@@ -99,7 +99,7 @@ namespace Rays
 						ptexcoords->reserve(points.capacity());
 					}
 					ptexcoords->insert(
-						ptexcoords->end(), texcoords_, texcoords_ + line.size());
+						ptexcoords->end(), texcoords_, texcoords_ + polyline.size());
 				}
 			}
 
@@ -233,9 +233,9 @@ namespace Rays
 	struct Polygon::Data
 	{
 
-		LineList lines;
+		PolylineList polylines;
 
-		mutable std::unique_ptr<Bounds> pbounds;
+		mutable std::unique_ptr<Bounds>    pbounds;
 
 		mutable std::unique_ptr<Triangles> ptriangles;
 
@@ -247,14 +247,14 @@ namespace Rays
 		{
 			if (!pbounds)
 			{
-				if (lines.empty())
+				if (polylines.empty())
 					pbounds.reset(new Bounds(-1, -1, -1));
 				else
 				{
-					pbounds.reset(new Bounds(lines[0][0], 0));
-					for (const auto& line : lines)
+					pbounds.reset(new Bounds(polylines[0][0], 0));
+					for (const auto& polyline : polylines)
 					{
-						for (const auto& point : line)
+						for (const auto& point : polyline)
 							*pbounds |= point;
 					}
 				}
@@ -262,22 +262,12 @@ namespace Rays
 			return *pbounds;
 		}
 
-		void append (const Polyline& polyline, bool hole = false)
+		void append (const Polyline& polyline)
 		{
 			if (polyline.empty())
 				return;
 
-			lines.emplace_back(polyline, hole);
-			pbounds.reset();
-		}
-
-		void append (const Line& line)
-		{
-			if (line.empty())
-				return;
-
-			lines.emplace_back(line);
-			pbounds.reset();
+			polylines.emplace_back(polyline);
 		}
 
 		bool triangulate (TrianglePointList* triangles) const
@@ -313,8 +303,8 @@ namespace Rays
 				if (!ptriangles)
 				{
 					ptriangles.reset(new Triangles(count_points_for_triangulation()));
-					for (const auto& line : lines)
-						ptriangles->append(line);
+					for (const auto& polyline : polylines)
+						ptriangles->append(polyline);
 				}
 				return *ptriangles;
 			}
@@ -322,17 +312,17 @@ namespace Rays
 			size_t count_points_for_triangulation () const
 			{
 				size_t count = 0;
-				for (const auto& line : lines)
+				for (const auto& polyline : polylines)
 				{
-					if (can_triangulate(line))
-						count += line.size();
+					if (can_triangulate(polyline))
+						count += polyline.size();
 				}
 				return count;
 			}
 
-			bool can_triangulate (const Line& line) const
+			bool can_triangulate (const Polyline& polyline) const
 			{
-				return (line.fill() || line.hole()) && line.size() >= 3;
+				return (polyline.fill() || polyline.hole()) && polyline.size() >= 3;
 			}
 
 			void stroke_with_width (
@@ -393,11 +383,11 @@ namespace Rays
 			{
 				assert(painter && color);
 
-				for (const auto& line : lines)
+				for (const auto& polyline : polylines)
 				{
 					Painter_draw(
-						painter, line.loop() ? GL_LINE_LOOP : GL_LINE_STRIP, color,
-						&line[0], line.size());
+						painter, polyline.loop() ? GL_LINE_LOOP : GL_LINE_STRIP, color,
+						&polyline[0], polyline.size());
 				}
 			}
 
@@ -463,14 +453,14 @@ namespace Rays
 		assert(clipper);
 
 		clip::Path path;
-		for (const auto& line : polygon)
+		for (const auto& polyline : polygon)
 		{
-			if (!line) continue;
+			if (!polyline) continue;
 
-			Polyline_get_path(&path, line, line.hole());
+			Polyline_get_path(&path, polyline, polyline.hole());
 			if (path.empty()) continue;
 
-			clipper->AddPath(path, type, line.loop());
+			clipper->AddPath(path, type, polyline.loop());
 		}
 	}
 
@@ -530,10 +520,10 @@ namespace Rays
 		assert(offsetter);
 
 		bool added = false;
-		for (const auto& line : polygon.self->lines)
+		for (const auto& polyline : polygon.self->polylines)
 		{
 			added |= add_polyline_to_offsetter(
-				offsetter, line, cap, join, line.hole(), true);
+				offsetter, polyline, cap, join, polyline.hole(), true);
 		}
 		return added;
 	}
@@ -546,12 +536,11 @@ namespace Rays
 		if (node.Contour.empty() || node.IsHole())
 			return false;
 
-		Polyline polyline;
-		Polyline_create(&polyline, node.Contour, !node.IsOpen(), false);
+		Polyline polyline = Polyline_create(node.Contour, !node.IsOpen());
 		if (!polyline)
 			return false;
 
-		polygon->self->append(polyline, false);
+		polygon->self->append(polyline);
 		return true;
 	}
 
@@ -565,12 +554,11 @@ namespace Rays
 			if (!child->IsHole())
 				return;
 
-			Polyline polyline;
-			Polyline_create(&polyline, child->Contour, !child->IsOpen(), true);
+			Polyline polyline = Polyline_create(child->Contour, !child->IsOpen(), true);
 			if (!polyline)
 				continue;
 
-			polygon->self->append(polyline, true);
+			polygon->self->append(polyline);
 		}
 	}
 
@@ -676,10 +664,10 @@ namespace Rays
 
 		void fill (Painter* painter, const Color& color) const
 		{
-			if (lines.size() != 1)
+			if (polylines.size() != 1)
 				invalid_state_error(__FILE__, __LINE__);
 
-			const auto& outline = lines[0];
+			const auto& outline = polylines[0];
 			Painter_draw(
 				painter, GL_TRIANGLE_FAN, color, &outline[0], outline.size());
 		}
@@ -837,7 +825,7 @@ namespace Rays
 
 		void fill (Painter* painter, const Color& color) const
 		{
-			if (lines.size() <= 0)
+			if (polylines.size() <= 0)
 				invalid_state_error(__FILE__, __LINE__);
 
 			if (mode == 0)
@@ -846,10 +834,10 @@ namespace Rays
 				return;
 			}
 
-			if (lines.size() >= 2)
+			if (polylines.size() >= 2)
 				invalid_state_error(__FILE__, __LINE__);
 
-			const auto& outline = lines[0];
+			const auto& outline = polylines[0];
 			Painter_draw(painter, mode, color, &outline[0], outline.size());
 		}
 
@@ -905,7 +893,7 @@ namespace Rays
 							hole_x, hole_y, hole_size.x, hole_size.y,
 							radian_from, radian_to, nsegment, seg));
 					}
-					append(Polyline(&points[0], points.size(), true), true);
+					append(Polyline_create(&points[0], points.size(), true, true));
 				}
 			}
 
@@ -1502,12 +1490,12 @@ namespace Rays
 		self->append(polyline);
 	}
 
-	Polygon::Polygon (const Line* lines, size_t size)
+	Polygon::Polygon (const Polyline* polylines, size_t size)
 	{
-		if (!lines || size <= 0) return;
+		if (!polylines || size <= 0) return;
 
 		for (size_t i = 0; i < size; ++i)
-			self->append(lines[i]);
+			self->append(polylines[i]);
 	}
 
 	Polygon::Polygon (Data* data)
@@ -1536,7 +1524,7 @@ namespace Rays
 	size_t
 	Polygon::size () const
 	{
-		return self->lines.size();
+		return self->polylines.size();
 	}
 
 	bool
@@ -1544,9 +1532,9 @@ namespace Rays
 	{
 		if (deep)
 		{
-			for (const auto& line : self->lines)
+			for (const auto& polyline : self->polylines)
 			{
-				if (!line.empty())
+				if (!polyline.empty())
 					return false;
 			}
 		}
@@ -1557,29 +1545,29 @@ namespace Rays
 	Polygon::const_iterator
 	Polygon::begin () const
 	{
-		return self->lines.begin();
+		return self->polylines.begin();
 	}
 
 	Polygon::const_iterator
 	Polygon::end () const
 	{
-		return self->lines.end();
+		return self->polylines.end();
 	}
 
-	const Polygon::Line&
+	const Polyline&
 	Polygon::operator [] (size_t index) const
 	{
-		return self->lines[index];
+		return self->polylines[index];
 	}
 
 	Polygon::operator bool () const
 	{
-		if (self->lines.empty())
+		if (self->polylines.empty())
 			return true;
 
-		for (const auto& line : self->lines)
+		for (const auto& polyline : self->polylines)
 		{
-			if (line) return true;
+			if (polyline) return true;
 		}
 
 		return false;
@@ -1633,45 +1621,6 @@ namespace Rays
 		if (lhs.self == rhs.self) return Polygon();
 
 		return clip_polygons(lhs, rhs, clip::ctXor);
-	}
-
-
-	Polygon::Line::Line ()
-	:	Super(), hole_(false)
-	{
-	}
-
-	Polygon::Line::Line (
-		const Point* points, size_t size, bool loop, bool hole,
-		const Color* colors, const Coord3* texcoords)
-	:	Super(points, size, loop, colors, texcoords), hole_(hole)
-	{
-		if (!*this)
-			argument_error(__FILE__, __LINE__);
-	}
-
-	Polygon::Line::Line (const Polyline& polyline, bool hole)
-	:	Super(polyline), hole_(hole)
-	{
-		if (!*this)
-			argument_error(__FILE__, __LINE__);
-	}
-
-	bool
-	Polygon::Line::hole () const
-	{
-		return hole_;
-	}
-
-	Polygon::Line::operator bool () const
-	{
-		return Super::operator bool() && (loop() || !hole());
-	}
-
-	bool
-	Polygon::Line::operator ! () const
-	{
-		return !operator bool();
 	}
 
 

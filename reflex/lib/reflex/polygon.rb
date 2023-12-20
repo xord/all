@@ -1,5 +1,4 @@
 require 'rays/polygon'
-require 'rays/polygon_line'
 
 
 module Reflex

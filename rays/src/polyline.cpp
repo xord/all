@@ -1,7 +1,6 @@
 #include "polyline.h"
 
 
-#include <assert.h>
 #include <memory>
 #include "rays/color.h"
 #include "rays/debug.h"
@@ -27,19 +26,20 @@ namespace Rays
 
 		std::unique_ptr<TexCoordList> ptexcoords;
 
-		bool loop = false, fill = false;
+		bool loop = false, fill = false, hole = false;
 
 		void reset (
 			const auto* points_, const Color* colors_, const Coord3* texcoords_,
-			size_t size_, bool loop, bool fill, bool hole,
+			size_t size_, bool loop_, bool fill_, bool hole_,
 			auto to_point_fun)
 		{
 			ColorList* colors       = colors_    ? &this->colors()    : NULL;
 			TexCoordList* texcoords = texcoords_ ? &this->texcoords() : NULL;
 			int size                = (int) size_;
 
-			this->loop = loop;
-			this->fill = fill;
+			loop = loop_;
+			fill = fill_;
+			hole = hole_;
 
 			points.clear();
 			points.reserve(size);
@@ -114,16 +114,27 @@ namespace Rays
 	};// Polyline::Data
 
 
-	void
-	Polyline_create (
-		Polyline* polyline, const Path& path, bool loop, bool hole)
+	Polyline
+	Polyline_create (const Point* points, size_t size, bool loop, bool hole)
+	{
+		Polyline pl;
+		pl.self->reset(
+			points, NULL, NULL, size, loop, loop, hole,
+			[](const Point& point) {return point;});
+		return pl;
+	}
+
+	Polyline
+	Polyline_create (const Path& path, bool loop, bool hole)
 	{
 		Path cleaned;
 		ClipperLib::CleanPolygon(path, cleaned);
 
-		polyline->self->reset(
+		Polyline pl;
+		pl.self->reset(
 			&cleaned[0], NULL, NULL, cleaned.size(), loop, loop, hole,
 			[](const IntPoint& point) {return from_clipper(point);});
+		return pl;
 	}
 
 	template <typename I>
@@ -138,8 +149,6 @@ namespace Rays
 	void
 	Polyline_get_path (Path* path, const Polyline& polyline, bool hole)
 	{
-		assert(path);
-
 		const auto& points = polyline.self->points;
 		if (hole)
 			reset_path(path, points.rbegin(), points.rend());
@@ -206,6 +215,12 @@ namespace Rays
 		return self->fill;
 	}
 
+	bool
+	Polyline::hole () const
+	{
+		return self->hole;
+	}
+
 	const Point*
 	Polyline::points () const
 	{
@@ -259,7 +274,7 @@ namespace Rays
 
 	Polyline::operator bool () const
 	{
-		return true;
+		return self->loop || !self->hole;
 	}
 
 	bool
