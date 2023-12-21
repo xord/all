@@ -32,11 +32,13 @@ namespace Rays
 
 			Polyline (
 				const Point* points, size_t size, bool loop = false,
-				const Color* colors = NULL, const Coord3* texcoords = NULL);
+				const Color* colors = NULL, const Coord3* texcoords = NULL,
+				bool hole = false);
 
 			Polyline (
 				const Point* points, size_t size, bool loop, bool fill,
-				const Color* colors = NULL, const Coord3* texcoords = NULL);
+				const Color* colors = NULL, const Coord3* texcoords = NULL,
+				bool hole = false);
 
 			~Polyline ();
 

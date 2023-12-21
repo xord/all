@@ -25,14 +25,15 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF5(setup, points, loop, fill, colors, texcoords)
+RUCY_DEF6(setup, points, loop, fill, colors, texcoords, hole)
 {
 	CHECK;
 
 	CreateParams params(points, colors, texcoords);
 	*THIS = Rays::Polyline(
 		params.ppoints(), params.size(), loop, fill,
-		params.pcolors(), params.ptexcoords());
+		params.pcolors(), params.ptexcoords(),
+		hole);
 }
 RUCY_END
 

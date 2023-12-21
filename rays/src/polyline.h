@@ -51,16 +51,10 @@ namespace Rays
 
 
 	Polyline Polyline_create (
-		const Point* points, size_t size,
-		bool loop, bool hole = false);
-
-	Polyline Polyline_create (
-		const ClipperLib::Path& path,
-		bool loop, bool hole = false);
+		const ClipperLib::Path& path, bool loop, bool hole = false);
 
 	void Polyline_get_path (
-		ClipperLib::Path* path, const Polyline& polyline,
-		bool hole = false);
+		ClipperLib::Path* path, const Polyline& polyline, bool hole = false);
 
 	bool Polyline_expand (
 		Polygon* result, const Polyline& polyline,

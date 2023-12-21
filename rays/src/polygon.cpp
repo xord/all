@@ -499,7 +499,7 @@ namespace Rays
 	static bool
 	add_polyline_to_offsetter (
 		clip::ClipperOffset* offsetter, const Polyline& polyline,
-		CapType cap, JoinType join, bool hole, bool fill)
+		CapType cap, JoinType join, bool fill, bool hole)
 	{
 		assert(offsetter);
 
@@ -523,7 +523,7 @@ namespace Rays
 		for (const auto& polyline : polygon.self->polylines)
 		{
 			added |= add_polyline_to_offsetter(
-				offsetter, polyline, cap, join, polyline.hole(), true);
+				offsetter, polyline, cap, join, true, polyline.hole());
 		}
 		return added;
 	}
@@ -893,7 +893,7 @@ namespace Rays
 							hole_x, hole_y, hole_size.x, hole_size.y,
 							radian_from, radian_to, nsegment, seg));
 					}
-					append(Polyline_create(&points[0], points.size(), true, true));
+					append(Polyline(&points[0], points.size(), true, NULL, NULL, true));
 				}
 			}
 

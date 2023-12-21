@@ -59,39 +59,57 @@ class TestPolyline < Test::Unit::TestCase
   def test_initialize_loop_fill()
     get = -> pl {[pl.loop?, pl.fill?]}
 
-    assert_equal [false, false], get[polyline(1, 2, 3, 4, 5, 6)]
+    assert_equal [false, false], get[polyline(1,2, 3,4, 5,6)]
 
-    assert_equal [true,  true],  get[polyline(1, 2, 3, 4, 5, 6, loop: true)]
-    assert_equal [false, false], get[polyline(1, 2, 3, 4, 5, 6, loop: false)]
-    assert_equal [false, true],  get[polyline(1, 2, 3, 4, 5, 6, fill: true)]
-    assert_equal [false, false], get[polyline(1, 2, 3, 4, 5, 6, fill: false)]
+    assert_equal [true,  true],  get[polyline(1,2, 3,4, 5,6, loop: true)]
+    assert_equal [false, false], get[polyline(1,2, 3,4, 5,6, loop: false)]
+    assert_equal [false, true],  get[polyline(1,2, 3,4, 5,6, fill: true)]
+    assert_equal [false, false], get[polyline(1,2, 3,4, 5,6, fill: false)]
 
-    assert_equal [true,  true],  get[polyline(1, 2, 3, 4, 5, 6, loop: true,  fill: true)]
-    assert_equal [true,  false], get[polyline(1, 2, 3, 4, 5, 6, loop: true,  fill: false)]
-    assert_equal [false, true],  get[polyline(1, 2, 3, 4, 5, 6, loop: false, fill: true)]
-    assert_equal [false, false], get[polyline(1, 2, 3, 4, 5, 6, loop: false, fill: false)]
+    assert_equal [true,  true],  get[polyline(1,2, 3,4, 5,6, loop: true,  fill: true)]
+    assert_equal [true,  false], get[polyline(1,2, 3,4, 5,6, loop: true,  fill: false)]
+    assert_equal [false, true],  get[polyline(1,2, 3,4, 5,6, loop: false, fill: true)]
+    assert_equal [false, false], get[polyline(1,2, 3,4, 5,6, loop: false, fill: false)]
 
-    assert_equal [true,  true],  get[polyline(                  loop: true,  fill: true)]
-    assert_equal [true,  false], get[polyline(                  loop: true,  fill: false)]
-    assert_equal [false, true],  get[polyline(                  loop: false, fill: true)]
-    assert_equal [false, false], get[polyline(                  loop: false, fill: false)]
+    assert_equal [true,  true],  get[polyline(               loop: true,  fill: true)]
+    assert_equal [true,  false], get[polyline(               loop: true,  fill: false)]
+    assert_equal [false, true],  get[polyline(               loop: false, fill: true)]
+    assert_equal [false, false], get[polyline(               loop: false, fill: false)]
+  end
+
+  def test_initialize_hole()
+    assert_false polyline(1,2, 3,4, 5,6, loop: true).hole?
+
+    assert_true  polyline(1,2, 3,4, 5,6, loop: true, hole: true) .hole?
+    assert_false polyline(1,2, 3,4, 5,6, loop: true, hole: false).hole?
+
+    assert_true  polyline(               loop: true, hole: true) .hole?
+    assert_false polyline(               loop: true, hole: false).hole?
   end
 
   def test_initialize_errors()
-    assert_nothing_raised       {polyline(                  loop: true)}
-    assert_nothing_raised       {polyline(                  loop: false)}
-    assert_raise(ArgumentError) {polyline(1,                loop: true)}
-    assert_raise(ArgumentError) {polyline(1,                loop: false)}
-    assert_nothing_raised       {polyline(1, 2,             loop: true)}
-    assert_nothing_raised       {polyline(1, 2,             loop: false)}
-    assert_raise(ArgumentError) {polyline(1, 2, 3,          loop: true)}
-    assert_raise(ArgumentError) {polyline(1, 2, 3,          loop: false)}
-    assert_nothing_raised       {polyline(1, 2, 3, 4,       loop: true)}
-    assert_nothing_raised       {polyline(1, 2, 3, 4,       loop: false)}
-    assert_raise(ArgumentError) {polyline(1, 2, 3, 4, 5,    loop: true)}
-    assert_raise(ArgumentError) {polyline(1, 2, 3, 4, 5,    loop: false)}
-    assert_nothing_raised       {polyline(1, 2, 3, 4, 5, 6, loop: true)}
-    assert_nothing_raised       {polyline(1, 2, 3, 4, 5, 6, loop: false)}
+    assert_nothing_raised       {polyline(               loop: true,  hole: true)}
+    assert_nothing_raised       {polyline(               loop: true,  hole: false)}
+    assert_raise(ArgumentError) {polyline(               loop: false, hole: true)}
+    assert_nothing_raised       {polyline(               loop: false, hole: false)}
+    assert_raise(ArgumentError) {polyline(1,             loop: true)}
+    assert_raise(ArgumentError) {polyline(1,             loop: false)}
+    assert_nothing_raised       {polyline(1,2,           loop: true,  hole: true)}
+    assert_nothing_raised       {polyline(1,2,           loop: true,  hole: false)}
+    assert_raise(ArgumentError) {polyline(1,2,           loop: false, hole: true)}
+    assert_nothing_raised       {polyline(1,2,           loop: false, hole: false)}
+    assert_raise(ArgumentError) {polyline(1,2, 3,        loop: true)}
+    assert_raise(ArgumentError) {polyline(1,2, 3,        loop: false)}
+    assert_nothing_raised       {polyline(1,2, 3,4,      loop: true,  hole: true)}
+    assert_nothing_raised       {polyline(1,2, 3,4,      loop: true,  hole: false)}
+    assert_raise(ArgumentError) {polyline(1,2, 3,4,      loop: false, hole: true)}
+    assert_nothing_raised       {polyline(1,2, 3,4,      loop: false, hole: false)}
+    assert_raise(ArgumentError) {polyline(1,2, 3,4, 5,   loop: true)}
+    assert_raise(ArgumentError) {polyline(1,2, 3,4, 5,   loop: false)}
+    assert_nothing_raised       {polyline(1,2, 3,4, 5,6, loop: true,  hole: true)}
+    assert_nothing_raised       {polyline(1,2, 3,4, 5,6, loop: true,  hole: false)}
+    assert_raise(ArgumentError) {polyline(1,2, 3,4, 5,6, loop: false, hole: true)}
+    assert_nothing_raised       {polyline(1,2, 3,4, 5,6, loop: false, hole: false)}
   end
 
   def test_expand()
@@ -146,9 +164,15 @@ class TestPolyline < Test::Unit::TestCase
   end
 
   def test_dup_loop_fill()
-    assert_equal polyline(1,2, 3,4, loop: false, fill: false), polyline(1,2, 3,4)
-    assert_equal polyline(1,2, 3,4, loop: true,  fill: false), polyline(1,2, 3,4).dup(loop: true)
-    assert_equal polyline(1,2, 3,4, loop: false, fill: true),  polyline(1,2, 3,4).dup(fill: true)
+    assert_equal(
+      polyline(1,2, 3,4, 5,6,     loop: false, fill: false),
+      polyline(1,2, 3,4, 5,6))
+    assert_equal(
+      polyline(1,2, 3,4, 5,6,     loop: true,  fill: false),
+      polyline(1,2, 3,4, 5,6).dup(loop: true))
+    assert_equal(
+      polyline(1,2, 3,4, 5,6,     loop: false, fill: true),
+      polyline(1,2, 3,4, 5,6).dup(             fill: true))
   end
 
   def test_dup_colors()
@@ -171,6 +195,15 @@ class TestPolyline < Test::Unit::TestCase
       polyline(1,2, 3,4, colors: [[1], [2]]).dup(colors: [[3], [4]]))
 
     assert_raise(ArgumentError) {polyline(1,2, 3,4).dup(colors: [[1]])}
+  end
+
+  def test_dup_hole()
+    assert_equal(
+      polyline(1,2, 3,4, 5,6, loop: true,     hole: false),
+      polyline(1,2, 3,4, 5,6, loop: true))
+    assert_equal(
+      polyline(1,2, 3,4, 5,6, loop: true,     hole: true),
+      polyline(1,2, 3,4, 5,6, loop: true).dup(hole: true))
   end
 
   def test_equal()
