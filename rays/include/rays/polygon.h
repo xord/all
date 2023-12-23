@@ -59,6 +59,8 @@ namespace Rays
 
 			bool operator ! () const;
 
+			friend Polygon operator + (const Polygon& lhs, const Polyline& rhs);
+
 			friend Polygon operator + (const Polygon& lhs, const Polygon& rhs);
 
 			friend Polygon operator - (const Polygon& lhs, const Polygon& rhs);

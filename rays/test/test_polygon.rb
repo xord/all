@@ -55,6 +55,8 @@ class TestPolygon < Test::Unit::TestCase
     assert_raise(ArgumentError) {polygon(1,2, 3,4, 5,   loop: false)}
     assert_nothing_raised       {polygon(1,2, 3,4, 5,6, loop: true)}
     assert_nothing_raised       {polygon(1,2, 3,4, 5,6, loop: false)}
+
+    assert_raise(ArgumentError) {polygon(polyline(1,2, 3,4, 5,6, loop: true, hole: true))}
   end
 
   def test_expand()
@@ -153,6 +155,12 @@ class TestPolygon < Test::Unit::TestCase
     assert_equal_polygon rect(0, 0, 10, 10), rect(0, 0, 10, 10) + polygon()
     assert_equal_polygon rect(0, 0, 10, 10), polygon() + rect(0, 0, 10, 10)
     assert_equal_polygon rect(0, 0, 10, 10), rect(0, 0, 10, 10) + []
+
+    assert_equal(
+      polygon(
+        polyline(0,0, 0,10, 10,10, 10,0, loop: true, fill: true),
+        polyline(1,1, 2,1,   2,2,   1,2, loop: true, fill: true, hole: true)),
+      polygon(0,0, 0,10, 10,10, 10,0) + polyline(1,1, 2,1, 2,2, 1,2, loop: true, hole: true))
   end
 
   def test_sub()

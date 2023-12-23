@@ -1487,12 +1487,19 @@ namespace Rays
 
 	Polygon::Polygon (const Polyline& polyline)
 	{
+		if (polyline.hole())
+			argument_error(__FILE__, __LINE__);
+
 		self->append(polyline);
 	}
 
 	Polygon::Polygon (const Polyline* polylines, size_t size)
 	{
-		if (!polylines || size <= 0) return;
+		if (!polylines || size <= 0)
+			return;
+
+		if (polylines[0].hole())
+			argument_error(__FILE__, __LINE__);
 
 		for (size_t i = 0; i < size; ++i)
 			self->append(polylines[i]);
@@ -1583,6 +1590,16 @@ namespace Rays
 	Polygon::triangulate (TrianglePointList* triangles) const
 	{
 		return self->triangulate(triangles);
+	}
+
+	Polygon
+	operator + (const Polygon& lhs, const Polyline& rhs)
+	{
+		std::vector<Polyline> polylines;
+		for (const auto& polyline : lhs)
+			polylines.emplace_back(polyline);
+		polylines.emplace_back(rhs);
+		return Polygon(&polylines[0], polylines.size());
 	}
 
 	Polygon

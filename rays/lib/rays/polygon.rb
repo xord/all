@@ -8,6 +8,7 @@ module Rays
   class Polygon
 
     include Enumerable
+    include Comparable
 
     def initialize(*args, loop: true, colors: nil, texcoords: nil)
       setup args, loop, colors, texcoords
@@ -20,6 +21,16 @@ module Rays
 
     def intersects(obj)
       !(self & obj).empty?
+    end
+
+    def <=>(o)
+      (size <=> o.size).then {|cmp|                return cmp if cmp != 0}
+      to_a.zip(o.to_a).each {|a, b| cmp = a <=> b; return cmp if cmp != 0}
+      0
+    end
+
+    def inspect()
+      "#<Rays::Polygon [#{map {|polyline| polyline.inspect}.join ', '}]>"
     end
 
     def self.points(*points)
