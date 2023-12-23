@@ -9,19 +9,22 @@ module Rays
     include Enumerable
     include Comparable
 
-    def initialize(*points, loop: false, fill: nil, colors: nil, texcoords: nil)
-      setup points, loop, (fill != nil ? fill : loop), colors, texcoords
+    def initialize(
+      *points, loop: false, fill: nil, colors: nil, texcoords: nil, hole: false)
+
+      setup points, loop, (fill != nil ? fill : loop), colors, texcoords, hole
     end
 
     def dup(**kwargs)
-      points_, loop_, fill_, colors_, texcoords_ =
-        kwargs.values_at :points, :loop, :fill, :colors, :texcoords
+      points_, loop_, fill_, colors_, texcoords_, hole_ =
+        kwargs.values_at :points, :loop, :fill, :colors, :texcoords, :hole
       self.class.new(
                  *(points_    || (points?    ? points    : [])),
         loop:      loop_ != nil ? loop_ : loop?,
         fill:      fill_ != nil ? fill_ : fill?,
         colors:    colors_    || (colors?    ? colors    : nil),
-        texcoords: texcoords_ || (texcoords? ? texcoords : nil))
+        texcoords: texcoords_ || (texcoords? ? texcoords : nil),
+        hole:      hole_ != nil ? hole_ : hole?)
     end
 
     def points()

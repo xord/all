@@ -40,6 +40,8 @@ namespace Rays
 			loop = loop_;
 			fill = fill_;
 			hole = hole_;
+			if (!is_valid())
+				argument_error(__FILE__, __LINE__, "hole polyline must be looped");
 
 			points.clear();
 			points.reserve(size);
@@ -99,6 +101,11 @@ namespace Rays
 			return *ptexcoords;
 		}
 
+		bool is_valid () const
+		{
+			return loop || !hole;
+		}
+
 		private:
 #if 0
 			void reset_values (size_t size_, bool hole, auto fun)
@@ -113,16 +120,6 @@ namespace Rays
 #endif
 	};// Polyline::Data
 
-
-	Polyline
-	Polyline_create (const Point* points, size_t size, bool loop, bool hole)
-	{
-		Polyline pl;
-		pl.self->reset(
-			points, NULL, NULL, size, loop, loop, hole,
-			[](const Point& point) {return point;});
-		return pl;
-	}
 
 	Polyline
 	Polyline_create (const Path& path, bool loop, bool hole)
@@ -163,19 +160,21 @@ namespace Rays
 
 	Polyline::Polyline (
 		const Point* points, size_t size, bool loop,
-		const Color* colors, const Coord3* texcoords)
+		const Color* colors, const Coord3* texcoords,
+		bool hole)
 	{
 		self->reset(
-			points, colors, texcoords, size, loop, loop, false,
+			points, colors, texcoords, size, loop, loop, hole,
 			[](const Point& p) {return p;});
 	}
 
 	Polyline::Polyline (
 		const Point* points, size_t size, bool loop, bool fill,
-		const Color* colors, const Coord3* texcoords)
+		const Color* colors, const Coord3* texcoords,
+		bool hole)
 	{
 		self->reset(
-			points, colors, texcoords, size, loop, fill, false,
+			points, colors, texcoords, size, loop, fill, hole,
 			[](const Point& p) {return p;});
 	}
 
@@ -274,7 +273,7 @@ namespace Rays
 
 	Polyline::operator bool () const
 	{
-		return self->loop || !self->hole;
+		return self->is_valid();
 	}
 
 	bool
