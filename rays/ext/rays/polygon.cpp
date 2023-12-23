@@ -124,35 +124,36 @@ RUCY_DEF1(op_add, obj)
 {
 	CHECK;
 
-	if (obj.is_array() && obj.empty())
-		return self;
+	if (obj.is_kind_of(Rays::polyline_class()))
+		return value(*THIS + to<Rays::Polyline&>(obj));
+
+	if (obj.is_kind_of(Rays::polygon_class()))
+		return value(*THIS + to<Rays::Polygon&>(obj));
+
+	if (!obj.is_array())
+		argument_error(__FILE__, __LINE__);
+
+	if (obj.empty()) return self;
 
 	std::vector<Rays::Polyline> polylines;
 	for (const auto& polyline : to<Rays::Polygon&>(self))
 		polylines.emplace_back(polyline);
 
-	if (obj.is_array())
+	if (obj[0].is_kind_of(Rays::polyline_class()))
 	{
-		if (obj[0].is_kind_of(Rays::polyline_class()))
+		each_poly<Rays::Polyline>(obj, [&](const auto& polyline)
 		{
-			each_poly<Rays::Polyline>(obj, [&](const auto& polyline)
-			{
-				polylines.emplace_back(polyline);
-			});
-		}
-		else
-		{
-			each_poly<Rays::Polygon>(obj, [&](const auto& polygon)
-			{
-				for (const auto& polyline : polygon)
-					polylines.emplace_back(polyline);
-			});
-		}
+			polylines.emplace_back(polyline);
+		});
 	}
-	else if (obj.is_kind_of(Rays::polyline_class()))
-		polylines.emplace_back(to<Rays::Polyline&>(obj));
-	else for (const auto& polyline : to<Rays::Polygon&>(obj))
-		polylines.emplace_back(polyline);
+	else
+	{
+		each_poly<Rays::Polygon>(obj, [&](const auto& polygon)
+		{
+			for (const auto& polyline : polygon)
+				polylines.emplace_back(polyline);
+		});
+	}
 
 	return value(Rays::Polygon(&polylines[0], polylines.size()));
 }
