@@ -108,15 +108,56 @@ RUCY_DEF0(each)
 }
 RUCY_END
 
-static void
-each_polygon (const Value& value, auto fun)
+template <typename T>
+static inline void
+each_poly (const Value& value, auto fun)
 {
 	int size           = value.size();
 	const Value* array = value.as_array();
 
 	for (int i = 0; i < size; ++i)
-		fun(to<Rays::Polygon&>(array[i]));
+		fun(to<T&>(array[i]));
 }
+
+static
+RUCY_DEF1(op_add, obj)
+{
+	CHECK;
+
+	if (obj.is_kind_of(Rays::polyline_class()))
+		return value(*THIS + to<Rays::Polyline&>(obj));
+
+	if (obj.is_kind_of(Rays::polygon_class()))
+		return value(*THIS + to<Rays::Polygon&>(obj));
+
+	if (!obj.is_array())
+		argument_error(__FILE__, __LINE__);
+
+	if (obj.empty()) return self;
+
+	std::vector<Rays::Polyline> polylines;
+	for (const auto& polyline : to<Rays::Polygon&>(self))
+		polylines.emplace_back(polyline);
+
+	if (obj[0].is_kind_of(Rays::polyline_class()))
+	{
+		each_poly<Rays::Polyline>(obj, [&](const auto& polyline)
+		{
+			polylines.emplace_back(polyline);
+		});
+	}
+	else
+	{
+		each_poly<Rays::Polygon>(obj, [&](const auto& polygon)
+		{
+			for (const auto& polyline : polygon)
+				polylines.emplace_back(polyline);
+		});
+	}
+
+	return value(Rays::Polygon(&polylines[0], polylines.size()));
+}
+RUCY_END
 
 static
 RUCY_DEF1(op_sub, obj)
@@ -126,7 +167,7 @@ RUCY_DEF1(op_sub, obj)
 	if (obj.is_array())
 	{
 		Rays::Polygon result = *THIS;
-		each_polygon(obj, [&](const Rays::Polygon& polygon)
+		each_poly<Rays::Polygon>(obj, [&](const auto& polygon)
 		{
 			result = result - polygon;
 		});
@@ -145,7 +186,7 @@ RUCY_DEF1(op_and, obj)
 	if (obj.is_array())
 	{
 		Rays::Polygon result = *THIS;
-		each_polygon(obj, [&](const Rays::Polygon& polygon)
+		each_poly<Rays::Polygon>(obj, [&](const auto& polygon)
 		{
 			result = result & polygon;
 		});
@@ -164,7 +205,7 @@ RUCY_DEF1(op_or, obj)
 	if (obj.is_array())
 	{
 		Rays::Polygon result = *THIS;
-		each_polygon(obj, [&](const Rays::Polygon& polygon)
+		each_poly<Rays::Polygon>(obj, [&](const auto& polygon)
 		{
 			result = result | polygon;
 		});
@@ -183,7 +224,7 @@ RUCY_DEF1(op_xor, obj)
 	if (obj.is_array())
 	{
 		Rays::Polygon result = *THIS;
-		each_polygon(obj, [&](const Rays::Polygon& polygon)
+		each_poly<Rays::Polygon>(obj, [&](const auto& polygon)
 		{
 			result = result ^ polygon;
 		});
@@ -333,7 +374,7 @@ Init_rays_polygon ()
 	cPolygon.define_method("empty?", is_empty);
 	cPolygon.define_method("[]", get_at);
 	cPolygon.define_method("each", each);
-	cPolygon.define_method("+", op_or);
+	cPolygon.define_method("+", op_add);
 	cPolygon.define_method("-", op_sub);
 	cPolygon.define_method("&", op_and);
 	cPolygon.define_method("|", op_or);

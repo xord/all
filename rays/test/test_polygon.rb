@@ -135,6 +135,25 @@ class TestPolygon < Test::Unit::TestCase
     assert_raise(IndexError) {o[-4]}
   end
 
+  def test_add()
+    assert_equal_polygon(
+      polygon(*rect(0, 0, 10, 10).to_a, *rect(5, 0, 10, 10).to_a),
+               rect(0, 0, 10, 10)      + rect(5, 0, 10, 10))
+
+    assert_equal_polygon(
+      polygon(*rect(0, 0, 10, 10).to_a, *rect(5, 0, 10, 10).to_a, *rect(10, 0, 10, 10).to_a),
+               rect(0, 0, 10, 10)     + [rect(5, 0, 10, 10),       rect(10, 0, 10, 10)])
+
+    o = rect(0, 0, 10, 10)
+    assert_equal_polygon(
+      polygon(*rect(0, 0, 10, 10).to_a, *rect(0, 0, 10, 10).to_a),
+      o + o)
+
+    assert_equal_polygon rect(0, 0, 10, 10), rect(0, 0, 10, 10) + polygon()
+    assert_equal_polygon rect(0, 0, 10, 10), polygon() + rect(0, 0, 10, 10)
+    assert_equal_polygon rect(0, 0, 10, 10), rect(0, 0, 10, 10) + []
+  end
+
   def test_sub()
     rect10 = rect 0, 0, 10, 10
 

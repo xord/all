@@ -1588,7 +1588,10 @@ namespace Rays
 	Polygon
 	operator + (const Polygon& lhs, const Polygon& rhs)
 	{
-		return lhs | rhs;
+		std::vector<Polyline> polylines;
+		for (const auto& polyline : lhs) polylines.emplace_back(polyline);
+		for (const auto& polyline : rhs) polylines.emplace_back(polyline);
+		return Polygon(&polylines[0], polylines.size());
 	}
 
 	Polygon
