@@ -13,8 +13,8 @@ class TestPolygon < Test::Unit::TestCase
     Rays::Polygon.new(*args, **kwargs)
   end
 
-  def polyline(*args)
-    Rays::Polyline.new(*args)
+  def polyline(*args, **kwargs)
+    Rays::Polyline.new(*args, **kwargs)
   end
 
   def point(*args)
@@ -40,20 +40,21 @@ class TestPolygon < Test::Unit::TestCase
     assert_equal [[[5, 6], [7, 8]]], polygon(  [5, 6],   [7, 8], loop: false).dump
     assert_equal [[[1, 1], [2, 2]]], polygon(     [1],      [2], loop: false).dump
     assert_equal [[[3, 3], [4, 4]]], polygon(point(3), point(4), loop: false).dump
-    assert_nothing_raised       {polygon(                  loop: true)}
-    assert_nothing_raised       {polygon(                  loop: false)}
-    assert_raise(ArgumentError) {polygon(1,                loop: true)}
-    assert_raise(ArgumentError) {polygon(1,                loop: false)}
-    assert_nothing_raised       {polygon(1, 2,             loop: true)}
-    assert_nothing_raised       {polygon(1, 2,             loop: false)}
-    assert_raise(ArgumentError) {polygon(1, 2, 3,          loop: true)}
-    assert_raise(ArgumentError) {polygon(1, 2, 3,          loop: false)}
-    assert_nothing_raised       {polygon(1, 2, 3, 4,       loop: true)}
-    assert_nothing_raised       {polygon(1, 2, 3, 4,       loop: false)}
-    assert_raise(ArgumentError) {polygon(1, 2, 3, 4, 5,    loop: true)}
-    assert_raise(ArgumentError) {polygon(1, 2, 3, 4, 5,    loop: false)}
-    assert_nothing_raised       {polygon(1, 2, 3, 4, 5, 6, loop: true)}
-    assert_nothing_raised       {polygon(1, 2, 3, 4, 5, 6, loop: false)}
+
+    assert_nothing_raised       {polygon(               loop: true)}
+    assert_nothing_raised       {polygon(               loop: false)}
+    assert_raise(ArgumentError) {polygon(1,             loop: true)}
+    assert_raise(ArgumentError) {polygon(1,             loop: false)}
+    assert_nothing_raised       {polygon(1,2,           loop: true)}
+    assert_nothing_raised       {polygon(1,2,           loop: false)}
+    assert_raise(ArgumentError) {polygon(1,2, 3,        loop: true)}
+    assert_raise(ArgumentError) {polygon(1,2, 3,        loop: false)}
+    assert_nothing_raised       {polygon(1,2, 3,4,      loop: true)}
+    assert_nothing_raised       {polygon(1,2, 3,4,      loop: false)}
+    assert_raise(ArgumentError) {polygon(1,2, 3,4, 5,   loop: true)}
+    assert_raise(ArgumentError) {polygon(1,2, 3,4, 5,   loop: false)}
+    assert_nothing_raised       {polygon(1,2, 3,4, 5,6, loop: true)}
+    assert_nothing_raised       {polygon(1,2, 3,4, 5,6, loop: false)}
   end
 
   def test_expand()

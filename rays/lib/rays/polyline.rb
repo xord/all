@@ -51,12 +51,12 @@ module Rays
     alias each each_point
 
     def <=>(o)
-      return size  <=> o.size  if size  != o.size
-      return loop? <=> o.loop? if loop? != o.loop?
-      return fill? <=> o.fill? if loop? != o.fill?
-      points   .zip(o.points)   .each {|a, b| return a <=> b if a != b}
-      colors   .zip(o.colors)   .each {|a, b| return a <=> b if a != b}
-      texcoords.zip(o.texcoords).each {|a, b| return a <=> b if a != b}
+      (size  <=> o.size) .then {|cmp|                        return cmp if cmp != 0}
+      (loop? <=> o.loop?).then {|cmp|                        return cmp if cmp != 0}
+      (fill? <=> o.fill?).then {|cmp|                        return cmp if cmp != 0}
+      points   .zip(o.points)   .each {|a, b| cmp = a <=> b; return cmp if cmp != 0}
+      colors   .zip(o.colors)   .each {|a, b| cmp = a <=> b; return cmp if cmp != 0}
+      texcoords.zip(o.texcoords).each {|a, b| cmp = a <=> b; return cmp if cmp != 0}
       0
     end
 
