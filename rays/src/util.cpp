@@ -1,4 +1,4 @@
-#include "rays/noise.h"
+#include "rays/util.h"
 
 
 #include <glm/gtc/noise.hpp>

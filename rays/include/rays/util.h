@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __RAYS_NOISE_H__
-#define __RAYS_NOISE_H__
+#ifndef __RAYS_UTIL_H__
+#define __RAYS_UTIL_H__
 
 
 #include <rays/defs.h>

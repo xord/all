@@ -19,7 +19,7 @@ void Init_rays_font ();
 void Init_rays_shader ();
 void Init_rays_camera ();
 
-void Init_rays_noise ();
+void Init_rays_util ();
 
 
 extern "C" void
@@ -51,7 +51,7 @@ extern "C" void
 	Init_rays_shader();
 	Init_rays_camera();
 
-	Init_rays_noise();
+	Init_rays_util();
 
 	RUCY_CATCH
 }

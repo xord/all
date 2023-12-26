@@ -1,4 +1,4 @@
-#include "rays/noise.h"
+#include "rays/util.h"
 #include "rays/ruby/point.h"
 #include "defs.h"
 
@@ -47,7 +47,7 @@ RUCY_END
 
 
 void
-Init_rays_noise ()
+Init_rays_util ()
 {
 	Module mRays = define_module("Rays");
 	mRays.define_singleton_method("perlin", perlin);
