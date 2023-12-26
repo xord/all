@@ -353,7 +353,7 @@ static
 RUCY_DEF2(create_bezier, points, loop)
 {
 	CreateParams params(points, nil(), nil());
-	return value(Rays::create_bezier(params.ppoints(), points.size(), loop));
+	return value(Rays::create_bezier(params.ppoints(), params.size(), loop));
 }
 RUCY_END
 
