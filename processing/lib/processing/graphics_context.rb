@@ -1289,10 +1289,9 @@ module Processing
     # @see https://processing.org/reference/beginShape_.html
     #
     def beginShape(type = nil)
-      raise "beginShape() cannot be called twice" if drawingShape__
-      @shapeType__, @shapeContours__                    = type, []
-      @shapePoints__, @shapeColors__, @shapeTexCoords__ = [], [], []
-      nil
+      raise "beginShape() cannot be called twice" if @drawingShape__
+      @drawingShape__ = createShape
+      @drawingShape__.beginShape type
     end
 
     # Ends drawing complex shapes.
@@ -1307,13 +1306,10 @@ module Processing
     # @see https://processing.org/reference/endShape_.html
     #
     def endShape(mode = nil)
-      raise "endShape() must be called after beginShape()" unless drawingShape__
-      loop    = mode == CLOSE || @shapeContours__.size > 0
-      polygon = Shape.createPolygon__(
-        @shapeType__, @shapePoints__, loop, @shapeColors__, @shapeTexCoords__)
-      drawWithTexture__ {|_| @painter__.polygon polygon + @shapeContours__} if polygon
-      @shapeType__ = @shapeContours__                   = nil
-      @shapePoints__ = @shapeColors__ = @shapeTexCoords = nil
+      s = @drawingShape__ or raise "endShape() must be called after beginShape()"
+      s.endShape mode
+      shape s
+      @drawingShape__ = nil
       nil
     end
 
@@ -1339,9 +1335,8 @@ module Processing
     # @see https://p5js.org/reference/#/p5/beginContour
     #
     def beginContour()
-      raise "beginContour() must be called after beginShape()" unless drawingShape__
-      @contourPoints__, @contourColors__, @contourTexCoords__ = [], [], []
-      nil
+      (@drawingShape__ or raise "beginContour() must be called after beginShape()")
+        .beginContour
     end
 
     # Ends drawing a hole.
@@ -1352,12 +1347,8 @@ module Processing
     # @see https://p5js.org/reference/#/p5/endContour
     #
     def endContour()
-      raise "endContour() must be called after beginContour()" unless drawingContour__
-      @shapeContours__ << Rays::Polyline.new(
-        *@contourPoints__, colors: @contourColors__, texcoords: @contourTexCoords__,
-        loop: true, hole: true)
-      @contoursPoints__ = @contoursColors__ = @contoursTexCoords = nil
-      nil
+      (@drawingShape__ or raise "endContour() must be called after beginShape()")
+        .endContour
     end
 
     # Append vertex for shape polygon.
@@ -1373,32 +1364,56 @@ module Processing
     # @return [nil] nil
     #
     # @see https://processing.org/reference/vertex_.html
+    # @see https://p5js.org/reference/#/p5/vertex
     #
     def vertex(x, y, u = nil, v = nil)
-      raise "vertex() must be called after beginShape()" unless drawingShape__
-      raise "Either 'u' or 'v' is missing" if (u == nil) != (v == nil)
-      u   ||= x
-      v   ||= y
-      color = @painter__.fill
-      if drawingContour__
-        @contourPoints__    << x << y
-        @contourColors__    << color
-        @contourTexCoords__ << u << v
-      else
-        @shapePoints__    << x << y
-        @shapeColors__    << color
-        @shapeTexCoords__ << u << v
-      end
+      (@drawingShape__ or raise "vertex() must be called after beginShape()")
+        .vertex x, y, u, v
     end
 
-    # @private
-    def drawingShape__()
-      @shapePoints__
+    # Append curve vertex for shape polygon.
+    #
+    # @param x [Numeric] x position of vertex
+    # @param y [Numeric] y position of vertex
+    #
+    # @return [nil] nil
+    #
+    # @see https://processing.org/reference/curveVertex_.html
+    # @see https://p5js.org/reference/#/p5/curveVertex
+    #
+    def curveVertex(x, y)
+      (@drawingShape__ or raise "curveVertex() must be called after beginShape()")
+        .curveVertex x, y
     end
 
-    # @private
-    def drawingContour__()
-      @contourPoints__
+    # Append bezier vertex for shape polygon.
+    #
+    # @param x [Numeric] x position of vertex
+    # @param y [Numeric] y position of vertex
+    #
+    # @return [nil] nil
+    #
+    # @see https://processing.org/reference/bezierVertex_.html
+    # @see https://p5js.org/reference/#/p5/bezierVertex
+    #
+    def bezierVertex(x2, y2, x3, y3, x4, y4)
+      (@drawingShape__ or raise "bezierVertex() must be called after beginShape()")
+        .bezierVertex x2, y2, x3, y3, x4, y4
+    end
+
+    # Append quadratic vertex for shape polygon.
+    #
+    # @param x [Numeric] x position of vertex
+    # @param y [Numeric] y position of vertex
+    #
+    # @return [nil] nil
+    #
+    # @see https://processing.org/reference/quadraticVertex_.html
+    # @see https://p5js.org/reference/#/p5/quadraticVertex
+    #
+    def quadraticVertex(cx, cy, x3, y3)
+      (@drawingShape__ or raise "quadraticVertex() must be called after beginShape()")
+        .quadraticVertex cx, cy, x3, y3
     end
 
     # Copies image.
