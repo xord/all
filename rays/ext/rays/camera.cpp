@@ -139,8 +139,8 @@ RUCY_DEF0(device_names)
 	auto names = Rays::get_camera_device_names();
 
 	std::vector<Value> v;
-	for (auto it = names.begin(), end = names.end(); it != end; ++it)
-		v.emplace_back(value(it->c_str()));
+	for (const auto& name : names)
+		v.emplace_back(name.c_str());
 	return value(v.size(), &v[0]);
 }
 RUCY_END
