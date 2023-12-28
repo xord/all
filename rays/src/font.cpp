@@ -37,6 +37,14 @@ namespace Rays
 	};// Font::Data
 
 
+	Font
+	load_font (const char* path, coord size)
+	{
+		Font font;
+		font.self->rawfont = RawFont_load(path, size);
+		return font;
+	}
+
 	const Font&
 	get_default_font ()
 	{

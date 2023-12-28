@@ -58,6 +58,9 @@ namespace Rays
 		coord* ascent = NULL, coord* descent = NULL, coord* leading = NULL);
 
 
+	RawFont RawFont_load (const char* path, coord size);
+
+
 }// Rays
 
 

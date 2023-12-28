@@ -49,6 +49,8 @@ namespace Rays
 	};// Font
 
 
+	Font load_font (const char* path, coord size = Font::DEFAULT_SIZE);
+
 	const Font& get_default_font ();
 
 
