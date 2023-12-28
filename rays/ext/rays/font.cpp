@@ -49,6 +49,15 @@ RUCY_DEF0(name)
 RUCY_END
 
 static
+RUCY_DEF1(set_size, size)
+{
+	CHECK;
+	THIS->set_size(to<coord>(size));
+	return size;
+}
+RUCY_END
+
+static
 RUCY_DEF0(size)
 {
 	CHECK;
@@ -129,7 +138,8 @@ Init_rays_font ()
 	cFont.define_private_method("initialize",      initialize);
 	cFont.define_private_method("initialize_copy", initialize_copy);
 	cFont.define_method("name", name);
-	cFont.define_method("size", size);
+	cFont.define_method("size=", set_size);
+	cFont.define_method("size",      size);
 	cFont.define_method("width",   width);
 	cFont.define_method("height",  height);
 	cFont.define_method("ascent",  ascent);

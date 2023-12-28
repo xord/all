@@ -29,7 +29,9 @@ namespace Rays
 
 			String name () const;
 
-			coord size () const;
+			void set_size (coord size);
+
+			coord    size () const;
 
 			coord get_width (const char* str) const;
 

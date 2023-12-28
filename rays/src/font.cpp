@@ -27,7 +27,7 @@ namespace Rays
 			if (pixel_density != for_pixel_density)
 			{
 				rawfont_for_pixel_density =
-					RawFont(rawfont.name(), rawfont.size() * pixel_density);
+					RawFont(rawfont, rawfont.size() * pixel_density);
 				for_pixel_density = pixel_density;
 			}
 
@@ -99,6 +99,12 @@ namespace Rays
 	Font::name () const
 	{
 		return self->rawfont.name();
+	}
+
+	void
+	Font::set_size (coord size)
+	{
+		self->rawfont = RawFont(self->rawfont, size);
 	}
 
 	coord
