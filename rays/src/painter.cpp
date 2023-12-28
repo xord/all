@@ -86,7 +86,7 @@ namespace Rays
 			nsegment       = 0;
 			blend_mode     = BLEND_NORMAL;
 			clip           .reset(-1);
-			font           = default_font();
+			font           = get_default_font();
 			texture        = Image();
 			texcoord_mode  = TEXCOORD_IMAGE;
 			texcoord_wrap  = TEXCOORD_CLAMP;
@@ -1550,7 +1550,7 @@ namespace Rays
 	{
 		return
 			font.size() == size &&
-			font.name() == (name ? name : default_font().name().c_str());
+			font.name() == (name ? name : get_default_font().name().c_str());
 	}
 
 	void

@@ -49,7 +49,7 @@ namespace Rays
 	};// Font
 
 
-	const Font& default_font ();
+	const Font& get_default_font ();
 
 
 }// Rays

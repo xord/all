@@ -38,7 +38,7 @@ namespace Rays
 
 
 	const Font&
-	default_font ()
+	get_default_font ()
 	{
 		static const Font FONT(NULL);
 		return FONT;

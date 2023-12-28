@@ -142,7 +142,7 @@ namespace Rucy
 		if (convert)
 		{
 			if (argc == 0)
-				return Rays::default_font();
+				return Rays::get_default_font();
 
 			coord size = argc >= 2 ? to<coord>(argv[1]) : Rays::Font::DEFAULT_SIZE;
 			if (argv->is_nil())
