@@ -17,9 +17,11 @@ namespace Rays
 
 		public:
 
+			enum {DEFAULT_SIZE = 12};
+
 			Font ();
 
-			Font (const char* name, coord size = 0);
+			Font (const char* name, coord size = DEFAULT_SIZE);
 
 			~Font ();
 

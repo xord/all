@@ -19,7 +19,7 @@ namespace Rays
 
 			RawFont ();
 
-			RawFont (const char* name, coord size = 0);
+			RawFont (const char* name, coord size);
 
 			~RawFont ();
 
