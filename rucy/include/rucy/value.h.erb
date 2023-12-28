@@ -126,6 +126,12 @@ namespace Rucy
 
 			const Value& operator [] (size_t i) const;
 
+			// Hash
+
+			void  set (Value key, Value value);
+
+			Value get (Value key) const;
+
 			// String
 
 			const char* c_str () const;

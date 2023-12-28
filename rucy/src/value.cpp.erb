@@ -357,6 +357,20 @@ namespace Rucy
 		return const_cast<Value*>(this)->operator[](i);
 	}
 
+	void
+	Value::set (Value key, Value value)
+	{
+		RUCY_SYMBOL(array_set, "[]=");
+		call(array_set, key, value);
+	}
+
+	Value
+	Value::get (Value key) const
+	{
+		RUCY_SYMBOL(array_get, "[]");
+		return call(array_get, key);
+	}
+
 	const char*
 	Value::c_str () const
 	{
