@@ -4,6 +4,7 @@
 
 #include <memory>
 #import <ApplicationServices/ApplicationServices.h>
+#import <AppKit/AppKit.h>
 #include "rays/exception.h"
 #include "helper.h"
 
@@ -71,6 +72,25 @@ namespace Rays
 		return CTLinePtr(
 			CTLineCreateWithAttributedString(attrstr.get()),
 			CFRelease);
+	}
+
+	const FontFamilyMap&
+	get_font_families ()
+	{
+		static const FontFamilyMap MAP = []() {
+			NSFontManager* fm = NSFontManager.sharedFontManager;
+
+			FontFamilyMap map;
+			for (NSString* family in fm.availableFontFamilies)
+			{
+				FontFamilyMap::mapped_type array;
+				for (NSArray<NSString*>* members in [fm availableMembersOfFontFamily: family])
+					array.emplace_back(members[0].UTF8String);
+				map[family.UTF8String] = array;
+			}
+			return map;
+		}();
+		return MAP;
 	}
 
 	RawFont

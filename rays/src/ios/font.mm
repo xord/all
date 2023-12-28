@@ -74,6 +74,25 @@ namespace Rays
 			CFRelease);
 	}
 
+	const FontFamilyMap&
+	get_font_families ()
+	{
+		static const FontFamilyMap MAP = []() {
+			NSFontManager* fm = NSFontManager.sharedFontManager;
+
+			FontFamilyMap map;
+			for (NSString* family in fm.availableFontFamilies)
+			{
+				FontFamilyMap::mapped_type array;
+				for (NSArray<NSString*>* members in [fm availableMembersOfFontFamily: family])
+					array.emplace_back(members[0].UTF8String);
+				map[family.UTF8String] = array;
+			}
+			return map;
+		}();
+		return MAP;
+	}
+
 	RawFont
 	RawFont_load (const char* path, coord size)
 	{

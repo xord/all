@@ -112,6 +112,21 @@ RUCY_DEF0(leading)
 RUCY_END
 
 static
+RUCY_DEF0(families)
+{
+	Hash hash;
+	for (const auto& family : Rays::get_font_families())
+	{
+		std::vector<Value> members;
+		for (const auto& member : family.second)
+			members.emplace_back(member.c_str());
+		hash.set(family.first.c_str(), value(members.size(), &members[0]));
+	}
+	return hash;
+}
+RUCY_END
+
+static
 RUCY_DEFN(load)
 {
 	check_arg_count(__FILE__, __LINE__, "Font.load", argc, 1, 2);
@@ -145,6 +160,7 @@ Init_rays_font ()
 	cFont.define_method("ascent",  ascent);
 	cFont.define_method("descent", descent);
 	cFont.define_method("leading", leading);
+	cFont.define_module_function("families", families);
 	cFont.define_module_function("load", load);
 }
 

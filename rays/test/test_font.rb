@@ -3,8 +3,10 @@ require_relative 'helper'
 
 class TestFont < Test::Unit::TestCase
 
+  R = Rays
+
   def font(*args)
-    Rays::Font.new(*args)
+    R::Font.new(*args)
   end
 
   def test_name()
@@ -37,6 +39,10 @@ class TestFont < Test::Unit::TestCase
   def test_height()
     f = font
     assert_equal f.height, f.ascent + f.descent + f.leading
+  end
+
+  def test_families()
+    assert_not R::Font.families.empty?
   end
 
 end# TestFont

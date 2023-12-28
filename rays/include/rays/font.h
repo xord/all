@@ -4,6 +4,8 @@
 #define __RAYS_FONT_H__
 
 
+#include <vector>
+#include <map>
 #include <xot/pimpl.h>
 #include <rays/defs.h>
 
@@ -50,6 +52,10 @@ namespace Rays
 
 	};// Font
 
+
+	typedef std::map<String, std::vector<String>> FontFamilyMap;
+
+	const FontFamilyMap& get_font_families ();
 
 	Font load_font (const char* path, coord size = Font::DEFAULT_SIZE);
 
