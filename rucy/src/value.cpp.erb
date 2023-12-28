@@ -409,6 +409,12 @@ namespace Rucy
 	}
 
 
+	Hash::Hash ()
+	:	Value(rb_hash_new())
+	{
+	}
+
+
 	GlobalValue::GlobalValue ()
 	{
 		init(false);
