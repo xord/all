@@ -321,6 +321,12 @@ namespace Rucy
 		return call(inspect);
 	}
 
+	const char*
+	Value::c_str () const
+	{
+		return as_s(true);
+	}
+
 	Value
 	Value::push (Value obj)
 	{
@@ -369,12 +375,6 @@ namespace Rucy
 	{
 		RUCY_SYMBOL(array_get, "[]");
 		return call(array_get, key);
-	}
-
-	const char*
-	Value::c_str () const
-	{
-		return as_s(true);
 	}
 
 	static int

@@ -112,6 +112,10 @@ namespace Rucy
 
 			Value inspect () const;
 
+			// String
+
+			const char* c_str () const;
+
 			// Array
 
 			Value push (Value obj);
@@ -132,15 +136,13 @@ namespace Rucy
 
 			Value get (Value key) const;
 
-			// String
-
-			const char* c_str () const;
-
-			// Array / String
+			// String / Array
 
 			int length () const;
 
 			int size () const;
+
+			// String / Array / Hash
 
 			bool empty () const;
 
