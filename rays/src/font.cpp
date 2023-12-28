@@ -79,6 +79,14 @@ namespace Rays
 	{
 	}
 
+	Font
+	Font::dup () const
+	{
+		Font f;
+		f.self->rawfont = RawFont(self->rawfont, self->rawfont.size());
+		return f;
+	}
+
 	String
 	Font::name () const
 	{

@@ -25,6 +25,8 @@ namespace Rays
 
 			~Font ();
 
+			Font dup () const;
+
 			String name () const;
 
 			coord size () const;
