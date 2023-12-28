@@ -13,12 +13,12 @@ namespace Rays
 	}
 
 
-	CFString
+	CFStringPtr
 	cfstring (const char* str)
 	{
 		CFStringRef ref = CFStringCreateWithCString(
 			kCFAllocatorDefault, str, kCFStringEncodingUTF8);
-		return CFString(ref, safe_cfrelease);
+		return CFStringPtr(ref, safe_cfrelease);
 	}
 
 

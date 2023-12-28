@@ -2,6 +2,7 @@
 #include "../font.h"
 
 
+#include <memory>
 #include <ApplicationServices/ApplicationServices.h>
 #include "rays/exception.h"
 #include "helper.h"
@@ -11,15 +12,21 @@ namespace Rays
 {
 
 
+	typedef std::shared_ptr<const __CFDictionary>       CFDictionaryPtr;
+
+	typedef std::shared_ptr<const __CFAttributedString> CFAttributedStringPtr;
+
+	typedef std::shared_ptr<CGDataProvider>             CGDataProviderPtr;
+
+	typedef std::shared_ptr<CGFont>                     CGFontPtr;
+
+	typedef std::shared_ptr<const __CTLine>             CTLinePtr;
+
+
 	struct RawFont::Data
 	{
 
-		CTFontRef font;
-
-		Data ()
-		:	font(NULL)
-		{
-		}
+		CTFontRef font = NULL;
 
 		~Data ()
 		{
@@ -33,7 +40,7 @@ namespace Rays
 	};// RawFont::Data
 
 
-	static CTLineRef
+	static CTLinePtr
 	make_line (CTFontRef font, const char* str)
 	{
 		if (!font || !str || *str == '\0')
@@ -49,18 +56,19 @@ namespace Rays
 		};
 		size_t nkeys = sizeof(keys) / sizeof(keys[0]);
 
-		CFDictionaryRef attr = CFDictionaryCreate(
-			NULL, (const void**) &keys, (const void**) &values, nkeys,
-			&kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+		CFDictionaryPtr attr(
+			CFDictionaryCreate(
+				NULL, (const void**) &keys, (const void**) &values, nkeys,
+				&kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks),
+			CFRelease);
 
-		CFAttributedStringRef attrstr = CFAttributedStringCreate(
-			NULL, cfstring(str).get(), attr);
-		CFRelease(attr);
+		CFAttributedStringPtr attrstr(
+			CFAttributedStringCreate(NULL, cfstring(str).get(), attr.get()),
+			CFRelease);
 
-		CTLineRef line = CTLineCreateWithAttributedString(attrstr);
-		CFRelease(attrstr);
-
-		return line;
+		return CTLinePtr(
+			CTLineCreateWithAttributedString(attrstr.get()),
+			CFRelease);
 	}
 
 
@@ -91,7 +99,7 @@ namespace Rays
 
 		if (*str == '\0') return;
 
-		CTLineRef line = make_line(self->font, str);
+		CTLinePtr line = make_line(self->font, str);
 		if (!line)
 			rays_error(__FILE__, __LINE__, "creating CTLineRef failed.");
 
@@ -109,10 +117,8 @@ namespace Rays
 		CGContextSaveGState(context);
 		CGContextSetTextMatrix(context, CGAffineTransformIdentity);
 		CGContextSetTextPosition(context, x, context_height - ascent - y);
-		CTLineDraw(line, context);
+		CTLineDraw(line.get(), context);
 		CGContextRestoreGState(context);
-
-		CFRelease(line);
 	}
 
 	String
@@ -120,14 +126,13 @@ namespace Rays
 	{
 		if (!*this) return "";
 
-		CFStringRef str = CTFontCopyFullName(self->font);
+		CFStringPtr str(CTFontCopyFullName(self->font), CFRelease);
 
 		enum {BUFSIZE = 2048};
 		char buf[BUFSIZE + 1];
-		if (!CFStringGetCString(str, buf, BUFSIZE, kCFStringEncodingUTF8))
+		if (!CFStringGetCString(str.get(), buf, BUFSIZE, kCFStringEncodingUTF8))
 			buf[0] = '\0';
 
-		CFRelease(str);
 		return buf;
 	}
 
@@ -149,14 +154,11 @@ namespace Rays
 
 		if (*str == '\0') return 0;
 
-		CTLineRef line = make_line(self->font, str);
+		CTLinePtr line = make_line(self->font, str);
 		if (!line)
 			rays_error(__FILE__, __LINE__, "creating CTLineRef failed.");
 
-		coord w = CTLineGetTypographicBounds(line, NULL, NULL, NULL);
-		CFRelease(line);
-
-		return w;
+		return CTLineGetTypographicBounds(line.get(), NULL, NULL, NULL);
 	}
 
 	coord
