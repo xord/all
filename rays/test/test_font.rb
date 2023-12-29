@@ -13,7 +13,19 @@ class TestFont < Test::Unit::TestCase
 
   def test_size()
     assert_kind_of Numeric, font.size
-    assert_equal 32, font(nil, 32).size
+
+    f = font('Arial', 10)
+    assert_equal 10, f.size
+
+    name   = f.name
+    f.size = 11
+    assert_equal 11,   f.size
+    assert_equal name, f.name
+
+    f11    = f.dup
+    f.size = 12
+    assert_equal 12, f  .size
+    assert_equal 11, f11.size
   end
 
   def test_width()

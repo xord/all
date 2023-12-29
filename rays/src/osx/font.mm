@@ -116,7 +116,11 @@ namespace Rays
 
 	RawFont::RawFont (const This& obj, coord size)
 	{
-		not_implemented_error(__FILE__, __LINE__);
+		const char* path = obj.self->path.empty() ? NULL : obj.self->path.c_str();
+		if (path)
+			*this = RawFont_load(path, size);
+		else
+			self->font = CTFontCreateWithName(cfstring(obj.name()).get(), size, NULL);
 	}
 
 	RawFont::~RawFont ()
