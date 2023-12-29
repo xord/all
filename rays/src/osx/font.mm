@@ -3,7 +3,7 @@
 
 
 #include <memory>
-#include <ApplicationServices/ApplicationServices.h>
+#import <ApplicationServices/ApplicationServices.h>
 #include "rays/exception.h"
 #include "helper.h"
 
@@ -112,6 +112,11 @@ namespace Rays
 		self->font = name
 			?	CTFontCreateWithName(cfstring(name).get(), size, NULL)
 			:	CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, size, NULL);
+	}
+
+	RawFont::RawFont (const This& obj, coord size)
+	{
+		not_implemented_error(__FILE__, __LINE__);
 	}
 
 	RawFont::~RawFont ()

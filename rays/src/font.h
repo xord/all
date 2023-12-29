@@ -15,11 +15,15 @@ namespace Rays
 	class RawFont
 	{
 
+		typedef RawFont This;
+
 		public:
 
 			RawFont ();
 
 			RawFont (const char* name, coord size);
+
+			RawFont (const This& obj, coord size);
 
 			~RawFont ();
 
