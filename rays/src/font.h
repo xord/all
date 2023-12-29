@@ -15,11 +15,15 @@ namespace Rays
 	class RawFont
 	{
 
+		typedef RawFont This;
+
 		public:
 
 			RawFont ();
 
 			RawFont (const char* name, coord size);
+
+			RawFont (const This& obj, coord size);
 
 			~RawFont ();
 
@@ -56,6 +60,9 @@ namespace Rays
 	coord Font_get_height (
 		const Font& font, float pixel_density,
 		coord* ascent = NULL, coord* descent = NULL, coord* leading = NULL);
+
+
+	RawFont RawFont_load (const char* path, coord size);
 
 
 }// Rays

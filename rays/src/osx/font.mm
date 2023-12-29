@@ -3,7 +3,7 @@
 
 
 #include <memory>
-#include <ApplicationServices/ApplicationServices.h>
+#import <ApplicationServices/ApplicationServices.h>
 #include "rays/exception.h"
 #include "helper.h"
 
@@ -27,6 +27,8 @@ namespace Rays
 	{
 
 		CTFontRef font = NULL;
+
+		String path;
 
 		~Data ()
 		{
@@ -71,6 +73,35 @@ namespace Rays
 			CFRelease);
 	}
 
+	RawFont
+	RawFont_load (const char* path, coord size)
+	{
+		if (!path)
+			argument_error(__FILE__, __LINE__);
+
+		CGDataProviderPtr data_provider(
+			CGDataProviderCreateWithFilename(path),
+			CGDataProviderRelease);
+		if (!data_provider)
+			rays_error(__FILE__, __LINE__, "failed to create CGDataProvider");
+
+		CGFontPtr cgfont(
+			CGFontCreateWithDataProvider(data_provider.get()),
+			CGFontRelease);
+		if (!cgfont)
+			rays_error(__FILE__, __LINE__, "failed to create CGFont");
+
+		CTFontRef ctfont = CTFontCreateWithGraphicsFont(
+			cgfont.get(), size, NULL, NULL);
+		if (!ctfont)
+			rays_error(__FILE__, __LINE__, "failed to create CTFont");
+
+		RawFont rawfont;
+		rawfont.self->font = ctfont;
+		rawfont.self->path = path;
+		return rawfont;
+	}
+
 
 	RawFont::RawFont ()
 	{
@@ -81,6 +112,11 @@ namespace Rays
 		self->font = name
 			?	CTFontCreateWithName(cfstring(name).get(), size, NULL)
 			:	CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, size, NULL);
+	}
+
+	RawFont::RawFont (const This& obj, coord size)
+	{
+		not_implemented_error(__FILE__, __LINE__);
 	}
 
 	RawFont::~RawFont ()

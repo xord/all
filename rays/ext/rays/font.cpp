@@ -102,6 +102,20 @@ RUCY_DEF0(leading)
 }
 RUCY_END
 
+static
+RUCY_DEFN(load)
+{
+	check_arg_count(__FILE__, __LINE__, "Font.load", argc, 1, 2);
+
+	const char* path = argv[0].c_str();
+
+	if (argc >= 2)
+		return value(Rays::load_font(path, to<Rays::coord>(argv[1])));
+	else
+		return value(Rays::load_font(path));
+}
+RUCY_END
+
 
 static Class cFont;
 
@@ -121,6 +135,7 @@ Init_rays_font ()
 	cFont.define_method("ascent",  ascent);
 	cFont.define_method("descent", descent);
 	cFont.define_method("leading", leading);
+	cFont.define_module_function("load", load);
 }
 
 
