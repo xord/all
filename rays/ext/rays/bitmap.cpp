@@ -72,6 +72,257 @@ RUCY_DEF0(color_space)
 }
 RUCY_END
 
+static void
+set_pixels (Rays::Bitmap* bmp, Value pixels)
+{
+	int w = bmp->width(), h = bmp->height();
+	const auto& cs = bmp->color_space();
+	if (pixels.size() != (w * h * (cs.is_float() ? cs.Bpp() / cs.Bpc() : 1)))
+	{
+		argument_error(
+			__FILE__, __LINE__,
+			"The size of the pixel array does not match the size of the bitmap");
+	}
+
+	const Value* array = pixels.as_array();
+
+	switch (cs.type())
+	{
+		case Rays::GRAY_8:
+		case Rays::ALPHA_8:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, ++pb)
+					*pb = to<uint8_t>(*pa);
+			}
+			break;
+
+		case Rays::GRAY_16:
+		case Rays::ALPHA_16:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint16_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, ++pb)
+					*pb = to<uint16_t>(*pa);
+			}
+			break;
+
+		case Rays::GRAY_32:
+		case Rays::ALPHA_32:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint32_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, ++pb)
+					*pb = to<uint32_t>(*pa);
+			}
+			break;
+
+		case Rays::GRAY_float:
+		case Rays::ALPHA_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<float>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, ++pb)
+					*pb = to<float>(*pa);
+			}
+			break;
+
+		case Rays::RGB_888:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, pb += 3)
+				{
+					uint32_t argb = to<uint32_t>(*pa);
+					pb[0] = (uint8_t) (argb >> 16 & 0xff);
+					pb[1] = (uint8_t) (argb >> 8  & 0xff);
+					pb[2] = (uint8_t) (argb >> 0  & 0xff);
+				}
+			}
+			break;
+
+		case Rays::RGBA_8888:
+		case Rays::RGBX_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, pb += 4)
+				{
+					uint32_t argb = to<uint32_t>(*pa);
+					pb[0] = (uint8_t) (argb >> 16 & 0xff);
+					pb[1] = (uint8_t) (argb >> 8  & 0xff);
+					pb[2] = (uint8_t) (argb >> 0  & 0xff);
+					pb[3] = (uint8_t) (argb >> 24 & 0xff);
+				}
+			}
+			break;
+
+		case Rays::ARGB_8888:
+		case Rays::XRGB_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, pb += 4)
+				{
+					uint32_t argb = to<uint32_t>(*pa);
+					pb[0] = (uint8_t) (argb >> 24 & 0xff);
+					pb[1] = (uint8_t) (argb >> 16 & 0xff);
+					pb[2] = (uint8_t) (argb >> 8  & 0xff);
+					pb[3] = (uint8_t) (argb >> 0  & 0xff);
+				}
+			}
+			break;
+
+		case Rays::BGR_888:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, pb += 3)
+				{
+					uint32_t argb = to<uint32_t>(*pa);
+					pb[0] = (uint8_t) (argb >> 0  & 0xff);
+					pb[1] = (uint8_t) (argb >> 8  & 0xff);
+					pb[2] = (uint8_t) (argb >> 16 & 0xff);
+				}
+			}
+			break;
+
+		case Rays::BGRA_8888:
+		case Rays::BGRX_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, pb += 4)
+				{
+					uint32_t argb = to<uint32_t>(*pa);
+					pb[0] = (uint8_t) (argb >> 0  & 0xff);
+					pb[1] = (uint8_t) (argb >> 8  & 0xff);
+					pb[2] = (uint8_t) (argb >> 16 & 0xff);
+					pb[3] = (uint8_t) (argb >> 24 & 0xff);
+				}
+			}
+			break;
+
+		case Rays::ABGR_8888:
+		case Rays::XBGR_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[w * y];
+				auto* pb        = bmp->at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, ++pa, pb += 4)
+				{
+					uint32_t argb = to<uint32_t>(*pa);
+					pb[0] = (uint8_t) (argb >> 24 & 0xff);
+					pb[1] = (uint8_t) (argb >> 0  & 0xff);
+					pb[2] = (uint8_t) (argb >> 8  & 0xff);
+					pb[3] = (uint8_t) (argb >> 16 & 0xff);
+				}
+			}
+			break;
+
+		case Rays::RGB_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[3 * w * y];
+				auto* pb        = bmp->at<float>(0, y);
+				for (int x = 0; x < w; ++x, pa += 3, pb += 3)
+				{
+					pb[0] = to<float>(pa[0]);
+					pb[1] = to<float>(pa[1]);
+					pb[2] = to<float>(pa[2]);
+				}
+			}
+			break;
+
+		case Rays::RGBA_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[4 * w * y];
+				auto* pb        = bmp->at<float>(0, y);
+				for (int x = 0; x < w; ++x, pa += 4, pb += 4)
+				{
+					pb[0] = to<float>(pa[0]);
+					pb[1] = to<float>(pa[1]);
+					pb[2] = to<float>(pa[2]);
+					pb[3] = to<float>(pa[3]);
+				}
+			}
+			break;
+
+		case Rays::ARGB_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[4 * w * y];
+				auto* pb        = bmp->at<float>(0, y);
+				for (int x = 0; x < w; ++x, pa += 4, pb += 4)
+				{
+					pb[0] = to<float>(pa[3]);
+					pb[1] = to<float>(pa[0]);
+					pb[2] = to<float>(pa[1]);
+					pb[3] = to<float>(pa[2]);
+				}
+			}
+			break;
+
+		case Rays::BGR_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[3 * w * y];
+				auto* pb        = bmp->at<float>(0, y);
+				for (int x = 0; x < w; ++x, pa += 3, pb += 3)
+				{
+					pb[0] = to<float>(pa[2]);
+					pb[1] = to<float>(pa[1]);
+					pb[2] = to<float>(pa[0]);
+				}
+			}
+			break;
+
+		case Rays::BGRA_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[4 * w * y];
+				auto* pb        = bmp->at<float>(0, y);
+				for (int x = 0; x < w; ++x, pa += 4, pb += 4)
+				{
+					pb[0] = to<float>(pa[2]);
+					pb[1] = to<float>(pa[1]);
+					pb[2] = to<float>(pa[0]);
+					pb[3] = to<float>(pa[3]);
+				}
+			}
+			break;
+
+		case Rays::ABGR_float:
+			for (int y = 0; y < h; ++y)
+			{
+				const Value* pa = &array[4 * w * y];
+				auto* pb        = bmp->at<float>(0, y);
+				for (int x = 0; x < w; ++x, pa += 4, pb += 4)
+				{
+					pb[0] = to<float>(pa[3]);
+					pb[1] = to<float>(pa[2]);
+					pb[2] = to<float>(pa[1]);
+					pb[3] = to<float>(pa[0]);
+				}
+			}
+			break;
+
+		default:
+			argument_error(__FILE__, __LINE__);
+	}
+}
+
 static inline Value
 to_rgb_value (uint8_t r, uint8_t g, uint8_t b)
 {
@@ -82,7 +333,7 @@ to_rgb_value (uint8_t r, uint8_t g, uint8_t b)
 }
 
 static inline Value
-to_rgba_value (uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+to_argb_value (uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
 	return value(
 		((uint) a) << 24 |
@@ -95,8 +346,8 @@ static void
 get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 {
 	int w = bmp.width(), h = bmp.height();
-
 	const auto& cs = bmp.color_space();
+
 	pixels->clear();
 	pixels->reserve(w * h * (cs.is_float() ? cs.Bpp() / cs.Bpc() : 1));
 
@@ -152,38 +403,22 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			break;
 
 		case Rays::RGBA_8888:
-			for (int y = 0; y < h; ++y)
-			{
-				const auto* p = bmp.at<uint8_t>(0, y);
-				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgba_value(p[0], p[1], p[2], p[3]));
-			}
-			break;
-
 		case Rays::RGBX_8888:
 			for (int y = 0; y < h; ++y)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgb_value(p[0], p[1], p[2]));
+					pixels->push_back(to_argb_value(p[0], p[1], p[2], p[3]));
 			}
 			break;
 
 		case Rays::ARGB_8888:
-			for (int y = 0; y < h; ++y)
-			{
-				const auto* p = bmp.at<uint8_t>(0, y);
-				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgba_value(p[1], p[2], p[3], p[0]));
-			}
-			break;
-
 		case Rays::XRGB_8888:
 			for (int y = 0; y < h; ++y)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgb_value(p[1], p[2], p[3]));
+					pixels->push_back(to_argb_value(p[1], p[2], p[3], p[0]));
 			}
 			break;
 
@@ -197,45 +432,29 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			break;
 
 		case Rays::BGRA_8888:
-			for (int y = 0; y < h; ++y)
-			{
-				const auto* p = bmp.at<uint8_t>(0, y);
-				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgba_value(p[2], p[1], p[0], p[3]));
-			}
-			break;
-
 		case Rays::BGRX_8888:
 			for (int y = 0; y < h; ++y)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgb_value(p[2], p[1], p[0]));
+					pixels->push_back(to_argb_value(p[2], p[1], p[0], p[3]));
 			}
 			break;
 
 		case Rays::ABGR_8888:
-			for (int y = 0; y < h; ++y)
-			{
-				const auto* p = bmp.at<uint8_t>(0, y);
-				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgba_value(p[3], p[2], p[1], p[0]));
-			}
-			break;
-
 		case Rays::XBGR_8888:
 			for (int y = 0; y < h; ++y)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgb_value(p[3], p[2], p[1]));
+					pixels->push_back(to_argb_value(p[3], p[2], p[1], p[0]));
 			}
 			break;
 
 		case Rays::RGB_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 3)
 				{
 					pixels->push_back(value(p[0]));
@@ -248,7 +467,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::RGBA_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
 				{
 					pixels->push_back(value(p[0]));
@@ -262,7 +481,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::ARGB_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
 				{
 					pixels->push_back(value(p[1]));
@@ -276,7 +495,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::BGR_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 3)
 				{
 					pixels->push_back(value(p[2]));
@@ -289,7 +508,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::BGRA_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
 				{
 					pixels->push_back(value(p[2]));
@@ -303,7 +522,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::ABGR_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
 				{
 					pixels->push_back(value(p[3]));
@@ -320,9 +539,31 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 }
 
 static
-RUCY_DEF0(pixels)
+RUCY_DEF1(set_pixels, pixels)
 {
 	CHECK;
+
+	if (sizeof(VALUE) <= 4)
+	{
+		not_implemented_error(
+			__FILE__, __LINE__, "Bitmap#pixels=() does not support 32-bit platforms");
+	}
+
+	set_pixels(THIS, pixels);
+	return pixels;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_pixels)
+{
+	CHECK;
+
+	if (sizeof(VALUE) <= 4)
+	{
+		not_implemented_error(
+			__FILE__, __LINE__, "Bitmap#pixels() does not support 32-bit platforms");
+	}
 
 	std::vector<VALUE> pixels;
 	get_pixels(&pixels, *THIS);
@@ -371,7 +612,8 @@ Init_rays_bitmap ()
 	cBitmap.define_method("width",  width);
 	cBitmap.define_method("height", height);
 	cBitmap.define_method("color_space", color_space);
-	cBitmap.define_method("pixels", pixels);
+	cBitmap.define_method("pixels=", set_pixels);
+	cBitmap.define_method("pixels",  get_pixels);
 	cBitmap.define_method("[]=", set_at);
 	cBitmap.define_method("[]",  get_at);
 }

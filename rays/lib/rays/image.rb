@@ -9,7 +9,7 @@ module Rays
 
     extend Forwardable
 
-    def_delegators :bitmap, :[], :[]=
+    def_delegators :bitmap, :pixels=, :pixels, :[]=, :[]
 
     def paint(&block)
       painter.paint self, &block
