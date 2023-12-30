@@ -6,8 +6,8 @@ class TestBitmap < Test::Unit::TestCase
   W = 32
   H = 16
 
-  def bitmap(w = W, h = H)
-    Rays::Bitmap.new w, h
+  def bitmap(w = W, h = H, *args)
+    Rays::Bitmap.new w, h, *args
   end
 
   def color(*args)
@@ -32,10 +32,17 @@ class TestBitmap < Test::Unit::TestCase
   end
 
   def test_pixels()
-    colors = %w[#f00 #0f0 #00f #ff0].map {|s| color s}
-    bmp = bitmap 2, 2
-    bmp[0, 0], bmp[1, 0], bmp[0, 1], bmp[1, 1] = colors
+    bmp = bitmap 2, 2, Rays::RGBA
+    assert_equal [0] * 4, bmp.pixels
+
+    bmp.pixels = [0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00]
     assert_equal [0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00], bmp.pixels
+
+    bmp = bitmap 2, 2, Rays::RGBA_float
+    assert_equal [0,0,0,0] * 4, bmp.pixels
+
+    bmp.pixels = [1,0,0,1, 0,1,0,1, 0,0,1,1, 1,1,0,1]
+    assert_equal [1,0,0,1, 0,1,0,1, 0,0,1,1, 1,1,0,1], bmp.pixels
   end
 
   def test_at()
