@@ -448,45 +448,29 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			break;
 
 		case Rays::BGRA_8888:
-			for (int y = 0; y < h; ++y)
-			{
-				const auto* p = bmp.at<uint8_t>(0, y);
-				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgba_value(p[2], p[1], p[0], p[3]));
-			}
-			break;
-
 		case Rays::BGRX_8888:
 			for (int y = 0; y < h; ++y)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgb_value(p[2], p[1], p[0]));
+					pixels->push_back(to_argb_value(p[2], p[1], p[0], p[3]));
 			}
 			break;
 
 		case Rays::ABGR_8888:
-			for (int y = 0; y < h; ++y)
-			{
-				const auto* p = bmp.at<uint8_t>(0, y);
-				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgba_value(p[3], p[2], p[1], p[0]));
-			}
-			break;
-
 		case Rays::XBGR_8888:
 			for (int y = 0; y < h; ++y)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgb_value(p[3], p[2], p[1]));
+					pixels->push_back(to_argb_value(p[3], p[2], p[1], p[0]));
 			}
 			break;
 
 		case Rays::RGB_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 3)
 				{
 					pixels->push_back(value(p[0]));
@@ -499,7 +483,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::RGBA_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
 				{
 					pixels->push_back(value(p[0]));
@@ -513,7 +497,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::ARGB_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
 				{
 					pixels->push_back(value(p[1]));
@@ -527,7 +511,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::BGR_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 3)
 				{
 					pixels->push_back(value(p[2]));
@@ -540,7 +524,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::BGRA_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
 				{
 					pixels->push_back(value(p[2]));
@@ -554,7 +538,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 		case Rays::ABGR_float:
 			for (int y = 0; y < h; ++y)
 			{
-				const auto* p = bmp.at<uint8_t>(0, y);
+				const auto* p = bmp.at<float>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
 				{
 					pixels->push_back(value(p[3]));
