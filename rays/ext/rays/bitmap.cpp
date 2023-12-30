@@ -333,7 +333,7 @@ to_rgb_value (uint8_t r, uint8_t g, uint8_t b)
 }
 
 static inline Value
-to_rgba_value (uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+to_argb_value (uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
 	return value(
 		((uint) a) << 24 |
@@ -346,8 +346,8 @@ static void
 get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 {
 	int w = bmp.width(), h = bmp.height();
-
 	const auto& cs = bmp.color_space();
+
 	pixels->clear();
 	pixels->reserve(w * h * (cs.is_float() ? cs.Bpp() / cs.Bpc() : 1));
 
@@ -403,38 +403,22 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			break;
 
 		case Rays::RGBA_8888:
-			for (int y = 0; y < h; ++y)
-			{
-				const auto* p = bmp.at<uint8_t>(0, y);
-				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgba_value(p[0], p[1], p[2], p[3]));
-			}
-			break;
-
 		case Rays::RGBX_8888:
 			for (int y = 0; y < h; ++y)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgb_value(p[0], p[1], p[2]));
+					pixels->push_back(to_argb_value(p[0], p[1], p[2], p[3]));
 			}
 			break;
 
 		case Rays::ARGB_8888:
-			for (int y = 0; y < h; ++y)
-			{
-				const auto* p = bmp.at<uint8_t>(0, y);
-				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgba_value(p[1], p[2], p[3], p[0]));
-			}
-			break;
-
 		case Rays::XRGB_8888:
 			for (int y = 0; y < h; ++y)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_rgb_value(p[1], p[2], p[3]));
+					pixels->push_back(to_argb_value(p[1], p[2], p[3], p[0]));
 			}
 			break;
 
@@ -571,9 +555,15 @@ RUCY_DEF1(set_pixels, pixels)
 RUCY_END
 
 static
-RUCY_DEF0(pixels)
+RUCY_DEF0(get_pixels)
 {
 	CHECK;
+
+	if (sizeof(VALUE) <= 4)
+	{
+		not_implemented_error(
+			__FILE__, __LINE__, "Bitmap#pixels() does not support 32-bit platforms");
+	}
 
 	std::vector<VALUE> pixels;
 	get_pixels(&pixels, *THIS);
@@ -623,7 +613,7 @@ Init_rays_bitmap ()
 	cBitmap.define_method("height", height);
 	cBitmap.define_method("color_space", color_space);
 	cBitmap.define_method("pixels=", set_pixels);
-	cBitmap.define_method("pixels", pixels);
+	cBitmap.define_method("pixels",  get_pixels);
 	cBitmap.define_method("[]=", set_at);
 	cBitmap.define_method("[]",  get_at);
 }
