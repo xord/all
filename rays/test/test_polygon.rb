@@ -76,7 +76,7 @@ class TestPolygon < Test::Unit::TestCase
 
     o.transform {|polylines|
       m = Rays::Matrix.translate 10, 10
-      polylines.map {|pl| pl.dup points: pl.points.map {|p| m * p}}
+      polylines.map {|pl| pl.with points: pl.points.map {|p| m * p}}
     }.tap {|x|
       assert_equal_polygon (rect(10, 10, 100, 100) - rect(20, 20, 50, 50)), x
     }

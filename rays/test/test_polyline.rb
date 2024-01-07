@@ -154,56 +154,56 @@ class TestPolyline < Test::Unit::TestCase
     assert_raise(ArgumentError) {pl[].expand 1, 99}
   end
 
-  def test_dup_points()
-    assert_equal polyline(5,6, 7,8), polyline(1,2, 3,4).dup(points: [5,6, 7,8])
-    assert_equal polyline(5,6),      polyline(1,2, 3,4).dup(points: [5,6])
+  def test_with_points()
+    assert_equal polyline(5,6, 7,8), polyline(1,2, 3,4).with(points: [5,6, 7,8])
+    assert_equal polyline(5,6),      polyline(1,2, 3,4).with(points: [5,6])
 
     assert_raise(ArgumentError) do
-      polyline(1,2, 3,4, colors: [[1], [2]]).dup(points: [1,2])
+      polyline(1,2, 3,4, colors: [[1], [2]]).with(points: [1,2])
     end
   end
 
-  def test_dup_loop_fill()
+  def test_with_loop_fill()
     assert_equal(
       polyline(1,2, 3,4, 5,6,     loop: false, fill: false),
       polyline(1,2, 3,4, 5,6))
     assert_equal(
-      polyline(1,2, 3,4, 5,6,     loop: true,  fill: false),
-      polyline(1,2, 3,4, 5,6).dup(loop: true))
+      polyline(1,2, 3,4, 5,6,      loop: true,  fill: false),
+      polyline(1,2, 3,4, 5,6).with(loop: true))
     assert_equal(
-      polyline(1,2, 3,4, 5,6,     loop: false, fill: true),
-      polyline(1,2, 3,4, 5,6).dup(             fill: true))
+      polyline(1,2, 3,4, 5,6,      loop: false, fill: true),
+      polyline(1,2, 3,4, 5,6).with(             fill: true))
   end
 
-  def test_dup_colors()
+  def test_with_colors()
     assert_equal(
-      polyline(1,2, 3,4,     texcoords: [1,2, 3,4]),
-      polyline(1,2, 3,4).dup(texcoords: [1,2, 3,4]))
+      polyline(1,2, 3,4,      texcoords: [1,2, 3,4]),
+      polyline(1,2, 3,4).with(texcoords: [1,2, 3,4]))
     assert_equal(
-      polyline(1,2, 3,4,                            texcoords: [5,6, 7,8]),
-      polyline(1,2, 3,4, texcoords: [1,2, 3,4]).dup(texcoords: [5,6, 7,8]))
+      polyline(1,2, 3,4,                             texcoords: [5,6, 7,8]),
+      polyline(1,2, 3,4, texcoords: [1,2, 3,4]).with(texcoords: [5,6, 7,8]))
 
-    assert_raise(ArgumentError) {polyline(1,2, 3,4).dup(colors: [[1]])}
+    assert_raise(ArgumentError) {polyline(1,2, 3,4).with(colors: [[1]])}
   end
 
-  def test_dup_texcoords()
+  def test_with_texcoords()
     assert_equal(
-      polyline(1,2, 3,4,     colors: [[1], [2]]),
-      polyline(1,2, 3,4).dup(colors: [[1], [2]]))
+      polyline(1,2, 3,4,      colors: [[1], [2]]),
+      polyline(1,2, 3,4).with(colors: [[1], [2]]))
     assert_equal(
-      polyline(1,2, 3,4,                         colors: [[3], [4]]),
-      polyline(1,2, 3,4, colors: [[1], [2]]).dup(colors: [[3], [4]]))
+      polyline(1,2, 3,4,                          colors: [[3], [4]]),
+      polyline(1,2, 3,4, colors: [[1], [2]]).with(colors: [[3], [4]]))
 
-    assert_raise(ArgumentError) {polyline(1,2, 3,4).dup(colors: [[1]])}
+    assert_raise(ArgumentError) {polyline(1,2, 3,4).with(colors: [[1]])}
   end
 
-  def test_dup_hole()
+  def test_with_hole()
     assert_equal(
       polyline(1,2, 3,4, 5,6, loop: true,     hole: false),
       polyline(1,2, 3,4, 5,6, loop: true))
     assert_equal(
-      polyline(1,2, 3,4, 5,6, loop: true,     hole: true),
-      polyline(1,2, 3,4, 5,6, loop: true).dup(hole: true))
+      polyline(1,2, 3,4, 5,6, loop: true,      hole: true),
+      polyline(1,2, 3,4, 5,6, loop: true).with(hole: true))
   end
 
   def test_equal()

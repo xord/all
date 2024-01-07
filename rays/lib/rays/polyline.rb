@@ -15,7 +15,7 @@ module Rays
       setup points, loop, (fill != nil ? fill : loop), colors, texcoords, hole
     end
 
-    def dup(**kwargs)
+    def with(**kwargs)
       points_, loop_, fill_, colors_, texcoords_, hole_ =
         kwargs.values_at :points, :loop, :fill, :colors, :texcoords, :hole
       self.class.new(
