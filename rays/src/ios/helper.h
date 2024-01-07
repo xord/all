@@ -15,9 +15,9 @@ namespace Rays
 	void safe_cfrelease (CFTypeRef ref);
 
 
-	typedef std::shared_ptr<const __CFString> CFString;
+	typedef std::shared_ptr<const __CFString> CFStringPtr;
 
-	CFString cfstring (const char* str);
+	CFStringPtr cfstring (const char* str);
 
 
 }// Rays

@@ -78,14 +78,12 @@ namespace Rays
 	get_font_families ()
 	{
 		static const FontFamilyMap MAP = []() {
-			NSFontManager* fm = NSFontManager.sharedFontManager;
-
 			FontFamilyMap map;
-			for (NSString* family in fm.availableFontFamilies)
+			for (NSString* family in UIFont.familyNames)
 			{
 				FontFamilyMap::mapped_type array;
-				for (NSArray<NSString*>* members in [fm availableMembersOfFontFamily: family])
-					array.emplace_back(members[0].UTF8String);
+				for (NSString* name in [UIFont fontNamesForFamilyName: family])
+					array.emplace_back(name.UTF8String);
 				map[family.UTF8String] = array;
 			}
 			return map;
