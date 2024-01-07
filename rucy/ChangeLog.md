@@ -1,6 +1,12 @@
 # rucy ChangeLog
 
 
+## [v0.1.43] - 2024-01-08
+
+- Add Hash class
+- Add set() and get() to Value class
+
+
 ## [v0.1.42] - 2023-12-09
 
 - Trigger github actions on all pull_request

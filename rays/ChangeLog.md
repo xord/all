@@ -1,6 +1,29 @@
 # rays ChangeLog
 
 
+## [v0.1.48] - 2024-01-08
+
+- Add Bitmap#pixels=
+- Add Font#dup, Font#size=, Font.families, and Font.load
+- Add Polyline#with
+- Add Painter#texture, Painter#texcoord_mode,  and Painter#texcoord_wrap
+
+- Delete Polygon::Line because it was merged into Polyline
+
+- Polygon and Polyline can take colors and texcoords for each vertex
+- Polyline.new can take 'hole' parameter
+- 'polygonA + polygonB' means Polygon.new(*polygonA.to_a, *polygonB.to_a)
+- Polygon with only holes raises an ArgumentError
+- Image delegates 'pixels' accessors to Bitmap
+- Use GL_CLAMP_TO_EDGE for texturing
+- Refine Point#inspect(), Color#inspect(), and Font#inspect()
+- default_font() -> get_default_font()
+- rays/include/noise.h -> rays/include/util.h
+
+- Fix Polygon.bezier() returns broken object
+- Fix get_pixels() does not work with float colors
+
+
 ## [v0.1.47] - 2023-12-09
 
 - Add Polygon's singleton methods: points(), lines(), triangles(), triangle_strip(), triangle_fan(), quads(), quad_strip()

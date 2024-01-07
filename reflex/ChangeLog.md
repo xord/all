@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.1.56] - 2024-01-08
+
+- Delete Polygon::Line because it was merged into Polyline
+
+
 ## [v0.1.55] - 2023-12-09
 
 - Trigger github actions on all pull_request
