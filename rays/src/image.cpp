@@ -10,6 +10,13 @@
 #include "texture.h"
 
 
+#if 0
+#define PRINT_MODIFIED_FLAGS(message) self->print_modified_flags(message)
+#else
+#define PRINT_MODIFIED_FLAGS(message)
+#endif
+
+
 namespace Rays
 {
 
@@ -26,6 +33,16 @@ namespace Rays
 		mutable Bitmap bitmap;
 
 		mutable Texture texture;
+
+		void print_modified_flags (const char* message)
+		{
+			printf("%s: %d %d %d %d \n",
+				message,
+				bitmap ? 1 : 0,
+				Bitmap_get_modified(bitmap) ? 1 : 0,
+				texture ? 1 : 0,
+				texture.modified() ? 1 : 0);
+		}
 
 	};// Image::Data
 
@@ -82,9 +99,15 @@ namespace Rays
 		if (!self->bitmap)
 		{
 			if (self->texture)
+			{
+				PRINT_MODIFIED_FLAGS("new bitmap from texture");
 				self->bitmap = Bitmap_from(self->texture);
+			}
 			else
+			{
+				PRINT_MODIFIED_FLAGS("new bitmap");
 				self->bitmap = Bitmap(self->width, self->height, self->color_space);
+			}
 			clear_modified_flags(image);
 		}
 		else if (
@@ -92,6 +115,7 @@ namespace Rays
 			self->texture.modified() &&
 			!Bitmap_get_modified(self->bitmap))
 		{
+			PRINT_MODIFIED_FLAGS("bitmap from texture");
 			self->bitmap = Bitmap_from(self->texture);
 			clear_modified_flags(image);
 		}
@@ -115,9 +139,13 @@ namespace Rays
 		if (!self->texture)
 		{
 			if (self->bitmap)
+			{
+				PRINT_MODIFIED_FLAGS("new texture from bitmap");
 				self->texture = Texture(self->bitmap);
+			}
 			else
 			{
+				PRINT_MODIFIED_FLAGS("new texture");
 				self->texture = Texture(self->width, self->height, self->color_space);
 
 				Painter p = image.painter();
@@ -132,6 +160,7 @@ namespace Rays
 			Bitmap_get_modified(self->bitmap) &&
 			!self->texture.modified())
 		{
+			PRINT_MODIFIED_FLAGS("texture from bitmap");
 			self->texture = Texture(self->bitmap);
 			clear_modified_flags(&image);
 		}
