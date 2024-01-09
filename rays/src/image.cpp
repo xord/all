@@ -170,7 +170,7 @@ namespace Rays
 			else
 			{
 				PRINT_MODIFIED_FLAGS("texture from bitmap");
-				self->texture = Texture(self->bitmap);
+				self->texture = self->bitmap;
 				clear_modified_flags(&image);
 			}
 		}
