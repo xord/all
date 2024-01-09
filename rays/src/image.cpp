@@ -279,7 +279,7 @@ namespace Rays
 	const Bitmap&
 	Image::bitmap () const
 	{
-		return get_bitmap(const_cast<Image*>(this));
+		return const_cast<Image*>(this)->bitmap();
 	}
 
 	Image::operator bool () const
