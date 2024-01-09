@@ -21,9 +21,9 @@ namespace Xot
 
 #else
 
-	inline void dout(...) {}
+	inline void dout (...) {}
 
-	inline void doutln(...) {}
+	inline void doutln (...) {}
 
 #endif
 
