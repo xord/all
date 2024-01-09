@@ -110,14 +110,19 @@ namespace Rays
 			}
 			clear_modified_flags(image);
 		}
-		else if (
-			self->texture &&
-			self->texture.modified() &&
-			!Bitmap_get_modified(self->bitmap))
+		else if (self->texture && self->texture.modified())
 		{
-			PRINT_MODIFIED_FLAGS("bitmap from texture");
-			self->bitmap = Bitmap_from(self->texture);
-			clear_modified_flags(image);
+			if (Bitmap_get_modified(self->bitmap))
+			{
+				invalid_state_error(
+					__FILE__, __LINE__, "bitmap and texture modifications conflicted");
+			}
+			else
+			{
+				PRINT_MODIFIED_FLAGS("bitmap from texture");
+				self->bitmap = Bitmap_from(self->texture);
+				clear_modified_flags(image);
+			}
 		}
 
 		return self->bitmap;
@@ -155,14 +160,19 @@ namespace Rays
 			}
 			clear_modified_flags(&image);
 		}
-		else if (
-			self->bitmap &&
-			Bitmap_get_modified(self->bitmap) &&
-			!self->texture.modified())
+		else if (self->bitmap && Bitmap_get_modified(self->bitmap))
 		{
-			PRINT_MODIFIED_FLAGS("texture from bitmap");
-			self->texture = Texture(self->bitmap);
-			clear_modified_flags(&image);
+			if (self->texture.modified())
+			{
+				invalid_state_error(
+					__FILE__, __LINE__, "texture and bitmap modifications conflicted");
+			}
+			else
+			{
+				PRINT_MODIFIED_FLAGS("texture from bitmap");
+				self->texture = Texture(self->bitmap);
+				clear_modified_flags(&image);
+			}
 		}
 
 		return self->texture;
