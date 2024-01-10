@@ -145,7 +145,7 @@ namespace Rays
 	}
 
 	static void
-	copy_bitmap (Bitmap* dest, const Bitmap& src)
+	copy_pixels (Bitmap* dest, const Bitmap& src)
 	{
 		assert(dest);
 
@@ -174,7 +174,7 @@ namespace Rays
 		if (!*bmp)
 			rays_error(__FILE__, __LINE__);
 
-		copy_bitmap(bmp.get(), bitmap);
+		copy_pixels(bmp.get(), bitmap);
 		return bmp;
 	}
 
