@@ -270,6 +270,8 @@ namespace Rays
 
 		GLenum format, type;
 		ColorSpace_get_gl_format_and_type(&format, &type, bitmap.color_space());
+
+		glBindTexture(GL_TEXTURE_2D, self->id);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, format, type, bitmap.pixels());
 
 		return *this;
