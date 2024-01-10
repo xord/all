@@ -113,10 +113,10 @@ RUCY_DEF0(painter)
 RUCY_END
 
 static
-RUCY_DEF0(bitmap)
+RUCY_DEF1(get_bitmap, modify)
 {
 	CHECK;
-	return value(THIS->bitmap());
+	return value(THIS->bitmap(modify));
 }
 RUCY_END
 
@@ -145,7 +145,7 @@ Init_rays_image ()
 	cImage.define_method("color_space", color_space);
 	cImage.define_method("pixel_density", pixel_density);
 	cImage.define_method("painter", painter);
-	cImage.define_method("bitmap", bitmap);
+	cImage.define_private_method("get_bitmap", get_bitmap);
 	cImage.define_module_function("load", load);
 }
 

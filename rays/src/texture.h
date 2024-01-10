@@ -28,6 +28,8 @@ namespace Rays
 
 			Texture (const Bitmap& bitmap);
 
+			Texture& operator = (const Bitmap& bitmap);
+
 			~Texture ();
 
 			int          width () const;

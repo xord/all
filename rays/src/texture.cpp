@@ -258,6 +258,23 @@ namespace Rays
 			&bitmap);
 	}
 
+	Texture&
+	Texture::operator = (const Bitmap& bitmap)
+	{
+		if (!bitmap)
+			argument_error(__FILE__, __LINE__);
+
+		int w = bitmap.width(), h = bitmap.height();
+		if (w != width() || h != height())
+			argument_error(__FILE__, __LINE__, "the size of bitmap does not match");
+
+		GLenum format, type;
+		ColorSpace_get_gl_format_and_type(&format, &type, bitmap.color_space());
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, format, type, bitmap.pixels());
+
+		return *this;
+	}
+
 	Texture::~Texture ()
 	{
 	}

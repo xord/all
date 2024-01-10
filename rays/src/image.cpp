@@ -170,7 +170,7 @@ namespace Rays
 			else
 			{
 				PRINT_MODIFIED_FLAGS("texture from bitmap");
-				self->texture = Texture(self->bitmap);
+				self->texture = self->bitmap;
 				clear_modified_flags(&image);
 			}
 		}
@@ -271,8 +271,13 @@ namespace Rays
 	}
 
 	Bitmap&
-	Image::bitmap ()
+	Image::bitmap (bool modify)
 	{
+		if (modify)
+		{
+			if (!self->bitmap) get_bitmap(this);
+			Bitmap_set_modified(&self->bitmap);
+		}
 		return get_bitmap(this);
 	}
 

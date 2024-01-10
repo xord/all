@@ -723,7 +723,13 @@ namespace Rays
 		set_blend_mode(self->state.blend_mode);
 
 		FrameBuffer& fb = self->frame_buffer;
-		if (fb) FrameBuffer_bind(fb.id());
+		if (fb)
+		{
+			FrameBuffer_bind(fb.id());
+
+			Texture& tex = fb.texture();
+			if (tex) tex.set_modified();
+		}
 
 		const Bounds& vp = self->viewport;
 		float density    = self->pixel_density;
@@ -773,12 +779,7 @@ namespace Rays
 		glFinish();
 
 		if (self->frame_buffer)
-		{
 			FrameBuffer_unbind();
-
-			Texture& tex = self->frame_buffer.texture();
-			if (tex) tex.set_modified();
-		}
 	}
 
 	bool
