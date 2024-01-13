@@ -39,9 +39,11 @@ namespace Reflex
 
 				FLAG_RESIZABLE   = Xot::bit(2),
 
-				FLAG_PORTRAIT    = Xot::bit(3),
+				FLAG_FULLSCREEN  = Xot::bit(3),
 
-				FLAG_LANDSCAPE   = Xot::bit(4),
+				FLAG_PORTRAIT    = Xot::bit(4),
+
+				FLAG_LANDSCAPE   = Xot::bit(5),
 
 				FLAG_LAST        = FLAG_LANDSCAPE
 

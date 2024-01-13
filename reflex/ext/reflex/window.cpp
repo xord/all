@@ -184,6 +184,28 @@ RUCY_DEF0(is_resizable)
 }
 RUCY_END
 
+static
+RUCY_DEF1(set_fullscreen, state)
+{
+	CHECK;
+
+	if (state)
+		THIS->   add_flag(Reflex::Window::FLAG_FULLSCREEN);
+	else
+		THIS->remove_flag(Reflex::Window::FLAG_FULLSCREEN);
+
+	return state;
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_fullscreen)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::Window::FLAG_FULLSCREEN));
+}
+RUCY_END
+
 static const uint ORIENTATION_MASK =
 	Reflex::Window::FLAG_PORTRAIT | Reflex::Window::FLAG_LANDSCAPE;
 
@@ -411,12 +433,14 @@ Init_reflex_window ()
 	cWindow.define_method("title", get_title);
 	cWindow.define_method("frame=", set_frame);
 	cWindow.define_method("frame",  get_frame);
-	cWindow.define_method("closable=",     set_closable);
-	cWindow.define_method("closable?",      is_closable);
-	cWindow.define_method("minimizable=",  set_minimizable);
-	cWindow.define_method("minimizable?",   is_minimizable);
-	cWindow.define_method("resizable=",    set_resizable);
-	cWindow.define_method("resizable?",     is_resizable);
+	cWindow.define_method("closable=",    set_closable);
+	cWindow.define_method("closable?",     is_closable);
+	cWindow.define_method("minimizable=", set_minimizable);
+	cWindow.define_method("minimizable?",  is_minimizable);
+	cWindow.define_method("resizable=",   set_resizable);
+	cWindow.define_method("resizable?",    is_resizable);
+	cWindow.define_method("fullscreen=",  set_fullscreen);
+	cWindow.define_method("fullscreen?",   is_fullscreen);
 	cWindow.define_method("orientations=", set_orientations);
 	cWindow.define_method("orientations",  get_orientations);
 	cWindow.define_method("hidden", hidden);

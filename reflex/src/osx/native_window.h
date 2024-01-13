@@ -6,6 +6,8 @@
 
 	- (void) draw;
 
+	- (BOOL) hasFullScreenFlag;
+
 	+ (NSRect) frameRectForContentRect: (NSRect) contentRect;
 
 @end// NativeWindow

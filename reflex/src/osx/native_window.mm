@@ -221,6 +221,11 @@ update_pixel_density (Reflex::Window* window)
 		Window_call_draw_event(win, &e);
 	}
 
+	- (BOOL) hasFullScreenFlag
+	{
+		return self.styleMask & NSWindowStyleMaskFullScreen;
+	}
+
 	- (BOOL) windowShouldClose: (id) sender
 	{
 		Reflex::Window* win = self.window;
@@ -297,6 +302,41 @@ update_pixel_density (Reflex::Window* window)
 				win->on_resize(&e);
 			}
 		}
+	}
+
+	- (void) windowWillEnterFullScreen: (NSNotification*) notification
+	{
+		[self updateFullScreenFlag];
+	}
+
+	- (void) windowDidEnterFullScreen: (NSNotification*) notification
+	{
+		[self updateFullScreenFlag];
+	}
+
+	- (void) windowWillExitFullScreen: (NSNotification*) notification
+	{
+		[self updateFullScreenFlag];
+	}
+
+	- (void) windowDidExitFullScreen: (NSNotification*) notification
+	{
+		[self updateFullScreenFlag];
+	}
+
+	- (void) updateFullScreenFlag
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		bool fullscreen = self.hasFullScreenFlag;
+		if (fullscreen == win->has_flag(Reflex::Window::FLAG_FULLSCREEN))
+			return;
+
+		if (fullscreen)
+			win->add_flag(Reflex::Window::FLAG_FULLSCREEN);
+		else
+			win->remove_flag(Reflex::Window::FLAG_FULLSCREEN);
 	}
 
 	- (void) windowDidBecomeKey: (NSNotification*) notification

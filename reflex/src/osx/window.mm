@@ -154,6 +154,9 @@ namespace Reflex
 
 		if (styleMask != native.styleMask)
 			native.styleMask = styleMask;
+
+		if (native.hasFullScreenFlag != Xot::has_flag(flags, Window::FLAG_FULLSCREEN))
+			[native toggleFullScreen: native];
 	}
 
 	Screen

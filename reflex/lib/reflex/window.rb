@@ -70,7 +70,8 @@ module Reflex
     universal_accessor :title, :frame,
       closable:    {reader: :closable?},
       minimizable: {reader: :minimizable?},
-      resizable:   {reader: :resizable?}
+      resizable:   {reader: :resizable?},
+      fullscreen:  {reader: :fullscreen?}
 
     def initialize(options = nil, &block)
       super()
