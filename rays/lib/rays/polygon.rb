@@ -79,12 +79,12 @@ module Rays
       ellipse! args, center, radius, hole, from, to, nsegment
     end
 
-    def self.curve(*points, loop: false)
-      curve! points, loop
+    def self.curve(*points, loop: false, nsegment: nil)
+      curve! points, loop, nsegment
     end
 
-    def self.bezier(*points, loop: false)
-      bezier! points, loop
+    def self.bezier(*points, loop: false, nsegment: nil)
+      bezier! points, loop, nsegment
     end
 
   end# Polygon

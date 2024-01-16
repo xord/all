@@ -1353,10 +1353,12 @@ namespace Rays
 	create_spline (
 		SplineType type,
 		const Point* points, size_t size, bool loop,
-		uint nsegment = 16)
+		uint nsegment = 0)
 	{
 		if (size % 4 != 0)
 			argument_error(__FILE__, __LINE__);
+
+		if (nsegment <= 0) nsegment = 16;
 
 		size_t count = size / 4;
 		auto spline_fun = get_spline_fun(type);
@@ -1384,7 +1386,7 @@ namespace Rays
 	create_curve (
 		coord x1, coord y1, coord x2, coord y2,
 		coord x3, coord y3, coord x4, coord y4,
-		bool loop)
+		bool loop, uint nsegment)
 	{
 		const Point points[] = {
 			Point(x1, y1),
@@ -1392,29 +1394,29 @@ namespace Rays
 			Point(x3, y3),
 			Point(x4, y4)
 		};
-		return create_spline(CATMULLROM, points, 4, loop);
+		return create_spline(CATMULLROM, points, 4, loop, nsegment);
 	}
 
 	Polygon
 	create_curve (
 		const Point& p1, const Point& p2, const Point& p3, const Point& p4,
-		bool loop)
+		bool loop, uint nsegment)
 	{
 		const Point points[] = {p1, p2, p3, p4};
-		return create_spline(CATMULLROM, points, 4, loop);
+		return create_spline(CATMULLROM, points, 4, loop, nsegment);
 	}
 
 	Polygon
-	create_curve (const Point* points, size_t size, bool loop)
+	create_curve (const Point* points, size_t size, bool loop, uint nsegment)
 	{
-		return create_spline(CATMULLROM, points, size, loop);
+		return create_spline(CATMULLROM, points, size, loop, nsegment);
 	}
 
 	Polygon
 	create_bezier (
 		coord x1, coord y1, coord x2, coord y2,
 		coord x3, coord y3, coord x4, coord y4,
-		bool loop)
+		bool loop, uint nsegment)
 	{
 		const Point points[] = {
 			Point(x1, y1),
@@ -1422,22 +1424,22 @@ namespace Rays
 			Point(x3, y3),
 			Point(x4, y4)
 		};
-		return create_spline(BEZIER, points, 4, loop);
+		return create_spline(BEZIER, points, 4, loop, nsegment);
 	}
 
 	Polygon
 	create_bezier (
 		const Point& p1, const Point& p2, const Point& p3, const Point& p4,
-		bool loop)
+		bool loop, uint nsegment)
 	{
 		const Point points[] = {p1, p2, p3, p4};
-		return create_spline(BEZIER, points, 4, loop);
+		return create_spline(BEZIER, points, 4, loop, nsegment);
 	}
 
 	Polygon
-	create_bezier (const Point* points, size_t size, bool loop)
+	create_bezier (const Point* points, size_t size, bool loop, uint nsegment)
 	{
-		return create_spline(BEZIER, points, size, loop);
+		return create_spline(BEZIER, points, size, loop, nsegment);
 	}
 
 	void
