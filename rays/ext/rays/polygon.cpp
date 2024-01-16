@@ -342,18 +342,20 @@ RUCY_DEF7(create_ellipse,
 RUCY_END
 
 static
-RUCY_DEF2(create_curve, points, loop)
+RUCY_DEF3(create_curve, points, loop, nsegment)
 {
 	CreateParams params(points, nil(), nil());
-	return value(Rays::create_curve(params.ppoints(), params.size(), loop));
+	uint nseg = nsegment ? 0 : to<uint>(nsegment);
+	return value(Rays::create_curve(params.ppoints(), params.size(), loop, nseg));
 }
 RUCY_END
 
 static
-RUCY_DEF2(create_bezier, points, loop)
+RUCY_DEF3(create_bezier, points, loop, nsegment)
 {
 	CreateParams params(points, nil(), nil());
-	return value(Rays::create_bezier(params.ppoints(), params.size(), loop));
+	uint nseg = nsegment ? 0 : to<uint>(nsegment);
+	return value(Rays::create_bezier(params.ppoints(), params.size(), loop, nseg));
 }
 RUCY_END
 

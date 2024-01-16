@@ -191,29 +191,35 @@ namespace Rays
 	Polygon create_curve (
 		coord x1, coord y1, coord x2, coord y2,
 		coord x3, coord y3, coord x4, coord y4,
-		bool loop = false);
+		bool loop     = false,
+		uint nsegment = 0);
 
 	Polygon create_curve (
 		const Point& p1, const Point& p2, const Point& p3, const Point& p4,
-		bool loop = false);
+		bool loop     = false,
+		uint nsegment = 0);
 
 	Polygon create_curve (
 		const Point* points, size_t size,
-		bool loop = false);
+		bool loop     = false,
+		uint nsegment = 0);
 
 
 	Polygon create_bezier (
 		coord x1, coord y1, coord x2, coord y2,
 		coord x3, coord y3, coord x4, coord y4,
-		bool loop = false);
+		bool loop     = false,
+		uint nsegment = 0);
 
 	Polygon create_bezier (
 		const Point& p1, const Point& p2, const Point& p3, const Point& p4,
-		bool loop = false);
+		bool loop     = false,
+		uint nsegment = 0);
 
 	Polygon create_bezier (
 		const Point* points, size_t size,
-		bool loop = false);
+		bool loop     = false,
+		uint nsegment = 0);
 
 
 }// Rays
