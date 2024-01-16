@@ -431,7 +431,7 @@ namespace Rays
 #endif
 
 	static uint
-	get_nsegment (
+	get_nsegment_for_angle (
 		uint nsegment, uint nsegment_min, float angle_from, float angle_to)
 	{
 		float angle = angle_to - angle_from;
@@ -700,7 +700,7 @@ namespace Rays
 					left_top    != 0 || right_top    != 0 ||
 					left_bottom != 0 || right_bottom != 0);
 
-				nsegment = get_nsegment(nsegment, 1, 0, 90);
+				nsegment = get_nsegment_for_angle(nsegment, 1, 0, 90);
 
 				fix_rounds(
 					&left_top,    &right_top,
@@ -863,7 +863,7 @@ namespace Rays
 			{
 				assert(width != 0 && height != 0);
 
-				nsegment = get_nsegment(nsegment, 3, 0, 360);
+				nsegment = get_nsegment_for_angle(nsegment, 3, 0, 360);
 
 				bool has_hole     = hole_size != 0;
 				float radian_from = Xot::deg2rad(0);
@@ -904,7 +904,7 @@ namespace Rays
 			{
 				assert(width != 0 && height != 0 && angle_from != angle_to);
 
-				nsegment = get_nsegment(nsegment, 3, angle_from, angle_to);
+				nsegment = get_nsegment_for_angle(nsegment, 3, angle_from, angle_to);
 
 				bool has_hole     = hole_size != 0;
 				float radian_from = Xot::deg2rad(angle_from);
