@@ -991,7 +991,7 @@ namespace Rays
 		coord x3, coord y3, coord x4, coord y4,
 		bool loop)
 	{
-		polygon(create_curve(x1, y1, x2, y2, x3, y3, x4, y4, loop));
+		polygon(create_curve(x1, y1, x2, y2, x3, y3, x4, y4, loop, nsegment()));
 	}
 
 	void
@@ -999,13 +999,13 @@ namespace Rays
 		const Point& p1, const Point& p2, const Point& p3, const Point& p4,
 		bool loop)
 	{
-		polygon(create_curve(p1, p2, p3, p4, loop));
+		polygon(create_curve(p1, p2, p3, p4, loop, nsegment()));
 	}
 
 	void
 	Painter::curve (const Point* points, size_t size, bool loop)
 	{
-		polygon(create_curve(points, size, loop));
+		polygon(create_curve(points, size, loop, nsegment()));
 	}
 
 	void
@@ -1014,7 +1014,7 @@ namespace Rays
 		coord x3, coord y3, coord x4, coord y4,
 		bool loop)
 	{
-		polygon(create_bezier(x1, y1, x2, y2, x3, y3, x4, y4, loop));
+		polygon(create_bezier(x1, y1, x2, y2, x3, y3, x4, y4, loop, nsegment()));
 	}
 
 	void
@@ -1022,13 +1022,13 @@ namespace Rays
 		const Point& p1, const Point& p2, const Point& p3, const Point& p4,
 		bool loop)
 	{
-		polygon(create_bezier(p1, p2, p3, p4, loop));
+		polygon(create_bezier(p1, p2, p3, p4, loop, nsegment()));
 	}
 
 	void
 	Painter::bezier (const Point* points, size_t size, bool loop)
 	{
-		polygon(create_bezier(points, size, loop));
+		polygon(create_bezier(points, size, loop, nsegment()));
 	}
 
 	static void
