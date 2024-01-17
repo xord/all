@@ -895,6 +895,24 @@ namespace Rays
 	}
 
 	void
+	Painter::point (coord x, coord y)
+	{
+		polygon(create_point(x, y));
+	}
+
+	void
+	Painter::point (const Point& point)
+	{
+		polygon(create_point(point));
+	}
+
+	void
+	Painter::points (const Point* points, size_t size)
+	{
+		polygon(create_points(points, size));
+	}
+
+	void
 	Painter::line (coord x1, coord y1, coord x2, coord y2)
 	{
 		polygon(create_line(x1, y1, x2, y2));

@@ -157,6 +157,19 @@ RUCY_DEFN(polygon)
 RUCY_END
 
 static
+RUCY_DEFN(point)
+{
+	CHECK;
+
+	std::vector<Rays::Point> points;
+	get_points(&points, argc, argv);
+
+	THIS->points(&points[0], points.size());
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF2(line, args, loop)
 {
 	CHECK;
@@ -785,6 +798,7 @@ Init_rays_painter ()
 	cPainter.define_method(              "painting?", is_painting);
 	cPainter.define_method("clear",   clear);
 	cPainter.define_method("polygon", polygon);
+	cPainter.define_method(             "point",    point);
 	cPainter.define_private_method("draw_line",     line);
 	cPainter.define_private_method("draw_polyline", polyline);
 	cPainter.define_private_method("draw_rect",     rect);

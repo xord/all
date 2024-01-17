@@ -77,6 +77,12 @@ namespace Rays
 			void polygon (
 				const Polygon& polygon, const Bounds& bounds);
 
+			void point (coord x, coord y);
+
+			void point (const Point& point);
+
+			void points (const Point* points, size_t size);
+
 			void line (coord x1, coord y1, coord x2, coord y2);
 
 			void line (const Point& p1, const Point& p2);
