@@ -973,9 +973,17 @@ namespace Rays
 	Polygon
 	create_points (const Point* points, size_t size)
 	{
+		static const coord DELTA = 0.01;
+
 		Polygon p;
 		for (size_t i = 0; i < size; ++i)
-			p.self->append(Polyline(&points[i], 1, false, false));
+		{
+			// Polyline(&points[i], 1, false, false).expand() ignores CapType
+
+			coord x = points[i].x, y = points[i].y;
+			Point array[] = {{x, y}, {x + DELTA, y + DELTA}};
+			p.self->append(Polyline(array, 2, false, false));
+		}
 		return p;
 	}
 
