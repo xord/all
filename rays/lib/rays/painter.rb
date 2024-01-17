@@ -57,26 +57,26 @@ module Rays
 
     def line(*args, loop: false)
       if args.first.kind_of?(Polyline)
-        draw_polyline args.first
+        polyline! args.first
       else
-        draw_line args, loop
+        line! args, loop
       end
     end
 
     def rect(*args, round: nil, lt: nil, rt: nil, lb: nil, rb: nil)
-      draw_rect args, round, lt, rt, lb, rb
+      rect! args, round, lt, rt, lb, rb
     end
 
     def ellipse(*args, center: nil, radius: nil, hole: nil, from: nil, to: nil)
-      draw_ellipse args, center, radius, hole, from, to
+      ellipse! args, center, radius, hole, from, to
     end
 
     def curve(*args, loop: false)
-      draw_curve args, loop
+      curve! args, loop
     end
 
     def bezier(*args, loop: false)
-      draw_bezier args, loop
+      bezier! args, loop
     end
 
     def color=(fill, stroke = nil)

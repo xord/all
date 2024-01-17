@@ -796,17 +796,17 @@ Init_rays_painter ()
 	cPainter.define_private_method("begin_paint",  begin_paint);
 	cPainter.define_private_method(  "end_paint",    end_paint);
 	cPainter.define_method(              "painting?", is_painting);
-	cPainter.define_method("clear",   clear);
-	cPainter.define_method("polygon", polygon);
-	cPainter.define_method(             "point",    point);
-	cPainter.define_private_method("draw_line",     line);
-	cPainter.define_private_method("draw_polyline", polyline);
-	cPainter.define_private_method("draw_rect",     rect);
-	cPainter.define_private_method("draw_ellipse",  ellipse);
-	cPainter.define_private_method("draw_curve",    curve);
-	cPainter.define_private_method("draw_bezier",   bezier);
-	cPainter.define_method("image", image);
-	cPainter.define_method("text",  text);
+	cPainter.define_method("clear", clear);
+	cPainter.define_method(        "polygon",   polygon);
+	cPainter.define_method(        "point",     point);
+	cPainter.define_private_method("line!",     line);
+	cPainter.define_private_method("polyline!", polyline);
+	cPainter.define_private_method("rect!",     rect);
+	cPainter.define_private_method("ellipse!",  ellipse);
+	cPainter.define_private_method("curve!",    curve);
+	cPainter.define_private_method("bezier!",   bezier);
+	cPainter.define_method(        "image",     image);
+	cPainter.define_method(        "text",      text);
 
 	cPainter.define_method(   "background=", set_background);
 	cPainter.define_method(   "background",  get_background);
