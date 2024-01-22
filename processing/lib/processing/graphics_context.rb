@@ -287,6 +287,8 @@ module Processing
       @tint__           = nil
       @filter__         = nil
       @pixels__         = nil
+      @random__         = nil
+      @nextGaussian__   = nil
       @noiseSeed__      = nil
       @noiseOctaves__   = nil
       @noiseFallOff__   = nil
@@ -316,6 +318,7 @@ module Processing
       curveDetail    20
       curveTightness 0
       bezierDetail   20
+      randomSeed     Random.new_seed
       noiseSeed      Random.new_seed
       noiseDetail    4, 0.5
     end
@@ -2256,7 +2259,6 @@ module Processing
 
     # Returns a random number in range low...high
     #
-    # @overload random()
     # @overload random(high)
     # @overload random(low, high)
     # @overload random(choices)
@@ -2267,10 +2269,60 @@ module Processing
     #
     # @return [Float] random number
     #
+    # @see https://processing.org/reference/random_.html
+    # @see https://p5js.org/reference/#/p5/random
+    #
     def random(*args)
-      return args.first.sample if args.first.kind_of? Array
-      high, low = args.reverse
-      rand (low || 0).to_f...(high || 1).to_f
+      if args.first.kind_of? Array
+        a = args.first
+        a.empty? ? nil : a[@random__.rand a.size]
+      else
+        high, low = args.reverse
+        @random__.rand (low || 0).to_f...(high || 1).to_f
+      end
+    end
+
+    # Sets the seed value for random()
+    #
+    # @param seed [Numeric] seed value
+    #
+    # @return [nil] nil
+    #
+    # @see https://processing.org/reference/randomSeed_.html
+    # @see https://p5js.org/reference/#/p5/randomSeed
+    #
+    def randomSeed(seed)
+      @random__       = Random.new seed
+      @nextGaussian__ = nil
+    end
+
+    # Returns a random number fitting a Gaussian, or normal, distribution.
+    #
+    # @param mean [Numeric] mean
+    # @param sd   [Numeric] standard deviation
+    #
+    # @return [Float] random number
+    #
+    # @see https://processing.org/reference/randomGaussian_.html
+    # @see https://p5js.org/reference/#/p5/randomGaussian
+    #
+    def randomGaussian(mean = 0, sd = 1)
+      value =
+        if @nextGaussian__
+          x, @nextGaussian__ = @nextGaussian__, nil
+          x
+        else
+          a, b, w = 0, 0, 1
+          until w < 1
+            a = random(2) - 1
+            b = random(2) - 1
+            w = a ** 2 + b ** 2
+          end
+          w = Math.sqrt(-2 * Math.log(w) / w)
+          @randomGaussian__ = a * w
+          b * w
+        end
+      value * sd + mean
     end
 
     # Creates a new vector object.
