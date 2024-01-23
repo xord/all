@@ -58,21 +58,6 @@ namespace Rays
 		return font.self->get_raw(pixel_density);
 	}
 
-	coord
-	Font_get_width (const Font& font, float pixel_density, const char* str)
-	{
-		return Font_get_raw(font, pixel_density).get_width(str);
-	}
-
-	coord
-	Font_get_height (
-		const Font& font, float pixel_density,
-		coord* ascent, coord* descent, coord* leading)
-	{
-		return Font_get_raw(font, pixel_density)
-			.get_height(ascent, descent, leading);
-	}
-
 
 	Font::Font ()
 	{
