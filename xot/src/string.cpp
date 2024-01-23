@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <memory>
+#include "xot/exception.h"
 
 
 namespace Xot
@@ -108,6 +109,29 @@ namespace Xot
 		}
 
 		return NULL;
+	}
+
+	void
+	split (StringList* result, const char* string, char separator)
+	{
+		if (separator == '\0')
+			argument_error(__FILE__, __LINE__);
+
+		result->clear();
+		for (const char* p = string;;)
+		{
+			const char* psep = strchr(p, separator);
+			if (psep)
+			{
+				result->emplace_back(p, psep);
+				p = psep + 1;
+			}
+			else
+			{
+				result->emplace_back(p);
+				break;
+			}
+		}
 	}
 
 	template <> String

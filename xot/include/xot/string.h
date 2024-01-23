@@ -58,9 +58,14 @@ namespace Xot
 	};// String
 
 
+	typedef std::vector<String> StringList;
+
+
 	String stringf (const char* format, ...);
 
 	String stringf (const char* format, va_list args);
+
+	void split(StringList* result, const char* string, char separator = '\n');
 
 	template <typename T> String to_s (const T& val);
 
