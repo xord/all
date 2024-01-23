@@ -34,6 +34,9 @@ class TestFont < Test::Unit::TestCase
     assert_equal 0, font.width('')
     w = font.width 'X'
     assert_equal w * 2, font.width('XX')
+    assert_equal w * 2, font.width("XX\nX")
+    assert_equal w * 2, font.width("XX\nXX")
+    assert_equal w * 3, font.width("XX\nXXX")
   end
 
   def test_height()

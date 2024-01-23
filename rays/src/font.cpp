@@ -116,7 +116,19 @@ namespace Rays
 	coord
 	Font::get_width (const char* str) const
 	{
-		return self->rawfont.get_width(str);
+		if (!strchr(str, '\n'))
+			return self->rawfont.get_width(str);
+
+		Xot::StringList lines;
+		split(&lines, str);
+
+		coord width = 0;
+		for (const auto& line : lines)
+		{
+			coord w = self->rawfont.get_width(line.c_str());
+			if (w > width) width = w;
+		}
+		return width;
 	}
 
 	coord
