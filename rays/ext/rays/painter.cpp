@@ -510,6 +510,23 @@ RUCY_DEF0(get_nsegment)
 RUCY_END
 
 static
+RUCY_DEF1(set_line_height, height)
+{
+	CHECK;
+	THIS->set_line_height(height ? to<coord>(height) : -1);
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_line_height)
+{
+	CHECK;
+	return value(THIS->line_height());
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_blend_mode, mode)
 {
 	CHECK;
@@ -829,6 +846,8 @@ Init_rays_painter ()
 	cPainter.define_method("miter_limit",  get_miter_limit);
 	cPainter.define_method("nsegment=", set_nsegment);
 	cPainter.define_method("nsegment",  get_nsegment);
+	cPainter.define_method("line_height=", set_line_height);
+	cPainter.define_method("line_height",  get_line_height);
 	cPainter.define_method("blend_mode=", set_blend_mode);
 	cPainter.define_method("blend_mode",  get_blend_mode);
 	cPainter.define_method(   "clip=", set_clip);
