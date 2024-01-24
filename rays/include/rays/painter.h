@@ -243,7 +243,7 @@ namespace Rays
 
 			void set_line_height (coord height);
 
-			coord    line_height () const;
+			coord    line_height (bool raw = false) const;
 
 			void  set_blend_mode (BlendMode mode);
 

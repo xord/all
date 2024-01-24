@@ -153,24 +153,28 @@ class TestPainter < Test::Unit::TestCase
   end
 
   def test_line_height_accessor()
-    pa     = painter
-    height = pa.line_height
-    assert                       pa.line_height > 0
-    assert_not_equal     1,      pa.line_height
+    pa = painter
+
+    h = pa.line_height
+    assert              h > 0
+    assert_not_equal 1, h
+
+    assert_equal        [h, -1], [pa.line_height, pa.line_height!]
     pa.line_height =     1
-    assert_equal         1,      pa.line_height
+    assert_equal        [1,  1], [pa.line_height, pa.line_height!]
     pa.line_height       2
-    assert_equal         2,      pa.line_height
+    assert_equal        [2,  2], [pa.line_height, pa.line_height!]
     pa.push line_height: 9 do |_|
-      assert_equal       9,      pa.line_height
+      assert_equal      [9,  9], [pa.line_height, pa.line_height!]
     end
-    assert_equal         2,      pa.line_height
-    pa.line_height = -1
-    assert_equal         height, pa.line_height
+    assert_equal        [2,  2], [pa.line_height, pa.line_height!]
+    pa.line_height =    -1
+    assert_equal        [h, -1], [pa.line_height, pa.line_height!]
     pa.line_height       0
-    assert_equal         0,      pa.line_height
-    pa.line_height = nil
-    assert_equal         height, pa.line_height
+    assert_equal        [0,  0], [pa.line_height, pa.line_height!]
+    pa.line_height =     nil
+    assert_equal        [h, -1], [pa.line_height, pa.line_height!]
+
     pa.font "Menlo", 100
     assert_equal pa.font.height, pa.line_height
   end

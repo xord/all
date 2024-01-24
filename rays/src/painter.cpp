@@ -1509,10 +1509,11 @@ namespace Rays
 	}
 
 	coord
-	Painter::line_height () const
+	Painter::line_height (bool raw) const
 	{
-		coord h = self->state.line_height;
-		return h >= 0 ? h : self->state.font.get_height();
+		coord height = self->state.line_height;
+		if (!raw && height < 0) height = self->state.font.get_height();
+		return height;
 	}
 
 	void
