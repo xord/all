@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <string>
+#include <vector>
 
 
 #define XOT_STRINGF(format, result) \
