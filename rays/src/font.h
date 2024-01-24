@@ -55,12 +55,6 @@ namespace Rays
 
 	const RawFont& Font_get_raw (const Font& font, float pixel_density);
 
-	coord Font_get_width (const Font& font, float pixel_density, const char* str);
-
-	coord Font_get_height (
-		const Font& font, float pixel_density,
-		coord* ascent = NULL, coord* descent = NULL, coord* leading = NULL);
-
 
 	RawFont RawFont_load (const char* path, coord size);
 

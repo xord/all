@@ -58,21 +58,6 @@ namespace Rays
 		return font.self->get_raw(pixel_density);
 	}
 
-	coord
-	Font_get_width (const Font& font, float pixel_density, const char* str)
-	{
-		return Font_get_raw(font, pixel_density).get_width(str);
-	}
-
-	coord
-	Font_get_height (
-		const Font& font, float pixel_density,
-		coord* ascent, coord* descent, coord* leading)
-	{
-		return Font_get_raw(font, pixel_density)
-			.get_height(ascent, descent, leading);
-	}
-
 
 	Font::Font ()
 	{
@@ -116,7 +101,19 @@ namespace Rays
 	coord
 	Font::get_width (const char* str) const
 	{
-		return self->rawfont.get_width(str);
+		if (!strchr(str, '\n'))
+			return self->rawfont.get_width(str);
+
+		Xot::StringList lines;
+		split(&lines, str);
+
+		coord width = 0;
+		for (const auto& line : lines)
+		{
+			coord w = self->rawfont.get_width(line.c_str());
+			if (w > width) width = w;
+		}
+		return width;
 	}
 
 	coord

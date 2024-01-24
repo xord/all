@@ -59,6 +59,8 @@ namespace Rays
 
 		uint nsegment;
 
+		coord line_height;
+
 		BlendMode blend_mode;
 
 		Bounds clip;
@@ -84,6 +86,7 @@ namespace Rays
 			stroke_join    = JOIN_DEFAULT;
 			miter_limit    = JOIN_DEFAULT_MITER_LIMIT;
 			nsegment       = 0;
+			line_height    = -1;
 			blend_mode     = BLEND_NORMAL;
 			clip           .reset(-1);
 			font           = get_default_font();
@@ -1195,7 +1198,7 @@ namespace Rays
 	}
 
 	static inline void
-	debug_draw_text (
+	debug_draw_line (
 		Painter* painter, const Font& font,
 		coord x, coord y, coord str_width, coord str_height)
 	{
@@ -1229,25 +1232,20 @@ namespace Rays
 	}
 
 	static void
-	draw_text (
+	draw_line (
 		Painter* painter, const Font& font,
-		const char* str, coord x, coord y, coord width = 0, coord height = 0)
+		const char* line, coord x, coord y, coord width = 0, coord height = 0)
 	{
 		assert(painter && font && str && *str != '\0');
 
 		Painter::Data* self = painter->self.get();
 
-		if (!self->painting)
-			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
-
-		if (!self->state.has_color())
-			return;
-
-		float density = self->pixel_density;
-		coord str_w = Font_get_width(font, density, str);
-		coord str_h = Font_get_height(font, density);
-		int tex_w   = ceil(str_w);
-		int tex_h   = ceil(str_h);
+		float density          = self->pixel_density;
+		const RawFont& rawfont = Font_get_raw(font, density);
+		coord str_w            = rawfont.get_width(line);
+		coord str_h            = rawfont.get_height();
+		int tex_w              = ceil(str_w);
+		int tex_h              = ceil(str_h);
 		const Texture& texture = Image_get_texture(self->text_image);
 		if (
 			texture.width()  < tex_w ||
@@ -1264,8 +1262,7 @@ namespace Rays
 
 		assert(self->text_image.pixel_density() == density);
 
-		Bitmap_draw_string(
-			&self->text_image.bitmap(), Font_get_raw(font, density), str, 0, 0);
+		Bitmap_draw_string(&self->text_image.bitmap(), rawfont, line, 0, 0);
 
 		str_w /= density;
 		str_h /= density;
@@ -1278,7 +1275,38 @@ namespace Rays
 			x, y, str_w, str_h,
 			false, true, &Shader_get_shader_for_text());
 
-		debug_draw_text(painter, font, x, y, str_w / density, str_h / density);
+		debug_draw_line(painter, font, x, y, str_w / density, str_h / density);
+	}
+
+	static void
+	draw_text (
+		Painter* painter, const Font& font,
+		const char* str, coord x, coord y, coord width = 0, coord height = 0)
+	{
+		assert(painter && font && str && *str != '\0');
+
+		Painter::Data* self = painter->self.get();
+
+		if (!self->painting)
+			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
+
+		if (!self->state.has_color())
+			return;
+
+		if (!strchr(str, '\n'))
+			draw_line(painter, font, str, x, y, width, height);
+		else
+		{
+			coord line_height = painter->line_height();
+
+			Xot::StringList lines;
+			split(&lines, str, '\n');
+			for (const auto& line : lines)
+			{
+				draw_line(painter, font, line.c_str(), x, y, width, height);
+				y += line_height;
+			}
+		}
 	}
 
 	void
@@ -1471,6 +1499,20 @@ namespace Rays
 	Painter::nsegment () const
 	{
 		return self->state.nsegment;
+	}
+
+	void
+	Painter::set_line_height (coord height)
+	{
+		if (height < 0) height = -1;
+		self->state.line_height = height;
+	}
+
+	coord
+	Painter::line_height () const
+	{
+		coord h = self->state.line_height;
+		return h >= 0 ? h : self->state.font.get_height();
 	}
 
 	void

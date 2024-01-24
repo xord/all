@@ -241,6 +241,10 @@ namespace Rays
 
 			uint     nsegment () const;
 
+			void set_line_height (coord height);
+
+			coord    line_height () const;
+
 			void  set_blend_mode (BlendMode mode);
 
 			BlendMode blend_mode () const;
