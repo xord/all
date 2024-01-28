@@ -121,6 +121,14 @@ class TestColor < Test::Unit::TestCase
     assert o > color(1, 2, 3, 3)
   end
 
+  def test_to_hsv()
+    h, s, v, a = hsv(0.1, 0.2, 0.3, 0.4).to_hsv
+    assert_in_delta 0.1, h
+    assert_in_delta 0.2, s
+    assert_in_delta 0.3, v
+    assert_in_delta 0.4, a
+  end
+
   def test_hsv_hue()
     assert_equal_color color(0.5, 0, 1), hsv(-0.25, 1, 1)
     assert_equal_color color(1,   0, 0), hsv( 0,    1, 1)
