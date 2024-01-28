@@ -66,19 +66,18 @@ class TestColor < Test::Unit::TestCase
   def test_set_rgb()
     o = color
     assert_equal [0, 0, 0, 1], o.to_a
-    o.red = 1
+    o.red   = 1
     assert_equal [1, 0, 0, 1], o.to_a
     o.green = 2
     assert_equal [1, 2, 0, 1], o.to_a
-    o.blue = 3
+    o.blue  = 3
     assert_equal [1, 2, 3, 1], o.to_a
     o.alpha = 4
     assert_equal [1, 2, 3, 4], o.to_a
   end
 
   def test_to_a()
-    o = color 1, 2, 3, 4
-    assert_equal [1, 2, 3, 4], o.to_a
+    assert_equal [1, 2, 3, 4], color(1, 2, 3, 4).to_a
   end
 
   def test_index()
