@@ -72,7 +72,9 @@ namespace Rays
 
 	Color rgb8 (int   red, int   green, int   blue, int   alpha = 255);
 
-	Color hsv (float hue, float saturation, float value, float alpha = 1);
+	Color    hsv (float  hue, float  saturation, float  value, float alpha = 1);
+
+	void get_hsv (float* hue, float* saturation, float* value, const Color& color);
 
 
 }// Rays

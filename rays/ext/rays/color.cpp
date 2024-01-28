@@ -114,6 +114,17 @@ RUCY_DEF0(get_alpha)
 }
 RUCY_END
 
+static
+RUCY_DEF0(to_hsv)
+{
+	CHECK;
+
+	float h, s, v;
+	Rays::get_hsv(&h, &s, &v, *THIS);
+	return array(h, s, v, THIS->alpha);
+}
+RUCY_END
+
 
 typedef std::map<Rays::String, Rays::Color> ColorMap;
 
@@ -212,7 +223,8 @@ Init_rays_color ()
 	cColor.define_method("blue",   get_blue);
 	cColor.define_method("alpha=", set_alpha);
 	cColor.define_method("alpha",  get_alpha);
-	cColor.define_module_function("hsv", hsv);
+	cColor.define_method(      "to_hsv", to_hsv);
+	cColor.define_module_function("hsv",    hsv);
 	cColor.define_module_function("set_palette_color", set_palette_color);
 }
 

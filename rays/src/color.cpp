@@ -47,8 +47,17 @@ namespace Rays
 		hue = fmod(hue, 1.f);
 		if (hue < 0) hue += 1.f;
 
-		auto c = glm::rgbColor(Vec3(hue * 360.f, saturation, value));
-		return Color(c[0], c[1], c[2], alpha);
+		auto rgb = glm::rgbColor(Vec3(hue * 360.f, saturation, value));
+		return Color(rgb[0], rgb[1], rgb[2], alpha);
+	}
+
+	void
+	get_hsv (float* hue, float* saturation, float* value, const Color& color)
+	{
+		auto hsv = glm::hsvColor(Vec3(color.r, color.g, color.b));
+		if (hue)        *hue        = hsv[0] / 360.f;
+		if (saturation) *saturation = hsv[1];
+		if (value)      *value      = hsv[2];
 	}
 
 
