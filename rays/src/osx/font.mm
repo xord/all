@@ -163,11 +163,9 @@ namespace Rays
 		if (!line)
 			rays_error(__FILE__, __LINE__, "creating CTLineRef failed.");
 
-		coord width = 0, height = 0, ascent = 0;
-		width  = get_width(str);
-		height = get_height(&ascent);
-
-		height = ceil(height);
+		coord width, height, ascent = 0;
+		width  = ceil(get_width(str));
+		height = ceil(get_height(&ascent));
 		ascent = floor(ascent);
 
 		CGRect rect = CGRectMake(x, context_height - height - y, width, height);
