@@ -21,6 +21,8 @@ module Rays
     alias a= alpha=
     alias a  alpha
 
+    alias to_hsb to_hsv
+
     def opaque?()
       alpha >= 1
     end
@@ -83,6 +85,10 @@ module Rays
 
     def inspect()
       "#<#{self.class.name} #{to_a.join ' '}>"
+    end
+
+    class << self
+      alias hsb hsv
     end
 
   end# Color
