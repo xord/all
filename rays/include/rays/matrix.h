@@ -57,6 +57,8 @@ namespace Rays
 
 		This& reset (const coord* elements, size_t size);
 
+		This& transpose ();
+
 		This& translate (coord x, coord y, coord z = 0);
 
 		This& translate (const Coord3& translate);
