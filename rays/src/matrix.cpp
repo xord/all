@@ -85,6 +85,13 @@ namespace Rays
 	}
 
 	Matrix&
+	Matrix::transpose ()
+	{
+		to_glm(*this) = glm::transpose(to_glm(*this));
+		return *this;
+	}
+
+	Matrix&
 	Matrix::translate (coord x, coord y, coord z)
 	{
 		to_glm(*this) = glm::translate(to_glm(*this), Vec3(x, y, z));

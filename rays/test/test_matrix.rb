@@ -87,6 +87,10 @@ class TestMatrix < Test::Unit::TestCase
     assert o > matrix(0)
   end
 
+  def test_transpose()
+    assert_equal mat_str('1594 2615 3726 4837'), mat_str('1234 5678 9123 4567').transpose
+  end
+
   def test_transform()
     assert_equal mat_str('1001 0102 0013 0001'), translate(1, 2, 3)
     assert_equal mat_str('2000 0300 0040 0001'), scale(2, 3, 4)

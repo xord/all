@@ -72,6 +72,15 @@ RUCY_DEFN(reset)
 RUCY_END
 
 static
+RUCY_DEFN(transpose)
+{
+	CHECK;
+	THIS->transpose();
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEFN(translate)
 {
 	CHECK;
@@ -219,6 +228,7 @@ Init_rays_matrix ()
 	cMatrix.define_private_method("initialize",      initialize);
 	cMatrix.define_private_method("initialize_copy", initialize_copy);
 	cMatrix.define_method("reset", reset);
+	cMatrix.define_method("transpose", transpose);
 	cMatrix.define_method("translate", translate);
 	cMatrix.define_method("scale",     scale);
 	cMatrix.define_method("rotate",    rotate);
