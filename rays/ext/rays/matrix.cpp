@@ -124,10 +124,10 @@ RUCY_DEF0(to_a)
 {
 	CHECK;
 	return array(
-		THIS->x0, THIS->y0, THIS->z0, THIS->w0,
-		THIS->x1, THIS->y1, THIS->z1, THIS->w1,
-		THIS->x2, THIS->y2, THIS->z2, THIS->w2,
-		THIS->x3, THIS->y3, THIS->z3, THIS->w3);
+		THIS->x0, THIS->x1, THIS->x2, THIS->x3,
+		THIS->y0, THIS->y1, THIS->y2, THIS->y3,
+		THIS->z0, THIS->z1, THIS->z2, THIS->z3,
+		THIS->w0, THIS->w1, THIS->w2, THIS->w3);
 }
 RUCY_END
 
