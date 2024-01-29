@@ -45,6 +45,14 @@ module Processing
     #
     DEGREES = :degrees
 
+    # Processing mode for matrixMode().
+    #
+    PROCESSING = :processing
+
+    # p5.js mode for matrixMode().
+    #
+    P5JS       = :p5js
+
     # Mode for rectMode(), ellipseMode(), imageMode(), and shapeMode().
     #
     CORNER  = :corner
@@ -273,6 +281,8 @@ module Processing
       @colorMaxes__     = [1.0] * 4
       @angleMode__      = nil
       @angleScale__     = 1.0
+      @matrixMode__     = nil
+      @p5jsMode__       = false
       @rectMode__       = nil
       @ellipseMode__    = nil
       @imageMode__      = nil
@@ -299,6 +309,7 @@ module Processing
 
       colorMode   RGB, 255
       angleMode   RADIANS
+      matrixMode  P5JS
       rectMode    CORNER
       ellipseMode CENTER
       imageMode   CORNER
@@ -592,6 +603,20 @@ module Processing
       when DEGREES then degrees
       else raise "invalid angle mode: #{mode}"
       end
+    end
+
+    # Sets matrix mode.
+    #
+    # @param mode [PROCESSING, P5JS] compatible to Processing or p5.js
+    #
+    # @return [PROCESSING, P5JS] current mode
+    #
+    def matrixMode(mode = nil)
+      if mode
+        @matrixMode__ = mode
+        @p5jsMode__   = mode == P5JS
+      end
+      @matrixMode__
     end
 
     # Sets rect mode. Default is CORNER.
@@ -1697,6 +1722,51 @@ module Processing
       assertDrawing__
       raise "matrix stack underflow" if @matrixStack__.empty?
       @painter__.matrix = @matrixStack__.pop
+      nil
+    end
+
+    # Reset current transformation matrix with 2x3, or 4x4 matrix.
+    #
+    # @overload applyMatrix(array)
+    # @overload applyMatrix(a, b, c, d, e, f)
+    # @overload applyMatrix(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+    #
+    # @param array [Array]   6 or 16 numbers which define the matrix
+    # @param a     [Numeric] number which defines the matrix
+    # @param b     [Numeric] number which defines the matrix
+    # @param c     [Numeric] number which defines the matrix
+    # @param d     [Numeric] number which defines the matrix
+    # @param e     [Numeric] number which defines the matrix
+    # @param f     [Numeric] number which defines the matrix
+    # @param g     [Numeric] number which defines the matrix
+    # @param h     [Numeric] number which defines the matrix
+    # @param i     [Numeric] number which defines the matrix
+    # @param j     [Numeric] number which defines the matrix
+    # @param k     [Numeric] number which defines the matrix
+    # @param l     [Numeric] number which defines the matrix
+    # @param m     [Numeric] number which defines the matrix
+    # @param n     [Numeric] number which defines the matrix
+    # @param o     [Numeric] number which defines the matrix
+    # @param p     [Numeric] number which defines the matrix
+    #
+    # @return [nil] nil
+    #
+    def applyMatrix(*args)
+      assertDrawing__
+      args = args.first if args.first.kind_of?(Array)
+      if args.size == 6
+        a, b, c, d, e, f = args
+        args = [
+          a, b, 0, 0,
+          c, d, 0, 0,
+          0, 0, 1, 0,
+          e, f, 0, 1
+        ]
+      end
+      raise ArgumentError unless args.size == 16
+      m = Rays::Matrix.new(*args)
+      m.transpose if @p5jsMode__
+      @painter__.matrix *= m
       nil
     end
 
