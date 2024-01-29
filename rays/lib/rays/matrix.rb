@@ -9,6 +9,22 @@ module Rays
     include Comparable
     include Enumerable
 
+    def transpose()
+      dup.transpose!
+    end
+
+    def translate(*args)
+      dup.translate!(*args)
+    end
+
+    def scale(*args)
+      dup.scale!(*args)
+    end
+
+    def rotate(*args)
+      dup.rotate!(*args)
+    end
+
     def each(&block)
       to_a.each(&block)
     end
