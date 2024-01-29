@@ -86,16 +86,6 @@ static
 RUCY_DEF1(rotate, degree)
 {
 	CHECK;
-	Rays::Point p = *THIS;
-	p.rotate(to<float>(degree));
-	return value(p);
-}
-RUCY_END
-
-static
-RUCY_DEF1(rotate_self, degree)
-{
-	CHECK;
 	THIS->rotate(to<float>(degree));
 }
 RUCY_END
@@ -283,8 +273,7 @@ Init_rays_point ()
 	cPoint.define_private_method("initialize_copy", initialize_copy);
 	cPoint.define_method("move_to!", move_to);
 	cPoint.define_method("move_by!", move_by);
-	cPoint.define_method("rotate",  rotate);
-	cPoint.define_method("rotate!", rotate_self);
+	cPoint.define_method("rotate!",  rotate);
 	cPoint.define_method("length", length);
 	cPoint.define_method("normalize", normalize);
 	cPoint.define_method("normal",    normal);

@@ -17,6 +17,10 @@ module Rays
       dup.move_by!(*args)
     end
 
+    def rotate(degree)
+      dup.rotate!(degree)
+    end
+
     def zero?()
       length == 0
     end
