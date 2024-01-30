@@ -124,19 +124,23 @@ namespace Reflex
 	}
 
 	void
-	Window_set_frame (Window* window, coord x, coord y, coord width, coord height)
+	Window_set_frame (Window* window, coord x, coord y, coord w, coord h)
 	{
-		NSRect frame =
-			[NativeWindow frameRectForContentRect: NSMakeRect(x, y, width, height)];
-		[get_native(window) setFrame: frame display: NO animate: NO];
+		NSRect f   = [NativeWindow frameRectForContentRect: NSMakeRect(x, y, w, h)];
+		f.origin.y = primary_screen_height() - (f.origin.y + f.size.height);
+
+		[get_native(window) setFrame: f display: NO animate: NO];
 	}
 
 	Bounds
 	Window_get_frame (const Window& window)
 	{
 		NativeWindow* native = get_native(&window);
-		NSRect r = [native contentRectForFrameRect: [native frame]];
-		return Bounds(r.origin.x, r.origin.y, r.size.width, r.size.height);
+
+		NSRect f   = [native contentRectForFrameRect: native.frame];
+		f.origin.y = primary_screen_height() - (f.origin.y + f.size.height);
+
+		return Bounds(f.origin.x, f.origin.y, f.size.width, f.size.height);
 	}
 
 	void

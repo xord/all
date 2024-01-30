@@ -22,6 +22,12 @@ namespace Reflex
 	};// Screen::Data
 
 
+	CGFloat
+	primary_screen_height ()
+	{
+		return NSScreen.screens.firstObject.frame.size.height;
+	}
+
 	void
 	Screen_initialize (Screen* pthis, NSScreen* screen)
 	{
@@ -44,7 +50,11 @@ namespace Reflex
 			invalid_state_error(__FILE__, __LINE__);
 
 		NSRect f = self->screen.frame;
-		return Bounds(f.origin.x, f.origin.y, f.size.width, f.size.height);
+		return Bounds(
+			f.origin.x,
+			primary_screen_height() - (f.origin.y + f.size.height),
+			f.size.width,
+			f.size.height);
 	}
 
 	Screen::operator bool () const

@@ -12,6 +12,9 @@ namespace Reflex
 {
 
 
+	CGFloat primary_screen_height ();
+
+
 	void Screen_initialize (Screen* pthis, NSScreen* screen);
 
 
