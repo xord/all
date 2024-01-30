@@ -42,6 +42,17 @@ update_pixel_density (Reflex::Window* window)
 	}
 }
 
+static void
+move_to_main_screen_origin (NativeWindow* window)
+{
+	NSRect frame   = window.frame;
+	NSRect screen  = NSScreen.mainScreen.visibleFrame;
+	frame.origin.x = screen.origin.x;
+	frame.origin.y = screen.origin.y + screen.size.height;
+
+	[window setFrame: frame display: NO animate: NO];
+}
+
 
 @implementation NativeWindow
 
@@ -88,6 +99,8 @@ update_pixel_density (Reflex::Window* window)
 
 	- (void) bind: (Reflex::Window*) window
 	{
+		move_to_main_screen_origin(self);
+
 		if (!window)
 			Reflex::argument_error(__FILE__, __LINE__);
 
