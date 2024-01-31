@@ -2706,15 +2706,10 @@ module Processing
       path   = path.sub_ext ext
 
       unless path.file?
-        URI.open uri do |input|
-          input.set_encoding nil# disable default_internal
+        Net::HTTP.get_response URI.parse(uri) do |res|
+          res.value # raise an error unless successful
           tmpdir.mkdir unless tmpdir.directory?
-          path.open('w') do |output|
-            output.set_encoding Encoding::ASCII_8BIT
-            while buf = input.read(2 ** 16)
-              output.write buf
-            end
-          end
+          path.open('wb') {|file| res.read_body {|body| file.write body}}
         end
       end
       path.to_s
