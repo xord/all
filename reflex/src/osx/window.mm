@@ -127,7 +127,7 @@ namespace Reflex
 	Window_set_frame (Window* window, coord x, coord y, coord w, coord h)
 	{
 		NSRect f   = [NativeWindow frameRectForContentRect: NSMakeRect(x, y, w, h)];
-		f.origin.y = primary_screen_height() - (f.origin.y + f.size.height);
+		f.origin.y = primary_screen_height() - (f.origin.y + h);
 
 		[get_native(window) setFrame: f display: NO animate: NO];
 	}
