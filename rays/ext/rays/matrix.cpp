@@ -215,6 +215,54 @@ RUCY_DEFN(s_rotate)
 }
 RUCY_END
 
+static
+RUCY_DEFN(s_ortho)
+{
+	check_arg_count(__FILE__, __LINE__, "Matrix#ortho", argc, 4, 6);
+
+	coord l = to<coord>(argv[0]);
+	coord r = to<coord>(argv[1]);
+	coord t = to<coord>(argv[2]);
+	coord b = to<coord>(argv[3]);
+	if (argc == 4)
+		return value(Rays::ortho(l, r, t, b));
+	else
+		return value(Rays::ortho(l, r, t, b, to<coord>(argv[4]), to<coord>(argv[5])));
+}
+RUCY_END
+
+static
+RUCY_DEF4(s_perspective, fov_y, aspect_ratio, near, far)
+{
+	return value(Rays::perspective(
+		to<float>(fov_y), to<float>(aspect_ratio), to<coord>(near), to<coord>(far)));
+}
+RUCY_END
+
+static
+RUCY_DEFN(s_look_at)
+{
+	check_arg_count(__FILE__, __LINE__, "Matrix#ortho", argc, 3, 6, 9);
+
+	if (argc == 3)
+	{
+		return value(Rays::look_at(
+			to<Rays::Point&>(argv[0]),
+			to<Rays::Point&>(argv[1]),
+			to<Rays::Point&>(argv[2])));
+	}
+	else
+	{
+		return value(Rays::look_at(
+			to<coord>(argv[0]), to<coord>(argv[1]), to<coord>(argv[2]),
+			to<coord>(argv[3]), to<coord>(argv[4]), to<coord>(argv[5]),
+			argc >= 7 ? to<coord>(argv[6]) : 0,
+			argc >= 8 ? to<coord>(argv[7]) : 1,
+			argc >= 9 ? to<coord>(argv[8]) : 0));
+	}
+}
+RUCY_END
+
 
 static Class cMatrix;
 
@@ -242,6 +290,10 @@ Init_rays_matrix ()
 	cMatrix.define_singleton_method("translate", s_translate);
 	cMatrix.define_singleton_method("scale",     s_scale);
 	cMatrix.define_singleton_method("rotate",    s_rotate);
+	cMatrix.define_singleton_method("ortho",       s_ortho);
+	cMatrix.define_singleton_method("perspective", s_perspective);
+	cMatrix.define_singleton_method("look_at",     s_look_at);
+
 }
 
 

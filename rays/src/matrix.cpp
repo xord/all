@@ -13,6 +13,44 @@ namespace Rays
 {
 
 
+	Matrix
+	ortho (coord left, coord right, coord top,  coord bottom)
+	{
+		return to_rays(glm::ortho(left, right, bottom, top));
+	}
+
+	Matrix
+	ortho (coord left, coord right, coord top,  coord bottom, coord near, coord far)
+	{
+		return to_rays(glm::ortho(left, right, bottom, top, near, far));
+	}
+
+	Matrix
+	perspective (float fov_y, float aspect_ratio, coord near, coord far)
+	{
+		return to_rays(glm::perspective(
+			(float) Xot::deg2rad(fov_y), aspect_ratio, near, far));
+	}
+
+	Matrix
+	look_at (
+		coord    eye_x,    coord eye_y, coord    eye_z,
+		coord target_x, coord target_y, coord target_z,
+		coord     up_x,     coord up_y, coord     up_z)
+	{
+		return to_rays(glm::lookAt(
+			Vec3(   eye_x,    eye_y,    eye_z),
+			Vec3(target_x, target_y, target_z),
+			Vec3(    up_x,     up_y,     up_z)));
+	}
+
+	Matrix
+	look_at (const Point& eye, const Point& target, const Point& up)
+	{
+		return to_rays(glm::lookAt(to_glm(eye), to_glm(target), to_glm(up)));
+	}
+
+
 	Matrix::Matrix (coord value)
 	{
 		reset(value);

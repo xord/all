@@ -104,4 +104,22 @@ class TestMatrix < Test::Unit::TestCase
     assert (rotate(90, 1, 0, 0) * point(0, 1, 0)).z > 0.99
   end
 
+  def test_ortho()
+    m = Rays::Matrix
+    assert_equal m, m.ortho(1, 2, 3, 4)      .class
+    assert_equal m, m.ortho(1, 2, 3, 4, 5, 6).class
+  end
+
+  def test_projection()
+    m = Rays::Matrix
+    assert_equal m, m.ortho(1, 2, 3, 4).class
+  end
+
+  def test_look_at()
+    m = Rays::Matrix
+    assert_equal m, m.look_at(1, 2, 3, 4, 5, 6)                              .class
+    assert_equal m, m.look_at(1, 2, 3, 4, 5, 6, 7, 8, 9)                     .class
+    assert_equal m, m.look_at(point(1, 2, 3), point(4, 5, 6), point(7, 8, 9)).class
+  end
+
 end# TestMatrix

@@ -94,6 +94,28 @@ namespace Rays
 	};// Matrix
 
 
+	Matrix ortho (
+		coord left, coord right,
+		coord top,  coord bottom);
+
+	Matrix ortho (
+		coord left, coord right,
+		coord top,  coord bottom,
+		coord near, coord far);
+
+	Matrix perspective (float fov_y, float aspect_ratio, coord near, coord far);
+
+	Matrix look_at (
+		coord    eye_x,     coord    eye_y,     coord    eye_z,
+		coord target_x,     coord target_y,     coord target_z,
+		coord     up_x = 0, coord     up_y = 1, coord     up_z = 0);
+
+	Matrix look_at (
+		const Point& eye,
+		const Point& target,
+		const Point& up = Point(0, 1, 0));
+
+
 }// Rays
 
 
