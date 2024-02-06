@@ -1,6 +1,12 @@
 # xot ChangeLog
 
 
+## [v0.1.42] - 2024-02-07
+
+- Add Xot::split()
+- Fix compile error
+
+
 ## [v0.1.41] - 2023-12-09
 
 - Add ci?()

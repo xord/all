@@ -1,6 +1,29 @@
 # rays ChangeLog
 
 
+## [v0.1.49] - 2024-02-07
+
+- Add point(), line_height(), and line_height!() to Painter
+- Add translate!(), scale!(), rotate!(), transpose(), and transpose!() to Rays::Matrix class
+- Add ortho(), perspective(), and look_at() to Rays::Matrix
+- Add Color#to_hsv
+- Add get_hsv()
+- hsb as an alias for hsv
+
+- Font::get_width() handles multiple lines if there is a newline character
+- Painter::curve() and Painter::bezier() use nsegment state
+- Polygon.curve() and Polygon.bezier() can take 'nsegment' parameter
+- When updating a texture with a bitmap, the texture is reused, not created anew
+- If the texture is bound to the frame buffer, replacing it with a new texture will cause the drawing target to shift
+- Set the modified flag on the texture in the framebuffer at the beginning of painting
+- Set modified flag for bitmap if needed
+- Throw error on conflict between bitmap and texture
+
+- Fix a bug that dust was drawn on the right edge when drawing text
+- Fix that Painter#point ignores stroke_cap
+- Fix Matrix::to_a order
+
+
 ## [v0.1.48] - 2024-01-08
 
 - Add Bitmap#pixels=

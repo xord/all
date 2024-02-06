@@ -1,6 +1,14 @@
 # reflex ChangeLog
 
 
+## [v0.1.57] - 2024-02-07
+
+- Add Window#fullscreen accessor
+- Window now appears on active screen when displayed
+
+- Fix Window#set_frame updating to a position that was lower than the correct position by the height of the window title bar
+- Fix a bug that the window position origin (0, 0) was at the bottom-left corner of the screen; now it is at the top-left corner of the screen
+
 ## [v0.1.56] - 2024-01-08
 
 - Delete Polygon::Line because it was merged into Polyline

@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.1.44] - 2024-02-07
+
+- Update dependencies
+
+
 ## [v0.1.43] - 2024-01-08
 
 - Add Hash class
