@@ -1236,7 +1236,7 @@ namespace Rays
 		Painter* painter, const Font& font,
 		const char* line, coord x, coord y, coord width = 0, coord height = 0)
 	{
-		assert(painter && font && str && *str != '\0');
+		assert(painter && font && line && *line != '\0');
 
 		Painter::Data* self = painter->self.get();
 
