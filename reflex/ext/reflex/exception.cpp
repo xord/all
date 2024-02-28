@@ -13,7 +13,7 @@ Init_reflex_exception ()
 {
 	Module mReflex = define_module("Reflex");
 
-	cReflexError  = mReflex.define_class("ReflexError", rb_eRuntimeError);
+	cReflexError  = mReflex.define_class("ReflexError", rb_eStandardError);
 	cLayoutError  = mReflex.define_class("LayoutError", cReflexError);
 	cPhysicsError = mReflex.define_class("PhysicsError", cReflexError);
 }

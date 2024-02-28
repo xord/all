@@ -13,7 +13,7 @@ Init_rays_exception ()
 {
 	Module mRays = define_module("Rays");
 
-	cRaysError   = mRays.define_class("RaysError", rb_eRuntimeError);
+	cRaysError   = mRays.define_class("RaysError", rb_eStandardError);
 	cOpenGLError = mRays.define_class("OpenGLError", cRaysError);
 	cShaderError = mRays.define_class("ShaderError", cOpenGLError);
 }

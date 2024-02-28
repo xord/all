@@ -18,7 +18,7 @@ namespace Rucy
 	// module Rucy
 
 	Class native_error_class ();
-	// class Rucy::NativeError < RuntimeError
+	// class Rucy::NativeError < StandardError
 
 	Class invalid_state_error_class ();
 	// class Rucy::InvalidStateError < Rucy::NativeError

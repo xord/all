@@ -35,7 +35,7 @@ namespace Rucy
 	native_error_class ()
 	{
 		static Class c =
-			rucy_module().define_class("NativeError", rb_eRuntimeError);
+			rucy_module().define_class("NativeError", rb_eStandardError);
 		return c;
 	}
 
