@@ -4,8 +4,8 @@
 #define __RAYS_RUBY_H__
 
 
-#include <rays/ruby/rays.h>
 #include <rays/ruby/defs.h>
+#include <rays/ruby/rays.h>
 #include <rays/ruby/exception.h>
 
 #include <rays/ruby/point.h>
@@ -22,6 +22,8 @@
 #include <rays/ruby/shader.h>
 
 #include <rays/ruby/painter.h>
+
+#include <rays/ruby/camera.h>
 
 
 #endif//EOH

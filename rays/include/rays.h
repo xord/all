@@ -6,6 +6,7 @@
 
 #include <rays/defs.h>
 #include <rays/rays.h>
+#include <rays/opengl.h>
 #include <rays/exception.h>
 #include <rays/debug.h>
 
@@ -24,6 +25,9 @@
 #include <rays/shader.h>
 
 #include <rays/painter.h>
+
+#include <rays/camera.h>
+#include <rays/util.h>
 
 
 #endif//EOH
