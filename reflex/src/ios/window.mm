@@ -142,6 +142,25 @@ namespace Reflex
 		return Bounds(b.origin.x, b.origin.y, b.size.width, b.size.height);
 	}
 
+	static UIScreen*
+	get_screen (const Window& window)
+	{
+		UIWindow* w = get_vc(&window).view.window;
+		if (@available(iOS 13.0, *))
+			return w.windowScene.screen;
+		else
+			return w.screen;
+	}
+
+	Screen
+	Window_get_screen (const Window& window)
+	{
+		Screen s;
+		UIScreen* screen = get_screen(window);
+		Screen_initialize(&s, screen ? screen : UIScreen.mainScreen);
+		return s;
+	}
+
 	static UIInterfaceOrientationMask g_orientation_mask =
 		UIInterfaceOrientationMaskAll;
 
@@ -244,25 +263,6 @@ namespace Reflex
 		Window_set_orientation_mask(
 			get_vc(window),
 			flags_to_orientation_mask(flags & (Window::FLAG_PORTRAIT | Window::FLAG_LANDSCAPE)));
-	}
-
-	static UIScreen*
-	get_screen (const Window& window)
-	{
-		UIWindow* w = get_vc(&window).view.window;
-		if (@available(iOS 13.0, *))
-			return w.windowScene.screen;
-		else
-			return w.screen;
-	}
-
-	Screen
-	Window_get_screen (const Window& window)
-	{
-		Screen s;
-		UIScreen* screen = get_screen(window);
-		Screen_initialize(&s, screen ? screen : UIScreen.mainScreen);
-		return s;
 	}
 
 	float

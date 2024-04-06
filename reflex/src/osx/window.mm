@@ -143,6 +143,15 @@ namespace Reflex
 		return Bounds(f.origin.x, f.origin.y, f.size.width, f.size.height);
 	}
 
+	Screen
+	Window_get_screen (const Window& window)
+	{
+		Screen s;
+		NSScreen* screen = get_native(&window).screen;
+		if (screen) Screen_initialize(&s, screen);
+		return s;
+	}
+
 	void
 	Window_set_flags (Window* window, uint flags)
 	{
@@ -161,15 +170,6 @@ namespace Reflex
 
 		if (native.hasFullScreenFlag != Xot::has_flag(flags, Window::FLAG_FULLSCREEN))
 			[native toggleFullScreen: native];
-	}
-
-	Screen
-	Window_get_screen (const Window& window)
-	{
-		Screen s;
-		NSScreen* screen = get_native(&window).screen;
-		if (screen) Screen_initialize(&s, screen);
-		return s;
 	}
 
 	float
