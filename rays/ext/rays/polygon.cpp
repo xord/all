@@ -8,7 +8,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Polygon)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Polygon)
 
 #define THIS  to<Rays::Polygon*>(self)
 
@@ -400,7 +400,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::Polygon
+	template <> RAYS_EXPORT Rays::Polygon
 	value_to<Rays::Polygon> (int argc, const Value* argv, bool convert)
 	{
 		if (convert)

@@ -9,14 +9,14 @@
 #include <reflex/screen.h>
 
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::Screen)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Screen)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class screen_class ();
+	REFLEX_EXPORT Rucy::Class screen_class ();
 	// class Reflex::Screen
 
 

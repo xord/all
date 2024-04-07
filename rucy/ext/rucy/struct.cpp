@@ -23,7 +23,7 @@ namespace Rucy
 
 }// Rucy
 
-RUCY_VALUE_FROM_TO(Struct)
+RUCY_VALUE_FROM_TO(RUCY_EXPORT, Struct)
 
 
 /*

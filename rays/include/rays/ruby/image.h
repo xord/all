@@ -9,14 +9,14 @@
 #include <rays/image.h>
 
 
-RUCY_DECLARE_VALUE_FROM_TO(Rays::Image)
+RUCY_DECLARE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Image)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class image_class ();
+	RAYS_EXPORT Rucy::Class image_class ();
 	// class Rays::Image
 
 

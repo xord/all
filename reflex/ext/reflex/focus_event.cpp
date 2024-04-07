@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::FocusEvent)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::FocusEvent)
 
 #define THIS  to<Reflex::FocusEvent*>(self)
 

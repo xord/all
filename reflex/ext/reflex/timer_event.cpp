@@ -6,7 +6,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::TimerEvent)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::TimerEvent)
 
 #define THIS  to<Reflex::TimerEvent*>(self)
 

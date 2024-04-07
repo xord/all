@@ -9,19 +9,19 @@
 #include <reflex/style.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Reflex::StyleLength)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(REFLEX_EXPORT, Reflex::StyleLength)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::Style)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Style)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class style_length_class ();
+	REFLEX_EXPORT Rucy::Class style_length_class ();
 	// class Reflex::StyleLength
 
-	Rucy::Class style_class ();
+	REFLEX_EXPORT Rucy::Class style_class ();
 	// class Reflex::Style
 
 

@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::WheelEvent)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::WheelEvent)
 
 #define THIS  to<Reflex::WheelEvent*>(self)
 

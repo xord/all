@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Reflex::Selector)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(REFLEX_EXPORT, Reflex::Selector)
 
 #define   THIS to<      Reflex::Selector*>(self)
 #define C_THIS to<const Reflex::Selector*>(self)
@@ -143,7 +143,7 @@ namespace Rucy
 {
 
 
-	template <> Reflex::Selector
+	template <> REFLEX_EXPORT Reflex::Selector
 	value_to<Reflex::Selector> (int argc, const Value* argv, bool convert)
 	{
 		if (argc == 1 && argv->is_array())

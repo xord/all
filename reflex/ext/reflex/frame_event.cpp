@@ -6,7 +6,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::FrameEvent)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::FrameEvent)
 
 #define THIS  to<Reflex::FrameEvent*>(self)
 

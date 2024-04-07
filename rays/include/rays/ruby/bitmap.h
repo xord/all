@@ -9,14 +9,14 @@
 #include <rays/bitmap.h>
 
 
-RUCY_DECLARE_VALUE_FROM_TO(Rays::Bitmap)
+RUCY_DECLARE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Bitmap)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class bitmap_class ();
+	RAYS_EXPORT Rucy::Class bitmap_class ();
 	// class Rays::Bitmap
 
 

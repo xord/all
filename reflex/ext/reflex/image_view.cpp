@@ -6,7 +6,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(Reflex::ImageView)
+RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ImageView)
 
 #define THIS      to<Reflex::ImageView*>(self)
 

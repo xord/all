@@ -15,7 +15,7 @@
 #include "selector.h"
 
 
-RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(Reflex::View)
+RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::View)
 
 #define   THIS    to<      Reflex::View*>(self)
 #define C_THIS    to<const Reflex::View*>(self)

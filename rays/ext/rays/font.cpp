@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Font)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Font)
 
 #define THIS  to<Rays::Font*>(self)
 
@@ -169,7 +169,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::Font
+	template <> RAYS_EXPORT Rays::Font
 	value_to<Rays::Font> (int argc, const Value* argv, bool convert)
 	{
 		if (argc == 1 && argv->is_array())

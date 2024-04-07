@@ -9,22 +9,22 @@
 #include <rays/rays.h>
 
 
-RUCY_DECLARE_CONVERT_TO(Rays::CapType)
+RUCY_DECLARE_CONVERT_TO(RAYS_EXPORT, Rays::CapType)
 
-RUCY_DECLARE_CONVERT_TO(Rays::JoinType)
+RUCY_DECLARE_CONVERT_TO(RAYS_EXPORT, Rays::JoinType)
 
-RUCY_DECLARE_CONVERT_TO(Rays::BlendMode)
+RUCY_DECLARE_CONVERT_TO(RAYS_EXPORT, Rays::BlendMode)
 
-RUCY_DECLARE_CONVERT_TO(Rays::TexCoordMode)
+RUCY_DECLARE_CONVERT_TO(RAYS_EXPORT, Rays::TexCoordMode)
 
-RUCY_DECLARE_CONVERT_TO(Rays::TexCoordWrap)
+RUCY_DECLARE_CONVERT_TO(RAYS_EXPORT, Rays::TexCoordWrap)
 
 
 namespace Rays
 {
 
 
-	Rucy::Module rays_module ();
+	RAYS_EXPORT Rucy::Module rays_module ();
 	// module Rays
 
 

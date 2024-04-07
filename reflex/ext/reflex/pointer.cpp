@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::Pointer)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Pointer)
 
 #define THIS  to<Reflex::Pointer*>(self)
 

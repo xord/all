@@ -13,7 +13,7 @@ namespace Reflex
 {
 
 
-	Rucy::Module reflex_module ();
+	REFLEX_EXPORT Rucy::Module reflex_module ();
 	// module Reflex
 
 

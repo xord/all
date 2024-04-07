@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::ColorSpace)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::ColorSpace)
 
 #define THIS  to<Rays::ColorSpace*>(self)
 
@@ -219,7 +219,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::ColorSpace
+	template <> RAYS_EXPORT Rays::ColorSpace
 	value_to<Rays::ColorSpace> (int argc, const Value* argv, bool convert)
 	{
 		if (argc == 1 && argv->is_array())
@@ -247,7 +247,7 @@ namespace Rucy
 	}
 
 
-	template <> Rays::ColorSpaceType
+	template <> RAYS_EXPORT Rays::ColorSpaceType
 	value_to<Rays::ColorSpaceType> (Value value, bool convert)
 	{
 		if (convert)

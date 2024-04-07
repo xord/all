@@ -7,7 +7,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::ContactEvent)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ContactEvent)
 
 #define THIS  to<Reflex::ContactEvent*>(self)
 
