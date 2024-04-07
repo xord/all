@@ -1,5 +1,8 @@
-// -*- objc -*-
 #include "rays/rays.h"
+
+
+#include "rays/exception.h"
+#include "../opengl.h"
 
 
 namespace Rays
@@ -9,27 +12,30 @@ namespace Rays
 	namespace global
 	{
 
-
 		static bool initialized = false;
-
 
 	}// global
 
 
-	bool
+	void
 	init ()
 	{
-		if (global::initialized) return false;
+		if (global::initialized)
+			rays_error(__FILE__, __LINE__, "already initialized.");
+
 		global::initialized = true;
-		return true;
+
+		glewInit();
+		OpenGL_set_context(get_offscreen_context());
 	}
 
-	bool
+	void
 	fin ()
 	{
-		if (!global::initialized) return false;
+		if (!global::initialized)
+			rays_error(__FILE__, __LINE__, "not initialized.");
+
 		global::initialized = false;
-		return true;
 	}
 
 
