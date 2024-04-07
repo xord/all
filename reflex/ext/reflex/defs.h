@@ -9,6 +9,8 @@
 #include "reflex/ruby/defs.h"
 
 
+using namespace Xot::Types;
+
 using namespace Rucy;
 
 using Reflex::coord;

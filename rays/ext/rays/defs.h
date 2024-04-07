@@ -12,6 +12,8 @@
 #include "rays/ruby/defs.h"
 
 
+using namespace Xot::Types;
+
 using namespace Rucy;
 
 using Rays::coord;

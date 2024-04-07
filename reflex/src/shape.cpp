@@ -1024,8 +1024,8 @@ namespace Reflex
 		bool has_angle () const
 		{
 			return
-				angle_from != DEFAULT_ANGLE_FROM ||
-				angle_to   != DEFAULT_ANGLE_TO;
+				angle_from != (float) DEFAULT_ANGLE_FROM ||
+				angle_to   != (float) DEFAULT_ANGLE_TO;
 		}
 
 		Fixture* create_fixtures (Shape* shape) override

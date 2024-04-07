@@ -232,10 +232,10 @@ RUCY_DEFN(s_ortho)
 RUCY_END
 
 static
-RUCY_DEF4(s_perspective, fov_y, aspect_ratio, near, far)
+RUCY_DEF4(s_perspective, fov_y, aspect_ratio, near_, far_)
 {
 	return value(Rays::perspective(
-		to<float>(fov_y), to<float>(aspect_ratio), to<coord>(near), to<coord>(far)));
+		to<float>(fov_y), to<float>(aspect_ratio), to<coord>(near_), to<coord>(far_)));
 }
 RUCY_END
 
