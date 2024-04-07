@@ -4,7 +4,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::KeyEvent)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::KeyEvent)
 
 #define THIS  to<Reflex::KeyEvent*>(self)
 

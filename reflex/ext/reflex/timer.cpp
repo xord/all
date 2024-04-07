@@ -8,7 +8,7 @@
 #include "selector.h"
 
 
-RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(Reflex::Timer)
+RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Timer)
 
 #define THIS      to<Reflex::Timer*>(self)
 

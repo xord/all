@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Rays::Camera)
+RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Camera)
 
 #define THIS  to<Rays::Camera*>(self)
 

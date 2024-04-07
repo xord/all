@@ -7,7 +7,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Rays::Image)
+RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Image)
 
 #define THIS  to<Rays::Image*>(self)
 

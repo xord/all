@@ -10,34 +10,34 @@
 #include <reflex/ruby/event.h>
 
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Shape)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Shape)
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::PolygonShape)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::PolygonShape)
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::LineShape)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::LineShape)
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::RectShape)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::RectShape)
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::EllipseShape)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::EllipseShape)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class shape_class ();
+	REFLEX_EXPORT Rucy::Class shape_class ();
 	// class Reflex::Shape
 
-	Rucy::Class polygon_shape_class ();
+	REFLEX_EXPORT Rucy::Class polygon_shape_class ();
 	// class Reflex::PolygonShape
 
-	Rucy::Class line_shape_class ();
+	REFLEX_EXPORT Rucy::Class line_shape_class ();
 	// class Reflex::LineShape
 
-	Rucy::Class rect_shape_class ();
+	REFLEX_EXPORT Rucy::Class rect_shape_class ();
 	// class Reflex::RectShape
 
-	Rucy::Class ellipse_shape_class ();
+	REFLEX_EXPORT Rucy::Class ellipse_shape_class ();
 	// class Reflex::EllipseShape
 
 

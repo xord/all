@@ -6,7 +6,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Color)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Color)
 
 #define THIS  to<Rays::Color*>(self)
 
@@ -344,7 +344,7 @@ namespace Rucy
 			return find_color(str_.c_str());
 	}
 
-	template <> Rays::Color
+	template <> RAYS_EXPORT Rays::Color
 	value_to<Rays::Color> (int argc, const Value*argv, bool convert)
 	{
 		if (argc == 1 && argv->is_array())

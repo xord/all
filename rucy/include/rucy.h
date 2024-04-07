@@ -5,6 +5,7 @@
 
 
 #include <rucy/ruby.h>
+#include <rucy/defs.h>
 #include <rucy/rucy.h>
 #include <rucy/exception.h>
 #include <rucy/debug.h>

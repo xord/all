@@ -9,14 +9,14 @@
 #include <rays/color.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Color)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Color)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class color_class ();
+	RAYS_EXPORT Rucy::Class color_class ();
 	// class Rays::Color
 
 

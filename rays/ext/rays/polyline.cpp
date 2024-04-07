@@ -10,7 +10,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Polyline)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Polyline)
 
 #define THIS  to<Rays::Polyline*>(self)
 
@@ -222,7 +222,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::Polyline
+	template <> RAYS_EXPORT Rays::Polyline
 	value_to<Rays::Polyline> (int argc, const Value* argv, bool convert)
 	{
 		assert(argc == 0 || (argc > 0 && argv));

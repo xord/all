@@ -10,14 +10,14 @@
 #include <rays/ruby/point.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Bounds)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Bounds)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class bounds_class ();
+	RAYS_EXPORT Rucy::Class bounds_class ();
 	// class Rays::Bounds
 
 

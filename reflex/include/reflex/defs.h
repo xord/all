@@ -7,6 +7,13 @@
 #include <rays/defs.h>
 
 
+#if defined(WIN32) && defined(GCC) && defined(REFLEX)
+	#define REFLEX_EXPORT __declspec(dllexport)
+#else
+	#define REFLEX_EXPORT
+#endif
+
+
 namespace Rays
 {
 

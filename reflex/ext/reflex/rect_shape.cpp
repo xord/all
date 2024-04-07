@@ -4,7 +4,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(Reflex::RectShape)
+RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::RectShape)
 
 #define THIS      to<Reflex::RectShape*>(self)
 

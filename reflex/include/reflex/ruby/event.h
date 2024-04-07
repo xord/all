@@ -9,74 +9,74 @@
 #include <reflex/event.h>
 
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::Event)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Event)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::UpdateEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::UpdateEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::DrawEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::DrawEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::FrameEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::FrameEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::ScrollEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ScrollEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::FocusEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::FocusEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::KeyEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::KeyEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::PointerEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::PointerEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::WheelEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::WheelEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::CaptureEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::CaptureEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::TimerEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::TimerEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::ContactEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ContactEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::MotionEvent)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MotionEvent)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class event_class ();
+	REFLEX_EXPORT Rucy::Class event_class ();
 	// class Reflex::Event
 
-	Rucy::Class update_event_class ();
+	REFLEX_EXPORT Rucy::Class update_event_class ();
 	// class Reflex::UpdateEvent
 
-	Rucy::Class draw_event_class ();
+	REFLEX_EXPORT Rucy::Class draw_event_class ();
 	// class Reflex::DrawEvent
 
-	Rucy::Class frame_event_class ();
+	REFLEX_EXPORT Rucy::Class frame_event_class ();
 	// class Reflex::FrameEvent
 
-	Rucy::Class scroll_event_class ();
+	REFLEX_EXPORT Rucy::Class scroll_event_class ();
 	// class Reflex::ScrollEvent
 
-	Rucy::Class focus_event_class ();
+	REFLEX_EXPORT Rucy::Class focus_event_class ();
 	// class Reflex::FocusEvent
 
-	Rucy::Class key_event_class ();
+	REFLEX_EXPORT Rucy::Class key_event_class ();
 	// class Reflex::KeyEvent
 
-	Rucy::Class pointer_event_class ();
+	REFLEX_EXPORT Rucy::Class pointer_event_class ();
 	// class Reflex::PointerEvent
 
-	Rucy::Class wheel_event_class ();
+	REFLEX_EXPORT Rucy::Class wheel_event_class ();
 	// class Reflex::WheelEvent
 
-	Rucy::Class capture_event_class ();
+	REFLEX_EXPORT Rucy::Class capture_event_class ();
 	// class Reflex::CaptureEvent
 
-	Rucy::Class timer_event_class ();
+	REFLEX_EXPORT Rucy::Class timer_event_class ();
 	// class Reflex::TimerEvent
 
-	Rucy::Class contact_event_class ();
+	REFLEX_EXPORT Rucy::Class contact_event_class ();
 	// class Reflex::ContactEvent
 
-	Rucy::Class motion_event_class ();
+	REFLEX_EXPORT Rucy::Class motion_event_class ();
 	// class Reflex::MotionEvent
 
 

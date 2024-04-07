@@ -6,11 +6,11 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_CONVERT_TO(Rays::CapType)
-RUCY_DEFINE_CONVERT_TO(Rays::JoinType)
-RUCY_DEFINE_CONVERT_TO(Rays::BlendMode)
-RUCY_DEFINE_CONVERT_TO(Rays::TexCoordMode)
-RUCY_DEFINE_CONVERT_TO(Rays::TexCoordWrap)
+RUCY_DEFINE_CONVERT_TO(RAYS_EXPORT, Rays::CapType)
+RUCY_DEFINE_CONVERT_TO(RAYS_EXPORT, Rays::JoinType)
+RUCY_DEFINE_CONVERT_TO(RAYS_EXPORT, Rays::BlendMode)
+RUCY_DEFINE_CONVERT_TO(RAYS_EXPORT, Rays::TexCoordMode)
+RUCY_DEFINE_CONVERT_TO(RAYS_EXPORT, Rays::TexCoordWrap)
 
 
 template <typename T>
@@ -104,7 +104,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::CapType
+	template <> RAYS_EXPORT Rays::CapType
 	value_to<Rays::CapType> (int argc, const Value* argv, bool convert)
 	{
 		assert(argc > 0 && argv);
@@ -135,7 +135,7 @@ namespace Rucy
 	}
 
 
-	template <> Rays::JoinType
+	template <> RAYS_EXPORT Rays::JoinType
 	value_to<Rays::JoinType> (int argc, const Value* argv, bool convert)
 	{
 		assert(argc > 0 && argv);
@@ -166,7 +166,7 @@ namespace Rucy
 	}
 
 
-	template <> Rays::BlendMode
+	template <> RAYS_EXPORT Rays::BlendMode
 	value_to<Rays::BlendMode> (int argc, const Value* argv, bool convert)
 	{
 		assert(argc > 0 && argv);
@@ -197,7 +197,7 @@ namespace Rucy
 	}
 
 
-	template <> Rays::TexCoordMode
+	template <> RAYS_EXPORT Rays::TexCoordMode
 	value_to<Rays::TexCoordMode> (int argc, const Value* argv, bool convert)
 	{
 		assert(argc > 0 && argv);
@@ -228,7 +228,7 @@ namespace Rucy
 	}
 
 
-	template <> Rays::TexCoordWrap
+	template <> RAYS_EXPORT Rays::TexCoordWrap
 	value_to<Rays::TexCoordWrap> (int argc, const Value* argv, bool convert)
 	{
 		assert(argc > 0 && argv);
