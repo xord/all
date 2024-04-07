@@ -154,10 +154,13 @@ namespace Rays
 	{
 		CGContextRef context = (CGContextRef) context_;
 
-		if (!*this || !context || !str)
+		if (!context || !str)
 			argument_error(__FILE__, __LINE__);
 
 		if (*str == '\0') return;
+
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
 
 		CTLinePtr line = make_line(self->font, str);
 		if (!line)
