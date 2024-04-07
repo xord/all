@@ -2,7 +2,6 @@
 #import "bitmap.h"
 
 
-#include <assert.h>
 #import <Cocoa/Cocoa.h>
 #include "rays/exception.h"
 #include "../color_space.h"
@@ -60,7 +59,7 @@ namespace Rays
 
 		ColorSpace color_space;
 
-		void* pixels = NULL;
+		void* pixels         = NULL;
 
 		CGContextRef context = NULL;
 
@@ -122,37 +121,40 @@ namespace Rays
 
 	static void
 	setup_bitmap (
-		Bitmap* this_,
+		Bitmap* bitmap,
 		int w, int h, const ColorSpace& cs,
-		const void* pixels_ = NULL, bool clear_pixels = true)
+		const void* pixels = NULL, bool clear_pixels = true)
 	{
-		if (!this_ || w <= 0 || h <= 0 || !cs)
+		if (w <= 0 || h <= 0 || !cs)
 			argument_error(__FILE__, __LINE__);
 
-		this_->self->clear();
+		Bitmap::Data* self = bitmap->self.get();
 
-		this_->self->width       = w;
-		this_->self->height      = h;
-		this_->self->color_space = cs;
-		this_->self->modified    = true;
+		self->clear();
+
+		self->width       = w;
+		self->height      = h;
+		self->color_space = cs;
+		self->modified    = true;
 
 		size_t size = w * h * cs.Bpp();
-		this_->self->pixels = new uchar[size];
+		self->pixels = new uchar[size];
 
-		if (pixels_)
-			memcpy(this_->self->pixels, pixels_, size);
+		if (pixels)
+			memcpy(self->pixels, pixels, size);
 		else if (clear_pixels)
-			memset(this_->self->pixels, 0, size);
+			memset(self->pixels, 0, size);
 	}
 
-	static void
-	setup_bitmap (Bitmap* this_, const Texture& tex)
+	Bitmap
+	Bitmap_from (const Texture& tex)
 	{
-		if (!this_ || !tex)
+		if (!tex)
 			argument_error(__FILE__, __LINE__);
 
+		Bitmap bmp;
 		setup_bitmap(
-			this_, tex.width(), tex.height(), tex.color_space(), NULL, false);
+			&bmp, tex.width(), tex.height(), tex.color_space(), NULL, false);
 
 		GLenum format, type;
 		ColorSpace_get_gl_format_and_type(&format, &type, tex.color_space());
@@ -160,18 +162,12 @@ namespace Rays
 		FrameBuffer fb(tex);
 		FrameBufferBinder binder(fb.id());
 
-		for (int y = 0; y < this_->height(); ++y)
+		for (int y = 0; y < bmp.height(); ++y)
 		{
-			GLvoid* ptr = (GLvoid*) this_->at<uchar>(0, y);
-			glReadPixels(0, y, this_->width(), 1, format, type, ptr);
+			GLvoid* ptr = (GLvoid*) bmp.at<uchar>(0, y);
+			glReadPixels(0, y, bmp.width(), 1, format, type, ptr);
 		}
-	}
 
-	Bitmap
-	Bitmap_from (const Texture& texture)
-	{
-		Bitmap bmp;
-		setup_bitmap(&bmp, texture);
 		return bmp;
 	}
 
@@ -206,15 +202,12 @@ namespace Rays
 		if (*str == '\0') return;
 
 		font.draw_string(bitmap->self->get_context(), bitmap->height(), str, x, y);
-
 		Bitmap_set_modified(bitmap);
 	}
 
 	void
 	Bitmap_set_modified (Bitmap* bitmap, bool modified)
 	{
-		assert(bitmap);
-
 		bitmap->self->modified = modified;
 	}
 
