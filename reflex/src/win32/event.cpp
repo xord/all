@@ -1,4 +1,4 @@
-#include "defs.h"
+#include "event.h"
 
 
 #include <windowsx.h>
@@ -29,7 +29,7 @@
 namespace Reflex
 {
 
-
+#if 0
 	static bool
 	get_modifiers (uint* modifiers)
 	{
@@ -285,18 +285,24 @@ namespace Reflex
 
 		return get_modifiers(&points->modifiers);
 	}
+#endif
 
-
-	Win32Key::Win32Key (UINT msg, WPARAM wp, LPARAM lp)
+	NativeKeyEvent::NativeKeyEvent (UINT msg, WPARAM wp, LPARAM lp)
 	{
-		get_key(this, msg, wp, lp);
+		//get_key(this, msg, wp, lp);
 	}
 
 
-	Win32Points::Win32Points (UINT msg, WPARAM wp, LPARAM lp)
-	:	Points(POINT_NONE, GET_X_LPARAM(lp), GET_Y_LPARAM(lp))
+	NativePointerEvent::NativePointerEvent (UINT msg, WPARAM wp, LPARAM lp)
+	//:	PointerEvent(POINT_NONE, GET_X_LPARAM(lp), GET_Y_LPARAM(lp))
 	{
-		get_points(this, msg, wp, lp);
+		//get_points(this, msg, wp, lp);
+	}
+
+
+	NativeWheelEvent::NativeWheelEvent (UINT msg, WPARAM wp, LPARAM lp)
+	//:	WheelEvent()
+	{
 	}
 
 

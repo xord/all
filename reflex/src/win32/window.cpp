@@ -1,6 +1,99 @@
-#include "reflex/window.h"
+#include "../window.h"
 
 
+#include "../view.h"
+
+
+#if 1
+namespace Reflex
+{
+
+
+	struct WindowData : public Window::Data
+	{
+
+		bool is_valid () const override
+		{
+			return false;
+		}
+
+	};// WindowData
+
+
+	Window::Data*
+	Window_create_data ()
+	{
+		return new WindowData();
+	}
+
+	uint
+	Window_default_flags ()
+	{
+		return 0;
+	}
+
+	void
+	Window_initialize (Window* window)
+	{
+	}
+
+	void
+	Window_show (Window* window)
+	{
+	}
+
+	void
+	Window_hide (Window* window)
+	{
+	}
+
+	void
+	Window_close (Window* window)
+	{
+	}
+
+	void
+	Window_set_title (Window* window, const char* title)
+	{
+	}
+
+	const char*
+	Window_get_title (const Window& window)
+	{
+		return "";
+	}
+
+	void
+	Window_set_frame (Window* window, coord x, coord y, coord w, coord h)
+	{
+	}
+
+	Bounds
+	Window_get_frame (const Window& window)
+	{
+		return Bounds();
+	}
+
+	Screen
+	Window_get_screen (const Window& window)
+	{
+		return Screen();
+	}
+
+	void
+	Window_set_flags (Window* window, uint flags)
+	{
+	}
+
+	float
+	Window_get_pixel_density (const Window& window)
+	{
+		return 1;
+	}
+
+
+}// Reflex
+#else
 #include <memory>
 #define NOMINMAX
 #include <windows.h>
@@ -547,3 +640,4 @@ namespace Reflex
 
 
 }// Reflex
+#endif
