@@ -11,8 +11,7 @@
 	#include <OpenGLES/ES3/gl.h>
 	#include <OpenGLES/ES3/glext.h>
 #elif defined(WIN32)
-	#include <GL/gl.h>
-	#include <GL/glext.h>
+	#include <GL/glew.h>
 #endif
 
 #include "rays/defs.h"

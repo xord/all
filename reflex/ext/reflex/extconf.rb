@@ -13,12 +13,12 @@ require 'reflex/extension'
 Xot::ExtConf.new Xot, Rucy, Rays, Reflex do
   setup do
     headers    << 'ruby.h'
-    libs.unshift 'gdi21', 'opengl32' if win32?
-    frameworks << 'Cocoa' if osx?
-    $LDFLAGS   << ' -Wl,--out-implib=native.dll.a' if cygwin?
+    libs.unshift 'gdi32', 'opengl32', 'glew32'     if win32?
+    frameworks << 'Cocoa'                          if osx?
+    $LDFLAGS   << ' -Wl,--out-implib=native.dll.a' if mingw? || cygwin?
 
     unless osx?
-      lib_dirs << Rays::Extension.lib_dir
+      lib_dirs << Rays::Extension.ext_dir
       libs     << 'rays/native'
     end
   end
