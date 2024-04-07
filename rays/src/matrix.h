@@ -12,7 +12,7 @@ namespace Rays
 {
 
 
-	typedef glm::tmat4x4<coord> Mat4;
+	typedef glm::mat<4, 4, coord> Mat4;
 
 
 	inline       Mat4&   to_glm (      Matrix& val) {return *(      Mat4*)   &val;}

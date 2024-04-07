@@ -15,6 +15,10 @@
 #undef memcpy // avoid defining ruby_nonempty_memcpy
 #endif
 
+#ifdef THIS
+#undef THIS // defined by <combaseapi.h>
+#endif
+
 
 namespace Rucy
 {
