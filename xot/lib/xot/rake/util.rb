@@ -55,7 +55,10 @@ module Xot
     end
 
     def inc_dirs()
-      env_array(:INCDIRS, []) + extensions.reverse.map {|m| m.inc_dir}.flatten
+      dirs  = env_array :INCDIRS, []
+      dirs += extensions.reverse.map {|m| m.inc_dir}.flatten
+      dirs << "#{env :MINGW_PREFIX}/include" if mingw?
+      dirs
     end
 
     def src_dirs()
@@ -170,11 +173,15 @@ module Xot
 
     def make_cppflags_defs(defs = [])
       a  = defs.dup
-      a << $~[0].upcase if RUBY_PLATFORM =~ /mswin|ming|cygwin|darwin/i
       a << (debug? ? '_DEBUG' : 'NDEBUG')
-      a << 'WIN32' if win32?
-      a << 'OSX'   if osx?
-      a << 'IOS'   if ios?
+      a << target.name.upcase
+      a << $~[0].upcase        if RUBY_PLATFORM =~ /mswin|mingw|cygwin|darwin/i
+      a << 'WIN32'             if win32?
+      a << 'OSX'               if osx?
+      a << 'IOS'               if ios?
+      a << 'GCC'               if gcc?
+      a << 'CLANG'             if clang?
+      a << '_USE_MATH_DEFINES' if gcc?
       a
     end
 
@@ -192,11 +199,11 @@ module Xot
     end
 
     def make_cflags(flags = '')
-      warning_opts = %w[
-        no-unknown-pragmas
+      warning_opts  = %w[no-unknown-pragmas]
+      warning_opts += %w[
         no-deprecated-register
         no-reserved-user-defined-literal
-      ]
+      ] if clang?
       s  = flags.dup
       s << warning_opts.map {|s| " -W#{s}"}.join
       s << " -arch arm64" if RUBY_PLATFORM =~ /arm64-darwin/
