@@ -3,9 +3,6 @@
 
 
 #include <typeinfo>
-#ifdef WIN32
-	#include <windows.h>
-#endif
 #include <xot/exception.h>
 #include "rucy/ruby.h"
 #include "rucy/rucy.h"
@@ -136,28 +133,7 @@ namespace Rucy
 	system_error (const char* file, int line, const char* format, ...)
 	{
 		XOT_STRINGF(format, s);
-
-		#ifdef WIN32
-			DWORD lasterror = GetLastError();
-			if (lasterror != 0)
-			{
-				LPVOID msg = NULL;
-				DWORD flags =
-					FORMAT_MESSAGE_ALLOCATE_BUFFER |
-					FORMAT_MESSAGE_FROM_SYSTEM |
-					FORMAT_MESSAGE_IGNORE_INSERTS;
-				if (FormatMessageA(
-					flags, NULL, lasterror, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					(LPSTR) &msg, 0, NULL))
-				{
-					Xot::String m = (LPCSTR) msg;
-					if (!m.empty()) s += ": " + m;
-				}
-				LocalFree(msg);
-			}
-		#endif
-
-		raise(system_error_class(), Xot::error_text(file, line, s));
+		raise(system_error_class(), Xot::system_error_text(file, line, s));
 	}
 
 

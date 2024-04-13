@@ -1,6 +1,11 @@
 #include "xot/exception.h"
 
 
+#ifdef WIN32
+	#include <windows.h>
+#endif
+
+
 namespace Xot
 {
 
@@ -35,6 +40,34 @@ namespace Xot
 		String s = str;
 		if (file) s = stringf("%s:%d: ", file, line) + s;
 		return s;
+	}
+
+	String
+	system_error_text (const char* file, int line, const char* str)
+	{
+		String s = str;
+
+		#ifdef WIN32
+			DWORD lasterror = GetLastError();
+			if (lasterror != 0)
+			{
+				LPVOID msg = NULL;
+				DWORD flags =
+					FORMAT_MESSAGE_ALLOCATE_BUFFER |
+					FORMAT_MESSAGE_FROM_SYSTEM |
+					FORMAT_MESSAGE_IGNORE_INSERTS;
+				if (FormatMessageA(
+					flags, NULL, lasterror, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					(LPSTR) &msg, 0, NULL))
+				{
+					String m = (LPCSTR) msg;
+					if (!m.empty()) s += ": " + m;
+				}
+				LocalFree(msg);
+			}
+		#endif
+
+		return error_text(file, line, s);
 	}
 
 
@@ -73,7 +106,7 @@ namespace Xot
 		system_error (const char* file, int line, const char* format, ...)
 		{
 			XOT_STRINGF(format, s);
-			throw SystemError(error_text(file, line, s));
+			throw SystemError(system_error_text(file, line, s));
 		}
 
 		void

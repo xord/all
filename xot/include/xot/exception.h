@@ -40,7 +40,9 @@ namespace Xot
 	};
 
 
-	String error_text (const char* file, int line, const char* str);
+	String error_text        (const char* file, int line, const char* str);
+
+	String system_error_text (const char* file, int line, const char* str);
 
 
 	namespace ErrorFunctions
