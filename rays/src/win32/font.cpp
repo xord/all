@@ -1,6 +1,8 @@
 #include "../font.h"
 
 
+#include <assert.h>
+#include <set>
 #include "rays/exception.h"
 #include "gdi.h"
 
@@ -19,10 +21,77 @@ namespace Rays
 	};// RawFont::Data
 
 
+	typedef std::set<String> StringSet;
+
+	struct EnumFontFamiliesCallbackParams
+	{
+
+		StringSet* names;
+
+		bool fullname;
+
+		EnumFontFamiliesCallbackParams (StringSet* names, bool fullname)
+		:	names(names), fullname(fullname)
+		{
+		}
+
+	};// EnumFontFamiliesCallbackParams
+
+
+	static int CALLBACK
+	enum_callback (
+		const ENUMLOGFONT* elf, const NEWTEXTMETRIC* ntm, DWORD font_type, LPARAM lp)
+	{
+		const auto* params = (EnumFontFamiliesCallbackParams*) lp;
+		const char* name   = params->fullname
+			?	(const char*) elf->elfFullName
+			:	(const char*) elf->elfLogFont.lfFaceName;
+
+		if (name && *name != '\0'  && *name != '@')
+			params->names->insert(name);
+
+		return TRUE;
+	}
+
+	static void
+	get_font_names (
+		StringSet* names, HDC hdc, const char* query = NULL, bool fullname = false)
+	{
+		assert(!query || strlen(query) < LF_FACESIZE);
+
+		LOGFONT lf   = {0};
+		lf.lfCharSet = DEFAULT_CHARSET;
+
+		if (query) strcpy(lf.lfFaceName, query);
+
+		EnumFontFamiliesCallbackParams params(names, fullname);
+		EnumFontFamiliesEx(
+			hdc, &lf, (FONTENUMPROC) &enum_callback, (LPARAM) &params, 0);
+	}
+
 	const FontFamilyMap&
 	get_font_families ()
 	{
-		not_implemented_error(__FILE__, __LINE__);
+		static const FontFamilyMap MAP = []() {
+			Win32::DC dc(GetDC(NULL), true, Win32::DC::RELEASE_DC);
+
+			StringSet families;
+			get_font_names(&families, dc.handle());
+
+			StringSet faces;
+			FontFamilyMap map;
+			for (const auto& family : families)
+			{
+				faces.clear();
+				get_font_names(&faces, dc.handle(), family, true);
+
+				auto& list = map[family];
+				list.insert(list.end(), faces.begin(), faces.end());
+			}
+
+			return map;
+		}();
+		return MAP;
 	}
 
 	RawFont
