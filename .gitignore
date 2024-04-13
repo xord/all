@@ -17,6 +17,7 @@ vendor/
 .doc
 .yardoc
 .DS_Store
+NUL
 Makefile
 depend.mf
 .vscode
