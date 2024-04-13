@@ -123,11 +123,21 @@ namespace Rays
 	coord
 	RawFont::get_height (coord* ascent, coord* descent, coord* leading) const
 	{
-		if (ascent || descent || leading)
-			not_implemented_error(__FILE__, __LINE__);
-
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
+
+		if (ascent || descent || leading)
+		{
+			Win32::DC dc(GetDC(NULL), true, Win32::DC::RELEASE_DC);
+			dc.set_font(self->font);
+
+			TEXTMETRIC tm;
+			GetTextMetrics(dc.handle(), &tm);
+
+			if (ascent)  *ascent  = tm.tmAscent;
+			if (descent) *descent = tm.tmDescent;
+			if (leading) *leading = tm.tmExternalLeading;
+		}
 
 		coord height;
 		if (!self->font.get_extent(NULL, &height, "X"))
