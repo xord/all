@@ -43,10 +43,8 @@ namespace Rays
 
 				typedef HANDLE Handle;
 
-				HandleObject (
-					Handle handle = NULL, bool owner = true,
-					DeleteHandleFunc delfun = delete_object)
-				:	handle_(handle), delfun_(delfun)
+				HandleObject ()
+				:	handle_(NULL), delfun_(NULL)
 				{
 				}
 
