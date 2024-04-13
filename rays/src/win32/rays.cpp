@@ -25,7 +25,7 @@ namespace Rays
 
 		global::initialized = true;
 
-		glewInit();
+		OpenGL_init();
 		OpenGL_set_context(get_offscreen_context());
 	}
 
@@ -36,6 +36,8 @@ namespace Rays
 			rays_error(__FILE__, __LINE__, "not initialized.");
 
 		global::initialized = false;
+
+		OpenGL_fin();
 	}
 
 
