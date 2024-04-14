@@ -110,7 +110,7 @@ namespace Rays
 
 		static OpenGLContext current_context;
 
-		static std::unique_ptr<OffscreenContext> offscreen_context;
+		static OffscreenContext* offscreen_context = NULL;
 
 	}// global
 
@@ -128,7 +128,7 @@ namespace Rays
 			glewInit();
 		}
 
-		global::offscreen_context.reset(new OffscreenContext());
+		global::offscreen_context = new OffscreenContext();
 	}
 
 	void
@@ -138,7 +138,9 @@ namespace Rays
 			rays_error(__FILE__, __LINE__, "not initialized.");
 
 		global::current_context.reset();
-		global::offscreen_context.reset();
+
+		delete global::offscreen_context;
+		global::offscreen_context = NULL;
 	}
 
 	void
@@ -163,7 +165,7 @@ namespace Rays
 	Context
 	get_offscreen_context ()
 	{
-		return global::offscreen_context.get();
+		return global::offscreen_context;
 	}
 
 
