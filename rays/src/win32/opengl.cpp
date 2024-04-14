@@ -121,7 +121,12 @@ namespace Rays
 		if (global::offscreen_context)
 			rays_error(__FILE__, __LINE__, "already initialized.");
 
-		glewInit();
+		static bool glew_init_done = false;
+		if (!glew_init_done)
+		{
+			glew_init_done = true;
+			glewInit();
+		}
 
 		global::offscreen_context.reset(new OffscreenContext());
 	}
