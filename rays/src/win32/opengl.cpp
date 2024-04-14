@@ -77,19 +77,19 @@ namespace Rays
 
 				hrc = wglCreateContext(hdc);
 				if (!hrc)
-					opengl_error(__FILE__, __LINE__);
+					system_error(__FILE__, __LINE__);
 
 				if (!wglMakeCurrent(hdc, hrc))
-					opengl_error(__FILE__, __LINE__);
+					system_error(__FILE__, __LINE__);
 			}
 
 			~OffscreenContext ()
 			{
 				if (!wglMakeCurrent(NULL, NULL))
-					opengl_error(__FILE__, __LINE__);
+					system_error(__FILE__, __LINE__);
 
 				if (!wglDeleteContext(hrc))
-					opengl_error(__FILE__, __LINE__);
+					system_error(__FILE__, __LINE__);
 
 				if (!ReleaseDC(hwnd, hdc))
 					system_error(__FILE__, __LINE__);
