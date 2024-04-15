@@ -22,15 +22,15 @@ namespace Rays
 {
 
 
-	void    OpenGL_set_context (Context context);
+	void OpenGL_set_context (Context context);
 
 	Context OpenGL_get_context ();
 
-	bool    OpenGL_has_error ();
+	bool OpenGL_has_error ();
 
-	void    OpenGL_check_error (const char* file, int line);
+	void OpenGL_check_error (const char* file, int line);
 
-	void    OpenGL_check_error (const char* file, int line, const char* format, ...);
+	void OpenGL_check_error (const char* file, int line, const char* format, ...);
 
 
 }// Rays
