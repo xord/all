@@ -15,7 +15,7 @@
 	#include <GL/glext.h>
 #endif
 
-#include "rays/opengl.h"
+#include "rays/context.h"
 
 
 namespace Rays

@@ -10,25 +10,35 @@ namespace Rays
 {
 
 
+	struct OpenGLContext : public Context
+	{
+
+		using Context::ptr1;
+		using Context::ptr2;
+
+	};// OpenGLContext
+
+
 	void
 	OpenGL_set_context (Context context)
 	{
-		[EAGLContext setCurrentContext: (EAGLContext*) context];
+		EAGLContext* c = (EAGLContext*) ((OpenGLContext*) &context)->ptr1;
+		[EAGLContext setCurrentContext: c];
 	}
 
 	Context
 	OpenGL_get_context ()
 	{
-		return [EAGLContext currentContext];
+		return Context([EAGLContext currentContext]);
 	}
 
 
 	Context
 	get_offscreen_context ()
 	{
-		static Context context = NULL;
+		static OpenGLContext context;
 		if (!context)
-			context = [[EAGLContext alloc] initWithAPI: kEAGLRenderingAPIOpenGLES3];
+			context.ptr1 = [[EAGLContext alloc] initWithAPI: kEAGLRenderingAPIOpenGLES3];
 		return context;
 	}
 

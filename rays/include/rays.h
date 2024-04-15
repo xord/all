@@ -6,7 +6,6 @@
 
 #include <rays/defs.h>
 #include <rays/rays.h>
-#include <rays/opengl.h>
 #include <rays/exception.h>
 #include <rays/debug.h>
 

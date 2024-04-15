@@ -9,24 +9,33 @@ namespace Rays
 {
 
 
+	struct OpenGLContext : public Context
+	{
+
+		using Context::ptr1;
+		using Context::ptr2;
+
+	};// OpenGLContext
+
+
 	void
 	OpenGL_set_context (Context context)
 	{
-		NSOpenGLContext* c = (NSOpenGLContext*) context;
+		NSOpenGLContext* c = (NSOpenGLContext*) ((OpenGLContext*) &context)->ptr1;
 		[c makeCurrentContext];
 	}
 
 	Context
 	OpenGL_get_context ()
 	{
-		return [NSOpenGLContext currentContext];
+		return Context([NSOpenGLContext currentContext]);
 	}
 
 
 	Context
 	get_offscreen_context ()
 	{
-		static Context context = NULL;
+		static OpenGLContext context;
 		if (!context)
 		{
 			NSOpenGLPixelFormatAttribute attribs[] =
@@ -44,7 +53,7 @@ namespace Rays
 			};
 			NSOpenGLPixelFormat* pf = [[[NSOpenGLPixelFormat alloc]
 				initWithAttributes: attribs] autorelease];
-			context = [[[NSOpenGLContext alloc]
+			context.ptr1 = [[[NSOpenGLContext alloc]
 				initWithFormat: pf shareContext: nil] autorelease];
 		}
 		return context;
