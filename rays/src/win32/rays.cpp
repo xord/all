@@ -35,9 +35,9 @@ namespace Rays
 		if (!global::initialized)
 			rays_error(__FILE__, __LINE__, "not initialized.");
 
-		global::initialized = false;
-
 		OpenGL_fin();
+
+		global::initialized = false;
 	}
 
 

@@ -30,7 +30,8 @@ namespace Rays
 
 			void make_current ()
 			{
-				wglMakeCurrent(hdc, hrc);
+				if (!wglMakeCurrent(hdc, hrc))
+					system_error(__FILE__, __LINE__);
 			}
 
 		protected:
@@ -77,9 +78,6 @@ namespace Rays
 
 				hrc = wglCreateContext(hdc);
 				if (!hrc)
-					system_error(__FILE__, __LINE__);
-
-				if (!wglMakeCurrent(hdc, hrc))
 					system_error(__FILE__, __LINE__);
 			}
 
