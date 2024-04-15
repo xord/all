@@ -175,7 +175,7 @@ namespace Rays
 		if (!ext)
 		{
 			argument_error(
-				__FILE__, __LINE__, "invalid image file extension: '%s'.", path);
+				__FILE__, __LINE__, "invalid image file extension: '%s'", path);
 		}
 
 		const auto& cs = bmp.color_space();
@@ -201,7 +201,7 @@ namespace Rays
 			ret = stbi_write_tga(path, w, h, cs.Bpp(), pixels.get());
 
 		if (!ret)
-			rays_error(__FILE__, __LINE__, "failed to save: '%s'.", path);
+			rays_error(__FILE__, __LINE__, "failed to save: '%s'", path);
 	}
 
 	Bitmap
@@ -213,7 +213,7 @@ namespace Rays
 		int w = 0, h = 0, Bpp = 0;
 		uchar* pixels = stbi_load(path, &w, &h, &Bpp, 0);
 		if (!pixels)
-			rays_error(__FILE__, __LINE__, "failed to load: '%s'.", path);
+			rays_error(__FILE__, __LINE__, "failed to load: '%s'", path);
 
 		ColorSpace cs;
 		switch (Bpp)
