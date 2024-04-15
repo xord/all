@@ -1,8 +1,11 @@
 #include "../bitmap.h"
 
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
+
 #include "rays/exception.h"
 #include "../color_space.h"
 #include "../font.h"
@@ -204,7 +207,33 @@ namespace Rays
 	Bitmap
 	Bitmap_load (const char* path)
 	{
-		not_implemented_error(__FILE__, __LINE__);
+		if (!path)
+			argument_error(__FILE__, __LINE__);
+
+		int w = 0, h = 0, Bpp = 0;
+		uchar* pixels = stbi_load(path, &w, &h, &Bpp, 0);
+		if (!pixels)
+			rays_error(__FILE__, __LINE__, "failed to load: '%s'.", path);
+
+		ColorSpace cs;
+		switch (Bpp)
+		{
+			case 1: cs = GRAY_8;    break;
+			case 3: cs = RGB_888;   break;
+			case 4: cs = RGBA_8888; break;
+			default:
+				rays_error(__FILE__, __LINE__, "unsupported image file: '%s'", path);
+		}
+
+		Bitmap bmp(w, h, cs);
+		if (!bmp)
+			rays_error(__FILE__, __LINE__, "failed to create Bitmap object");
+
+		int pitch = Bpp * w;
+		for (int y = 0; y < h; ++y)
+			memcpy(bmp.at<uchar>(0, y), pixels + pitch * y, pitch);
+
+		return bmp;
 	}
 
 
