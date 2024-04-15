@@ -1,6 +1,8 @@
 #include "../bitmap.h"
 
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 #include "rays/exception.h"
 #include "../color_space.h"
 #include "../font.h"
@@ -150,10 +152,53 @@ namespace Rays
 		return bitmap.self->modified;
 	}
 
+	static const char*
+	get_ext (const char* path)
+	{
+		if (!path)
+			return NULL;
+
+		size_t len = strlen(path);
+		if (len < 4)
+			return NULL;
+
+		return &path[len - 4];
+	}
+
 	void
 	Bitmap_save (const Bitmap& bmp, const char* path)
 	{
-		not_implemented_error(__FILE__, __LINE__);
+		const char* ext = get_ext(path);
+		if (!ext)
+		{
+			argument_error(
+				__FILE__, __LINE__, "invalid image file extension: '%s'.", path);
+		}
+
+		const auto& cs = bmp.color_space();
+		size_t w       = bmp.width();
+		size_t h       = bmp.height();
+		size_t pitch   = w * cs.Bpp();
+
+		std::unique_ptr<uchar[]> pixels(new uchar[h * pitch]);
+		for (size_t y = 0; y < h; ++y)
+			memcpy(pixels.get() + pitch * y, bmp.at<uchar>(0, y), pitch);
+
+		int ret = 0;
+		if (stricmp(ext, ".bmp") == 0)
+			ret = stbi_write_bmp(path, w, h, cs.Bpp(), pixels.get());
+		else
+		if (stricmp(ext, ".png") == 0)
+			ret = stbi_write_png(path, w, h, cs.Bpp(), pixels.get(), 0);
+		else
+		if (stricmp(ext, ".jpg") == 0 || stricmp(ext, ".jpeg") == 0)
+			ret = stbi_write_jpg(path, w, h, cs.Bpp(), pixels.get(), 90);
+		else
+		if (stricmp(ext, ".tga") == 0)
+			ret = stbi_write_tga(path, w, h, cs.Bpp(), pixels.get());
+
+		if (!ret)
+			rays_error(__FILE__, __LINE__, "failed to save: '%s'.", path);
 	}
 
 	Bitmap
