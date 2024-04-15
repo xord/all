@@ -22,6 +22,10 @@ namespace Rays
 {
 
 
+	void OpenGL_init ();
+
+	void OpenGL_fin ();
+
 	void OpenGL_set_context (Context context);
 
 	Context OpenGL_get_context ();

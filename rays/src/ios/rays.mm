@@ -29,7 +29,7 @@ namespace Rays
 
 		global::pool = [[NSAutoreleasePool alloc] init];
 
-		OpenGL_set_context(get_offscreen_context());
+		OpenGL_init();
 	}
 
 	void
@@ -37,6 +37,8 @@ namespace Rays
 	{
 		if (!global::pool)
 			rays_error(__FILE__, __LINE__, "Rays::fin(): not initialized.");
+
+		OpenGL_fin();
 
 		[global::pool release];
 		global::pool = nil;

@@ -20,6 +20,17 @@ namespace Rays
 
 
 	void
+	OpenGL_init ()
+	{
+		OpenGL_set_context(get_offscreen_context());
+	}
+
+	void
+	OpenGL_fin ()
+	{
+	}
+
+	void
 	OpenGL_set_context (Context context)
 	{
 		EAGLContext* c = (EAGLContext*) ((OpenGLContext*) &context)->ptr1;
