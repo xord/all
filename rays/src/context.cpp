@@ -5,14 +5,8 @@ namespace Rays
 {
 
 
-	Context::Context (void* ptr1, void* ptr2)
-	:	ptr1(ptr1), ptr2(ptr2)
+	Context::~Context ()
 	{
-	}
-
-	Context::operator bool () const
-	{
-		return ptr1 || ptr2;
 	}
 
 	bool

@@ -17,7 +17,7 @@ namespace Rays
 	struct Texture::Data
 	{
 
-		Context context = NULL;
+		Context::Ref context;
 
 		GLuint id = 0;
 
@@ -53,7 +53,7 @@ namespace Rays
 		{
 			if (!has_id()) return;
 
-			Context current_context = OpenGL_get_context();
+			Context::Ref current_context = OpenGL_get_context();
 
 			assert(context);
 			OpenGL_set_context(context);
@@ -62,8 +62,8 @@ namespace Rays
 
 			OpenGL_set_context(current_context);
 
-			context = NULL;
-			id      = 0;
+			context.reset();
+			id = 0;
 		}
 
 		bool has_id () const
@@ -313,7 +313,7 @@ namespace Rays
 		return self->color_space;
 	}
 
-	Context
+	Context*
 	Texture::context () const
 	{
 		return self->context;

@@ -71,10 +71,10 @@ namespace Rays
 		const Texture& tex = image->self->texture;
 		if (!tex) return;
 
-		Context tex_context = tex.context();
+		Context::Ref tex_context = tex.context();
 		if (!tex_context) return;
 
-		Context current_context = OpenGL_get_context();
+		Context::Ref current_context = OpenGL_get_context();
 		if (tex_context == current_context)
 			return;
 

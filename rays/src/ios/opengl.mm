@@ -2,55 +2,110 @@
 #include "../opengl.h"
 
 
-#include <vector>
 #import <OpenGLES/EAGL.h>
+#include <rays/exception.h>
 
 
 namespace Rays
 {
 
 
-	struct OpenGLContext : public Context
+	class OpenGLContext : public Context
 	{
 
-		using Context::ptr1;
-		using Context::ptr2;
+		typedef OpenGLContext This;
+
+		public:
+
+			typedef Xot::Ref<This> Ref;
+
+			OpenGLContext (EAGLContext* context)
+			:	context(context)
+			{
+				[context retain];
+			}
+
+			~OpenGLContext () override
+			{
+				[context release];
+			}
+
+			void activate ()
+			{
+				[EAGLContext setCurrentContext: context];
+			}
+
+			operator bool () const override
+			{
+				return context;
+			}
+
+		private:
+
+			EAGLContext* context;
 
 	};// OpenGLContext
 
 
+	namespace global
+	{
+
+		OpenGLContext::Ref current_context;
+
+		OpenGLContext::Ref offscreen_context;
+
+	}// global
+
+
+	static EAGLContext*
+	create_offscreen_context ()
+	{
+		return [[[EAGLContext alloc]
+			initWithAPI: kEAGLRenderingAPIOpenGLES3]
+			autorelease];
+	}
+
 	void
 	OpenGL_init ()
 	{
+		if (global::offscreen_context)
+			rays_error(__FILE__, __LINE__, "already initialized.");
+
+		global::offscreen_context = new OpenGLContext(create_offscreen_context());
 		OpenGL_set_context(get_offscreen_context());
 	}
 
 	void
 	OpenGL_fin ()
 	{
+		if (!global::offscreen_context)
+			rays_error(__FILE__, __LINE__, "not initialized.");
+
+		global::current_context.reset();
+		global::offscreen_context.reset();
 	}
 
 	void
-	OpenGL_set_context (Context context)
+	OpenGL_set_context (Context* context)
 	{
-		EAGLContext* c = (EAGLContext*) ((OpenGLContext*) &context)->ptr1;
-		[EAGLContext setCurrentContext: c];
+		global::current_context = (OpenGLContext*) context;
+		if (global::current_context)
+			global::current_context->activate();
+		else
+			[EAGLContext setCurrentContext: nil];
 	}
 
-	Context
+	Context*
 	OpenGL_get_context ()
 	{
-		return Context([EAGLContext currentContext]);
+		return global::current_context.get();
 	}
 
 
-	Context
+	Context*
 	get_offscreen_context ()
 	{
-		static OpenGLContext context;
-		if (!context)
-			context.ptr1 = [[EAGLContext alloc] initWithAPI: kEAGLRenderingAPIOpenGLES3];
-		return context;
+		return global::offscreen_context.get();
 	}
 
 

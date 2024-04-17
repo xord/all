@@ -42,7 +42,7 @@ namespace Rays
 
 			const ColorSpace& color_space () const;
 
-			Context context () const;
+			Context* context () const;
 
 			GLuint id () const;
 

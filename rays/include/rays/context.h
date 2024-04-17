@@ -4,6 +4,7 @@
 #define __RAYS_CONTEXT_H__
 
 
+#include <xot/ref.h>
 #include <rays/defs.h>
 
 
@@ -11,25 +12,25 @@ namespace Rays
 {
 
 
-	class Context
+	class Context : public Xot::RefCountable<>
 	{
+
+		typedef Context This;
 
 		public:
 
-			Context (void* ptr1 = NULL, void* ptr2 = NULL);
+			typedef Xot::Ref<This> Ref;
 
-			operator bool () const;
+			virtual ~Context ();
 
-			bool operator ! () const;
+			virtual operator bool () const = 0;
 
-		protected:
-
-			void *ptr1, *ptr2;
+			virtual bool operator ! () const;
 
 	};// Context
 
 
-	Context get_offscreen_context ();
+	Context* get_offscreen_context ();
 
 
 }// Rays
