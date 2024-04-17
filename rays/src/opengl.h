@@ -26,9 +26,9 @@ namespace Rays
 
 	void OpenGL_fin ();
 
-	void OpenGL_set_context (Context context);
+	void OpenGL_set_context (Context* context);
 
-	Context OpenGL_get_context ();
+	Context* OpenGL_get_context ();
 
 	bool OpenGL_has_error ();
 
