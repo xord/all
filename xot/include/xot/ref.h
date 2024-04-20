@@ -71,6 +71,13 @@ namespace Xot
 				return false;
 			}
 
+			#ifdef _DEBUG
+				int get_refc_count () const
+				{
+					return refc_count;
+				}
+			#endif
+
 		protected:
 
 			RefCountable ()
