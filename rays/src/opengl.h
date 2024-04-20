@@ -15,7 +15,7 @@
 	#include <GL/glext.h>
 #endif
 
-#include "rays/context.h"
+#include "rays/defs.h"
 
 
 namespace Rays
@@ -25,10 +25,6 @@ namespace Rays
 	void OpenGL_init ();
 
 	void OpenGL_fin ();
-
-	void OpenGL_set_context (Context* context);
-
-	Context* OpenGL_get_context ();
 
 	bool OpenGL_has_error ();
 

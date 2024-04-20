@@ -17,8 +17,6 @@ namespace Rays
 	struct Texture::Data
 	{
 
-		Context::Ref context;
-
 		GLuint id = 0;
 
 		int width, height, width_pow2, height_pow2;
@@ -53,22 +51,15 @@ namespace Rays
 		{
 			if (!has_id()) return;
 
-			Context::Ref current_context = OpenGL_get_context();
-
-			assert(context);
-			OpenGL_set_context(context);
-
 			glDeleteTextures(1, &id);
+			OpenGL_check_error(__FILE__, __LINE__);
 
-			OpenGL_set_context(current_context);
-
-			context.reset();
 			id = 0;
 		}
 
 		bool has_id () const
 		{
-			return context && id > 0;
+			return id > 0;
 		}
 
 	};// Texture::Data
@@ -184,13 +175,6 @@ namespace Rays
 		const Bitmap* bitmap = NULL, bool npot = false)
 	{
 		assert(self && !self->has_id());
-
-		if (self->context)
-			invalid_state_error(__FILE__, __LINE__);
-
-		self->context = OpenGL_get_context();
-		if (!self->context)
-			opengl_error(__FILE__, __LINE__);
 
 		glGenTextures(1, &self->id);
 		glBindTexture(GL_TEXTURE_2D, self->id);
@@ -311,12 +295,6 @@ namespace Rays
 	Texture::color_space () const
 	{
 		return self->color_space;
-	}
-
-	Context*
-	Texture::context () const
-	{
-		return self->context;
 	}
 
 	GLuint

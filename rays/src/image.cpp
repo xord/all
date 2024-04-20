@@ -56,33 +56,6 @@ namespace Rays
 		if (self->texture) self->texture.set_modified(false);
 	}
 
-	static void
-	invalidate_texture (Image* image)
-	{
-		image->bitmap();// update bitmap
-		image->self->texture = Texture();
-	}
-
-	static void
-	invalidate_texture_for_another_context (Image* image)
-	{
-		assert(image);
-
-		const Texture& tex = image->self->texture;
-		if (!tex) return;
-
-		Context::Ref tex_context = tex.context();
-		if (!tex_context) return;
-
-		Context::Ref current_context = OpenGL_get_context();
-		if (tex_context == current_context)
-			return;
-
-		OpenGL_set_context(tex_context);
-		invalidate_texture(image);
-		OpenGL_set_context(current_context);
-	}
-
 	static Bitmap&
 	get_bitmap (Image* image)
 	{
@@ -138,8 +111,6 @@ namespace Rays
 			assert(!self->texture);
 			return self->texture;
 		}
-
-		invalidate_texture_for_another_context(&image);
 
 		if (!self->texture)
 		{

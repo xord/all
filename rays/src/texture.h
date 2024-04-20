@@ -42,8 +42,6 @@ namespace Rays
 
 			const ColorSpace& color_space () const;
 
-			Context* context () const;
-
 			GLuint id () const;
 
 			void set_modified (bool modified = true);

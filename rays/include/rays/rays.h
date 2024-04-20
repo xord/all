@@ -11,9 +11,15 @@ namespace Rays
 {
 
 
+	typedef void* Context;
+
+
 	void init ();
 
 	void fin ();
+
+
+	Context get_offscreen_context ();
 
 
 }// Rays
