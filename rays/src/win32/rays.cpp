@@ -26,7 +26,6 @@ namespace Rays
 		global::initialized = true;
 
 		OpenGL_init();
-		OpenGL_set_context(get_offscreen_context());
 	}
 
 	void
