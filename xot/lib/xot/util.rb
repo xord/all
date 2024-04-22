@@ -7,23 +7,23 @@ module Xot
   extend module Util
 
     def win32?()
-      RUBY_PLATFORM =~ /mswin|ming|cygwin/
+      /mswin|ming|cygwin/.match? RUBY_PLATFORM
     end
 
     def mswin?()
-      RUBY_PLATFORM =~ /mswin/
+      /mswin/.match? RUBY_PLATFORM
     end
 
-    def ming?()
-      RUBY_PLATFORM =~ /ming/
+    def mingw?()
+      /ming/.match? RUBY_PLATFORM
     end
 
     def cygwin?()
-      RUBY_PLATFORM =~ /cygwin/
+      /cygwin/.match? RUBY_PLATFORM
     end
 
     def osx?()
-      RUBY_PLATFORM =~ /darwin/
+      /darwin/.match? RUBY_PLATFORM
     end
 
     def ios?()
@@ -31,11 +31,11 @@ module Xot
     end
 
     def gcc?()
-      RbConfig::CONFIG['CXX'] =~ /(^|\s)g\+\+/i
+      /(^|\s)g\+\+/i.match? RbConfig::CONFIG['CXX']
     end
 
     def clang?()
-      RbConfig::CONFIG['CXX'] =~ /(^|\s)clang/i
+      /(^|\s)clang/i.match? RbConfig::CONFIG['CXX']
     end
 
     self
