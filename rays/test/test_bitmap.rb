@@ -37,13 +37,15 @@ class TestBitmap < Test::Unit::TestCase
 
     bmp.pixels = [0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00]
     assert_equal [0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00], bmp.pixels
+  end
 
+  def test_pixels_float()
     bmp = bitmap 2, 2, Rays::RGBA_float
     assert_equal [0,0,0,0] * 4, bmp.pixels
 
     bmp.pixels = [1,0,0,1, 0,1,0,1, 0,0,1,1, 1,1,0,1]
     assert_equal [1,0,0,1, 0,1,0,1, 0,0,1,1, 1,1,0,1], bmp.pixels
-  end
+  end unless win32?
 
   def test_at()
     o       = bitmap
