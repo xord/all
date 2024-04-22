@@ -1,5 +1,6 @@
-require 'xot/rake/util'
 require 'xot/block_util'
+require 'xot/util'
+require 'xot/rake/util'
 
 
 module Xot
@@ -8,6 +9,7 @@ module Xot
   class ExtConf
 
     include Xot::Rake
+    include Xot::Util
 
     attr_reader :extensions, :defs, :inc_dirs, :lib_dirs, :headers, :libs, :local_libs, :frameworks
 
