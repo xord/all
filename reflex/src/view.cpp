@@ -245,7 +245,7 @@ namespace Reflex
 		void
 		get_view2body_matrix (Matrix* m)
 		{
-			assert(m && *m == 1 && ppivot && *ppivot != 0);
+			assert(*m == 1 && ppivot && *ppivot != 0);
 
 			Point pivot = *ppivot * frame.size();
 			m->translate(frame.position() + pivot)
@@ -256,7 +256,7 @@ namespace Reflex
 		void
 		get_body2view_matrix (Matrix* m)
 		{
-			assert(m && *m == 1 && ppivot && *ppivot != 0 && pbody);
+			assert(*m == 1 && ppivot && *ppivot != 0 && pbody);
 
 			Point pos   = pbody->position();
 			Point pivot = *ppivot * frame.size();
@@ -288,8 +288,6 @@ namespace Reflex
 
 		World* child_world (View* view, bool create = true)
 		{
-			assert(view);
-
 			if (!pchild_world && create)
 			{
 				pchild_world.reset(new World());
@@ -301,8 +299,6 @@ namespace Reflex
 
 		void create_walls (View* view)
 		{
-			assert(view);
-
 			clear_walls(view);
 
 			View* wall = new View(WALL_NAME);
@@ -314,8 +310,6 @@ namespace Reflex
 
 		void clear_walls (View* view)
 		{
-			assert(view);
-
 			for (auto& wall : view->find_children(WALL_NAME))
 				view->remove_child(wall.get());
 		}
@@ -364,8 +358,6 @@ namespace Reflex
 
 			void do_sort_children ()
 			{
-				assert(pchildren);
-
 				auto& children = *pchildren;
 
 				size_t size = children.size();
@@ -475,8 +467,6 @@ namespace Reflex
 
 			static void get_flow_sign (schar* h, schar* v, Style::Flow flow)
 			{
-				assert(h && v);
-
 				switch (flow)
 				{
 					case Style::FLOW_RIGHT: *h = +1; *v =  0; break;
@@ -491,8 +481,6 @@ namespace Reflex
 				iterator* line_end, coord* main_fill_size, coord* sub_size_max,
 				iterator begin, iterator end)
 			{
-				assert(line_end && main_fill_size && sub_size_max);
-
 				*line_end       = end;
 				*main_fill_size = 0;
 				*sub_size_max   = 0;
@@ -545,8 +533,6 @@ namespace Reflex
 			void place_child (
 				View* child, Point* position, coord main_fill_size, coord sub_size_max)
 			{
-				assert(child && position);
-
 				const Style* style = child->self->pstyle.get();
 				Bounds frame       = child->frame();
 				bool update        = false;
@@ -567,8 +553,6 @@ namespace Reflex
 				Bounds* frame,
 				const Style* style, coord main_fill_size, coord sub_size_max)
 			{
-				assert(frame);
-
 				bool update = false;
 
 				if (has_fill_length(style, DIR_MAIN))
@@ -582,8 +566,6 @@ namespace Reflex
 
 			bool place_in_flow (Bounds* frame, Point* position)
 			{
-				assert(frame && position);
-
 				coord old_x = frame->x;
 				coord old_y = frame->y;
 
@@ -604,8 +586,6 @@ namespace Reflex
 
 			bool place_position (Bounds* frame, const Style* style)
 			{
-				assert(frame);
-
 				if (!style)
 					return false;
 
@@ -666,8 +646,6 @@ namespace Reflex
 
 			bool set_flow_size (Bounds* frame, coord size, FlowDirection dir) const
 			{
-				assert(frame);
-
 				coord& value = flow_value(frame->width, frame->height, dir);
 				if (value == size) return false;
 
@@ -745,15 +723,11 @@ namespace Reflex
 	static void
 	apply_style_to_children_have_variable_lengths (View* parent)
 	{
-		assert(parent);
-
 		View::ChildList* children = parent->self->children();
 		if (!children) return;
 
 		for (auto& child : *children)
 		{
-			assert(child);
-
 			if (child->self->has_flag(View::Data::HAS_VARIABLE_LENGTHS))
 				child->self->add_flag(View::Data::APPLY_STYLE);
 		}
@@ -762,7 +736,6 @@ namespace Reflex
 	static void
 	update_view_layout (View* view, bool update_parent = false)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		self->add_flag(View::Data::UPDATE_LAYOUT);
@@ -776,7 +749,6 @@ namespace Reflex
 		View* view, const Bounds& frame, float zoom, float angle,
 		bool update_body = true)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		if (frame == self->frame && zoom == self->zoom && angle == self->angle)
@@ -854,8 +826,6 @@ namespace Reflex
 		View::ChildList* result, const View* view, const Selector& selector,
 		bool recursive)
 	{
-		assert(result && view);
-
 		View::ChildList* children = view->self->children();
 		if (!children) return;
 
@@ -877,8 +847,6 @@ namespace Reflex
 		View::StyleList* result, const View* view, const Selector& selector,
 		bool recursive)
 	{
-		assert(result && view);
-
 		View::StyleList* pstyles = view->self->pstyles.get();
 		if (pstyles)
 		{
@@ -902,8 +870,6 @@ namespace Reflex
 	static void
 	fire_timers (View* view, double now)
 	{
-		assert(view);
-
 		Timers* timers = view->self->ptimers.get();
 		if (timers)
 			timers->fire(now);
@@ -912,7 +878,6 @@ namespace Reflex
 	static void
 	update_view_shapes (View* view)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		bool create_shape = self->pbody && !self->pshape;
@@ -927,7 +892,6 @@ namespace Reflex
 	static void
 	update_view_body (View* view)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		Body* body = self->pbody.get();
@@ -954,7 +918,6 @@ namespace Reflex
 	static void
 	update_child_world (View* view, float dt)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		World* child_world = self->pchild_world.get();
@@ -973,7 +936,6 @@ namespace Reflex
 	static void
 	update_views_for_selectors (View* view)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		View::Data::SelectorSet* sels = self->pselectors_for_update.get();
@@ -1001,8 +963,6 @@ namespace Reflex
 	get_styles_for_selector (
 		View::StyleList* result, View* view, const Selector& selector)
 	{
-		assert(result);
-
 		View* parent = view->parent();
 		if (parent)
 			get_styles_for_selector(result, parent, selector);
@@ -1013,8 +973,6 @@ namespace Reflex
 	static bool
 	get_styles_for_view (View::StyleList* result, View* view)
 	{
-		assert(result && view);
-
 		result->clear();
 
 		Selector* sel = view->self->pselector.get();
@@ -1028,7 +986,6 @@ namespace Reflex
 	static void
 	update_view_style (View* view)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		Style* pstyle = self->pstyle.get();
@@ -1057,8 +1014,6 @@ namespace Reflex
 	static void
 	fit_view_to_content (View* view)
 	{
-		assert(view);
-
 		Bounds bounds = view->content_bounds();
 		if (!bounds) return;
 
@@ -1121,7 +1076,6 @@ namespace Reflex
 	static bool
 	use_cache (View* view)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		return
@@ -1132,7 +1086,7 @@ namespace Reflex
 	static bool
 	reset_cache_image (View* view, const Painter& painter)
 	{
-		assert(view && use_cache(view));
+		assert(use_cache(view));
 		View::Data* self = view->self.get();
 
 		Image* image = self->pcache_image.get();
@@ -1155,8 +1109,6 @@ namespace Reflex
 	static void
 	setup_painter (Painter* painter, const Color& fill, const Color& stroke)
 	{
-		assert(painter);
-
 		painter->set_fill(fill);
 		painter->set_stroke(stroke);
 	}
@@ -1164,11 +1116,7 @@ namespace Reflex
 	static void
 	draw_default_shape (View* view, DrawEvent* event)
 	{
-		assert(view && event);
-
-		Painter* painter = event->painter();
-		assert(painter);
-
+		Painter* painter         = event->painter();
 		const Style& style       = View_get_style(view);
 		const Color& back_fill   = style.background_fill();
 		const Color& back_stroke = style.background_stroke();
@@ -1189,8 +1137,6 @@ namespace Reflex
 	static void
 	draw_content (View* view, DrawEvent* event)
 	{
-		assert(view && event && event->painter());
-
 		draw_default_shape(view, event);
 
 		const Style& style = View_get_style(view);
@@ -1211,7 +1157,6 @@ namespace Reflex
 	draw_view (
 		View* view, DrawEvent* event, const Point& offset, const Bounds& clip)
 	{
-		assert(view && event && event->painter());
 		View::Data* self = view->self.get();
 
 		Painter* p = event->painter();
@@ -1250,8 +1195,6 @@ namespace Reflex
 	static void
 	draw_view_to_cache (View* view, DrawEvent* event)
 	{
-		assert(view && event && event->painter() && view->self->pcache_image);
-
 		Painter* view_painter = event->painter();
 		Painter cache_painter = view->self->pcache_image->painter();
 
@@ -1267,7 +1210,6 @@ namespace Reflex
 	static bool
 	draw_view_with_cache (View* view, DrawEvent* event, bool redraw)
 	{
-		assert(view && event && event->painter());
 		View::Data* self = view->self.get();
 
 		if (!use_cache(view))
@@ -1403,8 +1345,6 @@ namespace Reflex
 	static void
 	call_children (View* parent, std::function<bool(View*)> fun, bool sort = true)
 	{
-		assert(parent);
-
 		auto* children = parent->self->children(false, sort);
 		if (!children) return;
 
@@ -1418,8 +1358,6 @@ namespace Reflex
 	static void
 	call_pointer_events_for_each_child (View* parent, PointerEvent* event)
 	{
-		assert(parent && event);
-
 		call_children(parent, [&](View* child) {
 			PointerEvent e = event->dup();
 			PointerEvent_update_for_child_view(&e, child);
@@ -1431,8 +1369,6 @@ namespace Reflex
 	static void
 	call_pointer_events (View* view, PointerEvent* event)
 	{
-		assert(view && event);
-
 		if (view->self->pbody)
 			view->self->pbody->awake();
 
@@ -1454,8 +1390,6 @@ namespace Reflex
 	static void
 	register_captures (View* view, const PointerEvent& event)
 	{
-		assert(view);
-
 		Window* win = view->window();
 		if (!win)
 			invalid_state_error(__FILE__, __LINE__);
@@ -1470,8 +1404,6 @@ namespace Reflex
 	static void
 	unregister_captures (View* view, const PointerEvent& event)
 	{
-		assert(view);
-
 		Window* win = view->window();
 		if (!win)
 			invalid_state_error(__FILE__, __LINE__);
@@ -1666,7 +1598,6 @@ namespace Reflex
 	static void
 	get_from_parent_matrix (Matrix* m, const View* view)
 	{
-		assert(m && view);
 		View::Data* self = view->self.get();
 
 		const auto& frame  = self->frame;
@@ -1689,7 +1620,6 @@ namespace Reflex
 	static void
 	get_to_parent_matrix (Matrix* m, const View* view)
 	{
-		assert(m && view);
 		View::Data* self = view->self.get();
 
 		const auto& frame  = self->frame;
@@ -1778,7 +1708,6 @@ namespace Reflex
 	static void
 	set_parent (View* view, View* parent)
 	{
-		assert(view);
 		View::Data* self = view->self.get();
 
 		if (parent == self->parent) return;
@@ -1790,8 +1719,6 @@ namespace Reflex
 	static void
 	erase_child_from_children (View* parent, View* child)
 	{
-		assert(parent && child);
-
 		View::ChildList* children = parent->self->children();
 		if (!children) return;
 
@@ -1918,8 +1845,6 @@ namespace Reflex
 	static Style*
 	add_view_style (View* view, Style style)
 	{
-		assert(view);
-
 		if (!Style_set_owner(&style, view))
 			return NULL;
 
