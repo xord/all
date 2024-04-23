@@ -36,6 +36,7 @@ namespace Rays
 			wc.lpfnWndProc   = DefWindowProc;
 			wc.hInstance     = GetModuleHandle(NULL);
 			wc.lpszClassName = WINDOW_CLASS;
+			wc.style         = CS_OWNDC;
 			if (!RegisterClass(&wc))
 				system_error(__FILE__, __LINE__);
 
