@@ -97,6 +97,8 @@ namespace Reflex
 
 	void Window_set_flags (Window* window, uint flags);
 
+	float Window_get_pixel_density (const Window& window);
+
 	void Window_set_focus (Window* window, View* view);
 
 	void Window_register_capture (
@@ -116,8 +118,6 @@ namespace Reflex
 	void Window_call_pointer_event    (Window* window, PointerEvent* event);
 
 	void Window_call_wheel_event      (Window* window, WheelEvent*   event);
-
-	float Window_get_pixel_density (const Window& window);
 
 
 	typedef View* (*Window_CreateRootViewFun) ();

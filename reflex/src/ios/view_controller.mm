@@ -420,23 +420,22 @@ ReflexViewController_get_show_fun ()
 		win->self->prev_position = b.position();
 		win->self->prev_size     = b.size();
 
-		if (dpos != 0 || dsize != 0)
+		if (dpos == 0 && dsize == 0) return;
+
+		Reflex::FrameEvent e(b, dpos.x, dpos.y, 0, dsize.x, dsize.y, 0);
+		if (dpos  != 0) win->on_move(&e);
+		if (dsize != 0)
 		{
-			Reflex::FrameEvent e(b, dpos.x, dpos.y, 0, dsize.x, dsize.y, 0);
-			if (dpos  != 0) win->on_move(&e);
-			if (dsize != 0)
-			{
-				Rays::Bounds b = win->frame();
-				b.move_to(0, 0);
+			Rays::Bounds b = win->frame();
+			b.move_to(0, 0);
 
-				if (win->painter())
-					win->painter()->canvas(b, win->painter()->pixel_density());
+			if (win->painter())
+				win->painter()->canvas(b, win->painter()->pixel_density());
 
-				if (win->root())
-					View_set_frame(win->root(), b);
+			if (win->root())
+				View_set_frame(win->root(), b);
 
-				win->on_resize(&e);
-			}
+			win->on_resize(&e);
 		}
 	}
 

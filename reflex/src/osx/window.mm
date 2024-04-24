@@ -74,9 +74,9 @@ namespace Reflex
 	Window_default_flags ()
 	{
 		return
-			Window::FLAG_CLOSABLE    |
-			Window::FLAG_MINIMIZABLE |
-			Window::FLAG_RESIZABLE;
+			Window::FLAG_CLOSABLE  |
+			Window::FLAG_RESIZABLE |
+			Window::FLAG_MINIMIZABLE;
 	}
 
 	void
