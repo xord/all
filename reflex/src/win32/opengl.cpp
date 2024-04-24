@@ -1,12 +1,14 @@
 #include "opengl.h"
 
 
+#include "reflex/exception.h"
+
+
 namespace Reflex
 {
 
 
 	OpenGL::OpenGL ()
-	:	hwnd(NULL), hdc(NULL), hrc(NULL)
 	{
 	}
 
@@ -15,14 +17,19 @@ namespace Reflex
 		fin();
 	}
 
-	bool
+	void
 	OpenGL::init (HWND hwnd_)
 	{
-		if (!hwnd_ || *this) return false;
+		if (!hwnd_)
+			argument_error(__FILE__, __LINE__);
+
+		if (*this)
+			invalid_state_error(__FILE__, __LINE__);
 
 		hwnd = hwnd_;
 		hdc  = GetDC(hwnd);
-		if (!hdc) return false;
+		if (!hdc)
+			system_error(__FILE__, __LINE__);
 
 		static const PIXELFORMATDESCRIPTOR PFD =
 		{
@@ -33,51 +40,62 @@ namespace Reflex
 		};
 
 		int pf = ChoosePixelFormat(hdc, &PFD);
-		if (pf == 0) return false;
+		if (pf == 0)
+			system_error(__FILE__, __LINE__);
 
 		if (!SetPixelFormat(hdc, pf, &PFD))
-			return false;
+			system_error(__FILE__, __LINE__);
 
 		hrc = wglCreateContext(hdc);
-		if (!hrc) return false;
+		if (!hrc)
+			system_error(__FILE__, __LINE__);
 
-		return make_current();
+		make_current();
 	}
 
-	bool
+	void
 	OpenGL::fin ()
 	{
-		if (!*this) return false;
+		if (!*this) return;
 
 		if (hrc)
 		{
-			wglMakeCurrent(NULL, NULL);
-			wglDeleteContext(hrc);
+			if (!wglMakeCurrent(NULL, NULL))
+				system_error(__FILE__, __LINE__);
+
+			if (!wglDeleteContext(hrc))
+				system_error(__FILE__, __LINE__);
+
 			hrc = NULL;
 		}
 
 		if (hdc)
 		{
-			ReleaseDC(hwnd, hdc);
+			if (!ReleaseDC(hwnd, hdc))
+				system_error(__FILE__, __LINE__);
+
 			hdc = NULL;
 		}
 
 		hwnd = NULL;
-		return true;
 	}
 
-	bool
+	void
 	OpenGL::make_current ()
 	{
-		if (!*this) return false;
-		return wglMakeCurrent(hdc, hrc) != FALSE;
+		if (!*this) return;
+
+		if (!wglMakeCurrent(hdc, hrc))
+			system_error(__FILE__, __LINE__);
 	}
 
-	bool
+	void
 	OpenGL::swap_buffers ()
 	{
-		if (!*this) return false;
-		return SwapBuffers(hdc) != FALSE;
+		if (!*this) return;
+
+		if (!SwapBuffers(hdc))
+			system_error(__FILE__, __LINE__);
 	}
 
 	OpenGL::operator bool () const
