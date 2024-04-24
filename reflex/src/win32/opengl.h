@@ -5,7 +5,7 @@
 
 
 #include <windows.h>
-#include <rays/opengl.h>
+#include <GL/glew.h>
 
 
 namespace Reflex
@@ -21,13 +21,13 @@ namespace Reflex
 
 			~OpenGL ();
 
-			bool init (HWND hwnd);
+			void init (HWND hwnd);
 
-			bool fin ();
+			void fin ();
 
-			bool make_current ();
+			void make_current ();
 
-			bool swap_buffers ();
+			void swap_buffers ();
 
 			operator bool () const;
 
@@ -35,11 +35,11 @@ namespace Reflex
 
 		private:
 
-			HWND hwnd;
+			HWND hwnd = NULL;
 
-			HDC hdc;
+			HDC hdc   = NULL;
 
-			HGLRC hrc;
+			HGLRC hrc = NULL;
 
 	};// OpenGL
 
