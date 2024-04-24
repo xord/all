@@ -92,8 +92,7 @@ move_to_main_screen_origin (NativeWindow* window)
 	{
 		assert(!pwindow);
 
-		if (view) [view release];
-
+		[self cleanupContentView];
 		[super dealloc];
 	}
 
@@ -154,6 +153,16 @@ move_to_main_screen_origin (NativeWindow* window)
 		rect.origin.x = rect.origin.y = 0;
 		view = [[OpenGLView alloc] initWithFrame: rect];
 		[self setContentView: view];
+	}
+
+	- (void) cleanupContentView
+	{
+		if (!view) return;
+
+		if (view.openGLContext == NSOpenGLContext.current)
+			Rays::activate_offscreen_context();
+
+		[view release];
 	}
 
 	- (void) startTimer

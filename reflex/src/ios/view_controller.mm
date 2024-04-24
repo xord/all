@@ -272,9 +272,8 @@ ReflexViewController_get_show_fun ()
 		ReflexView* view = self.reflexView;
 		if (!view) return;
 
-		EAGLContext* context = view.context;
-		if (context && context == [EAGLContext currentContext])
-			[EAGLContext setCurrentContext: (EAGLContext*) Rays::get_offscreen_context()];
+		if (view.context && view.context == [EAGLContext currentContext])
+			Rays::activate_offscreen_context();
 
 		view.reflexViewController = nil;
 		[view removeFromSuperview];

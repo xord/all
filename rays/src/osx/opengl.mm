@@ -41,7 +41,7 @@ namespace Rays
 	void
 	OpenGL_init ()
 	{
-		[get_opengl_offscreen_context() makeCurrentContext];
+		activate_offscreen_context();
 	}
 
 	void
@@ -54,6 +54,12 @@ namespace Rays
 	get_offscreen_context ()
 	{
 		return get_opengl_offscreen_context();
+	}
+
+	void
+	activate_offscreen_context ()
+	{
+		[get_opengl_offscreen_context() makeCurrentContext];
 	}
 
 

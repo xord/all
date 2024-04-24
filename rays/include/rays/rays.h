@@ -21,6 +21,8 @@ namespace Rays
 
 	Context get_offscreen_context ();
 
+	void activate_offscreen_context ();
+
 
 }// Rays
 
