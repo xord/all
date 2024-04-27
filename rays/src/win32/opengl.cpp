@@ -38,7 +38,11 @@ namespace Rays
 			wc.lpszClassName = WINDOW_CLASS;
 			wc.style         = CS_OWNDC;
 			if (!RegisterClass(&wc))
-				system_error(__FILE__, __LINE__);
+			{
+				// It's OK to be registered by the duplicated Rays module
+				if (GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+					system_error(__FILE__, __LINE__);
+			}
 
 			hwnd = CreateWindowEx(
 				WS_EX_LAYERED, WINDOW_CLASS, "", WS_POPUP, 0, 0, 1, 1,
@@ -58,8 +62,12 @@ namespace Rays
 
 		~OffscreenContext ()
 		{
-			if (!wglMakeCurrent(NULL, NULL))
-				system_error(__FILE__, __LINE__);
+
+			if (hrc && hrc == wglGetCurrentContext())
+			{
+				if (!wglMakeCurrent(NULL, NULL))
+					system_error(__FILE__, __LINE__);
+			}
 
 			if (!wglDeleteContext(hrc))
 				system_error(__FILE__, __LINE__);
@@ -85,8 +93,7 @@ namespace Rays
 	void
 	OpenGL_init ()
 	{
-		const auto* context = get_opengl_offscreen_context();
-		wglMakeCurrent(context->hdc, context->hrc);
+		activate_offscreen_context();
 
 		static bool glew_initialized = false;
 		if (!glew_initialized)
@@ -107,6 +114,13 @@ namespace Rays
 	get_offscreen_context ()
 	{
 		return get_opengl_offscreen_context();
+	}
+
+	void
+	activate_offscreen_context ()
+	{
+		const auto* c = get_opengl_offscreen_context();
+		wglMakeCurrent(c->hdc, c->hrc);
 	}
 
 

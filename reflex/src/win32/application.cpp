@@ -14,7 +14,7 @@ namespace Reflex
 
 		static Application* instance = NULL;
 
-	}
+	}// global
 
 
 	Application*
@@ -48,6 +48,9 @@ namespace Reflex
 	void
 	Application::start ()
 	{
+		Event e;
+		on_start(&e);
+
 		MSG msg;
 		while (GetMessage(&msg, NULL, 0, 0))
 		{

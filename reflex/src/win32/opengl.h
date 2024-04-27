@@ -12,14 +12,14 @@ namespace Reflex
 {
 
 
-	class OpenGL
+	class OpenGLContext
 	{
 
 		public:
 
-			OpenGL ();
+			OpenGLContext ();
 
-			~OpenGL ();
+			~OpenGLContext ();
 
 			void init (HWND hwnd);
 
@@ -28,6 +28,8 @@ namespace Reflex
 			void make_current ();
 
 			void swap_buffers ();
+
+			bool is_active () const;
 
 			operator bool () const;
 
@@ -41,7 +43,7 @@ namespace Reflex
 
 			HGLRC hrc = NULL;
 
-	};// OpenGL
+	};// OpenGLContext
 
 
 }// Reflex

@@ -8,17 +8,17 @@ namespace Reflex
 {
 
 
-	OpenGL::OpenGL ()
+	OpenGLContext::OpenGLContext ()
 	{
 	}
 
-	OpenGL::~OpenGL ()
+	OpenGLContext::~OpenGLContext ()
 	{
 		fin();
 	}
 
 	void
-	OpenGL::init (HWND hwnd_)
+	OpenGLContext::init (HWND hwnd_)
 	{
 		if (!hwnd_)
 			argument_error(__FILE__, __LINE__);
@@ -54,14 +54,17 @@ namespace Reflex
 	}
 
 	void
-	OpenGL::fin ()
+	OpenGLContext::fin ()
 	{
 		if (!*this) return;
 
 		if (hrc)
 		{
-			if (!wglMakeCurrent(NULL, NULL))
-				system_error(__FILE__, __LINE__);
+			if (hrc == wglGetCurrentContext())
+			{
+				if (!wglMakeCurrent(NULL, NULL))
+					system_error(__FILE__, __LINE__);
+			}
 
 			if (!wglDeleteContext(hrc))
 				system_error(__FILE__, __LINE__);
@@ -81,7 +84,7 @@ namespace Reflex
 	}
 
 	void
-	OpenGL::make_current ()
+	OpenGLContext::make_current ()
 	{
 		if (!*this) return;
 
@@ -90,7 +93,7 @@ namespace Reflex
 	}
 
 	void
-	OpenGL::swap_buffers ()
+	OpenGLContext::swap_buffers ()
 	{
 		if (!*this) return;
 
@@ -98,13 +101,19 @@ namespace Reflex
 			system_error(__FILE__, __LINE__);
 	}
 
-	OpenGL::operator bool () const
+	bool
+	OpenGLContext::is_active () const
+	{
+		return *this && hrc == wglGetCurrentContext();
+	}
+
+	OpenGLContext::operator bool () const
 	{
 		return hwnd && hdc && hrc;
 	}
 
 	bool
-	OpenGL::operator ! () const
+	OpenGLContext::operator ! () const
 	{
 		return !operator bool();
 	}
