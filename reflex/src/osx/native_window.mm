@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #import <Cocoa/Cocoa.h>
+#include <rays/rays.h>
 #include "reflex/exception.h"
 #include "../view.h"
 #include "../pointer.h"
@@ -159,7 +160,7 @@ move_to_main_screen_origin (NativeWindow* window)
 	{
 		if (!view) return;
 
-		if (view.openGLContext == NSOpenGLContext.current)
+		if (view.openGLContext == NSOpenGLContext.currentContext)
 			Rays::activate_offscreen_context();
 
 		[view release];
