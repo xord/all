@@ -123,8 +123,12 @@ RUCY_DEF0(get_key)
 		CASE(LBRACKET):   SYMBOL1(lbracket);
 		CASE(RBRACKET):   SYMBOL1(rbracket);
 
-		CASE(ENTER):
-		CASE(RETURN):     SYMBOL1(enter);
+#ifdef OSX
+		CASE(ENTER):      SYMBOL1(enter);
+#else
+		CASE(ENTER):      SYMBOL1(enter);
+		CASE(RETURN):     SYMBOL1(_return, "return");
+#endif
 		CASE(SPACE):      SYMBOL1(space);
 		CASE(TAB):        SYMBOL1(tab);
 		CASE(DELETE):     SYMBOL2(_delete, "delete");
@@ -141,18 +145,27 @@ RUCY_DEF0(get_key)
 		CASE(PAGEUP):   SYMBOL1(pageup);
 		CASE(PAGEDOWN): SYMBOL1(pagedown);
 
+#ifdef OSX
 		CASE(LSHIFT):
 		CASE(RSHIFT):   SYMBOL1(shift);
+		CASE(LCONTROL):
+		CASE(RCONTROL): SYMBOL1(control);
+		CASE(LCOMMAND):
+		CASE(RCOMMAND): SYMBOL1(command);
+		CASE(LOPTION):
+		CASE(ROPTION):  SYMBOL1(option);
+#else
+		CASE(SHIFT):
+		CASE(LSHIFT):
+		CASE(RSHIFT):   SYMBOL1(shift);
+		CASE(CONTROL):
 		CASE(LCONTROL):
 		CASE(RCONTROL): SYMBOL1(control);
 		//CASE(LALT):
 		//CASE(RALT):     SYMBOL1(alt);
 		//CASE(LWIN):
 		//CASE(RWIN):     SYMBOL1(win);
-		CASE(LCOMMAND):
-		CASE(RCOMMAND): SYMBOL1(command);
-		CASE(LOPTION):
-		CASE(ROPTION):  SYMBOL1(option);
+#endif
 		CASE(FUNCTION): SYMBOL1(function);
 
 		CASE(F1):  SYMBOL1(f1);
@@ -188,6 +201,7 @@ RUCY_DEF0(get_key)
 		CASE(NUM_COMMA):    SYMBOL1(comma);
 		CASE(NUM_DECIMAL):  SYMBOL1(decimal);
 		CASE(NUM_CLEAR):    SYMBOL1(clear);
+		CASE(NUM_ENTER):    SYMBOL1(enter);
 
 		CASE(CAPSLOCK):   SYMBOL1(capslock);
 		//CASE(NUMLOCK):    SYMBOL1(numlock);
