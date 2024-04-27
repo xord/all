@@ -28,7 +28,7 @@ module Reflex
     end
 
     def inspect()
-      "#<Reflex::KeyEvent action:#{action} chars:'#{chars}' code:#{code} mod:#{modifiers} repeat:#{repeat} captured?:#{captured?}>"
+      "#<Reflex::KeyEvent action:#{action} chars:'#{chars}' key:#{key} code:#{code} mod:#{modifiers} repeat:#{repeat} captured?:#{captured?}>"
     end
 
   end# KeyEvent
