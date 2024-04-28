@@ -545,6 +545,7 @@ namespace Reflex
 	const char*
 	KeyEvent::chars () const
 	{
+		if (self->chars.empty()) return NULL;
 		return self->chars;
 	}
 

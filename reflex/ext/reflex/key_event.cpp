@@ -267,7 +267,8 @@ static
 RUCY_DEF0(get_chars)
 {
 	CHECK;
-	return value(THIS->chars());
+	const char* chars = THIS->chars();
+	return chars ? value(chars) : nil();
 }
 RUCY_END
 
