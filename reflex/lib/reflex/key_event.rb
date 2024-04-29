@@ -1,3 +1,4 @@
+require 'xot/bit_flag_accessor'
 require 'xot/const_symbol_accessor'
 require 'reflex/ext'
 
@@ -15,6 +16,19 @@ module Reflex
       up:   UP
     }
 
+    bit_flag_reader :modifiers, **{
+      shift:    MOD_SHIFT,
+      control:  MOD_CONTROL,
+      alt:      MOD_ALT,
+      win:      MOD_WIN,
+      option:   MOD_OPTION,
+      command:  MOD_COMMAND,
+      help:     MOD_HELP,
+      function: MOD_FUNCTION,
+      numpad:   MOD_NUMPAD,
+      caps:     MOD_CAPS,
+    }
+
     def down?()
       get_action == DOWN
     end
@@ -28,7 +42,15 @@ module Reflex
     end
 
     def inspect()
-      "#<Reflex::KeyEvent action:#{action} chars:'#{chars}' key:#{key} code:#{code} mod:#{modifiers} repeat:#{repeat} captured?:#{captured?}>"
+      "#<Reflex::KeyEvent action:%s chars:%s key:%s code:0x%X mod:%s repeat:%d captured?:%s>" % [
+        action,
+        chars ? "'#{chars}'" : :nil,
+        key ? key : :nil,
+        code,
+        modifiers.join(','),
+        repeat,
+        captured?
+      ]
     end
 
   end# KeyEvent
