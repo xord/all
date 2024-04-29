@@ -278,17 +278,17 @@ namespace Reflex
 		MOD_WIN      = 0x1 << 3,
 #endif
 
-		MOD_OPTION   = MOD_ALT,
+		MOD_OPTION   = 0x1 << 4,
 
-		MOD_COMMAND  = MOD_WIN,
+		MOD_COMMAND  = 0x1 << 5,
 
-		MOD_HELP     = 0x1 << 4,
+		MOD_HELP     = 0x1 << 6,
 
-		MOD_FUNCTION = 0x1 << 5,
+		MOD_FUNCTION = 0x1 << 7,
 
-		MOD_NUMPAD   = 0x1 << 6,
+		MOD_NUMPAD   = 0x1 << 8,
 
-		MOD_CAPS     = 0x1 << 7,
+		MOD_CAPS     = 0x1 << 9,
 
 	};// Modifier
 
