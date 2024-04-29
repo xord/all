@@ -11,12 +11,12 @@ class TestKeyEvent < Test::Unit::TestCase
 
   def test_initialize()
     e = event DOWN, 'a', 1, 2, 3
-    assert_equal :down, e.action
-    assert_equal 'a',   e.chars
-    assert_equal 1,     e.code
-    assert_equal 2,     e.modifiers
-    assert_equal 3,     e.repeat
-    assert_false        e.captured?
+    assert_equal :down,      e.action
+    assert_equal 'a',        e.chars
+    assert_equal 1,          e.code
+    assert_equal [:control], e.modifiers
+    assert_equal 3,          e.repeat
+    assert_false             e.captured?
   end
 
   def test_dup()
