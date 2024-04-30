@@ -226,7 +226,12 @@ namespace Reflex
 	const Pointer*
 	Pointer::down () const
 	{
-		return self->down.get();
+		if (self->down)
+			return self->down.get();
+		else if (action() == DOWN)
+			return this;
+		else
+			return NULL;
 	}
 
 	Pointer::operator bool () const

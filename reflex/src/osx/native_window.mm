@@ -428,13 +428,13 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::UP);
 		[self attachAndUpdatePastPointers: &e];
 
-		if (prev_pointer && Reflex::Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0)
+		Window_call_pointer_event(win, &e);
+
+		if (Reflex::Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0)
 		{
 			++pointer_id;
 			Pointer_set_down(&prev_pointer, NULL);
 		}
-
-		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) mouseDragged: (NSEvent*) event
@@ -471,23 +471,16 @@ move_to_main_screen_origin (NativeWindow* window)
 		{
 			Pointer_add_flag(&pointer, Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS));
 			Reflex::Pointer_set_prev(&pointer, &prev_pointer);
+
+			const Pointer* down = prev_pointer.down();
+			if (down) Reflex::Pointer_set_down(&pointer, down);
 		}
 
-		switch (pointer.action())
-		{
-			case Pointer::DOWN:
-				Pointer_add_flag(&pointer, pointer.types());
-				break;
-
-			case Pointer::UP:
-				Pointer_remove_flag(&pointer, pointer.types());
-				break;
-		}
-
-		if (prev_pointer && prev_pointer.down())
-			Reflex::Pointer_set_down(&pointer, prev_pointer.down());
-		else if (pointer.action() == Reflex::Pointer::DOWN)
-			Reflex::Pointer_set_down(&pointer, &pointer);
+		auto action = pointer.action();
+		if (action == Pointer::DOWN)
+			Pointer_add_flag(&pointer, pointer.types());
+		else if (action == Pointer::UP)
+			Pointer_remove_flag(&pointer, pointer.types());
 
 		prev_pointer = pointer;
 		Reflex::Pointer_set_prev(&prev_pointer, NULL);

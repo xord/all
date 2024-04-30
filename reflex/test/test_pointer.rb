@@ -34,13 +34,13 @@ class TestPointer < Test::Unit::TestCase
     assert_nothing_raised {pointer}
 
     p = pointer(
-      id: 1, types: TOUCH, action: DOWN,
+      id: 1, types: TOUCH, action: UP,
       position: [2, 3], modifiers: 4, drag: true, click_count: 5, view_index: 6,
       time: 7)
 
     assert_equal 1,        p.id
     assert_equal [:touch], p.types
-    assert_equal :down,    p.action
+    assert_equal :up,      p.action
     assert_equal [2, 3],   p.position.to_a
     assert_equal 2,        p.x
     assert_equal 3,        p.y
@@ -132,6 +132,11 @@ class TestPointer < Test::Unit::TestCase
   def test_xy()
     assert_equal 1, pointer(position: [1, 2]).x
     assert_equal 2, pointer(position: [1, 2]).y
+  end
+
+  def test_down()
+    assert_equal 1, pointer(id: 1, action: DOWN).down.id # DOWN pointer's down() returns itself
+    assert_nil      pointer(id: 2, action: UP)  .down
   end
 
   def test_compare()
