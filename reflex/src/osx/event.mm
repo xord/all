@@ -95,7 +95,7 @@ namespace Reflex
 			(flags & NSAlphaShiftKeyMask) ? MOD_CAPS     : 0 |
 			(flags & NSShiftKeyMask)      ? MOD_SHIFT    : 0 |
 			(flags & NSControlKeyMask)    ? MOD_CONTROL  : 0 |
-			(flags & NSAlternateKeyMask)  ? MOD_ALT      : 0 |
+			(flags & NSAlternateKeyMask)  ? MOD_OPTION   : 0 |
 			(flags & NSCommandKeyMask)    ? MOD_COMMAND  : 0 |
 			(flags & NSNumericPadKeyMask) ? MOD_NUMPAD   : 0 |
 			(flags & NSHelpKeyMask)       ? MOD_HELP     : 0 |
