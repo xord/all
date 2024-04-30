@@ -102,19 +102,13 @@ namespace Reflex
 			(flags & NSFunctionKeyMask)   ? MOD_FUNCTION : 0;
 	}
 
-	static NSPoint
-	correct_point (NSView* view, const NSPoint& point)
-	{
-		assert(view);
-		NSPoint p = [view convertPoint: point fromView: nil];
-		p.y = [view bounds].size.height - p.y;
-		return p;
-	}
-
 	static Point
 	get_pointer_position (NSEvent* e, NSView* view)
 	{
-		NSPoint p = correct_point(view, [e locationInWindow]);
+		assert(view);
+
+		NSPoint p = [view convertPoint: e.locationInWindow fromView: nil];
+		p.y = view.bounds.size.height - p.y;
 		return Point(p.x, p.y);
 	}
 
