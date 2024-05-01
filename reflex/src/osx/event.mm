@@ -11,12 +11,46 @@ namespace Reflex
 {
 
 
+	static uint
+	get_modifiers (const NSEvent* e)
+	{
+		NSUInteger flags = e.modifierFlags;
+		return
+			(flags & NSAlphaShiftKeyMask) ? MOD_CAPS     : 0 |
+			(flags & NSShiftKeyMask)      ? MOD_SHIFT    : 0 |
+			(flags & NSControlKeyMask)    ? MOD_CONTROL  : 0 |
+			(flags & NSAlternateKeyMask)  ? MOD_OPTION   : 0 |
+			(flags & NSCommandKeyMask)    ? MOD_COMMAND  : 0 |
+			(flags & NSNumericPadKeyMask) ? MOD_NUMPAD   : 0 |
+			(flags & NSHelpKeyMask)       ? MOD_HELP     : 0 |
+			(flags & NSFunctionKeyMask)   ? MOD_FUNCTION : 0;
+	}
+
+	static Point
+	get_pointer_position (NSEvent* e, NSView* view)
+	{
+		assert(view);
+
+		NSPoint p = [view convertPoint: e.locationInWindow fromView: nil];
+		p.y = view.bounds.size.height - p.y;
+		return Point(p.x, p.y);
+	}
+
+
 	static const char*
 	get_chars (NSEvent* e)
 	{
 		NSString* chars = [e characters];//charactersIgnoringModifiers];
 		return [chars UTF8String];
 	}
+
+	NativeKeyEvent::NativeKeyEvent (NSEvent* e, Action action)
+	:	KeyEvent(
+			action, get_chars(e), [e keyCode],
+			get_modifiers(e), [e isARepeat] ? 1 : 0)
+	{
+	}
+
 
 	static uint
 	get_modifier_flag_mask (const NSEvent* e)
@@ -46,6 +80,23 @@ namespace Reflex
 		return [e modifierFlags] & mask
 			?	Reflex::KeyEvent::DOWN
 			:	Reflex::KeyEvent::UP;
+	}
+
+	NativeFlagKeyEvent::NativeFlagKeyEvent (NSEvent* e)
+	:	KeyEvent(
+			get_flag_key_event_action(e), "", [e keyCode],
+			get_modifiers(e), 0)
+	{
+	}
+
+
+	static bool
+	is_pointer_dragging (NSEvent* e)
+	{
+		return
+			[e type] == NSLeftMouseDragged  ||
+			[e type] == NSRightMouseDragged ||
+			[e type] == NSOtherMouseDragged;
 	}
 
 	static uint
@@ -87,57 +138,6 @@ namespace Reflex
 		}
 	}
 
-	static uint
-	get_modifiers (const NSEvent* e)
-	{
-		NSUInteger flags = [e modifierFlags];
-		return
-			(flags & NSAlphaShiftKeyMask) ? MOD_CAPS     : 0 |
-			(flags & NSShiftKeyMask)      ? MOD_SHIFT    : 0 |
-			(flags & NSControlKeyMask)    ? MOD_CONTROL  : 0 |
-			(flags & NSAlternateKeyMask)  ? MOD_OPTION   : 0 |
-			(flags & NSCommandKeyMask)    ? MOD_COMMAND  : 0 |
-			(flags & NSNumericPadKeyMask) ? MOD_NUMPAD   : 0 |
-			(flags & NSHelpKeyMask)       ? MOD_HELP     : 0 |
-			(flags & NSFunctionKeyMask)   ? MOD_FUNCTION : 0;
-	}
-
-	static Point
-	get_pointer_position (NSEvent* e, NSView* view)
-	{
-		assert(view);
-
-		NSPoint p = [view convertPoint: e.locationInWindow fromView: nil];
-		p.y = view.bounds.size.height - p.y;
-		return Point(p.x, p.y);
-	}
-
-
-	NativeKeyEvent::NativeKeyEvent (NSEvent* e, Action action)
-	:	KeyEvent(
-			action, get_chars(e), [e keyCode],
-			get_modifiers(e), [e isARepeat] ? 1 : 0)
-	{
-	}
-
-
-	NativeFlagKeyEvent::NativeFlagKeyEvent (NSEvent* e)
-	:	KeyEvent(
-			get_flag_key_event_action(e), "", [e keyCode],
-			get_modifiers(e), 0)
-	{
-	}
-
-
-	static bool
-	is_pointer_dragging (NSEvent* e)
-	{
-		return
-			[e type] == NSLeftMouseDragged  ||
-			[e type] == NSRightMouseDragged ||
-			[e type] == NSOtherMouseDragged;
-	}
-
 	NativePointerEvent::NativePointerEvent (
 		NSEvent* event, NSView* view, Pointer::ID id, Pointer::Action action)
 	{
@@ -149,7 +149,7 @@ namespace Reflex
 			get_pointer_position(event, view),
 			get_modifiers(event),
 			dragging,
-			action == Pointer::MOVE && !dragging ? 0 : (uint) [event clickCount],
+			action == Pointer::MOVE && !dragging ? 0 : (uint) event.clickCount,
 			0,
 			time()));
 	}
