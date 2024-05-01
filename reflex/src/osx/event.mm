@@ -139,11 +139,11 @@ namespace Reflex
 	}
 
 	NativePointerEvent::NativePointerEvent (
-		NSEvent* event, NSView* view, Pointer::ID id, Pointer::Action action)
+		NSEvent* event, NSView* view, Pointer::Action action)
 	{
 		bool dragging = is_pointer_dragging(event);
 		PointerEvent_add_pointer(this, Pointer(
-			id,
+			0,
 			get_pointer_type(event),
 			action,
 			get_pointer_position(event, view),

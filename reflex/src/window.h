@@ -51,6 +51,10 @@ namespace Reflex
 
 		CaptureMap captures;
 
+		int next_pointer_id = 1;
+
+		Pointer prev_mouse_pointer;
+
 		uint flags;
 
 		Data ();

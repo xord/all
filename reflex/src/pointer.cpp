@@ -53,7 +53,7 @@ namespace Reflex
 		PrevPointerPtr prev, down;
 
 		Data (
-			ID id = -1, uint types = TYPE_NONE, Action action = ACTION_NONE,
+			ID id = 0, uint types = TYPE_NONE, Action action = ACTION_NONE,
 			const Point& position = 0, uint modifiers = 0,
 			bool drag = false, bool enter = false, bool exit = false,
 			uint click_count = 0, uint view_index = 0, double time = 0)
@@ -72,6 +72,11 @@ namespace Reflex
 				(drag  ? DRAG  : 0) |
 				(enter ? ENTER : 0) |
 				(exit  ? EXIT  : 0);
+		}
+
+		bool is_valid () const
+		{
+			return id >= 0 && types != TYPE_NONE && action != ACTION_NONE;
 		}
 
 	};// Pointer::Data
@@ -122,13 +127,13 @@ namespace Reflex
 	void
 	Pointer_set_prev (Pointer* it, const Pointer* prev)
 	{
-		it->self->prev.reset(prev ? new Pointer(*prev) : NULL);
+		it->self->prev.reset(prev && *prev ? new Pointer(*prev) : NULL);
 	}
 
 	void
 	Pointer_set_down (Pointer* it, const Pointer* down)
 	{
-		it->self->down.reset(down ? new Pointer(*down) : NULL);
+		it->self->down.reset(down && *down ? new Pointer(*down) : NULL);
 	}
 
 
@@ -236,9 +241,7 @@ namespace Reflex
 
 	Pointer::operator bool () const
 	{
-		return
-			self->types != TYPE_NONE &&
-			ACTION_NONE < self->action && self->action <= STAY;
+		return self->is_valid();
 	}
 
 	bool

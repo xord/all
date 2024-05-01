@@ -13,12 +13,6 @@
 #import "opengl_view.h"
 
 
-static const uint MOUSE_BUTTONS =
-	Reflex::Pointer::MOUSE_LEFT  |
-	Reflex::Pointer::MOUSE_RIGHT |
-	Reflex::Pointer::MOUSE_MIDDLE;
-
-
 static NSWindowStyleMask
 default_style_mask ()
 {
@@ -62,8 +56,6 @@ move_to_main_screen_origin (NativeWindow* window)
 		OpenGLView* view;
 		NSTimer* timer;
 		int update_count;
-		Reflex::Pointer::ID pointer_id;
-		Reflex::Pointer prev_pointer;
 	}
 
 	- (id) init
@@ -80,7 +72,6 @@ move_to_main_screen_origin (NativeWindow* window)
 		view            = nil;
 		timer           = nil;
 		update_count    = 0;
-		pointer_id      = 0;
 
 		[self setDelegate: self];
 		[self setupContentView];
@@ -403,10 +394,7 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		if (Reflex::Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0)
-			++pointer_id;
-
-		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::DOWN);
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::DOWN);
 
 		if (e[0].position().y < 0)
 		{
@@ -414,8 +402,6 @@ move_to_main_screen_origin (NativeWindow* window)
 			// will not come and will break clicking_count.
 			return;
 		}
-
-		[self attachAndUpdatePastPointers: &e];
 
 		Window_call_pointer_event(win, &e);
 	}
@@ -425,16 +411,8 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::UP);
-		[self attachAndUpdatePastPointers: &e];
-
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::UP);
 		Window_call_pointer_event(win, &e);
-
-		if (Reflex::Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0)
-		{
-			++pointer_id;
-			Pointer_set_down(&prev_pointer, NULL);
-		}
 	}
 
 	- (void) mouseDragged: (NSEvent*) event
@@ -442,9 +420,7 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::MOVE);
-		[self attachAndUpdatePastPointers: &e];
-
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::MOVE);
 		Window_call_pointer_event(win, &e);
 	}
 
@@ -453,37 +429,8 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(event, view, pointer_id, Reflex::Pointer::MOVE);
-		[self attachAndUpdatePastPointers: &e];
-
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::MOVE);
 		Window_call_pointer_event(win, &e);
-	}
-
-	- (void) attachAndUpdatePastPointers: (Reflex::PointerEvent*) e
-	{
-		using namespace Reflex;
-
-		assert(e->size() == 1);
-
-		Pointer& pointer = PointerEvent_pointer_at(e, 0);
-
-		if (prev_pointer)
-		{
-			Pointer_add_flag(&pointer, Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS));
-			Reflex::Pointer_set_prev(&pointer, &prev_pointer);
-
-			const Pointer* down = prev_pointer.down();
-			if (down) Reflex::Pointer_set_down(&pointer, down);
-		}
-
-		auto action = pointer.action();
-		if (action == Pointer::DOWN)
-			Pointer_add_flag(&pointer, pointer.types());
-		else if (action == Pointer::UP)
-			Pointer_remove_flag(&pointer, pointer.types());
-
-		prev_pointer = pointer;
-		Reflex::Pointer_set_prev(&prev_pointer, NULL);
 	}
 
 	- (void) scrollWheel: (NSEvent*) event

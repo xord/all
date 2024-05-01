@@ -223,6 +223,61 @@ namespace Reflex
 		cleanup_captures(window);
 	}
 
+	static Pointer::ID
+	get_next_pointer_id (Window* window)
+	{
+		return window->self->next_pointer_id++;
+	}
+
+	static void
+	setup_mouse_pointer (Window* window, Pointer* pointer)
+	{
+		static const uint MOUSE_BUTTONS =
+			Pointer::MOUSE_LEFT  |
+			Pointer::MOUSE_RIGHT |
+			Pointer::MOUSE_MIDDLE;
+
+		Window::Data* self = window->self.get();
+
+		auto action        = pointer->action();
+		auto& prev_pointer = self->prev_mouse_pointer;
+
+		auto id    = prev_pointer.id();
+		auto* down = prev_pointer.down();
+		if (
+			Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0 &&
+			(action == Pointer::DOWN || prev_pointer.action() == Pointer::UP))
+		{
+			id   = get_next_pointer_id(window);
+			down = NULL;
+		}
+
+		Pointer_set_id(pointer, id);
+		Pointer_add_flag(pointer, Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS));
+		Pointer_set_prev(pointer, &prev_pointer);
+		Pointer_set_down(pointer, down);
+
+		if (action == Pointer::DOWN)
+			Pointer_add_flag(pointer, pointer->types() & MOUSE_BUTTONS);
+
+		prev_pointer = *pointer;
+		Pointer_set_prev(&prev_pointer, NULL);
+
+		if (action == Pointer::UP)
+			Pointer_remove_flag(&prev_pointer, prev_pointer.types() & MOUSE_BUTTONS);
+	}
+
+	static void
+	setup_pointer_event (Window* window, PointerEvent* event)
+	{
+		for (size_t i = 0; i < event->size(); ++i)
+		{
+			Pointer& pointer = PointerEvent_pointer_at(event, i);
+			if (pointer.types() & Pointer::MOUSE)
+				setup_mouse_pointer(window, &pointer);
+		}
+	}
+
 	static void
 	get_views_capturing_all_pointers (Window* window, ViewList* result)
 	{
@@ -394,6 +449,8 @@ namespace Reflex
 
 		if (!event)
 			argument_error(__FILE__, __LINE__);
+
+		setup_pointer_event(window, event);
 
 		window->on_pointer(event);
 

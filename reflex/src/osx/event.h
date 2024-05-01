@@ -38,7 +38,7 @@ namespace Reflex
 		public:
 
 			NativePointerEvent (
-				NSEvent* event, NSView* view, Pointer::ID id, Pointer::Action action);
+				NSEvent* event, NSView* view, Pointer::Action action);
 
 	};// NativePointerEvent
 
