@@ -242,7 +242,7 @@ namespace Reflex
 		auto action        = pointer->action();
 		auto& prev_pointer = self->prev_mouse_pointer;
 
-		auto id    = prev_pointer.id();
+		auto id    = prev_pointer ? prev_pointer.id() : get_next_pointer_id(window);
 		auto* down = prev_pointer.down();
 		if (
 			Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0 &&

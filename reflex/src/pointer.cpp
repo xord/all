@@ -53,7 +53,7 @@ namespace Reflex
 		PrevPointerPtr prev, down;
 
 		Data (
-			ID id = 0, uint types = TYPE_NONE, Action action = ACTION_NONE,
+			ID id = -1, uint types = TYPE_NONE, Action action = ACTION_NONE,
 			const Point& position = 0, uint modifiers = 0,
 			bool drag = false, bool enter = false, bool exit = false,
 			uint click_count = 0, uint view_index = 0, double time = 0)
