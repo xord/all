@@ -224,13 +224,11 @@ module Xot
       env :DEBUG, false
     end
 
-    def ci?()
-      github_actions?
-    end
-
     def github_actions?()
       env :GITHUB_ACTIONS, false
     end
+
+    alias ci? github_actions?
 
     def cxx()
       env :CXX, RbConfig::CONFIG['CXX'] || 'g++'
