@@ -39,7 +39,7 @@ module Xot
     end
 
     def github_actions?()
-      (ENV['GITHUB_ACTIONS'] || 0).to_i != 0
+      ENV['GITHUB_ACTIONS'] == 'true'
     end
 
     alias ci? github_actions?
