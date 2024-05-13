@@ -2,7 +2,6 @@ require 'rbconfig'
 require 'rake'
 require 'rake/loaders/makefile'
 require 'rake/testtask'
-require 'xot/util'
 require 'xot/rake/alias_task'
 require 'xot/rake/util'
 #require 'xot/rake/escalation'
@@ -12,8 +11,6 @@ module Xot
 
 
   module Rake
-
-    include Xot::Util
 
     def srcs_map()
       paths = glob("#{src_dir}/**/*.{#{src_exts.join ','}}") +

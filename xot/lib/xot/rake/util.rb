@@ -1,11 +1,14 @@
 require 'erb'
 require 'rbconfig'
+require 'xot/util'
 
 
 module Xot
 
 
   module Rake
+
+    include Xot::Util
 
     def extensions()
       env(:EXTENSIONS, []).map {|m| m::Extension}
@@ -223,12 +226,6 @@ module Xot
       ENV['DEBUG'] = (!!state).to_s if state != nil
       env :DEBUG, false
     end
-
-    def github_actions?()
-      env :GITHUB_ACTIONS, false
-    end
-
-    alias ci? github_actions?
 
     def cxx()
       env :CXX, RbConfig::CONFIG['CXX'] || 'g++'

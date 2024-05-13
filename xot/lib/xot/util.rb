@@ -38,6 +38,12 @@ module Xot
       /(^|\s)clang/i.match? RbConfig::CONFIG['CXX']
     end
 
+    def github_actions?()
+      (ENV['GITHUB_ACTIONS'] || 0).to_i != 0
+    end
+
+    alias ci? github_actions?
+
     self
 
   end# Util

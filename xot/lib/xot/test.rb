@@ -1,7 +1,12 @@
+require 'xot/util'
+
+
 module Xot
 
 
   module Test
+
+    include Util
 
     def assert_not(expression, *args)
       assert !expression, *args
