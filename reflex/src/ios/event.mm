@@ -69,45 +69,13 @@ namespace Reflex
 			(flags & UIKeyModifierNumericPad) ? MOD_NUMPAD  : 0;
 	}
 
-	static void
-	set_pasts (Pointer* pointer, const Pointer* prev)
-	{
-		Pointer_set_prev(pointer, prev);
-		if (prev && prev->down())
-			Pointer_set_down(pointer, prev->down());
-	}
-
-	static void
-	attach_prev_pointer (
-		Pointer* pointer, PrevPointerList* prev_pointers, const Point& prev_position)
-	{
-		auto it = std::find_if(
-			prev_pointers->begin(), prev_pointers->end(),
-			[&](const Pointer& p) {return p.position() == prev_position;});
-
-		if (it != prev_pointers->end())
-		{
-			set_pasts(pointer, &*it);
-			prev_pointers->erase(it);
-		}
-		else if (prev_pointers->size() == 1)
-		{
-			set_pasts(pointer, &prev_pointers->front());
-			prev_pointers->clear();
-		}
-
-		if (pointer->prev())
-			Pointer_set_id(pointer, pointer->prev()->id());
-	}
-
 	static Pointer
-	create_pointer (
-		UITouch* touch, UIEvent* event, UIView* view, double time,
-		Pointer::ID pointer_id, PrevPointerList* prev_pointers)
+	create_pointer (UITouch* touch, UIEvent* event, UIView* view)
 	{
 		Pointer::Action action = get_action(touch);
+
 		Pointer pointer(
-			pointer_id,
+			0,
 			get_type(touch),
 			action,
 			to_point([touch locationInView: view]),
@@ -115,39 +83,24 @@ namespace Reflex
 			action == Pointer::MOVE,
 			(uint) touch.tapCount,
 			0,
-			time);
+			touch.timestamp);
 
-		if (prev_pointers)
+		if (touch.phase != UITouchPhaseBegan)
 		{
-			attach_prev_pointer(
-				&pointer, prev_pointers,
-				to_point([touch previousLocationInView: view]));
+			Pointer_set_prev_position(
+				&pointer, to_point([touch previousLocationInView: view]));
 		}
-		else
-			Pointer_set_down(&pointer, &pointer);
 
 		return pointer;
 	}
 
 	NativePointerEvent::NativePointerEvent (
-		NSSet* touches, UIEvent* event, UIView* view,
-		Pointer::ID* pointer_id)
+		NSSet* touches, UIEvent* event, UIView* view)
 	{
 		for (UITouch* touch in touches)
 		{
-			PointerEvent_add_pointer(
-				this, create_pointer(touch, event, view, time(), ++*pointer_id, NULL));
-		}
-	}
-
-	NativePointerEvent::NativePointerEvent (
-		NSSet* touches, UIEvent* event, UIView* view,
-		PrevPointerList* prev_pointers)
-	{
-		for (UITouch* touch in touches)
-		{
-			PointerEvent_add_pointer(
-				this, create_pointer(touch, event, view, time(), 0, prev_pointers));
+			Pointer pointer = create_pointer(touch, event, view);
+			if (pointer) PointerEvent_add_pointer(this, pointer);
 		}
 	}
 

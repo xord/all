@@ -136,8 +136,6 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window *pwindow, *ptr_for_rebind;
 		int update_count;
 		int touching_count;
-		Reflex::Pointer::ID pointer_id;
-		Reflex::PrevPointerList prev_pointers;
 	}
 
 	- (id) init
@@ -149,7 +147,6 @@ ReflexViewController_get_show_fun ()
 		ptr_for_rebind = NULL;
 		update_count   = 0;
 		touching_count = 0;
-		pointer_id     = 0;
 
 		return self;
 	}
@@ -479,12 +476,10 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(touches, event, self.reflexView, &pointer_id);
-		[self addToPrevPointers: e];
+		Reflex::NativePointerEvent e(touches, event, self.reflexView);
+		Window_call_pointer_event(win, &e);
 
 		touching_count += e.size();
-
-		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) touchesEnded: (NSSet*) touches withEvent: (UIEvent*) event
@@ -492,15 +487,14 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(touches, event, self.reflexView, &prev_pointers);
+		Reflex::NativePointerEvent e(touches, event, self.reflexView);
+		Window_call_pointer_event(win, &e);
 
 		touching_count -= e.size();
 		if (touching_count == 0)
-			prev_pointers.clear();
+			win->self->prev_pointers.clear();
 		else if (touching_count < 0)
 			Reflex::invalid_state_error(__FILE__, __LINE__);
-
-		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) touchesCancelled: (NSSet*) touches withEvent: (UIEvent*) event
@@ -513,23 +507,8 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(touches, event, self.reflexView, &prev_pointers);
-		[self addToPrevPointers: e];
-
+		Reflex::NativePointerEvent e(touches, event, self.reflexView);
 		Window_call_pointer_event(win, &e);
-	}
-
-	- (void) addToPrevPointers: (const Reflex::PointerEvent&) event
-	{
-		size_t size = event.size();
-		for (size_t i = 0; i < size; ++i)
-		{
-			prev_pointers.emplace_back(event[i]);
-			if (prev_pointers.size() > 10)
-				Reflex::invalid_state_error(__FILE__, __LINE__);
-
-			Reflex::Pointer_set_prev(&prev_pointers.back(), NULL);
-		}
 	}
 
 @end// ReflexViewController

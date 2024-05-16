@@ -5,6 +5,7 @@
 
 
 #include <vector>
+#include <list>
 #include <map>
 #include <xot/time.h>
 #include <rays/point.h>
@@ -16,6 +17,9 @@
 
 namespace Reflex
 {
+
+
+	typedef std::list<Pointer> PointerList;
 
 
 	enum {CAPTURE_ALL = INT_MAX};
@@ -54,6 +58,8 @@ namespace Reflex
 		int next_pointer_id = 1;
 
 		Pointer prev_mouse_pointer;
+
+		PointerList prev_pointers;
 
 		uint flags;
 

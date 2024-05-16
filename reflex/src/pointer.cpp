@@ -28,21 +28,25 @@ namespace Reflex
 		enum Flag
 		{
 
-			DRAG  = Xot::bit(0, TYPE_LAST),
+			DRAG          = Xot::bit(0, TYPE_LAST),
 
-			ENTER = Xot::bit(1, TYPE_LAST),
+			ENTER         = Xot::bit(1, TYPE_LAST),
 
-			EXIT  = Xot::bit(2, TYPE_LAST),
+			EXIT          = Xot::bit(2, TYPE_LAST),
+
+			HAS_SYSTEM_ID = Xot::bit(3, TYPE_LAST),
+
+			HAS_PREV_POS  = Xot::bit(4, TYPE_LAST),
 
 		};// Flag
 
-		ID id;
+		ID id, system_id;
 
 		uint types;
 
 		Action action;
 
-		Point position;
+		Point position, prev_position;
 
 		uint modifiers, flags;
 
@@ -134,6 +138,36 @@ namespace Reflex
 	Pointer_set_down (Pointer* it, const Pointer* down)
 	{
 		it->self->down.reset(down && *down ? new Pointer(*down) : NULL);
+	}
+
+	void
+	Pointer_set_system_id (Pointer*it, Pointer::ID id)
+	{
+		it->self->system_id = id;
+		Xot::add_flag(&it->self->flags, Pointer::Data::HAS_SYSTEM_ID);
+	}
+
+	const Pointer::ID*
+	Pointer_get_system_id (const Pointer& it)
+	{
+		if (!Xot::has_flag(it.self->flags, Pointer::Data::HAS_SYSTEM_ID))
+			return NULL;
+		return &it.self->system_id;
+	}
+
+	void
+	Pointer_set_prev_position (Pointer* it, const Point& position)
+	{
+		it->self->prev_position = position;
+		Xot::add_flag(&it->self->flags, Pointer::Data::HAS_PREV_POS);
+	}
+
+	const Point*
+	Pointer_get_prev_position (const Pointer& it)
+	{
+		if (!Xot::has_flag(it.self->flags, Pointer::Data::HAS_PREV_POS))
+			return NULL;
+		return &it.self->prev_position;
 	}
 
 
