@@ -254,17 +254,62 @@ namespace Reflex
 
 		Pointer_set_id(pointer, id);
 		Pointer_add_flag(pointer, Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS));
-		Pointer_set_prev(pointer, &prev_pointer);
 		Pointer_set_down(pointer, down);
 
 		if (action == Pointer::DOWN)
 			Pointer_add_flag(pointer, pointer->types() & MOUSE_BUTTONS);
 
 		prev_pointer = *pointer;
-		Pointer_set_prev(&prev_pointer, NULL);
+		Pointer_set_prev(pointer, &prev_pointer);
 
-		if (action == Pointer::UP)
+		if (action == Pointer::UP || action == Pointer::CANCEL)
 			Pointer_remove_flag(&prev_pointer, prev_pointer.types() & MOUSE_BUTTONS);
+	}
+
+	static PointerList::const_iterator
+	find_prev_pointer (const Pointer& pointer, const PointerList& prev_pointers)
+	{
+		const auto* sys_id   = Pointer_get_system_id(pointer);
+		const auto* prev_pos = Pointer_get_prev_position(pointer);
+
+		return std::find_if(
+			prev_pointers.begin(), prev_pointers.end(),
+			[&](const Pointer& p)
+			{
+				if (sys_id)
+				{
+					const auto* id = Pointer_get_system_id(p);
+					if (id && *id == *sys_id) return true;
+				}
+				return prev_pos && *prev_pos == p.position();
+			});
+	}
+
+	static void
+	setup_pointer (Window* window, Pointer* pointer)
+	{
+		Window::Data* self = window->self.get();
+
+		PointerList& prev_pointers  = self->prev_pointers;
+		auto it                     = find_prev_pointer(*pointer, prev_pointers);
+		const Pointer* prev_pointer = it != prev_pointers.end() && *it ? &*it : NULL;
+
+		if (prev_pointer)
+		{
+			Pointer_set_id(pointer, prev_pointer->id());
+			Pointer_set_prev(pointer, prev_pointer);
+			Pointer_set_down(pointer, prev_pointer->down());
+			prev_pointers.erase(it);
+		}
+		else
+			Pointer_set_id(pointer, get_next_pointer_id(window));
+
+		auto action = pointer->action();
+		if (action != Pointer::UP && action != Pointer::CANCEL)
+		{
+			prev_pointers.emplace_back(*pointer);
+			Pointer_set_prev(&prev_pointers.back(), NULL);
+		}
 	}
 
 	static void
@@ -275,6 +320,8 @@ namespace Reflex
 			Pointer& pointer = PointerEvent_pointer_at(event, i);
 			if (pointer.types() & Pointer::MOUSE)
 				setup_mouse_pointer(window, &pointer);
+			else
+				setup_pointer(window, &pointer);
 		}
 	}
 
