@@ -39,7 +39,7 @@ namespace Reflex
 
 		int hide_count = 1;
 
-		bool redraw = true;
+		bool redraw    = true;
 
 		Painter painter;
 
