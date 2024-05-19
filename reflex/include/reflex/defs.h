@@ -68,7 +68,7 @@ namespace Reflex
 
 		KEY_NONE = -1,
 
-		#ifdef OSX
+		#if defined(OSX) || defined(IOS)
 			#define NATIVE_VK(osx) osx
 		#endif
 

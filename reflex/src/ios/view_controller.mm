@@ -3,7 +3,7 @@
 
 
 #include <assert.h>
-#include <rays/opengl.h>
+#include <rays/rays.h>
 #include "reflex/exception.h"
 #include "../view.h"
 #include "../pointer.h"
