@@ -12,6 +12,16 @@ namespace Reflex
 {
 
 
+	class NativeKeyEvent : public KeyEvent
+	{
+
+		public:
+
+			NativeKeyEvent (UINT msg, WPARAM wp, LPARAM lp, const char* chars = NULL);
+
+	};// NativeKeyEvent
+
+
 	class NativePointerEvent : public PointerEvent
 	{
 
