@@ -227,36 +227,12 @@ namespace Reflex
 		}
 	}
 
-	static uint
-	get_modifiers (const PressingKeyMap& pressing_keys)
-	{
-#if 1
-		return
-			(GetKeyState(VK_SHIFT)   & 0x8000 ? MOD_SHIFT   : 0) |
-			(GetKeyState(VK_CONTROL) & 0x8000 ? MOD_CONTROL : 0) |
-			(GetKeyState(VK_MENU)    & 0x8000 ? MOD_ALT     : 0) |
-			(GetKeyState(VK_LWIN)    & 0x8000 ? MOD_WIN     : 0) |
-			(GetKeyState(VK_RWIN)    & 0x8000 ? MOD_WIN     : 0);
-#else
-		#define PRESSING(key) (pressing_keys.contains(KEY_##key))
-		return
-			(PRESSING(SHIFT)    | PRESSING(LSHIFT)    | PRESSING(RSHIFT)    ? MOD_SHIFT    : 0) |
-			(PRESSING(CONTROL)  | PRESSING(LCONTROL)  | PRESSING(RCONTROL)  ? MOD_CONTROL  : 0) |
-			(PRESSING(ALT)      | PRESSING(LALT)      | PRESSING(RALT)      ? MOD_ALT      : 0) |
-			(                     PRESSING(LWIN)      | PRESSING(RWIN)      ? MOD_WIN      : 0);
-		#undef PRESSING
-#endif
-	}
-
 	static void
 	key_down (Window* win, UINT msg, WPARAM wp, LPARAM lp)
 	{
 		assert(*win);
 
 		WindowData* self = get_data(win);
-
-		int code   = (int) wp;
-		int repeat = lp & 0xFF;
 
 		MSG wmchar;
 		UINT filter = msg == WM_SYSKEYDOWN ? WM_SYSCHAR : WM_CHAR;
@@ -265,32 +241,30 @@ namespace Reflex
 		String chars;
 		if (peeked) chars += (char) wmchar.wParam;
 
-		self->pressing_keys.insert_or_assign(code, chars);
+		NativeKeyEvent e(msg, wp, lp, chars);
 
+		self->pressing_keys.insert_or_assign(e.code(), chars);
 #if 0
 		for (auto kv : self->pressing_keys)
 			doutln("0x%x : %s", kv.first, (const char*) kv.second);
 #endif
 
-		KeyEvent e(KeyEvent::DOWN, chars, code, get_modifiers(self->pressing_keys), repeat);
 		Window_call_key_event(win, &e);
 	}
 
 	static void
-	key_up (Window* win, WPARAM wp, LPARAM lp)
+	key_up (Window* win, UINT msg, WPARAM wp, LPARAM lp)
 	{
 		assert(*win);
 
 		WindowData* self = get_data(win);
 
-		int code   = (int) wp;
-		int repeat = lp & 0xFF;
+		NativeKeyEvent e(msg, wp, lp);
 
-		String chars;
-		auto it = self->pressing_keys.find(code);
-		if (it != self->pressing_keys.end()) chars = it->second;
+		auto it = self->pressing_keys.find(e.code());
+		if (it != self->pressing_keys.end())
+			KeyEvent_set_chars(&e, it->second);
 
-		KeyEvent e(KeyEvent::UP, chars, code, get_modifiers(self->pressing_keys), repeat);
 		Window_call_key_event(win, &e);
 
 		if (it != self->pressing_keys.end()) self->pressing_keys.erase(it);
@@ -361,7 +335,7 @@ namespace Reflex
 			case WM_KEYUP:
 			case WM_SYSKEYUP:
 			{
-				key_up(win, wp, lp);
+				key_up(win, msg, wp, lp);
 				break;
 			}
 
