@@ -254,13 +254,14 @@ namespace Reflex
 
 		Pointer_set_id(pointer, id);
 		Pointer_add_flag(pointer, Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS));
+		Pointer_set_prev(pointer, &prev_pointer);
 		Pointer_set_down(pointer, down);
 
 		if (action == Pointer::DOWN)
 			Pointer_add_flag(pointer, pointer->types() & MOUSE_BUTTONS);
 
 		prev_pointer = *pointer;
-		Pointer_set_prev(pointer, &prev_pointer);
+		Pointer_set_prev(&prev_pointer, NULL);
 
 		if (action == Pointer::UP || action == Pointer::CANCEL)
 			Pointer_remove_flag(&prev_pointer, prev_pointer.types() & MOUSE_BUTTONS);
