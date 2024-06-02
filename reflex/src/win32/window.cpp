@@ -339,6 +339,22 @@ namespace Reflex
 				break;
 			}
 
+			case WM_LBUTTONDOWN:
+			case WM_RBUTTONDOWN:
+			case WM_MBUTTONDOWN:
+			case WM_LBUTTONDBLCLK:
+			case WM_RBUTTONDBLCLK:
+			case WM_MBUTTONDBLCLK:
+			case WM_LBUTTONUP:
+			case WM_RBUTTONUP:
+			case WM_MBUTTONUP:
+			case WM_MOUSEMOVE:
+			{
+				NativePointerEvent e(msg, wp, lp);
+				Window_call_pointer_event(win, &e);
+				break;
+			}
+
 			case WM_TIMER:
 			{
 				if (wp == UPDATE_TIMER_ID)
@@ -402,7 +418,7 @@ namespace Reflex
 		wc.cbSize        = sizeof(wc);
 		wc.lpszClassName = WINDOWCLASS;
 		wc.lpfnWndProc   = (WNDPROC) wndproc;
-		wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
 		wc.hInstance     = GetModuleHandle(NULL);
 		//wc.hIcon         = LoadIcon(wc.hInstance, IDI_APP_LARGE);
 		//wc.hIconSm       = LoadIcon(wc.hInstance, IDI_APP_SMALL);

@@ -40,47 +40,104 @@ namespace Reflex
 	}
 
 
-#if 0
-	static int
-	get_points (Points* points, UINT msg, WPARAM wp, LPARAM lp)
+
+	static uint
+	get_pointer_type (UINT msg, WPARAM wp)
 	{
-		if (!points) return false;
+		uint type = Reflex::Pointer::TYPE_NONE;
 
 		switch (msg)
 		{
-			case WM_LBUTTONDBLCLK:
-				points->count += 1;
 			case WM_LBUTTONDOWN:
+			case WM_LBUTTONDBLCLK:
 			case WM_LBUTTONUP:
-				points->type   = POINT_MOUSE_LEFT;
-				points->count += 1;
+				type |= Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_LEFT;
 				break;
 
-			case WM_RBUTTONDBLCLK:
-				points->count += 1;
 			case WM_RBUTTONDOWN:
+			case WM_RBUTTONDBLCLK:
 			case WM_RBUTTONUP:
-				points->type   = POINT_MOUSE_RIGHT;
-				points->count += 1;
+				type |= Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_RIGHT;
 				break;
 
-			case WM_MBUTTONDBLCLK:
-				points->count += 1;
 			case WM_MBUTTONDOWN:
+			case WM_MBUTTONDBLCLK:
 			case WM_MBUTTONUP:
-				points->type   = POINT_MOUSE_MIDDLE;
-				points->count += 1;
+				type |= Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_MIDDLE;
+				break;
+
+			case WM_MOUSEMOVE:
+				type |= Reflex::Pointer::MOUSE;
 				break;
 		}
 
-		return get_modifiers(&points->modifiers);
+		return type;
 	}
-#endif
+
+	static Reflex::Pointer::Action
+	get_pointer_action (UINT msg)
+	{
+		switch (msg)
+		{
+			case WM_LBUTTONDOWN:
+			case WM_RBUTTONDOWN:
+			case WM_MBUTTONDOWN:
+			case WM_LBUTTONDBLCLK:
+			case WM_RBUTTONDBLCLK:
+			case WM_MBUTTONDBLCLK:
+				return Reflex::Pointer::DOWN;
+
+			case WM_LBUTTONUP:
+			case WM_RBUTTONUP:
+			case WM_MBUTTONUP:
+				return Reflex::Pointer::UP;
+
+			case WM_MOUSEMOVE:
+				return Reflex::Pointer::MOVE;
+
+			default:
+				return Reflex::Pointer::ACTION_NONE;
+		}
+	}
+
+	static bool
+	is_dragging (UINT msg, WPARAM wp)
+	{
+		return msg == WM_MOUSEMOVE && wp & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON);
+	}
+
+	static int
+	get_click_count (UINT msg)
+	{
+		switch (msg)
+		{
+			case WM_LBUTTONDOWN:
+			case WM_RBUTTONDOWN:
+			case WM_MBUTTONDOWN:
+				return 1;
+
+			case WM_LBUTTONDBLCLK:
+			case WM_RBUTTONDBLCLK:
+			case WM_MBUTTONDBLCLK:
+				return 2;
+
+			default:
+				return 0;
+		}
+	}
 
 	NativePointerEvent::NativePointerEvent (UINT msg, WPARAM wp, LPARAM lp)
-	//:	PointerEvent(POINT_NONE, GET_X_LPARAM(lp), GET_Y_LPARAM(lp))
 	{
-		//get_points(this, msg, wp, lp);
+		PointerEvent_add_pointer(this, Pointer(
+			0,
+			get_pointer_type(msg, wp),
+			get_pointer_action(msg),
+			Point(GET_X_LPARAM(lp), GET_Y_LPARAM(lp)),
+			get_modifiers(),
+			is_dragging(msg, wp),
+			get_click_count(msg),
+			0,
+			time()));
 	}
 
 
