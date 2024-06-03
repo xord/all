@@ -141,8 +141,11 @@ namespace Reflex
 	}
 
 
-	NativeWheelEvent::NativeWheelEvent (UINT msg, WPARAM wp, LPARAM lp)
-	//:	WheelEvent()
+	NativeWheelEvent::NativeWheelEvent (WPARAM wp_x, WPARAM wp_y, LPARAM lp)
+	:	WheelEvent(
+			GET_X_LPARAM(lp),              GET_Y_LPARAM(lp),             0,
+			GET_WHEEL_DELTA_WPARAM(wp_x), -GET_WHEEL_DELTA_WPARAM(wp_y), 0,
+			get_modifiers())
 	{
 	}
 
