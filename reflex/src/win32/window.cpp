@@ -270,6 +270,33 @@ namespace Reflex
 		if (it != self->pressing_keys.end()) self->pressing_keys.erase(it);
 	}
 
+	static void
+	mouse_wheel (Window* win, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		assert(msg == WM_MOUSEWHEEL || msg == WM_MOUSEHWHEEL);
+
+		WindowData* self = get_data(win);
+
+		WPARAM wp_x = 0, wp_y = 0;
+		if (msg == WM_MOUSEWHEEL)
+		{
+			wp_y = wp;
+			MSG m;
+			if (PeekMessage(&m, self->hwnd, WM_MOUSEHWHEEL, WM_MOUSEHWHEEL, PM_REMOVE))
+				wp_x = m.wParam;
+		}
+		else
+		{
+			wp_x = wp;
+			MSG m;
+			if (PeekMessage(&m, self->hwnd, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE))
+				wp_y = m.wParam;
+		}
+
+		NativeWheelEvent e(wp_x, wp_y, lp);
+		Window_call_wheel_event(win, &e);
+	}
+
 	static LRESULT CALLBACK
 	window_proc (Window* win, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
@@ -352,6 +379,13 @@ namespace Reflex
 			{
 				NativePointerEvent e(msg, wp, lp);
 				Window_call_pointer_event(win, &e);
+				break;
+			}
+
+			case WM_MOUSEWHEEL:
+			case WM_MOUSEHWHEEL:
+			{
+				mouse_wheel(win, msg, wp, lp);
 				break;
 			}
 

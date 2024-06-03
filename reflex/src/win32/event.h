@@ -37,7 +37,7 @@ namespace Reflex
 
 		public:
 
-			NativeWheelEvent (UINT msg, WPARAM wp, LPARAM lp);
+			NativeWheelEvent (WPARAM wp_x, WPARAM wp_y, LPARAM lp);
 
 	};// NativeWheelEvent
 
