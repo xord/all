@@ -3,7 +3,6 @@
 
 #include <assert.h>
 #include <map>
-#include <windows.h>
 #include <xot/time.h>
 #include <rays/rays.h>
 #include "reflex/defs.h"
@@ -11,6 +10,7 @@
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "../view.h"
+#include "windows.h"
 #include "event.h"
 #include "opengl.h"
 

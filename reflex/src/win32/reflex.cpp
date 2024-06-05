@@ -1,7 +1,6 @@
 #include "reflex/reflex.h"
 
 
-#include <windows.h>
 #include "reflex/exception.h"
 
 

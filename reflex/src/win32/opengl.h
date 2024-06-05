@@ -4,8 +4,8 @@
 #define __REFLEX_SRC_WIN32_OPENGL_H__
 
 
-#include <windows.h>
 #include <GL/glew.h>
+#include "windows.h"
 
 
 namespace Reflex

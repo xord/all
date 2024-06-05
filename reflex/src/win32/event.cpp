@@ -1,7 +1,6 @@
 #include "event.h"
 
 
-#include <windowsx.h>
 #include "reflex/exception.h"
 
 

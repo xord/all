@@ -4,9 +4,9 @@
 #define __RAYS_SRC_WIN32_GDI_H__
 
 
-#include <windows.h>
 #include <xot/pimpl.h>
 #include "rays/defs.h"
+#include "windows.h"
 
 
 namespace Rays
