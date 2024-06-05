@@ -1,8 +1,8 @@
 #include "reflex/application.h"
 
 
-#include <windows.h>
 #include "reflex/exception.h"
+#include "windows.h"
 
 
 namespace Reflex
