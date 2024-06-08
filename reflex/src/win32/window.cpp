@@ -13,6 +13,7 @@
 #include "../view.h"
 #include "windows.h"
 #include "event.h"
+#include "screen.h"
 #include "opengl.h"
 
 
@@ -722,7 +723,9 @@ namespace Reflex
 	Screen
 	Window_get_screen (const Window& window)
 	{
-		return Screen();
+		Screen s;
+		Screen_initialize(&s, get_data(&window)->hwnd);
+		return s;
 	}
 
 	void
