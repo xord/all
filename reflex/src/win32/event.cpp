@@ -1,7 +1,9 @@
 #include "event.h"
 
 
+#include <xot/time.h>
 #include "reflex/exception.h"
+#include "../pointer.h"
 
 
 namespace Reflex
@@ -41,7 +43,7 @@ namespace Reflex
 
 
 	static uint
-	get_pointer_type (UINT msg, WPARAM wp)
+	get_mouse_type (UINT msg, WPARAM wp)
 	{
 		uint type = Reflex::Pointer::TYPE_NONE;
 
@@ -74,7 +76,7 @@ namespace Reflex
 	}
 
 	static Reflex::Pointer::Action
-	get_pointer_action (UINT msg)
+	get_mouse_action (UINT msg)
 	{
 		switch (msg)
 		{
@@ -100,13 +102,13 @@ namespace Reflex
 	}
 
 	static bool
-	is_dragging (UINT msg, WPARAM wp)
+	is_mouse_dragging (UINT msg, WPARAM wp)
 	{
 		return msg == WM_MOUSEMOVE && wp & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON);
 	}
 
 	static int
-	get_click_count (UINT msg)
+	get_mouse_click_count (UINT msg)
 	{
 		switch (msg)
 		{
@@ -129,14 +131,81 @@ namespace Reflex
 	{
 		PointerEvent_add_pointer(this, Pointer(
 			0,
-			get_pointer_type(msg, wp),
-			get_pointer_action(msg),
+			get_mouse_type(msg, wp),
+			get_mouse_action(msg),
 			Point(GET_X_LPARAM(lp), GET_Y_LPARAM(lp)),
 			get_modifiers(),
-			is_dragging(msg, wp),
-			get_click_count(msg),
+			is_mouse_dragging(msg, wp),
+			get_mouse_click_count(msg),
 			0,
-			time()));
+			Xot::time()));
+	}
+
+	static uint
+	get_touch_type (const TOUCHINPUT& touch)
+	{
+		if (touch.dwFlags & TOUCHEVENTF_PEN)  return Pointer::PEN;
+		if (touch.dwFlags & TOUCHEVENTF_PALM) return Pointer::TYPE_NONE;
+		else                                  return Pointer::TOUCH;
+	}
+
+	static Pointer::Action
+	get_touch_action (const TOUCHINPUT& touch)
+	{
+		if (touch.dwFlags & TOUCHEVENTF_DOWN) return Pointer::DOWN;
+		if (touch.dwFlags & TOUCHEVENTF_UP)   return Pointer::UP;
+		if (touch.dwFlags & TOUCHEVENTF_MOVE) return Pointer::MOVE;
+		else                                  return Pointer::ACTION_NONE;
+	}
+
+	static Point
+	get_touch_position (HWND hwnd, const TOUCHINPUT& touch)
+	{
+		coord x = (coord) touch.x / 100;
+		coord y = (coord) touch.y / 100;
+
+		POINT point = {0, 0};
+		if (ClientToScreen(hwnd, &point))
+		{
+			x -= point.x;
+			y -= point.y;
+		}
+
+		return Point(x, y);
+	}
+
+	static double
+	get_touch_time (const TOUCHINPUT& touch)
+	{
+		//if (touch.dwFlags & TOUCHINPUTMASKF_TIMEFROMSYSTEM)
+		//	return (double) touch.dwTime / 1000.0;
+
+		return Xot::time();
+	}
+
+	NativePointerEvent::NativePointerEvent (
+		HWND hwnd, const TOUCHINPUT* touches, size_t size)
+	{
+		for (size_t i = 0; i < size; ++i)
+		{
+			const TOUCHINPUT& touch = touches[i];
+			Pointer::Action action  = get_touch_action(touch);
+
+			Pointer pointer(
+				0,
+				get_touch_type(touch),
+				action,
+				get_touch_position(hwnd, touch),
+				get_modifiers(),
+				action == Pointer::MOVE,
+				action == Pointer::DOWN ? 1 : 0,
+				0,
+				get_touch_time(touch));
+			Pointer_set_system_id(&pointer, touch.dwID);
+
+			if (pointer)
+				PointerEvent_add_pointer(this, pointer);
+		}
 	}
 
 

@@ -69,38 +69,32 @@ namespace Reflex
 			(flags & UIKeyModifierNumericPad) ? MOD_NUMPAD  : 0;
 	}
 
-	static Pointer
-	create_pointer (UITouch* touch, UIEvent* event, UIView* view)
-	{
-		Pointer::Action action = get_action(touch);
-
-		Pointer pointer(
-			0,
-			get_type(touch),
-			action,
-			to_point([touch locationInView: view]),
-			get_modifiers(event),
-			action == Pointer::MOVE,
-			(uint) touch.tapCount,
-			0,
-			touch.timestamp);
-
-		if (touch.phase != UITouchPhaseBegan)
-		{
-			Pointer_set_prev_position(
-				&pointer, to_point([touch previousLocationInView: view]));
-		}
-
-		return pointer;
-	}
-
 	NativePointerEvent::NativePointerEvent (
 		NSSet* touches, UIEvent* event, UIView* view)
 	{
 		for (UITouch* touch in touches)
 		{
-			Pointer pointer = create_pointer(touch, event, view);
-			if (pointer) PointerEvent_add_pointer(this, pointer);
+			Pointer::Action action = get_action(touch);
+
+			Pointer pointer(
+				0,
+				get_type(touch),
+				action,
+				to_point([touch locationInView: view]),
+				get_modifiers(event),
+				action == Pointer::MOVE,
+				(uint) touch.tapCount,
+				0,
+				touch.timestamp);
+
+			if (pointer.action() != Pointer::DOWN)
+			{
+				Pointer_set_prev_position(
+					&pointer, to_point([touch previousLocationInView: view]));
+			}
+
+			if (pointer)
+				PointerEvent_add_pointer(this, pointer);
 		}
 	}
 

@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <map>
+#include <memory>
 #include <xot/time.h>
 #include <rays/rays.h>
 #include "reflex/defs.h"
@@ -270,6 +271,25 @@ namespace Reflex
 		if (it != self->pressing_keys.end()) self->pressing_keys.erase(it);
 	}
 
+	#ifndef MOUSEEVENTF_FROMTOUCH
+	#define MOUSEEVENTF_FROMTOUCH 0xff515700
+	#endif
+
+	static bool
+	is_from_touch_event ()
+	{
+		return (GetMessageExtraInfo() & 0xffffff00) == MOUSEEVENTF_FROMTOUCH;
+	}
+
+	static void
+	mouse (Window* win, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		if (is_from_touch_event()) return;
+
+		NativePointerEvent e(msg, wp, lp);
+		Window_call_pointer_event(win, &e);
+	}
+
 	static void
 	mouse_wheel (Window* win, UINT msg, WPARAM wp, LPARAM lp)
 	{
@@ -295,6 +315,26 @@ namespace Reflex
 
 		NativeWheelEvent e(wp_x, wp_y, lp);
 		Window_call_wheel_event(win, &e);
+	}
+
+	static void
+	touch (Window* win, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		WindowData* self = get_data(win);
+
+		size_t size = LOWORD(wp);
+		if (size <= 0) return;
+
+		HTOUCHINPUT handle = (HTOUCHINPUT) lp;
+		std::unique_ptr<TOUCHINPUT[]> touches(new TOUCHINPUT[size]);
+
+		if (!GetTouchInputInfo(handle, size, &touches[0], sizeof(TOUCHINPUT)))
+			return;
+
+		NativePointerEvent e(self->hwnd, &touches[0], size);
+		Window_call_pointer_event(win, &e);
+
+		CloseTouchInputHandle(handle);
 	}
 
 	static LRESULT CALLBACK
@@ -377,8 +417,7 @@ namespace Reflex
 			case WM_MBUTTONUP:
 			case WM_MOUSEMOVE:
 			{
-				NativePointerEvent e(msg, wp, lp);
-				Window_call_pointer_event(win, &e);
+				mouse(win, msg, wp, lp);
 				break;
 			}
 
@@ -386,6 +425,12 @@ namespace Reflex
 			case WM_MOUSEHWHEEL:
 			{
 				mouse_wheel(win, msg, wp, lp);
+				break;
+			}
+
+			case WM_TOUCH:
+			{
+				touch(win, msg, wp, lp);
 				break;
 			}
 
@@ -483,6 +528,9 @@ namespace Reflex
 
 		if (!*win)
 			invalid_state_error(__FILE__, __LINE__);
+
+		if (!RegisterTouchWindow(hwnd, 0))
+			system_error(__FILE__, __LINE__);
 	}
 
 
