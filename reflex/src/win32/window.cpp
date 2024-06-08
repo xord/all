@@ -586,7 +586,9 @@ namespace Reflex
 
 		WindowData* self = get_data(window);
 
-		ShowWindow(self->hwnd, SW_SHOW);
+		SetWindowPos(
+			self->hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+			SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE);
 		UpdateWindow(self->hwnd);
 
 		start_timer(self->hwnd, UPDATE_TIMER_ID, 1000 / 60);
@@ -600,7 +602,9 @@ namespace Reflex
 
 		WindowData* self = get_data(window);
 
-		ShowWindow(self->hwnd, SW_HIDE);
+		SetWindowPos(
+			self->hwnd, NULL, 0, 0, 0, 0,
+			SWP_HIDEWINDOW | SWP_NOMOVE | SWP_NOSIZE);
 
 		stop_timer(self->hwnd, UPDATE_TIMER_ID);
 	}
