@@ -1,4 +1,4 @@
-#include "reflex/screen.h"
+#include "screen.h"
 
 
 #include "reflex/exception.h"
@@ -10,28 +10,45 @@ namespace Reflex
 
 	struct Screen::Data
 	{
+
+		HMONITOR handle = NULL;
+
 	};// Screen::Data
+
+
+	void
+	Screen_initialize (Screen* pthis, HWND hwnd)
+	{
+		pthis->self->handle = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL);
+	}
 
 
 	Screen::Screen ()
 	{
-		not_implemented_error(__FILE__, __LINE__);
 	}
 
 	Screen::~Screen ()
 	{
-		not_implemented_error(__FILE__, __LINE__);
 	}
 
 	Bounds
 	Screen::frame () const
 	{
-		not_implemented_error(__FILE__, __LINE__);
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		MONITORINFO mi = {0};
+		mi.cbSize      = sizeof(mi);
+		if (!GetMonitorInfo(self->handle, &mi))
+			system_error(__FILE__, __LINE__);
+
+		const auto& r = mi.rcMonitor;
+		return Bounds(r.left, r.top, r.right - r.left, r.bottom - r.top);
 	}
 
 	Screen::operator bool () const
 	{
-		return false;
+		return self->handle;
 	}
 
 	bool
