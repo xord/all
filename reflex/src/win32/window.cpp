@@ -587,7 +587,7 @@ namespace Reflex
 		WindowData* self = get_data(window);
 
 		SetWindowPos(
-			self->hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+			self->hwnd, HWND_TOP, 0, 0, 0, 0,
 			SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE);
 		UpdateWindow(self->hwnd);
 
