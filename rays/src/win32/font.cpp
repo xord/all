@@ -144,14 +144,20 @@ namespace Rays
 		if (!self->font.get_extent(&width, &height, str))
 			rays_error(__FILE__, __LINE__, "failed to get font extent.");
 
-		DC dc = hdc;
-		RECT rect = {(int) x, (int) y, (int) (x + width), (int) (y + height)};
-		FillRect(dc.handle(), &rect, Brush(0, 0, 0).handle());
+		DC dc               = hdc;
+		Win32::Font font    = dc.font();
+		COLORREF text_color = dc.text_color();
+		COLORREF back_color = dc.back_color();
 
-		Win32::Font old = dc.font();
 		dc.set_font(self->font.handle());
+		dc.set_text_color(RGB(255, 255, 255));
+		dc.set_back_color(RGB(0, 0, 0));
+
 		BOOL ret = TextOutA(dc.handle(), x, y, str, strlen(str));
-		dc.set_font(old);
+
+		dc.set_font(font);
+		dc.set_text_color(text_color);
+		dc.set_back_color(back_color);
 
 		if (ret == FALSE)
 			rays_error(__FILE__, __LINE__, "drawing text failed.");
