@@ -161,11 +161,7 @@ namespace Rays
 		if (!path)
 			return NULL;
 
-		size_t len = strlen(path);
-		if (len < 4)
-			return NULL;
-
-		return &path[len - 4];
+		return strrchr(path, '.');
 	}
 
 	void
@@ -199,6 +195,8 @@ namespace Rays
 		else
 		if (stricmp(ext, ".tga") == 0)
 			ret = stbi_write_tga(path, w, h, cs.Bpp(), pixels.get());
+		else
+			argument_error(__FILE__, __LINE__, "unknown image file type");
 
 		if (!ret)
 			rays_error(__FILE__, __LINE__, "failed to save: '%s'", path);
