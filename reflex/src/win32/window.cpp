@@ -728,13 +728,23 @@ namespace Reflex
 	Window_get_screen (const Window& window)
 	{
 		Screen s;
-		Screen_initialize(&s, get_data(&window)->hwnd);
+		if (!window.hidden())
+		{
+			HMONITOR hmonitor =
+				MonitorFromWindow(get_data(&window)->hwnd, MONITOR_DEFAULTTONULL);
+			if (hmonitor) Screen_initialize(&s, hmonitor);
+		}
 		return s;
 	}
 
 	void
 	Window_set_flags (Window* window, uint flags)
 	{
+		if (Xot::has_flag(flags, Window::FLAG_PORTRAIT))
+			argument_error(__FILE__, __LINE__, "FLAG_PORTRAIT is not supported");
+
+		if (Xot::has_flag(flags, Window::FLAG_LANDSCAPE))
+			argument_error(__FILE__, __LINE__, "FLAG_LANDSCAPE is not supported");
 	}
 
 	float

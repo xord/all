@@ -43,31 +43,36 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_frame()
-    w = win
+    w         = win
+    min_width = w.frame.width
+    assert_equal [0, 0, min_width, 0], w.frame.to_a
+
     b = w.frame.dup
     assert_equal b, w.frame
 
-    w.frame =  1;                 assert_equal [0, 0,    1, 1],     w.frame.to_a
-    w.frame = [1];                assert_equal [0, 0,    1, 1],     w.frame.to_a
-    w.frame = [1, 2];             assert_equal [0, 0,    1, 2],     w.frame.to_a
-    w.frame = [1, 2, 3];          assert_equal [0, 0,    1, 2],     w.frame.to_a
-    w.frame = [1, 2, 3];          assert_equal [0, 0, 0, 1, 2, 0],  w.frame.to_a(3)
-    w.frame = [1, 2, 3, 4];       assert_equal [1, 2,    3, 4],     w.frame.to_a
-    w.frame = [1, 2, 3, 4];       assert_equal [1, 2, 0, 3, 4, 0],  w.frame.to_a(3)
-    w.frame = [1, 2, 3, 4, 5, 6]; assert_equal [1, 2,    4, 5],     w.frame.to_a
-    w.frame = [1, 2, 3, 4, 5, 6]; assert_equal [1, 2, 0, 4, 5, 0],  w.frame.to_a(3)
+    minw = -> value {[min_width, value].max}
 
-    w.frame =  point(1);                        assert_equal [0, 0,    1, 1],    w.frame.to_a
-    w.frame = [point(1)];                       assert_equal [0, 0,    1, 1],    w.frame.to_a
-    w.frame =  point(1, 2);                     assert_equal [0, 0,    1, 2],    w.frame.to_a
-    w.frame = [point(1, 2)];                    assert_equal [0, 0,    1, 2],    w.frame.to_a
-    w.frame = [point(1, 2),    point(3, 4)];    assert_equal [1, 2,    3, 4],    w.frame.to_a
-    w.frame = [point(1, 2),    point(3, 4)];    assert_equal [1, 2, 0, 3, 4, 0], w.frame.to_a(3)
-    w.frame = [point(1, 2, 3), point(4, 5, 6)]; assert_equal [1, 2,    4, 5],    w.frame.to_a
-    w.frame = [point(1, 2, 3), point(4, 5, 6)]; assert_equal [1, 2, 0, 4, 5, 0], w.frame.to_a(3)
+    w.frame =  1;                 assert_equal [0, 0,    minw[1], 1],     w.frame.to_a
+    w.frame = [1];                assert_equal [0, 0,    minw[1], 1],     w.frame.to_a
+    w.frame = [1, 2];             assert_equal [0, 0,    minw[1], 2],     w.frame.to_a
+    w.frame = [1, 2, 3];          assert_equal [0, 0,    minw[1], 2],     w.frame.to_a
+    w.frame = [1, 2, 3];          assert_equal [0, 0, 0, minw[1], 2, 0],  w.frame.to_a(3)
+    w.frame = [1, 2, 3, 4];       assert_equal [1, 2,    minw[3], 4],     w.frame.to_a
+    w.frame = [1, 2, 3, 4];       assert_equal [1, 2, 0, minw[3], 4, 0],  w.frame.to_a(3)
+    w.frame = [1, 2, 3, 4, 5, 6]; assert_equal [1, 2,    minw[4], 5],     w.frame.to_a
+    w.frame = [1, 2, 3, 4, 5, 6]; assert_equal [1, 2, 0, minw[4], 5, 0],  w.frame.to_a(3)
 
-    w.frame =  bounds(1, 2, 3, 4, 5, 6);  assert_equal [1, 2, 0, 4, 5, 0], w.frame.to_a(3)
-    w.frame = [bounds(1, 2, 3, 4, 5, 6)]; assert_equal [1, 2, 0, 4, 5, 0], w.frame.to_a(3)
+    w.frame =  point(1);                        assert_equal [0, 0,    minw[1], 1],    w.frame.to_a
+    w.frame = [point(1)];                       assert_equal [0, 0,    minw[1], 1],    w.frame.to_a
+    w.frame =  point(1, 2);                     assert_equal [0, 0,    minw[1], 2],    w.frame.to_a
+    w.frame = [point(1, 2)];                    assert_equal [0, 0,    minw[1], 2],    w.frame.to_a
+    w.frame = [point(1, 2),    point(3, 4)];    assert_equal [1, 2,    minw[3], 4],    w.frame.to_a
+    w.frame = [point(1, 2),    point(3, 4)];    assert_equal [1, 2, 0, minw[3], 4, 0], w.frame.to_a(3)
+    w.frame = [point(1, 2, 3), point(4, 5, 6)]; assert_equal [1, 2,    minw[4], 5],    w.frame.to_a
+    w.frame = [point(1, 2, 3), point(4, 5, 6)]; assert_equal [1, 2, 0, minw[4], 5, 0], w.frame.to_a(3)
+
+    w.frame =  bounds(1, 2, 3, 4, 5, 6);  assert_equal [1, 2, 0, minw[4], 5, 0], w.frame.to_a(3)
+    w.frame = [bounds(1, 2, 3, 4, 5, 6)]; assert_equal [1, 2, 0, minw[4], 5, 0], w.frame.to_a(3)
   end
 
   def test_closable?()

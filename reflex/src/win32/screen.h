@@ -12,7 +12,7 @@ namespace Reflex
 {
 
 
-	void Screen_initialize (Screen* pthis, HWND hwnd);
+	void Screen_initialize (Screen* pthis, HMONITOR hmonitor);
 
 
 }// Reflex

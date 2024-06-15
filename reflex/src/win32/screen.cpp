@@ -17,9 +17,9 @@ namespace Reflex
 
 
 	void
-	Screen_initialize (Screen* pthis, HWND hwnd)
+	Screen_initialize (Screen* pthis, HMONITOR hmonitor)
 	{
-		pthis->self->handle = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL);
+		pthis->self->handle = hmonitor;
 	}
 
 
