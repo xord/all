@@ -4,8 +4,8 @@
 #define __REFLEX_SRC_WIN32_EVENT_H__
 
 
+#include <xot/windows.h>
 #include "../event.h"
-#include "windows.h"
 
 
 namespace Reflex

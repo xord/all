@@ -5,13 +5,13 @@
 #include <map>
 #include <memory>
 #include <xot/time.h>
+#include <xot/windows.h>
 #include <rays/rays.h>
 #include "reflex/defs.h"
 #include "reflex/application.h"
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "../view.h"
-#include "windows.h"
 #include "event.h"
 #include "screen.h"
 #include "opengl.h"
