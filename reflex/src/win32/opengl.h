@@ -5,7 +5,7 @@
 
 
 #include <GL/glew.h>
-#include "windows.h"
+#include <xot/windows.h>
 
 
 namespace Reflex

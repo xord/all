@@ -15,5 +15,7 @@
 #include <xot/noncopyable.h>
 #include <xot/util.h>
 
+//#include <xot/windows.h>
+
 
 #endif//EOH

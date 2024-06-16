@@ -1,9 +1,9 @@
 #include "../opengl.h"
 
 
+#include <xot/windows.h>
 #include "rays/rays.h"
 #include "rays/exception.h"
-#include "windows.h"
 
 
 namespace Rays

@@ -4,8 +4,8 @@
 #define __REFLEX_SRC_WIN32_SCREEN_H__
 
 
+#include <xot/windows.h>
 #include "reflex/screen.h"
-#include "windows.h"
 
 
 namespace Reflex
