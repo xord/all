@@ -10,11 +10,6 @@ require 'test/unit'
 include Xot::Test
 
 
-unless defined?($RAYS_NOAUTOINIT) && $RAYS_NOAUTOINIT
-  def Rays.fin!() end
-end
-
-
 def assert_equal_color(c1, c2, delta = 0.000001)
   assert_in_delta c1.r, c2.r, delta
   assert_in_delta c1.g, c2.g, delta

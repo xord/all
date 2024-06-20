@@ -8,9 +8,3 @@ require 'reflex'
 require 'test/unit'
 
 include Xot::Test
-
-
-unless defined?($REFLEX_NOAUTOINIT) && $REFLEX_NOAUTOINIT
-  def Rays.fin!() end
-  def Reflex.fin!() end
-end
