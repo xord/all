@@ -567,7 +567,7 @@ RUCY_DEF0(get_pixels)
 
 	std::vector<VALUE> pixels;
 	get_pixels(&pixels, *THIS);
-	return value(pixels.size(), (const Value*) &pixels[0]);
+	return array((const Value*) &pixels[0], pixels.size());
 }
 RUCY_END
 

@@ -25,7 +25,7 @@ RUCY_DEF0(all_logs)
 {
 	std::vector<Value> a;
 	for (size_t i = 0; i < logs.size(); ++i) a.push_back(logs[i].c_str());
-	return value(a.size(), &a[0]);
+	return array(&a[0], a.size());
 }
 RUCY_END
 

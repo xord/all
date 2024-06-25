@@ -247,7 +247,7 @@ namespace Rucy
 
 	Value value (const char* s, size_t len);
 
-	Value value (size_t size, const Value* array);
+	Value array (const Value* values, size_t size);
 %	(1..16).each do |n|
 
 	Value array (<%= params(n, ', ') {|i| "Value v#{i}"} %>);

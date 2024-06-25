@@ -625,9 +625,9 @@ namespace Rucy
 	}
 
 	Value
-	value (size_t size, const Value* array)
+	array (const Value* values, size_t size)
 	{
-		return Value(size, array);
+		return Value(size, values);
 	}
 %	(1..16).each do |n|
 
@@ -635,7 +635,7 @@ namespace Rucy
 	array (<%= params(n, ', ') {|i| "Value v#{i}"} %>)
 	{
 		Value tmp[] = {<%= params(n, ', ') {|i| "v#{i}"} %>};
-		return value(<%= n %>, tmp);
+		return array(tmp, <%= n %>);
 	}
 %	end
 

@@ -141,7 +141,7 @@ RUCY_DEF0(device_names)
 	std::vector<Value> v;
 	for (const auto& name : names)
 		v.emplace_back(name.c_str());
-	return value(v.size(), &v[0]);
+	return array(&v[0], v.size());
 }
 RUCY_END
 
