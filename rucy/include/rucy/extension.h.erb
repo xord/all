@@ -446,8 +446,9 @@ namespace Rucy
 	template <typename T> inline T* get_type_ptr (Value obj, Value klass = nil())
 	{
 		if (!klass.is_nil()) check_class(obj, klass);
-		T* p = NULL;
-		Data_Get_Struct(obj.value(), T, p);
+		RubyValue o = obj.value();
+		T* p        = NULL;
+		Data_Get_Struct(o, T, p);
 		return p;
 	}
 
