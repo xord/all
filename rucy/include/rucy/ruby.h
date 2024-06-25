@@ -7,6 +7,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundef"
 #include <ruby.h>
+#include <ruby/encoding.h>
 #pragma clang diagnostic pop
 
 

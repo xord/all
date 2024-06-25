@@ -30,7 +30,7 @@ end
 
 w.on :pointer_move do |points|
   $pos = "#{points.x}, #{points.y}"
-  p [points.type, points.x, points.y, points.size, points.modifiers, points.count, points.drag]
+  p [points.action, points.x, points.y, points.size, points.modifiers, points.count, points.drag?]
   w.redraw
 end
 

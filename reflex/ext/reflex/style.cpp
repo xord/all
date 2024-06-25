@@ -52,7 +52,7 @@ RUCY_DEFN(set_flow)
 			argc >= 2 ? (Reflex::Style::Flow) to<int>(argv[1]) : Reflex::Style::FLOW_NONE);
 	}
 
-	return value(argc, argv);
+	return array(argv, argc);
 }
 RUCY_END
 
@@ -120,7 +120,7 @@ RUCY_DEFN(set_size)
 	set_width( self, argv[0]);
 	set_height(self, argc >= 2 ? argv[1] : argv[0]);
 
-	return value(argc, argv);
+	return array(argv, argc);
 }
 RUCY_END
 

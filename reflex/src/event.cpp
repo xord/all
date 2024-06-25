@@ -1,6 +1,7 @@
 #include "event.h"
 
 
+#include <algorithm>
 #include "reflex/timer.h"
 #include "reflex/shape.h"
 #include "reflex/exception.h"

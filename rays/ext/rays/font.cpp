@@ -120,7 +120,7 @@ RUCY_DEF0(families)
 		std::vector<Value> members;
 		for (const auto& member : family.second)
 			members.emplace_back(member.c_str());
-		hash.set(family.first.c_str(), value(members.size(), &members[0]));
+		hash.set(family.first.c_str(), array(&members[0], members.size()));
 	}
 	return hash;
 }

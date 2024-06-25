@@ -31,7 +31,7 @@ array (T begin, T end)
 {
 	std::vector<Value> v;
 	for (T it = begin; it != end; ++it) v.push_back(value(*it));
-	return value(v.size(), &v[0]);
+	return array(&v[0], v.size());
 }
 
 
