@@ -2,7 +2,6 @@
 #include "rucy/value.h"
 
 
-#include <ruby/encoding.h>
 #include "rucy/function.h"
 #include "rucy/exception.h"
 #include "rucy/debug.h"
@@ -56,28 +55,28 @@ namespace Rucy
 	}
 
 	static VALUE
-	str_new (const char* s)
+	str_new (const char* s, rb_encoding* encoding)
 	{
-		rb_encoding* e = rb_default_internal_encoding();
+		rb_encoding* e = encoding ? encoding : rb_default_internal_encoding();
 		return e ? rb_enc_str_new_cstr(s, e) : rb_str_new_cstr(s);
 	}
 
 	static VALUE
-	str_new (const char* s, size_t len)
+	str_new (const char* s, size_t len, rb_encoding* encoding)
 	{
-		rb_encoding* e = rb_default_internal_encoding();
+		rb_encoding* e = encoding ? encoding : rb_default_internal_encoding();
 		return e ? rb_enc_str_new(s, len, e) : rb_str_new(s, len);
 	}
 
-	Value::Value (const char* s)
-	:	val(s ? str_new(s) : Qnil)
+	Value::Value (const char* s, rb_encoding* encoding)
+	:	val(s ? str_new(s, encoding) : Qnil)
 	{
 		if (!s)
 			argument_error(__FILE__, __LINE__);
 	}
 
-	Value::Value (const char* s, size_t len)
-	:	val(s ? str_new(s, len) : Qnil)
+	Value::Value (const char* s, size_t len, rb_encoding* encoding)
+	:	val(s ? str_new(s, len, encoding) : Qnil)
 	{
 		if (!s)
 			argument_error(__FILE__, __LINE__);
@@ -613,15 +612,15 @@ namespace Rucy
 	}
 
 	Value
-	value (const char* s)
+	value (const char* s, rb_encoding* encoding)
 	{
-		return Value(s);
+		return Value(s, encoding);
 	}
 
 	Value
-	value (const char* s, size_t len)
+	value (const char* s, size_t len, rb_encoding* encoding)
 	{
-		return Value(s, len);
+		return Value(s, len, encoding);
 	}
 
 	Value

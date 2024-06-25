@@ -29,9 +29,9 @@ namespace Rucy
 
 			Value (double n);
 
-			Value (const char* s);
+			Value (const char* s,             rb_encoding* encoding = NULL);
 
-			Value (const char* s, size_t len);
+			Value (const char* s, size_t len, rb_encoding* encoding = NULL);
 
 			Value (size_t size, const Value* array);
 
@@ -243,9 +243,9 @@ namespace Rucy
 
 	Value value (double n);
 
-	Value value (const char* s);
+	Value value (const char* s,             rb_encoding* encoding = NULL);
 
-	Value value (const char* s, size_t len);
+	Value value (const char* s, size_t len, rb_encoding* encoding = NULL);
 
 	Value array (const Value* values, size_t size);
 %	(1..16).each do |n|
