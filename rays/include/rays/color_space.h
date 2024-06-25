@@ -56,13 +56,13 @@ namespace Rays
 
 			ColorSpaceType type () const;
 
-			int bpc () const;
+			int bpc () const;// bits  per channel
 
-			int Bpc () const;
+			int Bpc () const;// bytes per channel
 
-			int bpp () const;
+			int bpp () const;// bits  per pixel
 
-			int Bpp () const;
+			int Bpp () const;// bytes per pixel
 
 			int alpha_pos () const;
 
