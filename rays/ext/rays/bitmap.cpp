@@ -617,12 +617,6 @@ RUCY_DEF1(set_pixels, pixels)
 {
 	CHECK;
 
-	if (sizeof(VALUE) <= 4)
-	{
-		not_implemented_error(
-			__FILE__, __LINE__, "Bitmap#pixels=() does not support 32-bit platforms");
-	}
-
 	set_pixels(THIS, pixels);
 	return pixels;
 }
