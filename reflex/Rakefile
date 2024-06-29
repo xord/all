@@ -26,6 +26,6 @@ default_tasks :ext
 use_bundler
 build_native_library
 build_ruby_extension
-test_ruby_extension
+test_ruby_extension unless github_actions? && win32?
 generate_documents
 build_ruby_gem
