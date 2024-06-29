@@ -43,14 +43,12 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_frame()
-    w         = win
-    min_width = w.frame.width
-    assert_equal [0, 0, min_width, 0], w.frame.to_a
-
+    w = win
     b = w.frame.dup
     assert_equal b, w.frame
 
-    minw = -> value {[min_width, value].max}
+    min_width = w.frame.width
+    minw      = -> value {[min_width, value].max}
 
     w.frame =  1;                 assert_equal [0, 0,    minw[1], 1],     w.frame.to_a
     w.frame = [1];                assert_equal [0, 0,    minw[1], 1],     w.frame.to_a

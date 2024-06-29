@@ -102,6 +102,9 @@ namespace Rays
 			if (glewInit() != GLEW_OK)
 				opengl_error(__FILE__, __LINE__, "failed to initialize GLEW.");
 		}
+
+		printf("GL Version: %s\n", glGetString(GL_VERSION));
+		printf("GL Renderer: %s\n", glGetString(GL_RENDERER));
 	}
 
 	void
