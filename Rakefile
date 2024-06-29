@@ -13,7 +13,11 @@ include Xot::Rake
 EXTS  = %i[xot rucy beeps rays reflex]
 GEMS  = EXTS + %i[processing rubysketch]
 REPOS = %i[cruby] + GEMS
-TASKS = %i[bundle vendor erb lib ext test gem install uninstall upload clean clobber]
+TASKS = %i[
+  packages bundle vendor
+  erb lib ext test clean clobber
+  gem install uninstall upload
+]
 
 TARGETS = []
 
@@ -25,12 +29,6 @@ end
 def append_target (*targets)
   TARGETS.concat targets.flatten
   TARGETS.uniq!
-end
-
-def sh_each_target (cmd)
-  targets.each do |t|
-    cd_sh File.expand_path(t.to_s, __dir__), cmd
-  end
 end
 
 
@@ -56,7 +54,11 @@ end
 
 TASKS.each do |task_|
   task task_ => :scripts do
-    sh_each_target "rake #{task_}"
+    targets.each do |target|
+      dir   = File.expand_path target.to_s, __dir__
+      tasks = `rake -f #{dir}/Rakefile -AT`
+      cd_sh dir, "rake #{task_}" if tasks =~ /^rake\s+#{task_}\s+#/
+    end
   end
 end
 

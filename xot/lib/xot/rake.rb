@@ -272,6 +272,20 @@ module Xot
       end
     end
 
+    def install_packages(osx: [], win32: [])
+      desc "install packages"
+      task :packages do
+        case
+        when osx?   && osx.size > 0
+          sh %( brew install #{osx.join ' '} )
+        when win32? && win32.size > 0
+          prefix   = 'MINGW_PACKAGE_PREFIX'
+          packages = win32.map {|package| package.sub prefix, ENV[prefix]}
+          puts %( pacman -S --noconfirm #{packages.join ' '} )
+        end
+      end
+    end
+
     def use_external_library(
       repos, branch: nil, tag: nil, commit: nil,
       incdirs: nil, srcdirs: nil, excludes: [],
