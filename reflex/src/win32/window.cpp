@@ -728,12 +728,9 @@ namespace Reflex
 	Window_get_screen (const Window& window)
 	{
 		Screen s;
-		if (!window.hidden())
-		{
-			HMONITOR hmonitor =
-				MonitorFromWindow(get_data(&window)->hwnd, MONITOR_DEFAULTTONULL);
-			if (hmonitor) Screen_initialize(&s, hmonitor);
-		}
+		HMONITOR hmonitor =
+			MonitorFromWindow(get_data(&window)->hwnd, MONITOR_DEFAULTTONULL);
+		if (hmonitor) Screen_initialize(&s, hmonitor);
 		return s;
 	}
 
