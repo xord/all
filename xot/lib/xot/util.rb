@@ -6,6 +6,14 @@ module Xot
 
   extend module Util
 
+    def osx?()
+      /darwin/.match? RUBY_PLATFORM
+    end
+
+    def ios?()
+      false
+    end
+
     def win32?()
       /mswin|ming|cygwin/.match? RUBY_PLATFORM
     end
@@ -20,14 +28,6 @@ module Xot
 
     def cygwin?()
       /cygwin/.match? RUBY_PLATFORM
-    end
-
-    def osx?()
-      /darwin/.match? RUBY_PLATFORM
-    end
-
-    def ios?()
-      false
     end
 
     def gcc?()
