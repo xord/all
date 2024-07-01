@@ -281,7 +281,7 @@ module Xot
         when win32? && win32.size > 0
           prefix   = 'MINGW_PACKAGE_PREFIX'
           packages = win32.map {|package| package.sub prefix, ENV[prefix]}
-          puts %( pacman -S --noconfirm #{packages.join ' '} )
+          sh %( pacman -S --noconfirm #{packages.join ' '} )
         end
       end
     end
