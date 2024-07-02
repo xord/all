@@ -7,7 +7,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Rays::Bitmap)
+RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Bitmap)
 
 #define THIS  to<Rays::Bitmap*>(self)
 
@@ -323,23 +323,23 @@ set_pixels (Rays::Bitmap* bmp, Value pixels)
 	}
 }
 
-static inline Value
-to_rgb_value (uint8_t r, uint8_t g, uint8_t b)
+static inline uint32_t
+to_rgb (uint8_t r, uint8_t g, uint8_t b)
 {
-	return value(
-		((uint) r) << 16 |
-		((uint) g) << 8  |
-		((uint) b));
+	return
+		((uint32_t) r) << 16 |
+		((uint32_t) g) << 8  |
+		((uint32_t) b);
 }
 
-static inline Value
-to_argb_value (uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static inline uint32_t
+to_argb (uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-	return value(
-		((uint) a) << 24 |
-		((uint) r) << 16 |
-		((uint) g) << 8  |
-		((uint) b));
+	return
+		((uint32_t) a) << 24 |
+		((uint32_t) r) << 16 |
+		((uint32_t) g) << 8  |
+		((uint32_t) b);
 }
 
 static void
@@ -398,7 +398,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 3)
-					pixels->push_back(to_rgb_value(p[0], p[1], p[2]));
+					pixels->push_back(value(to_rgb(p[0], p[1], p[2])));
 			}
 			break;
 
@@ -408,7 +408,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_argb_value(p[0], p[1], p[2], p[3]));
+					pixels->push_back(value(to_argb(p[0], p[1], p[2], p[3])));
 			}
 			break;
 
@@ -418,7 +418,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_argb_value(p[1], p[2], p[3], p[0]));
+					pixels->push_back(value(to_argb(p[1], p[2], p[3], p[0])));
 			}
 			break;
 
@@ -427,7 +427,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 3)
-					pixels->push_back(to_rgb_value(p[2], p[1], p[0]));
+					pixels->push_back(value(to_rgb(p[2], p[1], p[0])));
 			}
 			break;
 
@@ -437,7 +437,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_argb_value(p[2], p[1], p[0], p[3]));
+					pixels->push_back(value(to_argb(p[2], p[1], p[0], p[3])));
 			}
 			break;
 
@@ -447,7 +447,7 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 			{
 				const auto* p = bmp.at<uint8_t>(0, y);
 				for (int x = 0; x < w; ++x, p += 4)
-					pixels->push_back(to_argb_value(p[3], p[2], p[1], p[0]));
+					pixels->push_back(value(to_argb(p[3], p[2], p[1], p[0])));
 			}
 			break;
 
@@ -538,16 +538,84 @@ get_pixels (auto* pixels, const Rays::Bitmap& bmp)
 	}
 }
 
+static Value
+get_32bit_pixels_string (const Rays::Bitmap& bmp)
+{
+	// avoid SEGV caused by 32bit argb value on 'x64-mingw-ucrt' platform.
+
+	const auto& cs = bmp.color_space();
+	if (cs.bpp() != 32) return nil();
+
+	int w = bmp.width(), h = bmp.height();
+
+	std::vector<uint32_t> pixels;
+	pixels.reserve(w * h);
+
+	switch (cs.type())
+	{
+		case Rays::GRAY_32:
+		case Rays::ALPHA_32:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint32_t>(0, y);
+				for (int x = 0; x < w; ++x, ++p)
+					pixels.push_back(*p);
+			}
+			break;
+
+		case Rays::RGBA_8888:
+		case Rays::RGBX_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels.push_back(to_argb(p[0], p[1], p[2], p[3]));
+			}
+			break;
+
+		case Rays::ARGB_8888:
+		case Rays::XRGB_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels.push_back(to_argb(p[1], p[2], p[3], p[0]));
+			}
+			break;
+
+		case Rays::BGRA_8888:
+		case Rays::BGRX_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels.push_back(to_argb(p[2], p[1], p[0], p[3]));
+			}
+			break;
+
+		case Rays::ABGR_8888:
+		case Rays::XBGR_8888:
+			for (int y = 0; y < h; ++y)
+			{
+				const auto* p = bmp.at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, p += 4)
+					pixels.push_back(to_argb(p[3], p[2], p[1], p[0]));
+			}
+			break;
+
+		default:
+			return nil();
+	}
+
+	return value(
+		(const char*) &pixels[0], pixels.size() * sizeof(uint32_t),
+		rb_ascii8bit_encoding());
+}
+
 static
 RUCY_DEF1(set_pixels, pixels)
 {
 	CHECK;
-
-	if (sizeof(VALUE) <= 4)
-	{
-		not_implemented_error(
-			__FILE__, __LINE__, "Bitmap#pixels=() does not support 32-bit platforms");
-	}
 
 	set_pixels(THIS, pixels);
 	return pixels;
@@ -559,11 +627,10 @@ RUCY_DEF0(get_pixels)
 {
 	CHECK;
 
-	if (sizeof(VALUE) <= 4)
-	{
-		not_implemented_error(
-			__FILE__, __LINE__, "Bitmap#pixels() does not support 32-bit platforms");
-	}
+#ifdef RAYS_32BIT_PIXELS_STRING
+	Value str = get_32bit_pixels_string(*THIS);
+	if (str) return str;
+#endif
 
 	std::vector<VALUE> pixels;
 	get_pixels(&pixels, *THIS);
@@ -613,7 +680,7 @@ Init_rays_bitmap ()
 	cBitmap.define_method("height", height);
 	cBitmap.define_method("color_space", color_space);
 	cBitmap.define_method("pixels=", set_pixels);
-	cBitmap.define_method("pixels",  get_pixels);
+	cBitmap.define_method("pixels!", get_pixels);
 	cBitmap.define_method("[]=", set_at);
 	cBitmap.define_method("[]",  get_at);
 }

@@ -156,6 +156,9 @@ namespace Rays
 			// restore premultiplied rgb values
 			"  vec3 rgb__   = col__.a != 0.0 ? col__.rgb / col__.a : col__.rgb;\n"
 			"  gl_FragColor = " + V_COLOR + " * vec4(rgb__, col__.a);\n"
+			#elif defined(WIN32)
+			"  float a__    = (col__.r + col__.g + col__.b) / 3.0;\n"
+			"  gl_FragColor = " + V_COLOR + " * vec4(1.0, 1.0, 1.0, a__);\n"
 			#else
 			"  gl_FragColor = " + V_COLOR + " * col__;\n"
 			#endif

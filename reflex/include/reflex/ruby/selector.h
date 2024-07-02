@@ -9,14 +9,14 @@
 #include <reflex/selector.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Reflex::Selector)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(REFLEX_EXPORT, Reflex::Selector)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class selector_class ();
+	REFLEX_EXPORT Rucy::Class selector_class ();
 	// class Reflex::Selector
 
 

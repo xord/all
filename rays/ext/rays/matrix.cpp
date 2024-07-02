@@ -6,7 +6,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Matrix)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Matrix)
 
 #define THIS  to<Rays::Matrix*>(self)
 
@@ -232,10 +232,10 @@ RUCY_DEFN(s_ortho)
 RUCY_END
 
 static
-RUCY_DEF4(s_perspective, fov_y, aspect_ratio, near, far)
+RUCY_DEF4(s_perspective, fov_y, aspect_ratio, near_, far_)
 {
 	return value(Rays::perspective(
-		to<float>(fov_y), to<float>(aspect_ratio), to<coord>(near), to<coord>(far)));
+		to<float>(fov_y), to<float>(aspect_ratio), to<coord>(near_), to<coord>(far_)));
 }
 RUCY_END
 
@@ -301,7 +301,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::Matrix
+	template <> RAYS_EXPORT Rays::Matrix
 	value_to<Rays::Matrix> (int argc, const Value* argv, bool convert)
 	{
 		if (argc == 1 && argv->is_array())

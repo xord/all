@@ -6,84 +6,85 @@
 
 #include <xot/ref.h>
 #include <xot/string.h>
+#include <rucy/defs.h>
 #include <rucy/rucy.h>
 #include <rucy/value.h>
 #include <rucy/exception.h>
 
 
-#define RUCY_DECLARE_VALUE_FROM(native_class) \
+#define RUCY_DECLARE_VALUE_FROM(export, native_class) \
 	namespace Rucy \
 	{ \
-		Value value (const native_class& obj); \
-		Value value (const native_class* obj); \
+		export Value value (const native_class& obj); \
+		export Value value (const native_class* obj); \
 	}
 
-#define RUCY_DECLARE_VALUE_TO(native_class) \
+#define RUCY_DECLARE_VALUE_TO(export, native_class) \
 	namespace Rucy \
 	{ \
-		template <>       native_class* value_to<      native_class*> (Value value, bool); \
-		template <> const native_class* value_to<const native_class*> (Value value, bool); \
-		template <>       native_class& value_to<      native_class&> (Value value, bool convert); \
-		template <> const native_class& value_to<const native_class&> (Value value, bool convert); \
+		template <> export       native_class* value_to<      native_class*> (Value value, bool); \
+		template <> export const native_class* value_to<const native_class*> (Value value, bool); \
+		template <> export       native_class& value_to<      native_class&> (Value value, bool convert); \
+		template <> export const native_class& value_to<const native_class&> (Value value, bool convert); \
 	}
 
-#define RUCY_DECLARE_ARRAY_TO(native_class) \
+#define RUCY_DECLARE_ARRAY_TO(export, native_class) \
 	namespace Rucy \
 	{ \
-		template <> native_class value_to<native_class> (Value value, bool convert); \
-		template <> native_class value_to<native_class> (int argc, const Value* argv, bool convert); \
+		template <> export native_class value_to<native_class> (Value value, bool convert); \
+		template <> export native_class value_to<native_class> (int argc, const Value* argv, bool convert); \
 	}
 
-#define RUCY_DECLARE_CONVERT_TO(native_type) \
-	RUCY_DECLARE_ARRAY_TO(native_type)
+#define RUCY_DECLARE_CONVERT_TO(export, native_type) \
+	RUCY_DECLARE_ARRAY_TO(export, native_type)
 
-#define RUCY_DECLARE_VALUE_OR_ARRAY_TO(native_class) \
-	RUCY_DECLARE_VALUE_TO(native_class) \
-	RUCY_DECLARE_ARRAY_TO(native_class)
+#define RUCY_DECLARE_VALUE_OR_ARRAY_TO(export, native_class) \
+	RUCY_DECLARE_VALUE_TO(export, native_class) \
+	RUCY_DECLARE_ARRAY_TO(export, native_class)
 
-#define RUCY_DECLARE_WRAPPER_VALUE_FROM(native_class) \
+#define RUCY_DECLARE_WRAPPER_VALUE_FROM(export, native_class) \
 	namespace Rucy \
 	{ \
-		Value value (native_class* obj); \
-		Value value (native_class* obj, Value klass); \
+		export Value value (native_class* obj); \
+		export Value value (native_class* obj, Value klass); \
 	}
 
-#define RUCY_DECLARE_WRAPPER_VALUE_TO(native_class) \
+#define RUCY_DECLARE_WRAPPER_VALUE_TO(export, native_class) \
 	namespace Rucy \
 	{ \
-		template <>       native_class* value_to<      native_class*> (Value value, bool convert); \
-		template <> const native_class* value_to<const native_class*> (Value value, bool convert); \
+		template <> export       native_class* value_to<      native_class*> (Value value, bool convert); \
+		template <> export const native_class* value_to<const native_class*> (Value value, bool convert); \
 	}
 
-#define RUCY_DEFINE_VALUE_FROM(native_class) \
+#define RUCY_DEFINE_VALUE_FROM(export, native_class) \
 	namespace Rucy \
 	{ \
-		Value \
+		export Value \
 		value (const native_class& obj) \
 		{ \
 			return new_type(get_ruby_class<native_class>(), new native_class(obj)); \
 		} \
-		Value \
+		export Value \
 		value (const native_class* obj) \
 		{ \
 			return obj ? value(*obj) : nil(); \
 		} \
 	}
 
-#define RUCY_DEFINE_VALUE_TO(native_class) \
+#define RUCY_DEFINE_VALUE_TO(export, native_class) \
 	namespace Rucy \
 	{ \
-		template <> native_class* \
+		template <> export native_class* \
 		value_to<native_class*> (Value value, bool) \
 		{ \
 			return get_type_ptr<native_class>(value, get_ruby_class<native_class>()); \
 		} \
-		template <> const native_class* \
+		template <> export const native_class* \
 		value_to<const native_class*> (Value value, bool convert) \
 		{ \
 			return (const native_class*) value_to<native_class*>(value, convert); \
 		} \
-		template <> native_class& \
+		template <> export native_class& \
 		value_to<native_class&> (Value value, bool convert) \
 		{ \
 			native_class* obj = value_to<native_class*>(value, convert); \
@@ -91,17 +92,17 @@
 				rucy_error(__FILE__, __LINE__, "failed to convert from/to %s.", #native_class); \
 			return *obj; \
 		} \
-		template <> const native_class& \
+		template <> export const native_class& \
 		value_to<const native_class&> (Value value, bool convert) \
 		{ \
 			return (const native_class&) value_to<native_class&>(value, convert); \
 		} \
 	}
 
-#define RUCY_DEFINE_ARRAY_TO(native_class) \
+#define RUCY_DEFINE_ARRAY_TO(export, native_class) \
 	namespace Rucy \
 	{ \
-		template <> native_class \
+		template <> export native_class \
 		value_to<native_class> (Value value, bool convert) \
 		{ \
 			if (value.is_array()) \
@@ -111,22 +112,22 @@
 		} \
 	}
 
-#define RUCY_DEFINE_CONVERT_TO(native_type) \
-	RUCY_DEFINE_ARRAY_TO(native_type)
+#define RUCY_DEFINE_CONVERT_TO(export, native_type) \
+	RUCY_DEFINE_ARRAY_TO(export, native_type)
 
-#define RUCY_DEFINE_VALUE_OR_ARRAY_TO(native_class) \
-	RUCY_DEFINE_VALUE_TO(native_class) \
-	RUCY_DEFINE_ARRAY_TO(native_class)
+#define RUCY_DEFINE_VALUE_OR_ARRAY_TO(export, native_class) \
+	RUCY_DEFINE_VALUE_TO(export, native_class) \
+	RUCY_DEFINE_ARRAY_TO(export, native_class)
 
-#define RUCY_DEFINE_WRAPPER_VALUE_FROM(native_class) \
+#define RUCY_DEFINE_WRAPPER_VALUE_FROM(export, native_class) \
 	namespace Rucy \
 	{ \
-		Value \
+		export Value \
 		value (native_class* obj) \
 		{ \
 			return value(obj, get_ruby_class<native_class>()); \
 		} \
-		Value \
+		export Value \
 		value (native_class* obj, Value klass) \
 		{ \
 			if (!obj) return nil(); \
@@ -137,56 +138,56 @@
 		} \
 	}
 
-#define RUCY_DEFINE_WRAPPER_VALUE_TO(native_class) \
+#define RUCY_DEFINE_WRAPPER_VALUE_TO(export, native_class) \
 	namespace Rucy \
 	{ \
-		template <> native_class* \
+		template <> export native_class* \
 		value_to<native_class*> (Value value, bool) \
 		{ \
 			return get_type_ptr<native_class>(value, get_ruby_class<native_class>()); \
 		} \
-		template <> const native_class* \
+		template <> export const native_class* \
 		value_to<const native_class*> (Value value, bool convert) \
 		{ \
 			return (const native_class*) value_to<native_class*>(value, convert); \
 		} \
 	}
 
-#define RUCY_DECLARE_VALUE_FROM_TO(native_class) \
-	RUCY_DECLARE_VALUE_FROM(native_class) \
-	RUCY_DECLARE_VALUE_TO(native_class)
+#define RUCY_DECLARE_VALUE_FROM_TO(export, native_class) \
+	RUCY_DECLARE_VALUE_FROM(export, native_class) \
+	RUCY_DECLARE_VALUE_TO(export, native_class)
 
-#define RUCY_DEFINE_VALUE_FROM_TO(native_class) \
-	RUCY_DEFINE_VALUE_FROM(native_class) \
-	RUCY_DEFINE_VALUE_TO(native_class)
+#define RUCY_DEFINE_VALUE_FROM_TO(export, native_class) \
+	RUCY_DEFINE_VALUE_FROM(export, native_class) \
+	RUCY_DEFINE_VALUE_TO(export, native_class)
 
-#define RUCY_VALUE_FROM_TO(native_class) \
-	RUCY_DECLARE_VALUE_FROM_TO(native_class) \
-	RUCY_DEFINE_VALUE_FROM_TO(native_class)
+#define RUCY_VALUE_FROM_TO(export, native_class) \
+	RUCY_DECLARE_VALUE_FROM_TO(export, native_class) \
+	RUCY_DEFINE_VALUE_FROM_TO(export, native_class)
 
-#define RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(native_class) \
-	RUCY_DECLARE_VALUE_FROM(native_class) \
-	RUCY_DECLARE_VALUE_OR_ARRAY_TO(native_class)
+#define RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(export, native_class) \
+	RUCY_DECLARE_VALUE_FROM(export, native_class) \
+	RUCY_DECLARE_VALUE_OR_ARRAY_TO(export, native_class)
 
-#define RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(native_class) \
-	RUCY_DEFINE_VALUE_FROM(native_class) \
-	RUCY_DEFINE_VALUE_OR_ARRAY_TO(native_class)
+#define RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(export, native_class) \
+	RUCY_DEFINE_VALUE_FROM(export, native_class) \
+	RUCY_DEFINE_VALUE_OR_ARRAY_TO(export, native_class)
 
-#define RUCY_VALUE_OR_ARRAY_FROM_TO(native_class) \
-	RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(native_class) \
-	RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(native_class)
+#define RUCY_VALUE_OR_ARRAY_FROM_TO(export, native_class) \
+	RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(export, native_class) \
+	RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(export, native_class)
 
-#define RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(native_class) \
-	RUCY_DECLARE_WRAPPER_VALUE_FROM(native_class) \
-	RUCY_DECLARE_WRAPPER_VALUE_TO(native_class)
+#define RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(export, native_class) \
+	RUCY_DECLARE_WRAPPER_VALUE_FROM(export, native_class) \
+	RUCY_DECLARE_WRAPPER_VALUE_TO(export, native_class)
 
-#define RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(native_class) \
-	RUCY_DEFINE_WRAPPER_VALUE_FROM(native_class) \
-	RUCY_DEFINE_WRAPPER_VALUE_TO(native_class)
+#define RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(export, native_class) \
+	RUCY_DEFINE_WRAPPER_VALUE_FROM(export, native_class) \
+	RUCY_DEFINE_WRAPPER_VALUE_TO(export, native_class)
 
-#define RUCY_WRAPPER_VALUE_FROM_TO(native_class) \
-	RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(native_class) \
-	RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(native_class)
+#define RUCY_WRAPPER_VALUE_FROM_TO(export, native_class) \
+	RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(export, native_class) \
+	RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(export, native_class)
 
 
 #define RUCY_TRY \

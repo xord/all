@@ -9,14 +9,14 @@
 #include <rays/font.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Font)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Font)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class font_class ();
+	RAYS_EXPORT Rucy::Class font_class ();
 	// class Rays::Font
 
 

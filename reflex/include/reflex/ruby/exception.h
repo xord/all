@@ -12,13 +12,13 @@ namespace Reflex
 {
 
 
-	Rucy::Class reflex_error_class ();
+	REFLEX_EXPORT Rucy::Class reflex_error_class ();
 	// class Reflex::ReflexError
 
-	Rucy::Class layout_error_class ();
+	REFLEX_EXPORT Rucy::Class layout_error_class ();
 	// class Reflex::LayoutError
 
-	Rucy::Class physics_error_class ();
+	REFLEX_EXPORT Rucy::Class physics_error_class ();
 	// class Reflex::PhysicsError
 
 

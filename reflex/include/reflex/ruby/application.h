@@ -10,14 +10,14 @@
 #include <reflex/ruby/event.h>
 
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Application)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Application)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class application_class ();
+	REFLEX_EXPORT Rucy::Class application_class ();
 	// class Reflex::Application
 
 

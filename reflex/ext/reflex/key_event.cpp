@@ -4,7 +4,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::KeyEvent)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::KeyEvent)
 
 #define THIS  to<Reflex::KeyEvent*>(self)
 
@@ -123,18 +123,18 @@ RUCY_DEF0(get_key)
 		CASE(LBRACKET):   SYMBOL1(lbracket);
 		CASE(RBRACKET):   SYMBOL1(rbracket);
 
-#if defined(OSX) || defined(IOS)
-		CASE(ENTER):      SYMBOL1(enter);
+#if defined(OSX) || defined(IOS) || defined(WIN32)
+		CASE(ENTER):     SYMBOL1(enter);
 #else
-		CASE(ENTER):      SYMBOL1(enter);
-		CASE(RETURN):     SYMBOL1(_return, "return");
+		CASE(ENTER):     SYMBOL1(enter);
+		CASE(RETURN):    SYMBOL1(_return, "return");
 #endif
-		CASE(SPACE):      SYMBOL1(space);
-		CASE(TAB):        SYMBOL1(tab);
-		CASE(DELETE):     SYMBOL2(_delete, "delete");
-		CASE(BACKSPACE):  SYMBOL1(backspace);
-		//CASE(INSERT):     SYMBOL1(insert);
-		CASE(ESCAPE):     SYMBOL1(escape);
+		CASE(SPACE):     SYMBOL1(space);
+		CASE(TAB):       SYMBOL1(tab);
+		CASE(DELETE):    SYMBOL2(_delete, "delete");
+		CASE(BACKSPACE): SYMBOL1(backspace);
+		CASE(INSERT):    SYMBOL1(insert);
+		CASE(ESCAPE):    SYMBOL1(escape);
 
 		CASE(LEFT):     SYMBOL1(left);
 		CASE(RIGHT):    SYMBOL1(right);
@@ -145,27 +145,25 @@ RUCY_DEF0(get_key)
 		CASE(PAGEUP):   SYMBOL1(pageup);
 		CASE(PAGEDOWN): SYMBOL1(pagedown);
 
-#if defined(OSX) || defined(IOS)
+#if !defined(OSX) && !defined(IOS)
+		CASE(SHIFT):
+#endif
 		CASE(LSHIFT):
 		CASE(RSHIFT):   SYMBOL1(shift);
+#if !defined(OSX) && !defined(IOS)
+		CASE(CONTROL):
+#endif
 		CASE(LCONTROL):
 		CASE(RCONTROL): SYMBOL1(control);
+		CASE(ALT):
+		CASE(LALT):
+		CASE(RALT):     SYMBOL1(alt);
+		CASE(LWIN):
+		CASE(RWIN):     SYMBOL1(win);
 		CASE(LCOMMAND):
 		CASE(RCOMMAND): SYMBOL1(command);
 		CASE(LOPTION):
 		CASE(ROPTION):  SYMBOL1(option);
-#else
-		CASE(SHIFT):
-		CASE(LSHIFT):
-		CASE(RSHIFT):   SYMBOL1(shift);
-		CASE(CONTROL):
-		CASE(LCONTROL):
-		CASE(RCONTROL): SYMBOL1(control);
-		//CASE(LALT):
-		//CASE(RALT):     SYMBOL1(alt);
-		//CASE(LWIN):
-		//CASE(RWIN):     SYMBOL1(win);
-#endif
 		CASE(FUNCTION): SYMBOL1(function);
 
 		CASE(F1):  SYMBOL1(f1);
@@ -188,10 +186,10 @@ RUCY_DEF0(get_key)
 		CASE(F18): SYMBOL1(f18);
 		CASE(F19): SYMBOL1(f19);
 		CASE(F20): SYMBOL1(f20);
-		//CASE(F21): SYMBOL1(f21);
-		//CASE(F22): SYMBOL1(f22);
-		//CASE(F23): SYMBOL1(f23);
-		//CASE(F24): SYMBOL1(f24);
+		CASE(F21): SYMBOL1(f21);
+		CASE(F22): SYMBOL1(f22);
+		CASE(F23): SYMBOL1(f23);
+		CASE(F24): SYMBOL1(f24);
 
 		CASE(NUM_PLUS):     SYMBOL1(plus);
 		CASE(NUM_MINUS):    SYMBOL1(minus);
@@ -204,56 +202,63 @@ RUCY_DEF0(get_key)
 		CASE(NUM_ENTER):    SYMBOL1(enter);
 
 		CASE(CAPSLOCK):   SYMBOL1(capslock);
-		//CASE(NUMLOCK):    SYMBOL1(numlock);
-		//CASE(SCROLLLOCK): SYMBOL1(scrolllock);
+		CASE(NUMLOCK):    SYMBOL1(numlock);
+		CASE(SCROLLLOCK): SYMBOL1(scrolllock);
 
-		//CASE(PRINTSCREEN): SYMBOL1(printscreen);
-		//CASE(PAUSE):       SYMBOL1(pause);
-		//CASE(BREAK):       SYMBOL2(_break, "break");
+		CASE(PRINTSCREEN): SYMBOL1(printscreen);
+		CASE(PAUSE):       SYMBOL1(pause);
+		CASE(BREAK):       SYMBOL2(_break, "break");
 		CASE(SECTION):     SYMBOL1(section);
 		CASE(HELP):        SYMBOL1(help);
 
-		CASE(IME_EISU):       SYMBOL1(eisu);
-		CASE(IME_KANA):       SYMBOL1(kana);
-		//CASE(IME_KANJI):      SYMBOL1(kanji);
-		//CASE(IME_JUNJA):      SYMBOL1(junja);
-		//CASE(IME_PROCESS):    SYMBOL1(process);
-		//CASE(IME_ACCEPT):     SYMBOL1(accept);
-		//CASE(IME_FINAL):      SYMBOL2(_final, "final");
-		//CASE(IME_CONVERT):    SYMBOL1(convert);
-		//CASE(IME_NONCONVERT): SYMBOL1(nonconvert);
-		//CASE(IME_MODECHANGE): SYMBOL1(mode_change);
+		CASE(EISU):           SYMBOL1(eisu);
+		CASE(KANA):           SYMBOL1(kana);
+		CASE(KANJI):          SYMBOL1(kanji);
+		CASE(IME_ON):         SYMBOL1(ime_on);
+		CASE(IME_OFF):        SYMBOL1(ime_off);
+		CASE(IME_MODECHANGE): SYMBOL1(ime_mode_change);
+		CASE(CONVERT):        SYMBOL1(convert);
+		CASE(NONCONVERT):     SYMBOL1(nonconvert);
+		CASE(ACCEPT):         SYMBOL1(accept);
+		CASE(PROCESS):        SYMBOL1(process);
 
 		CASE(VOLUME_UP):   SYMBOL1(volume_up);
 		CASE(VOLUME_DOWN): SYMBOL1(volume_down);
 		CASE(MUTE):        SYMBOL1(mute);
 
-		//CASE(SLEEP):  SYMBOL1(sleep);
-		//CASE(EXEC):   SYMBOL1(exec);
-		//CASE(PRINT):  SYMBOL1(print);
-		//CASE(APPS):   SYMBOL1(apps);
-		//CASE(SELECT): SYMBOL1(select);
-		//CASE(CLEAR):  SYMBOL1(clear);
-		//CASE(PLAY):   SYMBOL1(play);
-		//CASE(ZOOM):   SYMBOL1(zoom);
+		CASE(SLEEP):  SYMBOL1(sleep);
+		CASE(EXEC):   SYMBOL1(exec);
+		CASE(PRINT):  SYMBOL1(print);
+		CASE(APPS):   SYMBOL1(apps);
+		CASE(SELECT): SYMBOL1(select);
+		CASE(CLEAR):  SYMBOL1(clear);
 
-		//CASE(BROWSER_BACK):      SYMBOL1(browser_back);
-		//CASE(BROWSER_FORWARD):   SYMBOL1(browser_forward);
-		//CASE(BROWSER_REFRESH):   SYMBOL1(browser_refresh);
-		//CASE(BROWSER_STOP):      SYMBOL1(browser_stop);
-		//CASE(BROWSER_SEARCH):    SYMBOL1(browser_search);
-		//CASE(BROWSER_FAVORITES): SYMBOL1(browser_favorites);
-		//CASE(BROWSER_HOME):      SYMBOL1(browser_home);
+		CASE(NAVIGATION_VIEW):   SYMBOL1(navigation_view);
+		CASE(NAVIGATION_MENU):   SYMBOL1(navigation_menu);
+		CASE(NAVIGATION_UP):     SYMBOL1(navigation_up);
+		CASE(NAVIGATION_DOWN):   SYMBOL1(navigation_down);
+		CASE(NAVIGATION_LEFT):   SYMBOL1(navigation_left);
+		CASE(NAVIGATION_RIGHT):  SYMBOL1(navigation_right);
+		CASE(NAVIGATION_ACCEPT): SYMBOL1(navigation_accept);
+		CASE(NAVIGATION_CANCEL): SYMBOL1(navigation_cancel);
 
-		//CASE(MEDIA_NEXT_TRACK): SYMBOL1(media_next);
-		//CASE(MEDIA_PREV_TRACK): SYMBOL1(media_prev);
-		//CASE(MEDIA_STOP):       SYMBOL1(media_stop);
-		//CASE(MEDIA_PLAY_PAUSE): SYMBOL1(media_play_stop);
+		CASE(BROWSER_BACK):      SYMBOL1(browser_back);
+		CASE(BROWSER_FORWARD):   SYMBOL1(browser_forward);
+		CASE(BROWSER_REFRESH):   SYMBOL1(browser_refresh);
+		CASE(BROWSER_STOP):      SYMBOL1(browser_stop);
+		CASE(BROWSER_SEARCH):    SYMBOL1(browser_search);
+		CASE(BROWSER_FAVORITES): SYMBOL1(browser_favorites);
+		CASE(BROWSER_HOME):      SYMBOL1(browser_home);
 
-		//CASE(LAUNCH_MAIL):         SYMBOL1(launch_mail);
-		//CASE(LAUNCH_MEDIA_SELECT): SYMBOL1(launch_media_select);
-		//CASE(LAUNCH_APP1):         SYMBOL1(launch_app1);
-		//CASE(LAUNCH_APP2):         SYMBOL1(launch_app2);
+		CASE(MEDIA_PREV_TRACK): SYMBOL1(media_prev);
+		CASE(MEDIA_NEXT_TRACK): SYMBOL1(media_next);
+		CASE(MEDIA_PLAY_PAUSE): SYMBOL1(media_play_pause);
+		CASE(MEDIA_STOP):       SYMBOL1(media_stop);
+
+		CASE(LAUNCH_MAIL):         SYMBOL1(launch_mail);
+		CASE(LAUNCH_MEDIA_SELECT): SYMBOL1(launch_media_select);
+		CASE(LAUNCH_APP1):         SYMBOL1(launch_app1);
+		CASE(LAUNCH_APP2):         SYMBOL1(launch_app2);
 
 		#undef CASE
 		#undef SYMBOL1

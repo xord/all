@@ -9,14 +9,14 @@
 #include <rays/matrix.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Matrix)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Matrix)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class matrix_class ();
+	RAYS_EXPORT Rucy::Class matrix_class ();
 	// class Rays::Matrix
 
 

@@ -12,9 +12,11 @@ require 'rays/extension'
 Xot::ExtConf.new Xot, Rucy, Rays do
   setup do
     headers    << 'ruby.h'
-    libs.unshift 'gdi21', 'opengl32' if win32?
+    libs.unshift 'gdi32', 'opengl32', 'glew32'           if win32?
     frameworks << 'AppKit' << 'OpenGL' << 'AVFoundation' if osx?
-    $LDFLAGS   << ' -Wl,--out-implib=native.dll.a' if cygwin?
+    $LDFLAGS   << ' -Wl,--out-implib=native.dll.a'       if mingw? || cygwin?
+
+    $CPPFLAGS << ' -DRAYS_32BIT_PIXELS_STRING' if RUBY_PLATFORM == 'x64-mingw-ucrt'
   end
 
   create_makefile 'rays/native'

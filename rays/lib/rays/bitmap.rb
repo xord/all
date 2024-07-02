@@ -16,6 +16,13 @@ module Rays
       end
     end
 
+    def pixels()
+      case o = pixels!
+      when Array  then o
+      when String then o.unpack 'L*'
+      end
+    end
+
     def bounds()
       Bounds.new 0, 0, width, height
     end

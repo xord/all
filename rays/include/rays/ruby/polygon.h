@@ -9,14 +9,14 @@
 #include <rays/polygon.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Polygon)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Polygon)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class polygon_class ();
+	RAYS_EXPORT Rucy::Class polygon_class ();
 	// class Rays::Polygon
 
 

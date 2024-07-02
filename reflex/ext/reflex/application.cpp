@@ -4,7 +4,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(Reflex::Application)
+RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Application)
 
 #define THIS      to<Reflex::Application*>(self)
 

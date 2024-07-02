@@ -1,7 +1,7 @@
 #include "reflex/reflex.h"
 
 
-#include <windows.h>
+#include "reflex/exception.h"
 
 
 namespace Reflex
@@ -11,33 +11,27 @@ namespace Reflex
 	namespace global
 	{
 
-		static bool init = false;
+		static bool initialized = false;
 
 	}// global
 
 
-	bool
-	initialized ()
-	{
-		return global::init;
-	}
-
-	bool
+	void
 	init ()
 	{
-		if (global::init) return false;
+		if (global::initialized)
+			reflex_error(__FILE__, __LINE__, "already initialized.");
 
-		global::init = true;
-		return true;
+		global::initialized = true;
 	}
 
-	bool
+	void
 	fin ()
 	{
-		if (!global::init) return false;
+		if (!global::initialized)
+			reflex_error(__FILE__, __LINE__, "not initialized.");
 
-		global::init = false;
-		return true;
+		global::initialized = false;
 	}
 
 

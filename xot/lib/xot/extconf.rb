@@ -29,8 +29,8 @@ module Xot
 
       extensions.each do |ext|
         name = ext.name.downcase
-        headers << "#{name}.h"
-        libs << name
+        headers    << "#{name}.h"
+        local_libs << name
       end
 
       ldflags = $LDFLAGS.dup
@@ -45,7 +45,7 @@ module Xot
       $CFLAGS   = make_cflags   $CFLAGS   + ' -x c++'
       $CXXFLAGS = make_cflags   $CXXFLAGS + ' -x c++' if $CXXFLAGS
       $LDFLAGS  = make_ldflags  ldflags, lib_dirs, frameworks
-      $LOCAL_LIBS << local_libs.map {|s| " -l#{s}"}.join
+      $LOCAL_LIBS << local_libs.reverse.map {|s| " -l#{s}"}.join
     end
 
     def create_makefile(*args)

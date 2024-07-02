@@ -1,7 +1,7 @@
 #include "reflex/application.h"
 
 
-#include <windows.h>
+#include <xot/windows.h>
 #include "reflex/exception.h"
 
 
@@ -9,13 +9,18 @@ namespace Reflex
 {
 
 
-	static Application* instance = NULL;
+	namespace global
+	{
+
+		static Application* instance = NULL;
+
+	}// global
 
 
 	Application*
 	app ()
 	{
-		return instance;
+		return global::instance;
 	}
 
 
@@ -24,30 +29,27 @@ namespace Reflex
 
 		String name;
 
-		operator bool () const
-		{
-			return true;
-		}
-
 	};// Application::Data
 
 
 	Application::Application ()
 	{
-		if (instance) reflex_error("multiple application instance.");
+		if (global::instance)
+			reflex_error(__FILE__, __LINE__, "multiple application instances.");
 
-		instance = this;
+		global::instance = this;
 	}
 
 	Application::~Application ()
 	{
-		instance = NULL;
+		global::instance = NULL;
 	}
 
-	bool
-	Application::run ()
+	void
+	Application::start ()
 	{
-		if (!*this) return false;
+		Event e;
+		on_start(&e);
 
 		MSG msg;
 		while (GetMessage(&msg, NULL, 0, 0))
@@ -56,48 +58,59 @@ namespace Reflex
 			DispatchMessage(&msg);
 		}
 
-		return msg.wParam == 0;
+		if (msg.wParam != 0)
+			reflex_error(__FILE__, __LINE__, "WM_QUIT with wParam %d.", msg.wParam);
 	}
 
-	bool
+	void
 	Application::quit ()
 	{
-		if (!*this) return false;
-
 		PostQuitMessage(0);
-		return true;
 	}
 
-	bool
-	Application::preference ()
-	{
-		return *this;
-	}
-
-	bool
-	Application::about ()
-	{
-		return *this;
-	}
-
-	bool
+	void
 	Application::set_name (const char* name)
 	{
-		if (!*this || !name) return false;
+		if (!name)
+			argument_error(__FILE__, __LINE__);
+
 		self->name = name;
-		return true;
 	}
 
 	const char*
 	Application::name () const
 	{
-		if (!*this) return "";
 		return self->name.c_str();
+	}
+
+	void
+	Application::on_start (Event* e)
+	{
+	}
+
+	void
+	Application::on_quit (Event* e)
+	{
+	}
+
+	void
+	Application::on_motion (MotionEvent* e)
+	{
+	}
+
+	void
+	Application::on_preference (Event* e)
+	{
+	}
+
+	void
+	Application::on_about (Event* e)
+	{
 	}
 
 	Application::operator bool () const
 	{
-		return self && *self;
+		return true;
 	}
 
 	bool

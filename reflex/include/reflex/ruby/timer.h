@@ -9,14 +9,14 @@
 #include <reflex/timer.h>
 
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Timer)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Timer)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class timer_class ();
+	REFLEX_EXPORT Rucy::Class timer_class ();
 	// class Reflex::Timer
 
 

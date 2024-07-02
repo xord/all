@@ -12,13 +12,13 @@ namespace Rays
 {
 
 
-	Rucy::Class rays_error_class ();
+	RAYS_EXPORT Rucy::Class rays_error_class ();
 	// class Rays::RaysError
 
-	Rucy::Class opengl_error_class ();
+	RAYS_EXPORT Rucy::Class opengl_error_class ();
 	// class Rays::OpenGLError
 
-	Rucy::Class shader_error_class ();
+	RAYS_EXPORT Rucy::Class shader_error_class ();
 	// class Rays::ShaderError
 
 

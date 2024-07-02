@@ -4,30 +4,32 @@
 #define __REFLEX_SRC_WIN32_OPENGL_H__
 
 
-#include <windows.h>
-#include <rays/opengl.h>
+#include <GL/glew.h>
+#include <xot/windows.h>
 
 
 namespace Reflex
 {
 
 
-	class OpenGL
+	class OpenGLContext
 	{
 
 		public:
 
-			OpenGL ();
+			OpenGLContext ();
 
-			~OpenGL ();
+			~OpenGLContext ();
 
-			bool init (HWND hwnd);
+			void init (HWND hwnd);
 
-			bool fin ();
+			void fin ();
 
-			bool make_current ();
+			void make_current ();
 
-			bool swap_buffers ();
+			void swap_buffers ();
+
+			bool is_active () const;
 
 			operator bool () const;
 
@@ -35,13 +37,13 @@ namespace Reflex
 
 		private:
 
-			HWND hwnd;
+			HWND hwnd = NULL;
 
-			HDC hdc;
+			HDC hdc   = NULL;
 
-			HGLRC hrc;
+			HGLRC hrc = NULL;
 
-	};// OpenGL
+	};// OpenGLContext
 
 
 }// Reflex

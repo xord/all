@@ -1,6 +1,7 @@
 #include "event.h"
 
 
+#include <algorithm>
 #include "reflex/timer.h"
 #include "reflex/shape.h"
 #include "reflex/exception.h"
@@ -506,11 +507,14 @@ namespace Reflex
 
 
 	void
+	KeyEvent_set_chars (KeyEvent* pthis, const char* chars)
+	{
+		pthis->self->chars = chars ? chars : "";
+	}
+
+	void
 	KeyEvent_set_captured (KeyEvent* pthis, bool captured)
 	{
-		if (!pthis)
-			argument_error(__FILE__, __LINE__);
-
 		pthis->self->captured = captured;
 	}
 

@@ -3,11 +3,13 @@
   .each {|s| $:.unshift s if !$:.include?(s) && File.directory?(s)}
 
 require 'xot/test'
+require 'xot/util'
 require 'rays'
 
 require 'test/unit'
 
 include Xot::Test
+include Xot::Util
 
 
 def assert_equal_color(c1, c2, delta = 0.000001)
