@@ -359,11 +359,11 @@ module Xot
     end
 
     def define_placeholder_tasks()
-      desc "delete temporary files"
-      alias_task :clean
+      desc "setup all external libraries"
+      alias_task :vendor
 
-      desc "delete all generated files"
-      alias_task :clobber => :clean
+      desc "convert erb files"
+      alias_task :erb
 
       desc "build native library"
       alias_task :lib
@@ -371,20 +371,20 @@ module Xot
       desc "build ruby extension"
       alias_task :ext
 
-      desc "build ruby gem"
-      alias_task :gem
+      desc "run all tests"
+      alias_task :test
 
       desc "generate documentations"
       alias_task :doc
 
-      desc "run all tests"
-      alias_task :test
+      desc "build ruby gem"
+      alias_task :gem
 
-      desc "setup all external libraries"
-      alias_task :vendor
+      desc "delete temporary files"
+      alias_task :clean
 
-      desc "convert erb files"
-      alias_task :erb
+      desc "delete all generated files"
+      alias_task :clobber => :clean
     end
 
 
