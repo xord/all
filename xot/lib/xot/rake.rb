@@ -276,7 +276,7 @@ module Xot
       desc "install packages"
       task :packages do
         case
-        when osx?   && osx.size > 0
+        when osx? && osx.size > 0
           sh %( brew install #{osx.join ' '} )
         when win32? && win32.size > 0
           prefix   = 'MINGW_PACKAGE_PREFIX'
@@ -359,6 +359,9 @@ module Xot
     end
 
     def define_placeholder_tasks()
+      desc "install all external packages"
+      alias_task :packages
+
       desc "setup all external libraries"
       alias_task :vendor
 

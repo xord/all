@@ -21,7 +21,7 @@ jobs:
           token: ${{ secrets.PAT }}
 
       - name: test
-        run: rake quiet test
+        run: rake quiet packages test
 
       - name: subtree push
         run: rake subtree:push
