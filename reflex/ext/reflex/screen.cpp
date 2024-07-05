@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::Screen)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Screen)
 
 #define THIS  to<Reflex::Screen*>(self)
 

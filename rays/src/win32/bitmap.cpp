@@ -1,8 +1,16 @@
 #include "../bitmap.h"
 
 
-#include <assert.h>
-#include "font.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
+#include "rays/exception.h"
+#include "../color_space.h"
+#include "../font.h"
+#include "../texture.h"
+#include "../frame_buffer.h"
 #include "gdi.h"
 
 
@@ -15,60 +23,55 @@ namespace Rays
 
 		int width, height, pitch;
 
-		ColorSpace colorspace;
+		ColorSpace color_space;
 
-		void* pixels;
+		void* pixels = NULL;
 
 		Win32::MemoryDC memdc;
 
 		bool modified;
 
 		Data ()
-		:	pixels(NULL), modified(true)
 		{
+			clear();
 		}
 
-	};// Window::Data
-
-
-	static bool
-	init_bitmap_pixels (Bitmap* bmp)
-	{
-		if (!*bmp) return false;
-
-		memset(bmp->data(), 0, bmp->size());
-
-		if (!bmp->color_space().has_alpha())
-			return true;
-
-		int Bpp = bmp->color_space().Bpp();
-		for (int y = 0; y < bmp->height(); ++y)
+		~Data ()
 		{
-			unsigned char* p =
-				bmp->at<unsigned char>(0, y) + bmp->color_space().alpha_pos();
-			int w = bmp->width();
-			while (w--)
-			{
-				*p = 255;
-				p += Bpp;
-			}
+			clear();
 		}
 
-		return true;
-	}
+		void clear ()
+		{
+			if (memdc) memdc = Win32::MemoryDC();
 
-	static bool
-	setup_bitmap (Bitmap* bmp, int w, int h, const ColorSpace& cs, HDC hdc = NULL)
+			width = height = pitch = 0;
+			color_space = COLORSPACE_UNKNOWN;
+			pixels      = NULL;
+			modified    = false;
+		}
+
+	};// Bitmap::Data
+
+
+	static void
+	setup_bitmap (
+		Bitmap* bitmap,
+		int w, int h, const ColorSpace& cs,
+		const void* pixels = NULL, bool clear_pixels = true, HDC hdc = NULL)
 	{
-		if (w <= 0 || h <= 0 || !cs || !bmp || *bmp)
-			return false;
+		if (w <= 0 || h <= 0 || !cs)
+			argument_error(__FILE__, __LINE__);
 
-		Bitmap::Data* self = bmp->self.get();
+		Bitmap::Data* self = bitmap->self.get();
 
-		self->width      = w;
-		self->height     = h;
-		self->colorspace = cs;
-		self->pitch      = self->width * self->colorspace.Bpp();
+		self->clear();
+
+		self->width       = w;
+		self->height      = h;
+		self->pitch       = w * cs.Bpp();
+		self->color_space = cs;
+		self->modified    = true;
 
 		int padding = 4 - self->pitch % 4;
 		if (padding < 4) self->pitch += padding;
@@ -81,32 +84,49 @@ namespace Rays
 		header.biWidth       = self->width;
 		header.biHeight      = -self->height;
 		header.biPlanes      = 1;
-		header.biBitCount    = self->colorspace.bpp();
+		header.biBitCount    = self->color_space.bpp();
 		header.biCompression = BI_RGB;
 
 		Win32::DC dc = hdc ? Win32::DC(hdc) : Win32::screen_dc();
 
 		HBITMAP hbmp = CreateDIBSection(
 			dc.handle(), &bmpinfo, DIB_RGB_COLORS, (void**) &self->pixels, NULL, 0);
-		if (!hbmp) return false;
+		if (!hbmp)
+			rays_error(__FILE__, __LINE__);
 
 		self->memdc = Win32::MemoryDC(dc.handle(), Win32::Bitmap(hbmp, true));
-		if (!self->memdc) return false;
+		if (!self->memdc)
+			rays_error(__FILE__, __LINE__);
 
-		return init_bitmap_pixels(bmp);
-	}
-
-	static void
-	setup_bitmap (Bitmap* this_, const Texture& tex)
-	{
-		not_implemented_error(__FILE__, __LINE__);
+		size_t size = self->pitch * self->height;
+		if (pixels)
+			memcpy(self->pixels, pixels, size);
+		else if (clear_pixels)
+			memset(self->pixels, 0, size);
 	}
 
 	Bitmap
-	Bitmap_from (const Texture& texture)
+	Bitmap_from (const Texture& tex)
 	{
+		if (!tex)
+			argument_error(__FILE__, __LINE__);
+
 		Bitmap bmp;
-		setup_bitmap(&bmp, texture);
+		setup_bitmap(
+			&bmp, tex.width(), tex.height(), tex.color_space(), NULL, false);
+
+		GLenum format, type;
+		ColorSpace_get_gl_format_and_type(&format, &type, tex.color_space());
+
+		FrameBuffer fb(tex);
+		FrameBufferBinder binder(fb.id());
+
+		for (int y = 0; y < bmp.height(); ++y)
+		{
+			GLvoid* ptr = (GLvoid*) bmp.at<uchar>(0, y);
+			glReadPixels(0, y, bmp.width(), 1, format, type, ptr);
+		}
+
 		return bmp;
 	}
 
@@ -126,8 +146,6 @@ namespace Rays
 	void
 	Bitmap_set_modified (Bitmap* bitmap, bool modified)
 	{
-		assert(bitmap);
-
 		bitmap->self->modified = modified;
 	}
 
@@ -137,16 +155,83 @@ namespace Rays
 		return bitmap.self->modified;
 	}
 
-	bool
-	Bitmap_save (const Bitmap& bitmap, const char* path)
+	static const char*
+	get_ext (const char* path)
 	{
-		return false;
+		if (!path)
+			return NULL;
+
+		return strrchr(path, '.');
 	}
 
-	bool
-	Bitmap_load (Bitmap* bitmap, const char* path)
+	void
+	Bitmap_save (const Bitmap& bmp, const char* path)
 	{
-		return false;
+		const char* ext = get_ext(path);
+		if (!ext)
+		{
+			argument_error(
+				__FILE__, __LINE__, "invalid image file extension: '%s'", path);
+		}
+
+		const auto& cs = bmp.color_space();
+		size_t w       = bmp.width();
+		size_t h       = bmp.height();
+		size_t pitch   = w * cs.Bpp();
+
+		std::unique_ptr<uchar[]> pixels(new uchar[h * pitch]);
+		for (size_t y = 0; y < h; ++y)
+			memcpy(pixels.get() + pitch * y, bmp.at<uchar>(0, y), pitch);
+
+		int ret = 0;
+		if (stricmp(ext, ".bmp") == 0)
+			ret = stbi_write_bmp(path, w, h, cs.Bpp(), pixels.get());
+		else
+		if (stricmp(ext, ".png") == 0)
+			ret = stbi_write_png(path, w, h, cs.Bpp(), pixels.get(), 0);
+		else
+		if (stricmp(ext, ".jpg") == 0 || stricmp(ext, ".jpeg") == 0)
+			ret = stbi_write_jpg(path, w, h, cs.Bpp(), pixels.get(), 90);
+		else
+		if (stricmp(ext, ".tga") == 0)
+			ret = stbi_write_tga(path, w, h, cs.Bpp(), pixels.get());
+		else
+			argument_error(__FILE__, __LINE__, "unknown image file type");
+
+		if (!ret)
+			rays_error(__FILE__, __LINE__, "failed to save: '%s'", path);
+	}
+
+	Bitmap
+	Bitmap_load (const char* path)
+	{
+		if (!path)
+			argument_error(__FILE__, __LINE__);
+
+		int w = 0, h = 0, Bpp = 0;
+		uchar* pixels = stbi_load(path, &w, &h, &Bpp, 0);
+		if (!pixels)
+			rays_error(__FILE__, __LINE__, "failed to load: '%s'", path);
+
+		ColorSpace cs;
+		switch (Bpp)
+		{
+			case 1: cs = GRAY_8;    break;
+			case 3: cs = RGB_888;   break;
+			case 4: cs = RGBA_8888; break;
+			default:
+				rays_error(__FILE__, __LINE__, "unsupported image file: '%s'", path);
+		}
+
+		Bitmap bmp(w, h, cs);
+		if (!bmp)
+			rays_error(__FILE__, __LINE__, "failed to create Bitmap object");
+
+		int pitch = Bpp * w;
+		for (int y = 0; y < h; ++y)
+			memcpy(bmp.at<uchar>(0, y), pixels + pitch * y, pitch);
+
+		return bmp;
 	}
 
 
@@ -154,31 +239,45 @@ namespace Rays
 	{
 	}
 
-	Bitmap::Bitmap (int width, int height, const ColorSpace& cs)
+	Bitmap::Bitmap (
+		int width, int height, const ColorSpace& color_space, const void* pixels)
 	{
-		setup_bitmap(this, width, height, cs);
+		setup_bitmap(this, width, height, color_space, pixels);
 	}
 
 	Bitmap::~Bitmap ()
 	{
 	}
 
+	Bitmap
+	Bitmap::dup () const
+	{
+		return Bitmap(width(), height(), color_space(), pixels());
+	}
+
 	int
 	Bitmap::width () const
 	{
+		if (!*this) return 0;
 		return self->width;
 	}
 
 	int
 	Bitmap::height () const
 	{
+		if (!*this) return 0;
 		return self->height;
 	}
 
 	const ColorSpace&
 	Bitmap::color_space () const
 	{
-		return self->colorspace;
+		if (!*this)
+		{
+			static const ColorSpace UNKNOWN = COLORSPACE_UNKNOWN;
+			return UNKNOWN;
+		}
+		return self->color_space;
 	}
 
 	int
@@ -196,6 +295,7 @@ namespace Rays
 	void*
 	Bitmap::pixels ()
 	{
+		if (!*this) return NULL;
 		return self->pixels;
 	}
 
@@ -208,9 +308,11 @@ namespace Rays
 	Bitmap::operator bool () const
 	{
 		return
-			self &&
-			self->width > 0 && self->height > 0 && self->pitch > 0 &&
-			self->colorspace && self->pixels && self->memdc;
+			self->width  > 0  &&
+			self->height > 0  &&
+			self->pitch  > 0  &&
+			self->color_space &&
+			self->pixels;
 	}
 
 	bool

@@ -2,6 +2,7 @@
 
 
 #include <assert.h>
+#include <algorithm>
 #include <set>
 #include "reflex/exception.h"
 #include "view.h"

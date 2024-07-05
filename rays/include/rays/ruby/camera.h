@@ -9,14 +9,14 @@
 #include <rays/camera.h>
 
 
-RUCY_DECLARE_VALUE_FROM_TO(Rays::Camera)
+RUCY_DECLARE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Camera)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class camera_class ();
+	RAYS_EXPORT Rucy::Class camera_class ();
 	// class Rays::Camera
 
 

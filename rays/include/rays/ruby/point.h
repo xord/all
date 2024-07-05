@@ -9,14 +9,14 @@
 #include <rays/point.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Point)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Point)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class point_class ();
+	RAYS_EXPORT Rucy::Class point_class ();
 	// class Rays::Point
 
 

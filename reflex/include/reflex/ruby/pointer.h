@@ -9,14 +9,14 @@
 #include <reflex/pointer.h>
 
 
-RUCY_DECLARE_VALUE_FROM_TO(Reflex::Pointer)
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Pointer)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class pointer_class ();
+	REFLEX_EXPORT Rucy::Class pointer_class ();
 	// class Reflex::Pointer
 
 

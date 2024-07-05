@@ -5,6 +5,7 @@
 
 
 #include <stddef.h>
+#include <reflex/defs.h>
 
 
 namespace Reflex

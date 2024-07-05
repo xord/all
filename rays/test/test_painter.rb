@@ -175,7 +175,7 @@ class TestPainter < Test::Unit::TestCase
     pa.line_height =     nil
     assert_equal        [h, -1], [pa.line_height, pa.line_height!]
 
-    pa.font "Menlo", 100
+    pa.font "Arial", 100
     assert_equal pa.font.height, pa.line_height
   end
 
@@ -223,11 +223,11 @@ class TestPainter < Test::Unit::TestCase
 
   def test_font_name_size()
     pa = painter
-    pa.font "Menlo", 10
-    assert_equal "Menlo Regular", pa.font.name
+    pa.font "Arial", 10
+    assert_equal "Arial", pa.font.name
     assert_equal 10, pa.font.size
     pa.font nil
-    assert_not_equal "Menlo Regular", pa.font.name
+    assert_not_equal "Arial", pa.font.name
     pa.font nil, 20
     assert_equal 20, pa.font.size
   end

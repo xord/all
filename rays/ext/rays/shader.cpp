@@ -6,7 +6,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Shader)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Shader)
 
 #define THIS  to<Rays::Shader*>(self)
 
@@ -194,7 +194,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::Shader
+	template <> RAYS_EXPORT Rays::Shader
 	value_to<Rays::Shader> (int argc, const Value* argv, bool convert)
 	{
 		if (argc == 1 && argv->is_array())

@@ -2,6 +2,7 @@
 
 
 #include <limits.h>
+#include <string.h>
 #include <assert.h>
 #include <memory>
 #include <algorithm>

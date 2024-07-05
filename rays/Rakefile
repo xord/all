@@ -15,6 +15,8 @@ require 'rays/extension'
 EXTENSIONS  = [Xot, Rucy, Rays]
 TESTS_ALONE = ['test/test_rays_init.rb']
 
+install_packages win32: %w[MINGW_PACKAGE_PREFIX-glew]
+
 use_external_library 'https://github.com/g-truc/glm',
   tag:     '0.9.9.8',
   srcdirs: 'NOSRC'
@@ -32,12 +34,25 @@ use_external_library 'https://github.com/mapbox/earcut.hpp',
 
 use_external_library 'https://github.com/andrewwillmott/splines-lib',
   commit:   '11e7240d57b0d22871aec3308186a5fcf915ba77',
-  excludes: 'Test\.cpp'
+  excludes: 'Test\.cpp',
+  &proc {
+    filter_file('Splines.cpp') do |cpp|
+      <<~EOS + cpp
+        #include <cstdint>
+      EOS
+    end
+  }
+
+if win32?
+  use_external_library 'https://github.com/nothings/stb',
+    commit:  'ae721c50eaf761660b4f90cc590453cdb0c2acd0',
+    srcdirs: 'NOSRC'
+end
 
 default_tasks :ext
 use_bundler
 build_native_library
 build_ruby_extension
-test_ruby_extension
+test_ruby_extension unless github_actions? && win32?
 generate_documents
 build_ruby_gem

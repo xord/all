@@ -11,6 +11,13 @@
 #include <xot/string.h>
 
 
+#if defined(WIN32) && defined(GCC) && defined(RAYS)
+	#define RAYS_EXPORT __declspec(dllexport)
+#else
+	#define RAYS_EXPORT
+#endif
+
+
 namespace Rays
 {
 

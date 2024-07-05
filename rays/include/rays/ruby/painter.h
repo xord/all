@@ -9,14 +9,14 @@
 #include <rays/painter.h>
 
 
-RUCY_DECLARE_VALUE_FROM_TO(Rays::Painter)
+RUCY_DECLARE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Painter)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class painter_class ();
+	RAYS_EXPORT Rucy::Class painter_class ();
 	// class Rays::Painter
 
 

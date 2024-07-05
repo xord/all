@@ -2,6 +2,7 @@
 
 
 #include <math.h>
+#include <string.h>
 #include <assert.h>
 #include <memory>
 #include <vector>

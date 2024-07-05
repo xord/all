@@ -4,8 +4,8 @@
 #define __RAYS_SRC_WIN32_GDI_H__
 
 
-#include <windows.h>
 #include <xot/pimpl.h>
+#include <xot/windows.h>
 #include "rays/defs.h"
 
 

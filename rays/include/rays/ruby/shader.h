@@ -9,14 +9,14 @@
 #include <rays/shader.h>
 
 
-RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(Rays::Shader)
+RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Shader)
 
 
 namespace Rays
 {
 
 
-	Rucy::Class shader_class ();
+	RAYS_EXPORT Rucy::Class shader_class ();
 	// class Rays::Shader
 
 

@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(Reflex::PolygonShape)
+RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::PolygonShape)
 
 #define THIS      to<Reflex::PolygonShape*>(self)
 

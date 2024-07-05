@@ -6,7 +6,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Bounds)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Bounds)
 
 #define THIS  to<Rays::Bounds*>(self)
 
@@ -629,7 +629,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::Bounds
+	template <> RAYS_EXPORT Rays::Bounds
 	value_to<Rays::Bounds> (int argc, const Value* argv, bool convert)
 	{
 		if (argc == 1 && argv->is_array())

@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Reflex::ScrollEvent)
+RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ScrollEvent)
 
 #define THIS  to<Reflex::ScrollEvent*>(self)
 

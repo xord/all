@@ -10,7 +10,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Rays::Polyline)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Polyline)
 
 #define THIS  to<Rays::Polyline*>(self)
 
@@ -46,7 +46,7 @@ RUCY_DEFN(expand)
 	coord width         =             to<coord>         (argv[0]);
 	Rays::CapType cap   = argc >= 2 ? to<Rays::CapType> (argv[1]) : Rays::CAP_DEFAULT;
 	Rays::JoinType join = argc >= 3 ? to<Rays::JoinType>(argv[2]) : Rays::JOIN_DEFAULT;
-	coord ml            = argc >= 4 ? to<coord>         (argv[3]) : Rays::JOIN_DEFAULT_MITER_LIMIT;
+	coord ml            = argc >= 4 ? to<coord>         (argv[3]) : (coord) Rays::JOIN_DEFAULT_MITER_LIMIT;
 
 	Rays::Polygon polygon;
 	THIS->expand(&polygon, width, cap, join, ml);
@@ -222,7 +222,7 @@ namespace Rucy
 {
 
 
-	template <> Rays::Polyline
+	template <> RAYS_EXPORT Rays::Polyline
 	value_to<Rays::Polyline> (int argc, const Value* argv, bool convert)
 	{
 		assert(argc == 0 || (argc > 0 && argv));

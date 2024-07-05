@@ -8,7 +8,7 @@
 #include "selector.h"
 
 
-RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(Reflex::Shape)
+RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Shape)
 
 #define THIS      to<Reflex::Shape*>(self)
 

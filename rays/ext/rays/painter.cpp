@@ -12,7 +12,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(Rays::Painter)
+RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Painter)
 
 #define THIS  to<Rays::Painter*>(self)
 

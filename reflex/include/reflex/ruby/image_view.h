@@ -8,14 +8,14 @@
 #include <reflex/ruby/view.h>
 
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::ImageView)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ImageView)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class image_view_class ();
+	REFLEX_EXPORT Rucy::Class image_view_class ();
 	// class Reflex::ImageView
 
 

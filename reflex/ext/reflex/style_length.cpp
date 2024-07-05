@@ -5,7 +5,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(Reflex::StyleLength)
+RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(REFLEX_EXPORT, Reflex::StyleLength)
 
 #define THIS  to<Reflex::StyleLength*>(self)
 
@@ -214,7 +214,7 @@ namespace Rucy
 {
 
 
-	template <> Reflex::StyleLength
+	template <> REFLEX_EXPORT Reflex::StyleLength
 	value_to<Reflex::StyleLength> (int argc, const Value* argv, bool convert)
 	{
 		if (argc == 1 && argv->is_array())

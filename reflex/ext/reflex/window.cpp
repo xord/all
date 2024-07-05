@@ -8,7 +8,7 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(Reflex::Window)
+RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Window)
 
 #define THIS      to<Reflex::Window*>(self)
 

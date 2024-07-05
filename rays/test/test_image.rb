@@ -99,33 +99,27 @@ class TestImage < Test::Unit::TestCase
   end
 
   def test_save_load()
-    def get_image_type(filename)
+    get_image_type = -> filename {
       `file #{filename}`.match(/#{filename}: ([^,]+),/)[1]
-    end
+    }
 
     img    = image(10, 10).paint {fill 1, 0, 0; ellipse 0, 0, 10}
     pixels = img.bitmap.to_a
-    paths  = %w[png jpg jpeg gif bmp tif tiff].map {|ext| "#{__dir__}/testimage.#{ext}"}
+    paths  = %w[png jpg jpeg bmp].map {|ext| "#{__dir__}/testimage.#{ext}"}
 
-    png, jpg, jpeg, gif, bmp, tif, tiff = paths
+    png, jpg, jpeg, bmp = paths
 
     paths.each {|path| img.save path}
 
-    assert_equal 'PNG image data',  get_image_type(png)
-    assert_equal 'JPEG image data', get_image_type(jpg)
-    assert_equal 'JPEG image data', get_image_type(jpeg)
-    assert_equal 'GIF image data',  get_image_type(gif)
-    assert_equal 'PC bitmap',       get_image_type(bmp)
-    assert_equal 'TIFF image data', get_image_type(tif)
-    assert_equal 'TIFF image data', get_image_type(tiff)
+    assert_equal 'PNG image data',  get_image_type[png]
+    assert_equal 'JPEG image data', get_image_type[jpg]
+    assert_equal 'JPEG image data', get_image_type[jpeg]
+    assert_equal 'PC bitmap',       get_image_type[bmp]
 
     assert_equal pixels,   load(png) .then {|o| o.bitmap.to_a}
     assert_equal [10, 10], load(jpg) .then {|o| [o.width, o.height]}
     assert_equal [10, 10], load(jpeg).then {|o| [o.width, o.height]}
-    assert_equal pixels,   load(gif) .then {|o| o.bitmap.to_a}
     assert_equal [10, 10], load(bmp) .then {|o| [o.width, o.height]}
-    assert_equal pixels,   load(tif) .then {|o| o.bitmap.to_a}
-    assert_equal pixels,   load(tiff).then {|o| o.bitmap.to_a}
 
     paths.each {|path| File.delete path}
 

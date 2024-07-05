@@ -1,9 +1,7 @@
 #include "xot/exception.h"
 
 
-#ifdef WIN32
-	#include <windows.h>
-#endif
+#include "xot/windows.h"
 
 
 namespace Xot

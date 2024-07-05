@@ -11,14 +11,14 @@
 #include <reflex/filter.h>
 
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(Reflex::Filter)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Filter)
 
 
 namespace Reflex
 {
 
 
-	Rucy::Class filter_class ();
+	REFLEX_EXPORT Rucy::Class filter_class ();
 	// class Reflex::Filter
 
 

@@ -1,12 +1,19 @@
-#include "reflex/window.h"
+#include "../window.h"
 
 
+#include <assert.h>
+#include <map>
 #include <memory>
-#define NOMINMAX
-#include <windows.h>
-#include <rays/painter.h>
-#include "reflex/reflex.h"
-#include "reflex/view.h"
+#include <xot/time.h>
+#include <xot/windows.h>
+#include <rays/rays.h>
+#include "reflex/defs.h"
+#include "reflex/application.h"
+#include "reflex/exception.h"
+#include "reflex/debug.h"
+#include "../view.h"
+#include "event.h"
+#include "screen.h"
 #include "opengl.h"
 
 
@@ -14,66 +21,7 @@ namespace Reflex
 {
 
 
-	struct Window::Data
-	{
-
-		Window* this_;
-
-		HWND hwnd;
-
-		int hidecount;
-
-		bool redraw;
-
-		Painter painter;
-
-		View::Ref root;
-
-		String title_tmp;
-
-		OpenGL opengl;
-
-		Data ()
-		:	this_(NULL), hwnd(NULL), hidecount(1), redraw(true), root(new View)
-		{
-			root->set_name("root");
-		}
-
-		~Data ()
-		{
-			unbind();
-		}
-
-		void bind_reflex (Window* obj)
-		{
-			if (!obj) return;
-
-			this_ = obj;
-		}
-
-		void unbind_reflex ()
-		{
-			this_ = NULL;
-		}
-
-		void unbind ()
-		{
-			unbind_reflex();
-		}
-
-		operator bool () const
-		{
-			return this_ && hwnd && IsWindow(hwnd);
-		}
-
-		bool operator ! () const
-		{
-			return !operator bool();
-		}
-
-	};// Window::Data
-
-	typedef std::shared_ptr<Window::Data> WindowData;
+	typedef std::map<int, String> PressingKeyMap;
 
 
 	static const char* WINDOWCLASS   = "Reflex:WindowClass";
@@ -83,8 +31,38 @@ namespace Reflex
 	enum {UPDATE_TIMER_ID = 99999};
 
 
+	struct WindowData : public Window::Data
+	{
+
+		HWND hwnd = NULL;
+
+		OpenGLContext context;
+
+		PressingKeyMap pressing_keys;
+
+		mutable String title_tmp;
+
+		bool is_valid () const
+		{
+			return hwnd && IsWindow(hwnd);
+		}
+
+	};// WindowData
+
+
 	static LRESULT CALLBACK wndproc (HWND, UINT, WPARAM, LPARAM);
 
+	static WindowData*
+	get_data (Window* window)
+	{
+		return (WindowData*) window->self.get();
+	}
+
+	static const WindowData*
+	get_data (const Window* window)
+	{
+		return get_data(const_cast<Window*>(window));
+	}
 
 	static bool
 	window_has_wndproc (HWND hwnd)
@@ -113,88 +91,270 @@ namespace Reflex
 	static Window*
 	get_window_from_hwnd (HWND hwnd)
 	{
-		WindowData* data = NULL;
 		if (window_has_wndproc(hwnd))
-			data = (WindowData*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+			return (Window*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 		else
-			data = (WindowData*) GetProp(hwnd, USERDATA_PROP);
-
-		return data ? (*data)->this_ : NULL;
+			return (Window*) GetProp(hwnd, USERDATA_PROP);
 	}
 
-	static bool
+	static void
 	setup_window (Window* win, HWND hwnd)
 	{
-		if (!win || *win) return false;
+		if (*win)
+			Xot::invalid_state_error(__FILE__, __LINE__);
 
-		WindowData* data = new WindowData(win->self);
+		WindowData* self = get_data(win);
 
-		bool ret = false;
 		if (window_has_wndproc(hwnd))
 		{
 			SetLastError(0);
-			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) data);
-			ret = GetLastError() == 0;
+			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) win);
+			if (GetLastError() != 0)
+				system_error(__FILE__, __LINE__);
 		}
 		else
-			ret = SetProp(hwnd, USERDATA_PROP, (HANDLE) data);
-
-		if (ret)
 		{
-			win->self->hwnd = hwnd;
-			win->self->opengl.init(hwnd);
+			if (!SetProp(hwnd, USERDATA_PROP, (HANDLE) win))
+				system_error(__FILE__, __LINE__);
 		}
-		else
-			delete data;
 
-		return ret;
+		self->hwnd = hwnd;
+		self->context.init(hwnd);
+		win->retain();
 	}
 
-	static bool
+	static void
 	cleanup_window (Window* win)
 	{
-		if (!win || !*win) return false;
+		if (!*win)
+			Xot::invalid_state_error(__FILE__, __LINE__);
 
-		HWND hwnd = win->self->hwnd;
-		WindowData* data = NULL;
+		WindowData* self = get_data(win);
 
-		bool has_wndproc = window_has_wndproc(hwnd);
-		if (has_wndproc)
-			data = (WindowData*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-		else
-			data = (WindowData*) GetProp(hwnd, USERDATA_PROP);
-
-		if (!data || data->get() != win->self.get())
-			return false;
-
-		bool ret = false;
-		if (has_wndproc)
+		if (window_has_wndproc(self->hwnd))
 		{
 			SetLastError(0);
-			SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-			ret = GetLastError() == 0;
+			SetWindowLongPtr(self->hwnd, GWLP_USERDATA, 0);
+			if (GetLastError() != 0)
+				system_error(__FILE__, __LINE__);
 		}
 		else
-			ret = RemoveProp(hwnd, USERDATA_PROP) != NULL;
-
-		if (ret)
 		{
-			win->self->opengl.fin();
-			win->self->hwnd = NULL;
-			delete data;
+			if (!RemoveProp(self->hwnd, USERDATA_PROP))
+				system_error(__FILE__, __LINE__);
 		}
 
-		return ret;
+		if (self->context.is_active())
+			Rays::activate_offscreen_context();
+
+		self->context.fin();
+		self->hwnd = NULL;
+		win->release();
+	}
+
+	static void
+	update (Window* win)
+	{
+		WindowData* self = get_data(win);
+
+		double now = Xot::time();
+		Reflex::UpdateEvent e(now, now - self->prev_time_update);
+		self->prev_time_update = now;
+
+		win->on_update(&e);
+		if (!e.is_blocked())
+			Reflex::View_update_tree(win->root(), e);
+
+		if (self->redraw)
+		{
+			#if 1
+				InvalidateRect(self->hwnd, NULL, FALSE);
+			#else
+				RedrawWindow(
+					self->hwnd, NULL, NULL, RDW_ERASE |  RDW_INVALIDATE | EDW_ALLCHILDREN);
+			#endif
+
+			self->redraw = false;
+		}
+	}
+
+	static void
+	draw (Window* win)
+	{
+		WindowData* self = get_data(win);
+
+		//update_pixel_density(win);
+
+		//if (update_count == 0)
+			//update(win);
+
+		double now = Xot::time();
+		double dt  = now - self->prev_time_draw;
+		double fps = 1. / dt;
+
+		fps = self->prev_fps * 0.9 + fps * 0.1;// LPF
+
+		self->prev_time_draw = now;
+		self->prev_fps       = fps;
+
+		Reflex::DrawEvent e(dt, fps);
+		Window_call_draw_event(win, &e);
+	}
+
+	static void
+	frame_changed (Window* win)
+	{
+		Rays::Bounds b           = win->frame();
+		Rays::Point dpos         = b.position() - win->self->prev_position;
+		Rays::Point dsize        = b.size()     - win->self->prev_size;
+		win->self->prev_position = b.position();
+		win->self->prev_size     = b.size();
+
+		if (dpos == 0 && dsize == 0) return;
+
+		Reflex::FrameEvent e(b, dpos.x, dpos.y, 0, dsize.x, dsize.y, 0);
+		if (dpos  != 0) win->on_move(&e);
+		if (dsize != 0)
+		{
+			Rays::Bounds b = win->frame();
+			b.move_to(0, 0);
+
+			if (win->painter())
+				win->painter()->canvas(b, win->painter()->pixel_density());
+
+			if (win->root())
+				View_set_frame(win->root(), b);
+
+			win->on_resize(&e);
+		}
+	}
+
+	static void
+	key_down (Window* win, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		assert(*win);
+
+		WindowData* self = get_data(win);
+
+		MSG wmchar;
+		UINT filter = msg == WM_SYSKEYDOWN ? WM_SYSCHAR : WM_CHAR;
+		BOOL peeked = PeekMessage(&wmchar, self->hwnd, filter, filter, PM_NOREMOVE);
+
+		String chars;
+		if (peeked) chars += (char) wmchar.wParam;
+
+		NativeKeyEvent e(msg, wp, lp, chars);
+
+		self->pressing_keys.insert_or_assign(e.code(), chars);
+#if 0
+		for (auto kv : self->pressing_keys)
+			doutln("0x%x : %s", kv.first, (const char*) kv.second);
+#endif
+
+		Window_call_key_event(win, &e);
+	}
+
+	static void
+	key_up (Window* win, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		assert(*win);
+
+		WindowData* self = get_data(win);
+
+		NativeKeyEvent e(msg, wp, lp);
+
+		auto it = self->pressing_keys.find(e.code());
+		if (it != self->pressing_keys.end())
+			KeyEvent_set_chars(&e, it->second);
+
+		Window_call_key_event(win, &e);
+
+		if (it != self->pressing_keys.end()) self->pressing_keys.erase(it);
+	}
+
+	#ifndef MOUSEEVENTF_FROMTOUCH
+	#define MOUSEEVENTF_FROMTOUCH 0xff515700
+	#endif
+
+	static bool
+	is_from_touch_event ()
+	{
+		return (GetMessageExtraInfo() & 0xffffff00) == MOUSEEVENTF_FROMTOUCH;
+	}
+
+	static void
+	mouse (Window* win, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		if (is_from_touch_event()) return;
+
+		NativePointerEvent e(msg, wp, lp);
+		Window_call_pointer_event(win, &e);
+	}
+
+	static void
+	mouse_wheel (Window* win, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		assert(msg == WM_MOUSEWHEEL || msg == WM_MOUSEHWHEEL);
+
+		WindowData* self = get_data(win);
+
+		WPARAM wp_x = 0, wp_y = 0;
+		if (msg == WM_MOUSEWHEEL)
+		{
+			wp_y = wp;
+			MSG m;
+			if (PeekMessage(&m, self->hwnd, WM_MOUSEHWHEEL, WM_MOUSEHWHEEL, PM_REMOVE))
+				wp_x = m.wParam;
+		}
+		else
+		{
+			wp_x = wp;
+			MSG m;
+			if (PeekMessage(&m, self->hwnd, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE))
+				wp_y = m.wParam;
+		}
+
+		NativeWheelEvent e(wp_x, wp_y, lp);
+		Window_call_wheel_event(win, &e);
+	}
+
+	static void
+	touch (Window* win, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		WindowData* self = get_data(win);
+
+		size_t size = LOWORD(wp);
+		if (size <= 0) return;
+
+		HTOUCHINPUT handle = (HTOUCHINPUT) lp;
+		std::unique_ptr<TOUCHINPUT[]> touches(new TOUCHINPUT[size]);
+
+		if (!GetTouchInputInfo(handle, size, &touches[0], sizeof(TOUCHINPUT)))
+			return;
+
+		NativePointerEvent e(self->hwnd, &touches[0], size);
+		Window_call_pointer_event(win, &e);
+
+		CloseTouchInputHandle(handle);
 	}
 
 	static LRESULT CALLBACK
 	window_proc (Window* win, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
-		if (!win || !*win || win->self->hwnd != hwnd)
+		if (!win || !*win || hwnd != get_data(win)->hwnd)
 			return DefWindowProc(hwnd, msg, wp, lp);
+
+		WindowData* self = get_data(win);
 
 		switch (msg)
 		{
+			case WM_ACTIVATE:
+			{
+				if ((wp & 0xFFFF) == WA_INACTIVE)
+					self->pressing_keys.clear();
+				break;
+			}
+
 			case WM_CLOSE:
 			{
 				win->close();
@@ -203,33 +363,16 @@ namespace Reflex
 
 			case WM_PAINT:
 			{
+				self->context.make_current();
+
 				PAINTSTRUCT ps;
 				BeginPaint(hwnd, &ps);
 
-				if (win->self->opengl.make_current())
-				{
-					win->draw();
-					win->self->opengl.swap_buffers();
-				}
+				draw(win);
+				self->context.swap_buffers();
 
 				EndPaint(hwnd, &ps);
 				return 0;
-			}
-
-			case WM_MOVE:
-			{
-				coord x = 0, y = 0;
-				win->get_bounds(&x, &y);
-				win->moved(x, y);
-				break;
-			}
-
-			case WM_SIZE:
-			{
-				coord w = 0, h = 0;
-				win->get_bounds(NULL, NULL, &w, &h);
-				win->resized(w, h);
-				break;
 			}
 
 			case WM_ERASEBKGND:
@@ -238,10 +381,64 @@ namespace Reflex
 				return 0;
 			}
 
+			case WM_MOVE:
+			{
+				frame_changed(win);
+				break;
+			}
+
+			case WM_SIZE:
+			{
+				frame_changed(win);
+				break;
+			}
+
+			case WM_KEYDOWN:
+			case WM_SYSKEYDOWN:
+			{
+				key_down(win, msg, wp, lp);
+				break;
+			}
+
+			case WM_KEYUP:
+			case WM_SYSKEYUP:
+			{
+				key_up(win, msg, wp, lp);
+				break;
+			}
+
+			case WM_LBUTTONDOWN:
+			case WM_RBUTTONDOWN:
+			case WM_MBUTTONDOWN:
+			case WM_LBUTTONDBLCLK:
+			case WM_RBUTTONDBLCLK:
+			case WM_MBUTTONDBLCLK:
+			case WM_LBUTTONUP:
+			case WM_RBUTTONUP:
+			case WM_MBUTTONUP:
+			case WM_MOUSEMOVE:
+			{
+				mouse(win, msg, wp, lp);
+				break;
+			}
+
+			case WM_MOUSEWHEEL:
+			case WM_MOUSEHWHEEL:
+			{
+				mouse_wheel(win, msg, wp, lp);
+				break;
+			}
+
+			case WM_TOUCH:
+			{
+				touch(win, msg, wp, lp);
+				break;
+			}
+
 			case WM_TIMER:
 			{
 				if (wp == UPDATE_TIMER_ID)
-					win->update(1);
+					update(win);
 				return 0;
 			}
 
@@ -283,17 +480,17 @@ namespace Reflex
 			cleanup_window(win);
 
 			if (--window_total == 0)
-				Reflex::quit();
+				Reflex::app()->quit();
 		}
 
 		return ret;
 	}
 
-	static bool
+	static void
 	register_windowclass ()
 	{
 		static bool registered = false;
-		if (registered) return true;
+		if (registered) return;
 
 		WNDCLASSEX wc;
 		memset(&wc, 0, sizeof(wc));
@@ -301,7 +498,7 @@ namespace Reflex
 		wc.cbSize        = sizeof(wc);
 		wc.lpszClassName = WINDOWCLASS;
 		wc.lpfnWndProc   = (WNDPROC) wndproc;
-		wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
 		wc.hInstance     = GetModuleHandle(NULL);
 		//wc.hIcon         = LoadIcon(wc.hInstance, IDI_APP_LARGE);
 		//wc.hIconSm       = LoadIcon(wc.hInstance, IDI_APP_SMALL);
@@ -311,130 +508,135 @@ namespace Reflex
 		wc.cbWndExtra    = sizeof(Window*);
 
 		if (!RegisterClassEx(&wc))
-			return false;
+			system_error(__FILE__, __LINE__);
 
-		return registered = true;
+		registered = true;
 	}
 
-	static bool
+	static void
 	create_window (Window* win)
 	{
-		if (!win) return false;
+		if (*win)
+			invalid_state_error(__FILE__, __LINE__);
 
-		if (!register_windowclass())
-			return false;
-
-		CreateWindowEx(
+		register_windowclass();
+		HWND hwnd = CreateWindowEx(
 			0, WINDOWCLASS, "",
 			WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 			0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), win);
-		return *win;
+		if (!hwnd)
+			system_error(__FILE__, __LINE__);
+
+		if (!*win)
+			invalid_state_error(__FILE__, __LINE__);
+
+		if (!RegisterTouchWindow(hwnd, 0))
+			system_error(__FILE__, __LINE__);
 	}
 
 
-	Window::Window ()
+	Window::Data*
+	Window_create_data ()
 	{
-		self->bind_reflex(this);
-
-		create_window(this);
-
-		self->painter.canvas(0, 0, 1, 1);
+		return new WindowData();
 	}
 
-	Window::~Window ()
+	uint
+	Window_default_flags ()
 	{
-		close();
-
-		self->unbind_reflex();
+		return
+			Window::FLAG_CLOSABLE  |
+			Window::FLAG_RESIZABLE |
+			Window::FLAG_MINIMIZABLE;
 	}
 
-	static bool
+	void
+	Window_initialize (Window* window)
+	{
+		create_window(window);
+	}
+
+	static void
 	start_timer (HWND hwnd, UINT id, UINT interval)
 	{
-		if (!hwnd) return false;
+		if (!hwnd)
+			argument_error(__FILE__, __LINE__);
 
-		return SetTimer(hwnd, id, interval, NULL) != 0;
+		if (!SetTimer(hwnd, id, interval, NULL))
+			system_error(__FILE__, __LINE__);
 	}
 
-	static bool
+	static void
 	stop_timer (HWND hwnd, UINT id)
 	{
-		if (!hwnd || id == 0) return false;
+		if (!hwnd)
+			argument_error(__FILE__, __LINE__);
 
-		return KillTimer(hwnd, id) != FALSE;
+		if (id == 0) return;
+
+		if (!KillTimer(hwnd, id))
+			system_error(__FILE__, __LINE__);
 	}
 
-	bool
-	Window::show ()
+	void
+	Window_show (Window* window)
 	{
-		if (!*this) return false;
+		if (!*window)
+			invalid_state_error(__FILE__, __LINE__);
 
-		if (--self->hidecount != 0) return true;
+		WindowData* self = get_data(window);
 
-		SetLastError(0);
-		ShowWindow(self->hwnd, SW_SHOW);
-		if (GetLastError() != 0) return false;
-
-		if (!UpdateWindow(self->hwnd))
-			return false;
+		SetWindowPos(
+			self->hwnd, HWND_TOP, 0, 0, 0, 0,
+			SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE);
+		UpdateWindow(self->hwnd);
 
 		start_timer(self->hwnd, UPDATE_TIMER_ID, 1000 / 60);
-		return true;
 	}
 
-	bool
-	Window::hide ()
+	void
+	Window_hide (Window* window)
 	{
-		if (!*this) return false;
+		if (!*window)
+			invalid_state_error(__FILE__, __LINE__);
 
-		if (++self->hidecount != 1) return true;
+		WindowData* self = get_data(window);
 
-		SetLastError(0);
-		ShowWindow(self->hwnd, SW_HIDE);
-		if (GetLastError() != 0) return false;
+		SetWindowPos(
+			self->hwnd, NULL, 0, 0, 0, 0,
+			SWP_HIDEWINDOW | SWP_NOMOVE | SWP_NOSIZE);
 
 		stop_timer(self->hwnd, UPDATE_TIMER_ID);
-		return true;
 	}
 
-	bool
-	Window::close ()
+	void
+	Window_close (Window* window)
 	{
-		if (!self->hwnd || !IsWindow(self->hwnd))
-			return false;
+		if (!*window)
+			invalid_state_error(__FILE__, __LINE__);
 
-		return DestroyWindow(self->hwnd) != FALSE;
+		if (!DestroyWindow(get_data(window)->hwnd))
+			system_error(__FILE__, __LINE__);
 	}
 
-	bool
-	Window::redraw ()
+	void
+	Window_set_title (Window* window, const char* title)
 	{
-		if (!*this) return false;
+		if (!title)
+			argument_error(__FILE__, __LINE__);
 
-		#if 1
-			self->redraw = true;
-			return true;
-		#elif 1
-			InvalidateRect(self->hwnd, NULL, FALSE);
-			return true;
-		#else
-			return FALSE != RedrawWindow(
-				self->hwnd, NULL, NULL, RDW_ERASE |  RDW_INVALIDATE | EDW_ALLCHILDREN);
-		#endif
-	}
+		if (!*window) return;
 
-	bool
-	Window::set_title (const char* title)
-	{
-		if (!*this || !title) return false;
-
-		return SetWindowText(self->hwnd, title) != FALSE;
+		if (!SetWindowText(get_data(window)->hwnd, title))
+			system_error(__FILE__, __LINE__);
 	}
 
 	const char*
-	Window::title () const
+	Window_get_title (const Window& window)
 	{
-		if (!*this) return "";
+		if (!window) return "";
+
+		const WindowData* self = get_data(&window);
 
 		int size = GetWindowTextLength(self->hwnd);
 		if (size <= 0) return "";
@@ -447,58 +649,51 @@ namespace Reflex
 		return self->title_tmp.c_str();
 	}
 
-	static bool
+	static void
 	get_window_bounds (
 		HWND hwnd, coord* x, coord* y, coord* width, coord* height,
 		coord* nonclient_width = NULL, coord* nonclient_height = NULL)
 	{
-		if (
-			!hwnd ||
-			(!x && !y && !width && !height) ||
-			!!nonclient_width != !!nonclient_height)
-		{
-			return false;
-		}
+		if (!x && !y && !width && !height && !nonclient_width && !nonclient_height)
+			argument_error(__FILE__, __LINE__);
 
-		RECT window, client;
-		if (
-			!GetWindowRect(hwnd, &window) ||
-			!GetClientRect(hwnd, &client))
-		{
-			return false;
-		}
+		RECT window;
+		if (!GetWindowRect(hwnd, &window))
+			system_error(__FILE__, __LINE__);
+
+		RECT client;
+		if (!GetClientRect(hwnd, &client))
+			system_error(__FILE__, __LINE__);
 
 		if (x)      *x      = window.left;
 		if (y)      *y      = window.top;
 		if (width)  *width  = client.right  - client.left;
 		if (height) *height = client.bottom - client.top;
 
-		if (nonclient_width || nonclient_height)
+		if (nonclient_width)
 		{
 			coord ww = window.right  - window.left;
-			coord wh = window.bottom - window.top;
 			coord cw = client.right  - client.left;
-			coord ch = client.bottom - client.top;
-
 			*nonclient_width  = ww - cw;
+		}
+		if (nonclient_height)
+		{
+			coord wh = window.bottom - window.top;
+			coord ch = client.bottom - client.top;
 			*nonclient_height = wh - ch;
 		}
-
-		return true;
 	}
 
-	bool
-	Window::set_bounds (coord x, coord y, coord width, coord height)
+	void
+	Window_set_frame (Window* window, coord x, coord y, coord width, coord height)
 	{
-		if (!*this) return false;
+		if (!*window) return;
+
+		WindowData* self = get_data(window);
 
 		coord xx, yy, ww, hh, nonclient_w, nonclient_h;
-		if (
-			!get_window_bounds(
-				self->hwnd, &xx, &yy, &ww, &hh, &nonclient_w, &nonclient_h))
-		{
-			return false;
-		}
+		get_window_bounds(
+			self->hwnd, &xx, &yy, &ww, &hh, &nonclient_w, &nonclient_h);
 
 		width  += nonclient_w;
 		height += nonclient_h;
@@ -507,42 +702,52 @@ namespace Reflex
 		if (x     == xx && y      == yy) flags |= SWP_NOMOVE;
 		if (width == ww && height == hh) flags |= SWP_NOSIZE;
 
-		if (flags == (SWP_NOMOVE | SWP_NOSIZE)) return true;
+		if (flags == (SWP_NOMOVE | SWP_NOSIZE))
+			return;
 
-		return FALSE != SetWindowPos(
+		if (!SetWindowPos(
 			self->hwnd, NULL, (int) x, (int) y, (int) width, (int) height,
-			flags | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+			flags | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER))
+		{
+			system_error(__FILE__, __LINE__);
+		}
 	}
 
-	bool
-	Window::get_bounds (coord* x, coord* y, coord* width, coord* height)
+	Bounds
+	Window_get_frame (const Window& window)
 	{
-		return *this && get_window_bounds(self->hwnd, x, y, width, height);
+		if (!window)
+			invalid_state_error(__FILE__, __LINE__);
+
+		coord x, y, w, h;
+		get_window_bounds(get_data(&window)->hwnd, &x, &y, &w, &h);
+		return Bounds(x, y, w, h);
 	}
 
-	bool
-	Window::hidden () const
+	Screen
+	Window_get_screen (const Window& window)
 	{
-		if (!*this) return true;
-
-		return self->hidecount > 0;
+		Screen s;
+		HMONITOR hmonitor =
+			MonitorFromWindow(get_data(&window)->hwnd, MONITOR_DEFAULTTONULL);
+		if (hmonitor) Screen_initialize(&s, hmonitor);
+		return s;
 	}
 
-	View*
-	Window::root ()
+	void
+	Window_set_flags (Window* window, uint flags)
 	{
-		return self->root.get();
+		if (Xot::has_flag(flags, Window::FLAG_PORTRAIT))
+			argument_error(__FILE__, __LINE__, "FLAG_PORTRAIT is not supported");
+
+		if (Xot::has_flag(flags, Window::FLAG_LANDSCAPE))
+			argument_error(__FILE__, __LINE__, "FLAG_LANDSCAPE is not supported");
 	}
 
-	Painter*
-	Window::painter ()
+	float
+	Window_get_pixel_density (const Window& window)
 	{
-		return &self->painter;
-	}
-
-	Window::operator bool () const
-	{
-		return self && *self;
+		return 1;
 	}
 
 
