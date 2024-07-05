@@ -1,6 +1,14 @@
 # rucy ChangeLog
 
 
+## [v0.2.1] - 2024-07-05
+
+- Value() can take encoding parameter
+- value(size, values) -> array(values, size)
+- Update workflows for test
+- Update to actions/checkout@v4
+
+
 ## [v0.2] - 2024-03-14
 
 - Change the super class for exception class from RuntimeError to StandardError

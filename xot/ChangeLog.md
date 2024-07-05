@@ -1,6 +1,17 @@
 # xot ChangeLog
 
 
+## [v0.2.1] - 2024-07-05
+
+- Add xot/util.rb
+- Add system_error_text()
+- Add get_refc_count() for debugging
+- Add 'packages' task
+- Update workflows for test
+- Update to actions/checkout@v4
+- Fix 'github_actions?'
+
+
 ## [v0.2] - 2024-03-14
 
 - v0.2

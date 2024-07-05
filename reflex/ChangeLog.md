@@ -1,6 +1,19 @@
 # reflex ChangeLog
 
 
+## [v0.2.1] - 2024-07-05
+
+- Use native values for key codes
+- KeyEvent#chars returns nil
+- KeyEvent#inspect prints 'key' value
+- MOD_ALT -> MOD_OPTION
+- Do not redefine fin!() methods, they are no longer needed
+- Refactoring: Pointer#down
+- Update workflows for test
+- Update to actions/checkout@v4
+- Fix duplicated prev pointer
+
+
 ## [v0.2] - 2024-03-14
 
 - Change the super class for exception class from RuntimeError to StandardError

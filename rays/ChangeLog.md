@@ -1,6 +1,15 @@
 # rays ChangeLog
 
 
+## [v0.2.1] - 2024-07-05
+
+- Add OpenGL_init() and OpenGL_fin()
+- Add activate_offscreen_context()
+- Do not redefine fin!() methods, they are no longer needed
+- Update workflows for test
+- Update to actions/checkout@v4
+
+
 ## [v0.2] - 2024-03-14
 
 - Change the super class for exception class from RuntimeError to StandardError
