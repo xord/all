@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.3] - 2024-07-06
+
+- Support Windows
+
+
 ## [v0.2.1] - 2024-07-05
 
 - Use native values for key codes
