@@ -689,14 +689,14 @@ namespace Reflex
 		std::vector<Pointer> pointers;
 		for (const auto& pointer : pthis->self->pointers)
 		{
+			if (!bounds.is_include(pointer.position()))
+				continue;
+
 			pointers.emplace_back(pointer);
 			Pointer_update_positions(&pointers.back(), [&](Point* pos)
 			{
 				*pos = child->from_parent(*pos);
 			});
-
-			if (!bounds.is_include(pointers.back().position()))
-				pointers.pop_back();
 		}
 		pthis->self->pointers = pointers;
 	}
