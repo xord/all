@@ -24,4 +24,4 @@ jobs:
         run: rake quiet packages test
 
       - name: subtree push
-        run: rake subtree:push
+        run: rake all subtree:push
