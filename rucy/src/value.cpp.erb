@@ -106,13 +106,13 @@ namespace Rucy
 	bool
 	Value::is_i () const
 	{
-		return FIXNUM_P(val) || type() == RUBY_T_BIGNUM || is_kind_of(rb_cInteger);
+		return FIXNUM_P(val) || type() == RUBY_T_BIGNUM || is_a(rb_cInteger);
 	}
 
 	bool
 	Value::is_f () const
 	{
-		return RB_FLOAT_TYPE_P(val) || is_kind_of(rb_cFloat);
+		return RB_FLOAT_TYPE_P(val) || is_a(rb_cFloat);
 	}
 
 	bool
@@ -124,25 +124,25 @@ namespace Rucy
 	bool
 	Value::is_s () const
 	{
-		return type() == RUBY_T_STRING || is_kind_of(rb_cString);
+		return type() == RUBY_T_STRING || is_a(rb_cString);
 	}
 
 	bool
 	Value::is_sym () const
 	{
-		return SYMBOL_P(val) || is_kind_of(rb_cSymbol);
+		return SYMBOL_P(val) || is_a(rb_cSymbol);
 	}
 
 	bool
 	Value::is_array () const
 	{
-		return type() == RUBY_T_ARRAY || is_kind_of(rb_cArray);
+		return type() == RUBY_T_ARRAY || is_a(rb_cArray);
 	}
 
 	bool
 	Value::is_hash () const
 	{
-		return type() == RUBY_T_HASH || is_kind_of(rb_cHash);
+		return type() == RUBY_T_HASH || is_a(rb_cHash);
 	}
 
 	bool
@@ -308,7 +308,7 @@ namespace Rucy
 	}
 
 	bool
-	Value::is_kind_of (Value klass) const
+	Value::is_a (Value klass) const
 	{
 		return rb_obj_is_kind_of(val, klass);
 	}

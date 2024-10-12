@@ -84,7 +84,7 @@ void get_rect_args (
 	if (argc <= 0)
 		argument_error(__FILE__, __LINE__);
 
-	if (argv[0].is_kind_of(Rays::bounds_class()))
+	if (argv[0].is_a(Rays::bounds_class()))
 	{
 		Rays::Bounds& b = to<Rays::Bounds&>(argv[0]);
 		*x  = b.x;
@@ -96,7 +96,7 @@ void get_rect_args (
 		*lb = argc >= 4 ? to<coord>(argv[3]) : *lt;
 		*rb = argc >= 5 ? to<coord>(argv[4]) : *lt;
 	}
-	else if (argv[0].is_kind_of(Rays::point_class()))
+	else if (argv[0].is_a(Rays::point_class()))
 	{
 		if (argc < 2)
 			argument_error(__FILE__, __LINE__);
@@ -154,7 +154,7 @@ void get_ellipse_args (
 	{
 		*x = *y = *w = *h = 0;
 	}
-	else if (argv[0].is_kind_of(Rays::bounds_class()))
+	else if (argv[0].is_a(Rays::bounds_class()))
 	{
 		const Rays::Bounds& b = to<Rays::Bounds&>(argv[0]);
 		*x = b.x;
@@ -162,7 +162,7 @@ void get_ellipse_args (
 		*w = b.w;
 		*h = b.h;
 	}
-	else if (argv[0].is_kind_of(Rays::point_class()))
+	else if (argv[0].is_a(Rays::point_class()))
 	{
 		if (argc < 2)
 			argument_error(__FILE__, __LINE__);

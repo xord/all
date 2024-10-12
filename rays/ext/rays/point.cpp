@@ -47,7 +47,7 @@ RUCY_DEFN(move_to)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Point#move_to", argc, 1, 2, 3);
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 		THIS->move_to(to<Rays::Point&>(argv[0]));
 	else
 	{
@@ -68,7 +68,7 @@ RUCY_DEFN(move_by)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Point#move_by", argc, 1, 2, 3);
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 		THIS->move_by(to<Rays::Point&>(argv[0]));
 	else
 	{

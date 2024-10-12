@@ -30,7 +30,7 @@ namespace Reflex
 
 			virtual void fire ()
 			{
-				if (this->value.is_kind_of(timer_class()))
+				if (this->value.is_a(timer_class()))
 				{
 					RUCY_SYM(call_timer_block);
 					this->value.call(call_timer_block);

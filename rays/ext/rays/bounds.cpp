@@ -75,7 +75,7 @@ RUCY_DEFN(move_to)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Bounds#move_to", argc, 1, 2, 3);
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 		THIS->move_to(to<Rays::Point&>(argv[0]));
 	else
 	{
@@ -102,7 +102,7 @@ RUCY_DEFN(move_by)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Bounds#move_by", argc, 1, 2, 3);
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 		THIS->move_by(to<Rays::Point&>(argv[0]));
 	else
 	{
@@ -128,7 +128,7 @@ RUCY_DEFN(resize_to)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Bounds#resize_to", argc, 1, 2, 3);
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 		THIS->resize_to(to<Rays::Point&>(argv[0]));
 	else
 	{
@@ -155,7 +155,7 @@ RUCY_DEFN(resize_by)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Bounds#resize_by", argc, 1, 2, 3);
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 		THIS->resize_by(to<Rays::Point&>(argv[0]));
 	else
 	{
@@ -181,7 +181,7 @@ RUCY_DEFN(inset_by)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Bounds#inset_by", argc, 1, 2, 3);
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 		THIS->inset_by(to<Rays::Point&>(argv[0]));
 	else
 	{
@@ -539,9 +539,9 @@ RUCY_DEF1(op_or, arg)
 	CHECK;
 
 	Rays::Bounds b = *THIS;
-	if (arg.is_kind_of(Rays::bounds_class()))
+	if (arg.is_a(Rays::bounds_class()))
 		b |= to<Rays::Bounds&>(arg);
-	else if (arg.is_kind_of(Rays::point_class()))
+	else if (arg.is_a(Rays::point_class()))
 		b |= to<Rays::Point&>(arg);
 	else
 		argument_error(__FILE__, __LINE__);
@@ -644,7 +644,7 @@ namespace Rucy
 		{
 			if (argc == 0)
 				return Rays::Bounds();
-			else if (argv->is_kind_of(Rays::point_class()))
+			else if (argv->is_a(Rays::point_class()))
 			{
 				switch (argc)
 				{

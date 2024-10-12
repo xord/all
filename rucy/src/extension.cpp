@@ -15,7 +15,7 @@ namespace Rucy
 		if (!klass)
 			argument_error(__FILE__, __LINE__);
 
-		if (!obj.is_kind_of(klass))
+		if (!obj.is_a(klass))
 		{
 			RUCY_SYMBOL(clas, "class");
 			RUCY_SYM(name);

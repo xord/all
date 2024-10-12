@@ -136,10 +136,10 @@ RUCY_DEF1(mult, val)
 {
 	CHECK;
 
-	if (val.is_kind_of(Rays::matrix_class()))
+	if (val.is_a(Rays::matrix_class()))
 		return value(*THIS * to<Rays::Matrix&>(val));
 
-	if (val.is_kind_of(Rays::point_class()))
+	if (val.is_a(Rays::point_class()))
 		return value(*THIS * to<Rays::Point&>(val));
 
 	if (val.is_array())

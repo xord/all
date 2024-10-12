@@ -27,7 +27,7 @@ RUCY_DEF4(setup, args, loop, colors, texcoords)
 {
 	CHECK;
 
-	if (args[0].is_kind_of(Rays::polyline_class()))
+	if (args[0].is_a(Rays::polyline_class()))
 		*THIS = to<Rays::Polygon>(args.size(), args.as_array());
 	else
 	{
@@ -124,10 +124,10 @@ RUCY_DEF1(op_add, obj)
 {
 	CHECK;
 
-	if (obj.is_kind_of(Rays::polyline_class()))
+	if (obj.is_a(Rays::polyline_class()))
 		return value(*THIS + to<Rays::Polyline&>(obj));
 
-	if (obj.is_kind_of(Rays::polygon_class()))
+	if (obj.is_a(Rays::polygon_class()))
 		return value(*THIS + to<Rays::Polygon&>(obj));
 
 	if (!obj.is_array())
@@ -139,7 +139,7 @@ RUCY_DEF1(op_add, obj)
 	for (const auto& polyline : to<Rays::Polygon&>(self))
 		polylines.emplace_back(polyline);
 
-	if (obj[0].is_kind_of(Rays::polyline_class()))
+	if (obj[0].is_a(Rays::polyline_class()))
 	{
 		each_poly<Rays::Polyline>(obj, [&](const auto& polyline)
 		{
@@ -407,7 +407,7 @@ namespace Rucy
 		{
 			if (argc <= 0)
 				return Rays::Polygon();
-			else if (argv->is_kind_of(Rays::polyline_class()))
+			else if (argv->is_a(Rays::polyline_class()))
 			{
 				if (argc == 1)
 					return Rays::Polygon(to<Rays::Polyline&>(*argv));

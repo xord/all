@@ -30,7 +30,7 @@ RUCY_DEF3(initialize, args, pixel_density, smooth)
 	check_arg_count(__FILE__, __LINE__, "Image#initialize", argc, 1, 2, 3);
 
 	float pd = to<float>(pixel_density);
-	if (args[0].is_kind_of(Rays::bitmap_class()))
+	if (args[0].is_a(Rays::bitmap_class()))
 	{
 		const Rays::Bitmap* bmp = to<Rays::Bitmap*>(args[0]);
 		if (!bmp)

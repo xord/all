@@ -298,7 +298,7 @@ to_shape (Value value)
 	if (value.is_nil())
 		return NULL;
 
-	if (value.is_kind_of(Rays::polygon_class()))
+	if (value.is_a(Rays::polygon_class()))
 	{
 		Reflex::PolygonShape* shape = new Reflex::PolygonShape();
 		shape->set_polygon(to<Rays::Polygon&>(value));
@@ -450,7 +450,7 @@ RUCY_DEFN(set_pivot)
 {
 	CHECK;
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 	{
 		check_arg_count(__FILE__, __LINE__, "View#pivot=(Point)", argc, 1);
 
@@ -489,7 +489,7 @@ RUCY_DEFN(scroll_to)
 {
 	CHECK;
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 	{
 		check_arg_count(__FILE__, __LINE__, "View#scroll_to(Point)", argc, 1);
 
@@ -520,7 +520,7 @@ RUCY_DEFN(scroll_by)
 {
 	CHECK;
 
-	if (argv[0].is_kind_of(Rays::point_class()))
+	if (argv[0].is_a(Rays::point_class()))
 	{
 		check_arg_count(__FILE__, __LINE__, "View#scroll_by", argc, 1);
 
