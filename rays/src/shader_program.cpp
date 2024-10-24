@@ -99,42 +99,50 @@ namespace Rays
 	};// UniformValueT
 
 
-	template <> void UniformValueT<int, 1>::apply_value (GLint location) const
+	template <> void
+	UniformValueT<int, 1>::apply_value (GLint location) const
 	{
 		glUniform1iv(location, 1, array);
 	}
 
-	template <> void UniformValueT<int, 2>::apply_value (GLint location) const
+	template <> void
+	UniformValueT<int, 2>::apply_value (GLint location) const
 	{
 		glUniform2iv(location, 1, array);
 	}
 
-	template <> void UniformValueT<int, 3>::apply_value (GLint location) const
+	template <> void
+	UniformValueT<int, 3>::apply_value (GLint location) const
 	{
 		glUniform3iv(location, 1, array);
 	}
 
-	template <> void UniformValueT<int, 4>::apply_value (GLint location) const
+	template <> void
+	UniformValueT<int, 4>::apply_value (GLint location) const
 	{
 		glUniform4iv(location, 1, array);
 	}
 
-	template <> void UniformValueT<float, 1>::apply_value (GLint location) const
+	template <> void
+	UniformValueT<float, 1>::apply_value (GLint location) const
 	{
 		glUniform1fv(location, 1, array);
 	}
 
-	template <> void UniformValueT<float, 2>::apply_value (GLint location) const
+	template <> void
+	UniformValueT<float, 2>::apply_value (GLint location) const
 	{
 		glUniform2fv(location, 1, array);
 	}
 
-	template <> void UniformValueT<float, 3>::apply_value (GLint location) const
+	template <> void
+	UniformValueT<float, 3>::apply_value (GLint location) const
 	{
 		glUniform3fv(location, 1, array);
 	}
 
-	template <> void UniformValueT<float, 4>::apply_value (GLint location) const
+	template <> void
+	UniformValueT<float, 4>::apply_value (GLint location) const
 	{
 		glUniform4fv(location, 1, array);
 	}
