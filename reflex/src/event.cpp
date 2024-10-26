@@ -684,12 +684,11 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 
 		const Bounds& frame = child->frame();
-		Bounds bounds       = frame.dup().move_to(0, 0);
 
 		std::vector<Pointer> pointers;
 		for (const auto& pointer : pthis->self->pointers)
 		{
-			if (!bounds.is_include(pointer.position()))
+			if (!frame.is_include(pointer.position()))
 				continue;
 
 			pointers.emplace_back(pointer);
