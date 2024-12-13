@@ -592,28 +592,16 @@ namespace Reflex
 		{
 		}
 
-		void increment_view_indices ()
-		{
-			for (auto& pointer : pointers)
-				Pointer_set_view_index(&pointer, pointer.view_index() + 1);
-
-			if (parent) parent->increment_view_indices();
-		}
-
 	};// PointerEvent::Data
 
 
 	void
-	PointerEvent_add_pointer (
-		PointerEvent* pthis, const Pointer& pointer,
-		std::function<void(Pointer*)> fun)
+	PointerEvent_add_pointer (PointerEvent* pthis, const Pointer& pointer)
 	{
 		if (!pthis)
 			argument_error(__FILE__, __LINE__);
 
 		pthis->self->pointers.emplace_back(pointer);
-
-		if (fun) fun(&pthis->self->pointers.back());
 	}
 
 	void
@@ -657,15 +645,6 @@ namespace Reflex
 
 		for (const auto& pointer : pthis->self->pointers)
 			fun(pointer);
-	}
-
-	void
-	PointerEvent_increment_view_indices (PointerEvent* pthis)
-	{
-		if (!pthis)
-			argument_error(__FILE__, __LINE__);
-
-		pthis->self->increment_view_indices();
 	}
 
 	void

@@ -148,9 +148,8 @@ namespace Reflex
 			action,
 			get_pointer_position(event, view),
 			get_modifiers(event),
-			dragging,
 			action == Pointer::MOVE && !dragging ? 0 : (uint) event.clickCount,
-			0,
+			dragging,
 			time()));
 	}
 

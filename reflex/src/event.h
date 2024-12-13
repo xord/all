@@ -24,9 +24,7 @@ namespace Reflex
 	void KeyEvent_set_captured (KeyEvent* pthis, bool captured);
 
 
-	void PointerEvent_add_pointer (
-		PointerEvent* pthis, const Pointer& pointer,
-		std::function<void(Pointer*)> fun = NULL);
+	void PointerEvent_add_pointer (PointerEvent* pthis, const Pointer& pointer);
 
 	void PointerEvent_erase_pointer (PointerEvent* pthis, Pointer::ID id);
 

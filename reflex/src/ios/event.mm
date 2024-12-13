@@ -82,9 +82,8 @@ namespace Reflex
 				action,
 				to_point([touch locationInView: view]),
 				get_modifiers(event),
-				action == Pointer::MOVE,
 				(uint) touch.tapCount,
-				0,
+				action == Pointer::MOVE,
 				touch.timestamp);
 
 			if (pointer.action() != Pointer::DOWN)

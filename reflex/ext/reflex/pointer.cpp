@@ -20,8 +20,8 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF9(initialize,
-	id, types, action, position, modifiers, drag, click_count, view_index, time)
+RUCY_DEF8(initialize,
+	id, types, action, position, modifiers, click_count, drag, time)
 {
 	CHECK;
 
@@ -31,9 +31,8 @@ RUCY_DEF9(initialize,
 		(Reflex::Pointer::Action) to<int>(action),
 		to<Rays::Point>(position),
 		to<uint>(modifiers),
-		to<bool>(drag),
 		to<uint>(click_count),
-		to<uint>(view_index),
+		to<bool>(drag),
 		to<double>(time));
 	return self;
 }
@@ -89,14 +88,6 @@ RUCY_DEF0(get_modifiers)
 RUCY_END
 
 static
-RUCY_DEF0(is_drag)
-{
-	CHECK;
-	return value(THIS->is_drag());
-}
-RUCY_END
-
-static
 RUCY_DEF0(get_click_count)
 {
 	CHECK;
@@ -105,10 +96,10 @@ RUCY_DEF0(get_click_count)
 RUCY_END
 
 static
-RUCY_DEF0(get_view_index)
+RUCY_DEF0(is_drag)
 {
 	CHECK;
-	return value(THIS->view_index());
+	return value(THIS->is_drag());
 }
 RUCY_END
 
@@ -153,9 +144,8 @@ Init_reflex_pointer ()
 	cPointer.define_private_method("get_action", get_action);
 	cPointer.define_method("position",           get_position);
 	cPointer.define_method("modifiers",          get_modifiers);
-	cPointer.define_method("drag?",              is_drag);
 	cPointer.define_method("click_count",        get_click_count);
-	cPointer.define_method("view_index",         get_view_index);
+	cPointer.define_method("drag?",              is_drag);
 	cPointer.define_method("time",               get_time);
 	cPointer.define_method("prev",               get_prev);
 	cPointer.define_method("down",               get_down);

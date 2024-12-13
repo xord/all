@@ -1383,9 +1383,6 @@ namespace Reflex
 			case Pointer::CANCEL: view->on_pointer_cancel(event); break;
 			default: break;
 		}
-
-		if (!event->is_captured())
-			PointerEvent_increment_view_indices(event);
 	}
 
 	static void
@@ -1398,7 +1395,7 @@ namespace Reflex
 		PointerEvent_each_pointer(&event, [&](const auto& pointer)
 		{
 			if (pointer.action() == Pointer::DOWN)
-				Window_register_capture(win, view, pointer.id(), pointer.view_index());
+				Window_register_capture(win, view, pointer.id());
 		});
 	}
 

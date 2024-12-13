@@ -1,7 +1,6 @@
 #include "pointer.h"
 
 
-#include <limits.h>
 #include <xot/time.h>
 #include "reflex/exception.h"
 
@@ -48,9 +47,7 @@ namespace Reflex
 
 		Point position, prev_position;
 
-		uint modifiers, flags;
-
-		ushort click_count, view_index;
+		uint modifiers, click_count, flags;
 
 		double time;
 
@@ -58,16 +55,14 @@ namespace Reflex
 
 		Data (
 			ID id = -1, uint types = TYPE_NONE, Action action = ACTION_NONE,
-			const Point& position = 0, uint modifiers = 0,
+			const Point& position = 0, uint modifiers = 0, uint click_count = 0,
 			bool drag = false, bool enter = false, bool exit = false,
-			uint click_count = 0, uint view_index = 0, double time = 0)
+			double time = 0)
 		:	id(id), types(types), action(action),
-			position(position), modifiers(modifiers),
+			position(position), modifiers(modifiers), click_count(click_count),
 			flags(make_flags(drag, enter, exit)),
-			click_count(click_count), view_index(view_index), time(time)
+			time(time)
 		{
-			if (view_index >= USHRT_MAX)
-				argument_error(__FILE__, __LINE__);
 		}
 
 		uint make_flags (bool drag, bool enter, bool exit)
@@ -99,15 +94,6 @@ namespace Reflex
 	Pointer_set_id (Pointer* it, Pointer::ID id)
 	{
 		it->self->id = id;
-	}
-
-	void
-	Pointer_set_view_index (Pointer* it, uint view_index)
-	{
-		if (view_index >= USHRT_MAX)
-			argument_error(__FILE__, __LINE__);
-
-		it->self->view_index = view_index;
 	}
 
 	void
@@ -177,12 +163,12 @@ namespace Reflex
 
 	Pointer::Pointer (
 		ID id, uint types, Action action,
-		const Point& position, uint modifiers, bool drag,
-		uint click_count, uint view_index, double time)
+		const Point& position, uint modifiers, uint click_count, bool drag,
+		double time)
 	:	self(new Data(
 			id, types, action,
-			position, modifiers, drag, false, false,
-			click_count, view_index, time))
+			position, modifiers, click_count, drag, false, false,
+			time))
 	{
 	}
 
@@ -232,22 +218,16 @@ namespace Reflex
 		return self->modifiers;
 	}
 
-	bool
-	Pointer::is_drag () const
-	{
-		return Xot::has_flag(self->flags, Data::DRAG);
-	}
-
 	uint
 	Pointer::click_count () const
 	{
 		return self->click_count;
 	}
 
-	uint
-	Pointer::view_index () const
+	bool
+	Pointer::is_drag () const
 	{
-		return self->view_index;
+		return Xot::has_flag(self->flags, Data::DRAG);
 	}
 
 	double

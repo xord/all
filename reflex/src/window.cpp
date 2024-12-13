@@ -19,9 +19,7 @@ namespace Reflex
 
 	using ExtractedPointerIDSet = std::set<Pointer::ID>;
 
-	using PointerData           = Window::Data::PointerData;
-
-	using TargetPointerMap      = Window::Data::TargetPointerMap;
+	using CaptureTargetIDList   = Window::Data::CaptureTargetIDList;
 
 
 	Window::Data::Data ()
@@ -31,12 +29,6 @@ namespace Reflex
 	}
 
 	Window::Data::~Data ()
-	{
-	}
-
-
-	Window::Data::PointerData::PointerData (uint view_index)
-	:	view_index(view_index)
 	{
 	}
 
@@ -89,8 +81,7 @@ namespace Reflex
 	}
 
 	void
-	Window_register_capture (
-		Window* window, View* view, Pointer::ID target, uint view_index)
+	Window_register_capture (Window* window, View* view, Pointer::ID target)
 	{
 		if (!view)
 			argument_error(__FILE__, __LINE__);
@@ -101,10 +92,12 @@ namespace Reflex
 		if (target < 0) return;
 
 		auto& targets = window->self->captures[view];
-		if (targets.find(target) != targets.end())
+		if (std::find(targets.begin(), targets.end(), target) != targets.end())
 			return;
 
-		targets.insert(std::make_pair(target, PointerData(view_index)));
+		targets.insert(
+			target == CAPTURE_ALL ? targets.begin() : targets.end(),
+			target);
 	}
 
 	void
@@ -117,7 +110,7 @@ namespace Reflex
 		if (captures_it == window->self->captures.end()) return;
 
 		auto& targets   = captures_it->second;
-		auto targets_it = targets.find(target);
+		auto targets_it = std::find(targets.begin(), targets.end(), target);
 		if (targets_it == targets.end()) return;
 
 		targets.erase(targets_it);
@@ -182,12 +175,12 @@ namespace Reflex
 	}
 
 	static bool
-	is_capturing (
-		const View* view, const TargetPointerMap& targets, View::Capture type)
+	is_capturing_all (
+		const View* view, const CaptureTargetIDList& targets, View::Capture type)
 	{
 		return
 			!targets.empty() &&
-			targets.find(CAPTURE_ALL) != targets.end() &&
+			targets[0] == CAPTURE_ALL &&
 			(view->capture() & type) == type;
 	}
 
@@ -210,8 +203,12 @@ namespace Reflex
 
 		for (auto& [view, targets] : window->self->captures)
 		{
-			if (!view->window() || !is_capturing(view.get(), targets, View::CAPTURE_KEY))
+			if (
+				!view->window() ||
+				!is_capturing_all(view.get(), targets, View::CAPTURE_KEY))
+			{
 				continue;
+			}
 
 			KeyEvent e = event->dup();
 			KeyEvent_set_captured(&e, true);
@@ -335,7 +332,7 @@ namespace Reflex
 		result->clear();
 		for (const auto& [view, targets] : window->self->captures)
 		{
-			if (is_capturing(view.get(), targets, View::CAPTURE_POINTER))
+			if (is_capturing_all(view.get(), targets, View::CAPTURE_POINTER))
 				result->emplace_back(view);
 		}
 	}
@@ -361,28 +358,24 @@ namespace Reflex
 	static void
 	extract_pointer (
 		PointerEvent* event, ExtractedPointerIDSet* extracteds,
-		const Pointer& pointer, uint view_index = 0)
+		const Pointer& pointer)
 	{
-		PointerEvent_add_pointer(event, pointer, [&](auto* p)
-		{
-			Pointer_set_view_index(p, view_index);
-		});
-
+		PointerEvent_add_pointer(event, pointer);
 		extracteds->insert(pointer.id());
 	}
 
 	static void
 	extract_targeted_pointers (
 		PointerEvent* event, ExtractedPointerIDSet* extracteds,
-		const TargetPointerMap& targets, const PointerMap& pointers)
+		const CaptureTargetIDList& targets, const PointerMap& pointers)
 	{
 		assert(event->empty());
 
-		for (auto& [pointer_id, data] : targets)
+		for (auto pointer_id : targets)
 		{
 			auto it = pointers.find(pointer_id);
 			if (it != pointers.end())
-				extract_pointer(event, extracteds, it->second, data.view_index);
+				extract_pointer(event, extracteds, it->second);
 		}
 	}
 

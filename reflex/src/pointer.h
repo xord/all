@@ -16,8 +16,6 @@ namespace Reflex
 
 	void Pointer_set_id (Pointer* it, Pointer::ID id);
 
-	void Pointer_set_view_index (Pointer* it, uint view_index);
-
 	void Pointer_add_flag (Pointer* it, uint flag);
 
 	void Pointer_remove_flag (Pointer* it, uint flag);
