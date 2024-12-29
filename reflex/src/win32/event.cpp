@@ -197,9 +197,8 @@ namespace Reflex
 				action,
 				get_touch_position(hwnd, touch),
 				get_modifiers(),
-				action == Pointer::MOVE,
 				action == Pointer::DOWN ? 1 : 0,
-				0,
+				action == Pointer::MOVE,
 				get_touch_time(touch));
 			Pointer_set_system_id(&pointer, touch.dwID);
 
