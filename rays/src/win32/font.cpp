@@ -132,7 +132,9 @@ namespace Rays
 
 		HDC hdc = (HDC) context;
 
-		if (!hdc || !str)
+		if (!hdc)
+			argument_error(__FILE__, __LINE__);
+		if (!str)
 			argument_error(__FILE__, __LINE__);
 
 		if (*str == '\0') return;

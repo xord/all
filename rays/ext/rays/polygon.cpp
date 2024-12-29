@@ -89,7 +89,9 @@ RUCY_DEF1(get_at, index)
 	int i    = to<int>(index);
 	if (i < 0) i += size;
 
-	if (i < 0 || size <= i)
+	if (i < 0)
+		index_error(__FILE__, __LINE__);
+	if (i >= size)
 		index_error(__FILE__, __LINE__);
 
 	return value((*THIS)[i]);

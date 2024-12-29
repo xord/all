@@ -117,7 +117,9 @@ namespace Rays
 	Color&
 	Color::reset (const void* pixel, const ColorSpace& cs)
 	{
-		if (!pixel || !cs)
+		if (!pixel)
+			argument_error(__FILE__, __LINE__);
+		if (!cs)
 			argument_error(__FILE__, __LINE__);
 
 		if (cs.is_float())
@@ -175,7 +177,9 @@ namespace Rays
 	static void
 	get_rgba (float* red, float* green, float* blue, float* alpha, const float* c)
 	{
-		if ((!red && !green && !blue && !alpha) || !c)
+		if (!red && !green && !blue && !alpha)
+			argument_error(__FILE__, __LINE__);
+		if (!c)
 			argument_error(__FILE__, __LINE__);
 
 		if (red)   *red   = c[0];
@@ -187,7 +191,9 @@ namespace Rays
 	static void
 	get_rgba (uchar* red, uchar* green, uchar* blue, uchar* alpha, const float* c)
 	{
-		if ((!red && !green && !blue && !alpha) || !c)
+		if (!red && !green && !blue && !alpha)
+			argument_error(__FILE__, __LINE__);
+		if (!c)
 			argument_error(__FILE__, __LINE__);
 
 		if (red)   *red   = Color::float2uchar(c[0]);
@@ -199,7 +205,9 @@ namespace Rays
 	void
 	Color::get (void* pixel, const ColorSpace& cs) const
 	{
-		if (!pixel || !cs)
+		if (!pixel)
+			argument_error(__FILE__, __LINE__);
+		if (!cs)
 			argument_error(__FILE__, __LINE__);
 
 		const float* c = array;

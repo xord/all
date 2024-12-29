@@ -154,7 +154,9 @@ namespace Rays
 	{
 		CGContextRef context = (CGContextRef) context_;
 
-		if (!context || !str)
+		if (!context)
+			argument_error(__FILE__, __LINE__);
+		if (!str)
 			argument_error(__FILE__, __LINE__);
 
 		if (*str == '\0') return;

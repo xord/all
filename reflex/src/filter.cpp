@@ -36,7 +36,9 @@ namespace Reflex
 		if (!self->shader)
 			return;
 
-		if (!painter || !image)
+		if (!painter)
+			argument_error(__FILE__, __LINE__);
+		if (!image)
 			argument_error(__FILE__, __LINE__);
 
 		painter->set_shader(self->shader);

@@ -1327,7 +1327,9 @@ namespace Reflex
 	void
 	View_call_key_event (View* view, KeyEvent* event)
 	{
-		if (!view || !event)
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
 			argument_error(__FILE__, __LINE__);
 
 		if (view->hidden()) return;
@@ -1417,7 +1419,9 @@ namespace Reflex
 	void
 	View_call_pointer_event (View* view, PointerEvent* event)
 	{
-		if (!view || !event)
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
 			argument_error(__FILE__, __LINE__);
 
 		if (view->hidden() || event->empty())
@@ -1440,7 +1444,9 @@ namespace Reflex
 	void
 	View_call_wheel_event (View* view, WheelEvent* event)
 	{
-		if (!view || !event)
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
 			argument_error(__FILE__, __LINE__);
 
 		if (view->hidden()) return;
@@ -1466,7 +1472,9 @@ namespace Reflex
 	void
 	View_call_contact_event (View* view, ContactEvent* event)
 	{
-		if (!view || !event)
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
 			argument_error(__FILE__, __LINE__);
 
 		ContactEvent e = event->dup();
@@ -1735,7 +1743,9 @@ namespace Reflex
 	void
 	View::add_child (View* child)
 	{
-		if (!child || child == this)
+		if (!child)
+			argument_error(__FILE__, __LINE__);
+		if (child == this)
 			argument_error(__FILE__, __LINE__);
 
 		bool found  = std::find(child_begin(), child_end(), child) != child_end();
@@ -1761,7 +1771,9 @@ namespace Reflex
 	void
 	View::remove_child (View* child)
 	{
-		if (!child || child == this)
+		if (!child)
+			argument_error(__FILE__, __LINE__);
+		if (child == this)
 			argument_error(__FILE__, __LINE__);
 
 		bool found  = std::find(child_begin(), child_end(), child) != child_end();

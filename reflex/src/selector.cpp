@@ -76,7 +76,9 @@ namespace Reflex
 	void
 	Selector::add_tag (const char* tag)
 	{
-		if (!tag || *tag == '\0')
+		if (!tag)
+			argument_error(__FILE__, __LINE__);
+		if (*tag == '\0')
 			argument_error(__FILE__, __LINE__);
 
 		iterator it = self->tags.find(tag);

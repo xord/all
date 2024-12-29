@@ -199,7 +199,9 @@ namespace Rays
 
 		Uniform (const char* name, const UniformValue* value)
 		{
-			if (!name || name[0] == '\0')
+			if (!name)
+				argument_error(__FILE__, __LINE__);
+			if (name[0] == '\0')
 				argument_error(__FILE__, __LINE__);
 
 			reset(value);

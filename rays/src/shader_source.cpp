@@ -29,7 +29,11 @@ namespace Rays
 
 		void compile (GLenum type_, const char* source_)
 		{
-			if (!is_valid_type(type_) || !source_ || !*source_)
+			if (!is_valid_type(type_))
+				argument_error(__FILE__, __LINE__);
+			if (!source_)
+				argument_error(__FILE__, __LINE__);
+			if (!*source_)
 				argument_error(__FILE__, __LINE__);
 
 			if (is_valid())

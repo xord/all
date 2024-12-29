@@ -128,7 +128,9 @@ namespace Rucy
 		}
 
 		int type = value_to<int>(*argv, convert);
-		if (type < 0 || Rays::CAP_MAX <= type)
+		if (type < 0)
+			argument_error(__FILE__, __LINE__, "invalid cap type -- %d", type);
+		if (type >= Rays::CAP_MAX)
 			argument_error(__FILE__, __LINE__, "invalid cap type -- %d", type);
 
 		return (Rays::CapType) type;
@@ -159,7 +161,9 @@ namespace Rucy
 		}
 
 		int type = value_to<int>(*argv, convert);
-		if (type < 0 || Rays::JOIN_MAX <= type)
+		if (type < 0)
+			argument_error(__FILE__, __LINE__, "invalid join type -- %d", type);
+		if (type >= Rays::JOIN_MAX)
 			argument_error(__FILE__, __LINE__, "invalid join type -- %d", type);
 
 		return (Rays::JoinType) type;
@@ -190,7 +194,9 @@ namespace Rucy
 		}
 
 		int mode = value_to<int>(*argv, convert);
-		if (mode < 0 || Rays::BLEND_MAX <= mode)
+		if (mode < 0)
+			argument_error(__FILE__, __LINE__, "invalid blend mode -- %d", mode);
+		if (mode >= Rays::BLEND_MAX)
 			argument_error(__FILE__, __LINE__, "invalid blend mode -- %d", mode);
 
 		return (Rays::BlendMode) mode;
@@ -221,7 +227,9 @@ namespace Rucy
 		}
 
 		int mode = value_to<int>(*argv, convert);
-		if (mode < 0 || Rays::TEXCOORD_MODE_MAX <= mode)
+		if (mode < 0)
+			argument_error(__FILE__, __LINE__, "invalid texcoord mode -- %d", mode);
+		if (mode >= Rays::TEXCOORD_MODE_MAX)
 			argument_error(__FILE__, __LINE__, "invalid texcoord mode -- %d", mode);
 
 		return (Rays::TexCoordMode) mode;
@@ -252,7 +260,9 @@ namespace Rucy
 		}
 
 		int wrap = value_to<int>(*argv, convert);
-		if (wrap < 0 || Rays::TEXCOORD_WRAP_MAX <= wrap)
+		if (wrap < 0)
+			argument_error(__FILE__, __LINE__, "invalid texcoord wrap -- %d", wrap);
+		if (wrap >= Rays::TEXCOORD_WRAP_MAX)
 			argument_error(__FILE__, __LINE__, "invalid texcoord wrap -- %d", wrap);
 
 		return (Rays::TexCoordWrap) wrap;

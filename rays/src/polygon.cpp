@@ -70,12 +70,10 @@ namespace Rays
 				if (!points_)
 					argument_error(__FILE__, __LINE__);
 
-				if (
-					!points.empty() &&
-					(!colors_ != !pcolors || !texcoords_ != !ptexcoords))
-				{
+				if (!points.empty() && !colors_ != !pcolors)
 					argument_error(__FILE__, __LINE__);
-				}
+				if (!points.empty() && !texcoords_ != !ptexcoords)
+					argument_error(__FILE__, __LINE__);
 
 				segments.emplace_back(points.size(), 0, polyline.hole());
 				points.insert(points.end(), points_, points_ + polyline.size());

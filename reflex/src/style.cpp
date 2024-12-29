@@ -202,7 +202,9 @@ namespace Reflex
 	void
 	StyleLength::reset (Type type, Value value)
 	{
-		if (type < NONE || TYPE_MAX <= type)
+		if (type < NONE)
+			argument_error(__FILE__, __LINE__);
+		if (type >= TYPE_MAX)
 			argument_error(__FILE__, __LINE__);
 
 		if (type == FIT && value != 1)
@@ -615,14 +617,18 @@ namespace Reflex
 	void
 	Style::set_flow (Flow main, Flow sub)
 	{
-		if (
-			main <  FLOW_NONE || FLOW_MAX <= main ||
-			sub  <  FLOW_NONE || FLOW_MAX <= sub  ||
-			(main != FLOW_NONE && (get_flow_dir(main) == get_flow_dir(sub))) ||
-			(main == FLOW_NONE && sub != FLOW_NONE))
-		{
+		if (main <  FLOW_NONE)
 			argument_error(__FILE__, __LINE__);
-		}
+		if (main >= FLOW_MAX)
+			argument_error(__FILE__, __LINE__);
+		if (sub  <  FLOW_NONE)
+			argument_error(__FILE__, __LINE__);
+		if (sub  >= FLOW_MAX)
+			argument_error(__FILE__, __LINE__);
+		if (main != FLOW_NONE && (get_flow_dir(main) == get_flow_dir(sub)))
+			argument_error(__FILE__, __LINE__);
+		if (main == FLOW_NONE && sub != FLOW_NONE)
+			argument_error(__FILE__, __LINE__);
 
 		self->set_flow(main, sub);
 

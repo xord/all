@@ -501,7 +501,9 @@ RUCY_DEF2(set_at, index, value)
 	CHECK;
 
 	int i = index.as_i();
-	if (i < 0 || 1 < i)
+	if (i < 0)
+		index_error(__FILE__, __LINE__);
+	if (i > 1)
 		index_error(__FILE__, __LINE__);
 
 	(*THIS)[i] = to<Rays::Point&>(value);
@@ -515,7 +517,9 @@ RUCY_DEF1(get_at, index)
 	CHECK;
 
 	int i = index.as_i();
-	if (i < 0 || 1 < i)
+	if (i < 0)
+		index_error(__FILE__, __LINE__);
+	if (i > 1)
 		index_error(__FILE__, __LINE__);
 
 	return value((*THIS)[i]);

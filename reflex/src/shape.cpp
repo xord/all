@@ -444,7 +444,9 @@ namespace Reflex
 	void
 	Shape_call_contact_event (Shape* shape, ContactEvent* event)
 	{
-		if (!shape || !event)
+		if (!shape)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
 			argument_error(__FILE__, __LINE__);
 
 		shape->on_contact(event);

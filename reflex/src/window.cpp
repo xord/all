@@ -36,7 +36,9 @@ namespace Reflex
 	void
 	Window_set_focus (Window* window, View* view)
 	{
-		if (!window || !view)
+		if (!window)
+			argument_error(__FILE__, __LINE__);
+		if (!view)
 			argument_error(__FILE__, __LINE__);
 
 		View* current = window->self->focus.get();
@@ -150,7 +152,9 @@ namespace Reflex
 	void
 	Window_call_draw_event (Window* window, DrawEvent* event)
 	{
-		if (!window || !event)
+		if (!window)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
 			argument_error(__FILE__, __LINE__);
 
 		Painter* painter = window->painter();

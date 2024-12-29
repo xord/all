@@ -25,16 +25,24 @@ namespace Rays
 
 		void create (int width_, int height_)
 		{
-			if (width_ <= 0 || height_ <= 0)
+			if (width_  <= 0)
+				argument_error(__FILE__, __LINE__);
+			if (height_ <= 0)
 				argument_error(__FILE__, __LINE__);
 
 			if (is_valid())
 			{
-				if (width != width_ || height == height_)
+				if (width  != width_)
 				{
 					argument_error(__FILE__, __LINE__,
 						"RenderBuffer is already created and "
-						"width/height parameters is not same as current width/height.");
+						"width parameters is not same as current width.");
+				}
+				if (height != height_)
+				{
+					argument_error(__FILE__, __LINE__,
+						"RenderBuffer is already created and "
+						"height parameters is not same as current height.");
 				}
 				return;
 			}

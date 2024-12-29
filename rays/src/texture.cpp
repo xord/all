@@ -111,7 +111,13 @@ namespace Rays
 		size_t width,
 		uchar* dest, size_t dest_stride, const uchar* src, size_t src_stride)
 	{
-		if (!dest || !src || dest_stride <= 0 || src_stride <= 0)
+		if (!dest)
+			argument_error(__FILE__, __LINE__);
+		if (!src)
+			argument_error(__FILE__, __LINE__);
+		if (dest_stride <= 0)
+			argument_error(__FILE__, __LINE__);
+		if ( src_stride <= 0)
 			argument_error(__FILE__, __LINE__);
 
 		while (width--)
@@ -230,7 +236,11 @@ namespace Rays
 
 	Texture::Texture (int width, int height, const ColorSpace& cs, bool smooth)
 	{
-		if (width <= 0 || height <= 0 || !cs)
+		if (width  <= 0)
+			argument_error(__FILE__, __LINE__);
+		if (height <= 0)
+			argument_error(__FILE__, __LINE__);
+		if (!cs)
 			argument_error(__FILE__, __LINE__);
 
 		setup_texture(self.get(), width, height, cs, smooth);
@@ -253,8 +263,10 @@ namespace Rays
 			argument_error(__FILE__, __LINE__);
 
 		int w = bitmap.width(), h = bitmap.height();
-		if (w != width() || h != height())
-			argument_error(__FILE__, __LINE__, "the size of bitmap does not match");
+		if (w != width())
+			argument_error(__FILE__, __LINE__, "the width of bitmap does not match");
+		if (h != height())
+			argument_error(__FILE__, __LINE__, "the height of bitmap does not match");
 
 		GLenum format, type;
 		ColorSpace_get_gl_format_and_type(&format, &type, bitmap.color_space());

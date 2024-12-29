@@ -159,7 +159,11 @@ namespace Rays
 	Point&
 	Point::operator /= (const This& rhs)
 	{
-		if (rhs.x == 0 || rhs.y == 0 || rhs.z == 0)
+		if (rhs.x == 0)
+			argument_error(__FILE__, __LINE__);
+		if (rhs.y == 0)
+			argument_error(__FILE__, __LINE__);
+		if (rhs.z == 0)
 			argument_error(__FILE__, __LINE__);
 
 		to_glm(*this) /= to_glm(rhs);
@@ -235,7 +239,11 @@ namespace Rays
 	Point
 	operator / (coord lhs, const Point& rhs)
 	{
-		if (rhs.x == 0 || rhs.y == 0 || rhs.z == 0)
+		if (rhs.x == 0)
+			argument_error(__FILE__, __LINE__);
+		if (rhs.y == 0)
+			argument_error(__FILE__, __LINE__);
+		if (rhs.z == 0)
 			argument_error(__FILE__, __LINE__);
 
 		return to_rays<Point>(lhs / to_glm(rhs));
@@ -253,7 +261,11 @@ namespace Rays
 	Point
 	operator / (const Point& lhs, const Point& rhs)
 	{
-		if (rhs.x == 0 || rhs.y == 0 || rhs.z == 0)
+		if (rhs.x == 0)
+			argument_error(__FILE__, __LINE__);
+		if (rhs.y == 0)
+			argument_error(__FILE__, __LINE__);
+		if (rhs.z == 0)
 			argument_error(__FILE__, __LINE__);
 
 		return to_rays<Point>(to_glm(lhs) / to_glm(rhs));

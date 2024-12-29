@@ -659,7 +659,9 @@ namespace Reflex
 	void
 	PointerEvent_update_for_child_view (PointerEvent* pthis, const View* child)
 	{
-		if (!pthis || !child)
+		if (!pthis)
+			argument_error(__FILE__, __LINE__);
+		if (!child)
 			argument_error(__FILE__, __LINE__);
 
 		const Bounds& frame = child->frame();
@@ -682,7 +684,9 @@ namespace Reflex
 	void
 	PointerEvent_update_for_capturing_view (PointerEvent* pthis, const View* view)
 	{
-		if (!pthis || !view)
+		if (!pthis)
+			argument_error(__FILE__, __LINE__);
+		if (!view)
 			argument_error(__FILE__, __LINE__);
 
 		for (auto& pointer : pthis->self->pointers)

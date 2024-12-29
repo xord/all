@@ -60,7 +60,11 @@ namespace Rays
 		int w, int h, const ColorSpace& cs,
 		const void* pixels = NULL, bool clear_pixels = true, HDC hdc = NULL)
 	{
-		if (w <= 0 || h <= 0 || !cs)
+		if (w <= 0)
+			argument_error(__FILE__, __LINE__);
+		if (h <= 0)
+			argument_error(__FILE__, __LINE__);
+		if (!cs)
 			argument_error(__FILE__, __LINE__);
 
 		Bitmap::Data* self = bitmap->self.get();
@@ -134,7 +138,13 @@ namespace Rays
 	Bitmap_draw_string (
 		Bitmap* bitmap, const RawFont& font, const char* str, coord x, coord y)
 	{
-		if (!bitmap || !*bitmap || !font || !str)
+		if (!bitmap)
+			argument_error(__FILE__, __LINE__);
+		if (!*bitmap)
+			argument_error(__FILE__, __LINE__);
+		if (!font)
+			argument_error(__FILE__, __LINE__);
+		if (!str)
 			argument_error(__FILE__, __LINE__);
 
 		if (*str == '\0') return;

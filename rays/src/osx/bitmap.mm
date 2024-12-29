@@ -125,7 +125,11 @@ namespace Rays
 		int w, int h, const ColorSpace& cs,
 		const void* pixels = NULL, bool clear_pixels = true)
 	{
-		if (w <= 0 || h <= 0 || !cs)
+		if (w <= 0)
+			argument_error(__FILE__, __LINE__);
+		if (h <= 0)
+			argument_error(__FILE__, __LINE__);
+		if (!cs)
 			argument_error(__FILE__, __LINE__);
 
 		Bitmap::Data* self = bitmap->self.get();
@@ -178,7 +182,9 @@ namespace Rays
 	{
 		if (width == 0 || height == 0) return;
 
-		if (!bitmap || !image)
+		if (!bitmap)
+			argument_error(__FILE__, __LINE__);
+		if (!image)
 			argument_error(__FILE__, __LINE__);
 
 		CGContextRef context = bitmap->self->get_context();
@@ -196,7 +202,13 @@ namespace Rays
 	Bitmap_draw_string (
 		Bitmap* bitmap, const RawFont& font, const char* str, coord x, coord y)
 	{
-		if (!bitmap || !*bitmap || !font || !str)
+		if (!bitmap)
+			argument_error(__FILE__, __LINE__);
+		if (!*bitmap)
+			argument_error(__FILE__, __LINE__);
+		if (!font)
+			argument_error(__FILE__, __LINE__);
+		if (!str)
 			argument_error(__FILE__, __LINE__);
 
 		if (*str == '\0') return;
@@ -260,7 +272,9 @@ namespace Rays
 	Bitmap
 	Bitmap_load (const char* path_)
 	{
-		if (!path_ || path_[0] == '\0')
+		if (!path_)
+			argument_error(__FILE__, __LINE__);
+		if (path_[0] == '\0')
 			argument_error(__FILE__, __LINE__);
 
 		NSString* path = [NSString stringWithUTF8String: path_];

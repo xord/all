@@ -332,7 +332,9 @@ namespace Rays
 			const TextureInfo* texinfo = NULL,
 			const Shader* shader       = NULL)
 		{
-			if (!points || npoints <= 0)
+			if (!points)
+				argument_error(__FILE__, __LINE__);
+			if (npoints <= 0)
 				argument_error(__FILE__, __LINE__);
 
 			if (!painting)

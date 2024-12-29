@@ -72,7 +72,9 @@ scan_type_and_value (
 {
 	assert(type && value);
 
-	if (!str || *str == '\0')
+	if (!str)
+		argument_error(__FILE__, __LINE__);
+	if (*str == '\0')
 		argument_error(__FILE__, __LINE__);
 
 	char buf[101];

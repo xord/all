@@ -50,7 +50,9 @@ namespace Rays
 	bool
 	Bounds::is_intersect (const Bounds& other, int dimension) const
 	{
-		if (dimension < 1 || 3 < dimension)
+		if (dimension < 1)
+			argument_error(__FILE__, __LINE__);
+		if (dimension > 3)
 			argument_error(__FILE__, __LINE__);
 
 		Point size = (*this & other).size();
@@ -69,7 +71,9 @@ namespace Rays
 	bool
 	Bounds::is_include (const Point& point, int dimension) const
 	{
-		if (dimension < 1 || 3 < dimension)
+		if (dimension < 1)
+			argument_error(__FILE__, __LINE__);
+		if (dimension > 3)
 			argument_error(__FILE__, __LINE__);
 
 		const Point &pos = position(), &size_ = size();
