@@ -135,9 +135,8 @@ namespace Reflex
 			get_mouse_action(msg),
 			Point(GET_X_LPARAM(lp), GET_Y_LPARAM(lp)),
 			get_modifiers(),
-			is_mouse_dragging(msg, wp),
 			get_mouse_click_count(msg),
-			0,
+			is_mouse_dragging(msg, wp),
 			Xot::time()));
 	}
 
