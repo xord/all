@@ -144,8 +144,7 @@
 		if ([NSApp respondsToSelector: @selector(setAppleMenu:)])
 			[NSApp performSelector: @selector(setAppleMenu:) withObject: menu];
 
-		NSString* name = !application->self->name.empty() ?
-			[NSString stringWithUTF8String: application->self->name.c_str()] : @"";
+		NSString* name = [NSString stringWithUTF8String: application->name()];
 		if ([name length] > 0)
 			name = [@" " stringByAppendingString: name];
 

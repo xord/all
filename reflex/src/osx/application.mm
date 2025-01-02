@@ -86,7 +86,10 @@ namespace Reflex
 	const char*
 	Application::name () const
 	{
-		return self->name.c_str();
+		if (!self->name.empty())
+			return self->name.c_str();
+		else
+			return NSProcessInfo.processInfo.processName.UTF8String;
 	}
 
 	void
