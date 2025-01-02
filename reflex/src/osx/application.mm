@@ -4,6 +4,7 @@
 
 #import <AppKit/NSApplication.h>
 #include "reflex/exception.h"
+#include "reflex/debug.h"
 #import "app_delegate.h"
 
 
