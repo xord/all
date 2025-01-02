@@ -43,11 +43,11 @@ namespace Reflex
 	static ReflexAppDelegate*
 	setup_app_delegate (NSApplication* app)
 	{
-		id<NSApplicationDelegate> delegate = [app delegate];
+		id<NSApplicationDelegate> delegate = app.delegate;
 		if (!delegate)
 		{
-			delegate = [[[ReflexAppDelegate alloc] init] autorelease];
-			[app setDelegate: delegate];
+			delegate     = [[[ReflexAppDelegate alloc] init] autorelease];
+			app.delegate = delegate;
 		}
 
 		if (![delegate isKindOfClass: ReflexAppDelegate.class])
@@ -59,11 +59,11 @@ namespace Reflex
 	void
 	Application::start ()
 	{
-		NSApplication* app          = [NSApplication sharedApplication];
+		NSApplication* app          = NSApplication.sharedApplication;
 		ReflexAppDelegate* delegate = setup_app_delegate(app);
 		[delegate bind: this];
 
-		if (![app isRunning])
+		if (!app.isRunning)
 			[app run];
 		else
 			[delegate callOnStart];
