@@ -1409,17 +1409,13 @@ namespace Reflex
 	}
 
 	static void
-	unregister_captures (View* view, const PointerEvent& event)
+	unregister_captures (Window* window, View* view, const PointerEvent& event)
 	{
-		Window* win = view->window();
-		if (!win)
-			invalid_state_error(__FILE__, __LINE__);
-
 		PointerEvent_each_pointer(&event, [&](const auto& pointer)
 		{
 			auto action = pointer.action();
 			if (action == Pointer::UP || action == Pointer::CANCEL)
-				Window_unregister_capture(win, view, pointer.id());
+				Window_unregister_capture(window, view, pointer.id());
 		});
 	}
 
@@ -1434,6 +1430,10 @@ namespace Reflex
 		if (view->hidden() || event->empty())
 			return;
 
+		Window* win = view->window();
+		if (!win)
+			invalid_state_error(__FILE__, __LINE__);
+
 		PointerEvent e = event->dup();
 
 		if (!e.is_captured())
@@ -1445,7 +1445,7 @@ namespace Reflex
 			call_pointer_events(view, &e);
 		}
 
-		unregister_captures(view, e);
+		unregister_captures(win, view, e);
 	}
 
 	void
