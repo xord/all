@@ -903,13 +903,21 @@ RUCY_DEF0(get_gravity_scale)
 RUCY_END
 
 static
-RUCY_DEFN(update_physics)
+RUCY_DEF1(create_world, pixels_per_meter)
 {
 	CHECK;
-	check_arg_count(__FILE__, __LINE__, "View#update_physics", argc, 0, 1);
+	THIS->create_world(to<float>(pixels_per_meter));
+}
+RUCY_END
+
+static
+RUCY_DEFN(update_world)
+{
+	CHECK;
+	check_arg_count(__FILE__, __LINE__, "View#update_world", argc, 0, 1);
 
 	float duration = argc >= 1 ? to<float>(argv[0]) : 0;
-	THIS->update_physics(duration);
+	THIS->update_world(duration);
 	return self;
 }
 RUCY_END
@@ -1302,7 +1310,8 @@ Init_reflex_view ()
 	cView.define_method("gravity_scale=", set_gravity_scale);
 	cView.define_method("gravity_scale",  get_gravity_scale);
 
-	cView.define_method("update_physics", update_physics);
+	cView.define_method("create_world", create_world);
+	cView.define_method("update_world", update_world);
 	cView.define_method("meter2pixel", meter2pixel);
 	cView.define_method("gravity=", set_gravity);
 	cView.define_method("gravity",  get_gravity);

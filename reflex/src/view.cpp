@@ -289,13 +289,20 @@ namespace Reflex
 
 		World* child_world (View* view, bool create = true)
 		{
-			if (!pchild_world && create)
-			{
-				pchild_world.reset(new World());
-				create_walls(view);
-			}
-
+			if (!pchild_world && create) create_world(view);
 			return pchild_world.get();
+		}
+
+		void create_world (View* view, float pixels_per_meter = 0)
+		{
+			if (pchild_world)
+				invalid_state_error(__FILE__, __LINE__);
+
+			if (pixels_per_meter == 0)
+				pixels_per_meter = World::DEFAULT_PIXELS_PER_METER;
+
+			pchild_world.reset(new World(pixels_per_meter));
+			create_walls(view);
 		}
 
 		void create_walls (View* view)
@@ -2526,7 +2533,13 @@ namespace Reflex
 	}
 
 	void
-	View::update_physics (float duration)
+	View::create_world (float pixels_per_meter)
+	{
+		self->create_world(this, pixels_per_meter);
+	}
+
+	void
+	View::update_world (float duration)
 	{
 		World* w = self->pchild_world.get();
 		if (w) w->update(duration);

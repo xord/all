@@ -309,7 +309,9 @@ namespace Reflex
 			//
 			// for physics child world
 			//
-			virtual void update_physics (float duration = 0);
+			virtual void create_world (float pixels_per_meter);
+
+			virtual void update_world (float duration = 0);
 
 			virtual float meter2pixel (float meter = 1, bool create_world = true);
 

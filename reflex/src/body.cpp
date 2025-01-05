@@ -284,24 +284,30 @@ namespace Reflex
 	void
 	Body_copy_attributes (Body* to, const Body& from)
 	{
-		if (!to)
-			return;
-
-		if (to->self->ppm != from.self->ppm)
-			physics_error(__FILE__, __LINE__);
+		if (!to) return;
 
 		      b2Body* b2to   = Body_get_b2ptr(to);
 		const b2Body* b2from = Body_get_b2ptr(&from);
 		assert(b2to && b2from);
 
 		b2to->SetType(           b2from->GetType());
-		b2to->SetTransform(      b2from->GetPosition(), b2from->GetAngle());
 		b2to->SetLinearVelocity( b2from->GetLinearVelocity());
 		b2to->SetAngularVelocity(b2from->GetAngularVelocity());
 		b2to->SetLinearDamping(  b2from->GetLinearDamping());
 		b2to->SetAngularDamping( b2from->GetAngularDamping());
 		b2to->SetGravityScale(   b2from->GetGravityScale());
 		b2to->SetBullet(         b2from->IsBullet());
+
+		float ppm_to   = to->self->ppm;
+		float ppm_from = from.self->ppm;
+		if (ppm_to == ppm_from)
+			b2to->SetTransform(b2from->GetPosition(), b2from->GetAngle());
+		else
+		{
+			auto pos = b2from->GetPosition();
+			pos *= ppm_from / ppm_to;
+			b2to->SetTransform(pos, b2from->GetAngle());
+		}
 	}
 
 	Body*
