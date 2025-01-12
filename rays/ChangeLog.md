@@ -1,6 +1,12 @@
 # rays ChangeLog
 
 
+## [v0.3.1] - 2025-01-13
+
+- Update LICENSE
+- Add smooth flag for Image
+
+
 ## [v0.3] - 2024-07-06
 
 - Support Windows

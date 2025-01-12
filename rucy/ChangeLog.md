@@ -1,6 +1,12 @@
 # rucy ChangeLog
 
 
+## [v0.3.1] - 2025-01-13
+
+- Update LICENSE
+- is_kind_of() -> is_a()
+
+
 ## [v0.3] - 2024-07-06
 
 - Support Windows

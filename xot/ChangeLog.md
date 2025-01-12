@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.3.1] - 2025-01-13
+
+- Update LICENSE
+
+
 ## [v0.3] - 2024-07-06
 
 - Support Windows

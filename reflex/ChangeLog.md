@@ -1,6 +1,18 @@
 # reflex ChangeLog
 
 
+## [v0.3.1] - 2025-01-13
+
+- Add View#create_world(pixels_per_meter)
+- Rename View#update_physics to View#update_world
+- Delete Pointer#view_index
+- Update LICENSE
+
+- Fix crash in unregister_captures() called immediately after deleting a view
+- Fix that incorrect determination whether the pointer is in a view or not
+- Fix a bug that caused some pointer events to be ignored in zoomed views
+
+
 ## [v0.3] - 2024-07-06
 
 - Support Windows
