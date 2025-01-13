@@ -41,17 +41,23 @@ begin
     .map {|path| [path[%r|(\w+)/VERSION$|, 1], get_version(path)]}
     .to_h
     .transform_values {|ver| ver.split('.').map &:to_i}
-    .transform_values {|nums| nums.slice(0, nums.first < 1 ? 3 : 2).join('.')}
-
+    .transform_values {|nums|
+      [nums, nums.slice(0, nums.first < 1 ? 3 : 2)]
+        .map {|a| a.join '.'}
+    }
 
   gemspec_paths.each do |path|
     gemspec = File.read path
     old     = gemspec.dup
 
-    versions.each do |name, ver|
+    versions.each do |name, (ver, min_ver)|
       gem = RENAMES[name.to_sym].then {|s| s || name}
-      re  = /add_runtime_dependency.*['"]#{gem}['"].*['"]\s*~>\s*[\d\.]+\s*['"]/
-      gemspec.sub!(re) {|s| s.sub /[\d\.]+/, ver}
+      re  = /add_dependency.*['"]#{gem}['"].*['"]\s*~>\s*[\d\.]+\s*['"]\s*,\s*['"]\s*>=\s*[\d\.]+\s*['"]/
+      gemspec.sub!(re) do |line|
+        line
+          .sub(/~>\s*([\d\.]+)/) {|s| s.sub $1, min_ver}
+          .sub(/>=\s*([\d\.]+)/) {|s| s.sub $1, ver}
+      end
     end
 
     if gemspec != old
