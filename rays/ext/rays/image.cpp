@@ -27,7 +27,7 @@ RUCY_DEF3(initialize, args, pixel_density, smooth)
 	RUCY_CHECK_OBJ(Rays::Image, self);
 
 	size_t argc = args.size();
-	check_arg_count(__FILE__, __LINE__, "Image#initialize", argc, 1, 2, 3);
+	check_arg_count(__FILE__, __LINE__, "Image#initialize!", argc, 1, 2, 3);
 
 	float pd = to<float>(pixel_density);
 	if (args[0].is_a(Rays::bitmap_class()))
