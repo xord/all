@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.3.2] - 2025-01-14
+
+- Update workflow files
+
+
 ## [v0.3.1] - 2025-01-13
 
 - Update LICENSE
