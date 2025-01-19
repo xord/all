@@ -250,7 +250,7 @@ module Xot
     def cxxflags(warnings = true)
       cflags   = env :CFLAGS,   RbConfig::CONFIG['CFLAGS']
       cxxflags = env :CXXFLAGS, RbConfig::CONFIG['CXXFLAGS']
-      cflags   = cflags.gsub(/-W[\w\-]+/, '') + ' -w' unless warnings
+      cflags   = cflags.gsub(/-W[\w\-\=]+/, '') + ' -w' unless warnings
       make_cflags "#{cflags} #{cxxflags}"
     end
 
