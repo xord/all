@@ -69,11 +69,5 @@ namespace Reflex
 		return true;
 	}
 
-	bool
-	Application::operator ! () const
-	{
-		return !operator bool();
-	}
-
 
 }// Reflex
