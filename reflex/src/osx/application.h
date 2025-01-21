@@ -4,7 +4,7 @@
 #define __REFLEX_SRC_OSX_APPLICATION_H__
 
 
-#include "reflex/application.h"
+#include "../application.h"
 
 
 @class ReflexAppDelegate;
@@ -14,16 +14,19 @@ namespace Reflex
 {
 
 
-	struct Application::Data
+	struct ApplicationData : public Application::Data
 	{
 
 		ReflexAppDelegate* delegate;
 
-		String name;
+		ApplicationData ();
 
-		Data ();
+	};// ApplicationData
 
-	};// Application::Data
+
+	      ApplicationData& Application_get_data (      Application* app);
+
+	const ApplicationData& Application_get_data (const Application* app);
 
 
 }// Reflex

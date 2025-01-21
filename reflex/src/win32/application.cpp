@@ -1,4 +1,4 @@
-#include "reflex/application.h"
+#include "../application.h"
 
 
 #include <xot/windows.h>
@@ -9,41 +9,12 @@ namespace Reflex
 {
 
 
-	namespace global
+	Application::Data*
+	Application_create_data ()
 	{
-
-		static Application* instance = NULL;
-
-	}// global
-
-
-	Application*
-	app ()
-	{
-		return global::instance;
+		return new Application::Data();
 	}
 
-
-	struct Application::Data
-	{
-
-		String name;
-
-	};// Application::Data
-
-
-	Application::Application ()
-	{
-		if (global::instance)
-			reflex_error(__FILE__, __LINE__, "multiple application instances.");
-
-		global::instance = this;
-	}
-
-	Application::~Application ()
-	{
-		global::instance = NULL;
-	}
 
 	void
 	Application::start ()
@@ -66,21 +37,6 @@ namespace Reflex
 	Application::quit ()
 	{
 		PostQuitMessage(0);
-	}
-
-	void
-	Application::set_name (const char* name)
-	{
-		if (!name)
-			argument_error(__FILE__, __LINE__);
-
-		self->name = name;
-	}
-
-	const char*
-	Application::name () const
-	{
-		return self->name.c_str();
 	}
 
 	void
@@ -111,12 +67,6 @@ namespace Reflex
 	Application::operator bool () const
 	{
 		return true;
-	}
-
-	bool
-	Application::operator ! () const
-	{
-		return !operator bool();
 	}
 
 
