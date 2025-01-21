@@ -23,6 +23,10 @@ module Reflex
       @start_block = block if block
     end
 
+    def windows()
+      to_enum :each_window
+    end
+
     def self.start(*args, &block)
       new(*args, &block).start
     end

@@ -24,6 +24,29 @@ namespace Reflex
 	}
 
 
+	void
+	Application_add_window (Application* app, Window* window)
+	{
+		app->self->windows.push_back(window);
+	}
+
+	void
+	Application_remove_window(Application* app, Window* window)
+	{
+		auto it = std::find(
+			app->self->windows.begin(), app->self->windows.end(), window);
+		if (it == app->self->windows.end()) return;
+
+		app->self->windows.erase(it);
+	}
+
+	size_t
+	Application_count_windows (Application* app)
+	{
+		return app->self->windows.size();
+	}
+
+
 	Application::Application ()
 	:	self(Application_create_data())
 	{
@@ -51,6 +74,30 @@ namespace Reflex
 	Application::name () const
 	{
 		return self->name.c_str();
+	}
+
+	Application::window_iterator
+	Application::window_begin ()
+	{
+		return self->windows.begin();
+	}
+
+	Application::const_window_iterator
+	Application::window_begin () const
+	{
+		return self->windows.begin();
+	}
+
+	Application::window_iterator
+	Application::window_end ()
+	{
+		return self->windows.end();
+	}
+
+	Application::const_window_iterator
+	Application::window_end () const
+	{
+		return self->windows.end();
 	}
 
 	bool

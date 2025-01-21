@@ -1,6 +1,7 @@
 #include "reflex/ruby/application.h"
 
 
+#include "reflex/ruby/window.h"
 #include "defs.h"
 
 
@@ -53,6 +54,18 @@ RUCY_DEF0(get_name)
 {
 	CHECK;
 	return value(THIS->name());
+}
+RUCY_END
+
+static
+RUCY_DEF0(each_window)
+{
+	CHECK;
+
+	Value ret;
+	for (auto it = THIS->window_begin(), end = THIS->window_end(); it != end; ++it)
+		ret = rb_yield(value(it->get()));
+	return ret;
 }
 RUCY_END
 
@@ -121,6 +134,7 @@ Init_reflex_application ()
 	cApplication.define_method("quit",  quit);
 	cApplication.define_method("name=", set_name);
 	cApplication.define_method("name",  get_name);
+	cApplication.define_method("each_window", each_window);
 	cApplication.define_method("on_start", on_start);
 	cApplication.define_method("on_quit",  on_quit);
 	cApplication.define_method("on_motion", on_motion);

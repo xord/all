@@ -6,6 +6,7 @@
 #import <Cocoa/Cocoa.h>
 #include <rays/rays.h>
 #include "reflex/exception.h"
+#include "../application.h"
 #include "../view.h"
 #include "../pointer.h"
 #include "event.h"
@@ -119,6 +120,8 @@ move_to_main_screen_origin (NativeWindow* window)
 
 			ptr_for_rebind->Xot::template RefCountable<>::release();
 			ptr_for_rebind = NULL;
+
+			Application_add_window(Reflex::app(), pwindow);
 		}
 	}
 
@@ -126,6 +129,8 @@ move_to_main_screen_origin (NativeWindow* window)
 	{
 		[self rebind];
 		if (!pwindow) return;
+
+		Application_remove_window(Reflex::app(), pwindow);
 
 		Window_get_data(pwindow).native = nil;
 
