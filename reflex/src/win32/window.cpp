@@ -1,4 +1,4 @@
-#include "../window.h"
+#include "window.h"
 
 
 #include <assert.h>
@@ -26,8 +26,6 @@ namespace Reflex
 	static const char* WINDOWCLASS   = "Reflex:WindowClass";
 
 	static const char* USERDATA_PROP = "Reflex:Window:HWND";
-
-	enum {UPDATE_TIMER_ID = 99999};
 
 
 	struct WindowData : public Window::Data
@@ -151,8 +149,8 @@ namespace Reflex
 		win->release();
 	}
 
-	static void
-	update (Window* win)
+	void
+	Window_update (Window* win)
 	{
 		WindowData* self = get_data(win);
 
@@ -434,13 +432,6 @@ namespace Reflex
 				break;
 			}
 
-			case WM_TIMER:
-			{
-				if (wp == UPDATE_TIMER_ID)
-					update(win);
-				return 0;
-			}
-
 			case WM_SYSCOMMAND:
 			{
 #if 0
@@ -555,28 +546,6 @@ namespace Reflex
 		create_window(window);
 	}
 
-	static void
-	start_timer (HWND hwnd, UINT id, UINT interval)
-	{
-		if (!hwnd)
-			argument_error(__FILE__, __LINE__);
-
-		if (!SetTimer(hwnd, id, interval, NULL))
-			system_error(__FILE__, __LINE__);
-	}
-
-	static void
-	stop_timer (HWND hwnd, UINT id)
-	{
-		if (!hwnd)
-			argument_error(__FILE__, __LINE__);
-
-		if (id == 0) return;
-
-		if (!KillTimer(hwnd, id))
-			system_error(__FILE__, __LINE__);
-	}
-
 	void
 	Window_show (Window* window)
 	{
@@ -589,8 +558,6 @@ namespace Reflex
 			self->hwnd, HWND_TOP, 0, 0, 0, 0,
 			SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE);
 		UpdateWindow(self->hwnd);
-
-		start_timer(self->hwnd, UPDATE_TIMER_ID, 1000 / 60);
 	}
 
 	void
@@ -604,8 +571,6 @@ namespace Reflex
 		SetWindowPos(
 			self->hwnd, NULL, 0, 0, 0, 0,
 			SWP_HIDEWINDOW | SWP_NOMOVE | SWP_NOSIZE);
-
-		stop_timer(self->hwnd, UPDATE_TIMER_ID);
 	}
 
 	void
