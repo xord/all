@@ -1,6 +1,7 @@
 #include "application.h"
 
 
+#include <algorithm>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 
