@@ -12,33 +12,33 @@ namespace Reflex
 {
 
 
-	namespace global
+	Application::Data*
+	Application_create_data ()
 	{
+		return new ApplicationData();
+	}
 
-		static Application* instance = NULL;
-
-	}// global
-
-
-	Application*
-	app ()
+	ApplicationData&
+	Application_get_data (Application* app)
 	{
-		return global::instance;
+		if (!app)
+			argument_error(__FILE__, __LINE__);
+
+		return (ApplicationData&) *app->self;
+	}
+
+	const ApplicationData&
+	Application_get_data (const Application* app)
+	{
+		return Application_get_data(const_cast<Application*>(app));
 	}
 
 
-	Application::Application ()
+	ApplicationData::ApplicationData ()
+	:	delegate(nil)
 	{
-		if (global::instance)
-			reflex_error(__FILE__, __LINE__, "multiple application instances.");
-
-		global::instance = this;
 	}
 
-	Application::~Application ()
-	{
-		global::instance = NULL;
-	}
 
 	static ReflexAppDelegate*
 	setup_app_delegate (NSApplication* app)
@@ -76,21 +76,6 @@ namespace Reflex
 	}
 
 	void
-	Application::set_name (const char* name)
-	{
-		if (!name)
-			argument_error(__FILE__, __LINE__);
-
-		self->name = name;
-	}
-
-	const char*
-	Application::name () const
-	{
-		return self->name.c_str();
-	}
-
-	void
 	Application::on_start (Event* e)
 	{
 	}
@@ -119,18 +104,6 @@ namespace Reflex
 	Application::operator bool () const
 	{
 		return true;
-	}
-
-	bool
-	Application::operator ! () const
-	{
-		return !operator bool();
-	}
-
-
-	Application::Data::Data ()
-	:	delegate(nil)
-	{
 	}
 
 

@@ -45,10 +45,11 @@
 		if (!app)
 			Reflex::argument_error(__FILE__, __LINE__);
 
-		if (app->self->delegate)
+		Reflex::ApplicationData& data = Reflex::Application_get_data(app);
+		if (data.delegate)
 			Reflex::invalid_state_error(__FILE__, __LINE__);
 
-		app->self->delegate = [self retain];
+		data.delegate = [self retain];
 		app->retain();
 
 		application = app;
@@ -58,10 +59,11 @@
 	{
 		if (!application) return;
 
-		if (application->self->delegate)
+		Reflex::ApplicationData& data = Reflex::Application_get_data(application);
+		if (data.delegate)
 		{
-			[application->self->delegate release];
-			application->self->delegate = nil;
+			[data.delegate release];
+			data.delegate = nil;
 		}
 
 		application->release();
