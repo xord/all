@@ -12,6 +12,7 @@
 #include <rays/painter.h>
 #include "reflex/window.h"
 #include "reflex/view.h"
+#include "application.h"
 #include "pointer.h"
 
 
@@ -74,6 +75,13 @@ namespace Reflex
 
 
 	Window::Data* Window_create_data ();
+
+	void Window_register   (Window* win);
+
+	void Window_unregister (Window* win);
+
+	Application::WindowList& Window_all ();
+
 
 	uint Window_default_flags ();
 

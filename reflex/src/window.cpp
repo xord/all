@@ -22,6 +22,37 @@ namespace Reflex
 	using CaptureTargetIDList   = Window::Data::CaptureTargetIDList;
 
 
+	void
+	Window_register (Window* win)
+	{
+		auto& all = Window_all();
+
+		auto it = std::find(all.begin(), all.end(), win);
+		if (it != all.end())
+			invalid_state_error(__FILE__, __LINE__);
+
+		all.push_back(win);
+	}
+
+	void
+	Window_unregister (Window* win)
+	{
+		auto& all = Window_all();
+
+		auto it = std::find(all.begin(), all.end(), win);
+		if (it == all.end()) return;
+
+		all.erase(it);
+	}
+
+	Application::WindowList&
+	Window_all ()
+	{
+		static Application::WindowList windows;
+		return windows;
+	}
+
+
 	Window::Data::Data ()
 	:	flags(Window_default_flags())
 	{

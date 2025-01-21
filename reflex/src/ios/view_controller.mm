@@ -195,6 +195,8 @@ ReflexViewController_get_show_fun ()
 
 			ptr_for_rebind->Xot::template RefCountable<>::release();
 			ptr_for_rebind = NULL;
+
+			Window_register(pwindow);
 		}
 	}
 
@@ -202,6 +204,8 @@ ReflexViewController_get_show_fun ()
 	{
 		[self rebind];
 		if (!pwindow) return;
+
+		Window_unregister(pwindow);
 
 		Window_get_data(pwindow).view_controller = nil;
 

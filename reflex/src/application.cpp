@@ -3,6 +3,7 @@
 
 #include "reflex/exception.h"
 #include "reflex/debug.h"
+#include "window.h"
 
 
 namespace Reflex
@@ -51,6 +52,30 @@ namespace Reflex
 	Application::name () const
 	{
 		return self->name.c_str();
+	}
+
+	Application::window_iterator
+	Application::window_begin ()
+	{
+		return Window_all().begin();
+	}
+
+	Application::const_window_iterator
+	Application::window_begin () const
+	{
+		return Window_all().begin();
+	}
+
+	Application::window_iterator
+	Application::window_end ()
+	{
+		return Window_all().end();
+	}
+
+	Application::const_window_iterator
+	Application::window_end () const
+	{
+		return Window_all().end();
 	}
 
 	bool

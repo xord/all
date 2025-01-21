@@ -119,6 +119,8 @@ move_to_main_screen_origin (NativeWindow* window)
 
 			ptr_for_rebind->Xot::template RefCountable<>::release();
 			ptr_for_rebind = NULL;
+
+			Window_register(pwindow);
 		}
 	}
 
@@ -126,6 +128,8 @@ move_to_main_screen_origin (NativeWindow* window)
 	{
 		[self rebind];
 		if (!pwindow) return;
+
+		Window_unregister(pwindow);
 
 		Window_get_data(pwindow).native = nil;
 

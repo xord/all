@@ -8,7 +8,6 @@
 #include <xot/windows.h>
 #include <rays/rays.h>
 #include "reflex/defs.h"
-#include "reflex/application.h"
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "../view.h"
@@ -458,8 +457,6 @@ namespace Reflex
 	static LRESULT CALLBACK
 	wndproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
-		static int window_total = 0;
-
 		Window* win = NULL;
 		if (msg == WM_NCCREATE)
 		{
@@ -467,7 +464,7 @@ namespace Reflex
 			win = (Window*) cs->lpCreateParams;
 			setup_window(win, hwnd);
 
-			++window_total;
+			Window_register(win);
 		}
 
 		if (!win)
@@ -477,9 +474,11 @@ namespace Reflex
 
 		if (msg == WM_NCDESTROY)
 		{
+			Window_unregister(win);
+
 			cleanup_window(win);
 
-			if (--window_total == 0)
+			if (Window_all().empty())
 				Reflex::app()->quit();
 		}
 

@@ -4,9 +4,11 @@
 #define __REFLEX_APPLICATION_H__
 
 
+#include <vector>
 #include <xot/ref.h>
 #include <xot/pimpl.h>
 #include <reflex/defs.h>
+#include <reflex/window.h>
 #include <reflex/event.h>
 
 
@@ -23,6 +25,12 @@ namespace Reflex
 
 			typedef Xot::Ref<This> Ref;
 
+			typedef std::vector<Window::Ref> WindowList;
+
+			typedef WindowList::      iterator       window_iterator;
+
+			typedef WindowList::const_iterator const_window_iterator;
+
 			Application ();
 
 			virtual void start ();
@@ -32,6 +40,14 @@ namespace Reflex
 			virtual void    set_name (const char* name);
 
 			virtual const char* name () const;
+
+			virtual       window_iterator window_begin ();
+
+			virtual const_window_iterator window_begin () const;
+
+			virtual       window_iterator window_end ();
+
+			virtual const_window_iterator window_end () const;
 
 			virtual void on_start (Event* e);
 
