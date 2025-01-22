@@ -23,6 +23,8 @@ namespace Rays
 
 	void activate_offscreen_context ();
 
+	String get_renderer_info ();
+
 
 }// Rays
 

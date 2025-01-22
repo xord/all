@@ -72,6 +72,13 @@ RUCY_DEF0(fin)
 }
 RUCY_END
 
+static
+RUCY_DEF0(renderer_info)
+{
+	return value(Rays::get_renderer_info());
+}
+RUCY_END
+
 
 static Module mRays;
 
@@ -82,6 +89,7 @@ Init_rays ()
 
 	mRays.define_singleton_method("init!", init);
 	mRays.define_singleton_method("fin!", fin);
+	mRays.define_singleton_method("renderer_info", renderer_info);
 
 	for (auto it = CAP_TYPES.begin(); it != CAP_TYPES.end(); ++it)
 		mRays.define_const(it->name, it->value);
