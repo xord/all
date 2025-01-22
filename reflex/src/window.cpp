@@ -25,11 +25,13 @@ namespace Reflex
 	void
 	Window_register (Window* win)
 	{
+		auto& all = Window_all();
+
 		auto it = std::find(all.begin(), all.end(), win);
 		if (it != all.end())
 			invalid_state_error(__FILE__, __LINE__);
 
-		Window_all().push_back(win);
+		all.push_back(win);
 	}
 
 	void
