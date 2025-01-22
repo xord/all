@@ -1,6 +1,7 @@
 #include "shader_source.h"
 
 
+#include <regex>
 #include "rays/exception.h"
 #include "rays/debug.h"
 
@@ -39,8 +40,11 @@ namespace Rays
 			if (is_valid())
 				invalid_state_error(__FILE__, __LINE__);
 
+			String buffer;
+			const char* src = add_headers(type_, source_, &buffer);
+
 			id = glCreateShader(type_);
-			glShaderSource(id, 1, &source_, NULL);
+			glShaderSource(id, 1, &src, NULL);
 			glCompileShader(id);
 
 			GLint status = GL_FALSE;
@@ -50,6 +54,32 @@ namespace Rays
 
 			type   = type_;
 			source = source_;
+		}
+
+		const char* add_headers (GLenum type, const char* source, String* buffer)
+		{
+#ifdef IOS
+			if (type == GL_FRAGMENT_SHADER)
+			{
+				static const std::regex PRECISION(R"(^\s*precision\s+\w+p\s+float\s*;)");
+				if (!std::regex_search(source, PRECISION))
+				{
+					static const String PRECISION_HEADER = "precision highp float;\n";
+					*buffer = PRECISION_HEADER + source;
+					source  = buffer->c_str();
+				}
+			}
+#endif
+
+			static const std::regex VERSION(R"(^\s*#\s*version\s+\d+)");
+			if (!std::regex_search(source, VERSION))
+			{
+				static const String VERSION_HEADER = "#version 120\n";
+				*buffer = VERSION_HEADER + source;
+				source  = buffer->c_str();
+			}
+
+			return source;
 		}
 
 		String get_compile_log () const

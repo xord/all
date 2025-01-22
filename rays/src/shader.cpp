@@ -2,7 +2,6 @@
 
 
 #include <assert.h>
-#include <regex>
 #include "rays/exception.h"
 #include "opengl.h"
 #include "image.h"
@@ -31,41 +30,6 @@ namespace Rays
 	static ShaderEnv DEFAULT_ENV;
 
 
-	static const char*
-	add_shader_version_line (const char* source, String* buffer)
-	{
-		static const String VERSION_HEADER = "#version 120\n";
-		static const std::regex VERSION(R"(^\s*#\s*version\s+\d+)");
-
-		if (!std::regex_search(source, VERSION))
-		{
-			*buffer = VERSION_HEADER + source;
-			return buffer->c_str();
-		}
-		else
-			return source;
-	}
-
-	static const char*
-	add_fragment_shader_precision_line (const char* source, String* buffer)
-	{
-		#ifdef IOS
-			static const String PRECISION_HEADER = "precision highp float;\n";
-			static const std::regex PRECISION(R"(^\s*precision\s+\w+p\s+float\s*;)");
-
-			if (!std::regex_search(source, PRECISION))
-			{
-				*buffer = PRECISION_HEADER + source;
-				return buffer->c_str();
-			}
-			else
-				return source;
-		#else
-			return source;
-		#endif
-	}
-
-
 	struct Shader::Data
 	{
 
@@ -85,31 +49,19 @@ namespace Rays
 
 			program.reset(new ShaderProgram(
 				make_vertex_shader_source(vertex_shader_source),
-				make_fragment_shader_source(fragment_shader_source),
+				ShaderSource(GL_FRAGMENT_SHADER, fragment_shader_source),
 				env_ ? ShaderEnv_get_flags(*env_) : 0));
 		}
 
 		ShaderSource make_vertex_shader_source (const char* source)
 		{
 			if (source)
-			{
-				String buffer;
-				source = add_shader_version_line(source, &buffer);
 				return ShaderSource(GL_VERTEX_SHADER, source);
-			}
 			else
 			{
 				return ShaderEnv_get_default_vertex_shader_source(
 					env ? env.get() : &DEFAULT_ENV);
 			}
-		}
-
-		ShaderSource make_fragment_shader_source (const char* source)
-		{
-			String buffer;
-			source = add_fragment_shader_precision_line(source, &buffer);
-			source = add_shader_version_line(source, &buffer);
-			return ShaderSource(GL_FRAGMENT_SHADER, source);
 		}
 
 	};// Shader::Data
@@ -488,10 +440,8 @@ namespace Rays
 
 		if (!self->default_vertex_shader_source)
 		{
-			String buffer;
-			const char* src = add_shader_version_line(
-				self->make_default_vertex_shader_source_code(), &buffer);
-			self->default_vertex_shader_source = ShaderSource(GL_VERTEX_SHADER, src);
+			self->default_vertex_shader_source = ShaderSource(
+				GL_VERTEX_SHADER, self->make_default_vertex_shader_source_code());
 		}
 		return self->default_vertex_shader_source;
 	}
