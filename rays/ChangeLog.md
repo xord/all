@@ -1,6 +1,14 @@
 # rays ChangeLog
 
 
+## [v0.3.3] - 2025-01-23
+
+- Add '#version 120' line to shader source
+- Add Rays.renderer_info
+
+- Fix shader error on Intel GPU
+
+
 ## [v0.3.2] - 2025-01-14
 
 - Update workflow files

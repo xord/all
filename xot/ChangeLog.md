@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.3.3] - 2025-01-23
+
+- Fix '=bar' in CFLAGS when '-Wfoo=bar' is included in CFLAGS, which leaves only '=bar' in CFLAGS and causes a compile error
+
+
 ## [v0.3.2] - 2025-01-14
 
 - Update workflow files

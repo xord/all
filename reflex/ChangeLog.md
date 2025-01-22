@@ -1,6 +1,14 @@
 # reflex ChangeLog
 
 
+## [v0.3.3] - 2025-01-23
+
+- Remove dependence on the beeps library
+- Add Application#windows
+
+- Fix frame rate limitation on Windows
+
+
 ## [v0.3.2] - 2025-01-14
 
 - Update workflow files
