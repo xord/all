@@ -60,7 +60,7 @@ namespace Rays
 	get_renderer_info ()
 	{
 		return Xot::stringf(
-			"OpenGL Version '%s', GLSL Version '%s', Renderer '%s', Vendor '%s'",
+			"{\"OpenGL Version\":\"%s\",\"GLSL Version\":\"%s\",\"Renderer\":\"%s\",\"Vendor\":\"%s\"}",
 			glGetString(GL_VERSION),
 			glGetString(GL_SHADING_LANGUAGE_VERSION),
 			glGetString(GL_RENDERER),
