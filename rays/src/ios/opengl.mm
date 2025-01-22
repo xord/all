@@ -45,5 +45,15 @@ namespace Rays
 		[EAGLContext setCurrentContext: get_opengl_offscreen_context()];
 	}
 
+	String
+	get_renderer_info ()
+	{
+		return Xot::stringf(
+			"OpenGL (Version: %s, Renderer: %s, Vendor: %s)",
+			glGetString(GL_VERSION),
+			glGetString(GL_RENDERER),
+			glGetString(GL_VENDOR));
+	}
+
 
 }// Rays
