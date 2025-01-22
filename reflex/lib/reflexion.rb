@@ -1,4 +1,3 @@
-require 'beeps'
 require 'rays'
 require 'reflex'
 
@@ -6,7 +5,7 @@ require 'reflex'
 module Reflexion
 
 
-  include Beeps, Rays, Reflex
+  include Rays, Reflex
 
 
   DEFAULTS = {

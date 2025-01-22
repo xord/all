@@ -27,7 +27,6 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'xot',   '~> 0.3.2', '>= 0.3.2'
   s.add_dependency 'rucy',  '~> 0.3.2', '>= 0.3.2'
-  s.add_dependency 'beeps', '~> 0.3.2', '>= 0.3.2'
   s.add_dependency 'rays',  '~> 0.3.2', '>= 0.3.2'
 
   s.files            = `git ls-files`.split $/
