@@ -1,9 +1,9 @@
 #include "application.h"
 
 
-#include <algorithm>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
+#include "window.h"
 
 
 namespace Reflex
@@ -22,29 +22,6 @@ namespace Reflex
 	app ()
 	{
 		return global::instance;
-	}
-
-
-	void
-	Application_add_window (Application* app, Window* window)
-	{
-		app->self->windows.push_back(window);
-	}
-
-	void
-	Application_remove_window(Application* app, Window* window)
-	{
-		auto it = std::find(
-			app->self->windows.begin(), app->self->windows.end(), window);
-		if (it == app->self->windows.end()) return;
-
-		app->self->windows.erase(it);
-	}
-
-	size_t
-	Application_count_windows (Application* app)
-	{
-		return app->self->windows.size();
 	}
 
 
@@ -80,25 +57,25 @@ namespace Reflex
 	Application::window_iterator
 	Application::window_begin ()
 	{
-		return self->windows.begin();
+		return Window_all().begin();
 	}
 
 	Application::const_window_iterator
 	Application::window_begin () const
 	{
-		return self->windows.begin();
+		return Window_all().begin();
 	}
 
 	Application::window_iterator
 	Application::window_end ()
 	{
-		return self->windows.end();
+		return Window_all().end();
 	}
 
 	Application::const_window_iterator
 	Application::window_end () const
 	{
-		return self->windows.end();
+		return Window_all().end();
 	}
 
 	bool

@@ -10,7 +10,6 @@
 #include "reflex/defs.h"
 #include "reflex/exception.h"
 #include "reflex/debug.h"
-#include "../application.h"
 #include "../view.h"
 #include "event.h"
 #include "screen.h"
@@ -465,7 +464,7 @@ namespace Reflex
 			win = (Window*) cs->lpCreateParams;
 			setup_window(win, hwnd);
 
-			Application_add_window(app(), win);
+			Window_register(win);
 		}
 
 		if (!win)
@@ -475,11 +474,11 @@ namespace Reflex
 
 		if (msg == WM_NCDESTROY)
 		{
-			Application_remove_window(app(), win);
+			Window_unregister(win);
 
 			cleanup_window(win);
 
-			if (Application_count_windows(app()) == 0)
+			if (Window_all().empty())
 				Reflex::app()->quit();
 		}
 

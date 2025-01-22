@@ -16,18 +16,10 @@ namespace Reflex
 
 		String name;
 
-		WindowList windows;
-
 	};// Application::Data
 
 
 	Application::Data* Application_create_data ();
-
-	void Application_add_window    (Application* app, Window* win);
-
-	void Application_remove_window (Application* app, Window* win);
-
-	size_t Application_count_windows (Application* app);
 
 
 }// Reflex

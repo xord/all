@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <rays/rays.h>
 #include "reflex/exception.h"
-#include "../application.h"
 #include "../view.h"
 #include "../pointer.h"
 #include "event.h"
@@ -197,7 +196,7 @@ ReflexViewController_get_show_fun ()
 			ptr_for_rebind->Xot::template RefCountable<>::release();
 			ptr_for_rebind = NULL;
 
-			Application_add_window(Reflex::app(), pwindow);
+			Window_register(pwindow);
 		}
 	}
 
@@ -206,7 +205,7 @@ ReflexViewController_get_show_fun ()
 		[self rebind];
 		if (!pwindow) return;
 
-		Application_remove_window(Reflex::app(), pwindow);
+		Window_unregister(pwindow);
 
 		Window_get_data(pwindow).view_controller = nil;
 
