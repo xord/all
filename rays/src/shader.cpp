@@ -94,12 +94,12 @@ namespace Rays
 			"uniform sampler2D " + U_TEXTURE + ";\n"
 			"void main ()\n"
 			"{\n"
-			"  vec2 texcoord__ = clamp(" +
+			"  vec2 _rays_texcoord = clamp(" +
 				V_TEXCOORD     + ".xy, " +
 				U_TEXCOORD_MIN + ".xy, " +
 				U_TEXCOORD_MAX + ".xy - " + U_TEXCOORD_OFFSET + ".xy);\n"
-			"  vec4 color__    = texture2D(" + U_TEXTURE + ", texcoord__);\n"
-			"  gl_FragColor    = " + V_COLOR + " * color__;\n"
+			"  vec4 _rays_color    = texture2D(" + U_TEXTURE + ", _rays_texcoord);\n"
+			"  gl_FragColor        = " + V_COLOR + " * _rays_color;\n"
 			"}\n");
 	}
 
@@ -116,11 +116,11 @@ namespace Rays
 			"uniform sampler2D " + U_TEXTURE + ";\n"
 			"void main ()\n"
 			"{\n"
-			"  vec2 min__      = " + U_TEXCOORD_MIN + ".xy;\n"
-			"  vec2 len__      = " + U_TEXCOORD_MAX + ".xy - min__;\n"
-			"  vec2 texcoord__ = mod(" + V_TEXCOORD + ".xy - min__, len__) + min__;\n"
-			"  vec4 color__    = texture2D(" + U_TEXTURE + ", texcoord__);\n"
-			"  gl_FragColor    = " + V_COLOR + " * color__;\n"
+			"  vec2 _rays_min      = " + U_TEXCOORD_MIN + ".xy;\n"
+			"  vec2 _rays_len      = " + U_TEXCOORD_MAX + ".xy - _rays_min;\n"
+			"  vec2 _rays_texcoord = mod(" + V_TEXCOORD + ".xy - _rays_min, _rays_len) + _rays_min;\n"
+			"  vec4 _rays_color    = texture2D(" + U_TEXTURE + ", _rays_texcoord);\n"
+			"  gl_FragColor        = " + V_COLOR + " * _rays_color;\n"
 			"}\n");
 	}
 
@@ -135,16 +135,16 @@ namespace Rays
 			"uniform sampler2D " + U_TEXTURE + ";\n"
 			"void main ()\n"
 			"{\n"
-			"  vec4 col__   = texture2D(" + U_TEXTURE + ", " + V_TEXCOORD + ".xy);\n"
+			"  vec4 _rays_col = texture2D(" + U_TEXTURE + ", " + V_TEXCOORD + ".xy);\n"
 			#if defined(OSX) || defined(IOS)
 			// restore premultiplied rgb values
-			"  vec3 rgb__   = col__.a != 0.0 ? col__.rgb / col__.a : col__.rgb;\n"
-			"  gl_FragColor = " + V_COLOR + " * vec4(rgb__, col__.a);\n"
+			"  vec3 _rays_rgb = _rays_col.a != 0.0 ? _rays_col.rgb / _rays_col.a : _rays_col.rgb;\n"
+			"  gl_FragColor   = " + V_COLOR + " * vec4(_rays_rgb, _rays_col.a);\n"
 			#elif defined(WIN32)
-			"  float a__    = (col__.r + col__.g + col__.b) / 3.0;\n"
-			"  gl_FragColor = " + V_COLOR + " * vec4(1.0, 1.0, 1.0, a__);\n"
+			"  float _rays_a  = (_rays_col.r + _rays_col.g + _rays_col.b) / 3.0;\n"
+			"  gl_FragColor   = " + V_COLOR + " * vec4(1.0, 1.0, 1.0, _rays_a);\n"
 			#else
-			"  gl_FragColor = " + V_COLOR + " * col__;\n"
+			"  gl_FragColor   = " + V_COLOR + " * _rays_col;\n"
 			#endif
 			"}\n");
 	}
@@ -406,12 +406,12 @@ namespace Rays
 				"uniform mat4 "   + U_TEXCOORD_MATRIX + ";\n"
 				"void main ()\n"
 				"{\n"
-				"  vec4 pos__          = vec4(" + A_POSITION + ", 1.0);\n"
-				"  vec4 texcoord__     = vec4(" + A_TEXCOORD + ", 1.0);\n"
-				"  " + V_POSITION +  " = pos__;\n"
-				"  " + V_TEXCOORD +  " = " + U_TEXCOORD_MATRIX + " * texcoord__;\n"
+				"  vec4 _rays_pos      = vec4(" + A_POSITION + ", 1.0);\n"
+				"  vec4 _rays_texcoord = vec4(" + A_TEXCOORD + ", 1.0);\n"
+				"  " + V_POSITION +  " = _rays_pos;\n"
+				"  " + V_TEXCOORD +  " = " + U_TEXCOORD_MATRIX + " * _rays_texcoord;\n"
 				"  " + V_COLOR    +  " = " + A_COLOR + ";\n"
-				"  gl_Position         = " + U_POSITION_MATRIX + " * pos__;\n"
+				"  gl_Position         = " + U_POSITION_MATRIX + " * _rays_pos;\n"
 				"}\n";
 		}
 
