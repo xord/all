@@ -19,6 +19,8 @@ TASKS = %i[
   gem install uninstall upload
 ]
 
+RENAMES = {:reflexion => :reflex}
+
 TARGETS = []
 
 
@@ -78,32 +80,45 @@ task :scripts => 'scripts:build'
 
 
 namespace :changelog do
-  changelogs = -> target do
+  get_changes = -> target do
     version = "#{target}/VERSION"
     return [] unless File.exist?(version)
 
     hash = `git log -1 #{version}`.lines(chomp: true).first.split[1]
     `git log #{hash}..HEAD #{target}/`
       .split(/commit.*\nAuthor:.*\nDate:.*\n/)
-      .map {|commit| commit.lines.select {|line| line =~ /^ /}.join}
+      .map    {|commit| commit.lines.select {|line| line =~ /^ /}.join}
       .reject {|s| s.strip.empty?}
   end
 
-  task :check do
-    targets.each do |target|
-      changes = changelogs.call target
-      next if changes.empty?
+  get_depends = -> target do
+    File.readlines("#{target}/#{target}.gemspec")
+      .map    {_1[/\.\s*add_dependency\s*'(\w+)'/, 1]&.to_sym}
+      .compact
+      .map    {RENAMES[_1] || _1}
+      .select {GEMS.include? _1}
+  end
 
+  get_all_changes = -> targets_ = targets do
+    all_deps    = targets_.map {[_1, get_depends.call(_1)]}.to_h
+    all_changes = targets_.map {[_1, get_changes.call(_1)]}.to_h
+    all_changes.each do |target, changes|
+      gems         = all_deps[target]
+      deps_updated = gems.any? {|gem| not all_changes[gem].empty?}
+      changes << '- Update dependencies' if changes.empty? && deps_updated
+    end
+    all_changes.reject {|_, changes| changes.empty?}
+  end
+
+  task :check do
+    get_all_changes.call.each do |target, changes|
       puts "# #{target}"
       puts changes
     end
   end
 
   task :update do
-    targets.each do |target|
-      changes = changelogs.call target
-      next if changes.empty?
-
+    get_all_changes.call.each do |target, changes|
       ver     = File.readlines("#{target}/VERSION", chomp: true)
         .first
         .sub(/.$/, '_')
