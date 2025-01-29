@@ -103,9 +103,8 @@ namespace :changelog do
     all_deps    = targets_.map {[_1, get_depends.call(_1)]}.to_h
     all_changes = targets_.map {[_1, get_changes.call(_1)]}.to_h
     all_changes.each do |target, changes|
-      gems         = all_deps[target]
-      deps_updated = gems.any? {|gem| not all_changes[gem].empty?}
-      changes << '- Update dependencies' if changes.empty? && deps_updated
+      gems = all_deps[target].select {|gem| not all_changes[gem].empty?}
+      changes << "- Update dependencies: #{gems.join ', '}" unless gems.empty?
     end
     all_changes.reject {|_, changes| changes.empty?}
   end
