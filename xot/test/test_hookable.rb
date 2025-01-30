@@ -21,6 +21,10 @@ class TestHookable < Test::Unit::TestCase
       @log << 0
     end
 
+    def on_one()
+      @log << 1
+    end
+
   end# Temp
 
   def temp(*args)
@@ -55,9 +59,9 @@ class TestHookable < Test::Unit::TestCase
 
   def test_on()
     o = temp
-    o.on(:zero) {o.log << 1}
-    o.zero
-    assert_equal [1], o.log
+    o.on(:one) {o.log << 9}
+    o.on_one
+    assert_equal [9], o.log
   end
 
   def test_hook_self()

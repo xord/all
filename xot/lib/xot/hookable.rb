@@ -9,9 +9,7 @@ module Xot
     end
 
     def on(name, &block)
-      hook name do |*a, &b|
-        block.call(*a, &b)
-      end
+      hook "on_#{name}", &block
     end
 
     def before(name, &block)

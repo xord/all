@@ -1,5 +1,6 @@
 require 'xot/setter'
 require 'xot/universal_accessor'
+require 'xot/hookable'
 require 'xot/block_util'
 require 'reflex/ext'
 require 'reflex/helper'
@@ -11,7 +12,7 @@ module Reflex
   class Shape
 
     include Xot::Setter
-    include Hookable
+    include Xot::Hookable
     include HasFrame
     include HasTags
 

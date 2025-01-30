@@ -2,6 +2,7 @@ require 'forwardable'
 require 'xot/setter'
 require 'xot/bit_flag_accessor'
 require 'xot/universal_accessor'
+require 'xot/hookable'
 require 'xot/block_util'
 require 'xot/inspectable'
 require 'reflex/ext'
@@ -14,8 +15,8 @@ module Reflex
   class Window
 
     include Xot::Setter
+    include Xot::Hookable
     include Xot::Inspectable
-    include Hookable
     include HasFrame
 
     extend Forwardable

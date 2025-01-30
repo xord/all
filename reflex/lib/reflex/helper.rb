@@ -1,21 +1,9 @@
-require 'xot/hookable'
 require 'xot/universal_accessor'
 require 'reflex/point'
 require 'reflex/bounds'
 
 
 module Reflex
-
-
-  module Hookable
-
-    include Xot::Hookable
-
-    def hook(name, &block)
-      super "on_#{name}".intern, &block
-    end
-
-  end# Hookable
 
 
   module HasFrame

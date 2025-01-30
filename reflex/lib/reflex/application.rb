@@ -1,9 +1,9 @@
 require 'xot/setter'
 require 'xot/universal_accessor'
+require 'xot/hookable'
 require 'xot/block_util'
 require 'xot/inspectable'
 require 'reflex/ext'
-require 'reflex/helper'
 
 
 module Reflex
@@ -12,8 +12,8 @@ module Reflex
   class Application
 
     include Xot::Setter
+    include Xot::Hookable
     include Xot::Inspectable
-    include Hookable
 
     universal_accessor :name
 

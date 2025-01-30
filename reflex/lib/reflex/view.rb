@@ -2,6 +2,7 @@ require 'forwardable'
 require 'xot/setter'
 require 'xot/bit_flag_accessor'
 require 'xot/universal_accessor'
+require 'xot/hookable'
 require 'xot/block_util'
 require 'reflex/ext'
 require 'reflex/selector'
@@ -16,7 +17,7 @@ module Reflex
   class View
 
     include Xot::Setter
-    include Hookable
+    include Xot::Hookable
     include HasFrame
     include HasTags
 
