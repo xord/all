@@ -45,16 +45,16 @@ class TestHookable < Test::Unit::TestCase
 
   def test_before()
     o = temp
-    o.before(:zero) {o.log << 1}
+    o.before(:zero) {o.log << 9}
     o.zero
-    assert_equal [1, 0], o.log
+    assert_equal [9, 0], o.log
   end
 
   def test_after()
     o = temp
-    o.after(:zero) {o.log << 1}
+    o.after(:zero) {o.log << 9}
     o.zero
-    assert_equal [0, 1], o.log
+    assert_equal [0, 9], o.log
   end
 
   def test_on()
