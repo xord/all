@@ -13,15 +13,15 @@ module Xot
     end
 
     def before(name, &block)
-      hook name do |*a, &b|
-        super(*a, &b) unless block.call(*a, &b) == :skip
+      hook name do |*a, **k, &b|
+        super(*a, **k, &b) unless block.call(*a, **k, &b) == :skip
       end
     end
 
     def after(name, &block)
-      hook name do |*a, &b|
-        ret = super(*a, &b)
-        block.call(*a, &b)
+      hook name do |*a, **k, &b|
+        ret = super(*a, **k, &b)
+        block.call(*a, **k, &b)
         ret
       end
     end
