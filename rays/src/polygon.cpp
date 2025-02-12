@@ -1454,7 +1454,7 @@ namespace Rays
 		if (!painter)
 			argument_error(__FILE__, __LINE__);
 
-		if (!color || !polygon || polygon.empty())
+		if (!polygon || polygon.empty())
 			return;
 
 		polygon.self->fill(painter, color);
@@ -1466,7 +1466,7 @@ namespace Rays
 		if (!painter)
 			argument_error(__FILE__, __LINE__);
 
-		if (!color || !polygon || polygon.empty())
+		if (!polygon || polygon.empty())
 			return;
 
 		polygon.self->stroke(polygon, painter, color);

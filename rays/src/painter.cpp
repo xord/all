@@ -97,9 +97,25 @@ namespace Rays
 			shader         = Shader();
 		}
 
-		bool has_color ()
+		bool get_color (Color* color, ColorType type) const
 		{
-			return colors[FILL] || colors[STROKE];
+			const Color& c = colors[type];
+			if (!c && can_ignore_alpha())
+				return false;
+
+			*color = c;
+			return true;
+		}
+
+		bool has_color () const
+		{
+			return colors[FILL] || colors[STROKE] || !can_ignore_alpha();
+		}
+
+		bool can_ignore_alpha () const
+		{
+			// BLEND_REPLACE needs to be drawn even with alpha 0
+			return blend_mode != BLEND_REPLACE;
 		}
 
 	};// State
@@ -312,15 +328,6 @@ namespace Rays
 			}
 
 			OpenGL_check_error(__FILE__, __LINE__);
-		}
-
-		bool get_color (Color* color, ColorType type)
-		{
-			const Color& c = state.colors[type];
-			if (!c) return false;
-
-			*color = c;
-			return true;
 		}
 
 		void draw (
@@ -861,13 +868,13 @@ namespace Rays
 
 		Color color;
 
-		if (self->get_color(&color, FILL))
+		if (self->state.get_color(&color, FILL))
 		{
 			Polygon_fill(polygon, painter, color);
 			debug_draw_triangulation(painter, polygon, color);
 		}
 
-		if (self->get_color(&color, STROKE))
+		if (self->state.get_color(&color, STROKE))
 			Polygon_stroke(polygon, painter, color);
 
 		if (backup)
@@ -1103,7 +1110,7 @@ namespace Rays
 			if ((nofill && type == FILL) || (nostroke && type == STROKE))
 				continue;
 
-			if (!painter->self->get_color(&color, (ColorType) type))
+			if (!painter->self->state.get_color(&color, (ColorType) type))
 				continue;
 
 			painter->self->draw(
