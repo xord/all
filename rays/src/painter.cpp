@@ -37,8 +37,7 @@ namespace Rays
 		FILL = 0,
 		STROKE,
 
-		COLOR_TYPE_END,
-		COLOR_TYPE_BEGIN = 0
+		COLOR_TYPE_MAX
 
 	};// ColorType
 
@@ -46,7 +45,9 @@ namespace Rays
 	struct State
 	{
 
-		Color background, colors[2];
+		Color background, colors[COLOR_TYPE_MAX];
+
+		bool color_flags[COLOR_TYPE_MAX];
 
 		coord stroke_width;
 
@@ -78,27 +79,32 @@ namespace Rays
 
 		void init ()
 		{
-			background     .reset(0, 0);
-			colors[FILL]   .reset(1, 1);
-			colors[STROKE] .reset(1, 0);
-			stroke_width   = 0;
-			stroke_outset  = 0;
-			stroke_cap     = CAP_DEFAULT;
-			stroke_join    = JOIN_DEFAULT;
-			miter_limit    = JOIN_DEFAULT_MITER_LIMIT;
-			nsegment       = 0;
-			line_height    = -1;
-			blend_mode     = BLEND_NORMAL;
-			clip           .reset(-1);
-			font           = get_default_font();
-			texture        = Image();
-			texcoord_mode  = TEXCOORD_IMAGE;
-			texcoord_wrap  = TEXCOORD_CLAMP;
-			shader         = Shader();
+			background          .reset(0, 0);
+			colors[FILL]        .reset(1, 1);
+			colors[STROKE]      .reset(1, 1);
+			color_flags[FILL]   = true;
+			color_flags[STROKE] = false;
+			stroke_width        = 0;
+			stroke_outset       = 0;
+			stroke_cap          = CAP_DEFAULT;
+			stroke_join         = JOIN_DEFAULT;
+			miter_limit         = JOIN_DEFAULT_MITER_LIMIT;
+			nsegment            = 0;
+			line_height         = -1;
+			blend_mode          = BLEND_NORMAL;
+			clip                .reset(-1);
+			font                = get_default_font();
+			texture             = Image();
+			texcoord_mode       = TEXCOORD_IMAGE;
+			texcoord_wrap       = TEXCOORD_CLAMP;
+			shader              = Shader();
 		}
 
 		bool get_color (Color* color, ColorType type) const
 		{
+			if (!color_flags[type])
+				return false;
+
 			const Color& c = colors[type];
 			if (!c && can_ignore_alpha())
 				return false;
@@ -109,6 +115,9 @@ namespace Rays
 
 		bool has_color () const
 		{
+			if (!color_flags[FILL] && !color_flags[STROKE])
+				return false;
+
 			return colors[FILL] || colors[STROKE] || !can_ignore_alpha();
 		}
 
@@ -1105,7 +1114,7 @@ namespace Rays
 		TextureInfo texinfo(texture, src_x, src_y, src_x + src_w, src_y + src_h);
 
 		Color color;
-		for (int type = COLOR_TYPE_BEGIN; type < COLOR_TYPE_END; ++type)
+		for (int type = 0; type < COLOR_TYPE_MAX; ++type)
 		{
 			if ((nofill && type == FILL) || (nostroke && type == STROKE))
 				continue;
@@ -1399,13 +1408,14 @@ namespace Rays
 	void
 	Painter::set_fill (const Color& color)
 	{
-		self->state.colors[FILL] = color;
+		self->state.colors[FILL]      = color;
+		self->state.color_flags[FILL] = true;
 	}
 
 	void
 	Painter::no_fill ()
 	{
-		self->state.colors[FILL].alpha = 0;
+		self->state.color_flags[FILL] = false;
 	}
 
 	const Color&
@@ -1423,13 +1433,14 @@ namespace Rays
 	void
 	Painter::set_stroke (const Color& color)
 	{
-		self->state.colors[STROKE] = color;
+		self->state.colors[STROKE]      = color;
+		self->state.color_flags[STROKE] = true;
 	}
 
 	void
 	Painter::no_stroke ()
 	{
-		self->state.colors[STROKE].alpha = 0;
+		self->state.color_flags[STROKE] = false;
 	}
 
 	const Color&
