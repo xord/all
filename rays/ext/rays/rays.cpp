@@ -138,7 +138,7 @@ namespace Rucy
 		int type = value_to<int>(*argv, convert);
 		if (type < 0)
 			argument_error(__FILE__, __LINE__, "invalid cap type -- %d", type);
-		if (type >= Rays::CAP_MAX)
+		if (type >= Rays::CAP_TYPE_MAX)
 			argument_error(__FILE__, __LINE__, "invalid cap type -- %d", type);
 
 		return (Rays::CapType) type;
@@ -171,7 +171,7 @@ namespace Rucy
 		int type = value_to<int>(*argv, convert);
 		if (type < 0)
 			argument_error(__FILE__, __LINE__, "invalid join type -- %d", type);
-		if (type >= Rays::JOIN_MAX)
+		if (type >= Rays::JOIN_TYPE_MAX)
 			argument_error(__FILE__, __LINE__, "invalid join type -- %d", type);
 
 		return (Rays::JoinType) type;
@@ -204,7 +204,7 @@ namespace Rucy
 		int mode = value_to<int>(*argv, convert);
 		if (mode < 0)
 			argument_error(__FILE__, __LINE__, "invalid blend mode -- %d", mode);
-		if (mode >= Rays::BLEND_MAX)
+		if (mode >= Rays::BLEND_MODE_MAX)
 			argument_error(__FILE__, __LINE__, "invalid blend mode -- %d", mode);
 
 		return (Rays::BlendMode) mode;

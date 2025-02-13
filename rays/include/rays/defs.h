@@ -39,7 +39,7 @@ namespace Rays
 
 		CAP_SQUARE,
 
-		CAP_MAX,
+		CAP_TYPE_MAX,
 
 		CAP_DEFAULT = CAP_BUTT
 
@@ -55,7 +55,7 @@ namespace Rays
 
 		JOIN_SQUARE,
 
-		JOIN_MAX,
+		JOIN_TYPE_MAX,
 
 		JOIN_DEFAULT             = JOIN_MITER,
 		JOIN_DEFAULT_MITER_LIMIT = 2
@@ -84,7 +84,7 @@ namespace Rays
 
 		BLEND_REPLACE,
 
-		BLEND_MAX
+		BLEND_MODE_MAX
 
 	};// BlendMode
 
