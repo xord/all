@@ -359,7 +359,7 @@ static
 RUCY_DEFN(set_fill)
 {
 	CHECK;
-	if (argc >= 1 && argv[0].is_nil())
+	if (argc >= 1 && is_nil_color(argv[0]))
 		THIS->no_fill();
 	else
 		THIS->set_fill(to<Rays::Color>(argc, argv));
@@ -388,7 +388,7 @@ static
 RUCY_DEFN(set_stroke)
 {
 	CHECK;
-	if (argc >= 1 && argv[0].is_nil())
+	if (argc >= 1 && is_nil_color(argv[0]))
 		THIS->no_stroke();
 	else
 		THIS->set_stroke(to<Rays::Color>(argc, argv));

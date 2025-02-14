@@ -13,6 +13,79 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Color)
 #define CHECK RUCY_CHECK_OBJ(Rays::Color, self)
 
 
+static const char* NIL_COLOR_NO   = "no";
+static const char* NIL_COLOR_NONE = "none";
+
+typedef std::map<Rays::String, Rays::Color> ColorMap;
+
+static ColorMap&
+get_color_map ()
+{
+	static ColorMap map;
+	if (map.empty())
+	{
+		map[NIL_COLOR_NO]   =
+		map[NIL_COLOR_NONE] =
+		map["transp"]       =
+		map["transparent"]  = Rays::gray(0, 0);
+
+		map["black"]      = Rays::rgb8(  0,   0,   0);
+		map["white"]      = Rays::rgb8(255, 241, 232);
+		map["gray"]       =
+		map["lightgray"]  = Rays::rgb8(194, 195, 199);
+		map["darkgray"]   = Rays::rgb8( 95,  87,  79);
+		map["brown"]      = Rays::rgb8(171,  82,  54);
+		map["red"]        = Rays::rgb8(255,   0,  77);
+		map["orange"]     = Rays::rgb8(255, 163,   0);
+		map["yellow"]     = Rays::rgb8(255, 236,  39);
+		map["green"]      = Rays::rgb8(  0, 228,  54);
+		map["darkgreen"]  = Rays::rgb8(  0, 135,  81);
+		map["blue"]       = Rays::rgb8( 41, 173, 255);
+		map["darkblue"]   = Rays::rgb8( 29,  43,  83);
+		map["indigo"]     = Rays::rgb8(131, 118, 156);
+		map["pink"]       = Rays::rgb8(255, 119, 168);
+		map["peach"]      = Rays::rgb8(255, 204, 170);
+		map["darkpurple"] = Rays::rgb8(126,  37,  83);
+	}
+	return map;
+}
+
+static const Rays::String
+to_color_name (const char* name)
+{
+	return Rays::String(name).downcase();
+}
+
+static const Rays::Color&
+find_color (const char* name)
+{
+	assert(name);
+
+	const ColorMap& map = get_color_map();
+	ColorMap::const_iterator it = map.find(to_color_name(name));
+	if (it == map.end())
+		argument_error(__FILE__, __LINE__, "color '%s' is not found.", name);
+
+	return it->second;
+}
+
+bool
+is_nil_color (Value value)
+{
+	if (value.is_nil())
+		return true;
+
+	const char* name = NULL;
+	if (value.is_s())   name = value.as_s();
+	if (value.is_sym()) name = value.as_s(true);
+	if (!name) return false;
+
+	return
+		strcmp(name, NIL_COLOR_NO)   == 0 ||
+		strcmp(name, NIL_COLOR_NONE) == 0;
+}
+
+
 static
 RUCY_DEF_ALLOC(alloc, klass)
 {
@@ -124,60 +197,6 @@ RUCY_DEF0(to_hsv)
 	return array(h, s, v, THIS->alpha);
 }
 RUCY_END
-
-
-typedef std::map<Rays::String, Rays::Color> ColorMap;
-
-static ColorMap&
-get_color_map ()
-{
-	static ColorMap map;
-	if (map.empty())
-	{
-		map["no"]          =
-		map["none"]        =
-		map["transp"]      =
-		map["transparent"] = Rays::gray(0, 0);
-
-		map["black"]      = Rays::rgb8(  0,   0,   0);
-		map["white"]      = Rays::rgb8(255, 241, 232);
-		map["gray"]       =
-		map["lightgray"]  = Rays::rgb8(194, 195, 199);
-		map["darkgray"]   = Rays::rgb8( 95,  87,  79);
-		map["brown"]      = Rays::rgb8(171,  82,  54);
-		map["red"]        = Rays::rgb8(255,   0,  77);
-		map["orange"]     = Rays::rgb8(255, 163,   0);
-		map["yellow"]     = Rays::rgb8(255, 236,  39);
-		map["green"]      = Rays::rgb8(  0, 228,  54);
-		map["darkgreen"]  = Rays::rgb8(  0, 135,  81);
-		map["blue"]       = Rays::rgb8( 41, 173, 255);
-		map["darkblue"]   = Rays::rgb8( 29,  43,  83);
-		map["indigo"]     = Rays::rgb8(131, 118, 156);
-		map["pink"]       = Rays::rgb8(255, 119, 168);
-		map["peach"]      = Rays::rgb8(255, 204, 170);
-		map["darkpurple"] = Rays::rgb8(126,  37,  83);
-	}
-	return map;
-}
-
-static const Rays::String
-to_color_name (const char* name)
-{
-	return Rays::String(name).downcase();
-}
-
-static const Rays::Color&
-find_color (const char* name)
-{
-	assert(name);
-
-	const ColorMap& map = get_color_map();
-	ColorMap::const_iterator it = map.find(to_color_name(name));
-	if (it == map.end())
-		argument_error(__FILE__, __LINE__, "color '%s' is not found.", name);
-
-	return it->second;
-}
 
 static
 RUCY_DEFN(hsv)

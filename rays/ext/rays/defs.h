@@ -19,6 +19,9 @@ using namespace Rucy;
 using Rays::coord;
 
 
+bool is_nil_color (Value value);
+
+
 void get_points (std::vector<Rays::Point>* points, int argc, const Value* argv);
 
 void get_colors (std::vector<Rays::Color>* colors, int argc, const Value* argv);
