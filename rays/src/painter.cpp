@@ -83,7 +83,7 @@ namespace Rays
 			  colors[FILL]   .reset(1, 1);
 			  colors[STROKE] .reset(1, 0);
 			nocolors[FILL]   = false;
-			nocolors[STROKE] = false;
+			nocolors[STROKE] = true;
 			stroke_width     = 0;
 			stroke_outset    = 0;
 			stroke_cap       = CAP_DEFAULT;
