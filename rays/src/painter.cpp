@@ -47,7 +47,7 @@ namespace Rays
 
 		Color background, colors[COLOR_TYPE_MAX];
 
-		bool color_flags[COLOR_TYPE_MAX];
+		bool nocolors[COLOR_TYPE_MAX];
 
 		coord stroke_width;
 
@@ -79,34 +79,31 @@ namespace Rays
 
 		void init ()
 		{
-			background          .reset(0, 0);
-			colors[FILL]        .reset(1, 1);
-			colors[STROKE]      .reset(1, 1);
-			color_flags[FILL]   = true;
-			color_flags[STROKE] = false;
-			stroke_width        = 0;
-			stroke_outset       = 0;
-			stroke_cap          = CAP_DEFAULT;
-			stroke_join         = JOIN_DEFAULT;
-			miter_limit         = JOIN_DEFAULT_MITER_LIMIT;
-			nsegment            = 0;
-			line_height         = -1;
-			blend_mode          = BLEND_NORMAL;
-			clip                .reset(-1);
-			font                = get_default_font();
-			texture             = Image();
-			texcoord_mode       = TEXCOORD_IMAGE;
-			texcoord_wrap       = TEXCOORD_CLAMP;
-			shader              = Shader();
+			background       .reset(0, 0);
+			  colors[FILL]   .reset(1, 1);
+			  colors[STROKE] .reset(1, 0);
+			nocolors[FILL]   = false;
+			nocolors[STROKE] = false;
+			stroke_width     = 0;
+			stroke_outset    = 0;
+			stroke_cap       = CAP_DEFAULT;
+			stroke_join      = JOIN_DEFAULT;
+			miter_limit      = JOIN_DEFAULT_MITER_LIMIT;
+			nsegment         = 0;
+			line_height      = -1;
+			blend_mode       = BLEND_NORMAL;
+			clip             .reset(-1);
+			font             = get_default_font();
+			texture          = Image();
+			texcoord_mode    = TEXCOORD_IMAGE;
+			texcoord_wrap    = TEXCOORD_CLAMP;
+			shader           = Shader();
 		}
 
 		bool get_color (Color* color, ColorType type) const
 		{
-			if (!color_flags[type])
-				return false;
-
 			const Color& c = colors[type];
-			if (!c && can_ignore_alpha())
+			if (blend_mode == BLEND_REPLACE ? nocolors[type] : !c)
 				return false;
 
 			*color = c;
@@ -115,16 +112,10 @@ namespace Rays
 
 		bool has_color () const
 		{
-			if (!color_flags[FILL] && !color_flags[STROKE])
-				return false;
-
-			return colors[FILL] || colors[STROKE] || !can_ignore_alpha();
-		}
-
-		bool can_ignore_alpha () const
-		{
-			// BLEND_REPLACE needs to be drawn even with alpha 0
-			return blend_mode != BLEND_REPLACE;
+			if (blend_mode == BLEND_REPLACE)
+				return !nocolors[FILL] || !nocolors[STROKE];
+			else
+				return colors[FILL] || colors[STROKE];
 		}
 
 	};// State
@@ -1408,14 +1399,15 @@ namespace Rays
 	void
 	Painter::set_fill (const Color& color)
 	{
-		self->state.colors[FILL]      = color;
-		self->state.color_flags[FILL] = true;
+		self->state.  colors[FILL] = color;
+		self->state.nocolors[FILL] = false;
 	}
 
 	void
 	Painter::no_fill ()
 	{
-		self->state.color_flags[FILL] = false;
+		self->state.  colors[FILL].alpha = 0;
+		self->state.nocolors[FILL]       = true;
 	}
 
 	const Color&
@@ -1433,14 +1425,15 @@ namespace Rays
 	void
 	Painter::set_stroke (const Color& color)
 	{
-		self->state.colors[STROKE]      = color;
-		self->state.color_flags[STROKE] = true;
+		self->state.  colors[STROKE] = color;
+		self->state.nocolors[STROKE] = false;
 	}
 
 	void
 	Painter::no_stroke ()
 	{
-		self->state.color_flags[STROKE] = false;
+		self->state.  colors[STROKE].alpha = 0;
+		self->state.nocolors[STROKE]       = true;
 	}
 
 	const Color&

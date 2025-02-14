@@ -21,19 +21,19 @@ class TestPainter < Test::Unit::TestCase
       .tap {|img| img.paint(&block) if block}
   end
 
-  def assert_gray(expected, actual)
-    assert_in_epsilon expected, actual, 0.02
+  def assert_gray(expected, actual, message = nil)
+    assert_in_epsilon expected, actual, 0.02, message
   end
 
   def assert_rgb(expected, actual)
     (0..2).each do |i|
-      assert_gray expected[i], actual[i]
+      assert_gray expected[i], actual[i], "Expected: #{expected}, Actual: #{actual}"
     end
   end
 
   def assert_rgba(expected, actual)
     (0..3).each do |i|
-      assert_gray expected[i], actual[i]
+      assert_gray expected[i], actual[i], "Expected: #{expected}, Actual: #{actual}"
     end
   end
 
@@ -347,14 +347,16 @@ class TestPainter < Test::Unit::TestCase
 
   def test_blend_mode_replace()
     i = image bg: 1 do
-      fill 0.1, 0.2, 0.3, 0.4
+      fill 0.1, 0.2, 0.3
       rect 0, 0, 2
       blend_mode :replace
-      fill 0.5, 0.6, 0.7, 0.8
+      no_stroke
+      fill 0.4, 0.5, 0.6, 0.7
       rect 1, 0, 2
     end
-    assert_rgba [0.5, 0.6, 0.7, 0.8], i[1, 0]
-    assert_rgba [0.5, 0.6, 0.7, 0.8], i[2, 0]
+    assert_rgba [0.1, 0.2, 0.3, 1.0], i[0, 0]
+    assert_rgba [0.4, 0.5, 0.6, 0.7], i[1, 0]
+    assert_rgba [0.4, 0.5, 0.6, 0.7], i[2, 0]
   end
 
   def test_blend_mode_invalid()
