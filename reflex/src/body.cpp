@@ -291,9 +291,7 @@ namespace Reflex
 		assert(b2to && b2from);
 
 		b2to->SetType(           b2from->GetType());
-		b2to->SetLinearVelocity( b2from->GetLinearVelocity());
 		b2to->SetAngularVelocity(b2from->GetAngularVelocity());
-		b2to->SetLinearDamping(  b2from->GetLinearDamping());
 		b2to->SetAngularDamping( b2from->GetAngularDamping());
 		b2to->SetGravityScale(   b2from->GetGravityScale());
 		b2to->SetBullet(         b2from->IsBullet());
@@ -301,12 +299,24 @@ namespace Reflex
 		float ppm_to   = to->self->ppm;
 		float ppm_from = from.self->ppm;
 		if (ppm_to == ppm_from)
-			b2to->SetTransform(b2from->GetPosition(), b2from->GetAngle());
+		{
+			b2to->SetTransform(     b2from->GetPosition(),
+			                        b2from->GetAngle());
+			b2to->SetLinearVelocity(b2from->GetLinearVelocity());
+			b2to->SetLinearDamping( b2from->GetLinearDamping());
+		}
 		else
 		{
-			auto pos = b2from->GetPosition();
-			pos *= ppm_from / ppm_to;
+			float scale = ppm_from / ppm_to;
+			auto pos    = b2from->GetPosition();
+			auto vel    = b2from->GetLinearVelocity();
+			auto damp   = b2from->GetLinearDamping();
+			pos  *= scale;
+			vel  *= scale;
+			damp *= scale;
 			b2to->SetTransform(pos, b2from->GetAngle());
+			b2to->SetLinearVelocity(vel);
+			b2to->SetLinearDamping(damp);
 		}
 	}
 
