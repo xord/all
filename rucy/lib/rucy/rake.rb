@@ -39,7 +39,7 @@ module Rucy
         directory rdocdir
 
         task :clean do
-          sh %( rm -rf #{rdocdir} #{rdocs.values.join ' '} )
+          sh %( rm -rf #{doc_dir} #{rdocdir} #{rdocs.values.join ' '} )
         end
       end
     end
