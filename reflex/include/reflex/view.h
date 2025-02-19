@@ -59,30 +59,30 @@ namespace Reflex
 			enum Flag
 			{
 
-				FLAG_CLIP           = Xot::bit(0),
+				FLAG_CLIP          = Xot::bit(0),
 
-				FLAG_CACHE          = Xot::bit(1),
+				FLAG_CACHE         = Xot::bit(1),
 
-				FLAG_RESIZE_TO_FIT  = Xot::bit(2),
+				FLAG_RESIZE_TO_FIT = Xot::bit(2),
 
-				FLAG_SCROLL_TO_FIT  = Xot::bit(3),
+				FLAG_SCROLL_TO_FIT = Xot::bit(3),
 
-				FLAG_FIX_ANGLE      = Xot::bit(4),
+				FLAG_FIX_ANGLE     = Xot::bit(4),
 
-				FLAG_LAST           = FLAG_FIX_ANGLE
+				FLAG_LAST          = FLAG_FIX_ANGLE
 
 			};// Flag
 
 			enum Capture
 			{
 
-				CAPTURE_NONE      = 0,
+				CAPTURE_NONE    = 0,
 
-				CAPTURE_KEY       = Xot::bit(0),
+				CAPTURE_KEY     = Xot::bit(0),
 
-				CAPTURE_POINTER   = Xot::bit(1),
+				CAPTURE_POINTER = Xot::bit(1),
 
-				CAPTURE_ALL       = CAPTURE_KEY | CAPTURE_POINTER,
+				CAPTURE_ALL     = CAPTURE_KEY | CAPTURE_POINTER,
 
 			};// Capture
 

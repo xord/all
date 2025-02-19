@@ -210,7 +210,7 @@ namespace Reflex
 	}
 
 	static bool
-	is_capturing_all (
+	is_capturing (
 		const View* view, const CaptureTargetIDList& targets, View::Capture type)
 	{
 		return
@@ -240,7 +240,7 @@ namespace Reflex
 		{
 			if (
 				!view->window() ||
-				!is_capturing_all(view.get(), targets, View::CAPTURE_KEY))
+				!is_capturing(view.get(), targets, View::CAPTURE_KEY))
 			{
 				continue;
 			}
@@ -367,7 +367,7 @@ namespace Reflex
 		result->clear();
 		for (const auto& [view, targets] : window->self->captures)
 		{
-			if (is_capturing_all(view.get(), targets, View::CAPTURE_POINTER))
+			if (is_capturing(view.get(), targets, View::CAPTURE_POINTER))
 				result->emplace_back(view);
 		}
 	}
