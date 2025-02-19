@@ -99,8 +99,14 @@ module Reflex
     end
 
     def capturing?(*args)
-      cap = capture
-      args.all? {|type| cap.include? type}
+      args, cap = args.flatten, capture
+      if args.empty?
+        not cap.empty?
+      elsif args.include?(:all)
+        cap == [:key, :pointer]
+      else
+        args.all? {|type| cap.include? type}
+      end
     end
 
     def on_contact(e)

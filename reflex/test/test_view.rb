@@ -373,6 +373,57 @@ class TestView < Test::Unit::TestCase
     assert_raise(ArgumentError) {v.scroll_by 100}
   end
 
+  def test_capture()
+    v, w = view, window
+    w.add v
+    assert_equal [], v.capture
+
+    v.capture  = :key;             assert_equal [:key],           v.capture
+    v.capture  = :pointer;         assert_equal [:pointer],       v.capture
+    v.capture  = :all;             assert_equal [:key, :pointer], v.capture
+
+    v.capture -= [:key];           assert_equal [:pointer],       v.capture
+    v.capture += [:key];           assert_equal [:key, :pointer], v.capture
+
+    v.capture  = [];               assert_equal [],               v.capture
+    v.capture += [:key, :pointer]; assert_equal [:key, :pointer], v.capture
+    v.capture  = [];               assert_equal [],               v.capture
+    v.capture += [:all];           assert_equal [:key, :pointer], v.capture
+
+    v.capture -= [];               assert_equal [:key, :pointer], v.capture
+    v.capture  = [];               assert_equal [],               v.capture
+    v.capture += [];               assert_equal [],               v.capture
+  end
+
+  def test_capturing()
+    v, w = view, window
+    w.add v
+
+    v.capture = []
+    assert_false v.capturing?
+    assert_false v.capturing? :key
+    assert_false v.capturing? :pointer
+    assert_false v.capturing? :all
+
+    v.capture = :key
+    assert_true  v.capturing?
+    assert_true  v.capturing? :key
+    assert_false v.capturing? :pointer
+    assert_false v.capturing? :all
+
+    v.capture = :pointer
+    assert_true  v.capturing?
+    assert_false v.capturing? :key
+    assert_true  v.capturing? :pointer
+    assert_false v.capturing? :all
+
+    v.capture = :all
+    assert_true  v.capturing?
+    assert_true  v.capturing? :key
+    assert_true  v.capturing? :pointer
+    assert_true  v.capturing? :all
+  end
+
   def test_parent()
     parent, child = view, view
     parent.add_child child
