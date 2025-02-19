@@ -23,7 +23,7 @@ namespace Reflex
 	typedef std::list<Pointer> PointerList;
 
 
-	enum {CAPTURE_ALL = INT_MAX};
+	enum {CAPTURE_ALL_EVENTS = INT_MAX};
 
 
 	struct Window::Data

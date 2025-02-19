@@ -2295,9 +2295,9 @@ namespace Reflex
 		bool capture    = types != CAPTURE_NONE;
 
 		if (capture && !registered)
-			Window_register_capture(w, this, CAPTURE_ALL);
+			Window_register_capture(w, this, CAPTURE_ALL_EVENTS);
 		else if (!capture && registered)
-			Window_unregister_capture(w, this, CAPTURE_ALL);
+			Window_unregister_capture(w, this, CAPTURE_ALL_EVENTS);
 
 		CaptureEvent e(~old & types, old & ~types);
 		on_capture(&e);

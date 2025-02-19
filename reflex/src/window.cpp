@@ -129,7 +129,7 @@ namespace Reflex
 			return;
 
 		targets.insert(
-			target == CAPTURE_ALL ? targets.begin() : targets.end(),
+			target == CAPTURE_ALL_EVENTS ? targets.begin() : targets.end(),
 			target);
 	}
 
@@ -215,7 +215,7 @@ namespace Reflex
 	{
 		return
 			!targets.empty() &&
-			targets[0] == CAPTURE_ALL &&
+			targets[0] == CAPTURE_ALL_EVENTS &&
 			(view->capture() & type) == type;
 	}
 
