@@ -227,15 +227,6 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		window->on_key(event);
-
-		switch (event->action())
-		{
-			case KeyEvent::DOWN: window->on_key_down(event); break;
-			case KeyEvent::UP:   window->on_key_up(event);   break;
-			default: break;
-		}
-
 		for (auto& [view, targets] : window->self->captures)
 		{
 			if (
@@ -248,9 +239,24 @@ namespace Reflex
 			KeyEvent e = event->dup();
 			KeyEvent_set_captured(&e, true);
 			View_call_key_event(const_cast<View*>(view.get()), &e);
+
+			if (e.is_blocked()) event->block();
 		}
 
-		if (window->self->focus)
+		if (!event->is_blocked())
+			window->on_key(event);
+
+		if (!event->is_blocked())
+		{
+			switch (event->action())
+			{
+				case KeyEvent::DOWN: window->on_key_down(event); break;
+				case KeyEvent::UP:   window->on_key_up(event);   break;
+				default: break;
+			}
+		}
+
+		if (!event->is_blocked() && window->self->focus)
 			View_call_key_event(window->self->focus.get(), event);
 
 		cleanup_captures(window);
@@ -416,7 +422,7 @@ namespace Reflex
 
 	static void
 	capture_targeted_pointers_and_call_events (
-		ExtractedPointerIDSet* extracteds,
+		ExtractedPointerIDSet* extracteds, bool* blocked,
 		Window* window, const PointerMap& pointers)
 	{
 		for (auto& [view, targets] : window->self->captures)
@@ -430,6 +436,8 @@ namespace Reflex
 
 			PointerEvent_update_for_capturing_view(&event, view);
 			View_call_pointer_event(const_cast<View*>(view.get()), &event);
+
+			if (event.is_blocked()) *blocked = true;
 		}
 	}
 
@@ -451,7 +459,7 @@ namespace Reflex
 
 	static void
 	capture_hovering_pointers_and_call_events (
-		ExtractedPointerIDSet* extracteds,
+		ExtractedPointerIDSet* extracteds, bool* blocked,
 		const ViewList& views_capturing_all, const PointerMap& pointers)
 	{
 		assert(extracteds);
@@ -470,6 +478,8 @@ namespace Reflex
 			PointerEvent e = event.dup();
 			PointerEvent_update_for_capturing_view(&e, view);
 			View_call_pointer_event(const_cast<View*>(view.get()), &e);
+
+			if (e.is_blocked()) *blocked = true;
 		}
 	}
 
@@ -512,11 +522,17 @@ namespace Reflex
 		});
 
 		ExtractedPointerIDSet extracteds;
-		capture_targeted_pointers_and_call_events(&extracteds, window, pointers);
+		bool blocked = false;
+
+		capture_targeted_pointers_and_call_events(
+			&extracteds, &blocked, window, pointers);
 		erase_extracted_pointers(&pointers, extracteds);
 
-		capture_hovering_pointers_and_call_events(&extracteds, views_capturing_all, pointers);
+		capture_hovering_pointers_and_call_events(
+			&extracteds, &blocked, views_capturing_all, pointers);
 		erase_extracted_pointers(event, extracteds);
+
+		if (blocked) event->block();
 	}
 
 	void
@@ -529,20 +545,24 @@ namespace Reflex
 
 		setup_pointer_event(window, event);
 
-		window->on_pointer(event);
-
-		switch ((*event)[0].action())
-		{
-			case Pointer::DOWN:   window->on_pointer_down(event);   break;
-			case Pointer::UP:     window->on_pointer_up(event);     break;
-			case Pointer::MOVE:   window->on_pointer_move(event);   break;
-			case Pointer::CANCEL: window->on_pointer_cancel(event); break;
-			default: break;
-		}
-
 		call_captured_pointer_events(window, event);
 
-		if (!event->empty())
+		if (!event->is_blocked() && !event->empty())
+			window->on_pointer(event);
+
+		if (!event->is_blocked() && !event->empty())
+		{
+			switch ((*event)[0].action())
+			{
+				case Pointer::DOWN:   window->on_pointer_down(event);   break;
+				case Pointer::UP:     window->on_pointer_up(event);     break;
+				case Pointer::MOVE:   window->on_pointer_move(event);   break;
+				case Pointer::CANCEL: window->on_pointer_cancel(event); break;
+				default: break;
+			}
+		}
+
+		if (!event->is_blocked() && !event->empty())
 		{
 			PointerEvent_update_for_child_view(event, window->root());
 			View_call_pointer_event(window->root(), event);
