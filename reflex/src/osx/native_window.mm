@@ -201,13 +201,7 @@ move_to_main_screen_origin (NativeWindow* window)
 
 		++update_count;
 
-		double now = Xot::time();
-		Reflex::UpdateEvent e(now, now - win->self->prev_time_update);
-		win->self->prev_time_update = now;
-
-		win->on_update(&e);
-		if (!e.is_blocked())
-			Reflex::View_update_tree(win->root(), e);
+		Window_call_update_event(win);
 
 		if (win->self->redraw)
 		{

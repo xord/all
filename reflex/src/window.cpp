@@ -181,6 +181,21 @@ namespace Reflex
 	}
 
 	void
+	Window_call_update_event (Window* window)
+	{
+		Window::Data* self = window->self.get();
+
+		double now = Xot::time();
+		UpdateEvent e(now, now - self->prev_time_update);
+		self->prev_time_update = now;
+
+		window->on_update(&e);
+		if (e.is_blocked()) return;
+
+		View_update_tree(window->root(), e);
+	}
+
+	void
 	Window_call_draw_event (Window* window, DrawEvent* event)
 	{
 		if (!window)

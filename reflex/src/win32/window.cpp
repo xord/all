@@ -154,13 +154,7 @@ namespace Reflex
 	{
 		WindowData* self = get_data(win);
 
-		double now = Xot::time();
-		Reflex::UpdateEvent e(now, now - self->prev_time_update);
-		self->prev_time_update = now;
-
-		win->on_update(&e);
-		if (!e.is_blocked())
-			Reflex::View_update_tree(win->root(), e);
+		Window_call_update_event(win);
 
 		if (self->redraw)
 		{

@@ -120,6 +120,8 @@ namespace Reflex
 
 	void Window_call_deactivate_event (Window* window);
 
+	void Window_call_update_event     (Window* window);
+
 	void Window_call_draw_event       (Window* window, DrawEvent*    event);
 
 	void Window_call_key_event        (Window* window, KeyEvent*     event);
