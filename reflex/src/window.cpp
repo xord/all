@@ -163,20 +163,20 @@ namespace Reflex
 	}
 
 	void
-	Window_call_activate_event (Reflex::Window* window)
+	Window_call_activate_event (Window* window)
 	{
 		if (!window) return;
 
-		Reflex::Event e;
+		Event e;
 		window->on_activate(&e);
 	}
 
 	void
-	Window_call_deactivate_event (Reflex::Window* window)
+	Window_call_deactivate_event (Window* window)
 	{
 		if (!window) return;
 
-		Reflex::Event e;
+		Event e;
 		window->on_deactivate(&e);
 	}
 
@@ -218,7 +218,7 @@ namespace Reflex
 
 		window->on_draw(event);
 		if (!event->is_blocked())
-			Reflex::View_draw_tree(window->root(), event, 0, frame.move_to(0));
+			View_draw_tree(window->root(), event, 0, frame.move_to(0));
 
 		painter->pop_state();
 		painter->end();
