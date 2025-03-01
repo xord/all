@@ -2,10 +2,10 @@
 
 
 #include <limits.h>
-#include <glm/gtx/color_space.hpp>
 #include <xot/util.h>
 #include "rays/exception.h"
 #include "rays/color_space.h"
+#include "glm.h"
 #include "coord.h"
 
 

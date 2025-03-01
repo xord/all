@@ -1,8 +1,6 @@
 #include "matrix.h"
 
 
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <xot/util.h>
 #include "rays/exception.h"
 #include "rays/point.h"

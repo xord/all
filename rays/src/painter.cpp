@@ -8,13 +8,13 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include <glm/gtc/matrix_transform.hpp>
 #include "rays/exception.h"
 #include "rays/point.h"
 #include "rays/bounds.h"
 #include "rays/color.h"
 #include "rays/debug.h"
 #include "opengl.h"
+#include "glm.h"
 #include "matrix.h"
 #include "polygon.h"
 #include "bitmap.h"

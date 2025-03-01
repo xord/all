@@ -1,7 +1,7 @@
 #include "rays/util.h"
 
 
-#include <glm/gtc/noise.hpp>
+#include "glm.h"
 #include "coord.h"
 
 

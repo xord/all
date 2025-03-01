@@ -4,8 +4,7 @@
 #define __RAYS_SRC_COORD_H__
 
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
+#include "glm.h"
 #include "rays/coord.h"
 
 

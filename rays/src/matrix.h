@@ -4,8 +4,8 @@
 #define __RAYS_SRC_MATRIX_H__
 
 
-#include <glm/mat4x4.hpp>
 #include "rays/matrix.h"
+#include "glm.h"
 
 
 namespace Rays

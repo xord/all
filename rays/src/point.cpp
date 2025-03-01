@@ -2,10 +2,9 @@
 
 
 #include <math.h>
-#include <glm/geometric.hpp>
-#include <glm/gtx/rotate_vector.hpp>
 #include <xot/util.h>
 #include "rays/exception.h"
+#include "glm.h"
 #include "coord.h"
 
 
