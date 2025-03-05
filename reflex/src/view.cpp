@@ -235,6 +235,8 @@ namespace Reflex
 			}
 			else
 				pbody->set_transform(frame.x, frame.y, angle);
+
+			pbody->awake();
 		}
 
 		void update_body_states ()
