@@ -1,6 +1,19 @@
 # rays ChangeLog
 
 
+## [v0.3.4] - 2025-03-07
+
+- Add msys2_mingw_dependencies for openal and glew
+
+- Update glm library
+- Painter: no stroke by default
+- Passing :no or :none to Painter::set_fill()/set_stroke() is equivalent to calling no_fill()/no_stroke()
+- BLEND_REPLACE disables fill/stroke only on calling no_fill/no_stroke (alpha 0 does not mean to no_fill/no_stroke)
+
+- Fix a bug that both fill and stroke were drawn even with blend_mode REPLACE, no_fill, and no_stroke combinations
+- Fix problem of not drawing when BLEND_REPLACE is combined with alpha 0
+
+
 ## [v0.3.3] - 2025-01-23
 
 - Add '#version 120' line to shader source

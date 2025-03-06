@@ -1,6 +1,15 @@
 # reflex ChangeLog
 
 
+## [v0.3.4] - 2025-03-07
+
+- Captured key and pointer events can be blocked before being sent to the window and views
+- Apply pixel<->meter scale to linear velocity and linear damping
+- Call awake() after moving the view
+
+- Fix an issue where capturing keys do not work
+
+
 ## [v0.3.3] - 2025-01-23
 
 - Remove dependence on the beeps library

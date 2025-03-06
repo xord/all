@@ -1,6 +1,12 @@
 # xot ChangeLog
 
 
+## [v0.3.4] - 2025-03-07
+
+- Hookable passes keyword args
+- Xot::Hookable#on defines methods that contain the 'on_' prefix
+
+
 ## [v0.3.3] - 2025-01-23
 
 - Fix '=bar' in CFLAGS when '-Wfoo=bar' is included in CFLAGS, which leaves only '=bar' in CFLAGS and causes a compile error

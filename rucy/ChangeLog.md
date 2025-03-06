@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.3.4] - 2025-03-07
+
+- The doc:clean task deletes 'doc/' dir
+
+
 ## [v0.3.3] - 2025-01-23
 
 - Update dependencies
