@@ -108,6 +108,8 @@ namespace Reflex
 
 		std::unique_ptr<ChildList>   pchildren_sorted;
 
+		ChildList*                   pchildren_to_remove = NULL;
+
 		Point& pivot ()
 		{
 			if (!ppivot) ppivot.reset(new Point);
@@ -1055,12 +1057,19 @@ namespace Reflex
 
 		fire_timers(view, event.now());
 
+		View::ChildList children_to_remove;
+		self->pchildren_to_remove = &children_to_remove;
+
 		View::ChildList* children = self->children();
 		if (children)
 		{
 			for (auto& child : *children)
 				View_update_tree(child.get(), event);
 		}
+
+		self->pchildren_to_remove = NULL;
+		for (auto& child : children_to_remove)
+			view->remove_child(child);
 
 		update_view_shapes(view);
 		update_child_world(view, event.dt());
@@ -1792,13 +1801,18 @@ namespace Reflex
 		else if (found != belong)
 			invalid_state_error(__FILE__, __LINE__);
 
-		set_parent(child, NULL);
-
-		erase_child_from_children(this, child);
-
-		self->sort_children();
-
-		update_view_layout(this);
+		if (self->pchildren_to_remove)
+		{
+			// delay removing child to avoid breaking child list looped on View_update_tree()
+			self->pchildren_to_remove->emplace_back(child);
+		}
+		else
+		{
+			set_parent(child, NULL);
+			erase_child_from_children(this, child);
+			self->sort_children();
+			update_view_layout(this);
+		}
 	}
 
 	void
