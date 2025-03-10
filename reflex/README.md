@@ -29,17 +29,17 @@ It is designed to help developers create intuitive and responsive user interface
 
 Add this line to your Gemfile:
 ```ruby
-gem 'reflexion'
+$ gem 'reflexion'
 ```
 
 Then, install gem:
 ```bash
- $ bundle install
+$ bundle install
 ```
 
 Or install it directly:
 ```bash
- $ gem install reflexion
+$ gem install reflexion
 ```
 
 ## 📜 License

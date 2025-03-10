@@ -29,17 +29,17 @@ Thanks for your support! 🙌
 
 Add this line to your Gemfile:
 ```ruby
-gem 'rucy'
+$ gem 'rucy'
 ```
 
 Then, install gem:
 ```bash
- $ bundle install
+$ bundle install
 ```
 
 Or install it directly:
 ```bash
- $ gem install rucy
+$ gem install rucy
 ```
 
 And then, write C++ source like ext/rucy/tester.cpp.

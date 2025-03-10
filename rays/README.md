@@ -28,17 +28,17 @@ It is designed to provide efficient graphics capabilities, making it ideal for c
 
 Add this line to your Gemfile:
 ```ruby
-gem 'rays'
+$ gem 'rays'
 ```
 
 Then, install gem:
 ```bash
- $ bundle install
+$ bundle install
 ```
 
 Or install it directly:
 ```bash
- $ gem install rays
+$ gem install rays
 ```
 
 ## 📜 License

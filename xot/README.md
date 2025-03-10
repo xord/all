@@ -30,17 +30,17 @@ Feel free to explore, but please note that it’s not actively maintained or int
 
 Add this line to your Gemfile:
 ```ruby
-gem 'xot'
+$ gem 'xot'
 ```
 
 Then, install gem:
 ```bash
- $ bundle install
+$ bundle install
 ```
 
 Or install it directly:
 ```bash
- $ gem install xot
+$ gem install xot
 ```
 
 ## 📜 License
