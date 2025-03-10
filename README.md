@@ -43,6 +43,10 @@ $ rake test
 $ ruby reflex/samples/hello.rb
 ```
 
+## 🤝 Contributions
+
+Contributions are welcome! For more details, please refer to the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+
 ## 📜 License
 
 **xord/all** is licensed under the MIT License.
