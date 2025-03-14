@@ -14,7 +14,7 @@ Xot::ExtConf.new Xot, Rucy, Rays, Reflex do
   setup do
     headers    << 'ruby.h'
     libs.unshift 'gdi32', 'winmm', 'opengl32', 'glew32' if win32?
-    frameworks << 'Cocoa'                               if osx?
+    frameworks << 'Cocoa' << 'GameController'           if osx?
     $LDFLAGS   << ' -Wl,--out-implib=native.dll.a'      if mingw? || cygwin?
 
     unless osx?

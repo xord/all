@@ -52,6 +52,17 @@ namespace Reflex
 		return windows;
 	}
 
+	Window*
+	Window_get_active ()
+	{
+		for (auto& w : Window_all())
+		{
+			if (Xot::has_flag(w->self->flags, Window::Data::ACTIVE))
+				return w;
+		}
+		return NULL;
+	}
+
 
 	Window::Data::Data ()
 	:	flags(Window_default_flags())
@@ -167,6 +178,8 @@ namespace Reflex
 	{
 		if (!window) return;
 
+		Xot::add_flag(&window->self->flags, Window::Data::ACTIVE);
+
 		Event e;
 		window->on_activate(&e);
 	}
@@ -178,6 +191,8 @@ namespace Reflex
 
 		Event e;
 		window->on_deactivate(&e);
+
+		Xot::remove_flag(&window->self->flags, Window::Data::ACTIVE);
 	}
 
 	void
