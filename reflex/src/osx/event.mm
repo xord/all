@@ -200,16 +200,25 @@ namespace Reflex
 		handle_gamepad_event(gamepad.buttonX, KEY_GAMEPAD_X);
 		handle_gamepad_event(gamepad.buttonY, KEY_GAMEPAD_Y);
 
-		handle_gamepad_event(gamepad. leftShoulder,         KEY_GAMEPAD_SHOULDER_LEFT);
-		handle_gamepad_event(gamepad.rightShoulder,         KEY_GAMEPAD_SHOULDER_RIGHT);
-		handle_gamepad_event(gamepad. leftTrigger,          KEY_GAMEPAD_TRIGGER_LEFT);
-		handle_gamepad_event(gamepad.rightTrigger,          KEY_GAMEPAD_TRIGGER_RIGHT);
-		handle_gamepad_event(gamepad. leftThumbstickButton, KEY_GAMEPAD_THUMB_LEFT);
-		handle_gamepad_event(gamepad.rightThumbstickButton, KEY_GAMEPAD_THUMB_RIGHT);
+		handle_gamepad_event(gamepad. leftShoulder, KEY_GAMEPAD_SHOULDER_LEFT);
+		handle_gamepad_event(gamepad.rightShoulder, KEY_GAMEPAD_SHOULDER_RIGHT);
+		handle_gamepad_event(gamepad. leftTrigger,  KEY_GAMEPAD_TRIGGER_LEFT);
+		handle_gamepad_event(gamepad.rightTrigger,  KEY_GAMEPAD_TRIGGER_RIGHT);
 
-		handle_gamepad_event(gamepad.buttonMenu,    KEY_GAMEPAD_MENU);
-		handle_gamepad_event(gamepad.buttonOptions, KEY_GAMEPAD_OPTION);
-		handle_gamepad_event(gamepad.buttonHome,    KEY_GAMEPAD_HOME);
+		if (@available(macOS 10.14.1, *))
+		{
+			handle_gamepad_event(gamepad. leftThumbstickButton, KEY_GAMEPAD_THUMB_LEFT);
+			handle_gamepad_event(gamepad.rightThumbstickButton, KEY_GAMEPAD_THUMB_RIGHT);
+		}
+
+		if (@available(macOS 10.15, *))
+		{
+			handle_gamepad_event(gamepad.buttonMenu,    KEY_GAMEPAD_MENU);
+			handle_gamepad_event(gamepad.buttonOptions, KEY_GAMEPAD_OPTION);
+		}
+
+		if (@available(macOS 11.0, *))
+			handle_gamepad_event(gamepad.buttonHome, KEY_GAMEPAD_HOME);
 	}
 
 	static id game_controllers_observer = nil;
