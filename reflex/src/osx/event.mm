@@ -178,7 +178,7 @@ namespace Reflex
 	static void
 	handle_gamepad_event (GCControllerButtonInput* input, int code)
 	{
-		[input setValueChangedHandler:
+		[input setPressedChangedHandler:
 			^(GCControllerButtonInput* button, float value, BOOL pressed) {
 				call_gamepad_event(code, pressed);
 			}];
@@ -190,15 +190,26 @@ namespace Reflex
 		GCExtendedGamepad* gamepad = controller.extendedGamepad;
 		if (!gamepad) return;
 
-		handle_gamepad_event(gamepad.dpad.left,  KEY_LEFT);
-		handle_gamepad_event(gamepad.dpad.right, KEY_RIGHT);
-		handle_gamepad_event(gamepad.dpad.up,    KEY_UP);
-		handle_gamepad_event(gamepad.dpad.down,  KEY_DOWN);
+		handle_gamepad_event(gamepad.dpad.left,  KEY_GAMEPAD_LEFT);
+		handle_gamepad_event(gamepad.dpad.right, KEY_GAMEPAD_RIGHT);
+		handle_gamepad_event(gamepad.dpad.up,    KEY_GAMEPAD_UP);
+		handle_gamepad_event(gamepad.dpad.down,  KEY_GAMEPAD_DOWN);
 
-		handle_gamepad_event(gamepad.buttonA, KEY_A);
-		handle_gamepad_event(gamepad.buttonB, KEY_B);
-		handle_gamepad_event(gamepad.buttonX, KEY_X);
-		handle_gamepad_event(gamepad.buttonY, KEY_Y);
+		handle_gamepad_event(gamepad.buttonA, KEY_GAMEPAD_A);
+		handle_gamepad_event(gamepad.buttonB, KEY_GAMEPAD_B);
+		handle_gamepad_event(gamepad.buttonX, KEY_GAMEPAD_X);
+		handle_gamepad_event(gamepad.buttonY, KEY_GAMEPAD_Y);
+
+		handle_gamepad_event(gamepad. leftShoulder,         KEY_GAMEPAD_SHOULDER_LEFT);
+		handle_gamepad_event(gamepad.rightShoulder,         KEY_GAMEPAD_SHOULDER_RIGHT);
+		handle_gamepad_event(gamepad. leftTrigger,          KEY_GAMEPAD_TRIGGER_LEFT);
+		handle_gamepad_event(gamepad.rightTrigger,          KEY_GAMEPAD_TRIGGER_RIGHT);
+		handle_gamepad_event(gamepad. leftThumbstickButton, KEY_GAMEPAD_THUMB_LEFT);
+		handle_gamepad_event(gamepad.rightThumbstickButton, KEY_GAMEPAD_THUMB_RIGHT);
+
+		handle_gamepad_event(gamepad.buttonMenu,    KEY_GAMEPAD_MENU);
+		handle_gamepad_event(gamepad.buttonOptions, KEY_GAMEPAD_OPTION);
+		handle_gamepad_event(gamepad.buttonHome,    KEY_GAMEPAD_HOME);
 	}
 
 	static id game_controllers_observer = nil;
