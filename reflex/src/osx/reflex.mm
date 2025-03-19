@@ -27,13 +27,13 @@ namespace Reflex
 
 		global::pool = [[NSAutoreleasePool alloc] init];
 
-		init_game_controller();
+		init_game_controllers();
 	}
 
 	void
 	fin ()
 	{
-		fin_game_controller();
+		fin_game_controllers();
 
 		if (!global::pool)
 			reflex_error(__FILE__, __LINE__, "not initialized.");
