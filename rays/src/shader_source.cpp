@@ -71,6 +71,7 @@ namespace Rays
 			}
 #endif
 
+#ifndef IOS
 			static const std::regex VERSION(R"(^\s*#\s*version\s+\d+)");
 			if (!std::regex_search(source, VERSION))
 			{
@@ -78,6 +79,7 @@ namespace Rays
 				*buffer = VERSION_HEADER + source;
 				source  = buffer->c_str();
 			}
+#endif
 
 			return source;
 		}
