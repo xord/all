@@ -165,67 +165,64 @@ namespace Reflex
 
 
 	static void
-	call_game_controller_event (int code, bool pressed)
+	call_gamepad_event (int code, bool pressed)
 	{
 		Window* win = Window_get_active();
 		if (!win) return;
 
-		KeyEvent::Action action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
+		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
 		KeyEvent e(action, NULL, code, get_modifiers(), 0);
 		Window_call_key_event(win, &e);
 	}
 
 	static void
-	handle_game_controller_event (GCControllerButtonInput* input, int code)
+	handle_gamepad_event (GCControllerButtonInput* input, int code)
 	{
 		[input setValueChangedHandler:
 			^(GCControllerButtonInput* button, float value, BOOL pressed) {
-				call_game_controller_event(code, pressed);
+				call_gamepad_event(code, pressed);
 			}];
 	}
 
 	static void
-	handle_game_controller_events (GCController* controller)
+	handle_gamepad_events (GCController* controller)
 	{
 		GCExtendedGamepad* gamepad = controller.extendedGamepad;
 		if (!gamepad) return;
 
-		handle_game_controller_event(gamepad.dpad.left,  KEY_LEFT);
-		handle_game_controller_event(gamepad.dpad.right, KEY_RIGHT);
-		handle_game_controller_event(gamepad.dpad.up,    KEY_UP);
-		handle_game_controller_event(gamepad.dpad.down,  KEY_DOWN);
+		handle_gamepad_event(gamepad.dpad.left,  KEY_LEFT);
+		handle_gamepad_event(gamepad.dpad.right, KEY_RIGHT);
+		handle_gamepad_event(gamepad.dpad.up,    KEY_UP);
+		handle_gamepad_event(gamepad.dpad.down,  KEY_DOWN);
 
-		handle_game_controller_event(gamepad.buttonA, KEY_A);
-		handle_game_controller_event(gamepad.buttonB, KEY_B);
-		handle_game_controller_event(gamepad.buttonX, KEY_X);
-		handle_game_controller_event(gamepad.buttonY, KEY_Y);
+		handle_gamepad_event(gamepad.buttonA, KEY_A);
+		handle_gamepad_event(gamepad.buttonB, KEY_B);
+		handle_gamepad_event(gamepad.buttonX, KEY_X);
+		handle_gamepad_event(gamepad.buttonY, KEY_Y);
 	}
 
-	static id game_controller_observer = nil;
+	static id game_controllers_observer = nil;
 
 	void
-	init_game_controller ()
+	init_game_controllers ()
 	{
 		for (GCController* c in GCController.controllers)
-			handle_game_controller_events(c);
+			handle_gamepad_events(c);
 
-		game_controller_observer = [NSNotificationCenter.defaultCenter
+		game_controllers_observer = [NSNotificationCenter.defaultCenter
 			addObserverForName: GCControllerDidConnectNotification
 			object: nil
 			queue: NSOperationQueue.mainQueue
-			usingBlock: ^(NSNotification* n)
-			{
-				handle_game_controller_events(n.object);
-			}];
+			usingBlock: ^(NSNotification* n) {handle_gamepad_events(n.object);}];
 	}
 
 	void
-	fin_game_controller ()
+	fin_game_controllers ()
 	{
-		if (!game_controller_observer) return;
+		if (!game_controllers_observer) return;
 
 		[NSNotificationCenter.defaultCenter
-			removeObserver: game_controller_observer];
+			removeObserver: game_controllers_observer];
 	}
 
 
