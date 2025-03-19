@@ -154,6 +154,8 @@ namespace Reflex
 	{
 		WindowData* self = get_data(win);
 
+		poll_gamepads();
+
 		Window_call_update_event(win);
 
 		if (self->redraw)
