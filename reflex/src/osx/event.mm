@@ -15,9 +15,9 @@ namespace Reflex
 
 
 	static uint
-	get_modifiers (const NSEvent* e = nil)
+	get_modifiers (const NSEvent* event = nil)
 	{
-		NSUInteger flags = e ? e.modifierFlags : NSEvent.modifierFlags;
+		NSUInteger flags = event ? event.modifierFlags : NSEvent.modifierFlags;
 		return
 			(flags & NSAlphaShiftKeyMask) ? MOD_CAPS     : 0 |
 			(flags & NSShiftKeyMask)      ? MOD_SHIFT    : 0 |

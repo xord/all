@@ -33,10 +33,10 @@ namespace Reflex
 	void
 	fin ()
 	{
-		fin_game_controllers();
-
 		if (!global::pool)
 			reflex_error(__FILE__, __LINE__, "not initialized.");
+
+		fin_game_controllers();
 
 		[global::pool release];
 		global::pool = nil;
