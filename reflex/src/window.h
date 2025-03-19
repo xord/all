@@ -33,6 +33,13 @@ namespace Reflex
 
 		typedef std::map<View::Ref, CaptureTargetIDList> CaptureMap;
 
+		enum Flag
+		{
+
+			ACTIVE = Xot::bit(1, FLAG_LAST),
+
+		};// Flag
+
 		int hide_count = 1;
 
 		bool redraw    = true;
@@ -81,6 +88,8 @@ namespace Reflex
 	void Window_unregister (Window* win);
 
 	Application::WindowList& Window_all ();
+
+	Window* Window_get_active ();
 
 
 	uint Window_default_flags ();

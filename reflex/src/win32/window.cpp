@@ -154,6 +154,8 @@ namespace Reflex
 	{
 		WindowData* self = get_data(win);
 
+		poll_gamepads();
+
 		Window_call_update_event(win);
 
 		if (self->redraw)
@@ -341,8 +343,13 @@ namespace Reflex
 		{
 			case WM_ACTIVATE:
 			{
-				if ((wp & 0xFFFF) == WA_INACTIVE)
+				if (LOWORD(wp) == WA_INACTIVE)
+				{
+					Window_call_deactivate_event(win);
 					self->pressing_keys.clear();
+				}
+				else
+					Window_call_activate_event(win);
 				break;
 			}
 

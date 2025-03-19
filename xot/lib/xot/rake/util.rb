@@ -207,10 +207,10 @@ module Xot
       s  = flags.dup
       s << warning_opts.map {|s| " -W#{s}"}.join
       s << " -arch arm64" if RUBY_PLATFORM =~ /arm64-darwin/
-      s << ' -std=c++20'                                          if gcc?
-      s << ' -std=c++20 -stdlib=libc++ -mmacosx-version-min=10.7' if clang?
-      s << ' ' + RbConfig::CONFIG['debugflags']                   if debug?
-      s.gsub!(/-O\d?\w*/, '-O0')                                  if debug?
+      s << ' -std=c++20'                                           if gcc?
+      s << ' -std=c++20 -stdlib=libc++ -mmacosx-version-min=10.10' if clang?
+      s << ' ' + RbConfig::CONFIG['debugflags']                    if debug?
+      s.gsub!(/-O\d?\w*/, '-O0')                                   if debug?
       s
     end
 

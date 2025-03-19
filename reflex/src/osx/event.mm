@@ -5,6 +5,9 @@
 #include <assert.h>
 #include <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
+#import <GameController/GameController.h>
+#include "reflex/debug.h"
+#include "window.h"
 
 
 namespace Reflex
@@ -12,9 +15,9 @@ namespace Reflex
 
 
 	static uint
-	get_modifiers (const NSEvent* e)
+	get_modifiers (const NSEvent* e = nil)
 	{
-		NSUInteger flags = e.modifierFlags;
+		NSUInteger flags = e ? e.modifierFlags : NSEvent.modifierFlags;
 		return
 			(flags & NSAlphaShiftKeyMask) ? MOD_CAPS     : 0 |
 			(flags & NSShiftKeyMask)      ? MOD_SHIFT    : 0 |
@@ -158,6 +161,79 @@ namespace Reflex
 	:	WheelEvent(0, 0, 0, [e deltaX], [e deltaY], [e deltaZ], get_modifiers(e))
 	{
 		WheelEvent_set_position(this, get_pointer_position(e, view));
+	}
+
+
+	static void
+	call_gamepad_event (int code, bool pressed)
+	{
+		Window* win = Window_get_active();
+		if (!win) return;
+
+		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
+		KeyEvent e(action, NULL, code, get_modifiers(), 0);
+		Window_call_key_event(win, &e);
+	}
+
+	static void
+	handle_gamepad_event (GCControllerButtonInput* input, int code)
+	{
+		[input setPressedChangedHandler:
+			^(GCControllerButtonInput* button, float value, BOOL pressed) {
+				call_gamepad_event(code, pressed);
+			}];
+	}
+
+	static void
+	handle_gamepad_events (GCController* controller)
+	{
+		GCExtendedGamepad* gamepad = controller.extendedGamepad;
+		if (!gamepad) return;
+
+		handle_gamepad_event(gamepad.dpad.left,  KEY_GAMEPAD_LEFT);
+		handle_gamepad_event(gamepad.dpad.right, KEY_GAMEPAD_RIGHT);
+		handle_gamepad_event(gamepad.dpad.up,    KEY_GAMEPAD_UP);
+		handle_gamepad_event(gamepad.dpad.down,  KEY_GAMEPAD_DOWN);
+
+		handle_gamepad_event(gamepad.buttonA, KEY_GAMEPAD_A);
+		handle_gamepad_event(gamepad.buttonB, KEY_GAMEPAD_B);
+		handle_gamepad_event(gamepad.buttonX, KEY_GAMEPAD_X);
+		handle_gamepad_event(gamepad.buttonY, KEY_GAMEPAD_Y);
+
+		handle_gamepad_event(gamepad. leftShoulder,         KEY_GAMEPAD_SHOULDER_LEFT);
+		handle_gamepad_event(gamepad.rightShoulder,         KEY_GAMEPAD_SHOULDER_RIGHT);
+		handle_gamepad_event(gamepad. leftTrigger,          KEY_GAMEPAD_TRIGGER_LEFT);
+		handle_gamepad_event(gamepad.rightTrigger,          KEY_GAMEPAD_TRIGGER_RIGHT);
+		handle_gamepad_event(gamepad. leftThumbstickButton, KEY_GAMEPAD_THUMB_LEFT);
+		handle_gamepad_event(gamepad.rightThumbstickButton, KEY_GAMEPAD_THUMB_RIGHT);
+
+		handle_gamepad_event(gamepad.buttonMenu,    KEY_GAMEPAD_MENU);
+		handle_gamepad_event(gamepad.buttonOptions, KEY_GAMEPAD_OPTION);
+		handle_gamepad_event(gamepad.buttonHome,    KEY_GAMEPAD_HOME);
+	}
+
+	static id game_controllers_observer = nil;
+
+	void
+	init_game_controllers ()
+	{
+		for (GCController* c in GCController.controllers)
+			handle_gamepad_events(c);
+
+		game_controllers_observer = [NSNotificationCenter.defaultCenter
+			addObserverForName: GCControllerDidConnectNotification
+			object: nil
+			queue: NSOperationQueue.mainQueue
+			usingBlock: ^(NSNotification* n) {handle_gamepad_events(n.object);}];
+	}
+
+	void
+	fin_game_controllers ()
+	{
+		if (!game_controllers_observer) return;
+
+		[NSNotificationCenter.defaultCenter
+			removeObserver: game_controllers_observer];
 	}
 
 

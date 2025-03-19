@@ -260,6 +260,26 @@ RUCY_DEF0(get_key)
 		CASE(LAUNCH_APP1):         SYMBOL1(launch_app1);
 		CASE(LAUNCH_APP2):         SYMBOL1(launch_app2);
 
+		CASE(GAMEPAD_LEFT):           SYMBOL1(gamepad_left);
+		CASE(GAMEPAD_RIGHT):          SYMBOL1(gamepad_right);
+		CASE(GAMEPAD_UP):             SYMBOL1(gamepad_up);
+		CASE(GAMEPAD_DOWN):           SYMBOL1(gamepad_down);
+		CASE(GAMEPAD_A):              SYMBOL1(gamepad_a);
+		CASE(GAMEPAD_B):              SYMBOL1(gamepad_b);
+		CASE(GAMEPAD_X):              SYMBOL1(gamepad_x);
+		CASE(GAMEPAD_Y):              SYMBOL1(gamepad_y);
+		CASE(GAMEPAD_TRIGGER_LEFT):   SYMBOL1(gamepad_trigger_left);
+		CASE(GAMEPAD_TRIGGER_RIGHT):  SYMBOL1(gamepad_trigger_right);
+		CASE(GAMEPAD_SHOULDER_LEFT):  SYMBOL1(gamepad_shoulder_left);
+		CASE(GAMEPAD_SHOULDER_RIGHT): SYMBOL1(gamepad_shoulder_right);
+		CASE(GAMEPAD_THUMB_LEFT):     SYMBOL1(gamepad_thumb_left);
+		CASE(GAMEPAD_THUMB_RIGHT):    SYMBOL1(gamepad_thumb_right);
+		CASE(GAMEPAD_HOME):           SYMBOL1(gamepad_home);
+		CASE(GAMEPAD_MENU):           SYMBOL1(gamepad_menu);
+		CASE(GAMEPAD_OPTION):         SYMBOL1(gamepad_option);
+		CASE(GAMEPAD_START):          SYMBOL1(gamepad_start);
+		CASE(GAMEPAD_SELECT):         SYMBOL1(gamepad_select);
+
 		#undef CASE
 		#undef SYMBOL1
 		#undef SYMBOL2

@@ -53,6 +53,11 @@ namespace Reflex
 	};// NativeWheelEvent
 
 
+	void init_game_controllers ();
+
+	void fin_game_controllers ();
+
+
 }// Reflex
 
 
