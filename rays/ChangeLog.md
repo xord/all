@@ -1,6 +1,14 @@
 # rays ChangeLog
 
 
+## [v0.3.5] - 2025-03-24
+
+- Add PULL_REQUEST_TEMPLATE.md
+- Add CONTRIBUTING.md
+
+- Fix shader error on iOS
+
+
 ## [v0.3.4] - 2025-03-07
 
 - Add msys2_mingw_dependencies for openal and glew

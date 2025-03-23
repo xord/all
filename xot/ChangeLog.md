@@ -1,6 +1,12 @@
 # xot ChangeLog
 
 
+## [v0.3.5] - 2025-03-24
+
+- Add PULL_REQUEST_TEMPLATE.md
+- Add CONTRIBUTING.md
+
+
 ## [v0.3.4] - 2025-03-07
 
 - Hookable passes keyword args

@@ -1,6 +1,18 @@
 # reflex ChangeLog
 
 
+## [v0.3.5] - 2025-03-24
+
+- Add PULL_REQUEST_TEMPLATE.md
+- Add CONTRIBUTING.md
+- Handle gamepad events on macOS, iOS, and Win32
+- Call activate/deactivate event for window on Win32
+- Define constants for gamepad keys
+- Delay removing child to avoid breaking child list looped on View_update_tree()
+
+- Fix a crash caused by add/remove_child()
+
+
 ## [v0.3.4] - 2025-03-07
 
 - Captured key and pointer events can be blocked before being sent to the window and views
