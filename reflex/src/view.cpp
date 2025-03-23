@@ -55,7 +55,13 @@ namespace Reflex
 
 			HAS_VARIABLE_LENGTHS = Xot::bit(8, FLAG_LAST),
 
-			NO_SHAPE             = Xot::bit(9, FLAG_LAST),
+			NO_SHAPE             = Xot::bit(8, FLAG_LAST),
+
+			UPDATING             = Xot::bit(10, FLAG_LAST),
+
+			HAS_CHILDREN_TO_REMOVE = Xot::bit(11, FLAG_LAST),
+
+			REMOVE_FROM_PARENT     = Xot::bit(12, FLAG_LAST),
 
 		};// Flag
 
@@ -107,8 +113,6 @@ namespace Reflex
 		std::unique_ptr<ChildList>   pchildren;
 
 		std::unique_ptr<ChildList>   pchildren_sorted;
-
-		ChildList*                   pchildren_to_remove = NULL;
 
 		Point& pivot ()
 		{
@@ -1047,6 +1051,18 @@ namespace Reflex
 		}
 	}
 
+	static void
+	remove_children (View* view, View::ChildList* children)
+	{
+		size_t size = children->size();
+		for (size_t i = size - 1; i >= 0; --i)
+		{
+			View* child = (*children)[i];
+			if (child->self->has_flag(View::Data::REMOVE_FROM_PARENT))
+				view->remove_child(child);
+		}
+	}
+
 	void
 	View_update_tree (View* view, const UpdateEvent& event)
 	{
@@ -1055,10 +1071,9 @@ namespace Reflex
 
 		View::Data* self = view->self.get();
 
-		fire_timers(view, event.now());
+		self->add_flag(View::Data::UPDATING);
 
-		View::ChildList children_to_remove;
-		self->pchildren_to_remove = &children_to_remove;
+		fire_timers(view, event.now());
 
 		View::ChildList* children = self->children();
 		if (children)
@@ -1066,10 +1081,6 @@ namespace Reflex
 			for (auto& child : *children)
 				View_update_tree(child.get(), event);
 		}
-
-		self->pchildren_to_remove = NULL;
-		for (auto& child : children_to_remove)
-			view->remove_child(child);
 
 		update_view_shapes(view);
 		update_child_world(view, event.dt());
@@ -1090,6 +1101,11 @@ namespace Reflex
 
 		if (self->check_and_remove_flag(View::Data::FIT_TO_CONTENT))
 			fit_view_to_content(view);
+
+		self->remove_flag(View::Data::UPDATING);
+
+		if (self->check_and_remove_flag(View::Data::HAS_CHILDREN_TO_REMOVE))
+			remove_children(view, children);
 	}
 
 	static bool
@@ -1801,10 +1817,10 @@ namespace Reflex
 		else if (found != belong)
 			invalid_state_error(__FILE__, __LINE__);
 
-		if (self->pchildren_to_remove)
+		if (self->has_flag(Data::UPDATING))
 		{
 			// delay removing child to avoid breaking child list looped on View_update_tree()
-			self->pchildren_to_remove->emplace_back(child);
+			child->self->add_flag(Data::REMOVE_FROM_PARENT);
 		}
 		else
 		{
