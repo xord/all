@@ -39,29 +39,29 @@ namespace Reflex
 		enum Flag
 		{
 
-			REDRAW               = Xot::bit(1, FLAG_LAST),
+			UPDATING               = Xot::bit(1, FLAG_LAST),
 
-			APPLY_STYLE          = Xot::bit(2, FLAG_LAST),
+			NO_SHAPE               = Xot::bit(2, FLAG_LAST),
 
-			UPDATE_STYLE         = Xot::bit(3, FLAG_LAST),
+			HAS_VARIABLE_LENGTHS   = Xot::bit(3, FLAG_LAST),
 
-			UPDATE_SHAPES        = Xot::bit(4, FLAG_LAST),
+			HAS_CHILDREN_TO_REMOVE = Xot::bit(4, FLAG_LAST),
 
-			UPDATE_LAYOUT        = Xot::bit(5, FLAG_LAST),
+			REMOVE_FROM_PARENT     = Xot::bit(5, FLAG_LAST),
 
-			SORT_CHILDREN        = Xot::bit(6, FLAG_LAST),
+			REDRAW                 = Xot::bit(6, FLAG_LAST),
 
-			FIT_TO_CONTENT       = Xot::bit(7, FLAG_LAST),
+			APPLY_STYLE            = Xot::bit(7, FLAG_LAST),
 
-			HAS_VARIABLE_LENGTHS = Xot::bit(8, FLAG_LAST),
+			UPDATE_STYLE           = Xot::bit(8, FLAG_LAST),
 
-			NO_SHAPE             = Xot::bit(8, FLAG_LAST),
+			UPDATE_SHAPES          = Xot::bit(9, FLAG_LAST),
 
-			UPDATING             = Xot::bit(10, FLAG_LAST),
+			UPDATE_LAYOUT          = Xot::bit(10, FLAG_LAST),
 
-			HAS_CHILDREN_TO_REMOVE = Xot::bit(11, FLAG_LAST),
+			SORT_CHILDREN          = Xot::bit(11, FLAG_LAST),
 
-			REMOVE_FROM_PARENT     = Xot::bit(12, FLAG_LAST),
+			FIT_TO_CONTENT         = Xot::bit(12, FLAG_LAST),
 
 		};// Flag
 
