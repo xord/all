@@ -1080,8 +1080,9 @@ namespace Reflex
 		View::ChildList* children = self->children();
 		if (children)
 		{
-			for (auto& child : *children)
-				View_update_tree(child.get(), event);
+			size_t size = children->size();
+			for (size_t i = 0; i < size; ++i)
+				View_update_tree((*children)[i].get(), event);
 		}
 
 		update_view_shapes(view);
