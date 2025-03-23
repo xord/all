@@ -1054,11 +1054,13 @@ namespace Reflex
 	static void
 	remove_children (View* view, View::ChildList* children)
 	{
-		size_t size = children->size();
-		for (size_t i = size - 1; i >= 0; --i)
+		assert(children);
+
+		int size = (int) children->size();
+		for (int i = size - 1; i >= 0; --i)
 		{
-			View* child = (*children)[i];
-			if (child->self->has_flag(View::Data::REMOVE_FROM_PARENT))
+			View* child = (*children)[i].get();
+			if (child->self->check_and_remove_flag(View::Data::REMOVE_FROM_PARENT))
 				view->remove_child(child);
 		}
 	}
@@ -1820,6 +1822,7 @@ namespace Reflex
 		if (self->has_flag(Data::UPDATING))
 		{
 			// delay removing child to avoid breaking child list looped on View_update_tree()
+			self->add_flag(Data::HAS_CHILDREN_TO_REMOVE);
 			child->self->add_flag(Data::REMOVE_FROM_PARENT);
 		}
 		else
