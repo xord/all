@@ -39,23 +39,29 @@ namespace Reflex
 		enum Flag
 		{
 
-			REDRAW               = Xot::bit(1, FLAG_LAST),
+			UPDATING               = Xot::bit(1, FLAG_LAST),
 
-			APPLY_STYLE          = Xot::bit(2, FLAG_LAST),
+			NO_SHAPE               = Xot::bit(2, FLAG_LAST),
 
-			UPDATE_STYLE         = Xot::bit(3, FLAG_LAST),
+			HAS_VARIABLE_LENGTHS   = Xot::bit(3, FLAG_LAST),
 
-			UPDATE_SHAPES        = Xot::bit(4, FLAG_LAST),
+			HAS_CHILDREN_TO_REMOVE = Xot::bit(4, FLAG_LAST),
 
-			UPDATE_LAYOUT        = Xot::bit(5, FLAG_LAST),
+			REMOVE_FROM_PARENT     = Xot::bit(5, FLAG_LAST),
 
-			SORT_CHILDREN        = Xot::bit(6, FLAG_LAST),
+			REDRAW                 = Xot::bit(6, FLAG_LAST),
 
-			FIT_TO_CONTENT       = Xot::bit(7, FLAG_LAST),
+			APPLY_STYLE            = Xot::bit(7, FLAG_LAST),
 
-			HAS_VARIABLE_LENGTHS = Xot::bit(8, FLAG_LAST),
+			UPDATE_STYLE           = Xot::bit(8, FLAG_LAST),
 
-			NO_SHAPE             = Xot::bit(9, FLAG_LAST),
+			UPDATE_SHAPES          = Xot::bit(9, FLAG_LAST),
+
+			UPDATE_LAYOUT          = Xot::bit(10, FLAG_LAST),
+
+			SORT_CHILDREN          = Xot::bit(11, FLAG_LAST),
+
+			FIT_TO_CONTENT         = Xot::bit(12, FLAG_LAST),
 
 		};// Flag
 
@@ -1045,6 +1051,18 @@ namespace Reflex
 		}
 	}
 
+	static void
+	remove_children (View* view, View::ChildList* children)
+	{
+		size_t size = children->size();
+		for (size_t i = size - 1; i >= 0; --i)
+		{
+			View* child = (*children)[i];
+			if (child->self->has_flag(View::Data::REMOVE_FROM_PARENT))
+				view->remove_child(child);
+		}
+	}
+
 	void
 	View_update_tree (View* view, const UpdateEvent& event)
 	{
@@ -1052,6 +1070,8 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 
 		View::Data* self = view->self.get();
+
+		self->add_flag(View::Data::UPDATING);
 
 		fire_timers(view, event.now());
 
@@ -1081,6 +1101,11 @@ namespace Reflex
 
 		if (self->check_and_remove_flag(View::Data::FIT_TO_CONTENT))
 			fit_view_to_content(view);
+
+		self->remove_flag(View::Data::UPDATING);
+
+		if (self->check_and_remove_flag(View::Data::HAS_CHILDREN_TO_REMOVE))
+			remove_children(view, children);
 	}
 
 	static bool
@@ -1792,13 +1817,18 @@ namespace Reflex
 		else if (found != belong)
 			invalid_state_error(__FILE__, __LINE__);
 
-		set_parent(child, NULL);
-
-		erase_child_from_children(this, child);
-
-		self->sort_children();
-
-		update_view_layout(this);
+		if (self->has_flag(Data::UPDATING))
+		{
+			// delay removing child to avoid breaking child list looped on View_update_tree()
+			child->self->add_flag(Data::REMOVE_FROM_PARENT);
+		}
+		else
+		{
+			set_parent(child, NULL);
+			erase_child_from_children(this, child);
+			self->sort_children();
+			update_view_layout(this);
+		}
 	}
 
 	void
