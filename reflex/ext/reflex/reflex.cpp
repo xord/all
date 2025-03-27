@@ -43,6 +43,15 @@ RUCY_DEF0(fin)
 }
 RUCY_END
 
+static
+RUCY_DEF0(process_events)
+{
+	Reflex::process_events();
+
+	return self;
+}
+RUCY_END
+
 
 static Module mReflex;
 
@@ -52,6 +61,7 @@ Init_reflex ()
 	mReflex = define_module("Reflex");
 	mReflex.define_singleton_method("init!", init);
 	mReflex.define_singleton_method("fin!", fin);
+	mReflex.define_singleton_method("process_events!", process_events);
 
 	using namespace Reflex;
 

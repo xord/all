@@ -24,6 +24,11 @@ namespace Xot
 	{
 	}
 
+	String::String (const std::string& str)
+	:	Super(str)
+	{
+	}
+
 	String
 	String::upcase () const
 	{

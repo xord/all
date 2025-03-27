@@ -45,6 +45,8 @@ namespace Xot
 
 			String (const char* str);
 
+			String (const std::string& str);
+
 			template <typename ITERATOR>
 			String (ITERATOR begin, ITERATOR end) : Super(begin, end) {}
 
