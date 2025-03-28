@@ -53,9 +53,9 @@ namespace Reflex
 	};// NativeWheelEvent
 
 
-	void init_game_controllers ();
+	void init_gamepads ();
 
-	void fin_game_controllers ();
+	void  fin_gamepads ();
 
 
 }// Reflex

@@ -279,6 +279,22 @@ RUCY_DEF0(get_key)
 		CASE(GAMEPAD_OPTION):         SYMBOL1(gamepad_option);
 		CASE(GAMEPAD_START):          SYMBOL1(gamepad_start);
 		CASE(GAMEPAD_SELECT):         SYMBOL1(gamepad_select);
+		CASE(GAMEPAD_BUTTON_0):       SYMBOL1(gamepad_button_0);
+		CASE(GAMEPAD_BUTTON_1):       SYMBOL1(gamepad_button_1);
+		CASE(GAMEPAD_BUTTON_2):       SYMBOL1(gamepad_button_2);
+		CASE(GAMEPAD_BUTTON_3):       SYMBOL1(gamepad_button_3);
+		CASE(GAMEPAD_BUTTON_4):       SYMBOL1(gamepad_button_4);
+		CASE(GAMEPAD_BUTTON_5):       SYMBOL1(gamepad_button_5);
+		CASE(GAMEPAD_BUTTON_6):       SYMBOL1(gamepad_button_6);
+		CASE(GAMEPAD_BUTTON_7):       SYMBOL1(gamepad_button_7);
+		CASE(GAMEPAD_BUTTON_8):       SYMBOL1(gamepad_button_8);
+		CASE(GAMEPAD_BUTTON_9):       SYMBOL1(gamepad_button_9);
+		CASE(GAMEPAD_BUTTON_10):      SYMBOL1(gamepad_button_10);
+		CASE(GAMEPAD_BUTTON_11):      SYMBOL1(gamepad_button_11);
+		CASE(GAMEPAD_BUTTON_12):      SYMBOL1(gamepad_button_12);
+		CASE(GAMEPAD_BUTTON_13):      SYMBOL1(gamepad_button_13);
+		CASE(GAMEPAD_BUTTON_14):      SYMBOL1(gamepad_button_14);
+		CASE(GAMEPAD_BUTTON_15):      SYMBOL1(gamepad_button_15);
 
 		#undef CASE
 		#undef SYMBOL1

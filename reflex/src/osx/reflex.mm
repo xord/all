@@ -27,7 +27,7 @@ namespace Reflex
 
 		global::pool = [[NSAutoreleasePool alloc] init];
 
-		init_game_controllers();
+		init_gamepads();
 	}
 
 	void
@@ -36,7 +36,7 @@ namespace Reflex
 		if (!global::pool)
 			reflex_error(__FILE__, __LINE__, "not initialized.");
 
-		fin_game_controllers();
+		fin_gamepads();
 
 		[global::pool release];
 		global::pool = nil;
