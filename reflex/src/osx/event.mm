@@ -181,13 +181,14 @@ namespace Reflex
 	handle_gamepad_event (GCControllerButtonInput* input, int code)
 	{
 		[input setPressedChangedHandler:
-			^(GCControllerButtonInput* button, float value, BOOL pressed) {
+			^(GCControllerButtonInput* button, float value, BOOL pressed)
+			{
 				call_gamepad_event(code, pressed);
 			}];
 	}
 
 	static void
-	handle_gamepad_events (GCController* controller)
+	handle_game_controller_events (GCController* controller)
 	{
 		GCExtendedGamepad* gamepad = controller.extendedGamepad;
 		if (!gamepad) return;
@@ -223,28 +224,35 @@ namespace Reflex
 			handle_gamepad_event(gamepad.buttonHome, KEY_GAMEPAD_HOME);
 	}
 
-	static id game_controllers_observer = nil;
+	static id game_controller_observer = nil;
 
-	void
-	init_game_controllers ()
+	static void
+	init_game_controller ()
 	{
-		for (GCController* c in GCController.controllers)
-			handle_gamepad_events(c);
+		if (game_controller_observer)
+			invalid_state_error(__FILE__, __LINE__);
 
-		game_controllers_observer = [NSNotificationCenter.defaultCenter
+		for (GCController* c in GCController.controllers)
+			handle_game_controller_events(c);
+
+		game_controller_observer = [NSNotificationCenter.defaultCenter
 			addObserverForName: GCControllerDidConnectNotification
 			object: nil
 			queue: NSOperationQueue.mainQueue
-			usingBlock: ^(NSNotification* n) {handle_gamepad_events(n.object);}];
+			usingBlock: ^(NSNotification* n)
+			{
+				handle_game_controller_events(n.object);
+			}];
 	}
 
-	void
-	fin_game_controllers ()
+	static void
+	fin_game_controller ()
 	{
-		if (!game_controllers_observer) return;
+		if (!game_controller_observer)
+			invalid_state_error(__FILE__, __LINE__);
 
 		[NSNotificationCenter.defaultCenter
-			removeObserver: game_controllers_observer];
+			removeObserver: game_controller_observer];
 	}
 
 
@@ -408,14 +416,14 @@ namespace Reflex
 	void
 	init_gamepads ()
 	{
-		init_game_controllers();
+		init_game_controller();
 		init_hid_gamepads();
 	}
 
 	void
 	fin_gamepads ()
 	{
-		fin_game_controllers();
+		fin_game_controller();
 		fin_hid_gamepads();
 	}
 

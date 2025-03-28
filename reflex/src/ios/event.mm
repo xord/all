@@ -156,15 +156,18 @@ namespace Reflex
 			handle_gamepad_event(gamepad.buttonHome, KEY_GAMEPAD_HOME);
 	}
 
-	static id game_controllers_observer = nil;
+	static id game_controller_observer = nil;
 
 	void
-	init_game_controllers ()
+	init_gamepads ()
 	{
+		if (game_controller_observer)
+			invalid_state_error(__FILE__, __LINE__);
+
 		for (GCController* c in GCController.controllers)
 			handle_gamepad_events(c);
 
-		game_controllers_observer = [NSNotificationCenter.defaultCenter
+		game_controller_observer = [NSNotificationCenter.defaultCenter
 			addObserverForName: GCControllerDidConnectNotification
 			object: nil
 			queue: NSOperationQueue.mainQueue
@@ -172,12 +175,13 @@ namespace Reflex
 	}
 
 	void
-	fin_game_controllers ()
+	fin_gamepads ()
 	{
-		if (!game_controllers_observer) return;
+		if (!game_controller_observer)
+			invalid_state_error(__FILE__, __LINE__);
 
 		[NSNotificationCenter.defaultCenter
-			removeObserver: game_controllers_observer];
+			removeObserver: game_controller_observer];
 	}
 
 
