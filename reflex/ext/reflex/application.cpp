@@ -90,6 +90,22 @@ RUCY_DEF1(on_quit, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_device_connect, event)
+{
+	CHECK;
+	CALL(on_device_connect(to<Reflex::DeviceEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_device_disconnect, event)
+{
+	CHECK;
+	CALL(on_device_disconnect(to<Reflex::DeviceEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_motion, event)
 {
 	CHECK;
@@ -137,6 +153,8 @@ Init_reflex_application ()
 	cApplication.define_method("each_window", each_window);
 	cApplication.define_method("on_start", on_start);
 	cApplication.define_method("on_quit",  on_quit);
+	cApplication.define_method("on_device_connect",    on_device_connect);
+	cApplication.define_method("on_device_disconnect", on_device_disconnect);
 	cApplication.define_method("on_motion", on_motion);
 	cApplication.define_method("on_preference", on_preference);
 	cApplication.define_method("on_about",      on_about);

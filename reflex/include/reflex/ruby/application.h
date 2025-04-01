@@ -65,6 +65,24 @@ namespace Reflex
 					return Super::on_quit(e);
 			}
 
+			virtual void on_device_connect (DeviceEvent* e)
+			{
+				RUCY_SYM(on_device_connect);
+				if (this->is_overridable())
+					this->value.call(on_device_connect, Rucy::value(e));
+				else
+					return Super::on_device_connect(e);
+			}
+
+			virtual void on_device_disconnect (DeviceEvent* e)
+			{
+				RUCY_SYM(on_device_disconnect);
+				if (this->is_overridable())
+					this->value.call(on_device_disconnect, Rucy::value(e));
+				else
+					return Super::on_device_disconnect(e);
+			}
+
 			virtual void on_motion (MotionEvent* e)
 			{
 				RUCY_SYM(on_motion);

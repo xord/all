@@ -18,6 +18,20 @@ namespace Reflex
 	}// global
 
 
+	void
+	Application_add_device (Application* app, Device* device)
+	{
+		DeviceEvent e(device);
+		app->on_device_connect(&e);
+	}
+
+	void
+	Application_remove_device (Application* app, Device* device)
+	{
+		DeviceEvent e(device);
+		app->on_device_disconnect(&e);
+	}
+
 	Application*
 	app ()
 	{
@@ -85,6 +99,16 @@ namespace Reflex
 
 	void
 	Application::on_quit (Event* e)
+	{
+	}
+
+	void
+	Application::on_device_connect (DeviceEvent* e)
+	{
+	}
+
+	void
+	Application::on_device_disconnect (DeviceEvent* e)
 	{
 	}
 
