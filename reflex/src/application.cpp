@@ -78,6 +78,31 @@ namespace Reflex
 		return Window_all().end();
 	}
 
+	void
+	Application::on_start (Event* e)
+	{
+	}
+
+	void
+	Application::on_quit (Event* e)
+	{
+	}
+
+	void
+	Application::on_motion (MotionEvent* e)
+	{
+	}
+
+	void
+	Application::on_preference (Event* e)
+	{
+	}
+
+	Application::operator bool () const
+	{
+		return true;
+	}
+
 	bool
 	Application::operator ! () const
 	{
