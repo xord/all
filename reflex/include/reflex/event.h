@@ -17,6 +17,7 @@ namespace Reflex
 {
 
 
+	class Device;
 	class Shape;
 	class View;
 
@@ -45,6 +46,30 @@ namespace Reflex
 			Event (const Event* src);
 
 	};// Event
+
+
+	class DeviceEvent : public Event
+	{
+
+		public:
+
+			DeviceEvent (Device* device = NULL);
+
+			DeviceEvent dup () const;
+
+			      Device* device ();
+
+			const Device* device () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			DeviceEvent (const DeviceEvent* src);
+
+	};// DeviceEvent
 
 
 	class UpdateEvent : public Event
@@ -302,7 +327,30 @@ namespace Reflex
 
 			WheelEvent ();
 
-			WheelEvent (
+			WheelEvent (const GamePad& gamepad);
+
+			WheelEvent dup () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			WheelEvent (const WheelEvent* src);
+
+	};// WheelEvent
+
+
+	class GamePadEvent : public Event
+	{
+
+		public:
+
+			GamePadEvent ();
+
+			GamePadEvent (
+										ulonglong button,
 				coord x, coord y, coord z, coord dx, coord dy, coord dz,
 				uint modifiers = 0);
 

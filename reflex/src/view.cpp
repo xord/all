@@ -1373,6 +1373,7 @@ namespace Reflex
 
 		KeyEvent e = event->dup();
 		view->on_key(&e);
+		if (e.is_blocked()) return;
 
 		switch (e.action())
 		{

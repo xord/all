@@ -3,6 +3,7 @@
 
 #include "reflex/exception.h"
 #include "reflex/debug.h"
+#include "device.h"
 #include "window.h"
 
 
@@ -18,6 +19,20 @@ namespace Reflex
 	}// global
 
 
+	void
+	Application_add_device (Application* app, Device* device)
+	{
+		DeviceEvent e(device);
+		app->on_device_connect(&e);
+	}
+
+	void
+	Application_remove_device (Application* app, Device* device)
+	{
+		DeviceEvent e(device);
+		app->on_device_disconnect(&e);
+	}
+
 	Application*
 	app ()
 	{
@@ -32,10 +47,14 @@ namespace Reflex
 			reflex_error(__FILE__, __LINE__, "multiple application instances.");
 
 		global::instance = this;
+
+		GamePad_init(this);
 	}
 
 	Application::~Application ()
 	{
+		GamePad_fin(this);
+
 		global::instance = NULL;
 	}
 

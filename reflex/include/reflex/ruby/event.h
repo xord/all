@@ -11,6 +11,8 @@
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Event)
 
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::DeviceEvent)
+
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::UpdateEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::DrawEvent)
@@ -42,6 +44,9 @@ namespace Reflex
 
 	REFLEX_EXPORT Rucy::Class event_class ();
 	// class Reflex::Event
+
+	REFLEX_EXPORT Rucy::Class device_event_class ();
+	// class Reflex::DeviceEvent
 
 	REFLEX_EXPORT Rucy::Class update_event_class ();
 	// class Reflex::UpdateEvent
@@ -91,6 +96,12 @@ namespace Rucy
 	get_ruby_class<Reflex::Event> ()
 	{
 		return Reflex::event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::DeviceEvent> ()
+	{
+		return Reflex::device_event_class();
 	}
 
 	template <> inline Class

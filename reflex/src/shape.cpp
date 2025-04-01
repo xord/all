@@ -852,7 +852,7 @@ namespace Reflex
 				b2points[i] = to_b2vec2(polyline[i], ppm);
 
 			b2PolygonShape b2shape;
-			b2shape.Set(&b2points[0], polyline.size());
+			b2shape.Set(&b2points[0], (int) polyline.size());
 
 			return FixtureBuilder(shape, &b2shape).fixtures();
 		}
