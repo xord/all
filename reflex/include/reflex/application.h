@@ -53,6 +53,10 @@ namespace Reflex
 
 			virtual void on_quit (Event* e);
 
+			virtual void on_device_connect    (DeviceEvent* e);
+
+			virtual void on_device_disconnect (DeviceEvent* e);
+
 			virtual void on_motion (MotionEvent* e);
 
 			virtual void on_preference (Event* e);

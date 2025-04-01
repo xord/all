@@ -22,6 +22,11 @@ namespace Reflex
 	Application::Data* Application_create_data ();
 
 
+	void Application_add_device    (Application* app, Device* device);
+
+	void Application_remove_device (Application* app, Device* device);
+
+
 }// Reflex
 
 
