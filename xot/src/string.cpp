@@ -4,8 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <algorithm>
-#include <memory>
 #include "xot/exception.h"
+
+#ifdef OSX
+#import <CoreFoundation/CoreFoundation.h>
+#endif
 
 
 namespace Xot
@@ -166,6 +169,47 @@ namespace Xot
 	{
 		return val;
 	}
+
+#ifdef OSX
+
+	template <> String
+	to_s<CFStringRef> (const CFStringRef& val)
+	{
+		if (!val || CFGetTypeID(val) != CFStringGetTypeID())
+			return String();
+
+		CFIndex len = CFStringGetMaximumSizeForEncoding(
+			CFStringGetLength(val), kCFStringEncodingUTF8) + 1;
+
+		std::unique_ptr<char[]> buffer(new char[len]);
+		if (!CFStringGetCString(val, buffer.get(), len, kCFStringEncodingUTF8))
+			system_error(__FILE__, __LINE__);
+
+		return buffer.get();
+	}
+
+	template <> String
+	to_s<CFStringPtr> (const CFStringPtr& val)
+	{
+		return to_s((CFStringRef) val.get());
+	}
+
+
+	static void
+	release_cfstring (CFTypeRef ref)
+	{
+		if (ref) CFRelease(ref);
+	}
+
+	CFStringPtr
+	cfstring (const char* str)
+	{
+		CFStringRef ref = CFStringCreateWithCString(
+			kCFAllocatorDefault, str, kCFStringEncodingUTF8);
+		return CFStringPtr(ref, release_cfstring);
+	}
+
+#endif
 
 
 }// Xot

@@ -5,6 +5,7 @@
 
 
 #include <stdarg.h>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,11 @@
 		} \
 	} \
 	while (false)
+
+
+#ifdef OSX
+	struct __CFString;
+#endif
 
 
 namespace Xot
@@ -69,6 +75,15 @@ namespace Xot
 	void split(StringList* result, const char* string, char separator = '\n');
 
 	template <typename T> String to_s (const T& val);
+
+
+#ifdef OSX
+
+	typedef std::shared_ptr<const __CFString> CFStringPtr;
+
+	CFStringPtr cfstring (const char* str);
+
+#endif
 
 
 }// Xot

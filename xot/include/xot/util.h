@@ -131,6 +131,13 @@ namespace Xot
 	}
 
 
+#ifdef OSX
+
+	void safe_cfrelease (const void* ref);
+
+#endif
+
+
 }// Xot
 
 

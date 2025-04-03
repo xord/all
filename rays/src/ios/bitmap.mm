@@ -4,12 +4,12 @@
 
 #import <ImageIO/CGImageDestination.h>
 #import <MobileCoreServices/UTCoreTypes.h>
+#include <xot/util.h>
 #include "rays/exception.h"
 #include "../color_space.h"
 #include "../font.h"
 #include "../texture.h"
 #include "../frame_buffer.h"
-#include "helper.h"
 
 
 namespace Rays
@@ -261,7 +261,7 @@ namespace Rays
 
 		std::shared_ptr<CGImageDestination> dest(
 			CGImageDestinationCreateWithURL((CFURLRef) url, type, 1, NULL),
-			safe_cfrelease);
+			Xot::safe_cfrelease);
 		if (!dest)
 			rays_error(__FILE__, __LINE__, "CGImageDestinationCreateWithURL() failed.");
 
