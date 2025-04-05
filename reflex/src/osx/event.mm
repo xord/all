@@ -5,11 +5,8 @@
 #include <assert.h>
 #include <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
-#import <GameController/GameController.h>
-#import <IOKit/hid/IOHIDManager.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
-#include "window.h"
 
 
 namespace Reflex
@@ -17,7 +14,7 @@ namespace Reflex
 
 
 	static uint
-	get_modifiers (const NSEvent* event = nil)
+	get_modifiers (const NSEvent* event)
 	{
 		NSUInteger flags = event ? event.modifierFlags : NSEvent.modifierFlags;
 		return
@@ -29,6 +26,12 @@ namespace Reflex
 			(flags & NSNumericPadKeyMask) ? MOD_NUMPAD   : 0 |
 			(flags & NSHelpKeyMask)       ? MOD_HELP     : 0 |
 			(flags & NSFunctionKeyMask)   ? MOD_FUNCTION : 0;
+	}
+
+	uint
+	get_key_modifiers ()
+	{
+		return get_modifiers(nil);
 	}
 
 	static Point
@@ -163,268 +166,6 @@ namespace Reflex
 	:	WheelEvent(0, 0, 0, [e deltaX], [e deltaY], [e deltaZ], get_modifiers(e))
 	{
 		WheelEvent_set_position(this, get_pointer_position(e, view));
-	}
-
-
-	static void
-	call_gamepad_event (int code, bool pressed)
-	{
-		Window* win = Window_get_active();
-		if (!win) return;
-
-		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
-		KeyEvent e(action, NULL, code, get_modifiers(), 0);
-		Window_call_key_event(win, &e);
-	}
-
-	static void
-	handle_gamepad_event (GCControllerButtonInput* input, int code)
-	{
-		[input setPressedChangedHandler:
-			^(GCControllerButtonInput* button, float value, BOOL pressed)
-			{
-				call_gamepad_event(code, pressed);
-			}];
-	}
-
-	static void
-	handle_game_controller_events (GCController* controller)
-	{
-		GCExtendedGamepad* gamepad = controller.extendedGamepad;
-		if (!gamepad) return;
-
-		handle_gamepad_event(gamepad.dpad.left,  KEY_GAMEPAD_LEFT);
-		handle_gamepad_event(gamepad.dpad.right, KEY_GAMEPAD_RIGHT);
-		handle_gamepad_event(gamepad.dpad.up,    KEY_GAMEPAD_UP);
-		handle_gamepad_event(gamepad.dpad.down,  KEY_GAMEPAD_DOWN);
-
-		handle_gamepad_event(gamepad.buttonA, KEY_GAMEPAD_A);
-		handle_gamepad_event(gamepad.buttonB, KEY_GAMEPAD_B);
-		handle_gamepad_event(gamepad.buttonX, KEY_GAMEPAD_X);
-		handle_gamepad_event(gamepad.buttonY, KEY_GAMEPAD_Y);
-
-		handle_gamepad_event(gamepad. leftShoulder, KEY_GAMEPAD_SHOULDER_LEFT);
-		handle_gamepad_event(gamepad.rightShoulder, KEY_GAMEPAD_SHOULDER_RIGHT);
-		handle_gamepad_event(gamepad. leftTrigger,  KEY_GAMEPAD_TRIGGER_LEFT);
-		handle_gamepad_event(gamepad.rightTrigger,  KEY_GAMEPAD_TRIGGER_RIGHT);
-
-		if (@available(macOS 10.14.1, *))
-		{
-			handle_gamepad_event(gamepad. leftThumbstickButton, KEY_GAMEPAD_THUMB_LEFT);
-			handle_gamepad_event(gamepad.rightThumbstickButton, KEY_GAMEPAD_THUMB_RIGHT);
-		}
-
-		if (@available(macOS 10.15, *))
-		{
-			handle_gamepad_event(gamepad.buttonMenu,    KEY_GAMEPAD_MENU);
-			handle_gamepad_event(gamepad.buttonOptions, KEY_GAMEPAD_OPTION);
-		}
-
-		if (@available(macOS 11.0, *))
-			handle_gamepad_event(gamepad.buttonHome, KEY_GAMEPAD_HOME);
-	}
-
-	static id game_controller_observer = nil;
-
-	static void
-	init_game_controller ()
-	{
-		if (game_controller_observer)
-			invalid_state_error(__FILE__, __LINE__);
-
-		for (GCController* c in GCController.controllers)
-			handle_game_controller_events(c);
-
-		game_controller_observer = [NSNotificationCenter.defaultCenter
-			addObserverForName: GCControllerDidConnectNotification
-			object: nil
-			queue: NSOperationQueue.mainQueue
-			usingBlock: ^(NSNotification* n)
-			{
-				handle_game_controller_events(n.object);
-			}];
-	}
-
-	static void
-	fin_game_controller ()
-	{
-		if (!game_controller_observer)
-			invalid_state_error(__FILE__, __LINE__);
-
-		[NSNotificationCenter.defaultCenter
-			removeObserver: game_controller_observer];
-	}
-
-
-	enum
-	{
-		DPAD_UP    = Xot::bit(0),
-		DPAD_RIGHT = Xot::bit(1),
-		DPAD_DOWN  = Xot::bit(2),
-		DPAD_LEFT  = Xot::bit(3)
-	};
-
-	static uint
-	to_dpad (CFIndex hatswitch)
-	{
-		switch (hatswitch)
-		{
-			case 0: return DPAD_UP;
-			case 1: return DPAD_UP    | DPAD_RIGHT;
-			case 2: return DPAD_RIGHT;
-			case 3: return DPAD_RIGHT | DPAD_DOWN;
-			case 4: return DPAD_DOWN;
-			case 5: return DPAD_DOWN  | DPAD_LEFT;
-			case 6: return DPAD_LEFT;
-			case 7: return DPAD_LEFT  | DPAD_UP;
-		}
-		return 0;
-	}
-
-	static void
-	call_hid_gamepad_event (int code, bool pressed)
-	{
-		doutln("code: 0x%x, pressed: %d", code, pressed ? 1 : 0);
-		Window* win = Window_get_active();
-		if (!win) return;
-
-		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
-		KeyEvent e(action, NULL, code, get_modifiers(), 0);
-		Window_call_key_event(win, &e);
-	}
-
-	static void
-	handle_hid_gamepad_hatswitch_events (IOHIDElementRef element, CFIndex hatswitch)
-	{
-		static std::map<void*, CFIndex> prev_hatswitches;
-
-		IOHIDDeviceRef device = NULL;
-		if (@available(macOS 11.0, *))
-			device = IOHIDElementGetDevice(element);
-
-		doutln("handle_hid_gamepad_hatswitch_events/device: %p", device);
-
-		CFIndex prev_hatswitch = 8;// neutral
-		auto it = prev_hatswitches.find(device);
-		if (it != prev_hatswitches.end()) prev_hatswitch = it->second;
-
-		uint prev_dpad = to_dpad(prev_hatswitch);
-		uint      dpad = to_dpad(     hatswitch);
-		uint diff      = prev_dpad ^ dpad;
-		if (diff & DPAD_UP)    call_hid_gamepad_event(KEY_GAMEPAD_UP,    dpad & DPAD_UP);
-		if (diff & DPAD_RIGHT) call_hid_gamepad_event(KEY_GAMEPAD_RIGHT, dpad & DPAD_RIGHT);
-		if (diff & DPAD_DOWN)  call_hid_gamepad_event(KEY_GAMEPAD_DOWN,  dpad & DPAD_DOWN);
-		if (diff & DPAD_LEFT)  call_hid_gamepad_event(KEY_GAMEPAD_LEFT,  dpad & DPAD_LEFT);
-
-		prev_hatswitches[device] = hatswitch;
-	}
-
-	static void
-	handle_hid_gamepad_events (
-		void* context, IOReturn result, void* sender, IOHIDValueRef value)
-	{
-		IOHIDElementRef element = IOHIDValueGetElement(value);
-		if (!element) return;
-
-		if (@available(macOS 11.0, *))
-		{
-			IOHIDDeviceRef device = IOHIDElementGetDevice(element);
-			if (device && [GCController supportsHIDDevice: device])
-				return;
-		}
-
-		uint32_t page  = IOHIDElementGetUsagePage(element);
-		uint32_t usage = IOHIDElementGetUsage(element);
-		CFIndex intval = IOHIDValueGetIntegerValue(value);
-		doutln("page: %d, usage: %d, value: %d", page, usage, intval);
-
-		switch (page)
-		{
-			case kHIDPage_GenericDesktop:
-				switch (usage)
-				{
-					case kHIDUsage_GD_Hatswitch:
-						handle_hid_gamepad_hatswitch_events(element, intval);
-						break;
-
-					case kHIDUsage_GD_X:  break;
-					case kHIDUsage_GD_Y:  break;
-					case kHIDUsage_GD_Rx: break;
-					case kHIDUsage_GD_Ry: break;
-				}
-				break;
-
-			case kHIDPage_Button:
-			{
-				int button = (int) usage - 1;
-				if (0 <= button && button <= (KEY_GAMEPAD_BUTTON_MAX - KEY_GAMEPAD_BUTTON_0))
-					call_hid_gamepad_event(KEY_GAMEPAD_BUTTON_0 + button, intval != 0);
-				break;
-			}
-		}
-	}
-
-	static IOHIDManagerRef hid_manager = NULL;
-
-	static void
-	init_hid_gamepads ()
-	{
-		if (hid_manager)
-			invalid_state_error(__FILE__, __LINE__);
-
-		hid_manager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
-		if (!hid_manager)
-			system_error(__FILE__, __LINE__);
-
-		NSDictionary* gamepad =
-		@{
-			@kIOHIDDeviceUsagePageKey: @(kHIDPage_GenericDesktop),
-			@kIOHIDDeviceUsageKey:     @(kHIDUsage_GD_GamePad)
-		};
-		NSDictionary* joystick =
-		@{
-			@kIOHIDDeviceUsagePageKey: @(kHIDPage_GenericDesktop),
-			@kIOHIDDeviceUsageKey:     @(kHIDUsage_GD_Joystick)
-		};
-		NSArray* matchings = @[gamepad, joystick];
-		IOHIDManagerSetDeviceMatchingMultiple(
-			hid_manager, (__bridge CFArrayRef) matchings);
-
-		IOHIDManagerRegisterInputValueCallback(
-			hid_manager, handle_hid_gamepad_events, NULL);
-
-		IOHIDManagerScheduleWithRunLoop(
-			hid_manager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-
-		IOReturn ret = IOHIDManagerOpen(hid_manager, kIOHIDOptionsTypeNone);
-		if (ret != kIOReturnSuccess)
-			system_error(__FILE__, __LINE__);
-	}
-
-	static void
-	fin_hid_gamepads ()
-	{
-		if (!hid_manager)
-			invalid_state_error(__FILE__, __LINE__);
-
-		IOHIDManagerClose(hid_manager, kIOHIDOptionsTypeNone);
-		CFRelease(hid_manager);
-		hid_manager = NULL;
-	}
-
-
-	void
-	init_gamepads ()
-	{
-		init_game_controller();
-		init_hid_gamepads();
-	}
-
-	void
-	fin_gamepads ()
-	{
-		fin_game_controller();
-		fin_hid_gamepads();
 	}
 
 

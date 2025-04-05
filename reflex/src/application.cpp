@@ -4,6 +4,7 @@
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "window.h"
+#include "gamepad.h"
 
 
 namespace Reflex
@@ -35,7 +36,7 @@ namespace Reflex
 	void
 	Application_call_start (Application* app, Event* e)
 	{
-		//Gamepad_init(app);
+		Gamepad_init(app);
 
 		app->on_start(e);
 	}
@@ -46,7 +47,7 @@ namespace Reflex
 		app->on_quit(e);
 		if (e->is_blocked()) return;
 
-		//Gamepad_fin(app);
+		Gamepad_fin(app);
 	}
 
 	Application*
