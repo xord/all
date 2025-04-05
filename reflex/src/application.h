@@ -26,6 +26,10 @@ namespace Reflex
 
 	void Application_remove_device (Application* app, Device* device);
 
+	void Application_call_start (Application* app, Event* e);
+
+	void Application_call_quit  (Application* app, Event* e);
+
 
 }// Reflex
 

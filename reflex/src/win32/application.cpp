@@ -42,7 +42,7 @@ namespace Reflex
 	Application::start ()
 	{
 		Event e;
-		on_start(&e);
+		Application_call_start(this, &e);
 
 		timeBeginPeriod(1);
 
@@ -84,6 +84,10 @@ namespace Reflex
 	void
 	Application::quit ()
 	{
+		Event e;
+		Application_call_quit(this, &e);
+		if (e.is_blocked()) return;
+
 		PostQuitMessage(0);
 	}
 

@@ -32,6 +32,23 @@ namespace Reflex
 		app->on_device_disconnect(&e);
 	}
 
+	void
+	Application_call_start (Application* app, Event* e)
+	{
+		//Gamepad_init(app);
+
+		app->on_start(e);
+	}
+
+	void
+	Application_call_quit (Application* app, Event* e)
+	{
+		app->on_quit(e);
+		if (e->is_blocked()) return;
+
+		//Gamepad_fin(app);
+	}
+
 	Application*
 	app ()
 	{

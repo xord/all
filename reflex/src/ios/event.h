@@ -22,11 +22,6 @@ namespace Reflex
 	};// NativePointerEvent
 
 
-	void init_gamepads ();
-
-	void  fin_gamepads ();
-
-
 }// Reflex
 
 
