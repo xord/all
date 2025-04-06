@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#ifdef OSX
+#if defined(OSX) || defined(IOS)
 #import <CoreFoundation/CFBase.h>
 #endif
 
@@ -53,7 +53,7 @@ namespace Xot
 	}
 
 
-#ifdef OSX
+#if defined(OSX) || defined(IOS)
 
 	void
 	safe_cfrelease (const void* ref)

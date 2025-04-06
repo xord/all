@@ -25,7 +25,7 @@
 	while (false)
 
 
-#ifdef OSX
+#if defined(OSX) || defined(IOS)
 	struct __CFString;
 #endif
 
@@ -77,7 +77,7 @@ namespace Xot
 	template <typename T> String to_s (const T& val);
 
 
-#ifdef OSX
+#if defined(OSX) || defined(IOS)
 
 	typedef std::shared_ptr<const __CFString> CFStringPtr;
 

@@ -3,8 +3,7 @@
 
 
 #include <assert.h>
-//#include <algorithm>
-//#include "window.h"
+#include "window.h"
 
 
 namespace Reflex

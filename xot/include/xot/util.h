@@ -131,7 +131,7 @@ namespace Xot
 	}
 
 
-#ifdef OSX
+#if defined(OSX) || defined(IOS)
 
 	void safe_cfrelease (const void* ref);
 

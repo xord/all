@@ -6,6 +6,7 @@
 #import <CoreGraphics/CGContext.h>
 #import <CoreText/CoreText.h>
 #include <xot/string.h>
+#include <xot/util.h>
 #include "rays/exception.h"
 
 

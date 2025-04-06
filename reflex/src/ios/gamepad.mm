@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <algorithm>
 #import <GameController/GameController.h>
+#include "reflex/exception.h"
+#include "../gamepad.h"
 #include "window.h"
 
 
@@ -43,7 +45,7 @@ namespace Reflex
 
 		bool has_handle (void* handle) const override
 		{
-			return handle == controller;
+			return handle == (__bridge void*) controller;
 		}
 
 	};// GameControllerGamepadData
@@ -127,7 +129,7 @@ namespace Reflex
 	static void
 	remove_gamepad (Application* app, GCController* controller)
 	{
-		Gamepad* gamepad = Gamepad_find(controller);
+		Gamepad* gamepad = Gamepad_find((__bridge void*) controller);
 		if (!gamepad) return;
 
 		Gamepad_remove(app, gamepad);
@@ -160,7 +162,7 @@ namespace Reflex
 	}
 
 	void
-	Gamepad_init (Application* app)
+	Gamepad_fin (Application* app)
 	{
 		if (!connect_observer || !disconnect_observer)
 			invalid_state_error(__FILE__, __LINE__);

@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "xot/exception.h"
 
-#ifdef OSX
+#if defined(OSX) || defined(IOS)
 #import <CoreFoundation/CoreFoundation.h>
 #endif
 
@@ -170,7 +170,7 @@ namespace Xot
 		return val;
 	}
 
-#ifdef OSX
+#if defined(OSX) || defined(IOS)
 
 	template <> String
 	to_s<CFStringRef> (const CFStringRef& val)
