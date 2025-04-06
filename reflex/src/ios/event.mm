@@ -3,9 +3,8 @@
 
 
 #include <assert.h>
-#include <algorithm>
-#import <GameController/GameController.h>
-#include "window.h"
+//#include <algorithm>
+//#include "window.h"
 
 
 namespace Reflex
@@ -96,92 +95,6 @@ namespace Reflex
 			if (pointer)
 				PointerEvent_add_pointer(this, pointer);
 		}
-	}
-
-
-	static void
-	call_gamepad_event (int code, bool pressed)
-	{
-		Window* win = Window_get_active();
-		if (!win) return;
-
-		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
-		KeyEvent e(action, NULL, code, 0, 0);
-		Window_call_key_event(win, &e);
-	}
-
-	static void
-	handle_gamepad_event (GCControllerButtonInput* input, int code)
-	{
-		[input setPressedChangedHandler:
-			^(GCControllerButtonInput* button, float value, BOOL pressed) {
-				call_gamepad_event(code, pressed);
-			}];
-	}
-
-	static void
-	handle_gamepad_events (GCController* controller)
-	{
-		GCExtendedGamepad* gamepad = controller.extendedGamepad;
-		if (!gamepad) return;
-
-		handle_gamepad_event(gamepad.dpad.left,  KEY_GAMEPAD_LEFT);
-		handle_gamepad_event(gamepad.dpad.right, KEY_GAMEPAD_RIGHT);
-		handle_gamepad_event(gamepad.dpad.up,    KEY_GAMEPAD_UP);
-		handle_gamepad_event(gamepad.dpad.down,  KEY_GAMEPAD_DOWN);
-
-		handle_gamepad_event(gamepad.buttonA, KEY_GAMEPAD_A);
-		handle_gamepad_event(gamepad.buttonB, KEY_GAMEPAD_B);
-		handle_gamepad_event(gamepad.buttonX, KEY_GAMEPAD_X);
-		handle_gamepad_event(gamepad.buttonY, KEY_GAMEPAD_Y);
-
-		handle_gamepad_event(gamepad. leftShoulder, KEY_GAMEPAD_SHOULDER_LEFT);
-		handle_gamepad_event(gamepad.rightShoulder, KEY_GAMEPAD_SHOULDER_RIGHT);
-		handle_gamepad_event(gamepad. leftTrigger,  KEY_GAMEPAD_TRIGGER_LEFT);
-		handle_gamepad_event(gamepad.rightTrigger,  KEY_GAMEPAD_TRIGGER_RIGHT);
-
-		if (@available(iOS 12.1, *))
-		{
-			handle_gamepad_event(gamepad. leftThumbstickButton, KEY_GAMEPAD_THUMB_LEFT);
-			handle_gamepad_event(gamepad.rightThumbstickButton, KEY_GAMEPAD_THUMB_RIGHT);
-		}
-
-		if (@available(iOS 13.0, *))
-		{
-			handle_gamepad_event(gamepad.buttonMenu,    KEY_GAMEPAD_MENU);
-			handle_gamepad_event(gamepad.buttonOptions, KEY_GAMEPAD_OPTION);
-		}
-
-		if (@available(iOS 14.0, *))
-			handle_gamepad_event(gamepad.buttonHome, KEY_GAMEPAD_HOME);
-	}
-
-	static id game_controller_observer = nil;
-
-	void
-	init_gamepads ()
-	{
-		if (game_controller_observer)
-			invalid_state_error(__FILE__, __LINE__);
-
-		for (GCController* c in GCController.controllers)
-			handle_gamepad_events(c);
-
-		game_controller_observer = [NSNotificationCenter.defaultCenter
-			addObserverForName: GCControllerDidConnectNotification
-			object: nil
-			queue: NSOperationQueue.mainQueue
-			usingBlock: ^(NSNotification* n) {handle_gamepad_events(n.object);}];
-	}
-
-	void
-	fin_gamepads ()
-	{
-		if (!game_controller_observer)
-			invalid_state_error(__FILE__, __LINE__);
-
-		[NSNotificationCenter.defaultCenter
-			removeObserver: game_controller_observer];
 	}
 
 
