@@ -18,6 +18,24 @@ namespace Reflex
 {
 
 
+	static int
+	get_int_property (IOHIDDeviceRef device, CFStringRef key)
+	{
+		CFNumberRef ref = (CFNumberRef) IOHIDDeviceGetProperty(device, key);
+		if (!ref) return 0;
+
+		int value = 0;
+		CFNumberGetValue(ref, kCFNumberIntType, &value);
+		return value;
+	}
+
+	static String
+	get_string_property (IOHIDDeviceRef device, CFStringRef key)
+	{
+		return Xot::to_s((CFStringRef) IOHIDDeviceGetProperty(device, key));
+	}
+
+
 	struct HIDGamepadData : Gamepad::Data
 	{
 
@@ -47,9 +65,9 @@ namespace Reflex
 			if (name_cache.empty())
 			{
 				String& name   = name_cache;
-				name           = get_property(CFSTR(kIOHIDManufacturerKey));
-				String product = get_property(CFSTR(kIOHIDProductKey));
-				String serial  = get_property(CFSTR(kIOHIDSerialNumberKey));
+				name           = get_string_property(device, CFSTR(kIOHIDManufacturerKey));
+				String product = get_string_property(device, CFSTR(kIOHIDProductKey));
+				String serial  = get_string_property(device, CFSTR(kIOHIDSerialNumberKey));
 
 				if (!product.empty())
 				{
@@ -70,11 +88,6 @@ namespace Reflex
 				if (name.empty()) name = "Unknown";
 			}
 			return name_cache;
-		}
-
-		String get_property (CFStringRef key) const
-		{
-			return Xot::to_s((CFStringRef) IOHIDDeviceGetProperty(device, key));
 		}
 
 		bool is_valid () const override
@@ -161,6 +174,16 @@ namespace Reflex
 		Gamepad_remove(app, gamepad);
 	}
 
+	static bool
+	can_handle (IOHIDDeviceRef device)
+	{
+		int page  = get_int_property(device, CFSTR(kIOHIDPrimaryUsagePageKey));
+		int usage = get_int_property(device, CFSTR(kIOHIDPrimaryUsageKey));
+		return
+			page == kHIDPage_GenericDesktop &&
+			(usage == kHIDUsage_GD_GamePad || usage == kHIDUsage_GD_Joystick);
+	}
+
 	static void
 	handle_disconnect_event (void* context, IOReturn result, void* sender)
 	{
@@ -175,6 +198,9 @@ namespace Reflex
 		void* context, IOReturn result, void* sender, IOHIDDeviceRef device)
 	{
 		Application* app = (Application*) context;
+
+		if (!can_handle(device))
+			return;
 
 		if (@available(macOS 11.0, *))
 		{
