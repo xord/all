@@ -1,6 +1,14 @@
 # reflex ChangeLog
 
 
+## [v0.3.6] - 2025-04-08
+
+- Add Gamepad class
+- Add Device and DeviceEvent classes
+- Add Application#on_device_connect/disconnect
+- Add Application_call_start() and Application_call_quit()
+
+
 ## [v0.3.5] - 2025-03-24
 
 - Add PULL_REQUEST_TEMPLATE.md
