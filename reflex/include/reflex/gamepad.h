@@ -24,7 +24,12 @@ namespace Reflex
 
 			typedef std::vector<Gamepad::Ref> List;
 
-			enum {INDEX_LEFT = 0, INDEX_RIGHT, INDEX_MAX};
+			enum Index
+			{
+
+				INDEX_LEFT = 0, INDEX_RIGHT, INDEX_MAX
+
+			};// Index
 
 			enum Button
 			{
@@ -61,39 +66,39 @@ namespace Reflex
 
 				BUTTON_Y     = Xot::bit(15),
 
-				BUTTON_TOUCH = Xot::bit(16),
+				LSHOULDER    = Xot::bit(16),
 
-				LSHOULDER    = Xot::bit(17),
+				RSHOULDER    = Xot::bit(17),
 
-				RSHOULDER    = Xot::bit(18),
+				LTRIGGER     = Xot::bit(18),
 
-				LTRIGGER     = Xot::bit(19),
+				RTRIGGER     = Xot::bit(19),
 
-				RTRIGGER     = Xot::bit(20),
+				LTHUMB       = Xot::bit(20),
 
-				LTHUMB       = Xot::bit(21),
+				RTHUMB       = Xot::bit(21),
 
-				RTHUMB       = Xot::bit(22),
+				LPADDLE_0    = Xot::bit(22),
 
 				LPADDLE_1    = Xot::bit(23),
 
-				LPADDLE_2    = Xot::bit(24),
+				RPADDLE_0    = Xot::bit(24),
 
 				RPADDLE_1    = Xot::bit(25),
 
-				RPADDLE_2    = Xot::bit(26),
+				HOME         = Xot::bit(26),
 
-				HOME         = Xot::bit(27),
+				MENU         = Xot::bit(27),
 
-				MENU         = Xot::bit(28),
+				OPTION       = Xot::bit(28),
 
-				OPTION       = Xot::bit(29),
+				SHARE        = Xot::bit(29),
 
-				SHARE        = Xot::bit(30),
+				START        = Xot::bit(30),
 
-				START        = Xot::bit(31),
+				SELECT       = Xot::bit(31),
 
-				SELECT       = Xot::bit(32),
+				BUTTON_TOUCH = Xot::bit(32),
 
 				BUTTON_0     = Xot::bit(33),
 

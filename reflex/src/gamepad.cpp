@@ -100,6 +100,12 @@ namespace Reflex
 		return it->get();
 	}
 
+	float
+	Gamepad_get_button_press_threshold ()
+	{
+		return 0.35;
+	}
+
 
 	Gamepad::Gamepad ()
 	{

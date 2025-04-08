@@ -41,7 +41,13 @@ namespace Reflex
 
 		typedef Gamepad::Data Super;
 
+		enum Mapping {RSTICK_UNKNOWN, RSTICK_RxRy, RSTICK_ZRz};
+
 		IOHIDDeviceRef device;
+
+		Mapping mapping = RSTICK_UNKNOWN;
+
+		CFIndex prev_hatswitch = 8;// neutral
 
 		mutable String name_cache;
 
@@ -111,14 +117,17 @@ namespace Reflex
 		return g;
 	}
 
+	static HIDGamepadData*
+	get_data (Gamepad* gamepad)
+	{
+		return (HIDGamepadData*) gamepad->self.get();
+	}
+
 	static std::map<IOHIDElementRef, IOHIDDeviceRef> element2device;
 
 	static void
-	register_to_device_map (IOHIDDeviceRef device)
+	each_element (IOHIDDeviceRef device, std::function<bool(IOHIDElementRef)> fun)
 	{
-		if (@available(macOS 11.0, *))
-			return;
-
 		std::shared_ptr<const __CFArray> elements(
 			IOHIDDeviceCopyMatchingElements(device, NULL, kIOHIDOptionsTypeNone),
 			Xot::safe_cfrelease);
@@ -129,8 +138,23 @@ namespace Reflex
 		{
 			IOHIDElementRef element =
 				(IOHIDElementRef) CFArrayGetValueAtIndex(elements.get(), i);
-			element2device[element] = device;
+			if (!element) continue;
+
+			if (!fun(element)) break;
 		}
+	}
+
+	static void
+	register_to_device_map (IOHIDDeviceRef device)
+	{
+		if (@available(macOS 11.0, *))
+			return;
+
+		each_element(device, [&](IOHIDElementRef element)
+		{
+			element2device[element] = device;
+			return true;
+		});
 	}
 
 	static void
@@ -159,10 +183,47 @@ namespace Reflex
 		}
 	}
 
+	static float
+	get_current_value (IOHIDDeviceRef device, uint32_t usage)
+	{
+		float value = 0;
+		each_element(device, [&](IOHIDElementRef element)
+		{
+			if (IOHIDElementGetUsage(element) != usage)
+				return true;
+
+			IOHIDValueRef valref = NULL;
+			IOReturn result      = IOHIDDeviceGetValue(device, element, &valref);
+			if (result != kIOReturnSuccess || !valref)
+				return true;
+
+			CFIndex val = IOHIDValueGetIntegerValue(valref);
+			CFIndex min = IOHIDElementGetLogicalMin(element);
+			CFIndex max = IOHIDElementGetLogicalMax(element);
+
+			value = (val - min) / (float) (max - min);
+			return false;
+		});
+
+		return value;
+	}
+
+	static HIDGamepadData::Mapping
+	get_mapping (IOHIDDeviceRef device)
+	{
+		float Z  = get_current_value(device, kHIDUsage_GD_Z);
+		float Rx = get_current_value(device, kHIDUsage_GD_Rx);
+		if (0.4 < Z  && Z  < 0.6) return HIDGamepadData::RSTICK_ZRz;
+		if (0.4 < Rx && Rx < 0.6) return HIDGamepadData::RSTICK_RxRy;
+		return                           HIDGamepadData::RSTICK_UNKNOWN;
+	}
+
 	static void
 	add_gamepad (Application* app, IOHIDDeviceRef device)
 	{
-		Gamepad_add(app, Gamepad_create(device));
+		Gamepad* gamepad           = Gamepad_create(device);
+		get_data(gamepad)->mapping = get_mapping(device);
+		Gamepad_add(app, gamepad);
 	}
 
 	static void
@@ -240,42 +301,153 @@ namespace Reflex
 	}
 
 	static void
-	call_gamepad_event (int code, bool pressed)
+	call_gamepad_event (int key_code, bool pressed)
 	{
 		Window* win = Window_get_active();
 		if (!win) return;
 
 		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
-		KeyEvent e(action, NULL, code, get_key_modifiers(), 0);
+		KeyEvent e(action, NULL, key_code, get_key_modifiers(), 0);
 		Window_call_key_event(win, &e);
 	}
 
 	static void
-	handle_hatswitch_events (
+	call_button_event (
+		Gamepad* gamepad, ulonglong button, int key_code, float value)
+	{
+		Gamepad::Data* self = gamepad->self.get();
+
+		bool pressed = value > Gamepad_get_button_press_threshold();
+		bool current = self->state.buttons & button;
+		if (pressed == current) return;
+
+		self->update_prev();
+		if (pressed)
+			self->state.buttons |=  button;
+		else
+			self->state.buttons &= ~button;
+
+		call_gamepad_event(key_code, pressed);
+	}
+
+	static void
+	handle_hatswitch_event (
 		Gamepad* gamepad, IOHIDElementRef element, CFIndex hatswitch)
 	{
-		static std::map<void*, CFIndex> prev_hatswitches;
+		HIDGamepadData* data = get_data(gamepad);
 
-		CFIndex prev_hatswitch = 8;// neutral
-		auto it = prev_hatswitches.find(gamepad);
-		if (it != prev_hatswitches.end()) prev_hatswitch = it->second;
+		CFIndex prev         = data->prev_hatswitch;
+		data->prev_hatswitch = hatswitch;
 
-		uint prev_dpad = to_dpad(prev_hatswitch);
-		uint      dpad = to_dpad(     hatswitch);
+		uint prev_dpad = to_dpad(prev);
+		uint      dpad = to_dpad(hatswitch);
 		uint diff      = prev_dpad ^ dpad;
-		if (diff & DPAD_UP)    call_gamepad_event(KEY_GAMEPAD_UP,    dpad & DPAD_UP);
-		if (diff & DPAD_RIGHT) call_gamepad_event(KEY_GAMEPAD_RIGHT, dpad & DPAD_RIGHT);
-		if (diff & DPAD_DOWN)  call_gamepad_event(KEY_GAMEPAD_DOWN,  dpad & DPAD_DOWN);
-		if (diff & DPAD_LEFT)  call_gamepad_event(KEY_GAMEPAD_LEFT,  dpad & DPAD_LEFT);
 
-		prev_hatswitches[gamepad] = hatswitch;
+		#define HANDLE_BUTTON(button, value) \
+			call_button_event( \
+				gamepad, \
+				Gamepad::button, KEY_GAMEPAD_##button, \
+				(value) ? 1 : 0)
+
+		if (diff & DPAD_UP)    HANDLE_BUTTON(UP,    dpad & DPAD_UP);
+		if (diff & DPAD_RIGHT) HANDLE_BUTTON(RIGHT, dpad & DPAD_RIGHT);
+		if (diff & DPAD_DOWN)  HANDLE_BUTTON(DOWN,  dpad & DPAD_DOWN);
+		if (diff & DPAD_LEFT)  HANDLE_BUTTON(LEFT,  dpad & DPAD_LEFT);
+
+		#undef HANDLE_BUTTON
+	}
+
+	static void
+	handle_stick_dpad_event (
+		Gamepad* gamepad, auto* state, float value,
+		ulonglong button_negative, int key_code_negative,
+		ulonglong button_positive, int key_code_positive)
+	{
+		*state = value;
+
+		if (value < 0)
+			call_button_event(gamepad, button_negative, key_code_negative, -value);
+		else
+			call_button_event(gamepad, button_positive, key_code_positive,  value);
+	}
+
+	static void
+	handle_trigger_event (Gamepad* gamepad, auto* state, float value)
+	{
+		*state = value;
+	}
+
+	static void
+	handle_analog_event (
+		Gamepad* gamepad, uint32_t usage, IOHIDElementRef element, CFIndex intval)
+	{
+		int value   = (int) intval;
+		int min     = (int) IOHIDElementGetLogicalMin(element);
+		int max     = (int) IOHIDElementGetLogicalMax(element);
+		float range = min == max ? max : max - min;
+		if (range == 0) range = 1;
+
+		float linear   = (value - min) / range;
+		float centered = linear * 2 - 1;
+
+		#define HANDLE_DPAD(stick, neg, pos, var, value) \
+			handle_stick_dpad_event( \
+				gamepad, \
+				&gamepad->self->state.var, \
+				value, \
+				Gamepad::stick##_##neg, KEY_GAMEPAD_##stick##_##neg, \
+				Gamepad::stick##_##pos, KEY_GAMEPAD_##stick##_##pos)
+
+		#define HANDLE_TRIGGER(trigger, var, value) \
+			handle_trigger_event( \
+				gamepad, \
+				&gamepad->self->state.var, \
+				value)
+
+		switch (get_data(gamepad)->mapping)
+		{
+			case HIDGamepadData::RSTICK_RxRy:
+				switch (usage)
+				{
+					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, UP,   DOWN,  sticks[0].y, -centered); break;
+					case kHIDUsage_GD_Rx: HANDLE_DPAD(RSTICK, LEFT, RIGHT, sticks[1].x,  centered); break;
+					case kHIDUsage_GD_Ry: HANDLE_DPAD(RSTICK, UP,   DOWN,  sticks[1].y, -centered); break;
+					case kHIDUsage_GD_Z:  HANDLE_TRIGGER(LTRIGGER,         triggers[0],  linear);   break;
+					case kHIDUsage_GD_Rz: HANDLE_TRIGGER(RTRIGGER,         triggers[1],  linear);   break;
+				}
+				break;
+
+			case HIDGamepadData::RSTICK_ZRz:
+				switch (usage)
+				{
+					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, UP,   DOWN,  sticks[0].y, -centered); break;
+					case kHIDUsage_GD_Z:  HANDLE_DPAD(RSTICK, LEFT, RIGHT, sticks[1].x,  centered); break;
+					case kHIDUsage_GD_Rz: HANDLE_DPAD(RSTICK, UP,   DOWN,  sticks[1].y, -centered); break;
+					case kHIDUsage_GD_Rx: HANDLE_TRIGGER(LTRIGGER,         triggers[0],  linear);   break;
+					case kHIDUsage_GD_Ry: HANDLE_TRIGGER(RTRIGGER,         triggers[1],  linear);   break;
+				}
+				break;
+
+			default:
+				switch (usage)
+				{
+					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, UP,   DOWN,  sticks[0].y, -centered); break;
+				}
+				break;
+		}
+
+		#undef HANDLE_DPAD
+		#undef HANDLE_TRIGGER
 	}
 
 	static void
 	handle_gamepad_events (
-		void* context, IOReturn result, void* sender, IOHIDValueRef value)
+		void* context, IOReturn result, void* sender, IOHIDValueRef valref)
 	{
-		IOHIDElementRef element = IOHIDValueGetElement(value);
+		IOHIDElementRef element = IOHIDValueGetElement(valref);
 		if (!element) return;
 
 		Gamepad* gamepad = Gamepad_find(get_device(element));
@@ -283,7 +455,7 @@ namespace Reflex
 
 		uint32_t page  = IOHIDElementGetUsagePage(element);
 		uint32_t usage = IOHIDElementGetUsage(element);
-		CFIndex intval = IOHIDValueGetIntegerValue(value);
+		CFIndex value  = IOHIDValueGetIntegerValue(valref);
 
 		switch (page)
 		{
@@ -291,21 +463,29 @@ namespace Reflex
 				switch (usage)
 				{
 					case kHIDUsage_GD_Hatswitch:
-						handle_hatswitch_events(gamepad, element, intval);
+						handle_hatswitch_event(gamepad, element, value);
 						break;
 
-					case kHIDUsage_GD_X:  break;
-					case kHIDUsage_GD_Y:  break;
-					case kHIDUsage_GD_Rx: break;
-					case kHIDUsage_GD_Ry: break;
+					case kHIDUsage_GD_X:
+					case kHIDUsage_GD_Y:
+					case kHIDUsage_GD_Z:
+					case kHIDUsage_GD_Rx:
+					case kHIDUsage_GD_Ry:
+					case kHIDUsage_GD_Rz:
+						handle_analog_event(gamepad, usage, element, value);
+						break;
 				}
 				break;
 
 			case kHIDPage_Button:
 			{
-				int button = (int) usage - 1;
-				if (0 <= button && button <= (KEY_GAMEPAD_BUTTON_MAX - KEY_GAMEPAD_BUTTON_0))
-					call_gamepad_event(KEY_GAMEPAD_BUTTON_0 + button, intval != 0);
+				int nth = (int) usage - 1;
+				if (0 <= nth && nth < (KEY_GAMEPAD_BUTTON_MAX - KEY_GAMEPAD_BUTTON_0))
+				{
+					ulonglong button = Xot::bit<ulonglong>(nth, Gamepad::BUTTON_0);
+					int key_code     = KEY_GAMEPAD_BUTTON_0 + nth;
+					call_button_event(gamepad, button, key_code, value > 0 ? 1 : 0);
+				}
 				break;
 			}
 		}
