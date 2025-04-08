@@ -34,103 +34,103 @@ namespace Reflex
 			enum Button
 			{
 
-				LEFT         = Xot::bit(0),
+				LEFT         = Xot::bit<ulonglong>(0),
 
-				RIGHT        = Xot::bit(1),
+				RIGHT        = Xot::bit<ulonglong>(1),
 
-				UP           = Xot::bit(2),
+				UP           = Xot::bit<ulonglong>(2),
 
-				DOWN         = Xot::bit(3),
+				DOWN         = Xot::bit<ulonglong>(3),
 
-				LSTICK_LEFT  = Xot::bit(4),
+				LSTICK_LEFT  = Xot::bit<ulonglong>(4),
 
-				LSTICK_RIGHT = Xot::bit(5),
+				LSTICK_RIGHT = Xot::bit<ulonglong>(5),
 
-				LSTICK_UP    = Xot::bit(6),
+				LSTICK_UP    = Xot::bit<ulonglong>(6),
 
-				LSTICK_DOWN  = Xot::bit(7),
+				LSTICK_DOWN  = Xot::bit<ulonglong>(7),
 
-				RSTICK_LEFT  = Xot::bit(8),
+				RSTICK_LEFT  = Xot::bit<ulonglong>(8),
 
-				RSTICK_RIGHT = Xot::bit(9),
+				RSTICK_RIGHT = Xot::bit<ulonglong>(9),
 
-				RSTICK_UP    = Xot::bit(10),
+				RSTICK_UP    = Xot::bit<ulonglong>(10),
 
-				RSTICK_DOWN  = Xot::bit(11),
+				RSTICK_DOWN  = Xot::bit<ulonglong>(11),
 
-				BUTTON_A     = Xot::bit(12),
+				BUTTON_A     = Xot::bit<ulonglong>(12),
 
-				BUTTON_B     = Xot::bit(13),
+				BUTTON_B     = Xot::bit<ulonglong>(13),
 
-				BUTTON_X     = Xot::bit(14),
+				BUTTON_X     = Xot::bit<ulonglong>(14),
 
-				BUTTON_Y     = Xot::bit(15),
+				BUTTON_Y     = Xot::bit<ulonglong>(15),
 
-				LSHOULDER    = Xot::bit(16),
+				LSHOULDER    = Xot::bit<ulonglong>(16),
 
-				RSHOULDER    = Xot::bit(17),
+				RSHOULDER    = Xot::bit<ulonglong>(17),
 
-				LTRIGGER     = Xot::bit(18),
+				LTRIGGER     = Xot::bit<ulonglong>(18),
 
-				RTRIGGER     = Xot::bit(19),
+				RTRIGGER     = Xot::bit<ulonglong>(19),
 
-				LTHUMB       = Xot::bit(20),
+				LTHUMB       = Xot::bit<ulonglong>(20),
 
-				RTHUMB       = Xot::bit(21),
+				RTHUMB       = Xot::bit<ulonglong>(21),
 
-				LPADDLE_0    = Xot::bit(22),
+				LPADDLE_0    = Xot::bit<ulonglong>(22),
 
-				LPADDLE_1    = Xot::bit(23),
+				LPADDLE_1    = Xot::bit<ulonglong>(23),
 
-				RPADDLE_0    = Xot::bit(24),
+				RPADDLE_0    = Xot::bit<ulonglong>(24),
 
-				RPADDLE_1    = Xot::bit(25),
+				RPADDLE_1    = Xot::bit<ulonglong>(25),
 
-				HOME         = Xot::bit(26),
+				HOME         = Xot::bit<ulonglong>(26),
 
-				MENU         = Xot::bit(27),
+				MENU         = Xot::bit<ulonglong>(27),
 
-				OPTION       = Xot::bit(28),
+				OPTION       = Xot::bit<ulonglong>(28),
 
-				SHARE        = Xot::bit(29),
+				SHARE        = Xot::bit<ulonglong>(29),
 
-				START        = Xot::bit(30),
+				START        = Xot::bit<ulonglong>(30),
 
-				SELECT       = Xot::bit(31),
+				SELECT       = Xot::bit<ulonglong>(31),
 
-				BUTTON_TOUCH = Xot::bit(32),
+				BUTTON_TOUCH = Xot::bit<ulonglong>(32),
 
-				BUTTON_0     = Xot::bit(33),
+				BUTTON_0     = Xot::bit<ulonglong>(33),
 
-				BUTTON_1     = Xot::bit(34),
+				BUTTON_1     = Xot::bit<ulonglong>(34),
 
-				BUTTON_2     = Xot::bit(35),
+				BUTTON_2     = Xot::bit<ulonglong>(35),
 
-				BUTTON_3     = Xot::bit(36),
+				BUTTON_3     = Xot::bit<ulonglong>(36),
 
-				BUTTON_4     = Xot::bit(37),
+				BUTTON_4     = Xot::bit<ulonglong>(37),
 
-				BUTTON_5     = Xot::bit(38),
+				BUTTON_5     = Xot::bit<ulonglong>(38),
 
-				BUTTON_6     = Xot::bit(39),
+				BUTTON_6     = Xot::bit<ulonglong>(39),
 
-				BUTTON_7     = Xot::bit(40),
+				BUTTON_7     = Xot::bit<ulonglong>(40),
 
-				BUTTON_8     = Xot::bit(41),
+				BUTTON_8     = Xot::bit<ulonglong>(41),
 
-				BUTTON_9     = Xot::bit(42),
+				BUTTON_9     = Xot::bit<ulonglong>(42),
 
-				BUTTON_10    = Xot::bit(43),
+				BUTTON_10    = Xot::bit<ulonglong>(43),
 
-				BUTTON_11    = Xot::bit(44),
+				BUTTON_11    = Xot::bit<ulonglong>(44),
 
-				BUTTON_12    = Xot::bit(45),
+				BUTTON_12    = Xot::bit<ulonglong>(45),
 
-				BUTTON_13    = Xot::bit(46),
+				BUTTON_13    = Xot::bit<ulonglong>(46),
 
-				BUTTON_14    = Xot::bit(47),
+				BUTTON_14    = Xot::bit<ulonglong>(47),
 
-				BUTTON_15    = Xot::bit(48),
+				BUTTON_15    = Xot::bit<ulonglong>(48),
 
 			};// Button
 

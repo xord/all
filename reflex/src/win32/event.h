@@ -44,7 +44,9 @@ namespace Reflex
 	};// NativeWheelEvent
 
 
-	void poll_gamepads ();
+	uint get_key_modifiers ();
+
+	void Gamepad_poll ();
 
 
 }// Reflex

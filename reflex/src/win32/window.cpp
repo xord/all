@@ -12,6 +12,7 @@
 #include "reflex/debug.h"
 #include "../view.h"
 #include "event.h"
+#include "gamepad.h"
 #include "screen.h"
 #include "opengl.h"
 
@@ -154,7 +155,7 @@ namespace Reflex
 	{
 		WindowData* self = get_data(win);
 
-		poll_gamepads();
+		Gamepad_poll();
 
 		Window_call_update_event(win);
 
