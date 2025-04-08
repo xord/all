@@ -2,11 +2,8 @@
 #include "../gamepad.h"
 
 
-#include <assert.h>
-#include <algorithm>
 #import <GameController/GameController.h>
 #include "reflex/exception.h"
-#include "../gamepad.h"
 #include "window.h"
 
 
@@ -60,61 +57,182 @@ namespace Reflex
 	}
 
 	static void
-	call_gamepad_event (int code, bool pressed)
+	call_gamepad_event (int key_code, bool pressed)
 	{
 		Window* win = Window_get_active();
 		if (!win) return;
 
 		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
-		KeyEvent e(action, NULL, code, 0, 0);
+		KeyEvent e(action, NULL, key_code, 0, 0);
 		Window_call_key_event(win, &e);
 	}
 
 	static void
-	handle_gamepad_event (GCControllerButtonInput* input, int code)
+	call_button_event (
+		Gamepad* gamepad, ulonglong button, int key_code, float value)
+	{
+		Gamepad::Data* self = gamepad->self.get();
+
+		bool pressed = value > Gamepad_get_button_press_threshold();
+		bool current = self->state.buttons & button;
+		if (pressed == current) return;
+
+		self->update_prev();
+		if (pressed)
+			self->state.buttons |=  button;
+		else
+			self->state.buttons &= ~button;
+
+		call_gamepad_event(key_code, pressed);
+	}
+
+	static void
+	handle_button_event (
+		Gamepad* gamepad, GCControllerButtonInput* input,
+		ulonglong button, int key_code)
 	{
 		[input setPressedChangedHandler:
-			^(GCControllerButtonInput* button, float value, BOOL pressed)
+			^(GCControllerButtonInput*, float, BOOL pressed)
 			{
-				call_gamepad_event(code, pressed);
+				call_button_event(gamepad, button, key_code, pressed ? 1 : 0);
 			}];
 	}
 
 	static void
-	handle_gamepad_events (Gamepad*, GCController* controller)
+	handle_stick_dpad_event (
+		Gamepad* gamepad, GCControllerButtonInput* input,
+		ulonglong button, int key_code)
 	{
-		GCExtendedGamepad* gamepad = controller.extendedGamepad;
+		[input setValueChangedHandler:
+			^(GCControllerButtonInput*, float value, BOOL)
+			{
+				call_button_event(gamepad, button, key_code, value);
+			}];
+	}
+
+	static void
+	handle_stick_event (
+		Gamepad* gamepad, GCControllerDirectionPad* input, Gamepad::Index index)
+	{
+		[input setValueChangedHandler:
+			^(GCControllerDirectionPad*, float x, float y)
+			{
+				gamepad->self->update_prev();
+				gamepad->self->state.sticks[index].reset(x, y);
+			}];
+	}
+
+	static void
+	handle_trigger_event (
+		Gamepad* gamepad, GCControllerButtonInput* input, Gamepad::Index index,
+		ulonglong button, int key_code)
+	{
+		[input setPressedChangedHandler:
+			^(GCControllerButtonInput*, float, BOOL pressed)
+			{
+				call_button_event(gamepad, button, key_code, pressed ? 1 : 0);
+			}];
+
+		[input setValueChangedHandler:
+			^(GCControllerButtonInput*, float value, BOOL)
+			{
+				Gamepad::Data* self = gamepad->self.get();
+
+				self->update_prev();
+				self->state.triggers[index] = value;
+			}];
+	}
+
+	static void
+	handle_gamepad_events (Gamepad* gamepad, GCController* controller)
+	{
+		GCExtendedGamepad* g = controller.extendedGamepad;
 		if (!gamepad) return;
 
-		handle_gamepad_event(gamepad.dpad.left,  KEY_GAMEPAD_LEFT);
-		handle_gamepad_event(gamepad.dpad.right, KEY_GAMEPAD_RIGHT);
-		handle_gamepad_event(gamepad.dpad.up,    KEY_GAMEPAD_UP);
-		handle_gamepad_event(gamepad.dpad.down,  KEY_GAMEPAD_DOWN);
+		static const Gamepad::Index L = Gamepad::INDEX_LEFT, R = Gamepad::INDEX_RIGHT;
 
-		handle_gamepad_event(gamepad.buttonA, KEY_GAMEPAD_A);
-		handle_gamepad_event(gamepad.buttonB, KEY_GAMEPAD_B);
-		handle_gamepad_event(gamepad.buttonX, KEY_GAMEPAD_X);
-		handle_gamepad_event(gamepad.buttonY, KEY_GAMEPAD_Y);
+		auto* dpad = g.dpad;
+		handle_button_event(gamepad, dpad.left,  Gamepad::LEFT,  KEY_GAMEPAD_LEFT);
+		handle_button_event(gamepad, dpad.right, Gamepad::RIGHT, KEY_GAMEPAD_RIGHT);
+		handle_button_event(gamepad, dpad.up,    Gamepad::UP,    KEY_GAMEPAD_UP);
+		handle_button_event(gamepad, dpad.down,  Gamepad::DOWN,  KEY_GAMEPAD_DOWN);
 
-		handle_gamepad_event(gamepad. leftShoulder, KEY_GAMEPAD_SHOULDER_LEFT);
-		handle_gamepad_event(gamepad.rightShoulder, KEY_GAMEPAD_SHOULDER_RIGHT);
-		handle_gamepad_event(gamepad. leftTrigger,  KEY_GAMEPAD_TRIGGER_LEFT);
-		handle_gamepad_event(gamepad.rightTrigger,  KEY_GAMEPAD_TRIGGER_RIGHT);
+		auto* lstick = g.leftThumbstick;
+		handle_stick_event(     gamepad, lstick, L);
+		handle_stick_dpad_event(gamepad, lstick.left,  Gamepad::LSTICK_LEFT,  KEY_GAMEPAD_LSTICK_LEFT);
+		handle_stick_dpad_event(gamepad, lstick.right, Gamepad::LSTICK_RIGHT, KEY_GAMEPAD_LSTICK_RIGHT);
+		handle_stick_dpad_event(gamepad, lstick.up,    Gamepad::LSTICK_UP,    KEY_GAMEPAD_LSTICK_UP);
+		handle_stick_dpad_event(gamepad, lstick.down,  Gamepad::LSTICK_DOWN,  KEY_GAMEPAD_LSTICK_DOWN);
+
+		auto* rstick = g.rightThumbstick;
+		handle_stick_event(     gamepad, rstick, R);
+		handle_stick_dpad_event(gamepad, rstick.left,  Gamepad::RSTICK_LEFT,  KEY_GAMEPAD_RSTICK_LEFT);
+		handle_stick_dpad_event(gamepad, rstick.right, Gamepad::RSTICK_RIGHT, KEY_GAMEPAD_RSTICK_RIGHT);
+		handle_stick_dpad_event(gamepad, rstick.up,    Gamepad::RSTICK_UP,    KEY_GAMEPAD_RSTICK_UP);
+		handle_stick_dpad_event(gamepad, rstick.down,  Gamepad::RSTICK_DOWN,  KEY_GAMEPAD_RSTICK_DOWN);
+
+		handle_button_event(gamepad, g.buttonA, Gamepad::BUTTON_A, KEY_GAMEPAD_A);
+		handle_button_event(gamepad, g.buttonB, Gamepad::BUTTON_B, KEY_GAMEPAD_B);
+		handle_button_event(gamepad, g.buttonX, Gamepad::BUTTON_X, KEY_GAMEPAD_X);
+		handle_button_event(gamepad, g.buttonY, Gamepad::BUTTON_Y, KEY_GAMEPAD_Y);
+
+		handle_button_event( gamepad, g. leftShoulder,   Gamepad::LSHOULDER, KEY_GAMEPAD_LSHOULDER);
+		handle_button_event( gamepad, g.rightShoulder,   Gamepad::RSHOULDER, KEY_GAMEPAD_RSHOULDER);
+		handle_trigger_event(gamepad, g. leftTrigger, L, Gamepad::LTRIGGER,  KEY_GAMEPAD_LTRIGGER);
+		handle_trigger_event(gamepad, g.rightTrigger, R, Gamepad::RTRIGGER,  KEY_GAMEPAD_RTRIGGER);
 
 		if (@available(iOS 12.1, *))
 		{
-			handle_gamepad_event(gamepad. leftThumbstickButton, KEY_GAMEPAD_THUMB_LEFT);
-			handle_gamepad_event(gamepad.rightThumbstickButton, KEY_GAMEPAD_THUMB_RIGHT);
+			handle_button_event(gamepad, g. leftThumbstickButton, Gamepad::LTHUMB, KEY_GAMEPAD_LTHUMB);
+			handle_button_event(gamepad, g.rightThumbstickButton, Gamepad::RTHUMB, KEY_GAMEPAD_RTHUMB);
 		}
 
 		if (@available(iOS 13.0, *))
 		{
-			handle_gamepad_event(gamepad.buttonMenu,    KEY_GAMEPAD_MENU);
-			handle_gamepad_event(gamepad.buttonOptions, KEY_GAMEPAD_OPTION);
+			handle_button_event(gamepad, g.buttonMenu,    Gamepad::MENU,   KEY_GAMEPAD_MENU);
+			handle_button_event(gamepad, g.buttonOptions, Gamepad::OPTION, KEY_GAMEPAD_OPTION);
 		}
 
 		if (@available(iOS 14.0, *))
-			handle_gamepad_event(gamepad.buttonHome, KEY_GAMEPAD_HOME);
+			handle_button_event(gamepad, g.buttonHome, Gamepad::HOME, KEY_GAMEPAD_HOME);
+
+		//if (@available(macOS 11.0, *))
+		{
+			if ([g isKindOfClass: GCDualShockGamepad.class])
+			{
+				GCDualShockGamepad* dualshock = (GCDualShockGamepad*) g;
+				handle_button_event(
+					gamepad, dualshock.touchpadButton,
+					Gamepad::BUTTON_TOUCH, KEY_GAMEPAD_BUTTON_TOUCH);
+			}
+		}
+
+		//if (@available(macOS 11.3, *))
+		{
+			if ([g isKindOfClass: GCDualSenseGamepad.class])
+			{
+				GCDualSenseGamepad* dualsense = (GCDualSenseGamepad*) g;
+				handle_button_event(
+					gamepad, dualsense.touchpadButton,
+					Gamepad::BUTTON_TOUCH, KEY_GAMEPAD_BUTTON_TOUCH);
+			}
+		}
+
+		//if (@available(macOS 11.0, *))
+		{
+			if ([g isKindOfClass: GCXboxGamepad.class])
+			{
+				GCXboxGamepad* xbox = (GCXboxGamepad*) g;
+				handle_button_event(
+					gamepad, xbox.paddleButton1, Gamepad::RPADDLE_0, KEY_GAMEPAD_RPADDLE_0);
+				handle_button_event(
+					gamepad, xbox.paddleButton2, Gamepad::LPADDLE_0, KEY_GAMEPAD_LPADDLE_0);
+				handle_button_event(
+					gamepad, xbox.paddleButton3, Gamepad::RPADDLE_1, KEY_GAMEPAD_RPADDLE_1);
+				handle_button_event(
+					gamepad, xbox.paddleButton4, Gamepad::LPADDLE_1, KEY_GAMEPAD_LPADDLE_1);
+			}
+		}
 	}
 
 	static void
@@ -140,7 +258,7 @@ namespace Reflex
 	static id disconnect_observer = nil;
 
 	void
-	Gamepad_init (Application* app)
+	init_gamepad (Application* app)
 	{
 		if (connect_observer || disconnect_observer)
 			invalid_state_error(__FILE__, __LINE__);
@@ -162,7 +280,7 @@ namespace Reflex
 	}
 
 	void
-	Gamepad_fin (Application* app)
+	fin_gamepad (Application* app)
 	{
 		if (!connect_observer || !disconnect_observer)
 			invalid_state_error(__FILE__, __LINE__);
@@ -173,6 +291,22 @@ namespace Reflex
 			removeObserver: disconnect_observer];
 
 		connect_observer = disconnect_observer = nil;
+
+		Gamepad_remove_all(app);
+	}
+
+	void
+	Gamepad_init (Application* app)
+	{
+		init_gamepad(app);
+	}
+
+	void
+	Gamepad_fin (Application* app)
+	{
+		fin_gamepad(app);
+
+		Gamepad_remove_all(app);
 	}
 
 
