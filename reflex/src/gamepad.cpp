@@ -62,7 +62,7 @@ namespace Reflex
 
 		gamepads.emplace_back(gamepad);
 
-		Application_add_device(app, gamepad);
+		Application_call_device_connect(app, gamepad);
 	}
 
 	void
@@ -73,7 +73,7 @@ namespace Reflex
 		auto it = std::find(gamepads.begin(), gamepads.end(), gamepad);
 		if (it == gamepads.end()) return;
 
-		Application_remove_device(app, gamepad);
+		Application_call_device_disconnect(app, gamepad);
 
 		gamepads.erase(it);
 	}

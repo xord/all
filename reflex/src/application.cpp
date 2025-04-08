@@ -20,20 +20,6 @@ namespace Reflex
 
 
 	void
-	Application_add_device (Application* app, Device* device)
-	{
-		DeviceEvent e(device);
-		app->on_device_connect(&e);
-	}
-
-	void
-	Application_remove_device (Application* app, Device* device)
-	{
-		DeviceEvent e(device);
-		app->on_device_disconnect(&e);
-	}
-
-	void
 	Application_call_start (Application* app, Event* e)
 	{
 		Gamepad_init(app);
@@ -48,6 +34,20 @@ namespace Reflex
 		if (e->is_blocked()) return;
 
 		Gamepad_fin(app);
+	}
+
+	void
+	Application_call_device_connect (Application* app, Device* device)
+	{
+		DeviceEvent e(device);
+		app->on_device_connect(&e);
+	}
+
+	void
+	Application_call_device_disconnect (Application* app, Device* device)
+	{
+		DeviceEvent e(device);
+		app->on_device_disconnect(&e);
 	}
 
 	Application*
