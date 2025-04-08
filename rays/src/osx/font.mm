@@ -5,8 +5,8 @@
 #include <memory>
 #import <ApplicationServices/ApplicationServices.h>
 #import <AppKit/AppKit.h>
+#include <xot/string.h>
 #include "rays/exception.h"
-#include "helper.h"
 
 
 namespace Rays
@@ -66,7 +66,7 @@ namespace Rays
 			CFRelease);
 
 		CFAttributedStringPtr attrstr(
-			CFAttributedStringCreate(NULL, cfstring(str).get(), attr.get()),
+			CFAttributedStringCreate(NULL, Xot::cfstring(str).get(), attr.get()),
 			CFRelease);
 
 		return CTLinePtr(
@@ -130,7 +130,7 @@ namespace Rays
 	RawFont::RawFont (const char* name, coord size)
 	{
 		self->font = name
-			?	CTFontCreateWithName(cfstring(name).get(), size, NULL)
+			?	CTFontCreateWithName(Xot::cfstring(name).get(), size, NULL)
 			:	CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, size, NULL);
 	}
 
@@ -140,7 +140,7 @@ namespace Rays
 		if (path)
 			*this = RawFont_load(path, size);
 		else
-			self->font = CTFontCreateWithName(cfstring(obj.name()).get(), size, NULL);
+			self->font = CTFontCreateWithName(Xot::cfstring(obj.name()).get(), size, NULL);
 	}
 
 	RawFont::~RawFont ()
@@ -189,14 +189,8 @@ namespace Rays
 	{
 		if (!*this) return "";
 
-		CFStringPtr str(CTFontCopyFullName(self->font), CFRelease);
-
-		enum {BUFSIZE = 2048};
-		char buf[BUFSIZE + 1];
-		if (!CFStringGetCString(str.get(), buf, BUFSIZE, kCFStringEncodingUTF8))
-			buf[0] = '\0';
-
-		return buf;
+		Xot::CFStringPtr str(CTFontCopyFullName(self->font), CFRelease);
+		return Xot::to_s(str);
 	}
 
 	coord

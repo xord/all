@@ -4,6 +4,7 @@
 void Init_reflex ();
 void Init_reflex_exception ();
 
+void Init_reflex_pointer ();
 void Init_reflex_selector ();
 void Init_reflex_style ();
 void Init_reflex_style_length ();
@@ -11,19 +12,19 @@ void Init_reflex_timer ();
 void Init_reflex_filter ();
 
 void Init_reflex_event ();
-void Init_reflex_motion_event ();
+void Init_reflex_device_event ();
 void Init_reflex_update_event ();
 void Init_reflex_draw_event ();
 void Init_reflex_frame_event ();
 void Init_reflex_scroll_event ();
 void Init_reflex_focus_event ();
 void Init_reflex_key_event ();
-void Init_reflex_pointer ();
 void Init_reflex_pointer_event ();
 void Init_reflex_wheel_event ();
 void Init_reflex_capture_event ();
 void Init_reflex_timer_event ();
 void Init_reflex_contact_event ();
+void Init_reflex_motion_event ();
 
 void Init_reflex_shape ();
 void Init_reflex_polygon_shape ();
@@ -55,6 +56,7 @@ extern "C" void
 	Init_reflex();
 	Init_reflex_exception();
 
+	Init_reflex_pointer();
 	Init_reflex_selector();
 	Init_reflex_style();
 	Init_reflex_style_length();
@@ -62,19 +64,19 @@ extern "C" void
 	Init_reflex_filter();
 
 	Init_reflex_event();
-	Init_reflex_motion_event();
+	Init_reflex_device_event();
 	Init_reflex_update_event();
 	Init_reflex_draw_event();
 	Init_reflex_frame_event();
 	Init_reflex_scroll_event();
 	Init_reflex_focus_event();
 	Init_reflex_key_event();
-	Init_reflex_pointer();
 	Init_reflex_pointer_event();
 	Init_reflex_wheel_event();
 	Init_reflex_capture_event();
 	Init_reflex_timer_event();
 	Init_reflex_contact_event();
+	Init_reflex_motion_event();
 
 	Init_reflex_shape();
 	Init_reflex_polygon_shape();

@@ -131,6 +131,13 @@ namespace Xot
 	}
 
 
+#if defined(OSX) || defined(IOS)
+
+	void safe_cfrelease (const void* ref);
+
+#endif
+
+
 }// Xot
 
 

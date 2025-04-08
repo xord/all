@@ -69,7 +69,7 @@
 			return YES;
 
 		Reflex::Event e;
-		application->on_start(&e);
+		Application_call_start(application, &e);
 		started = true;
 
 		if (e.is_blocked()) [self quit];
@@ -119,7 +119,7 @@
 		if (self->application)
 		{
 			Reflex::Event e;
-			self->application->on_quit(&e);
+			Application_call_quit(self->application, &e);
 			if (e.is_blocked()) return NSTerminateCancel;
 		}
 

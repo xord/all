@@ -3,7 +3,6 @@
 
 
 #include "reflex/exception.h"
-#include "event.h"
 
 
 namespace Reflex
@@ -25,8 +24,6 @@ namespace Reflex
 			reflex_error(__FILE__, __LINE__, "already initialized.");
 
 		global::pool = [[NSAutoreleasePool alloc] init];
-
-		init_game_controllers();
 	}
 
 	void
@@ -34,8 +31,6 @@ namespace Reflex
 	{
 		if (!global::pool)
 			reflex_error(__FILE__, __LINE__, "not initialized.");
-
-		fin_game_controllers();
 
 		[global::pool release];
 		global::pool = nil;

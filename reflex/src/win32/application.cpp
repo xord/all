@@ -42,7 +42,7 @@ namespace Reflex
 	Application::start ()
 	{
 		Event e;
-		on_start(&e);
+		Application_call_start(this, &e);
 
 		timeBeginPeriod(1);
 
@@ -84,37 +84,16 @@ namespace Reflex
 	void
 	Application::quit ()
 	{
+		Event e;
+		Application_call_quit(this, &e);
+		if (e.is_blocked()) return;
+
 		PostQuitMessage(0);
-	}
-
-	void
-	Application::on_start (Event* e)
-	{
-	}
-
-	void
-	Application::on_quit (Event* e)
-	{
-	}
-
-	void
-	Application::on_motion (MotionEvent* e)
-	{
-	}
-
-	void
-	Application::on_preference (Event* e)
-	{
 	}
 
 	void
 	Application::on_about (Event* e)
 	{
-	}
-
-	Application::operator bool () const
-	{
-		return true;
 	}
 
 

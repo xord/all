@@ -4,6 +4,7 @@
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "window.h"
+#include "gamepad.h"
 
 
 namespace Reflex
@@ -17,6 +18,37 @@ namespace Reflex
 
 	}// global
 
+
+	void
+	Application_call_start (Application* app, Event* e)
+	{
+		Gamepad_init(app);
+
+		app->on_start(e);
+	}
+
+	void
+	Application_call_quit (Application* app, Event* e)
+	{
+		app->on_quit(e);
+		if (e->is_blocked()) return;
+
+		Gamepad_fin(app);
+	}
+
+	void
+	Application_call_device_connect (Application* app, Device* device)
+	{
+		DeviceEvent e(device);
+		app->on_device_connect(&e);
+	}
+
+	void
+	Application_call_device_disconnect (Application* app, Device* device)
+	{
+		DeviceEvent e(device);
+		app->on_device_disconnect(&e);
+	}
 
 	Application*
 	app ()
@@ -76,6 +108,41 @@ namespace Reflex
 	Application::window_end () const
 	{
 		return Window_all().end();
+	}
+
+	void
+	Application::on_start (Event* e)
+	{
+	}
+
+	void
+	Application::on_quit (Event* e)
+	{
+	}
+
+	void
+	Application::on_device_connect (DeviceEvent* e)
+	{
+	}
+
+	void
+	Application::on_device_disconnect (DeviceEvent* e)
+	{
+	}
+
+	void
+	Application::on_motion (MotionEvent* e)
+	{
+	}
+
+	void
+	Application::on_preference (Event* e)
+	{
+	}
+
+	Application::operator bool () const
+	{
+		return true;
 	}
 
 	bool

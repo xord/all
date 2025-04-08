@@ -76,7 +76,7 @@
 			return YES;
 
 		Reflex::Event e;
-		application->on_start(&e);
+		Application_call_start(application, &e);
 		started = true;
 
 		return !e.is_blocked();
@@ -147,7 +147,7 @@
 		if (self->application)
 		{
 			Reflex::Event e;
-			self->application->on_quit(&e);
+			Application_call_quit(self->application, &e);
 			if (e.is_blocked())
 			{
 				Reflex::not_implemented_error(

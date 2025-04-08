@@ -2,6 +2,7 @@
 
 
 #include <algorithm>
+#include "reflex/device.h"
 #include "reflex/timer.h"
 #include "reflex/shape.h"
 #include "reflex/exception.h"
@@ -66,6 +67,43 @@ namespace Reflex
 	Event::time () const
 	{
 		return self->time;
+	}
+
+
+	struct DeviceEvent::Data
+	{
+
+		Device::Ref device;
+
+	};// DeviceEvent::Data
+
+
+	DeviceEvent::DeviceEvent (Device* device)
+	{
+		if (device) self->device = device;
+	}
+
+	DeviceEvent::DeviceEvent (const DeviceEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	DeviceEvent
+	DeviceEvent::dup () const
+	{
+		return DeviceEvent(this);
+	}
+
+	Device*
+	DeviceEvent::device ()
+	{
+		return self->device;
+	}
+
+	const Device*
+	DeviceEvent::device () const
+	{
+		return self->device;
 	}
 
 

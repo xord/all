@@ -3,6 +3,10 @@
 
 #include <stdlib.h>
 
+#if defined(OSX) || defined(IOS)
+#import <CoreFoundation/CFBase.h>
+#endif
+
 
 namespace Xot
 {
@@ -47,6 +51,17 @@ namespace Xot
 		if (min_ != 0) n += min_;
 		return n;
 	}
+
+
+#if defined(OSX) || defined(IOS)
+
+	void
+	safe_cfrelease (const void* ref)
+	{
+		if (ref) CFRelease(ref);
+	}
+
+#endif
 
 
 }// Xot
