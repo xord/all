@@ -8,6 +8,7 @@
 #import <IOKit/hid/IOHIDManager.h>
 #import <IOKit/hid/IOHIDDevice.h>
 #import <GameController/GameController.h>
+#include <xot/util.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "event.h"
