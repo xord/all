@@ -39,20 +39,6 @@ namespace Reflex
 	}
 
 
-	static Gamepad_CreateFun gamepad_create_fun = NULL;
-
-	void
-	Gamepad_set_create_fun (Gamepad_CreateFun fun)
-	{
-		gamepad_create_fun = fun;
-	}
-
-	Gamepad*
-	Gamepad_create ()
-	{
-		return gamepad_create_fun ? gamepad_create_fun() : new Gamepad();
-	}
-
 	static Gamepad::List gamepads;
 
 	void
@@ -105,6 +91,20 @@ namespace Reflex
 	Gamepad_get_button_press_threshold ()
 	{
 		return 0.35;
+	}
+
+	static Gamepad_CreateFun gamepad_create_fun = NULL;
+
+	void
+	Gamepad_set_create_fun (Gamepad_CreateFun fun)
+	{
+		gamepad_create_fun = fun;
+	}
+
+	Gamepad*
+	Gamepad_create ()
+	{
+		return gamepad_create_fun ? gamepad_create_fun() : new Gamepad();
 	}
 
 

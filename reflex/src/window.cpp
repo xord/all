@@ -103,25 +103,18 @@ namespace Reflex
 		}
 	}
 
-	namespace global
-	{
-
-		static Window_CreateRootViewFun create_root_view_fun = NULL;
-
-	}// global
+	static Window_CreateRootViewFun create_root_view_fun = NULL;
 
 	void
 	Window_set_create_root_view_fun (Window_CreateRootViewFun fun)
 	{
-		global::create_root_view_fun = fun;
+		create_root_view_fun = fun;
 	}
 
 	static View*
 	create_root_view ()
 	{
-		return global::create_root_view_fun
-			?	global::create_root_view_fun()
-			:	new View();
+		return create_root_view_fun ? create_root_view_fun() : new View();
 	}
 
 	void

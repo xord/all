@@ -20,9 +20,9 @@ namespace Reflex
 
 		public:
 
-			typedef Xot::Ref<Gamepad>         Ref;
+			typedef Xot::Ref<Gamepad> Ref;
 
-			typedef std::vector<Gamepad::Ref> List;
+			typedef std::vector<Ref>  List;
 
 			enum Index
 			{

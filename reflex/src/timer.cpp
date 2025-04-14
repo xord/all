@@ -40,25 +40,18 @@ namespace Reflex
 	};// Data
 
 
-	namespace global
-	{
-
-		static Timer_CreateFun create_fun = NULL;
-
-	}// global
+	static Timer_CreateFun timer_create_fun = NULL;
 
 	void
 	Timer_set_create_fun (Timer_CreateFun fun)
 	{
-		global::create_fun = fun;
+		timer_create_fun = fun;
 	}
 
 	static Timer*
 	Timer_create ()
 	{
-		return global::create_fun
-			?	global::create_fun()
-			:	new Timer();
+		return timer_create_fun ? timer_create_fun() : new Timer();
 	}
 
 

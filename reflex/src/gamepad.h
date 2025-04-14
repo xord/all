@@ -46,16 +46,9 @@ namespace Reflex
 	};// Gamepad
 
 
-	typedef Gamepad* (*Gamepad_CreateFun) ();
-
-
 	void Gamepad_init (Application* app);
 
 	void Gamepad_fin  (Application* app);
-
-	void Gamepad_set_create_fun (Gamepad_CreateFun fun);
-
-	Gamepad* Gamepad_create ();
 
 	void Gamepad_add    (Application* app, Gamepad* gamepad);
 
@@ -66,6 +59,13 @@ namespace Reflex
 	Gamepad* Gamepad_find (void* handle);
 
 	float Gamepad_get_button_press_threshold ();
+
+
+	typedef Gamepad* (*Gamepad_CreateFun) ();
+
+	void Gamepad_set_create_fun (Gamepad_CreateFun fun);
+
+	Gamepad* Gamepad_create ();
 
 
 }// Reflex
