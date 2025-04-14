@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __REFLEX_SRC_DEVICE_H__
-#define __REFLEX_SRC_DEVICE_H__
+#ifndef __REFLEX_SRC_GAMEPAD_H__
+#define __REFLEX_SRC_GAMEPAD_H__
 
 
 #include <memory>
