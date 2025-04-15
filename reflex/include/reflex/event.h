@@ -27,7 +27,7 @@ namespace Reflex
 
 		public:
 
-			Event ();
+			Event (double time = -1);
 
 			~Event ();
 
@@ -263,7 +263,7 @@ namespace Reflex
 
 			KeyEvent (
 				Action action, const char* chars, int code,
-				uint modifiers = 0, int repeat = 0);
+				uint modifiers = 0, int repeat = 0, double time = -1);
 
 			KeyEvent dup () const;
 

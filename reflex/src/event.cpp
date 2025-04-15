@@ -17,14 +17,14 @@ namespace Reflex
 	struct Event::Data
 	{
 
-		bool blocked;
-
 		double time;
+
+		bool blocked;
 
 		Data* parent = NULL;
 
-		Data (bool blocked = false, double time = Xot::time())
-		:	blocked(blocked), time(time)
+		Data (double time = -1, bool blocked = false)
+		:	time(time >= 0 ? time : Xot::time()), blocked(blocked)
 		{
 		}
 
@@ -37,7 +37,8 @@ namespace Reflex
 	};// Event::Data
 
 
-	Event::Event ()
+	Event::Event (double time)
+	:	self(new Data(time))
 	{
 	}
 
@@ -562,8 +563,9 @@ namespace Reflex
 	}
 
 	KeyEvent::KeyEvent (
-		Action action, const char* chars, int code, uint modifiers, int repeat)
-	:	self(new Data(action, chars, code, modifiers, repeat))
+		Action action, const char* chars, int code, uint modifiers, int repeat,
+		double time)
+	:	Event(time), self(new Data(action, chars, code, modifiers, repeat))
 	{
 	}
 
