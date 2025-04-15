@@ -18,6 +18,8 @@ namespace Reflex
 
 	void MIDI_fin  (Application* app);
 
+	void MIDI_process_events ();
+
 
 	typedef MIDI* (*MIDI_CreateFun) ();
 
