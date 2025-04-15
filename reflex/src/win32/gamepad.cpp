@@ -18,7 +18,7 @@ namespace Reflex
 	call_gamepad_event (Window* win, int code, bool pressed)
 	{
 		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
-		KeyEvent e(action, NULL, code, get_key_modifiers(), 0);
+		KeyEvent e(action, NULL, code, KeyEvent_get_modifiers(), 0);
 		Window_call_key_event(win, &e);
 	}
 

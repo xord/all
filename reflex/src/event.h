@@ -19,6 +19,8 @@ namespace Reflex
 	void DrawEvent_set_bounds  (DrawEvent* pthis, const Bounds& bounds);
 
 
+	uint KeyEvent_get_modifiers ();
+
 	void KeyEvent_set_chars (KeyEvent* pthis, const char* chars);
 
 	void KeyEvent_set_captured (KeyEvent* pthis, bool captured);

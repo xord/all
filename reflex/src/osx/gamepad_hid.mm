@@ -308,7 +308,7 @@ namespace Reflex
 		if (!win) return;
 
 		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
-		KeyEvent e(action, NULL, key_code, get_key_modifiers(), 0);
+		KeyEvent e(action, NULL, key_code, KeyEvent_get_modifiers(), 0);
 		Window_call_key_event(win, &e);
 	}
 

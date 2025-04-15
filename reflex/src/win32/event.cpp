@@ -12,7 +12,7 @@ namespace Reflex
 
 
 	uint
-	get_key_modifiers ()
+	KeyEvent_get_modifiers ()
 	{
 		return
 			(GetKeyState(VK_SHIFT)   & 0x8000 ? MOD_SHIFT   : 0) |
@@ -37,7 +37,7 @@ namespace Reflex
 	}
 
 	NativeKeyEvent::NativeKeyEvent (UINT msg, WPARAM wp, LPARAM lp, const char* chars)
-	:	KeyEvent(get_key_action(msg), chars, (int) wp, get_key_modifiers(), lp & 0xFF)
+	:	KeyEvent(get_key_action(msg), chars, (int) wp, KeyEvent_get_modifiers(), lp & 0xFF)
 	{
 	}
 
@@ -135,7 +135,7 @@ namespace Reflex
 			get_mouse_type(msg, wp),
 			get_mouse_action(msg),
 			Point(GET_X_LPARAM(lp), GET_Y_LPARAM(lp)),
-			get_key_modifiers(),
+			KeyEvent_get_modifiers(),
 			get_mouse_click_count(msg),
 			is_mouse_dragging(msg, wp),
 			Xot::time()));
@@ -196,7 +196,7 @@ namespace Reflex
 				get_touch_type(touch),
 				action,
 				get_touch_position(hwnd, touch),
-				get_key_modifiers(),
+				KeyEvent_get_modifiers(),
 				action == Pointer::DOWN ? 1 : 0,
 				action == Pointer::MOVE,
 				get_touch_time(touch));
@@ -212,7 +212,7 @@ namespace Reflex
 	:	WheelEvent(
 			GET_X_LPARAM(lp),              GET_Y_LPARAM(lp),             0,
 			GET_WHEEL_DELTA_WPARAM(wp_x), -GET_WHEEL_DELTA_WPARAM(wp_y), 0,
-			get_key_modifiers())
+			KeyEvent_get_modifiers())
 	{
 	}
 

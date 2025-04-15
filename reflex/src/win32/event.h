@@ -44,8 +44,6 @@ namespace Reflex
 	};// NativeWheelEvent
 
 
-	uint get_key_modifiers ();
-
 	void Gamepad_poll ();
 
 

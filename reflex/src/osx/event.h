@@ -53,9 +53,6 @@ namespace Reflex
 	};// NativeWheelEvent
 
 
-	uint get_key_modifiers ();
-
-
 }// Reflex
 
 

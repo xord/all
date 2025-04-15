@@ -54,10 +54,11 @@ namespace Reflex
 	static uint
 	get_modifiers (const UIEvent* event)
 	{
-		assert(event);
+		if (!event) return 0;
 
 		NSInteger flags = 0;
-		if (@available(iOS 13.4, *)) flags = event.modifierFlags;
+		if (@available(iOS 13.4, *))
+			flags = event.modifierFlags;
 
 		return
 			(flags & UIKeyModifierAlphaShift) ? MOD_CAPS    : 0 |
@@ -67,6 +68,13 @@ namespace Reflex
 			(flags & UIKeyModifierCommand)    ? MOD_COMMAND : 0 |
 			(flags & UIKeyModifierNumericPad) ? MOD_NUMPAD  : 0;
 	}
+
+	uint
+	KeyEvent_get_modifiers ()
+	{
+		return get_modifiers(nil);
+	}
+
 
 	NativePointerEvent::NativePointerEvent (
 		NSSet* touches, UIEvent* event, UIView* view)

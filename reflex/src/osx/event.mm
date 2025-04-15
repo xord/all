@@ -28,12 +28,6 @@ namespace Reflex
 			(flags & NSFunctionKeyMask)   ? MOD_FUNCTION : 0;
 	}
 
-	uint
-	get_key_modifiers ()
-	{
-		return get_modifiers(nil);
-	}
-
 	static Point
 	get_pointer_position (NSEvent* e, NSView* view)
 	{
@@ -42,6 +36,12 @@ namespace Reflex
 		NSPoint p = [view convertPoint: e.locationInWindow fromView: nil];
 		p.y = view.bounds.size.height - p.y;
 		return Point(p.x, p.y);
+	}
+
+	uint
+	KeyEvent_get_modifiers ()
+	{
+		return get_modifiers(nil);
 	}
 
 
