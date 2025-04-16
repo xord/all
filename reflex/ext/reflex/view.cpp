@@ -1346,6 +1346,7 @@ Init_reflex_view ()
 	cView.define_const("CAPTURE_NONE",    Reflex::View::CAPTURE_NONE);
 	cView.define_const("CAPTURE_KEY",     Reflex::View::CAPTURE_KEY);
 	cView.define_const("CAPTURE_POINTER", Reflex::View::CAPTURE_POINTER);
+	cView.define_const("CAPTURE_NOTE",    Reflex::View::CAPTURE_NOTE);
 	cView.define_const("CAPTURE_ALL",     Reflex::View::CAPTURE_ALL);
 
 	define_selector_methods<Reflex::View>(cView);

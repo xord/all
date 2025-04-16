@@ -49,6 +49,9 @@ namespace Reflex
 	void WheelEvent_set_position (WheelEvent* pthis, const Point& position);
 
 
+	void NoteEvent_set_captured (NoteEvent* pthis, bool captured);
+
+
 }// Reflex
 
 

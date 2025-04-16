@@ -49,6 +49,7 @@ module Reflex
     bit_flag_accessor :capture do
       flag :key,     CAPTURE_KEY
       flag :pointer, CAPTURE_POINTER
+      flag :note,    CAPTURE_NOTE
       flag :all,     CAPTURE_ALL
     end
 

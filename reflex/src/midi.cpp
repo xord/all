@@ -41,10 +41,10 @@ namespace Reflex
 		Window* win = Window_get_active();
 		if (!win) return;
 
-		KeyEvent e(
-			on ? KeyEvent::DOWN : KeyEvent::UP,
-			NULL, KEY_MIDI_NOTE_0 + note, KeyEvent_get_modifiers(), 0);
-		Window_call_key_event(win, &e);
+		NoteEvent e(
+			on ? NoteEvent::ON : NoteEvent::OFF,
+			channel, note, velocity, time);
+		Window_call_note_event(win, &e);
 	}
 
 
@@ -86,7 +86,7 @@ namespace Reflex
 	static Queue<MIDIEvent> queue;
 
 	static void
-	process_midi_event (const MIDIEvent& event)
+	dispatch_midi_event (const MIDIEvent& event)
 	{
 		switch (event.type)
 		{
@@ -111,8 +111,14 @@ namespace Reflex
 			}
 
 			case MIDIEvent::ERROR:
-				doutln("midi error: %s", event.error.what());
+			{
+				system_error(
+					__FILE__, __LINE__,
+					Xot::stringf("MIDI: %s", event.error.what()).c_str());
 				break;
+			}
+
+			default: break;
 		}
 	}
 
@@ -121,7 +127,7 @@ namespace Reflex
 	{
 		MIDIEvent event;
 		while (queue.try_pop(&event))
-			process_midi_event(event);
+			dispatch_midi_event(event);
 	}
 
 	static void

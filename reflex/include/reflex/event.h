@@ -354,6 +354,43 @@ namespace Reflex
 	};// WheelEvent
 
 
+	class NoteEvent : public Event
+	{
+
+		public:
+
+			enum Action {ACTION_NONE = 0, ON, OFF};
+
+			NoteEvent ();
+
+			NoteEvent (
+				Action action, int channel, int note, float velocity, double time);
+
+			NoteEvent dup () const;
+
+			Action action () const;
+
+			int channel () const;
+
+			int note () const;
+
+			float frequency () const;
+
+			float velocity () const;
+
+			bool is_captured () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			NoteEvent (const NoteEvent* src);
+
+	};// NoteEvent
+
+
 	class CaptureEvent : public Event
 	{
 
