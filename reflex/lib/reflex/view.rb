@@ -104,7 +104,7 @@ module Reflex
       if args.empty?
         not cap.empty?
       elsif args.include?(:all)
-        cap == [:key, :pointer]
+        cap == [:key, :pointer, :note]
       else
         args.all? {|type| cap.include? type}
       end

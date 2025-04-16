@@ -3,7 +3,7 @@ require_relative 'helper'
 
 class TestKeyEvent < Test::Unit::TestCase
 
-  DOWN = Reflex::KeyEvent::DOWN
+  DOWN, UP = Reflex::KeyEvent::DOWN, Reflex::KeyEvent::UP
 
   def event(*args)
     Reflex::KeyEvent.new(*args)
@@ -27,6 +27,13 @@ class TestKeyEvent < Test::Unit::TestCase
     assert_true  e1.blocked?
     assert_false e2.blocked?
     assert_true  e3.blocked?
+  end
+
+  def test_down_up()
+    assert_true  event(DOWN, 'a', 1, 2, 3).down?
+    assert_false event(DOWN, 'a', 1, 2, 3).up?
+    assert_false event(UP,   'a', 1, 2, 3).down?
+    assert_true  event(UP,   'a', 1, 2, 3).up?
   end
 
   def test_chars()
