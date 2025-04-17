@@ -1373,6 +1373,7 @@ namespace Reflex
 
 		KeyEvent e = event->dup();
 		view->on_key(&e);
+		if (e.is_blocked()) return;
 
 		switch (e.action())
 		{
@@ -1413,6 +1414,7 @@ namespace Reflex
 			view->self->pbody->awake();
 
 		view->on_pointer(event);
+		if (event->is_blocked()) return;
 
 		switch ((*event)[0].action())
 		{
