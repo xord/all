@@ -35,15 +35,26 @@ namespace Reflex
 
 	static void
 	call_note_event (
-		const MIDI* midi, bool on,
+		MIDI* midi, bool on,
 		int channel, int note, float velocity, double time)
 	{
-		Window* win = Window_get_active();
-		if (!win) return;
-
 		NoteEvent e(
 			on ? NoteEvent::ON : NoteEvent::OFF,
 			channel, note, velocity, time);
+
+		midi->on_note(&e);
+		if (e.is_blocked()) return;
+
+		switch ((int) e.action())
+		{
+			case NoteEvent::ON:  midi->on_note_on(&e);  break;
+			case NoteEvent::OFF: midi->on_note_off(&e); break;
+		}
+		if (e.is_blocked()) return;
+
+		Window* win = Window_get_active();
+		if (!win) return;
+
 		Window_call_note_event(win, &e);
 	}
 
@@ -86,25 +97,25 @@ namespace Reflex
 	static Queue<MIDIEvent> queue;
 
 	static void
-	dispatch_midi_event (const MIDIEvent& event)
+	dispatch_midi_event (MIDIEvent* event)
 	{
-		switch (event.type)
+		switch (event->type)
 		{
 			case MIDIEvent::MESSAGE:
 			{
-				auto& bytes = event.message;
+				auto& bytes = event->message;
 				switch (bytes[0] >> 4)
 				{
 					case 0x9:
 						call_note_event(
-							event.midi, true,
-							bytes[0] & 0xf, bytes[1], bytes[2] / 127.f, event.time);
+							event->midi, true,
+							bytes[0] & 0xf, bytes[1], bytes[2] / 127.f, event->time);
 						break;
 
 					case 0x8:
 						call_note_event(
-							event.midi, false,
-							bytes[0] & 0xf, bytes[1], bytes[2] / 127.f, event.time);
+							event->midi, false,
+							bytes[0] & 0xf, bytes[1], bytes[2] / 127.f, event->time);
 						break;
 				}
 				break;
@@ -114,11 +125,12 @@ namespace Reflex
 			{
 				system_error(
 					__FILE__, __LINE__,
-					Xot::stringf("MIDI: %s", event.error.what()).c_str());
+					Xot::stringf("MIDI: %s", event->error.what()).c_str());
 				break;
 			}
 
-			default: break;
+			case MIDIEvent::UNKNOWN:
+				invalid_state_error(__FILE__, __LINE__);
 		}
 	}
 
@@ -127,7 +139,7 @@ namespace Reflex
 	{
 		MIDIEvent event;
 		while (queue.try_pop(&event))
-			dispatch_midi_event(event);
+			dispatch_midi_event(&event);
 	}
 
 	static void
@@ -338,17 +350,17 @@ namespace Reflex
 	}
 
 	void
-	MIDI::on_key (KeyEvent* e)
+	MIDI::on_note (NoteEvent* e)
 	{
 	}
 
 	void
-	MIDI::on_key_down (KeyEvent* e)
+	MIDI::on_note_on (NoteEvent* e)
 	{
 	}
 
 	void
-	MIDI::on_key_up (KeyEvent* e)
+	MIDI::on_note_off (NoteEvent* e)
 	{
 	}
 

@@ -30,11 +30,11 @@ namespace Reflex
 
 			virtual const char* name () const;
 
-			virtual void on_key      (KeyEvent* e);
+			virtual void on_note     (NoteEvent* e);
 
-			virtual void on_key_down (KeyEvent* e);
+			virtual void on_note_on  (NoteEvent* e);
 
-			virtual void on_key_up   (KeyEvent* e);
+			virtual void on_note_off (NoteEvent* e);
 
 			virtual operator bool () const;
 

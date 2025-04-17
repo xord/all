@@ -3,21 +3,31 @@
 
 #include "reflex/ruby/view.h"
 #include "reflex/ruby/timer.h"
+#include "reflex/ruby/midi.h"
 #include "../../src/window.h"
 #include "../../src/timer.h"
+#include "../../src/midi.h"
 #include "defs.h"
 
 
 static Reflex::View*
 create_root_view ()
 {
-	return new Reflex::RubyView<Reflex::View>;
+	return new Reflex::RubyView<Reflex::View>();
 }
 
 static Reflex::Timer*
 create_timer ()
 {
-	return new Reflex::RubyTimer<Reflex::Timer>;
+	return new Reflex::RubyTimer<Reflex::Timer>();
+}
+
+static Reflex::MIDI*
+create_midi ()
+{
+	Reflex::MIDI* midi = new Reflex::RubyMIDI<Reflex::MIDI>();
+	value(midi);// apply MIDI class to ClassWrapper's value
+	return midi;
 }
 
 
@@ -27,6 +37,7 @@ RUCY_DEF0(init)
 	Reflex::init();
 	Reflex::Window_set_create_root_view_fun(create_root_view);
 	Reflex::Timer_set_create_fun(create_timer);
+	Reflex::MIDI_set_create_fun(create_midi);
 
 	return self;
 }
@@ -37,6 +48,7 @@ RUCY_DEF0(fin)
 {
 	Reflex::Window_set_create_root_view_fun(NULL);
 	Reflex::Timer_set_create_fun(NULL);
+	Reflex::MIDI_set_create_fun(NULL);
 	Reflex::fin();
 
 	return self;
