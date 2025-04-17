@@ -2,6 +2,7 @@
 
 
 #include <vector>
+#include <ranges>
 #include <rays/ruby/point.h>
 #include <rays/ruby/bounds.h>
 #include <rays/ruby/polygon.h>
@@ -23,16 +24,6 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::View)
 #define CHECK     RUCY_CHECK_OBJECT(Reflex::View, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
-
-
-template <typename T>
-static inline Value
-array (T begin, T end)
-{
-	std::vector<Value> v;
-	for (T it = begin; it != end; ++it) v.push_back(value(*it));
-	return array(&v[0], v.size());
-}
 
 
 static
@@ -213,8 +204,9 @@ RUCY_DEFN(find_children)
 
 	bool recursive = (argc >= 2) ? to<bool>(argv[1]) : true;
 
-	Reflex::View::ChildList children =
-		THIS->find_children(to<Reflex::Selector>(argv[0]), recursive);
+	auto children =
+		THIS->find_children(to<Reflex::Selector>(argv[0]), recursive) |
+		std::views::transform([](auto& ref) {return value(ref);});
 	return array(children.begin(), children.end());
 }
 RUCY_END
@@ -273,8 +265,9 @@ RUCY_DEFN(find_styles)
 
 	bool recursive = (argc >= 2) ? to<bool>(argv[1]) : false;
 
-	Reflex::View::StyleList styles =
-		THIS->find_styles(to<Reflex::Selector>(argv[0]), recursive);
+	auto styles =
+		THIS->find_styles(to<Reflex::Selector>(argv[0]), recursive) |
+		std::views::transform([](auto& ref) {return value(ref);});
 	return array(styles.begin(), styles.end());
 }
 RUCY_END
@@ -358,8 +351,9 @@ RUCY_DEFN(find_shapes)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "View#find_shapes", argc, 1);
 
-	Reflex::View::ShapeList shapes =
-		THIS->find_shapes(to<Reflex::Selector>(argv[0]));
+	auto shapes =
+		THIS->find_shapes(to<Reflex::Selector>(argv[0])) |
+		std::views::transform([](auto& ref) {return value(ref);});
 	return array(shapes.begin(), shapes.end());
 }
 RUCY_END

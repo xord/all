@@ -4,6 +4,7 @@
 #define __RUCY_VALUE_H__
 
 
+#include <vector>
 #include <rucy/ruby.h>
 #include <rucy/symbol.h>
 
@@ -252,6 +253,13 @@ namespace Rucy
 
 	Value array (<%= params(n, ', ') {|i| "Value v#{i}"} %>);
 %	end
+
+	template <typename T> inline Value
+	array (T begin, T end)
+	{
+		std::vector<Value> v(begin, end);
+		return array(&v[0], v.size());
+	}
 
 
 	template <typename T> T
