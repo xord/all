@@ -255,7 +255,12 @@ namespace Rucy
 %	end
 
 	template <typename T> inline Value
-	array (T begin, T end)
+	array (
+		T begin, T end,
+		typename std::enable_if<std::is_convertible<
+			typename std::iterator_traits<T>::iterator_category,
+			std::input_iterator_tag
+		>::value>::type* = nullptr)
 	{
 		std::vector<Value> v(begin, end);
 		return array(&v[0], v.size());
