@@ -69,6 +69,10 @@ module Xot
       env_array(:SRCEXTS, []) + %w[c cc cpp m mm]
     end
 
+    def defs()
+      env_array :DEFS, []
+    end
+
     def excludes()
       env_array :EXCLUDES, []
     end

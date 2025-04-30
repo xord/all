@@ -39,10 +39,6 @@ module Xot
       Hash[*src_exts.map {|ext| [".#{ext}", to]}.flatten]
     end
 
-    def defs()
-      env_array :DEFS, []
-    end
-
     def test_alones()
       env :TESTS_ALONE, []
     end
@@ -288,7 +284,7 @@ module Xot
 
     def use_external_library(
       repos, branch: nil, tag: nil, commit: nil,
-      incdirs: nil, srcdirs: nil, excludes: [],
+      incdirs: nil, srcdirs: nil, defs: [], excludes: [],
       submodules: [], post_submodules: nil,
       &after_clone_block)
 
@@ -296,10 +292,12 @@ module Xot
       dir      = "#{vendor_dir}/#{name}"
       incdirs  = [incdirs].flatten.map {|s| s ? "#{dir}/#{s}" : dir}
       srcdirs  = [srcdirs].flatten.map {|s| s ? "#{dir}/#{s}" : dir}
+      defs     = [defs].flatten
       excludes = [excludes].flatten
 
       append_env 'INCDIRS',  incdirs
       append_env 'SRCDIRS',  srcdirs
+      append_env 'DEFS',     defs
       append_env 'EXCLUDES', excludes unless excludes.empty?
 
       alias_task :vendor  => "vendor:#{name}"

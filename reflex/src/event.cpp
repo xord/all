@@ -868,6 +868,92 @@ namespace Reflex
 	}
 
 
+	struct NoteEvent::Data
+	{
+
+		Action action  = ACTION_NONE;
+
+		int channel    = 0;
+
+		int note       = 0;
+
+		float velocity = 0;
+
+		bool captured  = false;
+
+	};// NoteEvent::Data
+
+
+	void
+	NoteEvent_set_captured (NoteEvent* pthis, bool captured)
+	{
+		pthis->self->captured = captured;
+	}
+
+
+	NoteEvent::NoteEvent ()
+	{
+	}
+
+	NoteEvent::NoteEvent (
+		Action action, int channel, int note, float velocity, double time)
+	:	Event(time)
+	{
+		self->action   = action;
+		self->channel  = channel;
+		self->note     = note;
+		self->velocity = velocity;
+	}
+
+	NoteEvent::NoteEvent (const NoteEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	NoteEvent
+	NoteEvent::dup () const
+	{
+		return NoteEvent(this);
+	}
+
+	NoteEvent::Action
+	NoteEvent::action () const
+	{
+		return self->action;
+	}
+
+	int
+	NoteEvent::channel () const
+	{
+		return self->channel;
+	}
+
+	int
+	NoteEvent::note () const
+	{
+		return self->note;
+	}
+
+	float
+	NoteEvent::frequency () const
+	{
+		static const int A4 = 69;
+		return 440 * std::pow(2.0, (note() - A4) / 12.0);
+	}
+
+	float
+	NoteEvent::velocity () const
+	{
+		return self->velocity;
+	}
+
+	bool
+	NoteEvent::is_captured () const
+	{
+		return self->captured;
+	}
+
+
 	struct CaptureEvent::Data
 	{
 

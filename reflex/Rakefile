@@ -21,6 +21,13 @@ use_external_library 'https://github.com/erincatto/box2d',
   incdirs: %w[include src],
   srcdirs: 'src'
 
+use_external_library 'https://github.com/thestk/rtmidi',
+  tag:     '6.0.0',
+  incdirs: 'rtmidi',
+  srcdirs: 'rtmidi',
+  defs:    '__MACOSX_CORE__',
+  &proc {sh %( mkdir rtmidi && cp RtMidi.* rtmidi )}
+
 default_tasks :ext
 use_bundler
 build_native_library

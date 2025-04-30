@@ -21,6 +21,7 @@ void Init_reflex_focus_event ();
 void Init_reflex_key_event ();
 void Init_reflex_pointer_event ();
 void Init_reflex_wheel_event ();
+void Init_reflex_note_event ();
 void Init_reflex_capture_event ();
 void Init_reflex_timer_event ();
 void Init_reflex_contact_event ();
@@ -38,6 +39,7 @@ void Init_reflex_window ();
 void Init_reflex_view ();
 
 void Init_reflex_device ();
+void Init_reflex_midi ();
 
 void Init_reflex_image_view ();
 
@@ -73,6 +75,7 @@ extern "C" void
 	Init_reflex_key_event();
 	Init_reflex_pointer_event();
 	Init_reflex_wheel_event();
+	Init_reflex_note_event();
 	Init_reflex_capture_event();
 	Init_reflex_timer_event();
 	Init_reflex_contact_event();
@@ -90,6 +93,7 @@ extern "C" void
 	Init_reflex_view();
 
 	Init_reflex_device();
+	Init_reflex_midi();
 
 	Init_reflex_image_view();
 

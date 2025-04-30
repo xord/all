@@ -139,6 +139,8 @@ namespace Reflex
 
 	void Window_call_wheel_event      (Window* window, WheelEvent*   event);
 
+	void Window_call_note_event       (Window* window, NoteEvent*    event);
+
 
 	typedef View* (*Window_CreateRootViewFun) ();
 

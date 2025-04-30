@@ -607,6 +607,49 @@ namespace Reflex
 		View_call_wheel_event(window->root(), event);
 	}
 
+	void
+	Window_call_note_event (Window* window, NoteEvent* event)
+	{
+		assert(window);
+
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		for (auto& [view, targets] : window->self->captures)
+		{
+			if (
+				!view->window() ||
+				!is_capturing(view.get(), targets, View::CAPTURE_NOTE))
+			{
+				continue;
+			}
+
+			NoteEvent e = event->dup();
+			NoteEvent_set_captured(&e, true);
+			View_call_note_event(const_cast<View*>(view.get()), &e);
+
+			if (e.is_blocked()) event->block();
+		}
+
+		if (!event->is_blocked())
+			window->on_note(event);
+
+		if (!event->is_blocked())
+		{
+			switch (event->action())
+			{
+				case NoteEvent::ON:  window->on_note_on(event);  break;
+				case NoteEvent::OFF: window->on_note_off(event); break;
+				default: break;
+			}
+		}
+
+		if (!event->is_blocked() && window->self->focus)
+			View_call_note_event(window->self->focus.get(), event);
+
+		cleanup_captures(window);
+	}
+
 
 	Window::Window ()
 	:	self(Window_create_data())
@@ -895,6 +938,21 @@ namespace Reflex
 
 	void
 	Window::on_wheel (WheelEvent* e)
+	{
+	}
+
+	void
+	Window::on_note (NoteEvent* e)
+	{
+	}
+
+	void
+	Window::on_note_on (NoteEvent* e)
+	{
+	}
+
+	void
+	Window::on_note_off (NoteEvent* e)
 	{
 	}
 

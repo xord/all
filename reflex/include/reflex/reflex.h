@@ -16,6 +16,8 @@ namespace Reflex
 
 	void fin ();
 
+	void process_events ();
+
 
 }// Reflex
 

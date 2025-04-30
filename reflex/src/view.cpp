@@ -1509,6 +1509,28 @@ namespace Reflex
 	}
 
 	void
+	View_call_note_event (View* view, NoteEvent* event)
+	{
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		if (view->hidden()) return;
+
+		NoteEvent e = event->dup();
+		view->on_note(&e);
+		if (e.is_blocked()) return;
+
+		switch (e.action())
+		{
+			case NoteEvent::ON:  view->on_note_on(&e);  break;
+			case NoteEvent::OFF: view->on_note_off(&e); break;
+			default: break;
+		}
+	}
+
+	void
 	View_call_contact_event (View* view, ContactEvent* event)
 	{
 		if (!view)
@@ -2781,6 +2803,21 @@ namespace Reflex
 	View::on_wheel (WheelEvent* e)
 	{
 		//scroll_by(e->dx, e->dy, e->dz);
+	}
+
+	void
+	View::on_note (NoteEvent* e)
+	{
+	}
+
+	void
+	View::on_note_on (NoteEvent* e)
+	{
+	}
+
+	void
+	View::on_note_off (NoteEvent* e)
+	{
 	}
 
 	void

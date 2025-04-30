@@ -13,17 +13,64 @@ module RubySketch
     # @private
     def initialize(window)
       super
-      @window__                                  = window
-      @timers__, @firingTimers__, @nextTimerID__ = {}, {}, 0
+      @window__        = window
+      @timers__        = {}
+      @firingTimers__  = {}
+      @nextTimerID__   = 0
+      @noteNumber__    = 69
+      @noteFrequency__ = 440
+      @noteVelocity__  = 1
 
       @world__ = createWorld
+
+      updateNoteStates = -> event {
+        @noteNumber__    = event.note
+        @noteFrequency__ = event.frequency
+        @noteVelocity__  = event.velocity
+      }
 
       @window__.update_window = proc do
         fireTimers__
         Beeps.process_streams!
+        Reflex.process_events!
+      end
+
+      @window__.note_on  = proc do |e|
+        updateNoteStates.call e
+        @notePressedBlock__&.call
+      end
+
+      @window__.note_off = proc do |e|
+        updateNoteStates.call e
+        @noteReleasedBlock__&.call
       end
 
       noSmooth
+    end
+
+    # @private
+    def hasUserBlocks__()
+      super ||
+      @notePressedBlock__ ||
+      @noteReleasedBlock__
+    end
+
+    # Defines notePressed block.
+    #
+    # @return [nil] nil
+    #
+    def notePressed(&block)
+      @notePressedBlock__ = block if block
+      nil
+    end
+
+    # Defines noteReleased block.
+    #
+    # @return [nil] nil
+    #
+    def noteReleased(&block)
+      @noteReleasedBlock__ = block if block
+      nil
     end
 
     # Calls block after specified seconds
@@ -260,6 +307,30 @@ module RubySketch
     #
     def loadSound(path)
       Sound.load path
+    end
+
+    # Returns the last note number that was pressed or released.
+    #
+    # @return [Numeric] last note number
+    #
+    def noteNumber()
+      @noteNumber__
+    end
+
+    # Returns the last note frequency that was pressed or released.
+    #
+    # @return [Numeric] last note frequency
+    #
+    def noteFrequency()
+      @noteFrequency__
+    end
+
+    # Returns the last note velocity that was pressed or released.
+    #
+    # @return [Numeric] last note velocity
+    #
+    def noteVelocity()
+      @noteVelocity__
     end
 
     # Sets gravity for the physics engine.

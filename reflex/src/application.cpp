@@ -5,6 +5,7 @@
 #include "reflex/debug.h"
 #include "window.h"
 #include "gamepad.h"
+#include "midi.h"
 
 
 namespace Reflex
@@ -23,6 +24,7 @@ namespace Reflex
 	Application_call_start (Application* app, Event* e)
 	{
 		Gamepad_init(app);
+		MIDI_init(app);
 
 		app->on_start(e);
 	}
@@ -33,6 +35,7 @@ namespace Reflex
 		app->on_quit(e);
 		if (e->is_blocked()) return;
 
+		MIDI_fin(app);
 		Gamepad_fin(app);
 	}
 

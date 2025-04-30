@@ -378,21 +378,22 @@ class TestView < Test::Unit::TestCase
     w.add v
     assert_equal [], v.capture
 
-    v.capture  = :key;             assert_equal [:key],           v.capture
-    v.capture  = :pointer;         assert_equal [:pointer],       v.capture
-    v.capture  = :all;             assert_equal [:key, :pointer], v.capture
+    v.capture  = :key;                    assert_equal [:key],                  v.capture
+    v.capture  = :pointer;                assert_equal [:pointer],              v.capture
+    v.capture  = :note;                   assert_equal [:note],                 v.capture
+    v.capture  = :all;                    assert_equal [:key, :pointer, :note], v.capture
 
-    v.capture -= [:key];           assert_equal [:pointer],       v.capture
-    v.capture += [:key];           assert_equal [:key, :pointer], v.capture
+    v.capture -= [:key];                  assert_equal [:pointer, :note],       v.capture
+    v.capture += [:key];                  assert_equal [:key, :pointer, :note], v.capture
 
-    v.capture  = [];               assert_equal [],               v.capture
-    v.capture += [:key, :pointer]; assert_equal [:key, :pointer], v.capture
-    v.capture  = [];               assert_equal [],               v.capture
-    v.capture += [:all];           assert_equal [:key, :pointer], v.capture
+    v.capture  = [];                      assert_equal [],                      v.capture
+    v.capture += [:key, :pointer, :note]; assert_equal [:key, :pointer, :note], v.capture
+    v.capture  = [];                      assert_equal [],                      v.capture
+    v.capture += [:all];                  assert_equal [:key, :pointer, :note], v.capture
 
-    v.capture -= [];               assert_equal [:key, :pointer], v.capture
-    v.capture  = [];               assert_equal [],               v.capture
-    v.capture += [];               assert_equal [],               v.capture
+    v.capture -= [];                      assert_equal [:key, :pointer, :note], v.capture
+    v.capture  = [];                      assert_equal [],                      v.capture
+    v.capture += [];                      assert_equal [],                      v.capture
   end
 
   def test_capturing()
@@ -403,24 +404,35 @@ class TestView < Test::Unit::TestCase
     assert_false v.capturing?
     assert_false v.capturing? :key
     assert_false v.capturing? :pointer
+    assert_false v.capturing? :note
     assert_false v.capturing? :all
 
     v.capture = :key
     assert_true  v.capturing?
     assert_true  v.capturing? :key
     assert_false v.capturing? :pointer
+    assert_false v.capturing? :note
     assert_false v.capturing? :all
 
     v.capture = :pointer
     assert_true  v.capturing?
     assert_false v.capturing? :key
     assert_true  v.capturing? :pointer
+    assert_false v.capturing? :note
+    assert_false v.capturing? :all
+
+    v.capture = :note
+    assert_true  v.capturing?
+    assert_false v.capturing? :key
+    assert_false v.capturing? :pointer
+    assert_true  v.capturing? :note
     assert_false v.capturing? :all
 
     v.capture = :all
     assert_true  v.capturing?
     assert_true  v.capturing? :key
     assert_true  v.capturing? :pointer
+    assert_true  v.capturing? :note
     assert_true  v.capturing? :all
   end
 
