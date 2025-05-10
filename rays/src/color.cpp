@@ -2,7 +2,7 @@
 
 
 #include <limits.h>
-#include <xot/util.h>
+#include <algorithm>
 #include "rays/exception.h"
 #include "rays/color_space.h"
 #include "glm.h"
@@ -171,7 +171,7 @@ namespace Rays
 	static uint
 	to_gray (const float* c, uint max)
 	{
-		return Xot::clip<uint>(0, max, to_gray(c) * max);
+		return std::clamp<uint>(to_gray(c) * max, 0, max);
 	}
 
 	static void

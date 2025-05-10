@@ -90,12 +90,6 @@ test_util ()
 	if (Xot::bit(2) != 0x4) return false;
 	if (Xot::bit(3) != 0x8) return false;
 
-	if (!(Xot::clip(10, 100,  50) ==  50)) return false;
-	if (!(Xot::clip(10, 100,  10) ==  10)) return false;
-	if (!(Xot::clip(10, 100, 100) == 100)) return false;
-	if (!(Xot::clip(10, 100,   0) ==  10)) return false;
-	if (!(Xot::clip(10, 100, 200) == 100)) return false;
-
 	static const int F0 = Xot::bit(0), F1 = Xot::bit(1), F2 = Xot::bit(2);
 
 	int flags = 0;

@@ -4,7 +4,7 @@
 #define __RAYS_COLOR_H__
 
 
-#include <xot/util.h>
+#include <algorithm>
 #include <rays/defs.h>
 #include <rays/coord.h>
 
@@ -53,7 +53,7 @@ namespace Rays
 
 		static uchar float2uchar (float value)
 		{
-			return (uchar) Xot::clip(0.f, 255.f, value * 255);
+			return (uchar) std::clamp(value * 255, 0.f, 255.f);
 		}
 
 		static float uchar2float (int value)

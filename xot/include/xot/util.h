@@ -34,13 +34,6 @@ namespace Xot
 		return (T) (base << nth);
 	}
 
-	template <typename T>
-	inline constexpr T
-	clip (T minval, T maxval, T value)
-	{
-		return value > maxval ? maxval : (value < minval ? minval : value);
-	}
-
 
 	inline constexpr double
 	deg2rad (double degree)
