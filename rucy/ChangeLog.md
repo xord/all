@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.3.7] - 2025-05-11
+
+- Fixed complex overloading of array(Value,Value) and array(iterator,iterator) functions
+
+
 ## [v0.3.6] - 2025-04-08
 
 - Update dependencies: xot

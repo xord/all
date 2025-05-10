@@ -1,6 +1,14 @@
 # reflex ChangeLog
 
 
+## [v0.3.7] - 2025-05-11
+
+- Add MIDI class
+- Add NoteEvent class and on_note and on_note_on/off event handlers
+- Add reflex/test/test_note_event.rb
+- KeyEvent can take 'time' parameter
+
+
 ## [v0.3.6] - 2025-04-08
 
 - Add Gamepad class

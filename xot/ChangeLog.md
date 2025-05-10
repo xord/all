@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.3.7] - 2025-05-11
+
+- Delete Xot::clip(), and use std::clamp()
+
+
 ## [v0.3.6] - 2025-04-08
 
 - Move cfrelease() and CFStringPtr from rays to xot
