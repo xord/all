@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.3.8] - 2025-05-12
+
+- Initialize gamepad and MIDI devices after the application startup process
+
+
 ## [v0.3.7] - 2025-05-11
 
 - Add MIDI class
