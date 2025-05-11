@@ -23,10 +23,10 @@ namespace Reflex
 	void
 	Application_call_start (Application* app, Event* e)
 	{
+		app->on_start(e);
+
 		Gamepad_init(app);
 		MIDI_init(app);
-
-		app->on_start(e);
 	}
 
 	void
