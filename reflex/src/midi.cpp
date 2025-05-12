@@ -143,7 +143,7 @@ namespace Reflex
 	}
 
 	static void
-	midi_callback (double dt, MIDIEvent::Message* message, void* data)
+	event_callback (double dt, MIDIEvent::Message* message, void* data)
 	{
 		MIDI* midi       = (MIDI*) data;
 		MIDI::Data* self = midi->self.get();
@@ -179,18 +179,18 @@ namespace Reflex
 	}
 
 	static void
-	open_midi (MIDI* midi, uint port)
+	open_midi (MIDI* midi, uint port, const char* name)
 	{
 		MIDI::Data* self = midi->self.get();
 
 		if (port >= self->input.getPortCount())
 			argument_error(__FILE__, __LINE__);
 
-		self->name = self->input.getPortName(port);
-		self->input.setCallback(midi_callback, midi);
+		self->input.setCallback(event_callback, midi);
 		self->input.setErrorCallback(error_callback, midi);
-		self->input.openPort(port);
+		self->input.openPort(port, name);
 		self->input.ignoreTypes(false, false, false);
+		self->name = name;
 	}
 
 	static MIDI::List midis;
@@ -247,12 +247,12 @@ namespace Reflex
 			for (auto& midi : midis)
 				names.emplace(midi->self->name);
 
-			each_port([&](int port, auto& name)
+			each_port([&](int port, const std::string& name)
 			{
 				if (names.contains(name)) return;
 
 				MIDI::Ref midi = create_midi();
-				open_midi(midi, port);
+				open_midi(midi, port, name.c_str());
 				add_midi(midi);
 			});
 
@@ -288,7 +288,7 @@ namespace Reflex
 
 		void get_port_names (std::set<String>* names)
 		{
-			each_port([&](int, auto& name) {names->emplace(name);});
+			each_port([&](int, const std::string& name) {names->emplace(name);});
 		}
 
 		void each_port (std::function<void(int, const std::string&)> fun)
