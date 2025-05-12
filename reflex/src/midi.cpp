@@ -251,7 +251,7 @@ namespace Reflex
 			{
 				if (names.contains(name)) return;
 
-				MIDI* midi = create_midi();
+				MIDI::Ref midi = create_midi();
 				open_midi(midi, port);
 				add_midi(midi);
 			});
