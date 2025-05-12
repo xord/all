@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.3.8.1] - 2025-05-13
+
+- Fix a crash that occasionally occurred at startup when a MIDI device was connected
+
+
 ## [v0.3.8] - 2025-05-12
 
 - Initialize gamepad and MIDI devices after the application startup process
