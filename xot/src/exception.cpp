@@ -94,17 +94,17 @@ namespace Xot
 		}
 
 		void
-		invalid_state_error (const char* file, int line, const char* format, ...)
-		{
-			XOT_STRINGF(format, s);
-			throw InvalidStateError(error_text(file, line, s));
-		}
-
-		void
 		range_error (const char* file, int line, const char* format, ...)
 		{
 			XOT_STRINGF(format, s);
 			throw std::range_error(error_text(file, line, s));
+		}
+
+		void
+		invalid_state_error (const char* file, int line, const char* format, ...)
+		{
+			XOT_STRINGF(format, s);
+			throw InvalidStateError(error_text(file, line, s));
 		}
 
 		void

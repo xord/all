@@ -61,11 +61,11 @@ namespace Xot
 			const char* file, int line, const char* format = NULL, ...);
 
 		[[noreturn]]
-		void invalid_state_error (
+		void range_error (
 			const char* file, int line, const char* format = NULL, ...);
 
 		[[noreturn]]
-		void range_error (
+		void invalid_state_error (
 			const char* file, int line, const char* format = NULL, ...);
 
 		[[noreturn]]
