@@ -222,6 +222,14 @@
 	{ \
 		RUCY_GOTO_RAISE(rb_exc_new2(rb_eArgError, e.what())); \
 	} \
+	catch (const std::out_of_range& e) \
+	{ \
+		RUCY_GOTO_RAISE(rb_exc_new2(rb_eIndexError, e.what())); \
+	} \
+	catch (const std::range_error& e) \
+	{ \
+		RUCY_GOTO_RAISE(rb_exc_new2(rb_eRangeError, e.what())); \
+	} \
 	catch (const std::exception& e) \
 	{ \
 		Xot::String text = e.what(), type = typeid(e).name(); \
