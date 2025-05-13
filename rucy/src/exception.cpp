@@ -102,6 +102,20 @@ namespace Rucy
 	}
 
 	void
+	index_error (const char* file, int line, const char* format, ...)
+	{
+		XOT_STRINGF(format, s);
+		raise(rb_eIndexError, Xot::error_text(file, line, s));
+	}
+
+	void
+	range_error (const char* file, int line, const char* format, ...)
+	{
+		XOT_STRINGF(format, s);
+		raise(rb_eRangeError, Xot::error_text(file, line, s));
+	}
+
+	void
 	invalid_state_error (const char* file, int line, const char* format, ...)
 	{
 		XOT_STRINGF(format, s);
@@ -113,13 +127,6 @@ namespace Rucy
 	{
 		XOT_STRINGF(format, s);
 		raise(invalid_object_error_class(), Xot::error_text(file, line, s));
-	}
-
-	void
-	index_error (const char* file, int line, const char* format, ...)
-	{
-		XOT_STRINGF(format, s);
-		raise(rb_eIndexError, Xot::error_text(file, line, s));
 	}
 
 	void

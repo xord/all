@@ -74,15 +74,19 @@ namespace Rucy
 		int n6 = -1, int n7 = -1, int n8 = -1, int n9 = -1, int n10 = -1);
 
 	[[noreturn]]
+	void index_error (
+		const char* file, int line, const char* format = NULL, ...);
+
+	[[noreturn]]
+	void range_error (
+		const char* file, int line, const char* format = NULL, ...);
+
+	[[noreturn]]
 	void invalid_state_error (
 		const char* file, int line, const char* format = NULL, ...);
 
 	[[noreturn]]
 	void invalid_object_error (
-		const char* file, int line, const char* format = NULL, ...);
-
-	[[noreturn]]
-	void index_error (
 		const char* file, int line, const char* format = NULL, ...);
 
 	[[noreturn]]
