@@ -5,6 +5,34 @@ using namespace Rucy;
 
 
 static
+RUCY_DEF1(value_to_char, num)
+{
+	return value(to<char>(num));
+}
+RUCY_END
+
+static
+RUCY_DEF1(value_to_uchar, num)
+{
+	return value(to<unsigned char>(num));
+}
+RUCY_END
+
+static
+RUCY_DEF1(value_to_short, num)
+{
+	return value(to<short>(num));
+}
+RUCY_END
+
+static
+RUCY_DEF1(value_to_ushort, num)
+{
+	return value(to<unsigned short>(num));
+}
+RUCY_END
+
+static
 RUCY_DEFN(true_to_value)
 {
 	return value(true);
@@ -61,9 +89,15 @@ Init_value ()
 	Module mRucy   =       define_module("Rucy");
 	Module mTester = mRucy.define_module("Tester");
 
+	mTester.define_method("value_to_char",  value_to_char);
+	mTester.define_method("value_to_uchar", value_to_uchar);
+	mTester.define_method("value_to_short",  value_to_short);
+	mTester.define_method("value_to_ushort", value_to_ushort);
+
 	mTester.define_method("true_to_value", true_to_value);
 	mTester.define_method("false_to_value", false_to_value);
 	mTester.define_method("null_to_value", NULL_to_value);
+
 	mTester.define_method("nil_value", nil_value);
 	mTester.define_method("array_value", array_value);
 }

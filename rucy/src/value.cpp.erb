@@ -2,6 +2,7 @@
 #include "rucy/value.h"
 
 
+#include <limits>
 #include "rucy/function.h"
 #include "rucy/exception.h"
 #include "rucy/debug.h"
@@ -662,25 +663,53 @@ namespace Rucy
 	template <> char
 	value_to<char> (Value obj, bool convert)
 	{
-		return (char) value_to<int>(obj, convert);
+		int n = value_to<int>(obj, convert);
+		if (
+			n < std::numeric_limits<char>::min() ||
+			n > std::numeric_limits<char>::max())
+		{
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to char");
+		}
+		return (char) n;
 	}
 
 	template <> unsigned char
 	value_to<unsigned char> (Value obj, bool convert)
 	{
-		return (unsigned char) value_to<unsigned int>(obj, convert);
+		int n = value_to<int>(obj, convert);
+		if (
+			n < std::numeric_limits<unsigned char>::min() ||
+			n > std::numeric_limits<unsigned char>::max())
+		{
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to unsigned char");
+		}
+		return (unsigned char) n;
 	}
 
 	template <> short
 	value_to<short> (Value obj, bool convert)
 	{
-		return (short) value_to<int>(obj, convert);
+		int n = value_to<int>(obj, convert);
+		if (
+			n < std::numeric_limits<short>::min() ||
+			n > std::numeric_limits<short>::max())
+		{
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to short");
+		}
+		return (short) n;
 	}
 
 	template <> unsigned short
 	value_to<unsigned short> (Value obj, bool convert)
 	{
-		return (unsigned short) value_to<unsigned int>(obj, convert);
+		int n = value_to<int>(obj, convert);
+		if (
+			n < std::numeric_limits<unsigned short>::min() ||
+			n > std::numeric_limits<unsigned short>::max())
+		{
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to unsigned short");
+		}
+		return (unsigned short) n;
 	}
 
 	template <> long
