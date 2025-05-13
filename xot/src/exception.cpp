@@ -101,6 +101,13 @@ namespace Xot
 		}
 
 		void
+		range_error (const char* file, int line, const char* format, ...)
+		{
+			XOT_STRINGF(format, s);
+			throw std::range_error(error_text(file, line, s));
+		}
+
+		void
 		system_error (const char* file, int line, const char* format, ...)
 		{
 			XOT_STRINGF(format, s);

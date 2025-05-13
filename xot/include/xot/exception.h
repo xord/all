@@ -65,6 +65,10 @@ namespace Xot
 			const char* file, int line, const char* format = NULL, ...);
 
 		[[noreturn]]
+		void range_error (
+			const char* file, int line, const char* format = NULL, ...);
+
+		[[noreturn]]
 		void system_error (
 			const char* file, int line, const char* format = NULL, ...);
 
