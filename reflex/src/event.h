@@ -49,6 +49,11 @@ namespace Reflex
 	void WheelEvent_set_position (WheelEvent* pthis, const Point& position);
 
 
+	bool MIDIEvent_to_note_event (NoteEvent* result, const MIDIEvent& event);
+
+	void MIDIEvent_set_captured (MIDIEvent* pthis, bool captured);
+
+
 	void NoteEvent_set_captured (NoteEvent* pthis, bool captured);
 
 

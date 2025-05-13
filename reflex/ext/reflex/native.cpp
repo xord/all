@@ -21,6 +21,7 @@ void Init_reflex_focus_event ();
 void Init_reflex_key_event ();
 void Init_reflex_pointer_event ();
 void Init_reflex_wheel_event ();
+void Init_reflex_midi_event ();
 void Init_reflex_note_event ();
 void Init_reflex_capture_event ();
 void Init_reflex_timer_event ();
@@ -75,6 +76,7 @@ extern "C" void
 	Init_reflex_key_event();
 	Init_reflex_pointer_event();
 	Init_reflex_wheel_event();
+	Init_reflex_midi_event();
 	Init_reflex_note_event();
 	Init_reflex_capture_event();
 	Init_reflex_timer_event();

@@ -20,6 +20,7 @@ namespace Reflex
 	class Device;
 	class Shape;
 	class View;
+	class MIDI;
 
 
 	class Event
@@ -352,6 +353,63 @@ namespace Reflex
 			WheelEvent (const WheelEvent* src);
 
 	};// WheelEvent
+
+
+	class MIDIEvent : public Event
+	{
+
+		public:
+
+			enum Action
+			{
+
+				ACTION_NONE = 0,
+
+				NOTE_ON,
+
+				NOTE_OFF,
+
+				CONTROL_CHANGE,
+
+				PROGRAM_CHANGE,
+
+				CHANNEL_PRESSURE,
+
+				KEY_PRESSURE,
+
+				PITCH_BEND_CHANGE,
+
+				SYSTEM
+
+			};// Action
+
+			MIDIEvent ();
+
+			MIDIEvent (MIDI* midi, const uchar* bytes, double time);
+
+			MIDIEvent dup () const;
+
+			MIDI* midi () const;
+
+			Action action () const;
+
+			int channel () const;
+
+			uchar data1 () const;
+
+			uchar data2 () const;
+
+			bool is_captured () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			MIDIEvent (const MIDIEvent* src);
+
+	};// MIDIEvent
 
 
 	class NoteEvent : public Event

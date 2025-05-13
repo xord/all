@@ -5,6 +5,7 @@
 #include "reflex/device.h"
 #include "reflex/timer.h"
 #include "reflex/shape.h"
+#include "reflex/midi.h"
 #include "reflex/exception.h"
 #include "view.h"
 #include "pointer.h"
@@ -865,6 +866,112 @@ namespace Reflex
 	WheelEvent::modifiers () const
 	{
 		return self->modifiers;
+	}
+
+
+	struct MIDIEvent::Data
+	{
+
+		MIDI::Ref midi;
+
+		uchar bytes[3] = {0};
+
+		bool captured  = false;
+
+	};// MIDIEvent
+
+
+	bool
+	MIDIEvent_to_note_event (NoteEvent* result, const MIDIEvent& event)
+	{
+		auto a = event.action();
+		if (a != MIDIEvent::NOTE_ON && a != MIDIEvent::NOTE_OFF)
+			return false;
+
+		*result = NoteEvent(
+			a == MIDIEvent::NOTE_ON ? NoteEvent::ON : NoteEvent::OFF,
+			event.channel(), event.data1(), event.data2() / 127.f, event.time());
+		return true;
+	}
+
+	void
+	MIDIEvent_set_captured (MIDIEvent* pthis, bool captured)
+	{
+		pthis->self->captured = captured;
+	}
+
+
+	MIDIEvent::MIDIEvent ()
+	{
+	}
+
+	MIDIEvent::MIDIEvent (MIDI* midi, const uchar* bytes, double time)
+	:	Event(time)
+	{
+		self->midi = midi;
+		memcpy(self->bytes, bytes, sizeof(uchar) * 3);
+	}
+
+	MIDIEvent::MIDIEvent (const MIDIEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	MIDIEvent
+	MIDIEvent::dup () const
+	{
+		return MIDIEvent(this);
+	}
+
+	MIDI*
+	MIDIEvent::midi () const
+	{
+		return self->midi;
+	}
+
+	MIDIEvent::Action
+	MIDIEvent::action () const
+	{
+		switch (self->bytes[0] >> 4)
+		{
+			case 0x9: return NOTE_ON;
+			case 0x8: return NOTE_OFF;
+			case 0xA: return KEY_PRESSURE;
+			case 0xB: return CONTROL_CHANGE;
+			case 0xC: return PROGRAM_CHANGE;
+			case 0xD: return CHANNEL_PRESSURE;
+			case 0xE: return PITCH_BEND_CHANGE;
+			case 0xF: return SYSTEM;
+			default:  return ACTION_NONE;
+		}
+	}
+
+	int
+	MIDIEvent::channel () const
+	{
+		auto a = action();
+		if (a == ACTION_NONE || a == SYSTEM)
+			return -1;
+
+		return self->bytes[0] & 0xF;
+	}
+
+	uchar
+	MIDIEvent::data1 () const
+	{
+		return self->bytes[1];
+	}
+
+	uchar
+	MIDIEvent::data2 () const
+	{
+		return self->bytes[2];
+	}
+
+	bool
+	MIDIEvent::is_captured () const
+	{
+		return self->captured;
 	}
 
 
