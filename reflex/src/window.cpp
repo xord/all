@@ -262,8 +262,6 @@ namespace Reflex
 			KeyEvent e = event->dup();
 			KeyEvent_set_captured(&e, true);
 			View_call_key_event(const_cast<View*>(view.get()), &e);
-
-			if (e.is_blocked()) event->block();
 		}
 
 		if (!event->is_blocked())
@@ -627,8 +625,6 @@ namespace Reflex
 			NoteEvent e = event->dup();
 			NoteEvent_set_captured(&e, true);
 			View_call_note_event(const_cast<View*>(view.get()), &e);
-
-			if (e.is_blocked()) event->block();
 		}
 
 		if (!event->is_blocked())
@@ -697,8 +693,6 @@ namespace Reflex
 			MIDIEvent e = event->dup();
 			MIDIEvent_set_captured(&e, true);
 			View_call_midi_event(const_cast<View*>(view.get()), &e);
-
-			if (e.is_blocked()) event->block();
 		}
 
 		if (!event->is_blocked())
