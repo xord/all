@@ -390,6 +390,8 @@ namespace Reflex
 
 			virtual void on_note_off (NoteEvent* e);
 
+			virtual void on_control_change (ControlChangeEvent* e);
+
 			virtual void on_capture (CaptureEvent* e);
 
 			virtual void on_timer (TimerEvent* e);

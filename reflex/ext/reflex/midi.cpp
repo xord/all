@@ -55,6 +55,14 @@ RUCY_DEF1(on_note_off, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_control_change, event)
+{
+	CHECK;
+	CALL(on_control_change(to<Reflex::ControlChangeEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF0(s_get_all)
 {
 	auto list = Reflex::MIDI::all() |
@@ -73,9 +81,11 @@ Init_reflex_midi ()
 
 	cMIDI = mReflex.define_class("MIDI", Reflex::device_class());
 	cMIDI.define_alloc_func(alloc);
-	cMIDI.define_method("on_note",     on_note);
-	cMIDI.define_method("on_note_on",  on_note_on);
-	cMIDI.define_method("on_note_off", on_note_off);
+	cMIDI.define_method("on_midi",           on_midi);
+	cMIDI.define_method("on_note",           on_note);
+	cMIDI.define_method("on_note_on",        on_note_on);
+	cMIDI.define_method("on_note_off",       on_note_off);
+	cMIDI.define_method("on_control_change", on_control_change);
 
 	cMIDI.define_singleton_method("all", s_get_all);
 }

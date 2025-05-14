@@ -445,6 +445,14 @@ RUCY_DEF1(on_note_off, event)
 }
 RUCY_END
 
+static
+RUCY_DEF1(on_control_change, event)
+{
+	CHECK;
+	CALL(on_control_change(to<Reflex::ControlChangeEvent*>(event)));
+}
+RUCY_END
+
 
 static Class cWindow;
 
@@ -497,11 +505,12 @@ Init_reflex_window ()
 	cWindow.define_method("on_pointer_up",     on_pointer_up);
 	cWindow.define_method("on_pointer_move",   on_pointer_move);
 	cWindow.define_method("on_pointer_cancel", on_pointer_cancel);
-	cWindow.define_method("on_wheel",    on_wheel);
-	cWindow.define_method("on_midi",     on_midi);
-	cWindow.define_method("on_note",     on_note);
-	cWindow.define_method("on_note_on",  on_note_on);
-	cWindow.define_method("on_note_off", on_note_off);
+	cWindow.define_method("on_wheel",          on_wheel);
+	cWindow.define_method("on_midi",           on_midi);
+	cWindow.define_method("on_note",           on_note);
+	cWindow.define_method("on_note_on",        on_note_on);
+	cWindow.define_method("on_note_off",       on_note_off);
+	cWindow.define_method("on_control_change", on_control_change);
 
 	cWindow.define_const("ORIENTATION_PORTRAIT",  Reflex::Window::FLAG_PORTRAIT);
 	cWindow.define_const("ORIENTATION_LANDSCAPE", Reflex::Window::FLAG_LANDSCAPE);

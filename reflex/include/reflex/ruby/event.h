@@ -33,6 +33,8 @@ RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDIEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::NoteEvent)
 
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ControlChangeEvent)
+
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::CaptureEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::TimerEvent)
@@ -81,6 +83,9 @@ namespace Reflex
 
 	REFLEX_EXPORT Rucy::Class note_event_class ();
 	// class Reflex::NoteEvent
+
+	REFLEX_EXPORT Rucy::Class control_change_event_class ();
+	// class Reflex::ControlChangeEvent
 
 	REFLEX_EXPORT Rucy::Class capture_event_class ();
 	// class Reflex::CaptureEvent
@@ -172,6 +177,12 @@ namespace Rucy
 	get_ruby_class<Reflex::NoteEvent> ()
 	{
 		return Reflex::note_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::ControlChangeEvent> ()
+	{
+		return Reflex::control_change_event_class();
 	}
 
 	template <> inline Class

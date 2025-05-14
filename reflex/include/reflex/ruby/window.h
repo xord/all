@@ -227,6 +227,15 @@ namespace Reflex
 					Super::on_note_off(e);
 			}
 
+			virtual void on_control_change (ControlChangeEvent* e)
+			{
+				RUCY_SYM(on_control_change);
+				if (this->is_overridable())
+					this->value.call(on_control_change, Rucy::value(e));
+				else
+					Super::on_control_change(e);
+			}
+
 	};// RubyWindow
 
 

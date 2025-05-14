@@ -143,6 +143,8 @@ namespace Reflex
 
 			virtual void on_note_off (NoteEvent* e);
 
+			virtual void on_control_change (ControlChangeEvent* e);
+
 			operator bool () const;
 
 			bool operator ! () const;

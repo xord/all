@@ -23,6 +23,7 @@ void Init_reflex_pointer_event ();
 void Init_reflex_wheel_event ();
 void Init_reflex_midi_event ();
 void Init_reflex_note_event ();
+void Init_reflex_control_change_event ();
 void Init_reflex_capture_event ();
 void Init_reflex_timer_event ();
 void Init_reflex_contact_event ();
@@ -78,6 +79,7 @@ extern "C" void
 	Init_reflex_wheel_event();
 	Init_reflex_midi_event();
 	Init_reflex_note_event();
+	Init_reflex_control_change_event();
 	Init_reflex_capture_event();
 	Init_reflex_timer_event();
 	Init_reflex_contact_event();

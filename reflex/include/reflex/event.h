@@ -449,6 +449,37 @@ namespace Reflex
 	};// NoteEvent
 
 
+	class ControlChangeEvent : public Event
+	{
+
+		public:
+
+			ControlChangeEvent ();
+
+			ControlChangeEvent (
+				int channel, int controller, float value, double time);
+
+			ControlChangeEvent dup () const;
+
+			int channel () const;
+
+			int controller () const;
+
+			float value () const;
+
+			bool is_captured () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			ControlChangeEvent (const ControlChangeEvent* src);
+
+	};// ControlChangeEvent
+
+
 	class CaptureEvent : public Event
 	{
 

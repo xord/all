@@ -1545,6 +1545,20 @@ namespace Reflex
 	}
 
 	void
+	View_call_control_change_event (View* view, ControlChangeEvent* event)
+	{
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		if (view->hidden()) return;
+
+		ControlChangeEvent e = event->dup();
+		view->on_control_change(&e);
+	}
+
+	void
 	View_call_contact_event (View* view, ContactEvent* event)
 	{
 		if (!view)
@@ -2836,6 +2850,11 @@ namespace Reflex
 
 	void
 	View::on_note_off (NoteEvent* e)
+	{
+	}
+
+	void
+	View::on_control_change (ControlChangeEvent* e)
 	{
 	}
 

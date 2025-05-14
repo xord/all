@@ -1188,6 +1188,14 @@ RUCY_DEF1(on_note_off, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_control_change, event)
+{
+	CHECK;
+	CALL(on_control_change(to<Reflex::ControlChangeEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_capture, event)
 {
 	CHECK;
@@ -1367,11 +1375,12 @@ Init_reflex_view ()
 	cView.define_method("on_pointer_up",     on_pointer_up);
 	cView.define_method("on_pointer_move",   on_pointer_move);
 	cView.define_method("on_pointer_cancel", on_pointer_cancel);
-	cView.define_method("on_wheel",    on_wheel);
-	cView.define_method("on_midi",     on_midi);
-	cView.define_method("on_note",     on_note);
-	cView.define_method("on_note_on",  on_note_on);
-	cView.define_method("on_note_off", on_note_off);
+	cView.define_method("on_wheel",          on_wheel);
+	cView.define_method("on_midi",           on_midi);
+	cView.define_method("on_note",           on_note);
+	cView.define_method("on_note_on",        on_note_on);
+	cView.define_method("on_note_off",       on_note_off);
+	cView.define_method("on_control_change", on_control_change);
 	cView.define_method("on_capture",  on_capture);
 	cView.define_method("on_timer",    on_timer);
 	cView.define_method(        "will_contact?",     will_contact);

@@ -894,6 +894,18 @@ namespace Reflex
 		return true;
 	}
 
+	bool
+	MIDIEvent_to_control_change_event (
+		ControlChangeEvent* result, const MIDIEvent& event)
+	{
+		if (event.action() != MIDIEvent::CONTROL_CHANGE)
+			return false;
+
+		*result = ControlChangeEvent(
+			event.channel(), event.data1(), event.data2() / 127.f, event.time());
+		return true;
+	}
+
 	void
 	MIDIEvent_set_captured (MIDIEvent* pthis, bool captured)
 	{
@@ -1056,6 +1068,76 @@ namespace Reflex
 
 	bool
 	NoteEvent::is_captured () const
+	{
+		return self->captured;
+	}
+
+
+	struct ControlChangeEvent::Data
+	{
+
+		int channel    = 0;
+
+		int controller = 0;
+
+		float value    = 0;
+
+		bool captured  = false;
+
+	};// ControlChangeEvent::Data
+
+
+	void
+	ControlChangeEvent_set_captured (ControlChangeEvent* pthis, bool captured)
+	{
+		pthis->self->captured = captured;
+	}
+
+
+	ControlChangeEvent::ControlChangeEvent ()
+	{
+	}
+
+	ControlChangeEvent::ControlChangeEvent (
+		int channel, int controller, float value, double time)
+	:	Event(time)
+	{
+		self->channel    = channel;
+		self->controller = controller;
+		self->value      = value;
+	}
+
+	ControlChangeEvent::ControlChangeEvent (const ControlChangeEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	ControlChangeEvent
+	ControlChangeEvent::dup () const
+	{
+		return ControlChangeEvent(this);
+	}
+
+	int
+	ControlChangeEvent::channel () const
+	{
+		return self->channel;
+	}
+
+	int
+	ControlChangeEvent::controller () const
+	{
+		return self->controller;
+	}
+
+	float
+	ControlChangeEvent::value () const
+	{
+		return self->value;
+	}
+
+	bool
+	ControlChangeEvent::is_captured () const
 	{
 		return self->captured;
 	}

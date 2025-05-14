@@ -51,10 +51,16 @@ namespace Reflex
 
 	bool MIDIEvent_to_note_event (NoteEvent* result, const MIDIEvent& event);
 
+	bool MIDIEvent_to_control_change_event (
+		ControlChangeEvent* result, const MIDIEvent& event);
+
 	void MIDIEvent_set_captured (MIDIEvent* pthis, bool captured);
 
 
 	void NoteEvent_set_captured (NoteEvent* pthis, bool captured);
+
+
+	void ControlChangeEvent_set_captured (ControlChangeEvent* pthis, bool captured);
 
 
 }// Reflex

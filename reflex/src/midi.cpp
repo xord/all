@@ -83,16 +83,26 @@ namespace Reflex
 	}
 
 	static void
-	call_midi_event (MIDI* midi, const uchar* bytes, double time)
+	call_midi_event (MIDI* midi, const MIDIEvent& event)
+	{
+		NoteEvent note_e;
+		if (MIDIEvent_to_note_event(&note_e, event))
+			call_midi_note_event(midi, &note_e);
+
+		ControlChangeEvent cc_e;
+		if (MIDIEvent_to_control_change_event(&cc_e, event))
+			midi->on_control_change(&cc_e);
+	}
+
+	static void
+	call_events (MIDI* midi, const uchar* bytes, double time)
 	{
 		MIDIEvent event(midi, bytes, time);
 
 		midi->on_midi(&event);
 		if (event.is_blocked()) return;
 
-		NoteEvent note_event;
-		if (MIDIEvent_to_note_event(&note_event, event))
-			call_midi_note_event(midi, &note_event);
+		call_midi_event(midi, event);
 
 		Window* win = Window_get_active();
 		if (!win) return;
@@ -108,7 +118,7 @@ namespace Reflex
 		switch (event->type)
 		{
 			case RtMidiEvent::MESSAGE:
-				call_midi_event(event->midi, &event->message[0], event->time);
+				call_events(event->midi, &event->message[0], event->time);
 				break;
 
 			case RtMidiEvent::ERROR:
@@ -354,6 +364,11 @@ namespace Reflex
 
 	void
 	MIDI::on_note_off (NoteEvent* e)
+	{
+	}
+
+	void
+	MIDI::on_control_change (ControlChangeEvent* e)
 	{
 	}
 

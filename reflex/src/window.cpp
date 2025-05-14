@@ -648,6 +648,35 @@ namespace Reflex
 			View_call_note_event(window->self->focus.get(), event);
 	}
 
+	static void
+	Window_call_control_change_event (Window* window, ControlChangeEvent* event)
+	{
+		assert(window);
+
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		for (auto& [view, targets] : window->self->captures)
+		{
+			if (
+				!view->window() ||
+				!is_capturing(view.get(), targets, View::CAPTURE_MIDI))
+			{
+				continue;
+			}
+
+			ControlChangeEvent e = event->dup();
+			ControlChangeEvent_set_captured(&e, true);
+			View_call_control_change_event(const_cast<View*>(view.get()), &e);
+		}
+
+		if (!event->is_blocked())
+			window->on_control_change(event);
+
+		if (!event->is_blocked() && window->self->focus)
+			View_call_control_change_event(window->self->focus.get(), event);
+	}
+
 	void
 	Window_call_midi_event (Window* window, MIDIEvent* event)
 	{
@@ -678,9 +707,16 @@ namespace Reflex
 		if (!event->is_blocked() && window->self->focus)
 			View_call_midi_event(window->self->focus.get(), event);
 
-		NoteEvent note_event;
-		if (!event->is_blocked() && MIDIEvent_to_note_event(&note_event, *event))
-			Window_call_note_event(window, &note_event);
+		if (!event->is_blocked())
+		{
+			NoteEvent note_e;
+			if (MIDIEvent_to_note_event(&note_e, *event))
+				Window_call_note_event(window, &note_e);
+
+			ControlChangeEvent cc_e;
+			if (MIDIEvent_to_control_change_event(&cc_e, *event))
+				Window_call_control_change_event(window, &cc_e);
+		}
 
 		cleanup_captures(window);
 	}
@@ -993,6 +1029,11 @@ namespace Reflex
 
 	void
 	Window::on_note_off (NoteEvent* e)
+	{
+	}
+
+	void
+	Window::on_control_change (ControlChangeEvent* e)
 	{
 	}
 
