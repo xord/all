@@ -26,34 +26,34 @@ class TestCaptureEvent < Test::Unit::TestCase
   end
 
   def test_begin()
-    c = event [:key, :pointer, :note], []
-    assert_equal [:key, :pointer, :note], c.begin
+    c = event [:key, :pointer, :midi], []
+    assert_equal [:key, :pointer, :midi], c.begin
     assert_equal true,                    c.begin?(:key)
     assert_equal true,                    c.begin?(:pointer)
-    assert_equal true,                    c.begin?(:note)
+    assert_equal true,                    c.begin?(:midi)
     assert_equal true,                    c.begin?(:all)
 
     c = event [:key], []
     assert_equal [:key], c.begin
     assert_equal true,   c.begin?(:key)
     assert_equal false,  c.begin?(:pointer)
-    assert_equal false,  c.begin?(:note)
+    assert_equal false,  c.begin?(:midi)
     assert_equal false,  c.begin?(:all)
   end
 
   def test_end()
-    c = event [], [:key, :pointer, :note]
-    assert_equal [:key, :pointer, :note], c.end
+    c = event [], [:key, :pointer, :midi]
+    assert_equal [:key, :pointer, :midi], c.end
     assert_equal true,                    c.end?(:key)
     assert_equal true,                    c.end?(:pointer)
-    assert_equal true,                    c.end?(:note)
+    assert_equal true,                    c.end?(:midi)
     assert_equal true,                    c.end?(:all)
 
     c = event [], [:key]
     assert_equal [:key], c.end
     assert_equal true,   c.end?(:key)
     assert_equal false,  c.end?(:pointer)
-    assert_equal false,  c.end?(:note)
+    assert_equal false,  c.end?(:midi)
     assert_equal false,  c.end?(:all)
   end
 

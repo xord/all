@@ -82,9 +82,9 @@ namespace Reflex
 
 				CAPTURE_POINTER = Xot::bit(1),
 
-				CAPTURE_NOTE    = Xot::bit(2),
+				CAPTURE_MIDI    = Xot::bit(2),
 
-				CAPTURE_ALL     = CAPTURE_KEY | CAPTURE_POINTER | CAPTURE_NOTE,
+				CAPTURE_ALL     = CAPTURE_KEY | CAPTURE_POINTER | CAPTURE_MIDI,
 
 			};// Capture
 
@@ -381,6 +381,8 @@ namespace Reflex
 			virtual void on_pointer_cancel (PointerEvent* e);
 
 			virtual void on_wheel (WheelEvent* e);
+
+			virtual void on_midi (MIDIEvent* e);
 
 			virtual void on_note     (NoteEvent* e);
 

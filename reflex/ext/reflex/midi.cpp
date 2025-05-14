@@ -23,6 +23,14 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
+RUCY_DEF1(on_midi, event)
+{
+	CHECK;
+	CALL(on_midi(to<Reflex::MIDIEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_note, event)
 {
 	CHECK;

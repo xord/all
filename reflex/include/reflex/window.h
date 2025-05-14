@@ -135,6 +135,8 @@ namespace Reflex
 
 			virtual void on_wheel (WheelEvent* e);
 
+			virtual void on_midi (MIDIEvent* e);
+
 			virtual void on_note     (NoteEvent* e);
 
 			virtual void on_note_on  (NoteEvent* e);

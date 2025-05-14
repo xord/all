@@ -191,6 +191,15 @@ namespace Reflex
 					Super::on_wheel(e);
 			}
 
+			virtual void on_midi (MIDIEvent* e)
+			{
+				RUCY_SYM(on_midi);
+				if (this->is_overridable())
+					this->value.call(on_midi, Rucy::value(e));
+				else
+					Super::on_midi(e);
+			}
+
 			virtual void on_note (NoteEvent* e)
 			{
 				RUCY_SYM(on_note);

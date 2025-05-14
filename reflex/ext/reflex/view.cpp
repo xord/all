@@ -1156,6 +1156,38 @@ RUCY_DEF1(on_wheel, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_midi, event)
+{
+	CHECK;
+	CALL(on_midi(to<Reflex::MIDIEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_note, event)
+{
+	CHECK;
+	CALL(on_note(to<Reflex::NoteEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_note_on, event)
+{
+	CHECK;
+	CALL(on_note_on(to<Reflex::NoteEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_note_off, event)
+{
+	CHECK;
+	CALL(on_note_off(to<Reflex::NoteEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_capture, event)
 {
 	CHECK;
@@ -1335,9 +1367,13 @@ Init_reflex_view ()
 	cView.define_method("on_pointer_up",     on_pointer_up);
 	cView.define_method("on_pointer_move",   on_pointer_move);
 	cView.define_method("on_pointer_cancel", on_pointer_cancel);
-	cView.define_method("on_wheel",   on_wheel);
-	cView.define_method("on_capture", on_capture);
-	cView.define_method("on_timer",   on_timer);
+	cView.define_method("on_wheel",    on_wheel);
+	cView.define_method("on_midi",     on_midi);
+	cView.define_method("on_note",     on_note);
+	cView.define_method("on_note_on",  on_note_on);
+	cView.define_method("on_note_off", on_note_off);
+	cView.define_method("on_capture",  on_capture);
+	cView.define_method("on_timer",    on_timer);
 	cView.define_method(        "will_contact?",     will_contact);
 	cView.define_private_method("call_contact!",       on_contact);
 	cView.define_private_method("call_contact_begin!", on_contact_begin);
@@ -1346,7 +1382,7 @@ Init_reflex_view ()
 	cView.define_const("CAPTURE_NONE",    Reflex::View::CAPTURE_NONE);
 	cView.define_const("CAPTURE_KEY",     Reflex::View::CAPTURE_KEY);
 	cView.define_const("CAPTURE_POINTER", Reflex::View::CAPTURE_POINTER);
-	cView.define_const("CAPTURE_NOTE",    Reflex::View::CAPTURE_NOTE);
+	cView.define_const("CAPTURE_MIDI",    Reflex::View::CAPTURE_MIDI);
 	cView.define_const("CAPTURE_ALL",     Reflex::View::CAPTURE_ALL);
 
 	define_selector_methods<Reflex::View>(cView);

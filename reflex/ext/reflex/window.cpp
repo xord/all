@@ -414,6 +414,14 @@ RUCY_DEF1(on_wheel, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_midi, event)
+{
+	CHECK;
+	CALL(on_midi(to<Reflex::MIDIEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_note, event)
 {
 	CHECK;
@@ -489,7 +497,8 @@ Init_reflex_window ()
 	cWindow.define_method("on_pointer_up",     on_pointer_up);
 	cWindow.define_method("on_pointer_move",   on_pointer_move);
 	cWindow.define_method("on_pointer_cancel", on_pointer_cancel);
-	cWindow.define_method("on_wheel", on_wheel);
+	cWindow.define_method("on_wheel",    on_wheel);
+	cWindow.define_method("on_midi",     on_midi);
 	cWindow.define_method("on_note",     on_note);
 	cWindow.define_method("on_note_on",  on_note_on);
 	cWindow.define_method("on_note_off", on_note_off);

@@ -49,7 +49,7 @@ module Reflex
     bit_flag_accessor :capture do
       flag :key,     CAPTURE_KEY
       flag :pointer, CAPTURE_POINTER
-      flag :note,    CAPTURE_NOTE
+      flag :midi,    CAPTURE_MIDI
       flag :all,     CAPTURE_ALL
     end
 
@@ -104,7 +104,7 @@ module Reflex
       if args.empty?
         not cap.empty?
       elsif args.include?(:all)
-        cap == [:key, :pointer, :note]
+        cap == [:key, :pointer, :midi]
       else
         args.all? {|type| cap.include? type}
       end

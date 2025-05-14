@@ -7,6 +7,7 @@
 #include <rucy/class.h>
 #include <rucy/extension.h>
 #include <reflex/midi.h>
+#include <reflex/ruby/event.h>
 
 
 RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDI)
@@ -27,6 +28,15 @@ namespace Reflex
 		typedef Rucy::ClassWrapper<T> Super;
 
 		public:
+
+			virtual void on_midi (MIDIEvent* e)
+			{
+				RUCY_SYM(on_midi);
+				if (this->is_overridable())
+					this->value.call(on_midi, Rucy::value(e));
+				else
+					Super::on_midi(e);
+			}
 
 			virtual void on_note (NoteEvent* e)
 			{

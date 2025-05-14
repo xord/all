@@ -33,33 +33,7 @@ namespace Reflex
 	};// MIDI::Data
 
 
-	static void
-	call_note_event (
-		MIDI* midi, bool on,
-		int channel, int note, float velocity, double time)
-	{
-		NoteEvent e(
-			on ? NoteEvent::ON : NoteEvent::OFF,
-			channel, note, velocity, time);
-
-		midi->on_note(&e);
-		if (e.is_blocked()) return;
-
-		switch ((int) e.action())
-		{
-			case NoteEvent::ON:  midi->on_note_on(&e);  break;
-			case NoteEvent::OFF: midi->on_note_off(&e); break;
-		}
-		if (e.is_blocked()) return;
-
-		Window* win = Window_get_active();
-		if (!win) return;
-
-		Window_call_note_event(win, &e);
-	}
-
-
-	struct MIDIEvent
+	struct RtMidiEvent
 	{
 
 		typedef std::vector<unsigned char> Message;
@@ -76,60 +50,74 @@ namespace Reflex
 
 		double time = 0;
 
-		MIDIEvent ()
+		RtMidiEvent ()
 		:	error("")
 		{
 		}
 
-		MIDIEvent (MIDI* midi, const Message& message, double time)
+		RtMidiEvent (MIDI* midi, const Message& message, double time)
 		:	type(MESSAGE), midi(midi), message(message), error(""), time(time)
 		{
 		}
 
-		MIDIEvent (MIDI* midi, const RtMidiError& error)
+		RtMidiEvent (MIDI* midi, const RtMidiError& error)
 		:	type(ERROR), midi(midi), error(error)
 		{
 		}
 
-	};// MIDIEvent
+	};// RtMidiEvent
 
-
-	static Queue<MIDIEvent> queue;
 
 	static void
-	dispatch_midi_event (MIDIEvent* event)
+	call_midi_note_event (MIDI* midi, NoteEvent* event)
+	{
+		midi->on_note(event);
+		if (event->is_blocked())
+			return;
+
+		switch ((int) event->action())
+		{
+			case NoteEvent::ON:  midi->on_note_on(event);  break;
+			case NoteEvent::OFF: midi->on_note_off(event); break;
+		}
+	}
+
+	static void
+	call_midi_event (MIDI* midi, const uchar* bytes, double time)
+	{
+		MIDIEvent event(midi, bytes, time);
+
+		midi->on_midi(&event);
+		if (event.is_blocked()) return;
+
+		NoteEvent note_event;
+		if (MIDIEvent_to_note_event(&note_event, event))
+			call_midi_note_event(midi, &note_event);
+
+		Window* win = Window_get_active();
+		if (!win) return;
+
+		Window_call_midi_event(win, &event);
+	}
+
+	static Queue<RtMidiEvent> queue;
+
+	static void
+	dispatch_midi_event (RtMidiEvent* event)
 	{
 		switch (event->type)
 		{
-			case MIDIEvent::MESSAGE:
-			{
-				auto& bytes = event->message;
-				switch (bytes[0] >> 4)
-				{
-					case 0x9:
-						call_note_event(
-							event->midi, true,
-							bytes[0] & 0xf, bytes[1], bytes[2] / 127.f, event->time);
-						break;
-
-					case 0x8:
-						call_note_event(
-							event->midi, false,
-							bytes[0] & 0xf, bytes[1], bytes[2] / 127.f, event->time);
-						break;
-				}
+			case RtMidiEvent::MESSAGE:
+				call_midi_event(event->midi, &event->message[0], event->time);
 				break;
-			}
 
-			case MIDIEvent::ERROR:
-			{
+			case RtMidiEvent::ERROR:
 				system_error(
 					__FILE__, __LINE__,
 					Xot::stringf("MIDI: %s", event->error.what()).c_str());
 				break;
-			}
 
-			case MIDIEvent::UNKNOWN:
+			case RtMidiEvent::UNKNOWN:
 				invalid_state_error(__FILE__, __LINE__);
 		}
 	}
@@ -137,13 +125,13 @@ namespace Reflex
 	static void
 	process_midi_events ()
 	{
-		MIDIEvent event;
+		RtMidiEvent event;
 		while (queue.try_pop(&event))
 			dispatch_midi_event(&event);
 	}
 
 	static void
-	event_callback (double dt, MIDIEvent::Message* message, void* data)
+	event_callback (double dt, RtMidiEvent::Message* message, void* data)
 	{
 		MIDI* midi       = (MIDI*) data;
 		MIDI::Data* self = midi->self.get();
@@ -153,7 +141,7 @@ namespace Reflex
 		else
 			self->time += dt;
 
-		queue.push(MIDIEvent(midi, *message, self->time));
+		queue.push(RtMidiEvent(midi, *message, self->time));
 	}
 
 	static void
@@ -161,7 +149,7 @@ namespace Reflex
 	{
 		MIDI* midi = (MIDI*) data;
 
-		queue.push(MIDIEvent(midi, RtMidiError(message, type)));
+		queue.push(RtMidiEvent(midi, RtMidiError(message, type)));
 	}
 
 	static MIDI_CreateFun midi_create_fun = NULL;
@@ -347,6 +335,11 @@ namespace Reflex
 	MIDI::name () const
 	{
 		return self->name;
+	}
+
+	void
+	MIDI::on_midi (MIDIEvent* e)
+	{
 	}
 
 	void

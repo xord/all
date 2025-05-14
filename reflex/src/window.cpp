@@ -607,7 +607,7 @@ namespace Reflex
 		View_call_wheel_event(window->root(), event);
 	}
 
-	void
+	static void
 	Window_call_note_event (Window* window, NoteEvent* event)
 	{
 		assert(window);
@@ -619,7 +619,7 @@ namespace Reflex
 		{
 			if (
 				!view->window() ||
-				!is_capturing(view.get(), targets, View::CAPTURE_NOTE))
+				!is_capturing(view.get(), targets, View::CAPTURE_MIDI))
 			{
 				continue;
 			}
@@ -646,6 +646,41 @@ namespace Reflex
 
 		if (!event->is_blocked() && window->self->focus)
 			View_call_note_event(window->self->focus.get(), event);
+	}
+
+	void
+	Window_call_midi_event (Window* window, MIDIEvent* event)
+	{
+		if (!window) return;
+
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		for (auto& [view, targets] : window->self->captures)
+		{
+			if (
+				!view->window() ||
+				!is_capturing(view.get(), targets, View::CAPTURE_MIDI))
+			{
+				continue;
+			}
+
+			MIDIEvent e = event->dup();
+			MIDIEvent_set_captured(&e, true);
+			View_call_midi_event(const_cast<View*>(view.get()), &e);
+
+			if (e.is_blocked()) event->block();
+		}
+
+		if (!event->is_blocked())
+			window->on_midi(event);
+
+		if (!event->is_blocked() && window->self->focus)
+			View_call_midi_event(window->self->focus.get(), event);
+
+		NoteEvent note_event;
+		if (!event->is_blocked() && MIDIEvent_to_note_event(&note_event, *event))
+			Window_call_note_event(window, &note_event);
 
 		cleanup_captures(window);
 	}
@@ -938,6 +973,11 @@ namespace Reflex
 
 	void
 	Window::on_wheel (WheelEvent* e)
+	{
+	}
+
+	void
+	Window::on_midi (MIDIEvent* e)
 	{
 	}
 

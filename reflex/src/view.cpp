@@ -1509,6 +1509,20 @@ namespace Reflex
 	}
 
 	void
+	View_call_midi_event (View* view, MIDIEvent* event)
+	{
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		if (view->hidden()) return;
+
+		MIDIEvent e = event->dup();
+		view->on_midi(&e);
+	}
+
+	void
 	View_call_note_event (View* view, NoteEvent* event)
 	{
 		if (!view)
@@ -2803,6 +2817,11 @@ namespace Reflex
 	View::on_wheel (WheelEvent* e)
 	{
 		//scroll_by(e->dx, e->dy, e->dz);
+	}
+
+	void
+	View::on_midi (MIDIEvent* e)
+	{
 	}
 
 	void
