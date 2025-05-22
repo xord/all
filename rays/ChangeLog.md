@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.3.8] - 2025-05-22
+
+- Update dependencies
+
+
 ## [v0.3.7] - 2025-05-11
 
 - Use std::clamp() instead of Xot::clip()

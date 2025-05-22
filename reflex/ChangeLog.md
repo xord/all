@@ -1,6 +1,13 @@
 # reflex ChangeLog
 
 
+## [v0.3.9] - 2025-05-22
+
+- Add MIDIEvent class and on_midi() event handler
+- Add ControlChangeEvent and on_control_change() event handler
+- Replace capture type from CAPTURE_NOTE to CAPTURE_MIDI
+
+
 ## [v0.3.8.1] - 2025-05-13
 
 - Fix a crash that occasionally occurred at startup when a MIDI device was connected

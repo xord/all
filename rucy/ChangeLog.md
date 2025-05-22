@@ -1,6 +1,13 @@
 # rucy ChangeLog
 
 
+## [v0.3.8] - 2025-05-22
+
+- Catch std::out_of_range and std::range_error, then throw Ruby's IndexError and RangeError
+- Rucy::value_to<>() checks the value range when converting a ruby value to char or short
+- Add Rucy::range_error()
+
+
 ## [v0.3.7] - 2025-05-11
 
 - Fixed complex overloading of array(Value,Value) and array(iterator,iterator) functions

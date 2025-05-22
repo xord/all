@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.3.8] - 2025-05-22
+
+- Add Xot::range_error()
+
+
 ## [v0.3.7] - 2025-05-11
 
 - Delete Xot::clip(), and use std::clamp()
