@@ -25,7 +25,12 @@ use_external_library 'https://github.com/thestk/rtmidi',
   tag:     '6.0.0',
   incdirs: 'rtmidi',
   srcdirs: 'rtmidi',
-  defs:    '__MACOSX_CORE__',
+  defs:    -> {
+    case
+    when osx?   then '__MACOSX_CORE__'
+    when win32? then '__WINDOWS_MM__'
+    end
+  }.call,
   &proc {sh %( mkdir rtmidi && cp RtMidi.* rtmidi )}
 
 default_tasks :ext
