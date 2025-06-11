@@ -1,5 +1,6 @@
 # xord/all
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/all)
 ![License](https://img.shields.io/github/license/xord/all)
 ![Build Status](https://github.com/xord/all/actions/workflows/test.yml/badge.svg)
 
