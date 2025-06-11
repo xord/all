@@ -1,5 +1,6 @@
 # Reflex - A Graphical User Interface Tool Kit for Ruby.
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/reflex)
 ![License](https://img.shields.io/github/license/xord/reflex)
 ![Build Status](https://github.com/xord/reflex/actions/workflows/test.yml/badge.svg)
 ![Gem Version](https://badge.fury.io/rb/reflexion.svg)

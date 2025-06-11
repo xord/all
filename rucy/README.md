@@ -1,5 +1,6 @@
 # Rucy - A Ruby C++ Extension Helper Library
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/rucy)
 ![License](https://img.shields.io/github/license/xord/rucy)
 ![Build Status](https://github.com/xord/rucy/actions/workflows/test.yml/badge.svg)
 ![Gem Version](https://badge.fury.io/rb/rucy.svg)

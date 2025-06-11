@@ -1,5 +1,6 @@
 # Xot - Some useful utility classes and functions
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/xot)
 ![License](https://img.shields.io/github/license/xord/xot)
 ![Build Status](https://github.com/xord/xot/actions/workflows/test.yml/badge.svg)
 ![Gem Version](https://badge.fury.io/rb/xot.svg)

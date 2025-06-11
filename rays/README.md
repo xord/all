@@ -1,5 +1,6 @@
 # Rays - A Drawing Engine using OpenGL.
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/rays)
 ![License](https://img.shields.io/github/license/xord/rays)
 ![Build Status](https://github.com/xord/rays/actions/workflows/test.yml/badge.svg)
 ![Gem Version](https://badge.fury.io/rb/rays.svg)
