@@ -608,8 +608,11 @@ namespace Rays
 					OpenGL_check_error(__FILE__, __LINE__);
 				}
 
-				glDeleteBuffers((GLsizei) buffers.size(), &buffers[0]);
-				OpenGL_check_error(__FILE__, __LINE__);
+				if (!buffers.empty())
+				{
+					glDeleteBuffers((GLsizei) buffers.size(), &buffers[0]);
+					OpenGL_check_error(__FILE__, __LINE__);
+				}
 
 				locations.clear();
 				buffers.clear();
