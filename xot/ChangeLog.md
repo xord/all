@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.3.9] - 2025-07-06
+
+- Add deepwiki badge
+
+
 ## [v0.3.8] - 2025-05-22
 
 - Add Xot::range_error()

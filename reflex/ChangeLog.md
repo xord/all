@@ -1,6 +1,12 @@
 # reflex ChangeLog
 
 
+## [v0.3.10] - 2025-07-06
+
+- Add deepwiki badge
+- Define __WINDOWS_MM__ macro on Windows
+
+
 ## [v0.3.9] - 2025-05-22
 
 - Add MIDIEvent class and on_midi() event handler

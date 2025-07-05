@@ -1,6 +1,12 @@
 # rays ChangeLog
 
 
+## [v0.3.9] - 2025-07-06
+
+- Add deepwiki badge
+- Call glDeleteBuffers() only when the buffers are not empty
+
+
 ## [v0.3.8] - 2025-05-22
 
 - Update dependencies

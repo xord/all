@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.3.9] - 2025-07-06
+
+- Add deepwiki badge
+
+
 ## [v0.3.8] - 2025-05-22
 
 - Catch std::out_of_range and std::range_error, then throw Ruby's IndexError and RangeError
