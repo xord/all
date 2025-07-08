@@ -250,22 +250,7 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		for (auto& [view, targets] : window->self->captures)
-		{
-			if (
-				!view->window() ||
-				!is_capturing(view.get(), targets, View::CAPTURE_KEY))
-			{
-				continue;
-			}
-
-			KeyEvent e = event->dup();
-			KeyEvent_set_captured(&e, true);
-			View_call_key_event(const_cast<View*>(view.get()), &e);
-		}
-
-		if (!event->is_blocked())
-			window->on_key(event);
+		window->on_key(event);
 
 		if (!event->is_blocked())
 		{
@@ -274,6 +259,25 @@ namespace Reflex
 				case KeyEvent::DOWN: window->on_key_down(event); break;
 				case KeyEvent::UP:   window->on_key_up(event);   break;
 				default: break;
+			}
+		}
+
+		if (!event->is_blocked())
+		{
+			for (auto& [view, targets] : window->self->captures)
+			{
+				if (
+					!view->window() ||
+					!is_capturing(view.get(), targets, View::CAPTURE_KEY))
+				{
+					continue;
+				}
+
+				KeyEvent e = event->dup();
+				KeyEvent_set_captured(&e, true);
+				View_call_key_event(const_cast<View*>(view.get()), &e);
+
+				if (e.is_blocked()) event->block();
 			}
 		}
 
@@ -566,12 +570,10 @@ namespace Reflex
 
 		setup_pointer_event(window, event);
 
-		call_captured_pointer_events(window, event);
-
-		if (!event->is_blocked() && !event->empty())
+		if (!event->empty())
 			window->on_pointer(event);
 
-		if (!event->is_blocked() && !event->empty())
+		if (!event->empty() && !event->is_blocked())
 		{
 			switch ((*event)[0].action())
 			{
@@ -583,7 +585,10 @@ namespace Reflex
 			}
 		}
 
-		if (!event->is_blocked() && !event->empty())
+		if (!event->empty() && !event->is_blocked())
+			call_captured_pointer_events(window, event);
+
+		if (!event->empty() && !event->is_blocked())
 		{
 			PointerEvent_update_for_child_view(event, window->root());
 			View_call_pointer_event(window->root(), event);
