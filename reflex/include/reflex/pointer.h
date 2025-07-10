@@ -21,7 +21,7 @@ namespace Reflex
 
 		public:
 
-			typedef int ID;
+			typedef uintptr_t ID;
 
 			enum Type
 			{

@@ -92,6 +92,7 @@ namespace Reflex
 				(uint) touch.tapCount,
 				action == Pointer::MOVE,
 				touch.timestamp);
+			Pointer_set_system_id(&pointer, (Pointer::ID) touch);
 
 			if (pointer.action() != Pointer::DOWN)
 			{
