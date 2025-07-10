@@ -2665,7 +2665,7 @@ namespace Reflex
 	}
 
 	void
-	View::set_gravity (float x, float y)
+	View::set_gravity (coord x, coord y)
 	{
 		set_gravity(Point(x, y));
 	}
