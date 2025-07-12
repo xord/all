@@ -587,7 +587,7 @@ static
 RUCY_DEFN(set_font)
 {
 	CHECK;
-	check_arg_count(__FILE__, __LINE__, "Painter#set_font", argc, 0, 1, 2);
+	check_arg_count(__FILE__, __LINE__, "Painter#set_font", argc, 0, 1, 2, 3);
 
 	THIS->set_font(to<Rays::Font>(argc, argv));
 	return self;

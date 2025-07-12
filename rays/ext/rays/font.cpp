@@ -23,7 +23,7 @@ static
 RUCY_DEFN(initialize)
 {
 	RUCY_CHECK_OBJ(Rays::Font, self);
-	check_arg_count(__FILE__, __LINE__, "Font#initialize", argc, 0, 1, 2);
+	check_arg_count(__FILE__, __LINE__, "Font#initialize", argc, 0, 1, 2, 3);
 
 	*THIS = to<Rays::Font>(argc, argv);
 	return self;
@@ -62,6 +62,23 @@ RUCY_DEF0(size)
 {
 	CHECK;
 	return value(THIS->size());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_smooth, smooth)
+{
+	CHECK;
+	THIS->set_smooth(to<bool>(smooth));
+	return smooth;
+}
+RUCY_END
+
+static
+RUCY_DEF0(smooth)
+{
+	CHECK;
+	return value(THIS->smooth());
 }
 RUCY_END
 
@@ -153,8 +170,10 @@ Init_rays_font ()
 	cFont.define_private_method("initialize",      initialize);
 	cFont.define_private_method("initialize_copy", initialize_copy);
 	cFont.define_method("name", name);
-	cFont.define_method("size=", set_size);
-	cFont.define_method("size",      size);
+	cFont.define_method("size=",   set_size);
+	cFont.define_method("size",        size);
+	cFont.define_method("smooth=", set_smooth);
+	cFont.define_method("smooth",      smooth);
 	cFont.define_method("width",   width);
 	cFont.define_method("height",  height);
 	cFont.define_method("ascent",  ascent);
@@ -185,12 +204,13 @@ namespace Rucy
 			if (argc == 0)
 				return Rays::get_default_font();
 
-			coord size =
-				argc >= 2 ? to<coord>(argv[1]) : (coord) Rays::Font::DEFAULT_SIZE;
+			coord size  = argc >= 2 ? to<coord>(argv[1]) : (coord) Rays::Font::DEFAULT_SIZE;
+			bool smooth = argc >= 3 ? to<bool>(argv[2])  : true;
+
 			if (argv->is_nil())
-				return Rays::Font(NULL, size);
+				return Rays::Font(NULL, size, smooth);
 			else if (argv->is_s() || argv->is_sym())
-				return Rays::Font(argv[0].c_str(), size);
+				return Rays::Font(argv[0].c_str(), size, smooth);
 		}
 
 		if (argc != 1)

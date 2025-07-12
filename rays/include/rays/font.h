@@ -23,7 +23,7 @@ namespace Rays
 
 			Font ();
 
-			Font (const char* name, coord size = DEFAULT_SIZE);
+			Font (const char* name, coord size = DEFAULT_SIZE, bool smooth = true);
 
 			~Font ();
 
@@ -34,6 +34,10 @@ namespace Rays
 			void set_size (coord size);
 
 			coord    size () const;
+
+			void set_smooth (bool smooth);
+
+			bool     smooth () const;
 
 			coord get_width (const char* str) const;
 

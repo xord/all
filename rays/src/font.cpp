@@ -14,6 +14,8 @@ namespace Rays
 
 		RawFont rawfont;
 
+		bool smooth = true;
+
 		mutable RawFont rawfont_for_pixel_density;
 
 		mutable float for_pixel_density = 1;
@@ -64,9 +66,10 @@ namespace Rays
 	{
 	}
 
-	Font::Font (const char* name, coord size)
+	Font::Font (const char* name, coord size, bool smooth)
 	{
 		self->rawfont = RawFont(name, size);
+		self->smooth  = smooth;
 	}
 
 	Font::~Font ()
@@ -78,6 +81,7 @@ namespace Rays
 	{
 		Font f;
 		f.self->rawfont = RawFont(self->rawfont, self->rawfont.size());
+		f.self->smooth  = self->smooth;
 		return f;
 	}
 
@@ -97,6 +101,18 @@ namespace Rays
 	Font::size () const
 	{
 		return self->rawfont.size();
+	}
+
+	void
+	Font::set_smooth (bool smooth)
+	{
+		self->smooth = smooth;
+	}
+
+	bool
+	Font::smooth () const
+	{
+		return self->smooth;
 	}
 
 	coord

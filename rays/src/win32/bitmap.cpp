@@ -136,7 +136,8 @@ namespace Rays
 
 	void
 	Bitmap_draw_string (
-		Bitmap* bitmap, const RawFont& font, const char* str, coord x, coord y)
+		Bitmap* bitmap, const RawFont& font,
+		const char* str, coord x, coord y, bool smooth)
 	{
 		if (!bitmap)
 			argument_error(__FILE__, __LINE__);

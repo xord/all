@@ -1275,7 +1275,8 @@ namespace Rays
 
 		assert(self->text_image.pixel_density() == density);
 
-		Bitmap_draw_string(&self->text_image.bitmap(), rawfont, line, 0, 0);
+		Bitmap_draw_string(
+			&self->text_image.bitmap(), rawfont, line, 0, 0, font.smooth());
 
 		str_w /= density;
 		str_h /= density;
@@ -1625,19 +1626,20 @@ namespace Rays
 	}
 
 	static bool
-	has_same_font (const Font& font, const char* name, coord size)
+	has_same_font (const Font& font, const char* name, coord size, bool smooth)
 	{
 		return
-			font.size() == size &&
-			font.name() == (name ? name : get_default_font().name().c_str());
+			font.size()   == size &&
+			font.smooth() == smooth &&
+			font.name()   == (name ? name : get_default_font().name().c_str());
 	}
 
 	void
-	Painter::set_font (const char* name, coord size)
+	Painter::set_font (const char* name, coord size, bool smooth)
 	{
-		if (has_same_font(self->state.font, name, size)) return;
+		if (has_same_font(self->state.font, name, size, smooth)) return;
 
-		set_font(Font(name, size));
+		set_font(Font(name, size, smooth));
 	}
 
 	void

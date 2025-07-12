@@ -257,7 +257,7 @@ namespace Rays
 
 			const Bounds& clip () const;
 
-			void    set_font (const char* name, coord size = 0);
+			void    set_font (const char* name, coord size = 0, bool smooth = true);
 
 			void    set_font (const Font& font);
 

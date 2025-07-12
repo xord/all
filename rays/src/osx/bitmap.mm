@@ -75,7 +75,7 @@ namespace Rays
 			clear();
 		}
 
-		CGContextRef get_context ()
+		CGContextRef get_context (bool smooth = true)
 		{
 			if (context) return context;
 
@@ -94,6 +94,17 @@ namespace Rays
 			context = CGBitmapContextCreate(
 				pixels, width, height, bpc, pitch, cgcs, make_bitmapinfo(color_space));
 			CGColorSpaceRelease(cgcs);
+
+			if (!smooth)
+			{
+				CGContextSetShouldAntialias(            context, false);
+				CGContextSetShouldSmoothFonts(          context, false);
+				CGContextSetInterpolationQuality(       context, kCGInterpolationNone);
+				CGContextSetAllowsFontSmoothing(        context, false);
+				CGContextSetShouldSubpixelPositionFonts(context, false);
+				CGContextSetShouldSubpixelQuantizeFonts(context, true);
+			}
+
 			return context;
 		}
 
@@ -200,7 +211,8 @@ namespace Rays
 
 	void
 	Bitmap_draw_string (
-		Bitmap* bitmap, const RawFont& font, const char* str, coord x, coord y)
+		Bitmap* bitmap, const RawFont& font,
+		const char* str, coord x, coord y, bool smooth)
 	{
 		if (!bitmap)
 			argument_error(__FILE__, __LINE__);
@@ -213,7 +225,7 @@ namespace Rays
 
 		if (*str == '\0') return;
 
-		font.draw_string(bitmap->self->get_context(), bitmap->height(), str, x, y);
+		font.draw_string(bitmap->self->get_context(smooth), bitmap->height(), str, x, y);
 		Bitmap_set_modified(bitmap);
 	}
 

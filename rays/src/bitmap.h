@@ -19,7 +19,8 @@ namespace Rays
 	Bitmap Bitmap_from (const Texture& texture);
 
 	void Bitmap_draw_string (
-		Bitmap* bitmap, const RawFont& font, const char* str, coord x, coord y);
+		Bitmap* bitmap, const RawFont& font,
+		const char* str, coord x, coord y, bool smooth);
 
 	void Bitmap_set_modified (Bitmap* bitmap, bool modified = true);
 
