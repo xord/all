@@ -19,6 +19,16 @@ class R8::Chip
   alias <=> cmp__
 end
 
+class R8::ChipState
+  include Comparable
+  alias <=> cmp__
+end
+
+class R8::ChipFrame
+  include Comparable
+  alias <=> cmp__
+end
+
 class R8::ChipList
   include Comparable
   alias <=> cmp__

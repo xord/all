@@ -6,13 +6,14 @@ class Reight::Chip
   def initialize(id, image, x, y, w, h, pos: nil, shape: nil, sensor: nil)
     @id, @image, @x, @y, @w, @h, @pos, @shape, @sensor =
      id,  image,  x,  y,  w,  h,  pos,  shape, (sensor || false)
+    @states = {}
   end
 
   attr_accessor :shape
 
   attr_writer :sensor
 
-  attr_reader :id, :image, :x, :y, :w, :h, :pos
+  attr_reader :id, :image, :x, :y, :w, :h, :pos, :states
 
   def frame   = [x, y, w, h]
 
@@ -81,8 +82,8 @@ class Reight::Chip
 
   # @private
   def cmp__(o)
-    a =                  [@id, @image.object_id, @x, @y, @w, @h, @pos, @shape, @sensor]
-    b = o.instance_eval {[@id, @image.object_id, @x, @y, @w, @h, @pos, @shape, @sensor]}
+    a =                  [@id, @image.object_id, @x, @y, @w, @h, @pos, @shape, @sensor, @states]
+    b = o.instance_eval {[@id, @image.object_id, @x, @y, @w, @h, @pos, @shape, @sensor, @states]}
     a <=> b
   end
 
@@ -107,6 +108,73 @@ class Reight::Chip
   end
 
 end# Chip
+
+
+class Reight::ChipState
+
+  include Enumerable
+
+  def initialize(name, fps, frames = [])
+    @name, @frames = name.to_s, frames
+    self.fps       = fps
+  end
+
+  attr_reader :name, :fps, :frames
+
+  def fps=(value)
+    @fps                        = value
+    @frame_count_per_chip_frame = 60.0 / @fps
+  end
+
+  def frame_at(frame_count)
+    @frames[(frame_count / @frame_count_per_chip_frame).to_i % @frames.size]
+  end
+
+  def to_hash()
+    {name: @name, fps: @fps, frames: @frames.map(&:to_hash)}
+  end
+
+  def self.restore(hash)
+    name, fps, frames = hash.values_at :name, :fps, :frames
+    self.new(name, fps, frames.map {Reight::ChipFrame.restore _1})
+  end
+
+  # @private
+  def cmp__(o)
+    a =                  [@name, @fps, @frames]
+    b = o.instance_eval {[@name, @fps, @frames]}
+    a <=> b
+  end
+
+end# ChipState
+
+
+class Reight::ChipFrame
+
+  def initialize(x, y)
+    @x, @y = x, y
+  end
+
+  attr_reader :x, :y
+
+  def offset = [@x, @y]
+
+  def to_hash()
+    {x: @x, y: @y}
+  end
+
+  def self.restore(hash)
+    self.new(*hash.values_at(:x, :y))
+  end
+
+  # @private
+  def cmp__(o)
+    a =                  [@x, @y]
+    b = o.instance_eval {[@x, @y]}
+    a <=> b
+  end
+
+end# ChipFrame
 
 
 class Reight::ChipList
