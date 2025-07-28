@@ -31,7 +31,7 @@ class Reight::App
   end
 
   def flash(...)
-    navigator.flash(...) if history.enabled?
+    #navigator.flash(...) if history.enabled?
   end
 
   def group(*buttons)
