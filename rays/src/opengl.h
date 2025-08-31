@@ -10,7 +10,7 @@
 #elif defined(IOS)
 	#include <OpenGLES/ES3/gl.h>
 	#include <OpenGLES/ES3/glext.h>
-#elif defined(WIN32)
+#elif defined(WIN32) || defined(SDL)
 	#include <GL/glew.h>
 #endif
 

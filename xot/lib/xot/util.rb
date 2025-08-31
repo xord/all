@@ -30,6 +30,10 @@ module Xot
       /cygwin/.match? RUBY_PLATFORM
     end
 
+    def sdl?()
+      /linux/.match? RUBY_PLATFORM
+    end
+
     def gcc?()
       /(^|\-)g\+\+$/i.match? RbConfig::CONFIG['CXX']
     end
