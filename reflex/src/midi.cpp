@@ -316,6 +316,7 @@ namespace Reflex
 		if (!manager)
 			invalid_state_error(__FILE__, __LINE__);
 
+		midis.clear();
 		manager.reset();
 	}
 
