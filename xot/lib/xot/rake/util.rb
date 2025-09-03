@@ -222,6 +222,7 @@ module Xot
       s  = flags.dup
       s << libdirs.map    {|s| " -L#{s}"}.join
       s << frameworks.map {|s| " -framework #{s}"}.join
+      s << ' -Wl,-bind_at_load' if osx? && debug?
       s
     end
 
