@@ -1,6 +1,7 @@
 #include "event.h"
 
 
+#include <string.h>
 #include <algorithm>
 #include "reflex/device.h"
 #include "reflex/timer.h"
