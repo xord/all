@@ -62,7 +62,6 @@ namespace Rays
 
 		~OffscreenContext ()
 		{
-
 			if (hrc && hrc == wglGetCurrentContext())
 			{
 				if (!wglMakeCurrent(NULL, NULL))
