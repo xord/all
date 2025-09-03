@@ -31,7 +31,7 @@ module Xot
     end
 
     def gcc?()
-      /(^|\s)g\+\+/i.match? RbConfig::CONFIG['CXX']
+      /(^|\-)g\+\+$/i.match? RbConfig::CONFIG['CXX']
     end
 
     def clang?()
