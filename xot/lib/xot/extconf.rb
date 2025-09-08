@@ -37,6 +37,7 @@ module Xot
       if osx?
         opt = '-Wl,-undefined,dynamic_lookup'
         ldflags << " #{opt}" unless ($DLDFLAGS || '').include?(opt)
+        ldflags << ' -Wl,-bind_at_load' if osx? && debug?
       end
 
       local_libs << (clang? ? 'c++' : 'stdc++')
