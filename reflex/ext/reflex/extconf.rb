@@ -17,7 +17,7 @@ Xot::ExtConf.new Xot, Rucy, Rays, Reflex do
     frameworks << 'Cocoa' << 'GameController'                     if osx?
     $LDFLAGS   << ' -Wl,--out-implib=reflex_ext.dll.a'            if mingw? || cygwin?
 
-    unless osx?
+    unless osx? || linux?
       lib_dirs << Rays::Extension.ext_dir
       libs     << 'rays_ext'
     end

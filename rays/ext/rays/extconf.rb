@@ -13,6 +13,7 @@ Xot::ExtConf.new Xot, Rucy, Rays do
   setup do
     headers    << 'ruby.h'
     libs.unshift 'gdi32', 'opengl32', 'glew32'           if win32?
+    libs.unshift 'SDL2', 'GLEW', 'GL'                    if linux?
     frameworks << 'AppKit' << 'OpenGL' << 'AVFoundation' if osx?
 
     $CPPFLAGS << ' -DRAYS_32BIT_PIXELS_STRING'      if RUBY_PLATFORM == 'x64-mingw-ucrt'
