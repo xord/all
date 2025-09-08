@@ -11,7 +11,7 @@ module Xot
     include Xot::Util
 
     def extensions()
-      env(:EXTENSIONS, []).map {|m| m::Extension}
+      get_env(:EXTENSIONS, []).map {|m| m::Extension}
     end
 
     def target()
@@ -19,62 +19,62 @@ module Xot
     end
 
     def target_name()
-      env :EXTNAME, target.name.downcase
+      get_env :EXTNAME, target.name.downcase
     end
 
     def inc_dir()
-      env :INCDIR, 'include'
+      get_env :INCDIR, 'include'
     end
 
     def src_dir()
-      env :SRCDIR, 'src'
+      get_env :SRCDIR, 'src'
     end
 
     def lib_dir()
-      env :LIBDIR, 'lib'
+      get_env :LIBDIR, 'lib'
     end
 
     def doc_dir()
-      env :DOCDIR, 'doc'
+      get_env :DOCDIR, 'doc'
     end
 
     def ext_dir()
-      env :EXTDIR, "ext/#{target_name}"
+      get_env :EXTDIR, "ext/#{target_name}"
     end
 
     def ext_lib_dir()
-      env :EXTLIBDIR, "lib/#{target_name}"
+      get_env :EXTLIBDIR, "lib/#{target_name}"
     end
 
     def test_dir()
-      env :TESTDIR, 'test'
+      get_env :TESTDIR, 'test'
     end
 
     def vendor_dir()
-      env :VENDORDIR, 'vendor'
+      get_env :VENDORDIR, 'vendor'
     end
 
     def inc_dirs()
-      dirs  = env_array :INCDIRS, []
+      dirs  = get_env_array :INCDIRS, []
       dirs += extensions.reverse.map {|m| m.inc_dir}.flatten
-      dirs << "#{env :MINGW_PREFIX}/include" if mingw?
+      dirs << "#{get_env :MINGW_PREFIX}/include" if mingw?
       dirs
     end
 
     def src_dirs()
-      env_array :SRCDIRS, []
+      get_env_array :SRCDIRS, []
     end
 
     def src_exts()
-      env_array(:SRCEXTS, []) + %w[c cc cpp m mm]
+      get_env_array(:SRCEXTS, []) + %w[c cc cpp m mm]
     end
 
     def defs()
-      env_array :DEFS, []
+      get_env_array :DEFS, []
     end
 
     def excludes()
-      env_array :EXCLUDES, []
+      get_env_array :EXCLUDES, []
     end
 
     def excluded?(path)
@@ -142,31 +142,6 @@ module Xot
       Hash[*paths.flatten]
     end
 
-    def get_env(name, defval = nil)
-      val = ENV[name.to_s] || Object.const_get(name) rescue defval
-      val.dup rescue val
-    end
-
-    def env(name, defval = nil)
-      case val = get_env(name, defval)
-      when /^\d+$/        then val.to_i
-      when 'true',  true  then true
-      when 'false', false then false
-      when nil            then nil
-      else                     val
-      end
-    end
-
-    def env_array(name, defval = nil)
-      val = get_env name, defval
-      val = val.strip.split(/\s+/) if val.kind_of? String
-      val
-    end
-
-    def append_env(name, *args)
-      ENV[name] = (ENV[name] || '') + " #{args.flatten.join ' '}"
-    end
-
     def make_cppflags(flags = '', defs = [], incdirs = [])
       s  = flags.dup
       s += make_cppflags_defs(defs)          .map {|s| " -D#{s}"}.join
@@ -226,45 +201,24 @@ module Xot
       s
     end
 
-    def verbose?(state = nil)
-      if state != nil
-        ::Rake.verbose state
-        ENV['VERBOSE'] = (!!state).to_s
-      end
-      ::Rake.verbose
-    end
-
-    def debug?(state = nil)
-      ENV['DEBUG'] = (!!state).to_s if state != nil
-      env :DEBUG, false
-    end
-
-    def cxx()
-      env :CXX, RbConfig::CONFIG['CXX'] || 'g++'
-    end
-
-    def ar()
-      env :AR, RbConfig::CONFIG['AR']  || 'ar'
-    end
-
     def cppflags()
-      flags = env :CPPFLAGS, RbConfig::CONFIG['CPPFLAGS']
+      flags = get_env :CPPFLAGS, RbConfig::CONFIG['CPPFLAGS']
       make_cppflags flags, defs, inc_dirs
     end
 
     def cxxflags(warnings = true)
-      cflags   = env :CFLAGS,   RbConfig::CONFIG['CFLAGS']
-      cxxflags = env :CXXFLAGS, RbConfig::CONFIG['CXXFLAGS']
+      cflags   = get_env :CFLAGS,   RbConfig::CONFIG['CFLAGS']
+      cxxflags = get_env :CXXFLAGS, RbConfig::CONFIG['CXXFLAGS']
       cflags   = cflags.gsub(/-W[\w\-\=]+/, '') + ' -w' unless warnings
       make_cflags "#{cflags} #{cxxflags}"
     end
 
     def arflags()
-      env :ARFLAGS, RbConfig::CONFIG['ARFLAGS'] || 'crs'
+      get_env :ARFLAGS, RbConfig::CONFIG['ARFLAGS'] || 'crs'
     end
 
     def default_tasks(default = nil)
-      verbose? env(:VERBOSE, true)
+      verbose? get_env(:VERBOSE, true)
 
       if default
         task :default => default

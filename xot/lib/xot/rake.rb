@@ -40,11 +40,11 @@ module Xot
     end
 
     def test_alones()
-      env :TESTS_ALONE, []
+      get_env :TESTS_ALONE, []
     end
 
     def test_excludes()
-      env :TESTS_EXCLUDE, []
+      get_env :TESTS_EXCLUDE, []
     end
 
     def use_bundler()
@@ -125,8 +125,8 @@ module Xot
     end
 
     def build_ruby_extension(dlname: 'native', dlext: nil, liboutput: true)
-      dlname = env :DLNAME, dlname
-      dlext  = env :DLEXT,  dlext || RbConfig::CONFIG['DLEXT'] || 'so'
+      dlname = get_env :DLNAME, dlname
+      dlext  = get_env :DLEXT,  dlext || RbConfig::CONFIG['DLEXT'] || 'so'
 
       extconf  = File.join ext_dir, 'extconf.rb'
       makefile = File.join ext_dir, 'Makefile'
@@ -201,8 +201,8 @@ module Xot
 
     def build_ruby_gem()
       gemspec = "#{target_name}.gemspec"
-      gemname = env :GEMNAME,    target_name
-      gemver  = env :GEMVERSION, target.version
+      gemname = get_env :GEMNAME,    target_name
+      gemver  = get_env :GEMVERSION, target.version
       gemfile = "#{gemname}-#{gemver}.gem"
 
       alias_task :gem       => gemfile
@@ -241,7 +241,7 @@ module Xot
     end
 
     def build_application()
-      bindir    = env :BINDIR, 'bin'
+      bindir    = get_env :BINDIR, 'bin'
       bin       = "#{bindir}/#{target_name}"
       appdir    = "#{target.name}.app"
       appbindir = "#{appdir}/Contents/MacOS"
@@ -328,7 +328,7 @@ module Xot
               end
             end
             Dir.chdir(dir) {after_clone_block.call} if after_clone_block
-            unless env :VENDOR_NOCOMPILE, false
+            unless get_env :VENDOR_NOCOMPILE, false
               vendor_srcs_map(*srcdirs).each do |src, obj|
                 sh %( #{cxx} -c #{cppflags} #{cxxflags false} -o #{obj} #{src} )
               end
