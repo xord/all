@@ -12,42 +12,6 @@ module Xot
 
   module Rake
 
-    def srcs_map()
-      paths = glob("#{src_dir}/**/*.{#{src_exts.join ','}}") +
-        erbs_map.values.grep(/\.(#{src_exts.join '|'})$/)
-      paths.reject! {|path| excluded? path}
-      paths.reject! {|path| path =~ %r(/win32/)} unless win32?
-      paths.reject! {|path| path =~ %r(/osx/)}   unless osx?
-      paths.reject! {|path| path =~ %r(/ios/)}   unless ios?
-      paths.reject! {|path| path =~ %r(/sdl/)}   unless linux?
-      make_path_map paths, src_ext_map
-    end
-
-    def erbs_map()
-      paths = glob(*[inc_dir, src_dir].map {|s| "#{s}/**/*.erb"})
-      paths.reject! {|path| excluded? path}
-      make_path_map paths, {".erb" => ""}
-    end
-
-    def vendor_srcs_map(*dirs)
-      dirs  = src_dirs if dirs.empty?
-      paths = dirs.map {|dir| glob "#{dir}/**/*.{#{src_exts.join ','}}"}.flatten
-      paths.reject! {|path| excluded? path}
-      make_path_map paths.flatten, src_ext_map
-    end
-
-    def src_ext_map(to = '.o')
-      Hash[*src_exts.map {|ext| [".#{ext}", to]}.flatten]
-    end
-
-    def test_alones()
-      get_env :TESTS_ALONE, []
-    end
-
-    def test_excludes()
-      get_env :TESTS_EXCLUDE, []
-    end
-
     def use_bundler()
       task :clobber => 'bundle:clobber'
 
@@ -125,9 +89,9 @@ module Xot
       end
     end
 
-    def build_ruby_extension(dlname: 'native', dlext: nil, liboutput: true)
-      dlname = get_env :DLNAME, dlname
-      dlext  = get_env :DLEXT,  dlext || RbConfig::CONFIG['DLEXT'] || 'so'
+    def build_ruby_extension(dlname: nil, dlext: nil, liboutput: true)
+      dlname = get_env :DLNAME, dlname || "#{target_name}_ext"
+      dlext  = get_env :DLEXT,  dlext  || RbConfig::CONFIG['DLEXT'] || 'so'
 
       extconf  = File.join ext_dir, 'extconf.rb'
       makefile = File.join ext_dir, 'Makefile'
@@ -135,7 +99,7 @@ module Xot
 
       outname = "#{dlname}.#{dlext}"
       extout  = File.join ext_dir, outname
-      libout  = File.join ext_lib_dir, outname
+      libout  = File.join lib_dir, outname
 
       srcs = FileList["#{ext_dir}/**/*.cpp"]
       libs = extensions.map {|x| "#{x.lib_dir}/lib#{x.name.downcase}.a"}
@@ -169,9 +133,16 @@ module Xot
           sh %( cd #{ext_dir} && #{cxx} -M #{cppflags} #{inc} #{src} > #{dep} )
         end
 
+        task :lib_objs => :lib do
+          (srcs_map.values + vendor_srcs_map.values).each do |obj|
+            to = File.join ext_dir, "__libobj_#{obj.gsub '/', '_'}"
+            sh %( cp #{obj} #{to} )
+          end
+        end
+
         task :clean do
           sh %( cd #{ext_dir} && make clean ) if File.exist? makefile
-          sh %( rm -rf #{libout} )
+          sh %( rm -rf #{libout} #{ext_dir}/__libobj_*.o )
         end
 
         task :clobber do
@@ -187,13 +158,13 @@ module Xot
       namespace :test do
         ::Rake::TestTask.new :full do |t|
           t.libs << lib_dir
-          t.test_files = FileList["#{test_dir}/**/test_*.rb"] - test_alones - test_excludes
+          t.test_files = FileList["#{test_dir}/**/test_*.rb"] - tests_alone - tests_exclude
           t.verbose = ::Rake.verbose
         end
 
         task :alones do
-          test_alones.each do |rb|
-            next if test_excludes.include? rb
+          tests_alone.each do |rb|
+            next if tests_exclude.include? rb
             sh %( ruby #{rb} )
           end
         end
@@ -213,7 +184,10 @@ module Xot
       alias_task :upload    => 'gem:upload'
 
       namespace :gem do
-        file gemfile => [:ext, :doc, gemspec] do
+        file gemfile => ['gem:build', :ext, :doc, gemspec]
+
+        desc "build gem"
+        task :build do
           sh %( gem build #{gemspec} )
         end
 

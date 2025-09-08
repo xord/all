@@ -31,5 +31,5 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = rdocs.to_a
   s.has_rdoc         = true
 
-  s.extensions << 'Rakefile'
+  s.extensions << 'ext/xot/extconf.rb'
 end

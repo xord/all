@@ -1,0 +1,45 @@
+PATH
+  remote: ../rays
+  specs:
+    rays (0.3.9)
+      rucy (~> 0.3.9, >= 0.3.9)
+      xot (~> 0.3.9, >= 0.3.9)
+
+PATH
+  remote: ../reflex
+  specs:
+    reflexion (0.3.10)
+      rays (~> 0.3.9, >= 0.3.9)
+      rucy (~> 0.3.9, >= 0.3.9)
+      xot (~> 0.3.9, >= 0.3.9)
+
+PATH
+  remote: ../rucy
+  specs:
+    rucy (0.3.9)
+      xot (~> 0.3.9, >= 0.3.9)
+
+PATH
+  remote: ../xot
+  specs:
+    xot (0.3.9)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (13.3.0)
+    ruby_wasm (2.7.1-aarch64-linux)
+
+PLATFORMS
+  aarch64-linux-gnu
+
+DEPENDENCIES
+  rake
+  rays!
+  reflexion!
+  ruby_wasm
+  rucy!
+  xot!
+
+BUNDLED WITH
+   2.4.20

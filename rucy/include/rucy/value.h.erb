@@ -62,8 +62,6 @@ namespace Rucy
 
 			Symbol       as_sym (bool convert = false) const;
 
-			      Value* as_array (bool convert = false);
-
 			const Value* as_array (bool convert = false) const;
 
 			Value to_i () const;
@@ -127,13 +125,15 @@ namespace Rucy
 
 			Value unshift (Value obj);
 
-			      Value& operator [] (size_t i);
+			void  set (size_t index, Value obj);
 
-			const Value& operator [] (size_t i) const;
+			Value get (size_t index) const;
+
+			const Value& operator [] (size_t index) const;
 
 			// Hash
 
-			void  set (Value key, Value value);
+			void  set (Value key, Value obj);
 
 			Value get (Value key) const;
 

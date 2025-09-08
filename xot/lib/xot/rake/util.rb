@@ -42,16 +42,20 @@ module Xot
       get_env :EXTDIR, "ext/#{target_name}"
     end
 
-    def ext_lib_dir()
-      get_env :EXTLIBDIR, "lib/#{target_name}"
-    end
-
     def test_dir()
       get_env :TESTDIR, 'test'
     end
 
     def vendor_dir()
       get_env :VENDORDIR, 'vendor'
+    end
+
+    def tests_alone()
+      get_env :TESTS_ALONE, []
+    end
+
+    def tests_exclude()
+      get_env :TESTS_EXCLUDE, []
     end
 
     def inc_dirs()
@@ -68,6 +72,45 @@ module Xot
 
     def src_exts()
       get_env_array(:SRCEXTS, []) + %w[c cc cpp m mm]
+    end
+
+    def srcs_map(src_dir: self.src_dir, src_exts: self.src_exts)
+      paths = glob("#{src_dir}/**/*.{#{src_exts.join ','}}") +
+              erbs_map.values.grep(/\.(#{src_exts.join '|'})$/)
+      paths.reject! {|path| excluded? path}
+      paths.reject! {|path| path =~ %r(/osx/)}   unless osx?
+      paths.reject! {|path| path =~ %r(/ios/)}   unless ios?
+      paths.reject! {|path| path =~ %r(/win32/)} unless win32?
+      paths.reject! {|path| path =~ %r(/sdl/)}   unless linux? || wasm?
+      make_path_map paths, src_ext_map
+    end
+
+    def erbs_map(inc_dir: self.inc_dir, src_dir: self.src_dir)
+      paths = glob(*[inc_dir, src_dir].map {|s| "#{s}/**/*.erb"})
+      paths.reject! {|path| excluded? path}
+      make_path_map paths, {".erb" => ""}
+    end
+
+    def vendor_srcs_map(*dirs, src_exts: self.src_exts)
+      dirs  = src_dirs if dirs.empty?
+      paths = dirs.map {|dir| glob "#{dir}/**/*.{#{src_exts.join ','}}"}.flatten
+      paths.reject! {|path| excluded? path}
+      make_path_map paths.flatten, src_ext_map(src_exts: src_exts)
+    end
+
+    def src_ext_map(to = '.o', src_exts: self.src_exts)
+      Hash[*src_exts.map {|ext| [".#{ext}", to]}.flatten]
+    end
+
+    def make_path_map(paths, ext_map)
+      paths = paths.map do |path|
+        newpath = ext_map.inject path do |value, (from, to)|
+          value.sub(/#{from.gsub('.', '\.')}$/, to)
+        end
+        raise "map to same path" if path == newpath
+        [path, newpath]
+      end
+      Hash[*paths.flatten]
     end
 
     def defs()
@@ -132,17 +175,6 @@ module Xot
       (1..max).map(&block).join(sep)
     end
 
-    def make_path_map(paths, ext_map)
-      paths = paths.map do |path|
-        newpath = ext_map.inject path do |value, (from, to)|
-          value.sub(/#{from.gsub('.', '\.')}$/, to)
-        end
-        raise "map to same path" if path == newpath
-        [path, newpath]
-      end
-      Hash[*paths.flatten]
-    end
-
     def make_cppflags(flags = '', defs = [], incdirs = [])
       s  = flags.dup
       s += make_cppflags_defs(defs)          .map {|s| " -D#{s}"}.join
@@ -160,6 +192,7 @@ module Xot
       a << 'OSX'               if osx?
       a << 'IOS'               if ios?
       a << 'LINUX'             if linux?
+      a << 'WASM'              if wasm?
       a << 'GCC'               if gcc?
       a << 'CLANG'             if clang?
       a << '_USE_MATH_DEFINES' if gcc?
@@ -189,7 +222,7 @@ module Xot
       s  = flags.dup
       s << warning_opts.map {|s| " -W#{s}"}.join
       s << " -arch arm64" if RUBY_PLATFORM =~ /arm64-darwin/
-      s << ' -std=c++20'                                           if gcc?
+      s << ' -std=c++20'                                           if gcc? || emcc?
       s << ' -std=c++20 -stdlib=libc++ -mmacosx-version-min=10.10' if clang?
       s << ' ' + RbConfig::CONFIG['debugflags']                    if debug?
       s.gsub!(/-O\d?\w*/, '-O0')                                   if debug?

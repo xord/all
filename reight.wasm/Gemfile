@@ -1,0 +1,11 @@
+source "https://rubygems.org"
+
+gem 'xot',       path: '../xot'
+gem 'rucy',      path: '../rucy'
+gem 'rays',      path: '../rays'
+gem 'reflexion', path: '../reflex'
+
+group :development do
+  gem 'ruby_wasm'
+  gem 'rake'
+end

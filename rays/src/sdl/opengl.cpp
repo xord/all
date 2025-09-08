@@ -60,7 +60,9 @@ namespace Rays
 	get_opengl_offscreen_context ()
 	{
 		static OffscreenContext* context = NULL;
-		if (!context) context = new OffscreenContext();
+		#ifndef WASM
+			if (!context) context = new OffscreenContext();
+		#endif
 		return context;
 	}
 
@@ -95,6 +97,8 @@ namespace Rays
 	activate_offscreen_context ()
 	{
 		const auto* c = get_opengl_offscreen_context();
+		if (!c) return;
+
 		SDL_GL_MakeCurrent(c->window, c->context);
 	}
 

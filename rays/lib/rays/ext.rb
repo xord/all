@@ -1,1 +1,1 @@
-require 'rays/native'
+require 'rays_ext'

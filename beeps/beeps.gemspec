@@ -36,5 +36,5 @@ Gem::Specification.new do |s|
 
   s.metadata['msys2_mingw_dependencies'] = 'openal'
 
-  s.extensions << 'Rakefile'
+  s.extensions << 'ext/beeps/extconf.rb'
 end

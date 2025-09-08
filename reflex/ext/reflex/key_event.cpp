@@ -123,11 +123,11 @@ RUCY_DEF0(get_key)
 		CASE(LBRACKET):   SYMBOL1(lbracket);
 		CASE(RBRACKET):   SYMBOL1(rbracket);
 
-#if defined(OSX) || defined(IOS) || defined(WIN32) || defined(LINUX)
+#if defined(OSX) || defined(IOS) || defined(WIN32) || defined(LINUX) || defined(WASM)
 		CASE(ENTER):     SYMBOL1(enter);
 #else
 		CASE(ENTER):     SYMBOL1(enter);
-		CASE(RETURN):    SYMBOL1(_return, "return");
+		CASE(RETURN):    SYMBOL2(_return, "return");
 #endif
 		CASE(SPACE):     SYMBOL1(space);
 		CASE(TAB):       SYMBOL1(tab);
@@ -145,12 +145,12 @@ RUCY_DEF0(get_key)
 		CASE(PAGEUP):   SYMBOL1(pageup);
 		CASE(PAGEDOWN): SYMBOL1(pagedown);
 
-#if !defined(OSX) && !defined(IOS) && !defined(LINUX)
+#if !defined(OSX) && !defined(IOS) && !defined(LINUX) && !defined(WASM)
 		CASE(SHIFT):
 #endif
 		CASE(LSHIFT):
 		CASE(RSHIFT):   SYMBOL1(shift);
-#if !defined(OSX) && !defined(IOS) && !defined(LINUX)
+#if !defined(OSX) && !defined(IOS) && !defined(LINUX) && !defined(WASM)
 		CASE(CONTROL):
 #endif
 		CASE(LCONTROL):

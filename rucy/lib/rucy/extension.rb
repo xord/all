@@ -25,6 +25,10 @@ module Rucy
       root_dir 'lib'
     end
 
+    def ext_dir()
+      root_dir 'ext'
+    end
+
   end# Extension
 
 

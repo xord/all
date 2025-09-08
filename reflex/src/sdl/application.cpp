@@ -2,10 +2,14 @@
 
 
 #include <SDL.h>
+#ifdef WASM
+	#include <emscripten.h>
+#endif
 #include <xot/time.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "window.h"
+
 
 
 namespace Reflex
@@ -76,13 +80,10 @@ namespace Reflex
 			Window_update(it->get());
 	}
 
-	void
-	Application::start ()
+	static void
+	main_loop (Application* app)
 	{
-		Event e;
-		Application_call_start(this, &e);
-
-		ApplicationData* self = get_data(this);
+		ApplicationData* self = get_data(app);
 
 		double prev = Xot::time();
 		while (!self->quit)
@@ -100,9 +101,33 @@ namespace Reflex
 				continue;
 			}
 
-			update_all_windows(this);
+			update_all_windows(app);
 			prev = now;
 		}
+	}
+
+	static void
+	emscripten_main_loop (void* arg)
+	{
+		Application* app = (Application*) arg;
+
+		if (get_data(app)->quit || !dispatch_events())
+			emscripten_cancel_main_loop();
+		else
+			update_all_windows(app);
+	}
+
+	void
+	Application::start ()
+	{
+		Event e;
+		Application_call_start(this, &e);
+
+		#ifdef WASM
+			emscripten_set_main_loop_arg(emscripten_main_loop, this, 0, true);
+		#else
+			main_loop(this);
+		#endif
 	}
 
 	void

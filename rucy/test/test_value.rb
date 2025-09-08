@@ -7,10 +7,9 @@ class TestFunction < Test::Unit::TestCase
 
   def test_value_to_char()
     assert_equal    0,        value_to_char(   0)
-    assert_equal  127,        value_to_char( 127)
-    assert_equal -128,        value_to_char(-128)
-    assert_raise(RangeError) {value_to_char  128}
-    assert_raise(RangeError) {value_to_char -129}
+    assert_equal  255,        value_to_char( 255)
+    assert_raise(RangeError) {value_to_char  256}
+    assert_raise(RangeError) {value_to_char -1}
   end
 
   def test_value_to_uchar()
