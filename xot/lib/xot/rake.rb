@@ -19,6 +19,7 @@ module Xot
       paths.reject! {|path| path =~ %r(/win32/)} unless win32?
       paths.reject! {|path| path =~ %r(/osx/)}   unless osx?
       paths.reject! {|path| path =~ %r(/ios/)}   unless ios?
+      paths.reject! {|path| path =~ %r(/sdl/)}   unless linux?
       make_path_map paths, src_ext_map
     end
 

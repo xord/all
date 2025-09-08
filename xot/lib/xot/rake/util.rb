@@ -58,6 +58,7 @@ module Xot
       dirs  = get_env_array :INCDIRS, []
       dirs += extensions.reverse.map {|m| m.inc_dir}.flatten
       dirs << "#{get_env :MINGW_PREFIX}/include" if mingw?
+      dirs << "/usr/include/SDL2" if linux?
       dirs
     end
 
@@ -158,9 +159,11 @@ module Xot
       a << 'WIN32'             if win32?
       a << 'OSX'               if osx?
       a << 'IOS'               if ios?
+      a << 'LINUX'             if linux?
       a << 'GCC'               if gcc?
       a << 'CLANG'             if clang?
       a << '_USE_MATH_DEFINES' if gcc?
+      a << '_THREAD_SAFE'      if linux?
       a
     end
 

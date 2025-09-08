@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <set>
 #include "reflex/exception.h"
+#include "reflex/debug.h"
 #include "view.h"
 #include "event.h"
 

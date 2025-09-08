@@ -29,6 +29,7 @@ use_external_library 'https://github.com/thestk/rtmidi',
     case
     when osx?   then '__MACOSX_CORE__'
     when win32? then '__WINDOWS_MM__'
+    when linux? then '__LINUX_ALSA__'
     end
   }.call,
   &proc {sh %( mkdir rtmidi && cp RtMidi.* rtmidi )}

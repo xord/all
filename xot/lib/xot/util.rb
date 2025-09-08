@@ -76,6 +76,10 @@ module Xot
       /cygwin/.match? RUBY_PLATFORM
     end
 
+    def linux?()
+      /linux/.match? RUBY_PLATFORM
+    end
+
     def gcc?()
       /(^|\-)g\+\+$/i.match? cxx
     end
