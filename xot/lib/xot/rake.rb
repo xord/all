@@ -111,7 +111,10 @@ module Xot
       namespace :ext do
         desc "build #{libout}"
         file libout => extout do
-          sh %( cp #{extout} #{libout} )
+          libdir = File.dirname libout
+          libimp = extout.sub /\.#{dlext}$/, '.dll.a'
+          sh %( cp #{extout} #{libdir} )
+          sh %( cp #{libimp} #{libdir} ) if mingw? || cygwin?
         end
 
         desc "build #{extout}"
