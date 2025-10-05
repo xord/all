@@ -12,41 +12,6 @@ module Xot
 
   module Rake
 
-    def srcs_map()
-      paths = glob("#{src_dir}/**/*.{#{src_exts.join ','}}") +
-        erbs_map.values.grep(/\.(#{src_exts.join '|'})$/)
-      paths.reject! {|path| excluded? path}
-      paths.reject! {|path| path =~ %r(/win32/)} unless win32?
-      paths.reject! {|path| path =~ %r(/osx/)}   unless osx?
-      paths.reject! {|path| path =~ %r(/ios/)}   unless ios?
-      make_path_map paths, src_ext_map
-    end
-
-    def erbs_map()
-      paths = glob(*[inc_dir, src_dir].map {|s| "#{s}/**/*.erb"})
-      paths.reject! {|path| excluded? path}
-      make_path_map paths, {".erb" => ""}
-    end
-
-    def vendor_srcs_map(*dirs)
-      dirs  = src_dirs if dirs.empty?
-      paths = dirs.map {|dir| glob "#{dir}/**/*.{#{src_exts.join ','}}"}.flatten
-      paths.reject! {|path| excluded? path}
-      make_path_map paths.flatten, src_ext_map
-    end
-
-    def src_ext_map(to = '.o')
-      Hash[*src_exts.map {|ext| [".#{ext}", to]}.flatten]
-    end
-
-    def test_alones()
-      get_env :TESTS_ALONE, []
-    end
-
-    def test_excludes()
-      get_env :TESTS_EXCLUDE, []
-    end
-
     def use_bundler()
       task :clobber => 'bundle:clobber'
 
@@ -186,13 +151,13 @@ module Xot
       namespace :test do
         ::Rake::TestTask.new :full do |t|
           t.libs << lib_dir
-          t.test_files = FileList["#{test_dir}/**/test_*.rb"] - test_alones - test_excludes
+          t.test_files = FileList["#{test_dir}/**/test_*.rb"] - tests_alone - tests_exclude
           t.verbose = ::Rake.verbose
         end
 
         task :alones do
-          test_alones.each do |rb|
-            next if test_excludes.include? rb
+          tests_alone.each do |rb|
+            next if tests_exclude.include? rb
             sh %( ruby #{rb} )
           end
         end

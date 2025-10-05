@@ -31,6 +31,10 @@ module Xot
       ENV[name] = (ENV[name] || '') + " #{args.flatten.join ' '}"
     end
 
+    def cc()
+      get_env :CC, RbConfig::CONFIG['CC'] || 'gcc'
+    end
+
     def cxx()
       get_env :CXX, RbConfig::CONFIG['CXX'] || 'g++'
     end
@@ -77,11 +81,11 @@ module Xot
     end
 
     def gcc?()
-      /(^|\-)g\+\+$/i.match? cxx
+      /(^|\-)gcc$/i.match? cc
     end
 
     def clang?()
-      /(^|\s)clang/i.match? cxx
+      /(^|\-)clang/i.match? cc
     end
 
     def github_actions?()
