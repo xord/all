@@ -18,15 +18,15 @@ class TestRake < Test::Unit::TestCase
   include Xot::Rake
 
   def test_set()
-    assert_equal 'const', env(:Const, :dummy)
-    assert_equal 0, env(:Zero, :dummy)
-    assert_equal 1, env(:NonZero, :dummy)
-    assert_equal 0, env(:ZeroStr, :dummy)
-    assert_equal 1, env(:NonZeroStr, :dummy)
-    assert_equal true, env(:True, :dummy)
-    assert_equal false, env(:False, :dummy)
-    assert_equal true, env(:TrueStr, :dummy)
-    assert_equal false, env(:FalseStr, :dummy)
+    assert_equal 'const', get_env(:Const, :dummy)
+    assert_equal 0,       get_env(:Zero, :dummy)
+    assert_equal 1,       get_env(:NonZero, :dummy)
+    assert_equal 0,       get_env(:ZeroStr, :dummy)
+    assert_equal 1,       get_env(:NonZeroStr, :dummy)
+    assert_equal true,    get_env(:True, :dummy)
+    assert_equal false,   get_env(:False, :dummy)
+    assert_equal true,    get_env(:TrueStr, :dummy)
+    assert_equal false,   get_env(:FalseStr, :dummy)
   end
 
 end# TestRake

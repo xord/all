@@ -8,11 +8,11 @@ module Rucy
 
 
     def rdoc()
-      env :RDOC, 'rdoc'# 'yardoc'
+      get_env :RDOC, 'rdoc'# 'yardoc'
     end
 
     def rucy2rdoc()
-      env :RUCY2RDOC, 'rucy2rdoc'
+      get_env :RUCY2RDOC, 'rucy2rdoc'
     end
 
     def generate_documents()
