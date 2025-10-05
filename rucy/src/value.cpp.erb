@@ -176,12 +176,6 @@ namespace Rucy
 		return as<Symbol>(convert);
 	}
 
-	Value*
-	Value::as_array (bool convert)
-	{
-		return as<Value*>(convert);
-	}
-
 	const Value*
 	Value::as_array (bool convert) const
 	{
@@ -351,23 +345,29 @@ namespace Rucy
 		return rb_ary_unshift(value(), obj.value());
 	}
 
-	Value&
-	Value::operator [] (size_t i)
+	void
+	Value::set (size_t index, Value obj)
 	{
-		return as_array()[i];
+		rb_ary_store(value(), (long) index, obj.value());
+	}
+
+	Value
+	Value::get (size_t index) const
+	{
+		return operator[](index);
 	}
 
 	const Value&
-	Value::operator [] (size_t i) const
+	Value::operator [] (size_t index) const
 	{
-		return const_cast<Value*>(this)->operator[](i);
+		return as_array()[index];
 	}
 
 	void
-	Value::set (Value key, Value value)
+	Value::set (Value key, Value obj)
 	{
 		RUCY_SYMBOL(array_set, "[]=");
-		call(array_set, key, value);
+		call(array_set, key, obj);
 	}
 
 	Value
@@ -778,22 +778,13 @@ namespace Rucy
 		return SYM2ID(obj.value());
 	}
 
-	template <> Value*
-	value_to<Value*> (Value obj, bool convert)
-	{
-		if (convert) obj = obj.to_array();
-		check_type(obj, RUBY_T_ARRAY);
-
-		return (Value*) RARRAY_PTR(obj.value());
-	}
-
 	template <> const Value*
 	value_to<const Value*> (Value obj, bool convert)
 	{
 		if (convert) obj = obj.to_array();
 		check_type(obj, RUBY_T_ARRAY);
 
-		return (const Value*) RARRAY_PTR(obj.value());
+		return (const Value*) RARRAY_CONST_PTR(obj.value());
 	}
 
 
