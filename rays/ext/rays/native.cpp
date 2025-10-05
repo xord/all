@@ -23,11 +23,7 @@ void Init_rays_util ();
 
 
 extern "C" void
-#ifdef COCOAPODS
-	Init_rays_native ()
-#else
-	Init_native ()
-#endif
+Init_rays_ext ()
 {
 	RUCY_TRY
 

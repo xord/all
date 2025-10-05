@@ -42,10 +42,6 @@ module Xot
       get_env :EXTDIR, "ext/#{target_name}"
     end
 
-    def ext_lib_dir()
-      get_env :EXTLIBDIR, "lib/#{target_name}"
-    end
-
     def test_dir()
       get_env :TESTDIR, 'test'
     end

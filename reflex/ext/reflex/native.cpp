@@ -47,11 +47,7 @@ void Init_reflex_image_view ();
 
 
 extern "C" void
-#ifdef COCOAPODS
-	Init_reflex_native ()
-#else
-	Init_native ()
-#endif
+Init_reflex_ext ()
 {
 	RUCY_TRY
 

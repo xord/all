@@ -1,2 +1,2 @@
 require 'rays/ext'
-require 'reflex/native'
+require 'reflex_ext'
