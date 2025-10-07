@@ -247,7 +247,7 @@ module Xot
           mingw  = mingw.map {|package| package.sub prefix, ENV[prefix]}
           sh %( pacman -S --noconfirm #{mingw.join ' '} )
         when linux? && apt.size > 0
-          sh %( sudo apt install -y #{apt.join ' '} )
+          sh %( sudo apt-get install -y -qq #{apt.join ' '} )
         end
       end
     end
