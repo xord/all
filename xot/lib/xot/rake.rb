@@ -243,11 +243,11 @@ module Xot
         when osx? && osx.size > 0
           sh %( brew install #{osx.join ' '} )
         when mingw? && mingw.size > 0
-          prefix   = 'MINGW_PACKAGE_PREFIX'
-          packages = mingw.map {|package| package.sub prefix, ENV[prefix]}
-          sh %( pacman -S --noconfirm #{packages.join ' '} )
+          prefix = 'MINGW_PACKAGE_PREFIX'
+          mingw  = mingw.map {|package| package.sub prefix, ENV[prefix]}
+          sh %( pacman -S --noconfirm #{mingw.join ' '} )
         when linux? && apt.size > 0
-          sh %( sudo apt install -y #{packages.join ' '} )
+          sh %( sudo apt install -y #{apt.join ' '} )
         end
       end
     end
