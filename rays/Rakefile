@@ -44,7 +44,7 @@ use_external_library 'https://github.com/andrewwillmott/splines-lib',
     end
   }
 
-if win32? || linux?
+if win32? || linux? || wasm?
   use_external_library 'https://github.com/nothings/stb',
     commit:  'ae721c50eaf761660b4f90cc590453cdb0c2acd0',
     srcdirs: 'NOSRC'
