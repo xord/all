@@ -236,16 +236,18 @@ module Xot
       end
     end
 
-    def install_packages(osx: [], win32: [])
+    def install_packages(osx: [], mingw: [], apt: [])
       desc "install packages"
       task :packages do
         case
         when osx? && osx.size > 0
           sh %( brew install #{osx.join ' '} )
-        when win32? && win32.size > 0
+        when mingw? && mingw.size > 0
           prefix   = 'MINGW_PACKAGE_PREFIX'
-          packages = win32.map {|package| package.sub prefix, ENV[prefix]}
+          packages = mingw.map {|package| package.sub prefix, ENV[prefix]}
           sh %( pacman -S --noconfirm #{packages.join ' '} )
+        when linux? && apt.size > 0
+          sh %( sudo apt install -y #{packages.join ' '} )
         end
       end
     end

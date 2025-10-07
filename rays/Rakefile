@@ -14,7 +14,9 @@ require 'rays/extension'
 EXTENSIONS  = [Xot, Rucy, Rays]
 TESTS_ALONE = ['test/test_rays_init.rb']
 
-install_packages win32: %w[MINGW_PACKAGE_PREFIX-glew]
+install_packages(
+  mingw: %w[MINGW_PACKAGE_PREFIX-glew],
+  apt:   %w[libglew-dev libsdl2-dev])
 
 use_external_library 'https://github.com/g-truc/glm',
   tag:     '1.0.1',

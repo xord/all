@@ -16,6 +16,8 @@ EXTENSIONS  = [Xot, Rucy, Rays, Reflex]
 GEMNAME     = 'reflexion'
 TESTS_ALONE = ['test/test_reflex_init.rb']
 
+install_packages apt: %w[libsdl2-dev]
+
 use_external_library 'https://github.com/erincatto/box2d',
   tag:    'v2.4.1',
   incdirs: %w[include src],
