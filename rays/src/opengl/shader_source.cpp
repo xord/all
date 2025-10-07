@@ -58,7 +58,7 @@ namespace Rays
 
 		const char* add_headers (GLenum type, const char* source, String* buffer)
 		{
-#ifdef IOS
+#if defined(IOS) || defined(WASM)
 			if (type == GL_FRAGMENT_SHADER)
 			{
 				static const std::regex PRECISION(R"(^\s*precision\s+\w+p\s+float\s*;)");
@@ -69,9 +69,7 @@ namespace Rays
 					source  = buffer->c_str();
 				}
 			}
-#endif
-
-#ifndef IOS
+#else
 			static const std::regex VERSION(R"(^\s*#\s*version\s+\d+)");
 			if (!std::regex_search(source, VERSION))
 			{
