@@ -14,8 +14,11 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
-      - name: emscripten
+      - name: install emscripten
         uses: mymindstorm/setup-emsdk@v14
 
+      - name: install gems
+        run: gem install ruby_wasm
+
       - name: version
-        run: emcc -v
+        run: emcc -v && rbwasm --version
