@@ -1,0 +1,37 @@
+name: Build WASM
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ruby 3.2
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: install emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: install gems
+        run: gem install ruby_wasm
+
+      - name: build
+        run: |
+          (cd reight/wasm && rake build)
+          mv reight/wasm/output reight.wasm
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reight.wasm
+          path: reight.wasm
