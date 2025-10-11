@@ -136,9 +136,17 @@ module Xot
           sh %( cd #{ext_dir} && #{cxx} -M #{cppflags} #{inc} #{src} > #{dep} )
         end
 
+        desc "compile src/**/*"
+        task :lib_objs => :lib do
+          (srcs_map.values + vendor_srcs_map.values).each do |obj|
+            to = File.join ext_dir, "__libobj_#{obj.gsub '/', '_'}"
+            sh %( cp #{obj} #{to} )
+          end
+        end
+
         task :clean do
           sh %( cd #{ext_dir} && make clean ) if File.exist? makefile
-          sh %( rm -rf #{libout} )
+          sh %( rm -rf #{libout} #{ext_dir}/__libobj_*.o )
         end
 
         task :clobber do

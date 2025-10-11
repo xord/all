@@ -81,7 +81,7 @@ module Xot
       paths.reject! {|path| path =~ %r(/osx/)}   unless osx?
       paths.reject! {|path| path =~ %r(/ios/)}   unless ios?
       paths.reject! {|path| path =~ %r(/win32/)} unless win32?
-      paths.reject! {|path| path =~ %r(/sdl/)}   unless linux?
+      paths.reject! {|path| path =~ %r(/sdl/)}   unless linux? || wasm?
       make_path_map paths, src_ext_map
     end
 
@@ -192,6 +192,7 @@ module Xot
       a << 'OSX'               if osx?
       a << 'IOS'               if ios?
       a << 'LINUX'             if linux?
+      a << 'WASM'              if wasm?
       a << 'GCC'               if gcc?
       a << 'CLANG'             if clang?
       a << '_USE_MATH_DEFINES' if gcc?
@@ -221,7 +222,7 @@ module Xot
       s  = flags.dup
       s << warning_opts.map {|s| " -W#{s}"}.join
       s << " -arch arm64" if RUBY_PLATFORM =~ /arm64-darwin/
-      s << ' -std=c++20'                                           if gcc?
+      s << ' -std=c++20'                                           if gcc? || emcc?
       s << ' -std=c++20 -stdlib=libc++ -mmacosx-version-min=10.10' if clang?
       s << ' ' + RbConfig::CONFIG['debugflags']                    if debug?
       s.gsub!(/-O\d?\w*/, '-O0')                                   if debug?

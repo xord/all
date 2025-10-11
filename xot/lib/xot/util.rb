@@ -57,7 +57,7 @@ module Xot
     end
 
     def osx?()
-      /darwin/.match? RUBY_PLATFORM
+      !wasm? && /darwin/.match?(RUBY_PLATFORM)
     end
 
     def ios?()
@@ -65,23 +65,27 @@ module Xot
     end
 
     def win32?()
-      /mswin|ming|cygwin/.match? RUBY_PLATFORM
+      !wasm? && /mswin|ming|cygwin/.match?(RUBY_PLATFORM)
     end
 
     def mswin?()
-      /mswin/.match? RUBY_PLATFORM
+      !wasm? && /mswin/.match?(RUBY_PLATFORM)
     end
 
     def mingw?()
-      /ming/.match? RUBY_PLATFORM
+      !wasm? && /ming/.match?(RUBY_PLATFORM)
     end
 
     def cygwin?()
-      /cygwin/.match? RUBY_PLATFORM
+      !wasm? && /cygwin/.match?(RUBY_PLATFORM)
     end
 
     def linux?()
-      /linux/.match? RUBY_PLATFORM
+      !wasm? && /linux/.match?(RUBY_PLATFORM)
+    end
+
+    def wasm?()
+      emcc?
     end
 
     def gcc?()
@@ -90,6 +94,10 @@ module Xot
 
     def clang?()
       /(^|\-)clang/i.match? cc
+    end
+
+    def emcc?()
+      /(^|\-)emcc$/i.match? cc
     end
 
     def github_actions?()
