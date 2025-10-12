@@ -34,10 +34,13 @@ module Xot
       end
 
       ldflags = $LDFLAGS.dup
-      if osx?
+      case
+      when osx?
         opt = '-Wl,-undefined,dynamic_lookup'
         ldflags << " #{opt}" unless ($DLDFLAGS || '').include?(opt)
         ldflags << ' -Wl,-bind_at_load' if osx? && debug?
+      when wasm?
+        build_lib_objs_for_wasm
       end
 
       local_libs << (clang? ? 'c++' : 'stdc++')
@@ -55,9 +58,44 @@ module Xot
       end
 
       exit 1 unless headers.all? {|s| have_header s}
-      exit 1 unless libs.all?    {|s| have_library s, 't'}
+      exit 1 unless libs.all?    {|s| have_library s, 't'} unless wasm?
 
       super
+
+      link_lib_objs_for_wasm if wasm?
+    end
+
+    def build_lib_objs_for_wasm()
+      ruby_dirs = [
+        "#{ENV['extout']}/include/wasm32-emscripten",
+        "#{ENV['top_srcdir']}/include"
+      ]
+      envs      = {
+        CC:       '',
+        CXX:      '',
+        AR:       '',
+        RANLIB:   '',
+        CPPFLAGS: ' -sUSE_SDL=2',
+        CFLAGS:   ' -sUSE_SDL=2',
+        CXXFLAGS: '',
+        LDFLAGS:  ' -sUSE_SDL=2',
+        INCDIRS:  ruby_dirs.join(' ')
+      }.map {|k, v| "#{k}='#{(RbConfig::CONFIG[k.to_s] || '') + v}'"}
+
+      Dir.chdir target.root_dir do
+        cmd = "#{envs.join ' '} rake ext:lib_objs"
+        puts cmd
+        system cmd
+      end
+    end
+
+    def link_lib_objs_for_wasm()
+      lib_objs = Dir.glob "#{target.ext_dir}/**/__libobj_*.o"
+      filter_file 'Makefile' do |str|
+        str.sub(/^(\s*)(.*\$\(AR\).*)$/) {
+          "#{$1}#{$2}\n#{$1}$(Q) $(AR) r $@ #{lib_objs.join ' '}"
+        }
+      end
     end
 
   end# ExtConf
