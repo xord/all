@@ -15,8 +15,12 @@ Xot::ExtConf.new Xot, Rucy, Beeps do
 
     case
     when osx?
-      headers    << 'OpenAL/al.h' << 'OpenAL/alc.h'
-      frameworks << 'OpenAL'      << 'AVFoundation'
+      oal = `brew --prefix openal-soft 2>/dev/null`.chomp
+      $INCFLAGS  = "-I#{oal}/include"
+      $LDFLAGS   = "-L#{oal}/lib"
+      headers    << 'AL/al.h' << 'AL/alc.h'
+      libs       << 'openal'
+      frameworks << 'AVFoundation'
     when win32?
       headers    << 'AL/al.h'     << 'AL/alc.h'
       libs       << 'openal' << 'ole32' << 'mf' << 'mfplat' << 'mfreadwrite' << 'mfuuid'

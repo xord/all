@@ -4,7 +4,7 @@
 #define __BEEPS_SRC_OPENAL_H__
 
 
-#if defined(OSX) || defined(IOS)
+#if defined(IOS)
 	#include <OpenAL/al.h>
 	#include <OpenAL/alc.h>
 #else

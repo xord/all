@@ -12,7 +12,7 @@ module Rucy
     end
 
     def rucy2rdoc()
-      get_env :RUCY2RDOC, 'rucy2rdoc'
+      get_env :RUCY2RDOC, "#{File.expand_path '../../bin', __dir__}/rucy2rdoc"
     end
 
     def generate_documents()

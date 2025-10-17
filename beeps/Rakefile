@@ -13,6 +13,8 @@ require 'beeps/extension'
 
 EXTENSIONS  = [Xot, Rucy, Beeps]
 TESTS_ALONE = ['test/test_beeps_init.rb']
+CPPFLAGS    = "-I#{`brew --prefix openal-soft`.chomp}/include"
+LDFLAGS     = "-L#{`brew --prefix openal-soft`.chomp}/lib"
 
 install_packages(
   mingw: %w[MINGW_PACKAGE_PREFIX-openal],
