@@ -71,7 +71,7 @@ module Xot
     end
 
     def src_exts()
-      get_env_array(:SRCEXTS, []) + %w[c cc cpp m mm]
+      get_env_array(:SRCEXTS, []) + %w[c cc cpp m mm swift]
     end
 
     def srcs_map(src_dir: self.src_dir, src_exts: self.src_exts)
@@ -220,7 +220,7 @@ module Xot
       ] if clang?
       s  = flags.dup
       s << warning_opts.map {|s| " -W#{s}"}.join
-      s << " -arch arm64" if RUBY_PLATFORM =~ /arm64-darwin/
+      s << " -arch arm64"                                          if osx? && arm64?
       s << ' -std=c++20'                                           if gcc?
       s << ' -std=c++20 -stdlib=libc++ -mmacosx-version-min=10.10' if clang?
       s << ' ' + RbConfig::CONFIG['debugflags']                    if debug?
@@ -250,6 +250,19 @@ module Xot
 
     def arflags()
       get_env :ARFLAGS, RbConfig::CONFIG['ARFLAGS'] || 'crs'
+    end
+
+    def swiftc()
+      get_env :SWIFTC, 'swiftc'
+    end
+
+    def swiftflags()
+      flags = get_env :SWIFTFLAGS, ''
+      flags += " -sdk #{`xcrun --show-sdk-path`.strip} -module-name #{target.name} -emit-object"
+      flags += ' -target arm64-apple-macos11.0'  if osx? && arm64?
+      flags += ' -target x86_64-apple-macos11.0' if osx? && x86_64?
+      flags += debug? ? ' -g -Onone' : ' -O'
+      flags
     end
 
     def default_tasks(default = nil)

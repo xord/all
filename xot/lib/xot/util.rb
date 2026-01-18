@@ -56,6 +56,14 @@ module Xot
       get_env :DEBUG, false
     end
 
+    def arm64?()
+      /arm64/.match? RUBY_PLATFORM
+    end
+
+    def x86_64?()
+      /x86_64/.match? RUBY_PLATFORM
+    end
+
     def osx?()
       /darwin/.match? RUBY_PLATFORM
     end

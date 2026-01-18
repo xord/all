@@ -29,11 +29,12 @@ module Xot
     end
 
     def build_native_library()
-      outname = "lib#{target_name}.a"
-      out     = File.join lib_dir, outname
-      erbs    = erbs_map
-      srcs    = srcs_map
-      depend  = 'depend.mf'
+      outname       = "lib#{target_name}.a"
+      out           = File.join lib_dir, outname
+      erbs          = erbs_map
+      srcs          = srcs_map
+      depend        = 'depend.mf'
+      swift_headers = srcs.select {_1.end_with? '.swift'}.to_h {[_1, _1 + '.h']}
 
       alias_task :erb   => 'lib:erb'
       alias_task :lib   => out
@@ -56,7 +57,7 @@ module Xot
         end
 
         desc "create #{depend}"
-        file depend => erbs.values do
+        file depend => erbs.values + swift_headers.values do
           sh %( #{cxx} -M #{cppflags} #{srcs.keys.join ' '} > #{depend} )
           input = open(depend) {|f| f.read}
           open(depend, 'w') do |output|
@@ -70,7 +71,20 @@ module Xot
           desc "compile #{src}"
           file obj => [:vendor, depend, src] + erbs.values do
             noverbose_puts "compiling #{src}"
-            sh %( #{cxx} -c #{cppflags} #{cxxflags} -o #{obj} #{src} )
+            case src
+            when /\.swift/
+              sh %( #{swiftc} #{swiftflags} -o #{obj} -c #{src} )
+            else
+              sh %( #{cxx} #{cppflags} #{cxxflags} -o #{obj} -c #{src} )
+            end
+          end
+        end
+
+        swift_headers.each do |swift, header|
+          desc "create #{header}"
+          file header => swift do
+            opts = "-emit-objc-header -emit-objc-header-path #{header} -o /dev/null"
+            sh %( #{swiftc} #{swiftflags} #{opts} -c #{swift} )
           end
         end
 
@@ -83,7 +97,7 @@ module Xot
         end
 
         task :clean do
-          tmps = srcs.values + erbs.values
+          tmps = srcs.values + swift_headers.values + erbs.values
           sh %( rm -rf #{out} #{depend} #{tmps.join ' '} )
         end
       end

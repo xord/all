@@ -6,6 +6,7 @@
 *.dll.a
 *.gem
 *.log
+*.swift.h
 *.rdoc.cpp
 *.dSYM
 *~
