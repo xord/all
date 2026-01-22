@@ -45,7 +45,7 @@ class Reight::App::Chips
   def index2offset(index)
     pw, ph = @page_size.x.to_i, @page_size.y.to_i
     size   = @chips.image.width / pw
-    create_vector -(index % size).to_i * pw, -(index / size).to_i * ph
+    create_vector(-(index % size).to_i * pw, -(index / size).to_i * ph)
   end
 
   def offset2index(offset = self.offset)

@@ -1,19 +1,20 @@
 require_relative 'helper'
-using Reight
 
 
 class TestMap < Test::Unit::TestCase
 
+  C = R8::CONTEXT__
+
   def map(...)   = R8::Map.new(...)
 
-  def chunk(...) = R8::Map::Chunk.new(...)
+  def chunk(...) = R8::MapChunk.new(...)
 
-  def chip(x, y, w, h, id: 1, image: self.image, pos: nil) =
-    R8::Chip.new id, image, x, y, w, h, pos: pos
+  def chip(x, y, w, h, id: 1, pos: nil) =
+    R8::Chip.new id, x, y, w, h, pos: pos
 
-  def image(w = 1, h = 1) = create_image w, h
+  def proj(dir = '/tmp')  = R8::Project.new dir
 
-  def vec(...)            = create_vector(...)
+  def vec(...)            = C.create_vector(...)
 
   def test_initialize()
     assert_nothing_raised       {map chip_size: 2,   chunk_size: 6}
@@ -23,9 +24,8 @@ class TestMap < Test::Unit::TestCase
   end
 
   def test_put()
-    img      = image
     new_chip = -> id, size, pos: nil {
-      chip 0, 0, size, size, id: id, image: img, pos: pos
+      chip 0, 0, size, size, id: id, pos: pos
     }
 
     map(chip_size: 10, chunk_size: 30).tap do |m|
@@ -165,38 +165,23 @@ class TestMap < Test::Unit::TestCase
       m.each_chip              .map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
   end
 
-  def test_to_hash()
+  def test_save()
     assert_equal(
       {
         chip_size: 10, chunk_size: 30,
         chunks: [{x: 30, y: 30, w: 30, h: 30, chip_size: 10, chips: [nil,nil,nil, [1, 30, 40]]}]
       },
-      map(chip_size: 10, chunk_size: 30).tap {_1.put 30, 40, chip(0, 0, 10, 10, id: 1)}.to_hash)
+      map(chip_size: 10, chunk_size: 30).tap {_1.put 30, 40, chip(0, 0, 10, 10, id: 1)}.save(proj))
   end
 
-  def test_compare()
-    assert_not_equal map(chip_size: 10, chunk_size: 20), map(chip_size: 1,  chunk_size: 20)
-    assert_not_equal map(chip_size: 10, chunk_size: 20), map(chip_size: 10, chunk_size: 10)
-
-    m1, m2 = map(chip_size: 10, chunk_size: 30), map(chip_size: 10, chunk_size: 30)
-    assert_equal m1, m2
-
-    img        = image
-    m1.put    10, 20, chip(0, 0, 10, 10, id: 1, image: img); assert_not_equal m1, m2
-    m2.put    10, 20, chip(0, 0, 10, 10, id: 1, image: img); assert_equal     m1, m2
-    m2.remove 10, 20
-    m2.put    10, 20, chip(0, 0, 10, 10, id: 2, image: img); assert_not_equal m1, m2
-  end
-
-  def test_restore()
-    img      = image
-    chips    = R8::ChipList.restore({
+  def test_load()
+    chips  = R8::ChipList.load({
       next_id: 3, chips: [
         {id: 1, x: 0, y: 0, w: 10, h: 10},
         {id: 2, x: 0, y: 0, w: 20, h: 20},
       ]
-    }, img)
-    restored = R8::Map.restore({
+    }, proj)
+    loaded = R8::Map.load({
       chip_size: 10, chunk_size: 30, chunks: [
         {
           x: 0,  y: 0, w: 30, h: 30, chip_size: 10,
@@ -211,13 +196,26 @@ class TestMap < Test::Unit::TestCase
 
     assert_equal(
       map(chip_size: 10, chunk_size: 30).tap {
-        _1.put 10, 20, chip(0, 0, 10, 10, id: 1, image: img)
-        _1.put 20, 10, chip(0, 0, 20, 20, id: 2, image: img)
+        _1.put 10, 20, chip(0, 0, 10, 10, id: 1)
+        _1.put 20, 10, chip(0, 0, 20, 20, id: 2)
       },
-      restored)
-    assert_equal     restored[20, 10].object_id, restored[20, 20].object_id
-    assert_equal     restored[30, 10].object_id, restored[30, 20].object_id
-    assert_not_equal restored[20, 10].object_id, restored[30, 10].object_id
+      loaded)
+    assert_equal     loaded[20, 10].object_id, loaded[20, 20].object_id
+    assert_equal     loaded[30, 10].object_id, loaded[30, 20].object_id
+    assert_not_equal loaded[20, 10].object_id, loaded[30, 10].object_id
+  end
+
+  def test_compare()
+    assert_not_equal map(chip_size: 10, chunk_size: 20), map(chip_size: 1,  chunk_size: 20)
+    assert_not_equal map(chip_size: 10, chunk_size: 20), map(chip_size: 10, chunk_size: 10)
+
+    m1, m2 = map(chip_size: 10, chunk_size: 30), map(chip_size: 10, chunk_size: 30)
+    assert_equal m1, m2
+
+    m1.put    10, 20, chip(0, 0, 10, 10, id: 1); assert_not_equal m1, m2
+    m2.put    10, 20, chip(0, 0, 10, 10, id: 1); assert_equal     m1, m2
+    m2.remove 10, 20
+    m2.put    10, 20, chip(0, 0, 10, 10, id: 2); assert_not_equal m1, m2
   end
 
   private
