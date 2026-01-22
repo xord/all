@@ -316,8 +316,8 @@ class Reight::Runner < Reight::App
   def clear_all_timers()
     prefix = Reight::Context::TIMER_PREFIX__
     ROOT_CONTEXT.instance_eval do
-      @timers__      .delete_if {|id| id in [prefix, _]}
-      @firingTimers__.delete_if {|id| id in [prefix, _]}
+      @timers__      .delete_if {|id| id in [^prefix, _]}
+      @firingTimers__.delete_if {|id| id in [^prefix, _]}
     end
   end
 
