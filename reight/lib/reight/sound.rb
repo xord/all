@@ -1,9 +1,7 @@
-using Reight
-
-
 class Reight::Sound
 
   include Enumerable
+  include Reight::Editable
 
   BPM_MAX = 999
 
@@ -85,23 +83,30 @@ class Reight::Sound
 
   def empty? = @sequence.all? {!_1 || _1.empty?}
 
-  def to_hash()
-    {
+  def save(proj)
+    super.merge({
       bpm:      @bpm,
-      sequence: @sequence.map {|notes| notes&.map {_1.to_hash}}
-    }
+      sequence: @sequence.map {|notes| notes&.map {_1.save proj}}
+    })
   end
 
-  def self.restore(hash)
-    bpm, sequence = hash.values_at :bpm, :sequence
+  def self.load(hash)
     #hash => {bpm:, sequence:}
+    bpm, sequence = hash.values_at :bpm, :sequence
     new(bpm).tap do |obj|
       obj.instance_eval do
         @sequence = sequence.map do |notes|
-          notes&.map {Note.restore _1}
+          notes&.map {Note.load _1}
         end
       end
     end
+  end
+
+  # @private
+  def cmp__(o)
+    a =                  [@bpm, @sequence]
+    b = o.instance_eval {[@bpm, @sequence]}
+    a <=> b
   end
 
   private
@@ -148,7 +153,7 @@ class Reight::Sound::Note
 
   TONES = %i[
     sine triangle square sawtooth pulse12_5 pulse25 noise
-  ]
+  ].freeze
 
   def initialize(index, tone = TONES.first)
     raise "Invalid note index: #{index}" unless (0..MAX).include? index
@@ -179,10 +184,6 @@ class Reight::Sound::Note
     "#{INDEX2NOTE[@index]}:#{@tone}"
   end
 
-  def to_hash()
-    {index: @index, tone: TONES.index(@tone)}
-  end
-
   def to_sound(bpm)
     osc  = self.class.oscillator tone, 32, freq: frequency
     sec  = self.class.seconds 4, bpm
@@ -190,6 +191,16 @@ class Reight::Sound::Note
     env  = self.class.envelope sec
     gain = self.class.gain
     RubySketch::Sound.new Beeps::Sound.new(seq >> env >> gain, sec)
+  end
+
+  def save(proj)
+    {index: @index, tone: TONES.index(@tone)}
+  end
+
+  def self.load(hash)
+    #hash       => {index:, tone:}
+    index, tone = hash.values_at :index, :tone
+    self.new index, TONES[tone]
   end
 
   def self.oscillator(type, size, **kwargs)
@@ -229,10 +240,11 @@ class Reight::Sound::Note
     60.0 / bpm / length
   end
 
-  def self.restore(hash)
-    index, tone = hash.values_at :index, :tone
-    #hash => {index:, tone:}
-    new index, TONES[tone]
+  # @private
+  def cmp__(o)
+    a =                  [@index, @tone]
+    b = o.instance_eval {[@index, @tone]}
+    a <=> b
   end
 
 end# Note

@@ -136,7 +136,7 @@ class Reight::SoundEditor::Canvas
   def draw_notes()
     sp           = sprite
     notew, noteh = sp.w / SEQUENCE_LEN, NOTE_HEIGHT
-    tones, max   = Reight::Sound::Note::TONES, Reight::Sound::Note::MAX
+    max          = Reight::Sound::Note::MAX
     @sound.each_note do |note, index|
       fill TONE_COLORS[note.tone]
       rect index * notew, (max - note.index) * noteh, notew, noteh

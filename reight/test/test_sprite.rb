@@ -1,10 +1,7 @@
 require_relative 'helper'
-using Reight
 
 
 class TestSpeite < Test::Unit::TestCase
-
-  def sprite(...) = R8::Sprite.new(...)
 
   def test_prop()
     assert_raise(NoMethodError) {sprite.foo}
@@ -25,4 +22,8 @@ class TestSpeite < Test::Unit::TestCase
     assert_equal [3, 4],   sp .foo
   end
 
-end# TestChip
+  private
+
+  def sprite(...) = R8::Sprite.new(...)
+
+end# TestSprite
