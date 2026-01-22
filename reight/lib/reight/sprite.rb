@@ -11,7 +11,7 @@ class Reight::Sprite < RubySketch::Sprite
 
   attr_accessor :map_chunk
 
-  attr_reader :chip, :state, :props
+  attr_reader :chip, :props
 
   def state=(name)
     @state = @chip.states[name] || @chip.states.first ||
