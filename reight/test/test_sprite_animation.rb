@@ -120,7 +120,7 @@ class TestSpriteAnimation < Test::Unit::TestCase
     a   = anim images: [image(R), image(G)]
     img = a.image_at 0
     assert_equal R,      rgb(img)
-    assert_equal [2, 3], img.size
+    assert_equal [2, 3], img.then {[_1.width, _1.height]}
   end
 
   def test_size()
