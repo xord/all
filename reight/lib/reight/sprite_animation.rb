@@ -5,7 +5,7 @@ class Reight::SpriteAnimation < Reight::Asset
   C = Reight::CONTEXT__
 
   def self.load(state, project)
-    Reight::Editable.load Reight::SpriteAnimation, state, project
+    Reight::Editable.load Reight::SpriteAnimation, state:, project:
   end
 
   def initialize(id = 0, width = 0, height = 0, fps: 2, load: nil)

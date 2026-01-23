@@ -5,7 +5,7 @@ class Reight::SpriteAsset < Reight::Asset
   SHAPES = [:rect, :circle]
 
   def self.load(state, project)
-    Reight::Editable.load Reight::SpriteAsset, state, project
+    Reight::Editable.load Reight::SpriteAsset, state:, project:
   end
 
   def initialize(*args, pos: nil, shape: nil, sensor: nil, anims: nil, load: nil)
