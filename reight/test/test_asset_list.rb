@@ -22,11 +22,11 @@ class TestAssetList < Test::Unit::TestCase
   end
 
   def test_insert()
-    ls = list;              assert_equal([],           ls.map(&:id))
-    ls.insert  0, asset(1); assert_equal([1],          ls.map(&:id))
-    ls.insert  0, asset(2); assert_equal([2, 1],       ls.map(&:id))
-    ls.insert  1, asset(3); assert_equal([2, 3, 1],    ls.map(&:id))
-    ls.insert -1, asset(4); assert_equal([2, 3, 1, 4], ls.map(&:id))
+    ls = list;               assert_equal([],           ls.map(&:id))
+    ls.insert  0, asset(1);  assert_equal([1],          ls.map(&:id))
+    ls.insert  0, asset(2);  assert_equal([2, 1],       ls.map(&:id))
+    ls.insert  1, asset(3);  assert_equal([2, 3, 1],    ls.map(&:id))
+    ls.insert(-1, asset(4)); assert_equal([2, 3, 1, 4], ls.map(&:id))
   end
 
   def test_push()

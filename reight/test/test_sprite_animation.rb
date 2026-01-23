@@ -73,11 +73,11 @@ class TestSpriteAnimation < Test::Unit::TestCase
   end
 
   def test_insert()
-    a = anim;              assert_equal([],           a.map {rgb _1})
-    a.insert  0, image(R); assert_equal([R],          a.map {rgb _1})
-    a.insert  0, image(G); assert_equal([G, R],       a.map {rgb _1})
-    a.insert  1, image(B); assert_equal([G, B, R],    a.map {rgb _1})
-    a.insert -1, image(Y); assert_equal([G, B, R, Y], a.map {rgb _1})
+    a = anim;               assert_equal([],           a.map {rgb _1})
+    a.insert  0, image(R);  assert_equal([R],          a.map {rgb _1})
+    a.insert  0, image(G);  assert_equal([G, R],       a.map {rgb _1})
+    a.insert  1, image(B);  assert_equal([G, B, R],    a.map {rgb _1})
+    a.insert(-1, image(Y)); assert_equal([G, B, R, Y], a.map {rgb _1})
   end
 
   def test_push()
