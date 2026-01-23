@@ -38,12 +38,12 @@ class R8::SpriteAnimation
   end
 end
 
-class R8::MapAsset
+class R8::Map
   include Comparable
   def <=>(o) = state_variables <=> o&.state_variables
 end
 
-class R8::MapTileChunk
+class R8::MapChunk
   include Comparable
   def <=>(o) = state_variables <=> o&.state_variables
 end

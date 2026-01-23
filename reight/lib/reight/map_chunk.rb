@@ -1,5 +1,5 @@
 # @private
-class Reight::MapTileChunk
+class Reight::MapChunk
 
   include Enumerable
   include Reight::Editable
@@ -7,7 +7,7 @@ class Reight::MapTileChunk
   C = Reight::CONTEXT__
 
   def self.load(state, project)
-    Reight::Editable.load Reight::MapTileChunk, state, project
+    Reight::Editable.load Reight::MapChunk, state:, project:
   end
 
   def initialize(x = 0, y = 0, width = 128, height = 128, tile_size: 8, load: nil)
@@ -42,8 +42,6 @@ class Reight::MapTileChunk
   alias w width
   alias h height
 
-  def frame() = [@x, @y, @width, @height]
-
   def sprites()
     @sprites ||= map(&:sprite).each {_1.map_chunk = self}
   end
@@ -52,15 +50,15 @@ class Reight::MapTileChunk
     @sprites = nil
   end
 
-  def put(x, y, asset)
-    x, y = align_tile_pos__ x, y
-    w, h = asset.w, asset.h
-    raise ArgumentError, "Asset size does not match tile size" if
+  def put(tile)
+    x, y, w, h = tile.frame
+    raise ArgumentError, 'Invalid tile position' if
+      align_tile_pos__(x, y) != [x, y]
+    raise ArgumentError, 'Invalid tile size' if
       w.to_f % @tile_size != 0 || h.to_f % @tile_size != 0
-    raise ArgumentError, "Conflicts with other tiles" if
+    raise ArgumentError, 'Conflicts with other tiles' if
       each_tile_pos(x, y, w, h).any? {|xx, yy| self[xx, yy]}
 
-    tile = Reight::MapTile.new asset, x, y
     each_tile_pos x, y, w, h do |xx, yy|
       @tiles[pos2index__ xx, yy] = tile
     end
@@ -114,6 +112,8 @@ class Reight::MapTileChunk
   end
 
   def each(&block) = each_tile {block.call _1}
+
+  def frame() = [@x, @y, @width, @height]
 
   def inspect()
     "#<#{self.class.name}:0x#{object_id}>"
@@ -174,4 +174,4 @@ class Reight::MapTileChunk
     ax < bx2 && bx < ax2 && ay < by2 && by < ay2
   end
 
-end# MapTileChunk
+end# MapChunk

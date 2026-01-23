@@ -79,7 +79,7 @@ class TestAsset < Test::Unit::TestCase
     end
     attr_reader :value
     def      save(proj)           = super.merge value: @value
-    def self.load(state, project) = R8::Editable.load Asset, state, project
+    def self.load(state, project) = R8::Editable.load(Asset, state:, project:)
     def state_variables()         = super.merge value: @value
   end
 

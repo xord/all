@@ -4,7 +4,7 @@ class Reight::AssetList
   include Reight::Editable
 
   def self.load(asset_class, state, project)
-    Reight::Editable.load Reight::AssetList, state, project
+    Reight::Editable.load Reight::AssetList, asset_class, state:, project:
   end
 
   def initialize(asset_class, assets = nil, load: nil)

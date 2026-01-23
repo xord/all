@@ -99,7 +99,7 @@ class TestAssetList < Test::Unit::TestCase
   List = R8::AssetList
 
   class Asset < R8::Asset
-    def self.load(state, project) = R8::Asset.load Asset, state, project
+    def self.load(state, project) = R8::Editable.load Asset, state:, project:
   end
 
   def list(assets = [])                 = List.new Asset, assets
