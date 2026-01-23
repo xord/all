@@ -12,10 +12,7 @@ class TestMap < Test::Unit::TestCase
 
   def test_save()
     assert_equal(
-      {
-        tile_size: 10, chunk_size: 30,
-        chunks: [{x: 30, y: 30, w: 30, h: 30, tile_size: 10, tiles: [nil,nil,nil, [1, 30, 40]]}]
-      },
+      {   tile_size: 10, chunk_size: 30, tiles: [[1, 30, 40]]},
       map(tile_size: 10, chunk_size: 30).tap {_1.put 30, 40, asset(1, 10)}.save(proj))
   end
 
@@ -25,16 +22,7 @@ class TestMap < Test::Unit::TestCase
       pj.sprites.push asset(2, 20)
     end
     loaded = R8::Map.load({
-      tile_size: 10, chunk_size: 30, chunks: [
-        {
-          x: 0,  y: 0, w: 30, h: 30, tile_size: 10,
-          tiles: [nil,nil,nil, nil,nil,[2,20,10], nil,[1,10,20],[2,20,10]]
-        },
-        {
-          x: 30, y: 0, w: 30, h: 30, tile_size: 10,
-          tiles: [nil,nil,nil, [2,20,10],nil,nil, [2,20,10]]
-        },
-      ]
+      tile_size: 10, chunk_size: 30, tiles: [[1,10,20], [2,20,10]]
     }, pj)
 
     assert_equal(
@@ -43,9 +31,9 @@ class TestMap < Test::Unit::TestCase
         _1.put 20, 10, asset(2, 20)
       },
       loaded)
-    assert_equal     loaded[20, 10].object_id, loaded[20, 20].object_id
-    assert_equal     loaded[30, 10].object_id, loaded[30, 20].object_id
-    assert_not_equal loaded[20, 10].object_id, loaded[30, 10].object_id
+    assert_equal loaded[20, 10].object_id, loaded[30, 10].object_id
+    assert_equal loaded[20, 10].object_id, loaded[20, 20].object_id
+    assert_equal loaded[20, 10].object_id, loaded[30, 20].object_id
   end
 
   def test_put()

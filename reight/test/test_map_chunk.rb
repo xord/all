@@ -13,42 +13,6 @@ class TestMapChunk < Test::Unit::TestCase
     assert_raise(ArgumentError) {chunk 1, 3, 4,   6.6, tile_size: 2}
   end
 
-  def test_save()
-    ch = chunk 10, 20, 30, 40, tile_size: 10
-
-    ch.put tile(asset(1, 10), 20, 30)
-    assert_equal(
-      {
-        x: 10, y: 20, w: 30, h: 40, tile_size: 10,
-        tiles: [nil,nil,nil, nil,[1,20,30]]
-      },
-      ch.save(proj))
-
-    ch.put tile(asset(2, 10, 20), 30, 40)
-    assert_equal(
-      {
-        x: 10, y: 20, w: 30, h: 40, tile_size: 10,
-        tiles: [nil,nil,nil, nil,[1,20,30],nil, nil,nil,[2,30,40], nil,nil,[2,30,40]]
-      },
-      ch.save(proj))
-  end
-
-  def test_load()
-    pj     = proj.tap {_1.sprites.push asset(1, 10), asset(2, 10, 20)}
-    loaded = Chunk.load({
-      x: 10, y: 20, w: 30, h: 40, tile_size: 10,
-      tiles: [nil,nil,nil, nil,[1,20,30],nil, nil,nil,[2,30,40], nil,nil,[2,30,40]]
-    }, pj)
-
-    assert_equal(
-      chunk(10, 20, 30, 40, tile_size: 10).tap {
-        _1.put tile(asset(1, 10, 10), 20, 30)
-        _1.put tile(asset(2, 10, 20), 30, 40)
-      },
-      loaded)
-    assert_equal loaded[30, 40].asset.object_id, loaded[30, 50].asset.object_id
-  end
-
   def test_put()
     chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
       assert_equal 0, count_all_tiles(ch)
@@ -217,17 +181,6 @@ class TestMapChunk < Test::Unit::TestCase
     ch2.put    tile(asset(1, 10), 10, 20); assert_equal     ch1, ch2
     ch2.remove 10, 20
     ch2.put    tile(asset(2, 10), 10, 20); assert_not_equal ch1, ch2
-  end
-
-  def test_delete_last_nils()
-    chunk(0, 0, 30, 30, tile_size: 10).tap do |ch|
-      ch.put tile(asset(1, 10), 10, 10)
-      ch.put tile(asset(2, 10), 10, 20)
-      assert_equal 8, ch.save(proj)[:tiles].size
-
-      ch.remove 10, 20
-      assert_equal 5, ch.save(proj)[:tiles].size
-    end
   end
 
   private
