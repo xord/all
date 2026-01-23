@@ -1,7 +1,7 @@
 module Reight::Editable
 
-  def self.load(asset_class, state, project)
-    asset_class.new load: {state:, project:}
+  def self.load(asset_class, *args, state:, project:)
+    asset_class.new(*args, load: {state:, project:})
   end
 
   def initialize(load: nil)

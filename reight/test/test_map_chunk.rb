@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 
-class TestMapTileChunk < Test::Unit::TestCase
+class TestMapChunk < Test::Unit::TestCase
 
   def test_initialize()
     assert_equal [1, 3, 4, 6], chunk(1,   3,   4, 6, tile_size: 2).frame
@@ -16,7 +16,7 @@ class TestMapTileChunk < Test::Unit::TestCase
   def test_save()
     ch = chunk 10, 20, 30, 40, tile_size: 10
 
-    ch.put 20, 30, asset(1, 10)
+    ch.put tile(asset(1, 10), 20, 30)
     assert_equal(
       {
         x: 10, y: 20, w: 30, h: 40, tile_size: 10,
@@ -24,7 +24,7 @@ class TestMapTileChunk < Test::Unit::TestCase
       },
       ch.save(proj))
 
-    ch.put 30, 40, asset(2, 10, 20)
+    ch.put tile(asset(2, 10, 20), 30, 40)
     assert_equal(
       {
         x: 10, y: 20, w: 30, h: 40, tile_size: 10,
@@ -42,54 +42,37 @@ class TestMapTileChunk < Test::Unit::TestCase
 
     assert_equal(
       chunk(10, 20, 30, 40, tile_size: 10).tap {
-        _1.put 20, 30, asset(1, 10, 10)
-        _1.put 30, 40, asset(2, 10, 20)
+        _1.put tile(asset(1, 10, 10), 20, 30)
+        _1.put tile(asset(2, 10, 20), 30, 40)
       },
       loaded)
     assert_equal loaded[30, 40].asset.object_id, loaded[30, 50].asset.object_id
   end
 
   def test_put()
-    new_tile = -> id, size, pos: nil {
-      tile 0, 0, size, size, id: id, pos: pos
-    }
-
     chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
-      assert_nil                                ch[20, 30]
       assert_equal 0, count_all_tiles(ch)
+      assert_nil                               ch[20, 30]
     end
 
     chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
-      ch.put 20, 30,     asset(1, 10)
-      assert_equal  tile(asset(1, 10), 20, 30), ch[20, 30]
+      ch.put       tile(asset(1, 10), 20, 30)
       assert_equal 1, count_all_tiles(ch)
+
+      assert_equal tile(asset(1, 10), 20, 30), ch[20, 30]
+      assert_nil                               ch[30, 30]
+      assert_nil                               ch[20, 40]
+      assert_nil                               ch[30, 40]
     end
 
     chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
-      ch.put 25, 35,     asset(2, 10)
-      assert_equal  tile(asset(2, 10), 20, 30), ch[25, 35]
-      assert_equal  tile(asset(2, 10), 20, 30), ch[20, 30]
-      assert_equal 1, count_all_tiles(ch)
-    end
-
-    chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
-      ch.put 20.2, 30.3, asset(3, 10)
-      assert_equal  tile(asset(3, 10), 20, 30), ch[20.2, 30.3]
-      assert_equal  tile(asset(3, 10), 20, 30), ch[20,   30]
-      assert_equal 1, count_all_tiles(ch)
-    end
-
-    chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
-      ch.put 25, 35,     asset(4, 20)
-      assert_equal  tile(asset(4, 20), 20, 30), ch[25, 35]
-      assert_equal  tile(asset(4, 20), 20, 30), ch[20, 30]
-      assert_equal  tile(asset(4, 20), 20, 30), ch[35, 35]
-      assert_equal  tile(asset(4, 20), 20, 30), ch[30, 30]
-      assert_equal  tile(asset(4, 20), 20, 30), ch[35, 45]
-      assert_equal  tile(asset(4, 20), 20, 30), ch[30, 40]
-      assert_equal  tile(asset(4, 20), 20, 30), ch[25, 45]
-      assert_equal  tile(asset(4, 20), 20, 30), ch[20, 40]
+      ch.put       tile(asset(1, 20), 20, 30)
       assert_equal 4, count_all_tiles(ch)
+
+      assert_equal tile(asset(1, 20), 20, 30), ch[20, 30]
+      assert_equal tile(asset(1, 20), 20, 30), ch[30, 30]
+      assert_equal tile(asset(1, 20), 20, 30), ch[20, 40]
+      assert_equal tile(asset(1, 20), 20, 30), ch[30, 40]
 
       assert_equal ch[20, 30].object_id, ch[30, 30].object_id
       assert_equal ch[20, 30].object_id, ch[30, 40].object_id
@@ -97,8 +80,22 @@ class TestMapTileChunk < Test::Unit::TestCase
     end
 
     chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
-      assert_nothing_raised {ch.put 20, 30, asset(5, 10)}
-      assert_raise          {ch.put 20, 30, asset(5, 10)}
+      ch.put       tile(asset(1, 10),  0,   0)
+      ch.put       tile(asset(1, 10),  40,  60)
+      ch.put       tile(asset(1, 10), -10,  -10)
+      assert_equal 0, count_all_tiles(ch)
+    end
+
+    chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
+      assert_nothing_raised {ch.put tile(asset(1, 10), 20, 30)}
+      assert_raise          {ch.put tile(asset(2, 10), 20, 30)}
+    end
+
+    chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
+      assert_raise(ArgumentError) {ch.put tile(asset(1, 10), 21,   30)}
+      assert_raise(ArgumentError) {ch.put tile(asset(1, 10), 20,   31)}
+      assert_raise(ArgumentError) {ch.put tile(asset(1, 10), 20.1, 30)}
+      assert_raise(ArgumentError) {ch.put tile(asset(1, 10), 20,   30.1)}
     end
   end
 
@@ -119,7 +116,7 @@ class TestMapTileChunk < Test::Unit::TestCase
       [19.999, 29.999, 1]
     ].each do |xx, yy, count|
       chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
-        ch.put 20, 30, asset(1, 10)
+        ch.put tile(asset(1, 10), 20, 30)
         assert_equal 1,     count_all_tiles(ch)
         assert_nothing_raised {ch.remove xx, yy}
         assert_equal count, count_all_tiles(ch)
@@ -134,7 +131,7 @@ class TestMapTileChunk < Test::Unit::TestCase
       [19.999, 29.999, 4],
     ].each do |xx, yy, count|
       chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
-        ch.put 20, 30, asset(1, 20)
+        ch.put tile(asset(1, 20), 20, 30)
         assert_equal 4,     count_all_tiles(ch)
         assert_nothing_raised {ch.remove xx, yy}
         assert_equal count, count_all_tiles(ch)
@@ -142,10 +139,43 @@ class TestMapTileChunk < Test::Unit::TestCase
     end
   end
 
+  def test_at()
+    chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
+      ch.put       tile(asset(1, 10), 20, 30)
+
+      assert_nil                               ch[19, 30]
+      assert_equal tile(asset(1, 10), 20, 30), ch[20, 30]
+      assert_equal tile(asset(1, 10), 20, 30), ch[21, 30]
+      assert_equal tile(asset(1, 10), 20, 30), ch[29, 30]
+      assert_nil                               ch[30, 30]
+
+      assert_nil                               ch[20, 29]
+      assert_equal tile(asset(1, 10), 20, 30), ch[20, 30]
+      assert_equal tile(asset(1, 10), 20, 30), ch[20, 31]
+      assert_equal tile(asset(1, 10), 20, 30), ch[20, 39]
+      assert_nil                               ch[20, 40]
+
+      assert_equal tile(asset(1, 10), 20, 30), ch[20.0, 30]
+      assert_equal tile(asset(1, 10), 20, 30), ch[20.1, 30]
+      assert_equal tile(asset(1, 10), 20, 30), ch[20,   30.0]
+      assert_equal tile(asset(1, 10), 20, 30), ch[20,   30.1]
+    end
+
+    chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
+      ch.put       tile(asset(1, 20), 20, 30)
+
+      assert_equal tile(asset(1, 20), 20, 30), ch[20, 30]
+      assert_equal tile(asset(1, 20), 20, 30), ch[39, 30]
+      assert_nil                               ch[40, 30]
+      assert_equal tile(asset(1, 20), 20, 30), ch[20, 49]
+      assert_nil                               ch[20, 50]
+    end
+  end
+
   def test_each_tile()
     ch        = chunk 10, 20, 30, 40, tile_size: 10
-    ch.put 10, 20, asset(1, 10)
-    ch.put 20, 30, asset(2, 20)
+    ch.put tile(asset(1, 10), 10, 20)
+    ch.put tile(asset(2, 20), 20, 30)
 
     assert_equal(
       [[1, 10,20, 10,20], [2, 20,30, 20,30]],
@@ -183,16 +213,16 @@ class TestMapTileChunk < Test::Unit::TestCase
     ch1, ch2 = chunk(10, 20, 30, 40, tile_size: 10), chunk(10, 20, 30, 40, tile_size: 10)
     assert_equal ch1, ch2
 
-    ch1.put    10, 20, asset(1, 10); assert_not_equal ch1, ch2
-    ch2.put    10, 20, asset(1, 10); assert_equal     ch1, ch2
+    ch1.put    tile(asset(1, 10), 10, 20); assert_not_equal ch1, ch2
+    ch2.put    tile(asset(1, 10), 10, 20); assert_equal     ch1, ch2
     ch2.remove 10, 20
-    ch2.put    10, 20, asset(2, 10); assert_not_equal ch1, ch2
+    ch2.put    tile(asset(2, 10), 10, 20); assert_not_equal ch1, ch2
   end
 
   def test_delete_last_nils()
     chunk(0, 0, 30, 30, tile_size: 10).tap do |ch|
-      ch.put 10, 10, asset(1, 10)
-      ch.put 10, 20, asset(2, 10)
+      ch.put tile(asset(1, 10), 10, 10)
+      ch.put tile(asset(2, 10), 10, 20)
       assert_equal 8, ch.save(proj)[:tiles].size
 
       ch.remove 10, 20
@@ -203,7 +233,7 @@ class TestMapTileChunk < Test::Unit::TestCase
   private
 
   C     = R8::CONTEXT__
-  Chunk = R8::MapTileChunk
+  Chunk = R8::MapChunk
 
   def chunk(...)                          = Chunk.new(...)
 
@@ -217,4 +247,4 @@ class TestMapTileChunk < Test::Unit::TestCase
     chunk.each_tile(include_hidden: true).to_a.size
   end
 
-end# TestMapTileChunk
+end# TestMapChunk
