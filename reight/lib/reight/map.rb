@@ -1,17 +1,21 @@
-class Reight::MapAsset < Reight::Asset
+class Reight::Map
 
   C = Reight::CONTEXT__
 
   include Enumerable
   include Reight::Editable
 
-  def initialize(*args, tile_size: 8, chunk_size: 128, load: nil)
-    super *args, load: load
+  def self.load(state, project)
+    Reight::Editable.load Reight::Map, state:, project:
+  end
+
+  def initialize(tile_size: 8, chunk_size: 128, load: nil)
+    super load: load
     if load
-      state                           = load.fetch_values :state, :project
+      state, project                  = load.fetch_values :state, :project
       @tile_size, @chunk_size, chunks = state.fetch_values :tile_size, :chunk_size, :chunks
       @chunks                         = chunks.each.with_object({}) do |chunk, hash|
-        ch = Reight::MapTileChunk.load chunk, project
+        ch = Reight::MapChunk.load chunk, project
         hash[[ch.x, ch.y]] = ch
       end
     else
@@ -22,7 +26,7 @@ class Reight::MapAsset < Reight::Asset
     raise ArgumentError, "Invalid tile_size: #{tile_size}" unless
       @tile_size  > 0 && @tile_size .to_i == @tile_size
     raise ArgumentError, "Invalid chunk_size: #{chunk_size}" unless
-      @chunk_size > 0 && @chunk_size.to_i != @chunk_size && @chunk_size % @tile_size == 0
+      @chunk_size > 0 && @chunk_size.to_i == @chunk_size && @chunk_size % @tile_size == 0
 
     @tile_size, @chunk_size = [@tile_size, @chunk_size].map &:to_i
   end
@@ -61,9 +65,9 @@ class Reight::MapAsset < Reight::Asset
 
   def put(x, y, asset)
     return unless asset
-    tile = nil
-    each_chunk__ x, y, tile.w, tile.h, create: true do |chunk|
-      tilechunk.put x, y, tile
+    tile = Reight::MapTile.new asset, *align_tile_pos__(x, y)
+    each_chunk__ tile.x, tile.y, tile.w, tile.h, create: true do |chunk|
+      chunk.put tile
     end
   end
 
@@ -71,7 +75,7 @@ class Reight::MapAsset < Reight::Asset
     tile           = self[x, y] or return
     tx, ty, tw, th = tile.x, tile.y, tile.w, tile.h
     each_chunk__ tx, ty, tw, th, create: false do |chunk|
-      each_tile_pos(tx, ty, tw, th) {|xx, yy| chunk.remove xx, yy}
+      each_tile_pos__(tx, ty, tw, th) {|xx, yy| chunk.remove xx, yy}
     end
   end
 
@@ -127,7 +131,7 @@ class Reight::MapAsset < Reight::Asset
     x2, y2 = align_chunk_pos__ x2, y2
     (y1..y2).step @chunk_size do |yy|
       (x1..x2).step @chunk_size do |xx|
-        chunk = chunk_at xx, yy, create: create
+        chunk = chunk_at__ xx, yy, create: create
         block.call chunk if chunk
       end
     end
@@ -138,7 +142,7 @@ class Reight::MapAsset < Reight::Asset
     x, y = align_chunk_pos__ x, y
     if create
       @chunks[[x, y]] ||=
-        Reight::MapTileChunk.new x, y, @chunk_size, @chunk_size, tile_size: @tile_size
+        Reight::MapChunk.new x, y, @chunk_size, @chunk_size, tile_size: @tile_size
     else
       @chunks[[x, y]]
     end
@@ -169,11 +173,11 @@ class Reight::MapAsset < Reight::Asset
     [x.to_i / s * s, y.to_i / s * s]
   end
 
-end# MapAsset
+end# Map
 
 
 # @private
-class Reight::MapAsset::SpriteArray < Array
+class Reight::Map::SpriteArray < Array
 
   def initialize(world: nil, sprites: [], &each_chunk)
     @world, @each_chunk = world, each_chunk

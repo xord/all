@@ -3,81 +3,98 @@ require_relative 'helper'
 
 class TestMap < Test::Unit::TestCase
 
-  C = R8::CONTEXT__
-
-  def map(...)   = R8::Map.new(...)
-
-  def chunk(...) = R8::MapChunk.new(...)
-
-  def chip(x, y, w, h, id: 1, pos: nil) =
-    R8::Chip.new id, x, y, w, h, pos: pos
-
-  def proj(dir = '/tmp')  = R8::Project.new dir
-
-  def vec(...)            = C.create_vector(...)
-
   def test_initialize()
-    assert_nothing_raised       {map chip_size: 2,   chunk_size: 6}
-    assert_raise(ArgumentError) {map chip_size: 2,   chunk_size: 7}
-    assert_raise(ArgumentError) {map chip_size: 2.2, chunk_size: 6}
-    assert_raise(ArgumentError) {map chip_size: 2,   chunk_size: 6.6}
+    assert_nothing_raised       {map tile_size: 2,   chunk_size: 6}
+    assert_raise(ArgumentError) {map tile_size: 2,   chunk_size: 7}
+    assert_raise(ArgumentError) {map tile_size: 2.2, chunk_size: 6}
+    assert_raise(ArgumentError) {map tile_size: 2,   chunk_size: 6.6}
+  end
+
+  def test_save()
+    assert_equal(
+      {
+        tile_size: 10, chunk_size: 30,
+        chunks: [{x: 30, y: 30, w: 30, h: 30, tile_size: 10, tiles: [nil,nil,nil, [1, 30, 40]]}]
+      },
+      map(tile_size: 10, chunk_size: 30).tap {_1.put 30, 40, asset(1, 10)}.save(proj))
+  end
+
+  def test_load()
+    pj = proj.tap do |pj|
+      pj.sprites.push asset(1, 10)
+      pj.sprites.push asset(2, 20)
+    end
+    loaded = R8::Map.load({
+      tile_size: 10, chunk_size: 30, chunks: [
+        {
+          x: 0,  y: 0, w: 30, h: 30, tile_size: 10,
+          tiles: [nil,nil,nil, nil,nil,[2,20,10], nil,[1,10,20],[2,20,10]]
+        },
+        {
+          x: 30, y: 0, w: 30, h: 30, tile_size: 10,
+          tiles: [nil,nil,nil, [2,20,10],nil,nil, [2,20,10]]
+        },
+      ]
+    }, pj)
+
+    assert_equal(
+      map(tile_size: 10, chunk_size: 30).tap {
+        _1.put 10, 20, asset(1, 10)
+        _1.put 20, 10, asset(2, 20)
+      },
+      loaded)
+    assert_equal     loaded[20, 10].object_id, loaded[20, 20].object_id
+    assert_equal     loaded[30, 10].object_id, loaded[30, 20].object_id
+    assert_not_equal loaded[20, 10].object_id, loaded[30, 10].object_id
   end
 
   def test_put()
-    new_chip = -> id, size, pos: nil {
-      chip 0, 0, size, size, id: id, pos: pos
-    }
-
-    map(chip_size: 10, chunk_size: 30).tap do |m|
-      assert_equal 0, count_all_chips(m)
+    map(tile_size: 10, chunk_size: 30).tap do |m|
+      assert_equal 0, count_all_tiles(m)
     end
 
-    map(chip_size: 10, chunk_size: 30).tap do |m|
-      m.put 10, 20,     new_chip[1, 10]
-      assert_equal      new_chip[1, 10, pos: vec(10, 20)],   m[10, 20]
-      assert_equal 1, count_all_chips(m)
+    map(tile_size: 10, chunk_size: 30).tap do |m|
+      m.put     10, 20, asset(1, 10)
+      assert_equal tile(asset(1, 10), 10, 20),   m[10, 20]
+      assert_equal 1, count_all_tiles(m)
     end
 
-    map(chip_size: 10, chunk_size: 30).tap do |m|
-      m.put(-10, -20,   new_chip[1, 10])
-      assert_equal      new_chip[1, 10, pos: vec(-10, -20)], m[-10, -20]
-      assert_equal 1, count_all_chips(m)
+    map(tile_size: 10, chunk_size: 30).tap do |m|
+      m.put(  -10, -20, asset(1, 10))
+      assert_equal tile(asset(1, 10), -10, -20), m[-10, -20]
+      assert_equal 1, count_all_tiles(m)
     end
 
-    map(chip_size: 10, chunk_size: 30).tap do |m|
-      m.put 15, 25,     new_chip[2, 10]
-      assert_equal      new_chip[2, 10, pos: vec(10, 20)],   m[15, 25]
-      assert_equal      new_chip[2, 10, pos: vec(10, 20)],   m[10, 20]
-      assert_equal 1, count_all_chips(m)
+    map(tile_size: 10, chunk_size: 30).tap do |m|
+      m.put     15, 25, asset(1, 10)
+      assert_equal tile(asset(1, 10), 10, 20),   m[15, 25]
+      assert_equal tile(asset(1, 10), 10, 20),   m[10, 20]
+      assert_equal 1, count_all_tiles(m)
     end
 
-    map(chip_size: 10, chunk_size: 30).tap do |m|
-      m.put 10.1, 20.2, new_chip[3, 10]
-      assert_equal      new_chip[3, 10, pos: vec(10, 20)],   m[10.1, 20.2]
-      assert_equal      new_chip[3, 10, pos: vec(10, 20)],   m[10,   20]
-      assert_equal 1, count_all_chips(m)
+    map(tile_size: 10, chunk_size: 30).tap do |m|
+      m.put 10.1, 20.2, asset(1, 10)
+      assert_equal tile(asset(1, 10), 10, 20),   m[10.1, 20.2]
+      assert_equal tile(asset(1, 10), 10, 20),   m[10,   20]
+      assert_equal 1, count_all_tiles(m)
     end
 
-    map(chip_size: 10, chunk_size: 30).tap do |m|
-      m.put 15, 25,     new_chip[4, 20]
-      assert_equal      new_chip[4, 20, pos: vec(10, 20)],   m[15, 25]
-      assert_equal      new_chip[4, 20, pos: vec(10, 20)],   m[10, 20]
-      assert_equal      new_chip[4, 20, pos: vec(10, 20)],   m[25, 25]
-      assert_equal      new_chip[4, 20, pos: vec(10, 20)],   m[20, 20]
-      assert_equal      new_chip[4, 20, pos: vec(10, 20)],   m[15, 35]
-      assert_equal      new_chip[4, 20, pos: vec(10, 20)],   m[10, 30]
-      assert_equal      new_chip[4, 20, pos: vec(10, 20)],   m[25, 35]
-      assert_equal      new_chip[4, 20, pos: vec(10, 20)],   m[20, 30]
-      assert_equal 4, count_all_chips(m)
+    map(tile_size: 10, chunk_size: 30).tap do |m|
+      m.put     10, 20, asset(1, 20)
+      assert_equal tile(asset(1, 20), 10, 20),   m[10, 20]
+      assert_equal tile(asset(1, 20), 10, 20),   m[20, 20]
+      assert_equal tile(asset(1, 20), 10, 20),   m[10, 30]
+      assert_equal tile(asset(1, 20), 10, 20),   m[20, 30]
+      assert_equal 4, count_all_tiles(m)
 
-      assert_equal     m[10, 20].object_id, m[20, 20].object_id
-      assert_equal     m[10, 30].object_id, m[20, 30].object_id
-      assert_not_equal m[10, 20].object_id, m[10, 30].object_id
+      assert_equal m[10, 20].object_id, m[20, 20].object_id
+      assert_equal m[10, 20].object_id, m[10, 30].object_id
+      assert_equal m[10, 20].object_id, m[20, 30].object_id
     end
 
-    map(chip_size: 10, chunk_size: 30).tap do |m|
-      assert_nothing_raised {m.put 10, 20, chip(0, 0, 10, 10)}
-      assert_raise          {m.put 10, 20, chip(0, 0, 10, 10)}
+    map(tile_size: 10, chunk_size: 30).tap do |m|
+      assert_nothing_raised {m.put 10, 20, asset(1, 10)}
+      assert_raise          {m.put 10, 20, asset(1, 10)}
     end
   end
 
@@ -85,9 +102,9 @@ class TestMap < Test::Unit::TestCase
     [
       [0, 0], [10, 20], [90, 90]
     ].each do |xx, yy|
-      map(chip_size: 10, chunk_size: 30).tap do |m|
+      map(tile_size: 10, chunk_size: 30).tap do |m|
         m.remove xx, yy
-        assert_equal 0, count_all_chips(m)
+        assert_equal 0, count_all_tiles(m)
       end
     end
 
@@ -97,11 +114,11 @@ class TestMap < Test::Unit::TestCase
       [19.999, 29.999, 0],
       [ 9.999, 19.999, 1]
     ].each do |xx, yy, count|
-      map(chip_size: 10, chunk_size: 30).tap do |m|
-        m.put 10, 20, chip(0, 0, 10, 10)
-        assert_equal 1,     count_all_chips(m)
+      map(tile_size: 10, chunk_size: 30).tap do |m|
+        m.put 10, 20, asset(1, 10)
+        assert_equal 1,     count_all_tiles(m)
         m.remove xx, yy
-        assert_equal count, count_all_chips(m)
+        assert_equal count, count_all_tiles(m)
       end
     end
 
@@ -112,116 +129,86 @@ class TestMap < Test::Unit::TestCase
       [29.999, 39.999, 0], [29.999, 30, 0], [20, 39.999, 0],
       [ 9.999, 19.999, 4],
     ].each do |xx, yy, count|
-      map(chip_size: 10, chunk_size: 30).tap do |m|
-        m.put 10, 20, chip(0, 0, 20, 20)
-        assert_equal 4,     count_all_chips(m)
+      map(tile_size: 10, chunk_size: 30).tap do |m|
+        m.put 10, 20, asset(1, 20)
+        assert_equal 4,     count_all_tiles(m)
         m.remove xx, yy
-        assert_equal count, count_all_chips(m)
+        assert_equal count, count_all_tiles(m)
       end
     end
   end
 
-  def test_remove_chip()
-    map(chip_size: 10, chunk_size: 30).tap do |m|
-      m.put           10, 20, chip(0, 0, 10, 10)
-      assert_equal 1, count_all_chips(m)
-      m.remove_chip m[10, 20]
-      assert_equal 0, count_all_chips(m)
+  def test_remove_tile()
+    map(tile_size: 10, chunk_size: 30).tap do |m|
+      m.put 10, 20, asset(1, 10)
+      assert_equal 1, count_all_tiles(m)
+      m.remove_tile m[10, 20]
+      assert_equal 0, count_all_tiles(m)
     end
   end
 
-  def test_each_chip()
-    m           = map chip_size: 10, chunk_size: 30
-    m.put 10,  20,  chip(0, 0, 10, 10, id: 1)
-    m.put 20,  30,  chip(0, 0, 20, 20, id: 2)
-    m.put 100, 200, chip(0, 0, 10, 10, id: 3)
+  def test_each_tile()
+    m           = map tile_size: 10, chunk_size: 30
+    m.put 10,  20,  asset(1, 10)
+    m.put 20,  30,  asset(2, 20)
+    m.put 100, 200, asset(3, 10)
 
     assert_equal(
       [],
-      m.each_chip( 0,  0, 10, 20).map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile( 0,  0, 10, 20).map {|tile| [tile.asset.id, tile.x, tile.y]})
     assert_equal(
       [[1, 10, 20]],
-      m.each_chip( 0,  0, 11, 21).map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile( 0,  0, 11, 21).map {|tile| [tile.asset.id, tile.x, tile.y]})
     assert_equal(
       [],
-      m.each_chip(20, 20, 10, 10).map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile(20, 20, 10, 10).map {|tile| [tile.asset.id, tile.x, tile.y]})
     assert_equal(
       [[1, 10, 20]],
-      m.each_chip(19, 20, 10, 10).map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile(19, 20, 10, 10).map {|tile| [tile.asset.id, tile.x, tile.y]})
     assert_equal(
       [],
-      m.each_chip(10, 30, 10, 10).map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile(10, 30, 10, 10).map {|tile| [tile.asset.id, tile.x, tile.y]})
     assert_equal(
       [[1, 10, 20]],
-      m.each_chip(10, 29, 10, 10).map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile(10, 29, 10, 10).map {|tile| [tile.asset.id, tile.x, tile.y]})
     assert_equal(
       [[1, 10, 20]],
-      m.each_chip(0, 0, 30, 30).map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile(0, 0, 30, 30)  .map {|tile| [tile.asset.id, tile.x, tile.y]})
     assert_equal(
       [[1, 10, 20], [2, 20, 30]],
-      m.each_chip(0, 0, 31, 31).map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile(0, 0, 31, 31)  .map {|tile| [tile.asset.id, tile.x, tile.y]})
     assert_equal(
       [[1, 10, 20], [2, 20, 30], [3, 100, 200]],
-      m.each_chip              .map {|chip| [chip.id, chip.pos.x, chip.pos.y]})
+      m.each_tile                .map {|tile| [tile.asset.id, tile.x, tile.y]})
   end
 
-  def test_save()
-    assert_equal(
-      {
-        chip_size: 10, chunk_size: 30,
-        chunks: [{x: 30, y: 30, w: 30, h: 30, chip_size: 10, chips: [nil,nil,nil, [1, 30, 40]]}]
-      },
-      map(chip_size: 10, chunk_size: 30).tap {_1.put 30, 40, chip(0, 0, 10, 10, id: 1)}.save(proj))
-  end
+  def test_compare_by_state_variables()
+    assert_not_equal map(tile_size: 10, chunk_size: 20), map(tile_size: 1,  chunk_size: 20)
+    assert_not_equal map(tile_size: 10, chunk_size: 20), map(tile_size: 10, chunk_size: 10)
 
-  def test_load()
-    chips  = R8::ChipList.load({
-      next_id: 3, chips: [
-        {id: 1, x: 0, y: 0, w: 10, h: 10},
-        {id: 2, x: 0, y: 0, w: 20, h: 20},
-      ]
-    }, proj)
-    loaded = R8::Map.load({
-      chip_size: 10, chunk_size: 30, chunks: [
-        {
-          x: 0,  y: 0, w: 30, h: 30, chip_size: 10,
-          chips: [nil,nil,nil, nil,nil,[2,20,10], nil,[1,10,20],[2,20,10]]
-        },
-        {
-          x: 30, y: 0, w: 30, h: 30, chip_size: 10,
-          chips: [nil,nil,nil, [2,20,10],nil,nil, [2,20,10]]
-        },
-      ]
-    }, chips)
-
-    assert_equal(
-      map(chip_size: 10, chunk_size: 30).tap {
-        _1.put 10, 20, chip(0, 0, 10, 10, id: 1)
-        _1.put 20, 10, chip(0, 0, 20, 20, id: 2)
-      },
-      loaded)
-    assert_equal     loaded[20, 10].object_id, loaded[20, 20].object_id
-    assert_equal     loaded[30, 10].object_id, loaded[30, 20].object_id
-    assert_not_equal loaded[20, 10].object_id, loaded[30, 10].object_id
-  end
-
-  def test_compare()
-    assert_not_equal map(chip_size: 10, chunk_size: 20), map(chip_size: 1,  chunk_size: 20)
-    assert_not_equal map(chip_size: 10, chunk_size: 20), map(chip_size: 10, chunk_size: 10)
-
-    m1, m2 = map(chip_size: 10, chunk_size: 30), map(chip_size: 10, chunk_size: 30)
+    m1, m2 = map(tile_size: 10, chunk_size: 30), map(tile_size: 10, chunk_size: 30)
     assert_equal m1, m2
 
-    m1.put    10, 20, chip(0, 0, 10, 10, id: 1); assert_not_equal m1, m2
-    m2.put    10, 20, chip(0, 0, 10, 10, id: 1); assert_equal     m1, m2
+    m1.put    10, 20, asset(1, 10); assert_not_equal m1, m2
+    m2.put    10, 20, asset(1, 10); assert_equal     m1, m2
     m2.remove 10, 20
-    m2.put    10, 20, chip(0, 0, 10, 10, id: 2); assert_not_equal m1, m2
+    m2.put    10, 20, asset(2, 10); assert_not_equal m1, m2
   end
 
   private
 
-  def count_all_chips(map_, map_size = 90, chip_size: 10)
-    range = (-map_size...map_size).step(chip_size).to_a
+  C = R8::CONTEXT__
+
+  def map(...)                            = R8::Map.new(...)
+
+  def tile(...)                           = R8::MapTile.new(...)
+
+  def asset(id, w, h = nil, x = 0, y = 0) = R8::SpriteAsset.new(id, w, h || w, x, y)
+
+  def proj(dir = '/tmp')                  = R8::Project.new dir
+
+  def count_all_tiles(map_, map_size = 90, tile_size: 10)
+    range = (-map_size...map_size).step(tile_size).to_a
     range.product(range)
       .map {|x, y| map_[x, y]}
       .count {_1 != nil}
