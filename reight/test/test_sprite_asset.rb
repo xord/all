@@ -21,7 +21,7 @@ class TestSpriteAsset < Test::Unit::TestCase
     assert_nil                     asset(1, 2, 3, 4, 5, anims: nil)                    .image
     assert_nil                     asset(1, 2, 3, 4, 5, anims: {})                     .image
     assert_nil                     asset(1, 2, 3, 4, 5, anims: {dummy:  anim(1, 2, 3)}).image
-    assert_equal [2, 3],           asset(1, 2, 3, 4, 5, anims: {normal: anim(1, 2, 3)}).image.size
+    assert_equal [2, 3],           asset(1, 2, 3, 4, 5, anims: {normal: anim(1, 2, 3)}).image.then {[_1.width, _1.height]}
 
     assert_raise(ArgumentError) {asset(-1, 2, 3, 4, 5)}
     assert_raise(ArgumentError) {asset( 1, 0, 3, 4, 5)}
