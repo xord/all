@@ -124,6 +124,7 @@ class TestImage < Test::Unit::TestCase
     paths.each {|path| File.delete path}
 
     assert_raise(ArgumentError) {img.save 'testimage.unknown'}
+    assert_raise(Errno::ENOENT) {load '/nofile.png'}
   end
 
 end# TestImage

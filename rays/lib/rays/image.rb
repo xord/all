@@ -38,6 +38,11 @@ module Rays
       get_bitmap true
     end
 
+    def self.load(path)
+      raise Errno::ENOENT, "no such file: '#{path}'" unless File.exist? path
+      load! path
+    end
+
   end# Image
 
 

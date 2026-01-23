@@ -162,7 +162,7 @@ Init_rays_image ()
 	cImage.define_private_method("get_bitmap", get_bitmap);
 	cImage.define_method("smooth=", set_smooth);
 	cImage.define_method("smooth",  get_smooth);
-	cImage.define_module_function("load", load);
+	cImage.define_module_function("load!", load);
 }
 
 
