@@ -37,7 +37,7 @@ class Reight::SpriteAnimation < Reight::Asset
   end
 
   def push(*images)
-    insert -1, *images
+    insert(-1, *images)
   end
 
   alias append push
