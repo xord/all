@@ -6,35 +6,16 @@ class Reight::MapChunk
 
   C = Reight::CONTEXT__
 
-  def self.load(state, project)
-    Reight::Editable.load Reight::MapChunk, state:, project:
+  def initialize(x, y, width = 128, height = 128, tile_size: 8)
+    raise ArgumentError, "Invalid tile_size: #{tile_size}" if tile_size.to_i != tile_size
+    raise ArgumentError, "Invalid width: #{width}"         if width  % tile_size != 0
+    raise ArgumentError, "Invalid height: #{height}"       if height % tile_size != 0
+
+    @x, @y, @width, @height, @tile_size = [x, y, width, height, tile_size].map(&:to_i)
+    @ncolumn, @tiles                    = @width / @tile_size, []
   end
 
-  def initialize(x = 0, y = 0, width = 128, height = 128, tile_size: 8, load: nil)
-    if load
-      state, project          = load.fetch_values :state, :project
-      @x, @y, @width, @height = state.fetch_values :x, :y, :w, :h
-      @tile_size, tiles       = state.fetch_values :tile_size, :tiles
-      @tiles                  = tiles.map {_1 ? Reight::MapTile.load(_1, project) : nil}
-    else
-      raise ArgumentError, "Invalid tile_size: #{tile_size}" if tile_size.to_i != tile_size
-      raise ArgumentError, "Invalid width: #{width}"         if width  % tile_size != 0
-      raise ArgumentError, "Invalid height: #{height}"       if height % tile_size != 0
-      @x, @y, @width, @height = x, y, width, height
-      @tile_size, @tiles      = tile_size, []
-    end
-    @x, @y, @width, @height, @tile_size = [@x, @y, @width, @height, @tile_size].map &:to_i
-    @ncolumn                            = @width / @tile_size
-  end
-
-  def save(proj)
-    super.merge({
-      x:, y:, w: @width, h: @height, tile_size: @tile_size,
-      tiles: @tiles.map {_1&.save proj}
-    })
-  end
-
-  def state_variables() =
+  protected def state_variables() =
     {x:, y:, width:, height:, tile_size: @tile_size, tiles: @tiles}
 
   attr_reader :x, :y, :width, :height
@@ -71,7 +52,6 @@ class Reight::MapChunk
       index         = pos2index__ xx, yy
       @tiles[index] = nil if @tiles[index]&.asset.id == tile.asset.id
     end
-    delete_last_nils__
     invalidate_cache__
   end
 
@@ -159,12 +139,6 @@ class Reight::MapChunk
   def align_tile_pos__(x, y)
     s = @tile_size
     [x.to_i / s * s, y.to_i / s * s]
-  end
-
-  # @private
-  def delete_last_nils__()
-    last   = @tiles.rindex {_1 != nil}
-    @tiles = @tiles[..last] if last
   end
 
   # @private

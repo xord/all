@@ -11,16 +11,14 @@ class Reight::Map
 
   def initialize(tile_size: 8, chunk_size: 128, load: nil)
     super load: load
+
+    @chunks = {}
     if load
-      state, project                  = load.fetch_values :state, :project
-      @tile_size, @chunk_size, chunks = state.fetch_values :tile_size, :chunk_size, :chunks
-      @chunks                         = chunks.each.with_object({}) do |chunk, hash|
-        ch = Reight::MapChunk.load chunk, project
-        hash[[ch.x, ch.y]] = ch
-      end
+      state, project                 = load.fetch_values :state, :project
+      @tile_size, @chunk_size, tiles = state.fetch_values :tile_size, :chunk_size, :tiles
+      tiles.each {put_tile__ Reight::MapTile.load _1, project}
     else
       @tile_size, @chunk_size = tile_size, chunk_size
-      @chunks                 = {}
     end
 
     raise ArgumentError, "Invalid tile_size: #{tile_size}" unless
@@ -34,7 +32,7 @@ class Reight::Map
   def save(proj)
     super.merge({
       tile_size: @tile_size, chunk_size: @chunk_size,
-      chunks: @chunks.values.map {_1.save proj}
+      tiles: each_tile.map {_1.save proj}
     })
   end
 
@@ -65,10 +63,7 @@ class Reight::Map
 
   def put(x, y, asset)
     return unless asset
-    tile = Reight::MapTile.new asset, *align_tile_pos__(x, y)
-    each_chunk__ tile.x, tile.y, tile.w, tile.h, create: true do |chunk|
-      chunk.put tile
-    end
+    put_tile__ Reight::MapTile.new(asset, *align_tile_pos__(x, y))
   end
 
   def remove(x, y)
@@ -117,6 +112,13 @@ class Reight::Map
   end
 
   private
+
+  # @private
+  def put_tile__(tile)
+    each_chunk__ tile.x, tile.y, tile.w, tile.h, create: true do |chunk|
+      chunk.put tile
+    end
+  end
 
   # @private
   def each_chunk__(x, y, w = 0, h = 0, create: false, &block)
