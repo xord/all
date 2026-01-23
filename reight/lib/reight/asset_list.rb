@@ -33,7 +33,7 @@ class Reight::AssetList
   end
 
   def push(*assets)
-    insert -1, *assets
+    insert(-1, *assets)
   end
 
   alias append push
