@@ -8,8 +8,8 @@ class Reight::SpriteAnimation < Reight::Asset
     Reight::Editable.load Reight::SpriteAnimation, state:, project:
   end
 
-  def initialize(id = 0, width = 0, height = 0, fps: 2, load: nil)
-    super id, width, height, load: load
+  def initialize(id = 0, width = 0, height = 0, fps: 2, name: nil, load: nil)
+    super id, width, height, name: name, load: load
     if load
       state, project = load.fetch_values :state, :project
       @fps    = state.fetch :fps
@@ -79,6 +79,10 @@ class Reight::SpriteAnimation < Reight::Asset
     @images.empty?
   end
 
+  def asset_type()
+    'anim'
+  end
+
   private
 
   # @private
@@ -100,7 +104,7 @@ class Reight::SpriteAnimation < Reight::Asset
 
   # @private
   def image_path__(project)
-    project.path_for "anim_#{id}.png"
+    project.path_for "#{asset_type}_#{id}.png"
   end
 
   # @private
