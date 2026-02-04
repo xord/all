@@ -52,10 +52,6 @@ class Reight::AssetList
     end
   end
 
-  def find(id)
-    @assets.find {_1.id == id}
-  end
-
   def each(&block)
     return enum_for :each unless block
     @assets.each(&block)
