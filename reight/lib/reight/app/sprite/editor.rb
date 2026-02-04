@@ -7,12 +7,6 @@ class Reight::SpriteEditor < Reight::App
     super project, Reight::SpriteEditor::Controller, Reight::SpriteEditor::Interface
   end
 
-  def draw()
-    background 200
-    sprite(*@interface.sprites)
-    super
-  end
-
   def cut(...)   = @controller.cut(...)
   def copy(...)  = @controller.copy(...)
   def paste(...) = @controller.paste(...)
