@@ -6,7 +6,7 @@ class Reight::SpriteEditor::Select < Reight::SpriteEditor::Tool
     x0, y0 = @press_pos || return
     if @moving
       dx, dy = (x - x0).to_i, (y - y0).to_i
-      controller.history.group do
+      controller.group_history do
         image, cx, cy = controller.cut
         xx, yy, w, h  = cx + dx, cy + dy, image.w, image.h
         controller.begin_drawing {_1.copy image, 0, 0, w, h, xx, yy, w, h}
