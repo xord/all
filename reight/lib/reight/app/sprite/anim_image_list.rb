@@ -1,10 +1,78 @@
-using Reight
+class Reight::SpriteEditor::AnimImageList
 
-
-class Reight::App::Chips
+  C       = Reight::CONTEXT__
+  PADDING = 1
 
   include Reight::Hookable
 
+  def initialize()
+    hook :selected
+
+    self.anim = nil
+  end
+
+  def anim=(anim)
+    return if anim == @anim
+    @anim = anim
+    select @anim&.at 0
+  end
+
+  def select(image)
+    return if image == @image
+    @image = image
+    selected! @image
+  end
+
+  def draw()
+    sp = sprite
+    C.clip sp.x, sp.y, sp.w, sp.h
+
+    image_frames.each do |image, x, y, w, h|
+      if image
+        C.blend image, 0, 0, image.w, image.h, x, y, w, h, REPLACE
+      else
+        C.fill 190
+        C.no_stroke
+        C.rect x, y, w, h
+      end
+      if image && image == @image
+        C.no_fill
+        C.stroke 255
+        C.rect x, y, w + 1, h + 1
+      end
+    end
+  end
+
+  def mouse_clicked(x, y)
+    image, = image_frames.find do |image, xx, yy, ww, hh|
+      image && (xx..(xx + ww)).include?(x) && (yy..(yy + hh)).include?(y)
+    end
+    selected! image if image
+  end
+
+  def sprite()
+    @sprite ||= RubySketch::Sprite.new.tap do |sp|
+      sp.draw           {draw}
+      #sp.mouse_pressed  {mouse_pressed  sp.mouse_x, sp.mouse_y}
+      #sp.mouse_released {mouse_released sp.mouse_x, sp.mouse_y}
+      #sp.mouse_dragged  {mouse_dragged  sp.mouse_x, sp.mouse_y}
+      sp.mouse_clicked  {mouse_clicked  sp.mouse_x, sp.mouse_y}
+    end
+  end
+
+  private
+
+  def image_frames()
+    return [] unless @anim
+    w = h = sprite.h - PADDING * 2
+    images  = @anim.to_a
+    least   = (sprite.w / sprite.h.to_f).ceil
+    images += [nil] * (least - @anim.size) if least > @anim.size
+    images.map.with_index do |image, index|
+      [image, PADDING + (w + PADDING) * index, PADDING, w, h]
+    end
+  end
+=begin
   def initialize(
     app, chips, size = 8,
     page_width  = app.project.chips_page_width,
@@ -120,5 +188,5 @@ class Reight::App::Chips
   def align_to_grid(n)
     n.to_i / 8 * 8
   end
-
-end# Chips
+=end
+end# AnimImageList

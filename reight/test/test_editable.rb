@@ -34,7 +34,7 @@ class TestEditable < Test::Unit::TestCase
     assert_nil child.parent
   end
 
-  def test_modified()
+  def test_modified?()
     pj = proj
     assert_true [pj, pj.root].all?(&:modified?)
 
@@ -43,6 +43,20 @@ class TestEditable < Test::Unit::TestCase
 
     pj.root.modified!
     assert_true [pj, pj.root].all?(&:modified?)
+  end
+
+  def test_modified!()
+    pj_modified_event = root_modified_event = false
+
+    pj = proj
+    pj     .modified {  pj_modified_event = true}
+    pj.root.modified {root_modified_event = true}
+
+    pj.root.modified!
+    assert_true  pj     .modified?
+    assert_true  pj.root.modified?
+    assert_false   pj_modified_event
+    assert_true  root_modified_event
   end
 
   private

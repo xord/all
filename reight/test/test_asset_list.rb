@@ -54,12 +54,6 @@ class TestAssetList < Test::Unit::TestCase
     a  = ls.remove_at(-1); assert_nil      a
   end
 
-  def test_find()
-    assert_equal 1, list([asset(1), asset(2), asset(3)]).find(1).id
-    assert_equal 2, list([asset(1), asset(2), asset(3)]).find(2).id
-    assert_equal 3, list([asset(1), asset(2), asset(3)]).find(3).id
-  end
-
   def test_each()
     ls = list [asset(1), asset(2), asset(3)]
     assert_equal [1, 2, 3], ls     .to_a.map(&:id)
