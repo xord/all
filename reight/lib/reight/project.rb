@@ -1,7 +1,6 @@
-using Reight
-
-
 class Reight::Project
+
+  C = Reight::CONTEXT__
 
   include Xot::Inspectable
 
@@ -13,17 +12,21 @@ class Reight::Project
     if File.exist? settings.project_json_path
       project   = read_json settings.project_json_path
       sprites   = read_json settings.sprites_json_path
+      #maps      = read_json settings.maps_json_path
+      #sounds    = read_json settings.sounds_json_path
       @next_id, = project.fetch :next_id
       @settings = Reight::Settings .load project.fetch(:settings), self
-      @sprites  = Reight::AssetList.load Reight::SpriteAsset,  sprites, self
-      #@maps     = Reight::AssetList.load Reight::TileMapAsset, maps,    self
-      #@sounds   = Reight::AssetList.load Reight::SoundAsset,   sound,   self
+      @sprites  = Reight::AssetList.load Reight::SpriteAsset, sprites, self
+      #@maps     = Reight::AssetList.load Reight::MapAsset,    maps,    self
+      #@sounds   = Reight::AssetList.load Reight::SoundAsset,  sound,   self
     else
       @next_id  = 1
       @settings = settings
       @sprites  = Reight::AssetList.new Reight::SpriteAsset
-      #@maps     = Reight::AssetList.new Reight::TileMapAsset
+      #@maps     = Reight::AssetList.new Reight::MapAsset
       #@sounds   = Reight::AssetList.new Reight::SoundAsset
+
+      create_sprite_asset 0, 0, 16, 16
     end
   end
 
@@ -48,32 +51,42 @@ class Reight::Project
 
   def get_asset(id)
     @id2asset_cache     ||= {}
-    @id2asset_cache[id] ||= @sprites.find(id)
+    @id2asset_cache[id] ||= @sprites.find {_1.id == id}
   end
 
   def path_for(name)
     File.expand_path name, project_dir
   end
 
-  def codes()  = @codes  ||= settings.code_paths.map {File.read _1 rescue nil}
+  def scripts() = @codes  ||= settings.script_paths.map {File.read _1 rescue nil}
 
-  def maps()   = @maps   ||= load_maps
-
-  def sounds() = @sounds ||= load_sounds
-
-  def font     = @font   ||= create_font(nil, settings.font_size)
+  def font      = @font   ||= C.create_font(nil, settings.font_size)
 
   def modified?()
     @settings.modified? || @sprites.modified? #|| @maps.modified? || @sounds.modified?
   end
 
+  def create_sprite_asset(x, y, w, h)
+    raise 'Overlaps with other assets' if @sprites.find {_1.hit? x, y, w, h}
+    @sprites.push Reight::SpriteAsset.new(get_next_id, w, h, x, y).tap {|asset|
+      asset.anims.push Reight::SpriteAnimation.new(get_next_id, w, h).tap {|anim|
+        anim.push anim.create_image
+      }
+    }
+    @sprites[-1]
+  end
+
+  def create_sprite(name)
+    sprites.find {_1.name == name}.create_sprite
+  end
+
   def clear_all_sprites()
     sprites.each(&:clear_sprite)
-    maps   .each(&:clear_sprites)
+    #maps   .each(&:clear_sprites)
   end
 
   private
-
+=begin
   def load_maps()
     if File.file? maps_json_path
       json = JSON.parse File.read(maps_json_path), symbolize_names: true
@@ -91,7 +104,7 @@ class Reight::Project
       [Reight::Sound.new]
     end
   end
-
+=end
   def to_json(hash, readable: true)
     if readable
       JSON.pretty_generate hash

@@ -3,6 +3,24 @@ using Reight
 
 class Reight::SpriteEditor < Reight::App
 
+  def initialize(project)
+    super project, Reight::SpriteEditor::Controller, Reight::SpriteEditor::Interface
+  end
+
+  def draw()
+    background 200
+    sprite(*@interface.sprites)
+    super
+  end
+
+  def cut(...)   = @controller.cut(...)
+  def copy(...)  = @controller.copy(...)
+  def paste(...) = @controller.paste(...)
+
+  def undo(...)  = @controller.undo(...)
+  def redo(...)  = @controller.redo(...)
+
+=begin
   def canvas()
     @canvas ||= Canvas.new(
       self,
@@ -279,5 +297,5 @@ class Reight::SpriteEditor < Reight::App
     shapes[[nil, :rect, :circle].index(chip.shape)].click
     types[chip.sensor? ? 1 : 0].click
   end
-
+=end
 end# SpriteEditor

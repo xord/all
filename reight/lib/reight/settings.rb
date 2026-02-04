@@ -52,18 +52,11 @@ class Reight::Settings
   end
 
   setting :sprites_page_width do
-    256
+    128
   end
 
   setting :sprites_page_height do
-    256
-  end
-
-  def sprites_npages()
-    w = sprites_width  / sprites_page_width .to_f
-    h = sprites_height / sprites_page_height.to_f
-    raise unless w == w.to_i && h == h.to_i
-    (w * h).to_i
+    128
   end
 
   setting :maps_json_name do
