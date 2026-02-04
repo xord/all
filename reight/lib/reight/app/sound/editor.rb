@@ -15,12 +15,6 @@ class Reight::SoundEditor < Reight::App
     end
   end
 
-  def draw()
-    background 200
-    sprite(*sprites)
-    super
-  end
-
   def key_pressed()
     super
     case key_code

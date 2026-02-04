@@ -23,12 +23,6 @@ class Reight::MapEditor < Reight::App
     end
   end
 
-  def draw()
-    background 200
-    sprite(*sprites)
-    super
-  end
-
   def key_pressed()
     super
     shift, ctrl, cmd = %i[shift control command].map {pressing? _1}
