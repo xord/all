@@ -18,8 +18,8 @@ class TestMap < Test::Unit::TestCase
 
   def test_load()
     pj = proj.tap do |pj|
-      pj.sprites.push asset(1, 10)
-      pj.sprites.push asset(2, 20)
+      pj.sprites.add asset(1, 10,  0, 0)
+      pj.sprites.add asset(2, 20, 10, 0)
     end
     loaded = R8::Map.load({
       tile_size: 10, chunk_size: 30, tiles: [[1,10,20], [2,20,10]]
@@ -27,8 +27,8 @@ class TestMap < Test::Unit::TestCase
 
     assert_equal(
       map(tile_size: 10, chunk_size: 30).tap {
-        _1.put 10, 20, asset(1, 10)
-        _1.put 20, 10, asset(2, 20)
+        _1.put 10, 20, asset(1, 10,  0, 0)
+        _1.put 20, 10, asset(2, 20, 10, 0)
       },
       loaded)
     assert_equal loaded[20, 10].object_id, loaded[30, 10].object_id
@@ -187,13 +187,13 @@ class TestMap < Test::Unit::TestCase
 
   C = R8::CONTEXT__
 
-  def map(...)                            = R8::Map.new(...)
+  def map(...)                      = R8::Map.new(...)
 
-  def tile(...)                           = R8::MapTile.new(...)
+  def tile(...)                     = R8::MapTile.new(...)
 
-  def asset(id, w, h = nil, x = 0, y = 0) = R8::SpriteAsset.new(id, w, h || w, x, y)
+  def asset(id, size, x = 0, y = 0) = R8::SpriteAsset.new(id, size, size, x, y)
 
-  def proj(dir = '/tmp')                  = R8::Project.new dir
+  def proj(dir = '/tmp')            = R8::Project.new dir
 
   def count_all_tiles(map_, map_size = 90, tile_size: 10)
     range = (-map_size...map_size).step(tile_size).to_a

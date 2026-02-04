@@ -2,8 +2,8 @@ class Reight::History
 
   def initialize(undos = [], redos = [])
     super()
-    @undos, @redos   = undos, redos
-    @group, @enabled = nil, true
+    @undos, @redos                 = undos, redos
+    @enabled, @group, @group_depth = true, nil, 0
   end
 
   def append(*actions)
@@ -19,8 +19,8 @@ class Reight::History
   end
 
   def begin_grouping(*args, **kwargs, &block)
-    raise "Grouping cannot be nested" if @group
-    @group = []
+    @group_depth += 1
+    @group = [] if @group_depth == 1
     if block
       begin
         block.call(*args, **kwargs)
@@ -33,9 +33,11 @@ class Reight::History
   alias group begin_grouping
 
   def end_grouping()
-    raise "'begin_grouping' is missing" unless @group
-    actions, @group = @group, nil
-    append(*actions)
+    @group_depth -= 1
+    if @group_depth == 0
+      actions, @group = @group, nil
+      append(*actions)
+    end
   end
 
   def undo(&block)
