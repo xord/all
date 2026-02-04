@@ -1,37 +1,24 @@
-using Reight
-
-
 class Reight::SpriteEditor::Line < Reight::SpriteEditor::Tool
 
-  def initialize(app, &block)
-    super app, icon: app.icon(4, 2, 8), &block
-    set_help left: name, right: 'Pick Color'
-  end
+  C = Reight::CONTEXT__
 
   def draw_line(x, y)
-    canvas.begin_editing do
-      canvas.paint do |g|
-        g.stroke(*canvas.color)
-        g.stroke_weight 0
-        g.line @x, @y, x, y
-      end
+    controller.begin_drawing do |g|
+      g.stroke(*controller.color)
+      g.stroke_weight 0
+      g.blend_mode REPLACE
+      g.line(*[@x, @y].map {_1.floor}, *[x, y].map {_1.ceil})
     end
   end
 
   def canvas_pressed(x, y, button)
-    return unless button == LEFT
     @x, @y = x, y
     draw_line x, y
   end
 
   def canvas_dragged(x, y, button)
-    return unless button == LEFT
-    app.undo flash: false
+    controller.undo
     draw_line x, y
-  end
-
-  def canvas_clicked(x, y, button)
-    pick_color x, y if button == RIGHT
   end
 
 end# Line

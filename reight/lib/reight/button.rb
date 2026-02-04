@@ -1,7 +1,6 @@
-using Reight
-
-
 class Reight::Button
+
+  C = Reight::CONTEXT__
 
   include Reight::Activatable
   include Reight::Hookable
@@ -21,32 +20,32 @@ class Reight::Button
 
   def draw()
     sp = sprite
-    no_stroke
+    C.no_stroke
 
     if @label
-      fill 210
-      rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
+      C.fill 210
+      C.rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
     end
 
     if active?
-      fill 230
-      rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
+      C.fill 230
+      C.rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
     end
 
     if @icon
       x  = (sp.w - @icon.width)  / 2
       y  = (sp.h - @icon.height) / 2
       y += 1 if pressing?
-      image enabled? ? @icon : disabled_icon, x, y
+      C.image enabled? ? @icon : disabled_icon, x, y
     end
 
     if @label
       y = pressing? ? 1 : 0
-      text_align CENTER, CENTER
-      fill active? ? 250 : 230
-      text @label, 0, y + 1, sp.w, sp.h
-      fill active? ? 70  : 50
-      text @label, 0, y,     sp.w, sp.h
+      C.text_align CENTER, CENTER
+      C.fill active? ? 250 : 230
+      C.text @label, 0, y + 1, sp.w, sp.h
+      C.fill active? ? 70  : 50
+      C.text @label, 0, y,     sp.w, sp.h
     end
   end
 
@@ -84,10 +83,10 @@ class Reight::Button
   end
 
   def disabled_icon()
-    @disabled_icon ||= createGraphics(@icon.width, @icon.height).tap do |g|
+    @disabled_icon ||= C.createGraphics(@icon.width, @icon.height).tap do |g|
       g.beginDraw {g.image @icon, 0, 0}
       g.load_pixels
-      g.pixels.map! {|c| alpha(c) > 0 ? color(180) : c}
+      g.pixels.map! {|c| C.alpha(c) > 0 ? C.color(180) : c}
       g.update_pixels
     end
   end

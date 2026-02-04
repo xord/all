@@ -1,10 +1,9 @@
-using Reight
-
-
 class Reight::SpriteEditor::Color < Reight::Button
 
-  def initialize(color, &clicked)
-    super name: color[0, 3].map {_1.to_s(16).upcase}.join, &clicked
+  C = Reight::CONTEXT__
+
+  def initialize(color)
+    super name: color[0, 3].map {_1.to_s(16).upcase}.join
     @color = color
     set_help name: "##{name}"
   end
@@ -14,18 +13,18 @@ class Reight::SpriteEditor::Color < Reight::Button
   def draw()
     sp = sprite
 
-    fill(*color)
-    no_stroke
-    blend_mode REPLACE
-    rect 0, 0, sp.w, sp.h
+    C.fill(*color)
+    C.no_stroke
+    C.blend_mode REPLACE
+    C.rect 0, 0, sp.w, sp.h
 
     if active?
-      no_fill
-      stroke_weight 1
-      stroke '#000000'
-      rect 2, 2, sp.w - 4, sp.h - 4
-      stroke '#ffffff'
-      rect 1, 1, sp.w - 2, sp.h - 2
+      C.no_fill
+      #C.stroke_weight 1
+      C.stroke '#000000'
+      C.rect 2, 2, sp.w - 3, sp.h - 3
+      C.stroke '#ffffff'
+      C.rect 1, 1, sp.w - 1, sp.h - 1
     end
   end
 
