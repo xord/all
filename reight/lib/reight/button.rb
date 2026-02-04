@@ -42,10 +42,15 @@ class Reight::Button
     if @label
       y = pressing? ? 1 : 0
       C.text_align CENTER, CENTER
-      C.fill active? ? 250 : 230
-      C.text @label, 0, y + 1, sp.w, sp.h
-      C.fill active? ? 70  : 50
-      C.text @label, 0, y,     sp.w, sp.h
+      if enabled?
+        C.fill active? ? 250 : 230
+        C.text @label, 0, y + 1, sp.w, sp.h
+        C.fill active? ? 70  : 50
+        C.text @label, 0, y,     sp.w, sp.h
+      else
+        C.fill 180
+        C.text @label, 0, y,     sp.w, sp.h
+      end
     end
   end
 

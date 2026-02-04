@@ -25,8 +25,6 @@ class Reight::Project
       @sprites  = Reight::AssetList.new Reight::SpriteAsset
       #@maps     = Reight::AssetList.new Reight::MapAsset
       #@sounds   = Reight::AssetList.new Reight::SoundAsset
-
-      create_sprite_asset 0, 0, 16, 16
     end
   end
 
@@ -64,16 +62,6 @@ class Reight::Project
 
   def modified?()
     @settings.modified? || @sprites.modified? #|| @maps.modified? || @sounds.modified?
-  end
-
-  def create_sprite_asset(x, y, w, h)
-    raise 'Overlaps with other assets' if @sprites.find {_1.hit? x, y, w, h}
-    @sprites.push Reight::SpriteAsset.new(get_next_id, w, h, x, y).tap {|asset|
-      asset.anims.push Reight::SpriteAnimation.new(get_next_id, w, h).tap {|anim|
-        anim.push anim.create_image
-      }
-    }
-    @sprites[-1]
   end
 
   def create_sprite(name)
