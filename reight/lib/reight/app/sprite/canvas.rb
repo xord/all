@@ -1,10 +1,125 @@
-using Reight
-
-
+# @private
 class Reight::SpriteEditor::Canvas
+
+  C = Reight::CONTEXT__
 
   include Reight::Hookable
 
+  def initialize()
+    hook :image_changed
+    hook :canvas_pressed
+    hook :canvas_released
+    hook :canvas_moved
+    hook :canvas_dragged
+    hook :canvas_clicked
+  end
+
+  attr_accessor :selection
+
+  def image=(image)
+    return if image == @image
+    @image = image
+    @grids = nil
+    image_changed! @image
+  end
+
+  def draw()
+    sp = sprite
+    C.clip sp.x, sp.y, sp.w, sp.h
+    C.fill 0
+    C.no_stroke
+    C.rect 0, 0, sp.w, sp.h
+    return unless @image
+
+    C.push do
+      sx, sy = sp.w / @image.w, sp.h / @image.h
+      C.scale sx, sy
+      C.no_fill
+      C.stroke_weight 0
+
+      draw_grids__
+      draw_selection__ sx, sy
+    end
+
+    C.copy @image, 0, 0, @image.w, @image.h, 0, 0, sp.w, sp.h if @image
+  end
+
+  def sprite()
+    @sprite ||= RubySketch::Sprite.new.tap do |sp|
+      pos = -> {to_image sp.mouse_x, sp.mouse_y}
+      sp.draw           {draw}
+      sp.mouse_pressed  {canvas_pressed!( *pos.call, sp.mouse_button) if @image}
+      sp.mouse_released {canvas_released!(*pos.call, sp.mouse_button) if @image}
+      sp.mouse_moved    {canvas_moved!(   *pos.call)                  if @image}
+      sp.mouse_dragged  {canvas_dragged!( *pos.call, sp.mouse_button) if @image}
+      sp.mouse_clicked  {canvas_clicked!( *pos.call, sp.mouse_button) if @image}
+    end
+  end
+
+  private
+
+  def to_image(x, y)
+    sp = sprite
+    return x * (@image.w.to_f / sp.w), y * (@image.h.to_f / sp.h)
+  end
+
+  def draw_grids__()
+    C.push do
+      C.stroke 50, 50, 50
+      C.shape grid__ 8
+      C.stroke 100, 100, 100
+      C.shape grid__ 16
+      C.stroke 150, 150, 150
+      C.shape grid__ 32
+    end
+  end
+
+  def grid__(interval)
+    (@grids ||= {})[interval] ||= C.create_shape.tap do |sh|
+      w, h = @image.w, @image.h
+      sh.begin_shape LINES
+      (0..w).step(interval).each do |x|
+        sh.vertex x, 0
+        sh.vertex x, h
+      end
+      (0..h).step(interval).each do |y|
+        sh.vertex 0, y
+        sh.vertex w, y
+      end
+      sh.end_shape
+    end
+  end
+
+  def draw_selection__(scale_x, scale_y)
+    return unless @selection&.size == 4
+    C.push do
+      C.no_fill
+      C.stroke 255, 255, 255
+      C.shader selection_shader__.tap {|sh|
+        sh.set :time, C.frame_count.to_f / 60
+        sh.set :scale, scale_x, scale_y
+      }
+      C.rect(*@selection)
+    end
+  end
+
+  def selection_shader__()
+    @selection_shader ||= C.create_shader nil, <<~END
+      varying vec4  vertTexCoord;
+      uniform float time;
+      uniform vec2  scale;
+      void main()
+      {
+        vec2 pos = vertTexCoord.xy * scale;
+        float t  = floor(time * 4.) / 4.;
+        float x  = mod( pos.x + time, 4.) < 2. ? 1. : 0.;
+        float y  = mod(-pos.y + time, 4.) < 2. ? 1. : 0.;
+        gl_FragColor = x != y ? vec4(0., 0., 0., 1.) : vec4(1., 1., 1., 1.);
+      }
+    END
+  end
+
+=begin
   def initialize(app, image, path)
     hook :frame_changed
     hook :selection_changed
@@ -223,7 +338,7 @@ class Reight::SpriteEditor::Canvas
         sh.set :time, frame_count.to_f / 60
         sh.set :scale, scale_x, scale_y
       }
-=begin
+ =begin
       begin_shape LINES
       x, y, w, h = @selection
       vertex x,     y,     x, 0
@@ -235,7 +350,7 @@ class Reight::SpriteEditor::Canvas
       vertex x,     y + h, x, 0
       vertex x,     y,     x + w, 0
       end_shape
-=end
+ =end
       rect(*@selection)
     end
   end
@@ -255,5 +370,5 @@ class Reight::SpriteEditor::Canvas
       }
     END
   end
-
+=end
 end# Canvas

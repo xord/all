@@ -3,14 +3,14 @@ using Reight
 
 class Reight::App
 
-  SCREEN_WIDTH     = 400
-  SCREEN_HEIGHT    = 224
+  SCREEN_WIDTH      = 400
+  SCREEN_HEIGHT     = 224
 
-  SPACE            = 6
-  BUTTON_SIZE      = 12
-  INDEX_SIZE       = 36
-  NAVIGATOR_HEIGHT = BUTTON_SIZE + 2
-  CHIPS_WIDTH      = 128
+  SPACE             = 6
+  BUTTON_SIZE       = 12
+  INDEX_SIZE        = 36
+  NAVIGATOR_HEIGHT  = BUTTON_SIZE + 2
+  ASSET_TABLE_WIDTH = 128
 
   PALETTE_COLORS   = %w[
     #00000000 #742f29 #ab5236 #f18459 #f7cca9 #ee044e #b8023f #7e2553
@@ -19,9 +19,11 @@ class Reight::App
     #1e5359   #2d8750 #3eb250 #4fe436 #95f041 #f8ec27 #f3a207 #e26b02
   ]
 
-  def initialize(project)
-    @project = project
-    @active  = false
+  def initialize(project, controller_class = nil, interface_class = nil)
+    @project    = project
+    @controller = controller_class&.new project
+    @interface  = interface_class&.new project, @controller
+    @active     = false
   end
 
   attr_reader :project
@@ -34,15 +36,6 @@ class Reight::App
     #navigator.flash(...) if history.enabled?
   end
 
-  def group(*buttons)
-    buttons.each.with_index do |button, index|
-      button.clicked do
-        buttons.each.with_index {|b, i| b.active = i == index}
-      end
-    end
-    buttons
-  end
-
   def active?()
     @active
   end
@@ -51,21 +44,8 @@ class Reight::App
     pressing_keys.include? key
   end
 
-  def history()
-    @history ||= Reight::History.new
-  end
-
   def sprites()
-    navigator.sprites
-  end
-
-  def icon(xi, yi, size)
-    (@icon ||= {})[[xi, yi, size]] ||= createGraphics(size, size).tap do |g|
-      g.beginDraw do
-        g.copy r8.icons, xi * size, yi * size, size, size, 0, 0, size, size
-      end
-    end
-    # TODO: ||= r8.icons.sub_image xi * size, yi * size, size, size
+    navigator.sprites + (@interface ? @interface.sprites : [])
   end
 
   def activated()
@@ -79,10 +59,8 @@ class Reight::App
     remove_world world if world
   end
 
-  def setup()
-  end
-
   def draw()
+    sprite(*@interface.sprites) if @interface
     navigator.draw
   end
 
@@ -97,8 +75,10 @@ class Reight::App
 
   def window_resized()
     navigator.window_resized
+    @interface&.update_layout
   end
 
+  def setup()          = nil
   def key_typed()      = nil
   def mouse_pressed()  = nil
   def mouse_released() = nil
@@ -118,9 +98,16 @@ class Reight::App
   #def undo(flash: true) = nil
   #def redo(flash: true) = nil
 
+  def can_undo?() = @controller&.can_undo? == true
+  def can_redo?() = @controller&.can_redo? == true
+
   #def cut(  flash: true) = nil
   #def copy( flash: true) = nil
   #def paste(flash: true) = nil
+
+  def can_copy?()  = @controller&.can_copy?
+  def can_cut?()   = @controller&.can_cut?
+  def can_paste?() = @controller&.can_paste?
 
   def inspect()
     "#<#{self.class.name}:0x#{object_id}>"

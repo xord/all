@@ -78,7 +78,7 @@ class Reight::Navigator
 
   def app_buttons()
     @app_buttons ||= r8.apps.map.with_index {|app, index|
-      Reight::Button.new(name: app.label, icon: app.icon(index, 0, 8)) {
+      Reight::Button.new(name: app.label, icon: r8.icon(index, 0, 8)) {
         r8.current = app
       }
     }
@@ -87,15 +87,15 @@ class Reight::Navigator
   def history_buttons()
     @history_buttons ||= [].tap do |buttons|
       next unless @app.respond_to? :undo
-      buttons << Reight::Button.new(name: 'Undo', icon: @app.icon(3, 1, 8)) {
-        @app.undo flash: false
+      buttons << Reight::Button.new(name: 'Undo', icon: r8.icon(3, 1, 8)) {
+        @app.undo
       }.tap {|b|
-        b.enabled? {@app.history.can_undo?}
+        b.enabled? {@app.can_undo?}
       }
-      buttons << Reight::Button.new(name: 'Redo', icon: @app.icon(4, 1, 8)) {
-        @app.redo flash: false
+      buttons << Reight::Button.new(name: 'Redo', icon: r8.icon(4, 1, 8)) {
+        @app.redo
       }.tap {|b|
-        b.enabled? {@app.history.can_redo?}
+        b.enabled? {@app.can_redo?}
       }
     end
   end
@@ -103,18 +103,18 @@ class Reight::Navigator
   def edit_buttons()
     @edit_buttons ||= [].tap do |buttons|
       next unless @app.respond_to? :paste
-      buttons << Reight::Button.new(name: 'Cut',   icon: @app.icon(0, 1, 8)) {
-        @app.cut   flash: false
+      buttons << Reight::Button.new(name: 'Cut',   icon: r8.icon(0, 1, 8)) {
+        @app.cut
       }.tap {|b|
         b.enabled? {@app.can_cut?}
       }
-      buttons << Reight::Button.new(name: 'Copy',  icon: @app.icon(1, 1, 8)) {
-        @app.copy  flash: false
+      buttons << Reight::Button.new(name: 'Copy',  icon: r8.icon(1, 1, 8)) {
+        @app.copy
       }.tap {|b|
         b.enabled? {@app.can_copy?}
       }
-      buttons << Reight::Button.new(name: 'Paste', icon: @app.icon(2, 1, 8)) {
-        @app.paste flash: false
+      buttons << Reight::Button.new(name: 'Paste', icon: r8.icon(2, 1, 8)) {
+        @app.paste
       }.tap {|b|
         b.enabled? {@app.can_paste?}
       }

@@ -26,8 +26,8 @@ class Reight::R8
     @apps ||= [].tap {|a|
       a << Reight::Runner      .new(project)
       a << Reight::SpriteEditor.new(project) if edit?
-      a << Reight::MapEditor   .new(project) if edit?
-      a << Reight::SoundEditor .new(project) if edit?
+      #a << Reight::MapEditor   .new(project) if edit?
+      #a << Reight::SoundEditor .new(project) if edit?
     }
   end
 
@@ -40,6 +40,15 @@ class Reight::R8
       img.pixels.map! {|c| c == transp ? color(0, 0, 0, 0) : c}
       img.update_pixels
     end
+  end
+
+  def icon(xi, yi, size)
+    (@icon ||= {})[[xi, yi, size]] ||= createGraphics(size, size).tap do |g|
+      g.beginDraw do
+        g.copy icons, xi * size, yi * size, size, size, 0, 0, size, size
+      end
+    end
+    # TODO: ||= r8.icons.sub_image xi * size, yi * size, size, size
   end
 
   def current=(app)
@@ -59,7 +68,7 @@ class Reight::R8
     w, h = Reight::App::SCREEN_WIDTH, Reight::App::SCREEN_HEIGHT
     createCanvas w, h, pixelDensity: AUTO
     window_resize(*[w, h].map {_1 * 3})
-    text_font r8.project.font, r8.project.font_size
+    text_font r8.project.font, r8.project.settings.font_size
   end
 
   def draw()           = current.draw
