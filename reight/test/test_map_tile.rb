@@ -18,7 +18,7 @@ class TestMapTile < Test::Unit::TestCase
   end
 
   def test_load()
-    pj = proj.tap {_1.sprites.push sprite(1)}
+    pj = proj.tap {_1.sprites.add sprite(1)}
 
     assert_equal 1, Tile.load([1, 2, 3], pj).asset.id
     assert_equal 2, Tile.load([1, 2, 3], pj).x

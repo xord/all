@@ -57,7 +57,7 @@ class Reight::Asset
   def hit?(x, y, w = 0, h = 0)
     x, w = x + w, -w if w < 0
     y, h = y + h, -h if h < 0
-    @x <= x + w && x < @x + @width && @y <= y + h && y < @y + @height
+    @x < x + w && x < @x + @width && @y < y + h && y < @y + @height
   end
 
   def asset_type()

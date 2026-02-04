@@ -87,6 +87,13 @@ class TestAsset < Test::Unit::TestCase
     assert_false a.modified?
   end
 
+  def test_hit?()
+    assert_false asset(0, 1, 1, 0, 0).hit?( 1,  0, 1, 1)
+    assert_false asset(0, 1, 1, 0, 0).hit?(-1,  0, 1, 1)
+    assert_false asset(0, 1, 1, 0, 0).hit?( 0,  1, 1, 1)
+    assert_false asset(0, 1, 1, 0, 0).hit?( 0, -1, 1, 1)
+  end
+
   def test_compare_by_state_variables()
     assert_equal(    asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 6, 'x'))
 
