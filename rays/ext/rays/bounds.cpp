@@ -62,7 +62,7 @@ RUCY_DEFN(include)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Bounds#include?", argc, 1, 2);
 
-	const Rays::Point& point = to<Rays::Point&>(argv[0]);
+	const Rays::Point& point = to<Rays::Point>(argv[0]);
 	int dimension            = argc >= 2 ? to<int>(argv[1]) : 2;
 
 	return value(THIS->is_include(point, dimension));
