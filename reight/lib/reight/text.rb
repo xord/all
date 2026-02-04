@@ -61,6 +61,8 @@ class Reight::Text
 
   def draw()
     sp = sprite
+    clip sp.x, sp.y, sp.w, sp.h
+
     no_stroke
 
     if @shake != 0
@@ -72,9 +74,9 @@ class Reight::Text
     fill focus? ? 230 : 200
     rect 0, 0, sp.w, sp.h, 3
 
-    show_old = value == ''
+    show_old = @old_value && (value.nil? || value.empty?)
     text     = show_old ? @old_value : value
-    text     = label.to_s + text unless focus?
+    text     = label.to_s + (text || '') unless focus?
     x        = 2
     fill show_old ? 200 : 50
     text_align @align, CENTER
@@ -93,14 +95,14 @@ class Reight::Text
     when ESC               then self.value  = @old_value; self.focus = false
     when ENTER             then self.focus  = false
     when DELETE, BACKSPACE then self.value  = value.split('').tap {_1.pop}.join
-    else                        self.value += key if key && valid?(key)
+    else                        self.value += key if key && valid?(key, ignore_regexp: false)
     end
   end
 
   def clicked(x, y)
     if focus?
       return if hit? x, y
-      self.value = @old_value if value == '' && !valid?(ignore_regexp: false)
+      self.value = @old_value if value == '' || !valid?(ignore_regexp: false)
       self.focus = false
     elsif editable?
       self.focus         = true

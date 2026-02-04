@@ -48,7 +48,7 @@ class Reight::SpriteAsset < Reight::Asset
 
   def sensor? = !!@sensor
 
-  def image   = @anims.first&.image_at 0
+  def image   = @anims.first&.image_at C.frame_count
 
   def empty?()
     pixels__.all? {C.red(_1) == 0 && C.green(_1) == 0 && C.blue(_1) == 0}
@@ -70,7 +70,7 @@ class Reight::SpriteAsset < Reight::Asset
       anims:  kwargs.key?(:anims)  ? anims  : @anims)# fix parent
   end
 
-  def to_sprite()
+  def create_sprite()
     physics, shape =
       case @shape
       when :rect   then [true,  nil]
@@ -78,7 +78,7 @@ class Reight::SpriteAsset < Reight::Asset
       else              [false, nil]
       end
     Reight::Sprite.new(
-      0, 0, w, h, chip: self,
+      0, 0, w, h, asset: self,
       image: image, offset: [x, y], shape: shape, physics: physics
     ).tap do |sp|
       if physics
@@ -87,6 +87,8 @@ class Reight::SpriteAsset < Reight::Asset
       end
     end
   end
+
+  alias to_sprite create_sprite
 
   def sprite()
     @sprite ||= to_sprite

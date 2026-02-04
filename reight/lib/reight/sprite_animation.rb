@@ -68,7 +68,7 @@ class Reight::SpriteAnimation < Reight::Asset
 
   def image_at(frame_count)
     return nil if @images.empty?
-    self[(frame_count / 60.0 / fps).to_i]
+    self[(frame_count / (60 / fps)).to_i % size]
   end
 
   def size()
@@ -81,6 +81,10 @@ class Reight::SpriteAnimation < Reight::Asset
 
   def asset_type()
     'anim'
+  end
+
+  def create_image()
+    C.create_graphics w, h
   end
 
   private

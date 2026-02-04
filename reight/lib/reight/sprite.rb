@@ -3,21 +3,20 @@ using Reight
 
 class Reight::Sprite < RubySketch::Sprite
 
-  def initialize(*a, chip: nil, **k, &b)
-    @chip, @state, @props = chip, nil, {}
-    @state_start          = frame_count
+  def initialize(*a, asset: nil, **k, &b)
+    @asset, @state, @props = asset, nil, {}
+    @state_start           = frame_count
     super(*a, **k, &b)
   end
 
   attr_accessor :map_chunk
 
-  attr_reader :chip, :props
+  attr_reader :asset, :props
 
   def state=(name)
-    @state = @chip.states[name] || @chip.states.first ||
-      raise("state '#{name}' not found")
+    @state       = @asset.states[name] || raise("state '#{name}' not found")
     @state_start = frame_count
-    state
+    @state
   end
 
   def state()
