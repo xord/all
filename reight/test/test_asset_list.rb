@@ -21,18 +21,18 @@ class TestAssetList < Test::Unit::TestCase
       ]}, proj))
   end
 
-  def test_insert()
-    ls = list;               assert_equal([],           ls.map(&:id))
-    ls.insert  0, asset(1);  assert_equal([1],          ls.map(&:id))
-    ls.insert  0, asset(2);  assert_equal([2, 1],       ls.map(&:id))
-    ls.insert  1, asset(3);  assert_equal([2, 3, 1],    ls.map(&:id))
-    ls.insert(-1, asset(4)); assert_equal([2, 3, 1, 4], ls.map(&:id))
-  end
+  def test_add()
+    ls = list
+    ls.add asset(1, 1, 1, 0, 0)
+    assert_equal [1],             ls.map(&:id)
 
-  def test_push()
-    ls = list;        assert_equal([],     ls.map(&:id))
-    ls.push asset(1); assert_equal([1],    ls.map(&:id))
-    ls.push asset(2); assert_equal([1, 2], ls.map(&:id))
+    ls.add asset(2, 1, 1, 2, 0)
+    ls.add asset(3, 1, 1, 1, 0)
+    assert_equal [1, 3, 2],       ls.map(&:id)
+
+    ls.add asset(4, 1, 1, 0, 2)
+    ls.add asset(5, 1, 1, 0, 1)
+    assert_equal [1, 3, 2, 5, 4], ls.map(&:id)
   end
 
   def test_remove()

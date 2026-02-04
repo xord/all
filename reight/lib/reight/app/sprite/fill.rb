@@ -7,7 +7,7 @@ class Reight::SpriteEditor::Fill < Reight::SpriteEditor::Tool
     sx, sy, sw, sh = controller.selection
     return unless (sx...(sx + sw)).include?(x) && (sy...(sy + sh)).include?(y)
     controller.begin_editing
-    w, h  = target_image.w, target_image.h
+    w     = target_image.w
     count = 0
     target_image.update_pixels do |pixels|
       from = pixels[y * w + x]

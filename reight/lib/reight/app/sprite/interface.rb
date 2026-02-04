@@ -16,33 +16,38 @@ class Reight::SpriteEditor::Interface
     c.color_changed       {|color| colors.each {_1.active = _1.color == color}}
     c.selection_changed   {canvas.selection = _1}
 
-    sprite_table.selected          {c.sprite = _1}
-    sprite_table.page_changed      {sprite_table_page.value = _1 + 1}
-    sprite_table_page_prev.clicked {sprite_table.page -= 1}
-    sprite_table_page_next.clicked {sprite_table.page += 1}
-    sprite_table_add.clicked       {sprite_table_add_clicked}
+    sprite_table.selected           {c.sprite = _1}
+    sprite_table.page_changed       {sprite_table_page.value = _1 + 1}
+    sprite_table_page_prev.enabled? {sprite_table.page > 0}
+    sprite_table_page_prev.clicked  {sprite_table.page -= 1}
+    sprite_table_page_next.enabled? {sprite_table.page < sprite_table.npages - 1}
+    sprite_table_page_next.clicked  {sprite_table.page += 1}
+    sprite_table_add.clicked        {sprite_table_add_clicked}
     sprite_sizes.each {|button|
-      button.clicked               {c.sprite_size = _1.label}
+      button.clicked                {c.sprite_size = _1.label}
     }
-    sprite_name.changed            {c.sprite.name = _1}
-    anim_prev.clicked              {c.anim_image = c.anim&.at get_anim_image_index - 1}
-    anim_next.clicked              {c.anim_image = c.anim&.at get_anim_image_index + 1}
-    anim_add.clicked               {anim_add_clicked}
+    sprite_name.changed             {c.sprite.name = _1}
+    anim_prev.clicked               {c.anim_image = c.anim&.at get_anim_image_index - 1}
+    anim_next.clicked               {c.anim_image = c.anim&.at get_anim_image_index + 1}
+    anim_add.clicked                {c.add_anim_image}
     anim_name
-    anim_images.selected           {c.anim_image = _1}
-    canvas.canvas_pressed          {|x, y, b| c.canvas_pressed  x, y, b}
-    canvas.canvas_released         {|x, y, b| c.canvas_released x, y, b}
-    canvas.canvas_moved            {|x, y|    c.canvas_moved    x, y}
-    canvas.canvas_dragged          {|x, y, b| c.canvas_dragged  x, y, b}
-    canvas.canvas_clicked          {|x, y, b| c.canvas_clicked  x, y, b}
+    anim_images.selected            {c.anim_image = _1}
+    canvas.canvas_pressed           {|x, y, b| c.canvas_pressed  x, y, b}
+    canvas.canvas_released          {|x, y, b| c.canvas_released x, y, b}
+    canvas.canvas_moved             {|x, y|    c.canvas_moved    x, y}
+    canvas.canvas_dragged           {|x, y, b| c.canvas_dragged  x, y, b}
+    canvas.canvas_clicked           {|x, y, b| c.canvas_clicked  x, y, b}
 
     tools.each  {|button| button.clicked {c.tool  = button.tool}}
     colors.each {|button| button.clicked {c.color = button.color}}
 
-    sprite_table.assets = project.sprites
-    c.sprite_size       = 16
-    c.tool              = c.tools.find {_1.class == Reight::SpriteEditor::Brush}
-    c.color             = c.colors.first
+    controller.disable_history do
+      sprite_table.assets = project.sprites
+      c.sprite_size       = 16
+      c.tool              = c.tools.find {_1.class == Reight::SpriteEditor::Brush}
+      c.color             = c.colors[12]
+      @controller.add_sprite 0, 0, c.sprite_size, c.sprite_size
+    end
   end
 
   def sprite_changed(sprite)
@@ -51,17 +56,9 @@ class Reight::SpriteEditor::Interface
   end
 
   def sprite_table_add_clicked()
-    size  = @controller.sprite_size
-    frame = sprite_table.get_frame_for_new_asset(size, size) || return
-    sp    = @project.create_sprite_asset(*frame)
-    @project.sprites.push sp
-    @controller.sprite = sp
-  end
-
-  def anim_add_clicked()
-    image = @controller.anim_image.dup
-    @controller.anim.insert get_anim_image_index + 1, image
-    @controller.anim_image = image
+    size       = @controller.sprite_size
+    x, y, w, h = sprite_table.get_frame_for_new_asset(size, size) || return
+    @controller.add_sprite x, y, w, h
   end
 
   def get_anim_image_index()
@@ -105,7 +102,7 @@ class Reight::SpriteEditor::Interface
   def sprite_sizes()           = @sprite_sizes           ||= [8, 16, 32].map {Reight::Button.new(label: _1)}
 
   def sprite_name()            = @sprite_name            ||= Reight::Text.new(
-    label: 'Name: ', editable: true, regexp: /^[\w_]*$/)
+    label: 'Name: ', editable: true, regexp: /^\w*$/)
 
   def anim_name()              = @anim_name              ||= Reight::Text.new
 
