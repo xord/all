@@ -60,6 +60,7 @@ class Reight::App
   end
 
   def draw()
+    background 200
     sprite(*@interface.sprites) if @interface
     navigator.draw
   end
