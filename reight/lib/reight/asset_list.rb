@@ -26,17 +26,15 @@ class Reight::AssetList
     super.merge class: @asset_class.name, assets: @assets.map {_1.save proj}
   end
 
-  def insert(index, *assets)
+  def add(*assets)
+    raise 'Overlaps with other assets' if
+      assets.any? {|asset| @assets.find {_1.hit?(*asset.frame)}}
+
     assets.each {_1.set_parent self}
-    @assets.insert index, *assets
+    @assets.push(*assets)
+    @assets.sort_by! {[_1.y, _1.x]}
     modified!
   end
-
-  def push(*assets)
-    insert(-1, *assets)
-  end
-
-  alias append push
 
   def remove(asset)
     @assets.delete(asset)&.tap do |asset|

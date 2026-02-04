@@ -6,9 +6,9 @@ class Reight::SpriteEditor::Controller
 
   def initialize(project)
     hook :sprite_changed
-    hook :sprite_size_changed
     hook :anim_changed
     hook :anim_image_changed
+    hook :sprite_size_changed
     hook :tool_changed
     hook :color_changed
     hook :selection_changed
@@ -16,35 +16,42 @@ class Reight::SpriteEditor::Controller
     @project = project
   end
 
-  attr_reader :sprite, :sprite_size, :anim, :anim_image, :tool, :color
-
-  def history() = @history ||= Reight::History.new
+  attr_reader :sprite, :anim, :anim_image, :sprite_size, :tool, :color
 
   def sprite=(sprite)
     return if sprite == @sprite
-    @sprite = sprite
-    sprite_changed! @sprite
-    self.anim = @sprite&.anims&.at 0
+    old, @sprite = @sprite, sprite
+    group_history do
+      self.anim = @sprite&.anims&.at 0
+      history__.append [:sprite, old, @sprite]
+      sprite_changed! @sprite
+    end
+  end
+
+  def anim=(anim)
+    return if anim == @anim
+    old, @anim = @anim, anim
+    group_history do
+      self.anim_image = @anim&.at 0
+      history__.append [:anim, old, @anim]
+      anim_changed! @anim
+    end
+  end
+
+  def anim_image=(image)
+    return if image == @anim_image
+    old, @anim_image = @anim_image, image
+    group_history do
+      deselect if selection(nil)
+      history__.append [:anim_image, old, @anim_image]
+      anim_image_changed! @anim_image
+    end
   end
 
   def sprite_size=(size)
     return if size == @sprite_size
     @sprite_size = size
     sprite_size_changed! @sprite_size
-  end
-
-  def anim=(anim)
-    return if anim == @anim
-    @anim = anim
-    anim_changed! @anim
-    self.anim_image = anim&.at 0
-  end
-
-  def anim_image=(image)
-    return if image == @anim_image
-    @anim_image = image
-    history.disable {deselect}
-    anim_image_changed! @anim_image
   end
 
   def tool=(tool)
@@ -85,13 +92,13 @@ class Reight::SpriteEditor::Controller
     w, h   = (x2 - x).ceil, (y2 - y).ceil
     return deselect if w == 0 || h == 0
     old, @selection = @selection, [x, y, w, h]
-    history.append [:select, old, @selection]
+    history__.append [:select, old, @selection]
     selection_changed! @selection
   end
 
   def deselect()
     old, @selection = @selection, nil
-    history.append [:select, old, @selection]
+    history__.append [:select, old, @selection]
     selection_changed! @selection
   end
 
@@ -100,8 +107,8 @@ class Reight::SpriteEditor::Controller
   end
 
   def begin_editing(bounds: nil, &block)
-    @image_before_editing = anim_image.dup
-    block.call anim_image if block
+    @image_before_editing = @anim_image.dup
+    block.call @anim_image if block
   ensure
     end_editing bounds if block
   end
@@ -111,24 +118,46 @@ class Reight::SpriteEditor::Controller
     before, @image_before_editing = @image_before_editing, nil
     x, y, w, h                    = get_edited_bounds__ before, bounds
     return if w == 0 || h == 0
-    before = copy_image__ before,     x, y, w, h
-    after  = copy_image__ anim_image, x, y, w, h, dup: true
-    history.append [:snapshot, before, after, x, y] if before && after
+    before = copy_image__ before,      x, y, w, h
+    after  = copy_image__ @anim_image, x, y, w, h, dup: true
+    history__.append [:snapshot, before, after, x, y] if before && after
   end
 
   def begin_drawing(bounds: nil, &block)
     begin_editing
-    anim_image.begin_draw
-    block.call anim_image if block
-    anim_image
+    @anim_image.begin_draw
+    block.call @anim_image if block
+    @anim_image
   ensure
     end_drawing bounds if block
   end
 
   def end_drawing(bounds = nil)
-    anim_image.end_draw
+    @anim_image.end_draw
   ensure
     end_editing bounds
+  end
+
+  def add_sprite(x, y, w, h)
+    sp = Reight::SpriteAsset.new(@project.get_next_id, w, h, x, y).tap {|asset|
+      asset.anims.push Reight::SpriteAnimation.new(@project.get_next_id, w, h).tap {|anim|
+        anim.push anim.create_image
+      }
+    }
+    group_history do
+      @project.sprites.add sp
+      history__.append [:add_sprite, sp]
+      self.sprite = sp
+    end
+  end
+
+  def add_anim_image()
+    index, image = @anim.find_index(@anim_image) + 1, @anim_image.dup
+    group_history do
+      @anim.insert index, image
+      history__.append [:add_anim_image, index, image]
+      self.anim_image = image
+    end
   end
 
   def cut()
@@ -144,19 +173,19 @@ class Reight::SpriteEditor::Controller
   end
 
   def copy()
-    return nil unless anim_image
+    return nil unless @anim_image
     sel   = selection
-    image = copy_image__(anim_image, *sel, dup: true) || (return nil)
+    image = copy_image__(@anim_image, *sel, dup: true) || (return nil)
     x, y, = sel
     @copy = [image, x, y]
   end
 
   def paste()
-    return unless anim_image
+    return unless @anim_image
     image, x, y = @copy || return
     w, h        = image.w, image.h
-    history.group do
-      deselect
+    group_history do
+      deselect if selection(nil)
       begin_editing do |img|
         img.begin_draw do |g|
           g.blend image, 0, 0, w, h, x, y, w, h, REPLACE
@@ -171,26 +200,39 @@ class Reight::SpriteEditor::Controller
   def can_paste? = @copy
 
   def undo()
-    history.undo do |action|
+    history__.undo do |action|
       case action
-      in [:snapshot, before, _, x, y] then restore_anim_image__ before, x, y
-      in [  :select, before, _]       then before ? select(*before) : deselect
+      in [:add_sprite, sprite]          then @project.sprites.remove sprite
+      in [:add_anim_image, index, _]    then @anim.remove_at index
+      in [:sprite,     before, _]       then self.sprite     = before
+      in [:anim,       before, _]       then self.anim       = before
+      in [:anim_image, before, _]       then self.anim_image = before
+      in [:snapshot,   before, _, x, y] then restore_anim_image__ before, x, y
+      in [  :select,   before, _]       then before ? select(*before) : deselect
       end
     end
   end
 
   def redo()
-    history.redo do |action|
+    history__.redo do |action|
       case action
-      in [:snapshot, _, after, x, y] then restore_anim_image__ after, x, y
-      in [  :select, _, after]       then after ? select(*after) : deselect
+      in [:add_sprite, sprite]            then @project.sprites.add sprite
+      in [:add_anim_image, index, sprite] then @anim.insert index, sprite
+      in [:sprite,     _, after]          then self.sprite     = after
+      in [:anim,       _, after]          then self.anim       = after
+      in [:anim_image, _, after]          then self.anim_image = after
+      in [:snapshot,   _, after, x, y]    then restore_anim_image__ after, x, y
+      in [  :select,   _, after]          then after ? select(*after) : deselect
       end
     end
   end
 
-  def can_undo?() = history.can_undo?
+  def can_undo?() = history__.can_undo?
+  def can_redo?() = history__.can_redo?
 
-  def can_redo?() = history.can_redo?
+  def group_history(&block)   = history__.group(&block)
+
+  def disable_history(&block) = history__.disable(&block)
 
   def canvas_pressed( x, y, button) = @tool&.canvas_pressed  x, y, button
 
@@ -203,6 +245,8 @@ class Reight::SpriteEditor::Controller
   def canvas_clicked( x, y, button) = @tool&.canvas_clicked  x, y, button
 
   private
+
+  def history__() = @history ||= Reight::History.new
 
   def get_edited_bounds__(image, bounds)
     return [0, 0, image.w, image.h] unless bounds
@@ -228,7 +272,7 @@ class Reight::SpriteEditor::Controller
   end
 
   def restore_anim_image__(img, x, y)
-    anim_image&.begin_draw do |g|
+    @anim_image&.begin_draw do |g|
       g.blend img, 0, 0, img.w, img.h, x, y, img.w, img.h, :replace
     end
   end

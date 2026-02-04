@@ -87,6 +87,10 @@ class Reight::SpriteAnimation < Reight::Asset
     C.create_graphics w, h
   end
 
+  def inspect()
+    "#<#{self.class.name}:0x#{object_id}>"
+  end
+
   private
 
   # @private

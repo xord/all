@@ -22,7 +22,7 @@ class Reight::AssetTable
     self.page = 0
   end
 
-  attr_reader :assets, :page
+  attr_reader :assets, :page, :npages
 
   def assets=(assets)
     return if assets == @assets
@@ -40,6 +40,7 @@ class Reight::AssetTable
 
   def page=(page)
     return if page == @page
+    return if page < 0 || @npages <= page
     @page                 = page
     @offset.x, @offset.y, = page_bounds__(@page).to_a(2)
     page_changed! @page
