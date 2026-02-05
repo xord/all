@@ -29,9 +29,10 @@ class Reight::SpriteEditor::Interface
     sprite_name.changed             {c.sprite.name = _1}
     anim_prev.clicked               {c.anim_image = c.anim&.at get_anim_image_index - 1}
     anim_next.clicked               {c.anim_image = c.anim&.at get_anim_image_index + 1}
-    anim_add.clicked                {c.add_anim_image}
+    #anim_add.clicked                {c.add_anim_image}
     anim_name
     anim_images.selected            {c.anim_image = _1}
+    anim_images.add_image           {c.add_anim_image _1}
     canvas.canvas_pressed           {|x, y, b| c.canvas_pressed  x, y, b}
     canvas.canvas_released          {|x, y, b| c.canvas_released x, y, b}
     canvas.canvas_moved             {|x, y|    c.canvas_moved    x, y}

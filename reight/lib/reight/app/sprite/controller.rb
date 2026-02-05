@@ -151,12 +151,20 @@ class Reight::SpriteEditor::Controller
     end
   end
 
-  def add_anim_image()
-    index, image = @anim.find_index(@anim_image) + 1, @anim_image.dup
+  def add_anim_image(index = @anim.find_index(@anim_image) + 1)
+    prev_image, insert_pos =
+      if index >= @anim.size
+        [@anim[-1], @anim.size]
+      else
+        [@anim_image, index]
+      end
     group_history do
-      @anim.insert index, image
-      history__.append [:add_anim_image, index, image]
-      self.anim_image = image
+      (insert_pos..index).each do |pos|
+        image = prev_image.dup
+        @anim.insert pos, image
+        history__.append [:add_anim_image, pos, image]
+      end
+      self.anim_image = @anim[index]
     end
   end
 
