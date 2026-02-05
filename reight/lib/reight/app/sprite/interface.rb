@@ -7,7 +7,7 @@ class Reight::SpriteEditor::Interface
     @controller = c  = controller
 
     c.sprite_changed      {sprite_changed _1}
-    c.sprite_size_changed {|size| sprite_sizes.each {_1.active = _1.label == size}}
+    c.sprite_size_changed {sprite_size_changed _1}
     c.anim_changed        {anim_images.anim = _1}
     c.anim_changed        {anim_name.value = _1.name}
     c.anim_image_changed  {anim_images.select _1}
@@ -17,6 +17,7 @@ class Reight::SpriteEditor::Interface
     c.selection_changed   {canvas.selection = _1}
 
     sprite_table.selected           {c.sprite = _1}
+    sprite_table.add_asset          {|x, y, w, h| c.add_sprite x, y, w, h}
     sprite_table.page_changed       {sprite_table_page.value = _1 + 1}
     sprite_table_page_prev.enabled? {sprite_table.page > 0}
     sprite_table_page_prev.clicked  {sprite_table.page -= 1}
@@ -56,9 +57,13 @@ class Reight::SpriteEditor::Interface
     sprite_name.value = sprite.name
   end
 
+  def sprite_size_changed(size)
+    sprite_sizes.each {_1.active = _1.label == size}
+    sprite_table.size_for_new_asset = size
+  end
+
   def sprite_table_add_clicked()
-    size       = @controller.sprite_size
-    x, y, w, h = sprite_table.get_frame_for_new_asset(size, size) || return
+    x, y, w, h = sprite_table.get_frame_for_new_asset || return
     @controller.add_sprite x, y, w, h
   end
 
@@ -71,14 +76,14 @@ class Reight::SpriteEditor::Interface
       sprite_table_page_prev,
       sprite_table_page,
       sprite_table_page_next,
-      sprite_table_add,
+      #sprite_table_add,
       *sprite_sizes,
       sprite_table,
       sprite_name,
       anim_name,
       anim_prev,
       anim_next,
-      anim_add,
+      #anim_add,
       anim_images,
       canvas,
       *tools,
