@@ -4,9 +4,11 @@ class Reight::AssetTable
   PADDING = 1
 
   include Reight::Hookable
+  include Reight::MouseEnterAndLeave
 
   def initialize(width, height, page_width, page_height)
     hook :selected
+    hook :add_asset
     hook :page_changed
 
     w = width  / page_width .to_f
@@ -16,11 +18,13 @@ class Reight::AssetTable
     @width, @height, @page_width, @page_height =
       [width, height, page_width, page_height].map(&:to_i)
 
-    @assets, @offset = nil, Rays::Point.new(0)
-    @npages          = (w * h).to_i
+    @assets, @offset, @size_for_new_asset = nil, Rays::Point.new(0), 8
+    @npages                               = (w * h).to_i
 
     self.page = 0
   end
+
+  attr_accessor :size_for_new_asset
 
   attr_reader :assets, :page, :npages
 
@@ -77,11 +81,25 @@ class Reight::AssetTable
       C.stroke 255
       C.rect @asset.x, @asset.y, @asset.w + 1, @asset.h + 1
     end
+
+    x, y, w, h = bounds_for_new_asset__ sp.mouse_x, sp.mouse_y
+    if mouse_entered? && @assets.none? {Reight.intersect? _1.x, _1.y, _1.w, _1.h, x, y, w, h}
+      C.fill 220
+      C.no_stroke
+      C.rect x, y, w, h, 2
+      C.text_align CENTER, CENTER
+      C.text_size 12
+      C.fill 190
+      C.text "+", x, y - 1, w, h
+    end
   end
 
   def mouse_clicked(x, y)
-    a = @assets.find {|a| a.hit? x, y}
-    select a if a
+    if asset = @assets.find {|a| a.hit? x, y}
+      select asset
+    else
+      add_asset!(*bounds_for_new_asset__(x, y))
+    end
   end
 
   def sprite()
@@ -89,6 +107,7 @@ class Reight::AssetTable
       sp.draw           {draw}
       #sp.mouse_pressed  {mouse_pressed  sp.mouse_x, sp.mouse_y}
       #sp.mouse_released {mouse_released sp.mouse_x, sp.mouse_y}
+      sp.mouse_moved    {mouse_moved_and_start_checking_mouse_leave}
       #sp.mouse_dragged  {mouse_dragged  sp.mouse_x, sp.mouse_y}
       sp.mouse_clicked  {mouse_clicked  sp.mouse_x, sp.mouse_y}
     end
@@ -113,6 +132,14 @@ class Reight::AssetTable
       (page / ncols) * @page_height,
       @page_width,
       @page_height)
+  end
+
+  # @private
+  def bounds_for_new_asset__(x, y)
+    size = @size_for_new_asset
+    x, y = (x + @offset.x), (y + @offset.y)
+    x, y = (x / size).to_i * size, (y / size).to_i * size
+    [x, y, size, size]
   end
 
 =begin
