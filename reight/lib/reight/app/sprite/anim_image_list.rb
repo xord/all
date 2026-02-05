@@ -4,6 +4,7 @@ class Reight::SpriteEditor::AnimImageList
   PADDING = 1
 
   include Reight::Hookable
+  include Reight::MouseEnterAndLeave
 
   def initialize()
     hook :selected
@@ -32,12 +33,12 @@ class Reight::SpriteEditor::AnimImageList
       if image
         C.blend image, 0, 0, image.w, image.h, x, y, w, h, REPLACE
       else
-        inside = @mouse_entered &&
+        inside = mouse_entered? &&
           (x..(x + w)).include?(sp.mouse_x) &&
           (y..(y + h)).include?(sp.mouse_y)
         C.fill inside ? 220 : 190
         C.no_stroke
-        C.rect x, y, w, h
+        C.rect x, y, w, h, 2
         if inside
           C.text_align CENTER, CENTER
           C.text_size 20
@@ -49,31 +50,6 @@ class Reight::SpriteEditor::AnimImageList
         C.no_fill
         C.stroke 255
         C.rect x, y, w + 1, h + 1
-      end
-    end
-  end
-
-  def mouse_moved(x, y)
-    mouse_entered x, y unless @mouse_entered
-    check_mouse_leave
-  end
-
-  def mouse_entered(x, y)
-    @mouse_entered = true
-  end
-
-  def mouse_leaved(x, y)
-    @mouse_entered = false
-  end
-
-  def check_mouse_leave()
-    sp = sprite
-    C.set_timeout 0.1, id: "#{__method__}_#{sp.object_id}" do
-      x, y = C.mouse_x - sp.x, C.mouse_y - sp.y
-      if x < 0 || sp.w <= x || y < 0 || sp.h <= y
-        mouse_leaved x, y
-      else
-        check_mouse_leave
       end
     end
   end
@@ -94,7 +70,7 @@ class Reight::SpriteEditor::AnimImageList
       sp.draw           {draw}
       #sp.mouse_pressed  {mouse_pressed  sp.mouse_x, sp.mouse_y}
       #sp.mouse_released {mouse_released sp.mouse_x, sp.mouse_y}
-      sp.mouse_moved    {mouse_moved    sp.mouse_x, sp.mouse_y}
+      sp.mouse_moved    {mouse_moved_and_start_checking_mouse_leave}
       #sp.mouse_dragged  {mouse_dragged  sp.mouse_x, sp.mouse_y}
       sp.mouse_clicked  {mouse_clicked  sp.mouse_x, sp.mouse_y}
     end
