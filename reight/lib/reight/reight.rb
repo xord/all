@@ -1,7 +1,6 @@
-using Reight
-
-
 class Reight::R8
+
+  C = Reight::CONTEXT__
 
   def initialize(path, edit: false)
     raise if $r8__
@@ -31,16 +30,16 @@ class Reight::R8
   def flash(...) = current.flash(...)
 
   def icons()
-    @icons ||= loadImage(File.expand_path('../../res/icons.png', __dir__)).tap do |img|
-      transp = color '#FF77A8'
+    @icons ||= C.load_image(File.expand_path('../../res/icons.png', __dir__)).tap do |img|
+      transp = C.color '#FF77A8'
       img.load_pixels
-      img.pixels.map! {|c| c == transp ? color(0, 0, 0, 0) : c}
+      img.pixels.map! {|c| c == transp ? C.color(0, 0, 0, 0) : c}
       img.update_pixels
     end
   end
 
   def icon(xi, yi, size)
-    (@icon ||= {})[[xi, yi, size]] ||= createGraphics(size, size).tap do |g|
+    (@icon ||= {})[[xi, yi, size]] ||= C.create_graphics(size, size).tap do |g|
       g.beginDraw do
         g.copy icons, xi * size, yi * size, size, size, 0, 0, size, size
       end
@@ -53,7 +52,7 @@ class Reight::R8
     @current = app
     @current.activated
 
-    set_title [
+    C.set_title [
       self.class.name.split('::').first,
       Reight::Extension.version,
       '|',
@@ -61,11 +60,16 @@ class Reight::R8
     ].join ' '
   end
 
+  def start_auto_save()
+    C.set_interval(1) {project.save if project.modified?}
+  end
+
   def setup()
     w, h = Reight::App::SCREEN_WIDTH, Reight::App::SCREEN_HEIGHT
-    createCanvas w, h, pixelDensity: AUTO
-    window_resize(*[w, h].map {_1 * 3})
-    text_font r8.project.font, r8.project.settings.font_size
+    C.create_canvas w, h, pixelDensity: AUTO
+    C.window_resize(*[w, h].map {_1 * 3})
+    C.text_font r8.project.font, r8.project.settings.font_size
+    start_auto_save
   end
 
   def draw()           = current.draw
