@@ -7,6 +7,7 @@ class Reight::SpriteEditor::AnimImageList
 
   def initialize()
     hook :selected
+    hook :add_image
 
     self.anim = nil
   end
@@ -31,9 +32,18 @@ class Reight::SpriteEditor::AnimImageList
       if image
         C.blend image, 0, 0, image.w, image.h, x, y, w, h, REPLACE
       else
-        C.fill 190
+        inside = @mouse_entered &&
+          (x..(x + w)).include?(sp.mouse_x) &&
+          (y..(y + h)).include?(sp.mouse_y)
+        C.fill inside ? 220 : 190
         C.no_stroke
         C.rect x, y, w, h
+        if inside
+          C.text_align CENTER, CENTER
+          C.text_size 20
+          C.fill 190
+          C.text "+", x, y - 3, w, h
+        end
       end
       if image && image == @image
         C.no_fill
@@ -43,11 +53,40 @@ class Reight::SpriteEditor::AnimImageList
     end
   end
 
-  def mouse_clicked(x, y)
-    image, = image_frames.find do |image, xx, yy, ww, hh|
-      image && (xx..(xx + ww)).include?(x) && (yy..(yy + hh)).include?(y)
+  def mouse_moved(x, y)
+    mouse_entered x, y unless @mouse_entered
+    check_mouse_leave
+  end
+
+  def mouse_entered(x, y)
+    @mouse_entered = true
+  end
+
+  def mouse_leaved(x, y)
+    @mouse_entered = false
+  end
+
+  def check_mouse_leave()
+    sp = sprite
+    C.set_timeout 0.1, id: "#{__method__}_#{sp.object_id}" do
+      x, y = C.mouse_x - sp.x, C.mouse_y - sp.y
+      if x < 0 || sp.w <= x || y < 0 || sp.h <= y
+        mouse_leaved x, y
+      else
+        check_mouse_leave
+      end
     end
-    selected! image if image
+  end
+
+  def mouse_clicked(x, y)
+    index, image, = image_frames
+      .map.with_index {|a, i| [i, *a]}
+      .find {|i, _, xx, yy, w, h| (xx..(xx + w)).include?(x) && (yy..(yy + h)).include?(y)}
+    if image
+      selected! image
+    else
+      add_image! index
+    end
   end
 
   def sprite()
@@ -55,6 +94,7 @@ class Reight::SpriteEditor::AnimImageList
       sp.draw           {draw}
       #sp.mouse_pressed  {mouse_pressed  sp.mouse_x, sp.mouse_y}
       #sp.mouse_released {mouse_released sp.mouse_x, sp.mouse_y}
+      sp.mouse_moved    {mouse_moved    sp.mouse_x, sp.mouse_y}
       #sp.mouse_dragged  {mouse_dragged  sp.mouse_x, sp.mouse_y}
       sp.mouse_clicked  {mouse_clicked  sp.mouse_x, sp.mouse_y}
     end
