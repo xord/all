@@ -55,9 +55,7 @@ class Reight::Asset
   end
 
   def hit?(x, y, w = 0, h = 0)
-    x, w = x + w, -w if w < 0
-    y, h = y + h, -h if h < 0
-    @x < x + w && x < @x + @width && @y < y + h && y < @y + @height
+    Reight.intersect? @x, @y, @width, @height, x, y, w, h
   end
 
   def asset_type()
