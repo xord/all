@@ -7,13 +7,6 @@ class Reight::SpriteEditor < Reight::App
     super project, Reight::SpriteEditor::Controller, Reight::SpriteEditor::Interface
   end
 
-  def cut(...)   = @controller.cut(...)
-  def copy(...)  = @controller.copy(...)
-  def paste(...) = @controller.paste(...)
-
-  def undo(...)  = @controller.undo(...)
-  def redo(...)  = @controller.redo(...)
-
 =begin
   def canvas()
     @canvas ||= Canvas.new(

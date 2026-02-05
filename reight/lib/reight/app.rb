@@ -96,19 +96,19 @@ class Reight::App
   def control_change() = nil
   def window_moved()   = nil
 
-  #def undo(flash: true) = nil
-  #def redo(flash: true) = nil
+  def has_history?() = @controller&.respond_to? :undo
+  def can_undo?()    = @controller&.can_undo?
+  def     undo()     = @controller&.undo
+  def can_redo?()    = @controller&.can_redo?
+  def     redo()     = @controller&.redo
 
-  def can_undo?() = @controller&.can_undo? == true
-  def can_redo?() = @controller&.can_redo? == true
-
-  #def cut(  flash: true) = nil
-  #def copy( flash: true) = nil
-  #def paste(flash: true) = nil
-
-  def can_copy?()  = @controller&.can_copy?
-  def can_cut?()   = @controller&.can_cut?
-  def can_paste?() = @controller&.can_paste?
+  def has_copy_and_paste? = @controller&.respond_to? :paste
+  def can_cut?()          = @controller&.can_cut?
+  def     cut()           = @controller&.cut
+  def can_copy?()         = @controller&.can_copy?
+  def     copy()          = @controller&.copy
+  def can_paste?()        = @controller&.can_paste?
+  def     paste()         = @controller&.paste
 
   def inspect()
     "#<#{self.class.name}:0x#{object_id}>"
