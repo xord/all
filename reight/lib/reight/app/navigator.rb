@@ -86,7 +86,7 @@ class Reight::Navigator
 
   def history_buttons()
     @history_buttons ||= [].tap do |buttons|
-      next unless @app.respond_to? :undo
+      next unless @app.has_history?
       buttons << Reight::Button.new(name: 'Undo', icon: r8.icon(3, 1, 8)) {
         @app.undo
       }.tap {|b|
@@ -102,7 +102,7 @@ class Reight::Navigator
 
   def edit_buttons()
     @edit_buttons ||= [].tap do |buttons|
-      next unless @app.respond_to? :paste
+      next unless @app.has_copy_and_paste?
       buttons << Reight::Button.new(name: 'Cut',   icon: r8.icon(0, 1, 8)) {
         @app.cut
       }.tap {|b|
