@@ -66,6 +66,7 @@ class Reight::App
   end
 
   def key_pressed()
+    @interface.key_pressed pressing_keys if @interface
     navigator.key_pressed
     pressing_keys.add key_code
   end
@@ -75,8 +76,8 @@ class Reight::App
   end
 
   def window_resized()
-    navigator.window_resized
     @interface&.update_layout
+    navigator.window_resized
   end
 
   def setup()          = nil
