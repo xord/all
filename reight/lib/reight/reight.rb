@@ -20,8 +20,8 @@ class Reight::R8
 
   def apps()
     @apps ||= [].tap {|a|
-      a << Reight::Runner      .new(project)
-      a << Reight::SpriteEditor.new(project) if edit?
+      a << Reight::Runner.new(project)
+      a << Reight::App.new(project, Reight::SpriteEditor, Reight::SpriteEditorInterface) if edit?
       #a << Reight::MapEditor   .new(project) if edit?
       #a << Reight::SoundEditor .new(project) if edit?
     }
