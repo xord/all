@@ -31,17 +31,21 @@ class Reight::SpriteEditor::Canvas
     C.rect 0, 0, sp.w, sp.h
     return unless @image
 
-    C.push do
-      sx, sy = sp.w / @image.w, sp.h / @image.h
-      C.scale sx, sy
-      C.no_fill
-      C.stroke_weight 0
+    sx, sy = sp.w / @image.w, sp.h / @image.h
+    C.no_fill
+    C.stroke_weight 0
 
+    C.push do
+      C.scale sx, sy
       draw_grids__
-      draw_selection__ sx, sy
     end
 
     C.copy @image, 0, 0, @image.w, @image.h, 0, 0, sp.w, sp.h if @image
+
+    C.push do
+      C.scale sx, sy
+      draw_selection__ sx, sy
+    end
   end
 
   def sprite()
