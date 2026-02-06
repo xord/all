@@ -232,4 +232,22 @@ class Reight::SpriteEditor::Interface
     end
   end
 
+  def key_pressed(pressings)
+    shift, ctrl, cmd = [SHIFT, CONTROL, COMMAND].map {pressings.include? _1}
+    c, se            = @controller, Reight::SpriteEditor
+    case C.key_code
+    when :z then shift ? c.redo : c.undo if ctrl || cmd
+    when :c then c.copy  if ctrl || cmd
+    when :x then c.cut   if ctrl || cmd
+    when :v then c.paste if ctrl || cmd
+    when :z then shift ? c.redo : c.undo if ctrl || cmd
+    when :s then c.tool = c.tools.find {_1.class == se::Select}
+    when :b then c.tool = c.tools.find {_1.class == se::Brush}
+    when :l then c.tool = c.tools.find {_1.class == se::Line}
+    when :f then c.tool = c.tools.find {_1.class == se::Fill}
+    when :r then c.tool = c.tools.find {_1.class == (shift ? se::FillRect    : se::StrokeRect)}
+    when :e then c.tool = c.tools.find {_1.class == (shift ? se::FillEllipse : se::StrokeEllipse)}
+    end
+  end
+
 end# SpriteEditor::Interface
