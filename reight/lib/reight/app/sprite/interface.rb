@@ -48,7 +48,7 @@ class Reight::SpriteEditor::Interface
       c.sprite_size       = 16
       c.tool              = c.tools.find {_1.class == Reight::SpriteEditor::Brush}
       c.color             = c.colors[12]
-      @controller.add_sprite 0, 0, c.sprite_size, c.sprite_size
+      @controller.add_sprite 0, 0, c.sprite_size, c.sprite_size if @project.sprites.empty?
     end
   end
 
