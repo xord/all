@@ -1,12 +1,12 @@
 class Reight::SpriteEditor::Tool
 
-  def initialize(controller)
-    @controller = controller
+  def initialize(editor)
+    @editor = editor
   end
 
-  attr_reader :controller, :label, :icon_index
+  attr_reader :editor, :label, :icon_index
 
-  def target_image() = controller.anim_image
+  def target_image() = editor.anim_image
 
   def edited_bounds()
     @edited_bounds&.to_a 2

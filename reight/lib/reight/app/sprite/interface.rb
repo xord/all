@@ -1,23 +1,23 @@
-class Reight::SpriteEditor::Interface
+class Reight::SpriteEditorInterface
 
   C = Reight::CONTEXT__
 
-  def initialize(project, controller)
-    @project    = pj = project
-    @controller = c  = controller
+  def initialize(project, editor)
+    @project = pj = project
+    @editor  = e  = editor
 
-    c.sprite_changed      {sprite_changed _1}
-    c.sprite_size_changed {sprite_size_changed _1}
-    c.anim_changed        {anim_images.anim = _1}
-    c.anim_changed        {anim_name.value = _1.name}
-    c.anim_image_changed  {anim_images.select _1}
-    c.anim_image_changed  {canvas.image = _1}
-    c.tool_changed        {|tool|  tools.each  {_1.active = _1.tool  == tool}}
-    c.color_changed       {|color| colors.each {_1.active = _1.color == color}}
-    c.selection_changed   {canvas.selection = _1}
+    e.sprite_changed      {sprite_changed _1}
+    e.sprite_size_changed {sprite_size_changed _1}
+    e.anim_changed        {anim_images.anim = _1}
+    e.anim_changed        {anim_name.value = _1.name}
+    e.anim_image_changed  {anim_images.select _1}
+    e.anim_image_changed  {canvas.image = _1}
+    e.tool_changed        {|tool|  tools.each  {_1.active = _1.tool  == tool}}
+    e.color_changed       {|color| colors.each {_1.active = _1.color == color}}
+    e.selection_changed   {canvas.selection = _1}
 
-    sprite_table.selected           {c.sprite = _1}
-    sprite_table.add_asset          {|x, y, w, h| c.add_sprite x, y, w, h}
+    sprite_table.selected           {e.sprite = _1}
+    sprite_table.add_asset          {|x, y, w, h| e.add_sprite x, y, w, h}
     sprite_table.page_changed       {sprite_table_page.value = _1 + 1}
     sprite_table_page_prev.enabled? {sprite_table.page > 0}
     sprite_table_page_prev.clicked  {sprite_table.page -= 1}
@@ -25,30 +25,31 @@ class Reight::SpriteEditor::Interface
     sprite_table_page_next.clicked  {sprite_table.page += 1}
     sprite_table_add.clicked        {sprite_table_add_clicked}
     sprite_sizes.each {|button|
-      button.clicked                {c.sprite_size = _1.label}
+      button.clicked                {e.sprite_size = _1.label}
     }
-    sprite_name.changed             {c.sprite.name = _1}
-    anim_prev.clicked               {c.anim_image = c.anim&.at get_anim_image_index - 1}
-    anim_next.clicked               {c.anim_image = c.anim&.at get_anim_image_index + 1}
-    #anim_add.clicked                {c.add_anim_image}
+    sprite_name.changed             {e.sprite.name = _1}
+    anim_prev.clicked               {e.anim_image = e.anim&.at get_anim_image_index - 1}
+    anim_next.clicked               {e.anim_image = e.anim&.at get_anim_image_index + 1}
+    #anim_add.clicked                {e.add_anim_image}
     anim_name
-    anim_images.selected            {c.anim_image = _1}
-    anim_images.add_image           {c.add_anim_image _1}
-    canvas.canvas_pressed           {|x, y, b| c.canvas_pressed  x, y, b}
-    canvas.canvas_released          {|x, y, b| c.canvas_released x, y, b}
-    canvas.canvas_moved             {|x, y|    c.canvas_moved    x, y}
-    canvas.canvas_dragged           {|x, y, b| c.canvas_dragged  x, y, b}
-    canvas.canvas_clicked           {|x, y, b| c.canvas_clicked  x, y, b}
+    anim_images.selected            {e.anim_image = _1}
+    anim_images.add_image           {e.add_anim_image _1}
+    canvas.canvas_pressed           {|x, y, b| e.canvas_pressed  x, y, b}
+    canvas.canvas_released          {|x, y, b| e.canvas_released x, y, b}
+    canvas.canvas_moved             {|x, y|    e.canvas_moved    x, y}
+    canvas.canvas_dragged           {|x, y, b| e.canvas_dragged  x, y, b}
+    canvas.canvas_clicked           {|x, y, b| e.canvas_clicked  x, y, b}
 
-    tools.each  {|button| button.clicked {c.tool  = button.tool}}
-    colors.each {|button| button.clicked {c.color = button.color}}
+    tools.each  {|button| button.clicked {e.tool  = button.tool}}
+    colors.each {|button| button.clicked {e.color = button.color}}
 
-    controller.disable_history do
+    e.disable_history do
       sprite_table.assets = project.sprites
-      c.sprite_size       = 16
-      c.tool              = c.tools.find {_1.class == Reight::SpriteEditor::Brush}
-      c.color             = c.colors[12]
-      @controller.add_sprite 0, 0, c.sprite_size, c.sprite_size if @project.sprites.empty?
+      e.sprite_size       = 16
+      e.tool              = e.tools.find {_1.class == Reight::SpriteEditor::Brush}
+      e.color             = e.colors[12]
+
+      e.add_sprite 0, 0, e.sprite_size, e.sprite_size if @project.sprites.empty?
     end
   end
 
@@ -64,11 +65,11 @@ class Reight::SpriteEditor::Interface
 
   def sprite_table_add_clicked()
     x, y, w, h = sprite_table.get_frame_for_new_asset || return
-    @controller.add_sprite x, y, w, h
+    @editor.add_sprite x, y, w, h
   end
 
   def get_anim_image_index()
-    @controller.anim.find_index @controller.anim_image
+    @editor.anim.find_index @editor.anim_image
   end
 
   def sprites()
@@ -122,7 +123,7 @@ class Reight::SpriteEditor::Interface
 
   def canvas()                 = @canvas                 ||= Reight::SpriteEditor::Canvas.new
 
-  def tools()                  = @tools                  ||= @controller.tools.map {|tool|
+  def tools()                  = @tools                  ||= @editor.tools.map {|tool|
     name, icon_index, help_text =
       case tool
       when Reight::SpriteEditor::Select        then ['Select',         0, 'Select or Move']
@@ -141,7 +142,7 @@ class Reight::SpriteEditor::Interface
   }
 
   def colors()                 = @colors                 ||=
-    @controller.colors.map {Reight::SpriteEditor::Color.new _1}
+    @editor.colors.map {Reight::SpriteEditor::Color.new _1}
 
   def update_layout()
     app                       = Reight::App
@@ -234,20 +235,19 @@ class Reight::SpriteEditor::Interface
 
   def key_pressed(pressings)
     shift, ctrl, cmd = [SHIFT, CONTROL, COMMAND].map {pressings.include? _1}
-    c, se            = @controller, Reight::SpriteEditor
+    e, se            = @editor, Reight::SpriteEditor
     case C.key_code
-    when :z then shift ? c.redo : c.undo if ctrl || cmd
-    when :c then c.copy  if ctrl || cmd
-    when :x then c.cut   if ctrl || cmd
-    when :v then c.paste if ctrl || cmd
-    when :z then shift ? c.redo : c.undo if ctrl || cmd
-    when :s then c.tool = c.tools.find {_1.class == se::Select}
-    when :b then c.tool = c.tools.find {_1.class == se::Brush}
-    when :l then c.tool = c.tools.find {_1.class == se::Line}
-    when :f then c.tool = c.tools.find {_1.class == se::Fill}
-    when :r then c.tool = c.tools.find {_1.class == (shift ? se::FillRect    : se::StrokeRect)}
-    when :e then c.tool = c.tools.find {_1.class == (shift ? se::FillEllipse : se::StrokeEllipse)}
+    when :z then shift ? e.redo : e.undo if ctrl || cmd
+    when :c then e.copy  if ctrl || cmd
+    when :x then e.cut   if ctrl || cmd
+    when :v then e.paste if ctrl || cmd
+    when :s then e.tool = e.tools.find {_1.class == se::Select}
+    when :b then e.tool = e.tools.find {_1.class == se::Brush}
+    when :l then e.tool = e.tools.find {_1.class == se::Line}
+    when :f then e.tool = e.tools.find {_1.class == se::Fill}
+    when :r then e.tool = e.tools.find {_1.class == (shift ? se::FillRect    : se::StrokeRect)}
+    when :e then e.tool = e.tools.find {_1.class == (shift ? se::FillEllipse : se::StrokeEllipse)}
     end
   end
 
-end# SpriteEditor::Interface
+end# SpriteEditorInterface
