@@ -18,8 +18,8 @@ class TestSpriteAsset < Test::Unit::TestCase
     assert_false               asset(1, 2, 3, 4, 5)               .sensor?
     assert_false               asset(1, 2, 3, 4, 5, sensor: false).sensor?
     assert_true                asset(1, 2, 3, 4, 5, sensor: true) .sensor?
-    assert_equal ([]),         asset(1, 2, 3, 4, 5, anims: nil)   .anims
-    assert_equal ([anim]),     asset(1, 2, 3, 4, 5, anims: [anim]).anims
+    assert_equal ([]),         asset(1, 2, 3, 4, 5, anims: nil)   .to_a
+    assert_equal ([anim]),     asset(1, 2, 3, 4, 5, anims: [anim]).to_a
     assert_nil                 asset(1, 2, 3, 4, 5)                        .image
     assert_nil                 asset(1, 2, 3, 4, 5, anims: nil)            .image
     assert_nil                 asset(1, 2, 3, 4, 5, anims: [])             .image
@@ -85,9 +85,76 @@ class TestSpriteAsset < Test::Unit::TestCase
     assert_equal a, Asset.load(state, proj)
   end
 
+  def test_insert()
+    a = asset 1, 2, 3
+    a.insert 0, anim(1)
+    assert_equal [1],       a.map(&:id)
+
+    a.insert 0, anim(2)
+    assert_equal [2, 1],    a.map(&:id)
+
+    a.insert(-1, anim(3))
+    assert_equal [2, 1, 3], a.map(&:id)
+
+    a.insert 1, anim(4), anim(5)
+    assert_equal [2, 4, 5, 1, 3], a.map(&:id)
+  end
+
+  def test_push()
+    a = asset 1, 2, 3
+    a.push anim(1)
+    assert_equal [1],       a.map(&:id)
+
+    a.push anim(2), anim(3)
+    assert_equal [1, 2, 3], a.map(&:id)
+  end
+
+  def test_remove()
+    a = asset 1, 2, 3
+    a.push anim(1), anim(2), anim(3)
+    assert_equal [1, 2, 3], a.map(&:id)
+
+    a.remove a[1]
+    assert_equal [1, 3],    a.map(&:id)
+  end
+
+  def test_remove_at()
+    a = asset 1, 2, 3
+    a.push anim(1), anim(2), anim(3)
+    assert_equal [1, 2, 3], a.map(&:id)
+
+    removed = a.remove_at 1
+    assert_equal 2,         removed.id
+    assert_equal [1, 3],    a.map(&:id)
+
+    removed = a.remove_at(-1)
+    assert_equal 3,         removed.id
+    assert_equal [1],       a.map(&:id)
+
+    removed = asset(1, 2, 3, 4, 5).remove_at(-1)
+    assert_nil              removed
+  end
+
+  def test_each()
+    a = asset 1, 2, 3, anims: [anim(1), anim(2), anim(3)]
+    assert_equal [1, 2, 3], a     .to_a.map(&:id)
+    assert_equal [1, 2, 3], a.each.to_a.map(&:id)
+  end
+
+  def test_at()
+    a = asset 1, 2, 3, anims: [anim(1), anim(2), anim(3)]
+    assert_equal [1, 2, 3], [a[0], a[1], a[2]].map(&:id)
+  end
+
+  def test_size()
+    assert_equal 0, asset(1, 2, 3, anims: [])                .size
+    assert_equal 1, asset(1, 2, 3, anims: [anim(1)])         .size
+    assert_equal 2, asset(1, 2, 3, anims: [anim(1), anim(2)]).size
+  end
+
   def test_empty?()
-    assert_false asset(anims: [anim(images: image([255, 255, 255]))]).empty?
-    assert_true  asset(anims: [anim(images: image([0,   0,   0  ]))]).empty?
+    assert_true  asset(1, 2, 3)                  .empty?
+    assert_false asset(1, 2, 3, anims: [anim(1)]).empty?
   end
 
   def test_with()
@@ -104,8 +171,8 @@ class TestSpriteAsset < Test::Unit::TestCase
     assert_false             asset(1, 2, 3, 4, 5, sensor: nil)  .with(sensor: false) .sensor?
     assert_false             asset(1, 2, 3, 4, 5, sensor: true) .with(sensor: false) .sensor?
     assert_false             asset(1, 2, 3, 4, 5, sensor: true) .with(sensor: nil)   .sensor?
-    assert_equal [],         asset(1, 2, 3, 4, 5, anims: nil)   .with(anims: [])     .anims
-    assert_equal [],         asset(1, 2, 3, 4, 5, anims: [])    .with(anims: nil)    .anims
+    assert_equal [],         asset(1, 2, 3, 4, 5, anims: nil)   .with(anims: [])     .to_a
+    assert_equal [],         asset(1, 2, 3, 4, 5, anims: [])    .with(anims: nil)    .to_a
 
     a1 = asset         1,     2,     3,     4,     5,  name: nil, shape: nil,   sensor: nil
     a2 = a1.with   id: 10, w: 20, h: 30, x: 40, y: 50, name: 'x', shape: :rect, sensor: true
@@ -113,12 +180,32 @@ class TestSpriteAsset < Test::Unit::TestCase
     assert_equal asset(10,    20,    30,    40,    50, name: 'x', shape: :rect, sensor: true), a2
   end
 
-  def test_initial_modified?()
-    a = asset
-    assert_true a.modified?
+  def test_modified_by_initial_anim()
+    a = asset 1, 2, 3, anims: [anim(1)]; assert_true  a.modified?
+    a.save proj;                         assert_false a.modified?
+    a[0].modified!;                      assert_true  a.modified?
+  end
 
-    state = a.save proj
-    assert_false Asset.load(state, proj).modified?
+  def test_modified_by_loaded_asset()
+    a      = asset anims: [anim(1)];        assert_true  a     .modified?
+    loaded = Asset.load a.save(proj), proj; assert_false loaded.modified?
+    loaded[0].modified!;                    assert_true  loaded.modified?
+  end
+
+  def test_modified_by_added_anim()
+    a = asset 1, 2, 3; assert_true  a.modified?
+    a.save proj;       assert_false a.modified?
+    a.push anim(1);    assert_true  a.modified?
+    a.save proj;       assert_false a.modified?
+    a[0].modified!;    assert_true  a.modified?
+  end
+
+  def test_modified_by_removed_anim()
+    a = asset 1, 2, 3, anims: [anim(1)]; assert_true  a.modified?
+    a.save proj;                         assert_false a.modified?
+    removed = a.remove a[0];             assert_true  a.modified?
+    a.save proj;                         assert_false a.modified?
+    removed.modified!;                   assert_false a.modified?
   end
 
   def test_compare_by_state_variables()

@@ -2,6 +2,8 @@ class Reight::SpriteAsset < Reight::Asset
 
   C = Reight::CONTEXT__
 
+  include Enumerable
+
   SHAPES = [:rect, :circle]
 
   def self.load(state, project)
@@ -22,6 +24,10 @@ class Reight::SpriteAsset < Reight::Asset
       set_sensor__ sensor
     end
     @anims ||= []
+
+    raise 'Some animations belong to other assets' unless
+      @anims.all? {_1.parent == nil}
+    @anims.each {_1.set_parent self}
   end
 
   def save(proj)
@@ -32,9 +38,9 @@ class Reight::SpriteAsset < Reight::Asset
     }
   end
 
-  protected def state_variables() = super.merge(shape:, sensor:, anims:)
+  protected def state_variables() = super.merge(shape:, sensor:, anims: @anims)
 
-  attr_reader :shape, :sensor, :anims
+  attr_reader :shape, :sensor
 
   def shape=(type)
     set_shape__ type
@@ -50,8 +56,51 @@ class Reight::SpriteAsset < Reight::Asset
 
   def image   = @anims.first&.image_at C.frame_count
 
+  def insert(index, *anims)
+    raise 'invalid animation size' unless
+      anims.all? {_1.w == width && _1.h == height}
+    @anims.insert index, *anims
+    anims.each {_1.set_parent self}
+    modified!
+  end
+
+  def push(*anims)
+    insert(-1, *anims)
+  end
+
+  alias append push
+
+  def remove(anim)
+    @anims.delete(anim)&.tap do
+      anim.set_parent nil
+      modified!
+    end
+  end
+
+  def remove_at(index)
+    @anims.delete_at(index)&.tap do |asset|
+      asset.set_parent nil
+      modified!
+    end
+  end
+
+  def each(&block)
+    return enum_for :each unless block
+    @anims.each(&block)
+  end
+
+  def at(index)
+    @anims[index]
+  end
+
+  alias [] at
+
+  def size()
+    @anims.size
+  end
+
   def empty?()
-    pixels__.all? {C.red(_1) == 0 && C.green(_1) == 0 && C.blue(_1) == 0}
+    @anims.empty?
   end
 
   def with(**kwargs)
@@ -113,16 +162,6 @@ class Reight::SpriteAsset < Reight::Asset
   # @private
   def set_sensor__(bool)
     @sensor = bool ? true : nil
-  end
-
-  # @private
-  def pixels__()
-    g = C.create_graphics w, h
-    g.begin_draw do
-      g.copy image, x, y, w, h, 0, 0, w, h
-    end
-    g.load_pixels
-    g.pixels
   end
 
 end# SpriteAsset
