@@ -4,14 +4,14 @@ class Reight::SpriteEditor::Fill < Reight::SpriteEditor::Tool
 
   def canvas_clicked(x, y, button)
     x, y           = [x, y].map(&:to_i)
-    sx, sy, sw, sh = controller.selection
+    sx, sy, sw, sh = editor.selection
     return unless (sx...(sx + sw)).include?(x) && (sy...(sy + sh)).include?(y)
-    controller.begin_editing
+    editor.begin_editing
     w     = target_image.w
     count = 0
     target_image.update_pixels do |pixels|
       from = pixels[y * w + x]
-      to   = C.color(*controller.color)
+      to   = C.color(*editor.color)
       rest = [[x, y]]
       until rest.empty?
         xx, yy = rest.shift
@@ -28,7 +28,7 @@ class Reight::SpriteEditor::Fill < Reight::SpriteEditor::Tool
         rest << [xx, y_] if y_ <  sy + sh && pixels[y_ * w + xx] == from
       end
     end
-    controller.end_editing if count > 0
+    editor.end_editing if count > 0
   end
 
 end# Fill

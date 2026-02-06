@@ -3,7 +3,7 @@ class Reight::SpriteEditor::Eyedropper < Reight::SpriteEditor::Tool
   C = Reight::CONTEXT__
 
   def canvas_clicked(x, y, button)
-    controller.color = pixel_at__ image, x, y
+    editor.color = pixel_at__ image, x, y
   end
 
   private

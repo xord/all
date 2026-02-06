@@ -19,11 +19,11 @@ class Reight::App
     #1e5359   #2d8750 #3eb250 #4fe436 #95f041 #f8ec27 #f3a207 #e26b02
   ]
 
-  def initialize(project, controller_class = nil, interface_class = nil)
-    @project    = project
-    @controller = controller_class&.new project
-    @interface  = interface_class&.new project, @controller
-    @active     = false
+  def initialize(project, editor_class = nil, interface_class = nil)
+    @project   = project
+    @editor    = editor_class&.new project
+    @interface = interface_class&.new project, @editor
+    @active    = false
   end
 
   attr_reader :project
@@ -97,19 +97,19 @@ class Reight::App
   def control_change() = nil
   def window_moved()   = nil
 
-  def has_history?() = @controller&.respond_to? :undo
-  def can_undo?()    = @controller&.can_undo?
-  def     undo()     = @controller&.undo
-  def can_redo?()    = @controller&.can_redo?
-  def     redo()     = @controller&.redo
+  def has_history?() = @editor&.respond_to? :undo
+  def can_undo?()    = @editor&.can_undo?
+  def     undo()     = @editor&.undo
+  def can_redo?()    = @editor&.can_redo?
+  def     redo()     = @editor&.redo
 
-  def has_copy_and_paste? = @controller&.respond_to? :paste
-  def can_cut?()          = @controller&.can_cut?
-  def     cut()           = @controller&.cut
-  def can_copy?()         = @controller&.can_copy?
-  def     copy()          = @controller&.copy
-  def can_paste?()        = @controller&.can_paste?
-  def     paste()         = @controller&.paste
+  def has_copy_and_paste? = @editor&.respond_to? :paste
+  def can_cut?()          = @editor&.can_cut?
+  def     cut()           = @editor&.cut
+  def can_copy?()         = @editor&.can_copy?
+  def     copy()          = @editor&.copy
+  def can_paste?()        = @editor&.can_paste?
+  def     paste()         = @editor&.paste
 
   def inspect()
     "#<#{self.class.name}:0x#{object_id}>"

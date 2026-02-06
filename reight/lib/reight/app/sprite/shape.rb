@@ -2,17 +2,17 @@ class Reight::SpriteEditor::Shape < Reight::SpriteEditor::Tool
 
   C = Reight::CONTEXT__
 
-  def initialize(controller, shape, fill)
+  def initialize(editor, shape, fill)
     @shape, @fill = shape, fill
-    super controller
+    super editor
   end
 
   def name = "#{@fill ? :Fill : :Stroke} #{@shape.capitalize}"
 
   def draw_shape(x, y)
-    controller.begin_drawing do |g|
-      @fill ? g.fill(*controller.color) : g.no_fill
-      g.stroke(*controller.color)
+    editor.begin_drawing do |g|
+      @fill ? g.fill(*editor.color) : g.no_fill
+      g.stroke(*editor.color)
       g.stroke_weight 0
       g.rect_mode    CORNER
       g.ellipse_mode CORNER
@@ -26,7 +26,7 @@ class Reight::SpriteEditor::Shape < Reight::SpriteEditor::Tool
   end
 
   def canvas_dragged(x, y, button)
-    controller.undo
+    editor.undo
     draw_shape x, y
   end
 
@@ -34,20 +34,20 @@ end# Shape
 
 
 class Reight::SpriteEditor::StrokeRect < Reight::SpriteEditor::Shape
-  def initialize(controller) = super controller, :rect, false
+  def initialize(editor) = super editor, :rect, false
 end# StrokeRect
 
 
 class Reight::SpriteEditor::FillRect < Reight::SpriteEditor::Shape
-  def initialize(controller) = super controller, :rect, true
+  def initialize(editor) = super editor, :rect, true
 end# FillRect
 
 
 class Reight::SpriteEditor::StrokeEllipse < Reight::SpriteEditor::Shape
-  def initialize(controller) = super controller, :ellipse, false
+  def initialize(editor) = super editor, :ellipse, false
 end# StrokeEllipse
 
 
 class Reight::SpriteEditor::FillEllipse < Reight::SpriteEditor::Shape
-  def initialize(controller) = super controller, :ellipse, true
+  def initialize(editor) = super editor, :ellipse, true
 end# FillEllipse
