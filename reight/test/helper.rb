@@ -33,7 +33,9 @@ end
 class R8::SpriteAnimation
   include Comparable
   def <=>(o)
-    a, b = [state_variables, o&.state_variables].each {_1[:images].map!(&:loadPixels)}
+    a, b = [state_variables, o.state_variables]
+      .map(&:dup)
+      .each {_1[:images] = _1[:images].map(&:loadPixels)}
     a <=> b
   end
 end

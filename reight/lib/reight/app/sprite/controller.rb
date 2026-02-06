@@ -22,7 +22,7 @@ class Reight::SpriteEditor::Controller
     return if sprite == @sprite
     old, @sprite = @sprite, sprite
     group_history do
-      self.anim = @sprite&.anims&.at 0
+      self.anim = @sprite&.at 0
       history__.append [:sprite, old, @sprite]
       sprite_changed! @sprite
     end
@@ -121,6 +121,7 @@ class Reight::SpriteEditor::Controller
     before = copy_image__ before,      x, y, w, h
     after  = copy_image__ @anim_image, x, y, w, h, dup: true
     history__.append [:snapshot, before, after, x, y] if before && after
+    @anim.modified!
   end
 
   def begin_drawing(bounds: nil, &block)
@@ -140,7 +141,7 @@ class Reight::SpriteEditor::Controller
 
   def add_sprite(x, y, w, h)
     sp = Reight::SpriteAsset.new(@project.get_next_id, w, h, x, y).tap {|asset|
-      asset.anims.push Reight::SpriteAnimation.new(@project.get_next_id, w, h).tap {|anim|
+      asset.push Reight::SpriteAnimation.new(@project.get_next_id, w, h).tap {|anim|
         anim.push anim.create_image
       }
     }

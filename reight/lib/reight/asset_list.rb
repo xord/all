@@ -8,6 +8,7 @@ class Reight::AssetList
   end
 
   def initialize(asset_class, assets = nil, load: nil)
+    super load: load
     @asset_class = asset_class
     if load
       state, project     = load.values_at :state, :project
@@ -18,6 +19,10 @@ class Reight::AssetList
     else
       @assets = assets || []
     end
+
+    raise 'Some assets belong to other lists' unless
+      @assets.all? {_1.parent == nil}
+    @assets.each {_1.set_parent self}
   end
 
   protected def state_variables() = {assets: @assets}

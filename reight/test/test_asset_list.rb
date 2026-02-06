@@ -76,6 +76,34 @@ class TestAssetList < Test::Unit::TestCase
     assert_false list([asset(1)]).empty?
   end
 
+  def test_modified_by_initial_asset()
+    ls = list [asset(1)]; assert_true  ls.modified?
+    ls.save proj;         assert_false ls.modified?
+    ls[0].modified!;      assert_true  ls.modified?
+  end
+
+  def test_modified_by_loaded_list()
+    ls     = list [asset(1)];                       assert_true  ls    .modified?
+    loaded = List.load(Asset, ls.save(proj), proj); assert_false loaded.modified?
+    loaded[0].modified!;                            assert_true  loaded.modified?
+  end
+
+  def test_modified_by_added_asset()
+    ls     = list;    assert_true  ls.modified?
+    ls.save proj;     assert_false ls.modified?
+    ls.add asset(1); assert_true  ls.modified?
+    ls.save proj;     assert_false ls.modified?
+    ls[0].modified!;  assert_true  ls.modified?
+  end
+
+  def test_modified_by_removed_asset()
+    ls     = list [asset(1)];  assert_true  ls.modified?
+    ls.save proj;              assert_false ls.modified?
+    removed = ls.remove ls[0]; assert_true  ls.modified?
+    ls.save proj;              assert_false ls.modified?
+    removed.modified!;         assert_false ls.modified?
+  end
+
   def test_compare_by_state_variables()
     assert_equal list,                         list
     assert_equal list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 3, 4, 5)])
