@@ -5,7 +5,7 @@ class Reight::SpriteEditor::Brush < Reight::SpriteEditor::Tool
   def brush(x, y, button)
     target_image.begin_draw do |g|
       g.no_fill
-      g.stroke(*controller.color)
+      g.stroke(*editor.color)
       g.stroke_weight 1
       g.blend_mode :replace
       g.point x.to_i + 0.5, y.to_i + 0.5 # TODO: Fix Painter::point() problem
@@ -15,12 +15,12 @@ class Reight::SpriteEditor::Brush < Reight::SpriteEditor::Tool
 
   def canvas_pressed(x, y, button)
     super
-    controller.begin_editing
+    editor.begin_editing
     brush x, y, button
   end
 
   def canvas_released(x, y, button)
-    controller.end_editing edited_bounds
+    editor.end_editing edited_bounds
     super
   end
 

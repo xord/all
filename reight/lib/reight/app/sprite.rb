@@ -1,5 +1,4 @@
 require 'reight/app/sprite/editor'
-require 'reight/app/sprite/controller'
 require 'reight/app/sprite/interface'
 require 'reight/app/sprite/anim_image_list'
 require 'reight/app/sprite/canvas'
