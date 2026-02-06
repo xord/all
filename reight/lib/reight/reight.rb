@@ -63,10 +63,6 @@ class Reight::R8
     ].join ' '
   end
 
-  def start_auto_save()
-    C.set_interval(1) {project.save if project.modified?}
-  end
-
   def setup()
     w, h = Reight::App::SCREEN_WIDTH, Reight::App::SCREEN_HEIGHT
     C.create_canvas w, h, pixelDensity: AUTO
@@ -94,5 +90,13 @@ class Reight::R8
   def control_change() = current.control_change
   def window_moved()   = apps.each {_1.window_moved}
   def window_resized() = apps.each {_1.window_resized}
+
+  private
+
+  def start_auto_save()
+    C.set_interval 3 do
+      project.save if project.modified?
+    end
+  end
 
 end# R8
