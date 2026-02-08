@@ -2,9 +2,8 @@ class Reight::SpriteEditorInterface
 
   C = Reight::CONTEXT__
 
-  def initialize(project, editor)
-    @project = pj = project
-    @editor  = e  = editor
+  def initialize(editor)
+    e = @editor = editor
 
     e.sprite_changed      {sprite_changed _1}
     e.sprite_size_changed {sprite_size_changed _1}
@@ -44,12 +43,12 @@ class Reight::SpriteEditorInterface
     colors.each {|button| button.clicked {e.color = button.color}}
 
     e.disable_history do
-      sprite_table.assets = project.sprites
+      sprite_table.assets = e.sprites
       e.sprite_size       = 16
       e.tool              = e.tools.find {_1.class == Reight::SpriteEditor::Brush}
       e.color             = e.colors[12]
 
-      e.add_sprite 0, 0, e.sprite_size, e.sprite_size if @project.sprites.empty?
+      e.add_sprite 0, 0, e.sprite_size, e.sprite_size if e.sprites.empty?
     end
   end
 
@@ -93,10 +92,8 @@ class Reight::SpriteEditorInterface
   end
 
   def sprite_table()           = @sprite_table           ||= Reight::AssetTable.new(
-    @project.settings.sprites_width,
-    @project.settings.sprites_width,
-    @project.settings.sprites_page_width,
-    @project.settings.sprites_page_height)
+    @editor.sprites_width,      @editor.sprites_width,
+    @editor.sprites_page_width, @editor.sprites_page_height)
 
   def sprite_table_page()      = @sprite_table_page      ||= Reight::Text.new(1, align: CENTER)
 
@@ -171,8 +168,8 @@ class Reight::SpriteEditorInterface
     prev = sprite_table.sprite.tap do |sp|
       sp.x = sprite_table_page_prev.sprite.x
       sp.y = sprite_table_page_prev.sprite.bottom + space_m
-      sp.w = @project.settings.sprites_page_width  + Reight::AssetTable::PADDING * 2
-      sp.h = @project.settings.sprites_page_height + Reight::AssetTable::PADDING * 2
+      sp.w = @editor.sprites_page_width  + Reight::AssetTable::PADDING * 2
+      sp.h = @editor.sprites_page_height + Reight::AssetTable::PADDING * 2
     end
     sprite_sizes.map(&:sprite).reverse.map.with_index do |sp, index|
       sp.w = sp.h = app::BUTTON_SIZE
