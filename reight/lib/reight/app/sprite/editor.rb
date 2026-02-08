@@ -1,8 +1,18 @@
 class Reight::SpriteEditor
 
-  C = Reight::CONTEXT__
+  extend Forwardable
 
   include Reight::Hookable
+
+  C = Reight::CONTEXT__
+
+  def_delegators :@project, :sprites
+
+  def_delegators :@settings,
+    :sprites_width,
+    :sprites_height,
+    :sprites_page_width,
+    :sprites_page_height
 
   def initialize(project)
     hook :sprite_changed
@@ -13,7 +23,7 @@ class Reight::SpriteEditor
     hook :color_changed
     hook :selection_changed
 
-    @project = project
+    @project, @settings = project, project.settings
   end
 
   attr_reader :sprite, :anim, :anim_image, :sprite_size, :tool, :color
