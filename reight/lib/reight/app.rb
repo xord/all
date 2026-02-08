@@ -22,14 +22,14 @@ class Reight::App
   def initialize(project, editor_class = nil, interface_class = nil)
     @project   = project
     @editor    = editor_class&.new project
-    @interface = interface_class&.new project, @editor
+    @interface = interface_class&.new @editor
     @active    = false
   end
 
   attr_reader :project
 
   def label()
-    self.class.name.split('::').last.gsub(/([a-z])([A-Z])/) {"#{$1} #{$2}"}
+    @editor.class.name.split('::').last.gsub(/([a-z])([A-Z])/) {"#{$1} #{$2}"}
   end
 
   def flash(...)
