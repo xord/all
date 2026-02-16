@@ -7,16 +7,18 @@ class Reight::AssetList
     Reight::Editable.load Reight::AssetList, asset_class, state:, project:
   end
 
-  def initialize(asset_class, assets = nil, load: nil)
+  def initialize(asset_class, assets = nil, type: :array, load: nil)
     super load: load
     @asset_class = asset_class
     if load
-      state, project     = load.values_at :state, :project
-      class_name, assets = state.values_at :class, :assets
+      state, project            = load.values_at :state, :project
+      class_name, type_, assets = state.fetch_values :class, :type, :assets
       raise 'asset class name mismatch' if class_name != @asset_class.name
       raise ArgumentError unless assets
+      @type   = type_.to_sym
       @assets = assets.map {|h| @asset_class.load h, project}
     else
+      @type   = type.to_sym
       @assets = assets || []
     end
 
@@ -25,13 +27,36 @@ class Reight::AssetList
     @assets.each {_1.set_parent self}
   end
 
-  protected def state_variables() = {assets: @assets}
+  protected def state_variables() = {type: @type, assets: @assets}
 
   def save(proj)
-    super.merge class: @asset_class.name, assets: @assets.map {_1.save proj}
+    super.merge({
+      class:  @asset_class.name,
+      type:   @type,
+      assets: @assets.map {_1.save proj}
+    })
   end
 
-  def add(*assets)
+  def insert(index, *assets)
+    raise "'insert' can only be called on 'array' type" if @type != :array
+    raise 'Some assets belong to other lists' unless
+      assets.all? {_1.parent == nil}
+
+    assets.each {_1.set_parent self}
+    @assets.insert index, *assets
+    modified!
+  end
+
+  def push(*assets)
+    insert(-1, *assets)
+  end
+
+  alias append push
+
+  def put(*assets)
+    raise "'put' can only be called on 'grid' type" if @type != :grid
+    raise 'Some assets belong to other lists' unless
+      assets.all? {_1.parent == nil}
     raise 'Overlaps with other assets' if
       assets.any? {|asset| @assets.find {_1.hit?(*asset.frame)}}
 

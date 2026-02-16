@@ -1,16 +1,13 @@
 class Reight::AssetTable
 
+  extend  Reight::Hookable
+  extend  Reight::HasState
+  include Reight::Widget
+
   C       = Reight::CONTEXT__
   PADDING = 1
 
-  include Reight::Hookable
-  include Reight::MouseEnterAndLeave
-
-  def initialize(width, height, page_width, page_height)
-    hook :selected
-    hook :add_asset
-    hook :page_changed
-
+  def initialize(width, height, page_width, page_height, size_for_new_asset: nil)
     w = width  / page_width .to_f
     h = height / page_height.to_f
     raise unless w == w.to_i && h == h.to_i
@@ -18,20 +15,33 @@ class Reight::AssetTable
     @width, @height, @page_width, @page_height =
       [width, height, page_width, page_height].map(&:to_i)
 
-    @assets, @offset, @size_for_new_asset = nil, Rays::Point.new(0), 8
-    @npages                               = (w * h).to_i
+    @offset, @npages = Rays::Point.new(0), (w * h).to_i
 
-    self.page = 0
+    self.page               = 0
+    self.size_for_new_asset = size_for_new_asset
   end
 
-  attr_accessor :size_for_new_asset
+  state :assets do |assets|
+    select assets&.at 0
+  end
 
-  attr_reader :assets, :page, :npages
+  hook :selected
+  hook :add_asset
+  hook :page_changed
 
-  def assets=(assets)
-    return if assets == @assets
-    @assets = assets
-    select @assets&.at 0
+  attr_reader :page, :npages, :size_for_new_asset
+
+  def page=(page)
+    return if page == @page
+    return if page < 0 || @npages <= page
+    @page                 = page
+    @offset.x, @offset.y, = page_bounds__(@page).to_a(2)
+    page_changed! @page
+  end
+
+  def size_for_new_asset=(*args)
+    @size_for_new_asset =
+      args == [nil] ? nil : Rays::Point.new(*args).to_a(2).map(&:to_i)
   end
 
   def select(asset)
@@ -40,14 +50,6 @@ class Reight::AssetTable
     return unless @assets&.find {_1.id == id} if id
     @asset = asset
     selected! @asset
-  end
-
-  def page=(page)
-    return if page == @page
-    return if page < 0 || @npages <= page
-    @page                 = page
-    @offset.x, @offset.y, = page_bounds__(@page).to_a(2)
-    page_changed! @page
   end
 
   def get_frame_for_new_asset(w, h)
@@ -61,8 +63,7 @@ class Reight::AssetTable
     end
   end
 
-  def draw()
-    sp = sprite
+  def draw(sp)
     C.clip sp.x, sp.y, sp.w, sp.h
     C.fill 190
     C.no_stroke
@@ -82,8 +83,9 @@ class Reight::AssetTable
       C.rect @asset.x, @asset.y, @asset.w + 1, @asset.h + 1
     end
 
-    x, y, w, h = bounds_for_new_asset__ sp.mouse_x, sp.mouse_y
-    if mouse_entered? && @assets.none? {Reight.intersect? _1.x, _1.y, _1.w, _1.h, x, y, w, h}
+    bounds = bounds_for_new_asset__ sp.mouse_x, sp.mouse_y
+    if bounds && mouse_hovered? && @assets.none? {Reight.intersect? _1.x, _1.y, _1.w, _1.h, *bounds}
+      x, y, w, h = bounds
       C.fill 220
       C.no_stroke
       C.rect x, y, w, h, 2
@@ -94,22 +96,11 @@ class Reight::AssetTable
     end
   end
 
-  def mouse_clicked(x, y)
+  def mouse_clicked(x, y, button)
     if asset = @assets.find {|a| a.hit? x, y}
       select asset
-    else
-      add_asset!(*bounds_for_new_asset__(x, y))
-    end
-  end
-
-  def sprite()
-    @sprite ||= RubySketch::Sprite.new.tap do |sp|
-      sp.draw           {draw}
-      #sp.mouse_pressed  {mouse_pressed  sp.mouse_x, sp.mouse_y}
-      #sp.mouse_released {mouse_released sp.mouse_x, sp.mouse_y}
-      sp.mouse_moved    {mouse_moved_and_start_checking_mouse_leave}
-      #sp.mouse_dragged  {mouse_dragged  sp.mouse_x, sp.mouse_y}
-      sp.mouse_clicked  {mouse_clicked  sp.mouse_x, sp.mouse_y}
+    elsif bounds = bounds_for_new_asset__(x, y)
+      add_asset!(*bounds)
     end
   end
 
@@ -136,10 +127,10 @@ class Reight::AssetTable
 
   # @private
   def bounds_for_new_asset__(x, y)
-    size = @size_for_new_asset
-    x, y = (x + @offset.x), (y + @offset.y)
-    x, y = (x / size).to_i * size, (y / size).to_i * size
-    [x, y, size, size]
+    w, h = @size_for_new_asset
+    return nil unless w && h
+    x, y = ((x + @offset.x) / w).to_i * w, ((y + @offset.y) / h).to_i * h
+    [x, y, w, h]
   end
 
 =begin

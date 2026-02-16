@@ -3,6 +3,8 @@ using Reight
 
 class Reight::App
 
+  include Xot::Inspectable
+
   SCREEN_WIDTH      = 400
   SCREEN_HEIGHT     = 224
 
@@ -66,7 +68,7 @@ class Reight::App
   end
 
   def key_pressed()
-    @interface.key_pressed pressing_keys if @interface
+    @interface&.key_pressed pressing_keys
     navigator.key_pressed
     pressing_keys.add key_code
   end
@@ -110,10 +112,6 @@ class Reight::App
   def     copy()          = @editor&.copy
   def can_paste?()        = @editor&.can_paste?
   def     paste()         = @editor&.paste
-
-  def inspect()
-    "#<#{self.class.name}:0x#{object_id}>"
-  end
 
   private
 
