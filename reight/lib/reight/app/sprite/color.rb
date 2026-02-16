@@ -10,9 +10,7 @@ class Reight::SpriteEditor::Color < Reight::Button
 
   attr_reader :color
 
-  def draw()
-    sp = sprite
-
+  def draw(sp)
     C.fill(*color)
     C.no_stroke
     C.blend_mode REPLACE

@@ -14,7 +14,7 @@ class TestProject < Test::Unit::TestCase
   def test_save()
     tmpdir do |dir|
       pj = proj(dir).tap do |pj|
-        pj.sprites.add sprite(pj.get_next_id)
+        pj.sprites.put sprite(pj.get_next_id)
         pj.save
       end
 
@@ -22,7 +22,7 @@ class TestProject < Test::Unit::TestCase
         {next_id: 2, settings: {}},
         read_json(pj.settings.project_json_path))
       assert_equal(
-        {class: 'Reight::SpriteAsset', assets: [{id: 1, w: 8, h: 8}]},
+        {class: 'Reight::SpriteAsset', type: 'grid', assets: [{id: 1, w: 8, h: 8}]},
         read_json(pj.settings.sprites_json_path))
     end
   end
@@ -30,7 +30,7 @@ class TestProject < Test::Unit::TestCase
   def test_load()
     tmpdir do |dir|
       proj(dir).tap do |pj|
-        pj.sprites.add sprite(pj.get_next_id), sprite(pj.get_next_id)
+        pj.sprites.put sprite(pj.get_next_id), sprite(pj.get_next_id)
         pj.save
       end
 
@@ -50,7 +50,7 @@ class TestProject < Test::Unit::TestCase
 
   def test_get_asset()
     pj = proj
-    pj.sprites.add sprite(1), sprite(2), sprite(3)
+    pj.sprites.put sprite(1), sprite(2), sprite(3)
     assert_equal 1, pj.get_asset(1).id
     assert_equal 2, pj.get_asset(2).id
     assert_equal 3, pj.get_asset(3).id

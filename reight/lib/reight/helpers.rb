@@ -21,6 +21,93 @@ module Reight
 end# Reight
 
 
+module Reight::ModelController
+
+  def group_history(&block)   = history__.group(&block)
+
+  def disable_history(&block) = history__.disable(&block)
+
+  private
+
+  def append_history(...)     = history__.append(...)
+
+  def history__()             = @history ||= Reight::History.new
+
+end# ModelController
+
+
+module Reight::ViewController
+
+  def bind(name, new, old, &block)
+    block.call
+    key = [self.class, name]
+    old&.remove_modified_observers key
+    new&.add_modified_observer key, &block
+  end
+
+end# ViewController
+
+
+module Reight::Widget
+
+  def mouse_hovered?()
+    @widget_mouse_entered
+  end
+
+  def sprite()
+    @widget_sprite ||= RubySketch::Sprite.new(physics: false).tap do |sp|
+      sp.draw           {draw sp}
+      sp.key_pressed    {key_pressed  sp.key, sp.key_code}
+      sp.key_released   {key_released sp.key, sp.key_code}
+      sp.key_typed      {key_typed    sp.key, sp.key_code}
+      sp.mouse_pressed  {mouse_pressed( *to_widget(sp.mouse_x, sp.mouse_y), sp.mouse_button)}
+      sp.mouse_released {mouse_released(*to_widget(sp.mouse_x, sp.mouse_y), sp.mouse_button)}
+      sp.mouse_moved    {mouse_moved(   *to_widget(sp.mouse_x, sp.mouse_y))}
+      sp.mouse_dragged  {mouse_dragged( *to_widget(sp.mouse_x, sp.mouse_y), sp.mouse_button)}
+      sp.mouse_clicked  {mouse_clicked( *to_widget(sp.mouse_x, sp.mouse_y), sp.mouse_button)}
+    end
+  end
+
+  protected
+
+  def draw(sp)                     = nil
+  def key_pressed( key, code)      = nil
+  def key_released(key, code)      = nil
+  def key_typed(   key, code)      = nil
+  def mouse_pressed( x, y, button) = nil
+  def mouse_released(x, y, button) = nil
+  def mouse_moved(   x, y)         = mouse_moved_and_start_checking_mouse_leave
+  def mouse_entered( x, y)         = nil
+  def mouse_leaved()               = nil
+  def mouse_dragged( x, y, button) = nil
+  def mouse_clicked( x, y, button) = nil
+
+  def to_widget(x, y)
+    [x, y]
+  end
+
+  private
+
+  def mouse_moved_and_start_checking_mouse_leave()
+    sp, c = sprite, Reight::CONTEXT__
+    unless @widget_mouse_entered
+      @widget_mouse_entered = true
+      mouse_entered(*to_widget(sp.mouse_x, sp.mouse_y))
+    end
+    c.set_timeout 1 / 20.0, id: "#{__method__}_#{sp.object_id}" do
+      x, y = c.mouse_x - sp.x, c.mouse_y - sp.y
+      if x < 0 || sp.w <= x || y < 0 || sp.h <= y
+        mouse_leaved
+        @widget_mouse_entered = false
+      else
+        mouse_moved_and_start_checking_mouse_leave
+      end
+    end
+  end
+
+end# Widget
+
+
 module Reight::Activatable
 
   def initialize(...)
@@ -52,11 +139,12 @@ module Reight::Hookable
 
   def hook(*names)
     names.each do |name|
-      singleton_class.__send__ :define_method, name do |&block|
+      name = name.to_sym
+      define_method name do |&block|
         @hookable_hooks ||= {}
         (@hookable_hooks[name] ||= []).push block
       end
-      singleton_class.__send__ :define_method, "#{name}!" do |*args, &block|
+      define_method "#{name}!" do |*args, &block|
         @hookable_hooks&.[](name)&.each {_1.call(*args, &block)}
       end
     end
@@ -65,24 +153,21 @@ module Reight::Hookable
 end# Hookable
 
 
-module Reight::MouseEnterAndLeave
+module Reight::HasState
 
-  def mouse_moved_and_start_checking_mouse_leave()
-    @mouse_enter_and_leave__entered = true
-    sp, c = sprite, Reight::CONTEXT__
-    c.set_timeout 0.1, id: "#{__method__}_#{sp.object_id}" do
-      x, y = c.mouse_x - sp.x, c.mouse_y - sp.y
-      if x < 0 || sp.w <= x || y < 0 || sp.h <= y
-        @mouse_enter_and_leave__entered = false
-      else
-        mouse_moved_and_start_checking_mouse_leave
-      end
+  def state(name, &block)
+    ivar_name, hook_name = "@#{name}", "#{name}_changed"
+    hook hook_name
+    define_method "#{name}=" do |value|
+      old = instance_variable_get ivar_name
+      return if value == old
+      instance_variable_set ivar_name, value
+      instance_exec value, old, &block if block
+      __send__ "#{hook_name}!", value, old
     end
   end
 
-  def mouse_entered?() = @mouse_enter_and_leave__entered
-
-end# MouseEnterAndLeave
+end# HasState
 
 
 module Reight::HasHelp

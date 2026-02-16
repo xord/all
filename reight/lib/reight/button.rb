@@ -1,25 +1,26 @@
 class Reight::Button
 
-  C = Reight::CONTEXT__
-
+  extend  Reight::Hookable
+  include Reight::Widget
   include Reight::Activatable
-  include Reight::Hookable
   include Reight::HasHelp
+
+  C = Reight::CONTEXT__
 
   def initialize(name: nil, icon: nil, label: nil, &clicked)
     raise if icon && label
     @name, @icon, @label = name, icon, label
     super()
 
-    hook :clicked
     self.clicked(&clicked) if clicked
     self.clicked {r8.flash name}
   end
 
+  hook :clicked
+
   attr_accessor :name, :icon, :label
 
-  def draw()
-    sp = sprite
+  def draw(sp)
     C.no_stroke
 
     if @label
@@ -54,21 +55,22 @@ class Reight::Button
     end
   end
 
-  def pressed(x, y)
+  def mouse_pressed(x, y, button)
     @pressing = true if enabled?
   end
 
-  def released(x, y)
+  def mouse_released(x, y, button)
     @pressing = false
   end
 
-  def pressing? = @pressing
-
-  def hover(x, y)
+  def mouse_moved(x, y)
+    super
     r8.flash help, priority: 0.5
   end
 
-  def click() = clicked! self
+  def mouse_clicked(x, y, button)
+    clicked! self if enabled?
+  end
 
   def enabled?(&block)
     @enabled_block = block if block
@@ -77,15 +79,7 @@ class Reight::Button
 
   def disabled? = !enabled?
 
-  def sprite()
-    @sprite ||= RubySketch::Sprite.new(physics: false).tap do |sp|
-      sp.draw           {draw}
-      sp.mouse_pressed  {pressed  sp.mouse_x, sp.mouse_y}
-      sp.mouse_released {released sp.mouse_x, sp.mouse_y}
-      sp.mouse_moved    {hover    sp.mouse_x, sp.mouse_y}
-      sp.mouse_clicked  {clicked! self if enabled?}
-    end
-  end
+  def pressing? = @pressing
 
   def disabled_icon()
     @disabled_icon ||= C.createGraphics(@icon.width, @icon.height).tap do |g|
