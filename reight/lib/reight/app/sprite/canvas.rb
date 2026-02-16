@@ -1,18 +1,16 @@
 # @private
 class Reight::SpriteEditor::Canvas
 
+  extend  Reight::Hookable
+  include Reight::Widget
+
   C = Reight::CONTEXT__
 
-  include Reight::Hookable
-
-  def initialize()
-    hook :image_changed
-    hook :canvas_pressed
-    hook :canvas_released
-    hook :canvas_moved
-    hook :canvas_dragged
-    hook :canvas_clicked
-  end
+  hook :canvas_pressed
+  hook :canvas_released
+  hook :canvas_moved
+  hook :canvas_dragged
+  hook :canvas_clicked
 
   attr_accessor :selection
 
@@ -20,11 +18,9 @@ class Reight::SpriteEditor::Canvas
     return if image == @image
     @image = image
     @grids = nil
-    image_changed! @image
   end
 
-  def draw()
-    sp = sprite
+  def draw(sp)
     C.clip sp.x, sp.y, sp.w, sp.h
     C.fill 0
     C.no_stroke
@@ -48,24 +44,35 @@ class Reight::SpriteEditor::Canvas
     end
   end
 
-  def sprite()
-    @sprite ||= RubySketch::Sprite.new.tap do |sp|
-      pos = -> {to_image sp.mouse_x, sp.mouse_y}
-      sp.draw           {draw}
-      sp.mouse_pressed  {canvas_pressed!( *pos.call, sp.mouse_button) if @image}
-      sp.mouse_released {canvas_released!(*pos.call, sp.mouse_button) if @image}
-      sp.mouse_moved    {canvas_moved!(   *pos.call)                  if @image}
-      sp.mouse_dragged  {canvas_dragged!( *pos.call, sp.mouse_button) if @image}
-      sp.mouse_clicked  {canvas_clicked!( *pos.call, sp.mouse_button) if @image}
-    end
+  def mouse_pressed(x, y, button)
+    canvas_pressed! x, y, button if @image
   end
 
-  private
+  def mouse_released(x, y, button)
+    canvas_released! x, y, button if @image
+  end
 
-  def to_image(x, y)
+  def mouse_moved(x, y)
+    super
+    canvas_moved! x, y if @image
+  end
+
+  def mouse_dragged(x, y, button)
+    canvas_dragged! x, y, button if @image
+  end
+
+  def mouse_clicked(x, y, button)
+    canvas_clicked! x, y, button if @image
+  end
+
+  protected
+
+  def to_widget(x, y)
     sp = sprite
     return x * (@image.w.to_f / sp.w), y * (@image.h.to_f / sp.h)
   end
+
+  private
 
   def draw_grids__()
     C.push do

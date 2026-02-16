@@ -5,8 +5,8 @@ class TestAssetList < Test::Unit::TestCase
 
   def test_save()
     assert_equal(
-      {class: 'TestAssetList::Asset', assets: [{id:1, w:2, h:3},   {id:5, w:6, h:7}]},
-      list([                                 asset(1,   2,   3), asset(5,   6,   7)]).save(proj))
+      {class: 'TestAssetList::Asset', assets: [{id:1, w:2, h:3},   {id:5, w:6, h:7}], type: :array},
+      list([                                 asset(1,   2,   3), asset(5,   6,   7)], type: :array).save(proj))
   end
 
   def test_load()
@@ -14,24 +14,58 @@ class TestAssetList < Test::Unit::TestCase
       list([
         asset(1, 2, 3),
         asset(5, 6, 7)
-      ]),
-      List.load(Asset, {class: 'TestAssetList::Asset', assets: [
+      ], type: :array),
+      List.load(Asset, {class: 'TestAssetList::Asset', type: :array, assets: [
+        {id:1, w:2, h:3, x:0, y:0},
+        {id:5, w:6, h:7, x:0, y:0}
+      ]}, proj))
+    assert_equal(
+      list([
+        asset(1, 2, 3),
+        asset(5, 6, 7)
+      ], type: :grid),
+      List.load(Asset, {class: 'TestAssetList::Asset', type: :grid, assets: [
         {id:1, w:2, h:3, x:0, y:0},
         {id:5, w:6, h:7, x:0, y:0}
       ]}, proj))
   end
 
-  def test_add()
-    ls = list
-    ls.add asset(1, 1, 1, 0, 0)
+  def test_type()
+    assert_nothing_raised {list(type: :array).insert(     0, asset(1))}
+    assert_nothing_raised {list(type: :array).push(          asset(1))}
+    assert_nothing_raised {list(type: :array).append(        asset(1))}
+    assert_nothing_raised {list(type: :grid) .put(           asset(1))}
+    assert_raise(RuntimeError) {list(type: :array).put(      asset(1))}
+    assert_raise(RuntimeError) {list(type: :grid) .insert(0, asset(1))}
+    assert_raise(RuntimeError) {list(type: :grid) .push(     asset(1))}
+    assert_raise(RuntimeError) {list(type: :grid) .append(   asset(1))}
+  end
+
+  def test_insert()
+    ls = list;               assert_equal [],           ls.map(&:id)
+    ls.insert  0, asset(1);  assert_equal [1],          ls.map(&:id)
+    ls.insert  0, asset(2);  assert_equal [2, 1],       ls.map(&:id)
+    ls.insert  1, asset(3);  assert_equal [2, 3, 1],    ls.map(&:id)
+    ls.insert(-1, asset(4)); assert_equal [2, 3, 1, 4], ls.map(&:id)
+  end
+
+  def test_push()
+    ls = list;        assert_equal([],     ls.map(&:id))
+    ls.push asset(1); assert_equal([1],    ls.map(&:id))
+    ls.push asset(2); assert_equal([1, 2], ls.map(&:id))
+  end
+
+  def test_put()
+    ls = list type: :grid
+    ls.put asset(1, 1, 1, 0, 0)
     assert_equal [1],             ls.map(&:id)
 
-    ls.add asset(2, 1, 1, 2, 0)
-    ls.add asset(3, 1, 1, 1, 0)
+    ls.put asset(2, 1, 1, 2, 0)
+    ls.put asset(3, 1, 1, 1, 0)
     assert_equal [1, 3, 2],       ls.map(&:id)
 
-    ls.add asset(4, 1, 1, 0, 2)
-    ls.add asset(5, 1, 1, 0, 1)
+    ls.put asset(4, 1, 1, 0, 2)
+    ls.put asset(5, 1, 1, 0, 1)
     assert_equal [1, 3, 2, 5, 4], ls.map(&:id)
   end
 
@@ -46,12 +80,12 @@ class TestAssetList < Test::Unit::TestCase
 
   def test_remove_at()
     ls = list [asset(1), asset(2), asset(3), asset(4)]
-                                                 assert_equal([1, 2, 3, 4], ls.map(&:id))
-    a  = ls.remove_at  1;  assert_equal 2, a.id; assert_equal([1, 3, 4],    ls.map(&:id))
-    a  = ls.remove_at  0;  assert_equal 1, a.id; assert_equal([3, 4],       ls.map(&:id))
-    a  = ls.remove_at(-1); assert_equal 4, a.id; assert_equal([3],          ls.map(&:id))
-    a  = ls.remove_at(-1); assert_equal 3, a.id; assert_equal([],           ls.map(&:id))
-    a  = ls.remove_at(-1); assert_nil      a
+                                                assert_equal([1, 2, 3, 4], ls.map(&:id))
+    a = ls.remove_at  1;  assert_equal 2, a.id; assert_equal([1, 3, 4],    ls.map(&:id))
+    a = ls.remove_at  0;  assert_equal 1, a.id; assert_equal([3, 4],       ls.map(&:id))
+    a = ls.remove_at(-1); assert_equal 4, a.id; assert_equal([3],          ls.map(&:id))
+    a = ls.remove_at(-1); assert_equal 3, a.id; assert_equal([],           ls.map(&:id))
+    a = ls.remove_at(-1); assert_nil      a
   end
 
   def test_each()
@@ -88,10 +122,10 @@ class TestAssetList < Test::Unit::TestCase
     loaded[0].modified!;                            assert_true  loaded.modified?
   end
 
-  def test_modified_by_added_asset()
-    ls     = list;    assert_true  ls.modified?
+  def test_modified_by_inserted_asset()
+    ls = list;        assert_true  ls.modified?
     ls.save proj;     assert_false ls.modified?
-    ls.add asset(1); assert_true  ls.modified?
+    ls.push asset(1); assert_true  ls.modified?
     ls.save proj;     assert_false ls.modified?
     ls[0].modified!;  assert_true  ls.modified?
   end
@@ -124,7 +158,7 @@ class TestAssetList < Test::Unit::TestCase
     def self.load(state, project) = R8::Editable.load Asset, state:, project:
   end
 
-  def list(assets = [])                 = List.new Asset, assets
+  def list(assets = [], type: :array)   = List.new Asset, assets, type: type
 
   def asset(id, w = 1, h = 2, *a, **kw) = Asset.new(id, w, h, *a, **kw)
 
