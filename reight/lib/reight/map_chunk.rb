@@ -2,6 +2,7 @@
 class Reight::MapChunk
 
   include Enumerable
+  include Xot::Inspectable
   include Reight::Editable
 
   C = Reight::CONTEXT__
@@ -95,10 +96,6 @@ class Reight::MapChunk
 
   def frame() = [@x, @y, @width, @height]
 
-  def inspect()
-    "#<#{self.class.name}:0x#{object_id}>"
-  end
-
   # @private
   def invalidate_cache__()
     @cached = false
@@ -107,7 +104,7 @@ class Reight::MapChunk
   # @private
   def drawSprite__(context)
     @cached ||= true.tap do
-      @cache ||= create_graphics @w, @h
+      @cache ||= C.create_graphics @width, @height
       @cache.begin_draw do |g|
         g.background 0, 0
         g.translate(-@x, -@y)
