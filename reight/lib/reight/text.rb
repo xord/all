@@ -1,15 +1,13 @@
-using Reight
-
-
 class Reight::Text
 
+  extend  Reight::Hookable
+  include Reight::Widget
   include Reight::Activatable
-  include Reight::Hookable
   include Reight::HasHelp
 
-  def initialize(text = '', editable: false, align: LEFT, label: nil, regexp: nil, &changed)
-    hook :changed
+  C = Reight::CONTEXT__
 
+  def initialize(text = '', editable: false, align: LEFT, label: nil, regexp: nil, &changed)
     super()
     @editable, @align, @label, @regexp = editable, align, label, regexp
     @shake                             = 0
@@ -17,6 +15,8 @@ class Reight::Text
 
     self.value = text
   end
+
+  hook :changed
 
   attr_accessor :editable, :align, :label
 
@@ -44,7 +44,7 @@ class Reight::Text
   end
 
   def value=(text)
-    str = text.to_s
+    str = text&.to_s || ''
     return if str == @value
     return unless valid? str
     @value = str
@@ -59,34 +59,33 @@ class Reight::Text
     end
   end
 
-  def draw()
-    sp = sprite
-    clip sp.x, sp.y, sp.w, sp.h
+  def draw(sp)
+    C.clip sp.x, sp.y, sp.w, sp.h
 
-    no_stroke
+    C.no_stroke
 
     if @shake != 0
-      translate rand(-@shake.to_f..@shake.to_f), 0
+      C.translate rand(-@shake.to_f..@shake.to_f), 0
       @shake *= rand(0.7..0.9)
       @shake  = 0 if @shake.abs < 0.1
     end
 
-    fill focus? ? 230 : 200
-    rect 0, 0, sp.w, sp.h, 3
+    C.fill focus? ? 230 : 200
+    C.rect 0, 0, sp.w, sp.h, 3
 
     show_old = @old_value && (value.nil? || value.empty?)
     text     = show_old ? @old_value : value
     text     = label.to_s + (text || '') unless focus?
     x        = 2
-    fill show_old ? 200 : 50
-    text_align @align, CENTER
-    text text, x, 0, sp.w - x * 2, sp.h
+    C.fill show_old ? 200 : 50
+    C.text_align @align, CENTER
+    C.text text, x, 0, sp.w - x * 2, sp.h
 
-    if focus? && (frame_count % 60) < 30
-      fill 100
-      bounds = text_font.text_bounds value
+    if focus? && (C.frame_count % 60) < 30
+      C.fill 100
+      bounds = C.text_font.text_bounds value
       xx     = (@align == LEFT ? x + bounds.w : (sp.w + bounds.w) / 2) - 1
-      rect xx, (sp.h - bounds.h) / 2, 2, bounds.h
+      C.rect xx, (sp.h - bounds.h) / 2, 2, bounds.h
     end
   end
 
@@ -99,7 +98,7 @@ class Reight::Text
     end
   end
 
-  def clicked(x, y)
+  def mouse_clicked(x, y, button)
     if focus?
       return if hit? x, y
       self.value = @old_value if value == '' || !valid?(ignore_regexp: false)
@@ -113,14 +112,6 @@ class Reight::Text
   def hit?(x, y)
     sp = sprite
     (0...sp.w).include?(x) && (0...sp.h).include?(y)
-  end
-
-  def sprite()
-    @sprite ||= RubySketch::Sprite.new(physics: false).tap do |sp|
-      sp.draw          {draw}
-      sp.key_pressed   {key_pressed sp.key, sp.key_code}
-      sp.mouse_clicked {clicked sp.mouse_x, sp.mouse_y}
-    end
   end
 
 end# Text

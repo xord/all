@@ -25,8 +25,8 @@ class Reight::R8
     @apps ||= [].tap {|a|
       a << Reight::Runner.new(project)
       a << Reight::App.new(project, Reight::SpriteEditor, Reight::SpriteEditorInterface) if edit?
-      #a << Reight::MapEditor   .new(project) if edit?
-      #a << Reight::SoundEditor .new(project) if edit?
+      a << Reight::App.new(project, Reight::   MapEditor, Reight::   MapEditorInterface) if edit?
+      #a << Reight::App.new(project, Reight:: SoundEditor, Reight:: SoundEditorInterface) if edit?
     }
   end
 
@@ -68,7 +68,8 @@ class Reight::R8
     C.create_canvas w, h, pixelDensity: AUTO
     C.window_resize(*[w, h].map {_1 * 3})
     C.text_font r8.project.font, r8.project.settings.font_size
-    start_auto_save
+
+    project.modified(observe_all: true) {_1.save_all}
   end
 
   def draw()           = current.draw
@@ -90,13 +91,5 @@ class Reight::R8
   def control_change() = current.control_change
   def window_moved()   = apps.each {_1.window_moved}
   def window_resized() = apps.each {_1.window_resized}
-
-  private
-
-  def start_auto_save()
-    C.set_interval 3 do
-      project.save if project.modified?
-    end
-  end
 
 end# R8

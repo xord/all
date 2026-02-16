@@ -1,8 +1,181 @@
-using Reight
+class Reight::MapEditor
 
+  extend  Forwardable
+  extend  Reight::Hookable
+  extend  Reight::HasState
+  include Reight::ModelController
 
-class Reight::MapEditor < Reight::App
+  C = Reight::CONTEXT__
 
+  def initialize(project)
+    super()
+    @project, @settings = project, project.settings
+  end
+
+  state :map do |new, old|
+    group_history do
+      self.layer = new&.at 0
+      append_history [:set_map, new, old]
+    end
+  end
+
+  state :layer do |new, old|
+    append_history [:set_layer, new, old]
+  end
+
+  state :sprite
+  state :tool
+
+  attr_reader :map, :layer, :sprite, :tool
+
+  hook :map_name_changed
+
+  def_delegators :@project, :maps, :sprites
+
+  def_delegators :@settings,
+    :sprites_width,
+    :sprites_height,
+    :sprites_page_width,
+    :sprites_page_height
+
+  def tools()
+    @tools ||= [
+      Reight::MapEditor::Brush     .new(self),
+      Reight::MapEditor::Line      .new(self),
+      Reight::MapEditor::StrokeRect.new(self),
+      Reight::MapEditor::  FillRect.new(self)
+    ]
+  end
+
+  def begin_editing(&block)
+    history__.begin_grouping
+    block.call @layer if block
+  ensure
+    end_editing if block
+  end
+
+  def end_editing()
+    history__.end_grouping
+  end
+
+  def add_map(x, y, w, h)
+    m = Reight::MapAsset.new(@project.get_next_id, w, h, x, y).tap {|asset|
+      asset.push Reight::Map.new
+    }
+    group_history do
+      maps.put m
+      append_history [:add_map, m]
+      self.map = m
+    end
+  end
+
+  def append_map()
+    x, y, w, h = maps[-1].frame
+    add_map x + w, y, w, h
+  end
+
+  def remove_map()
+    return unless @map
+    map, index = @map, maps.find_index(@map)
+    group_history do
+      maps.remove map
+      append_history [:remove_map, map]
+      pp [maps.size, maps[index], maps[-1]]
+      self.map = maps[index] || maps[-1]
+    end
+  end
+
+  def set_map_name(name)
+    old, @map.name = @map.name, name
+    append_history [:set_map_name, old, @map.name]
+  end
+
+  def put_sprite(x, y, sprite = @sprite)
+    return unless @layer && sprite
+    x, y, w, h = self.class.bounds_for_put x, y, sprite.w, sprite.h
+    return if @layer.each_tile(x, y, w, h).any?
+    tile = @layer.put x, y, sprite
+    append_history [:put_sprite, tile]
+  end
+
+  def remove_sprite(x, y)
+    return unless @layer
+    tile = @layer&.at(x, y) || return
+    @layer.remove_tile tile
+    append_history [:remove_sprite, tile]
+  end
+=begin
+  def put_or_remove_chip(x, y, chip)
+    return false unless x && y && chip
+    m = canvas.map
+    return false if !@deleting && m[x, y]&.id == chip.id
+
+    result = false
+    m.each_chip x, y, chip.w, chip.h do |ch|
+      m.remove_chip ch
+      result |= history.append [:remove_chip, ch.pos.x, ch.pos.y, ch.id]
+    end
+    unless @deleting
+      m.put x, y, chip
+      result |= history.append [:put_chip, x, y, chip.id]
+    end
+    result
+  end
+=end
+  def undo()
+    history__.undo do |action|
+      case action
+      in [:set_map,      before, _] then self.map      = before
+      in [:set_map_name, before, _] then self.map.name = before
+      in [:set_layer,    before, _] then self.layer    = before
+      in [   :add_map, map]         then maps.remove map
+      in [:remove_map, map]         then maps.put    map
+      in [   :put_sprite, tile]     then remove_sprite tile.x, tile.y
+      in [:remove_sprite, tile]     then    put_sprite tile.x, tile.y, tile.asset
+      #in [  :select, sel, _]      then sel ? canvas.select(*sel) : canvas.deselect
+      #in [:deselect, sel]         then       canvas.select(*sel)
+      end
+    end
+  end
+
+  def redo()
+    history__.redo do |action|
+      case action
+      in [:set_map,      _, after] then self.map      = after
+      in [:set_map_name, _, after] then self.map.name = after
+      in [:set_layer,    _, after] then self.layer    = after
+      in [   :add_map, map]        then maps.put    map
+      in [:remove_map, map]        then maps.remove map
+      in [   :put_sprite, tile]    then    put_sprite tile.x, tile.y, tile.asset
+      in [:remove_sprite, tile]    then remove_sprite tile.x, tile.y
+      #in [:remove_tile, x, y, id] then canvas.map.remove x, y
+      #in [  :select, _, sel]      then canvas.select(*sel)
+      #in [:deselect, _]           then canvas.deselect
+      end
+    end
+  end
+
+  def can_undo?() = history__.can_undo?
+  def can_redo?() = history__.can_redo?
+
+  def canvas_pressed( x, y, button) = @tool&.canvas_pressed  x, y, button
+
+  def canvas_released(x, y, button) = @tool&.canvas_released x, y, button
+
+  def canvas_moved(   x, y)         = @tool&.canvas_moved    x, y
+
+  def canvas_dragged( x, y, button) = @tool&.canvas_dragged  x, y, button
+
+  def canvas_clicked( x, y, button) = @tool&.canvas_clicked  x, y, button
+
+  def self.bounds_for_put(x, y, w, h)
+    x, y = (x / w).to_i * w, (y / h).to_i * h
+    [x, y, w, h]
+  end
+
+  private
+
+=begin
   def canvas()
     @canvas ||= Canvas.new self, project.maps.first
   end
@@ -78,10 +251,6 @@ class Reight::MapEditor < Reight::App
   def undo(flash: true)
     history.undo do |action|
       case action
-      in [:put_chip,    x, y, id] then canvas.map.remove x, y
-      in [:remove_chip, x, y, id] then canvas.map.put    x, y, project.chips[id]
-      in [  :select, sel, _]      then sel ? canvas.select(*sel) : canvas.deselect
-      in [:deselect, sel]         then       canvas.select(*sel)
       end
       self.flash 'Undo!' if flash
     end
@@ -90,10 +259,6 @@ class Reight::MapEditor < Reight::App
   def redo(flash: true)
     history.redo do |action|
       case action
-      in [:put_chip,    x, y, id] then canvas.map.put    x, y, project.chips[id]
-      in [:remove_chip, x, y, id] then canvas.map.remove x, y
-      in [  :select, _, sel]      then canvas.select(*sel)
-      in [:deselect, _]           then canvas.deselect
       end
       self.flash 'Redo!' if flash
     end
@@ -134,5 +299,5 @@ class Reight::MapEditor < Reight::App
   def line         = @line        ||= Line.new(self)              {canvas.tool = _1}
   def stroke_rect  = @stroke_rect ||= Rect.new(self, fill: false) {canvas.tool = _1}
   def   fill_rect  =   @fill_rect ||= Rect.new(self, fill: true)  {canvas.tool = _1}
-
+=end
 end# MapEditor

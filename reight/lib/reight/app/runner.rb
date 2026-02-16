@@ -179,6 +179,7 @@ class Reight::Runner < Reight::App
 
   def create_context()
     klass = Class.new do
+      include Xot::Inspectable
       include Reight::Context
 
       def call_activated__(&caller)
@@ -196,10 +197,6 @@ class Reight::Runner < Reight::App
         @setup_done__         ||= true.tap {caller.call(push: false) {setup}}
         @background_cleared__ ||= true.tap {caller.call {background 100}}
         caller.call {draw}
-      end
-
-      def inspect()
-        "#<#{self.class.name}:0x#{object_id}>"
       end
 
       methods = (instance_methods - Object.instance_methods)

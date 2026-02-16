@@ -1,35 +1,39 @@
-using Reight
+class Reight::MapEditor::Line < Reight::MapEditor::Tool
 
+  C = Reight::CONTEXT__
 
-class Reight::MapEditor::Line < Reight::MapEditor::BrushBase
-
-  def initialize(app, &block)
-    super app, icon: app.icon(4, 2, 8), &block
-    set_help left: name, right: 'Pick Chip'
-  end
-
-  def brush(cursor_from, cursor_to, chip)
-    result = false
-    canvas.begin_editing do
-      fromx, fromy = cursor_from[...2]
-      tox,   toy   = cursor_to[...2]
-      dx           = fromx < tox ? chip.w : -chip.w
-      dy           = fromy < toy ? chip.h : -chip.h
-      if (tox - fromx).abs > (toy - fromy).abs
-        (fromx..tox).step(dx).each do |x|
-          y = fromy == toy ? toy : map(x, fromx, tox, fromy, toy)
-          y = y / chip.h * chip.h
-          result |= put_or_remove_chip x, y, chip
+  def line(from, to)
+    sp             = editor.sprite || (return false)
+    x1, y1, x2, y2 = *from, *to
+    result         = false
+    editor.begin_editing do
+      dx = x1 < x2 ? sp.w : -sp.w
+      dy = y1 < y2 ? sp.h : -sp.h
+      if (x2 - x1).abs > (y2 - y1).abs
+        (x1..x2).step(dx).each do |x|
+          y = y1 == y2 ? y2 : C.map(x, x1, x2, y1, y2)
+          y = y / sp.h * sp.h
+          result |= editor.put_sprite x, y, sp
         end
       else
-        (fromy..toy).step(dy).each do |y|
-          x = fromx == tox ? tox : map(y, fromy, toy, fromx, tox)
-          x = x / chip.w * chip.w
-          result |= put_or_remove_chip x, y, chip
+        (y1..y2).step(dy).each do |y|
+          x = x1 == x2 ? x2 : C.map(y, y1, y2, x1, x2)
+          x = x / sp.w * sp.w
+          result |= editor.put_sprite x, y, sp
         end
       end
     end
     result
+  end
+
+  def canvas_pressed(x, y, button)
+    @start_pos = [x, y]
+    @undo_prev = line @start_pos, @start_pos
+  end
+
+  def canvas_dragged(x, y, button)
+    editor.undo if @undo_prev
+    line @start_pos, [x, y]
   end
 
 end# Line

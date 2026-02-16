@@ -3,6 +3,7 @@ class Reight::Map
   C = Reight::CONTEXT__
 
   include Enumerable
+  include Xot::Inspectable
   include Reight::Editable
 
   def self.load(state, project)
@@ -62,8 +63,11 @@ class Reight::Map
   end
 
   def put(x, y, asset)
-    return unless asset
-    put_tile__ Reight::MapTile.new(asset, *align_tile_pos__(x, y))
+    return nil unless asset
+    tile = Reight::MapTile.new asset, *align_tile_pos__(x, y)
+    put_tile__ tile
+    modified!
+    tile
   end
 
   def remove(x, y)
@@ -72,6 +76,7 @@ class Reight::Map
     each_chunk__ tx, ty, tw, th, create: false do |chunk|
       each_tile_pos__(tx, ty, tw, th) {|xx, yy| chunk.remove xx, yy}
     end
+    modified!
   end
 
   def remove_tile(tile)
@@ -94,13 +99,11 @@ class Reight::Map
 
   def each(&block) = each_tile(&block)
 
-  def [](x, y)
-    chunk_at__(x, y)&.[](x, y)
+  def at(x, y)
+    chunk_at__(x, y)&.at x, y
   end
 
-  def inspect()
-    "#<#{self.class.name}:0x#{object_id}>"
-  end
+  alias [] at
 
   # @private
   def drawSprite__(context)
@@ -214,10 +217,6 @@ class Reight::Map::SpriteArray < Array
   def delete(sprite)
     sprite.map_chunk&.delete_sprite__ sprite
     super
-  end
-
-  def inspect()
-    "#<#{self.class.name}:0x#{object_id}>"
   end
 
   def drawSprite__(context)

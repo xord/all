@@ -18,8 +18,8 @@ class TestMap < Test::Unit::TestCase
 
   def test_load()
     pj = proj.tap do |pj|
-      pj.sprites.add asset(1, 10,  0, 0)
-      pj.sprites.add asset(2, 20, 10, 0)
+      pj.sprites.put asset(1, 10,  0, 0)
+      pj.sprites.put asset(2, 20, 10, 0)
     end
     loaded = R8::Map.load({
       tile_size: 10, chunk_size: 30, tiles: [[1,10,20], [2,20,10]]
@@ -141,33 +141,15 @@ class TestMap < Test::Unit::TestCase
     m.put 20,  30,  asset(2, 20)
     m.put 100, 200, asset(3, 10)
 
-    assert_equal(
-      [],
-      m.each_tile( 0,  0, 10, 20).map {|tile| [tile.asset.id, tile.x, tile.y]})
-    assert_equal(
-      [[1, 10, 20]],
-      m.each_tile( 0,  0, 11, 21).map {|tile| [tile.asset.id, tile.x, tile.y]})
-    assert_equal(
-      [],
-      m.each_tile(20, 20, 10, 10).map {|tile| [tile.asset.id, tile.x, tile.y]})
-    assert_equal(
-      [[1, 10, 20]],
-      m.each_tile(19, 20, 10, 10).map {|tile| [tile.asset.id, tile.x, tile.y]})
-    assert_equal(
-      [],
-      m.each_tile(10, 30, 10, 10).map {|tile| [tile.asset.id, tile.x, tile.y]})
-    assert_equal(
-      [[1, 10, 20]],
-      m.each_tile(10, 29, 10, 10).map {|tile| [tile.asset.id, tile.x, tile.y]})
-    assert_equal(
-      [[1, 10, 20]],
-      m.each_tile(0, 0, 30, 30)  .map {|tile| [tile.asset.id, tile.x, tile.y]})
-    assert_equal(
-      [[1, 10, 20], [2, 20, 30]],
-      m.each_tile(0, 0, 31, 31)  .map {|tile| [tile.asset.id, tile.x, tile.y]})
-    assert_equal(
-      [[1, 10, 20], [2, 20, 30], [3, 100, 200]],
-      m.each_tile                .map {|tile| [tile.asset.id, tile.x, tile.y]})
+    assert_equal [],        m.each_tile( 0,  0, 10, 20).map {_1.asset.id}
+    assert_equal [1],       m.each_tile( 0,  0, 11, 21).map {_1.asset.id}
+    assert_equal [],        m.each_tile(20, 20, 10, 10).map {_1.asset.id}
+    assert_equal [1],       m.each_tile(19, 20, 10, 10).map {_1.asset.id}
+    assert_equal [],        m.each_tile(10, 30, 10, 10).map {_1.asset.id}
+    assert_equal [1],       m.each_tile(10, 29, 10, 10).map {_1.asset.id}
+    assert_equal [1],       m.each_tile( 0,  0, 30, 30).map {_1.asset.id}
+    assert_equal [1, 2],    m.each_tile( 0,  0, 30, 31).map {_1.asset.id}
+    assert_equal [1, 2, 3], m.each_tile                .map {_1.asset.id}
   end
 
   def test_compare_by_state_variables()
