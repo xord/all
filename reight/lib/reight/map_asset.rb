@@ -1,10 +1,40 @@
-class Reight::SpriteAsset < Reight::Asset
+class Reight::MapAsset < Reight::Asset
 
-  C = Reight::CONTEXT__
-
+  extend  Forwardable
   include Enumerable
   include Xot::Inspectable
 
+  C = Reight::CONTEXT__
+
+  def self.load(state, project)
+    Reight::Editable.load Reight::MapAsset, state:, project:
+  end
+
+  def initialize(*args, load: nil)
+    super(*args, load: load)
+    if load
+      state, project = load.fetch_values :state, :project
+      layers,        = state.fetch_values :layers
+      @layers        = Reight::AssetList.load Reight::Map, layers, project
+    else
+      @layers        = Reight::AssetList.new Reight::Map
+    end
+
+    @layers.set_parent self
+  end
+
+  def save(proj)
+    super.merge layers: @layers.save(proj)
+  end
+
+  protected def state_variables() = super.merge(layers:)
+
+  attr_reader :layers
+
+  def_delegators :@layers,
+    :insert, :push, :append, :remove, :remove_at, :each, :at, :[], :size, :empty?
+
+=begin
   SHAPES = [:rect, :circle]
 
   def self.load(state, project)
@@ -148,6 +178,10 @@ class Reight::SpriteAsset < Reight::Asset
     @sprite = nil
   end
 
+  def inspect()
+    "#<#{self.class.name}:0x#{object_id}>"
+  end
+
   private
 
   # @private
@@ -160,5 +194,5 @@ class Reight::SpriteAsset < Reight::Asset
   def set_sensor__(bool)
     @sensor = bool ? true : nil
   end
-
-end# SpriteAsset
+=end
+end# MapAsset

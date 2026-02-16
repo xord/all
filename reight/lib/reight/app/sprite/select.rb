@@ -26,6 +26,7 @@ class Reight::SpriteEditor::Select < Reight::SpriteEditor::Tool
   def canvas_released(x, y, button)
     @press_pos = nil
     @moving    = false
+    super
   end
 
   def canvas_dragged(x, y, button)

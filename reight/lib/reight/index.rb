@@ -3,12 +3,12 @@ using Reight
 
 class Reight::Index
 
+  extend  Reight::Hookable
+  include Reight::Widget
   include Reight::Activatable
-  include Reight::Hookable
   include Reight::HasHelp
 
   def initialize(index = 0, min: 0, max: nil, &changed)
-    hook :changed
 
     super()
     @min, @max = min, max
@@ -16,6 +16,8 @@ class Reight::Index
     self.changed(&changed) if changed
     self.index = index
   end
+
+  hook :changed
 
   attr_reader :index
 
@@ -26,10 +28,9 @@ class Reight::Index
     changed! @index
   end
 
-  def draw()
+  def draw(sp)
     no_stroke
 
-    sp   = sprite
     w, h = sp.w, sp.h
     dec  = pressing? && prev?
     inc  = pressing? && next?
@@ -55,33 +56,24 @@ class Reight::Index
 
   def next? = !prev?
 
-  def pressed(x, y)
+  def mouse_pressed(x, y, button)
     @pressing = true
   end
 
-  def released(x, y)
+  def mouse_released(x, y, button)
     @pressing = false
   end
 
-  def pressing? = @pressing
-
-  def hover(x, y)
+  def mouse_moved(x, y)
+    super
     r8.flash x < (sprite.w / 2) ? 'Prev' : 'Next'
   end
 
-  def clicked()
+  def mouse_clicked(x, y, button)
     self.index += 1 if next?
     self.index -= 1 if prev?
   end
 
-  def sprite()
-    @sprite ||= RubySketch::Sprite.new(physics: false).tap do |sp|
-      sp.draw           {draw}
-      sp.mouse_pressed  {pressed  sp.mouse_x, sp.mouse_y}
-      sp.mouse_released {released sp.mouse_x, sp.mouse_y}
-      sp.mouse_moved    {hover    sp.mouse_x, sp.mouse_y}
-      sp.mouse_clicked  {clicked}
-    end
-  end
+  def pressing? = @pressing
 
 end# Index

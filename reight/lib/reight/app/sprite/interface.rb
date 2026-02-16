@@ -1,16 +1,16 @@
 class Reight::SpriteEditorInterface
 
+  include Reight::ViewController
+
   C = Reight::CONTEXT__
 
   def initialize(editor)
     e = @editor = editor
 
-    e.sprite_changed      {sprite_changed _1}
+    e.sprite_changed      {sprite_changed _1, _2}
     e.sprite_size_changed {sprite_size_changed _1}
-    e.anim_changed        {anim_images.anim = _1}
-    e.anim_changed        {anim_name.value = _1.name}
-    e.anim_image_changed  {anim_images.select _1}
-    e.anim_image_changed  {canvas.image = _1}
+    e.anim_changed        {anim_changed _1, _2}
+    e.anim_image_changed  {anim_image_changed _1, _2}
     e.tool_changed        {|tool|  tools.each  {_1.active = _1.tool  == tool}}
     e.color_changed       {|color| colors.each {_1.active = _1.color == color}}
     e.selection_changed   {canvas.selection = _1}
@@ -22,15 +22,17 @@ class Reight::SpriteEditorInterface
     sprite_table_page_prev.clicked  {sprite_table.page -= 1}
     sprite_table_page_next.enabled? {sprite_table.page < sprite_table.npages - 1}
     sprite_table_page_next.clicked  {sprite_table.page += 1}
-    sprite_table_add.clicked        {sprite_table_add_clicked}
-    sprite_sizes.each {|button|
-      button.clicked                {e.sprite_size = _1.label}
-    }
-    sprite_name.changed             {e.sprite.name = _1}
-    anim_prev.clicked               {e.anim_image = e.anim&.at get_anim_image_index - 1}
-    anim_next.clicked               {e.anim_image = e.anim&.at get_anim_image_index + 1}
-    #anim_add.clicked                {e.add_anim_image}
-    anim_name
+    sprite_remove.clicked           {e.remove_sprite}
+    sprite_name.changed             {e.set_sprite_name _1}
+    anim_prev.enabled?              {get_anim_index > 0}
+    anim_prev.clicked               {e.anim = e.sprite&.at get_anim_index - 1}
+    anim_next.enabled?              {get_anim_index < (e.sprite&.size || 0) - 1}
+    anim_next.clicked               {e.anim = e.sprite&.at get_anim_index + 1}
+    anim_add   .clicked             {e.add_anim}
+    anim_remove.enabled?            {(e.sprite&.size || 0) > 0}
+    anim_remove.clicked             {e.remove_anim}
+    anim_name.changed               {e.set_anim_name _1}
+    anim_image_remove.clicked       {e.remove_anim_image}
     anim_images.selected            {e.anim_image = _1}
     anim_images.add_image           {e.add_anim_image _1}
     canvas.canvas_pressed           {|x, y, b| e.canvas_pressed  x, y, b}
@@ -39,8 +41,9 @@ class Reight::SpriteEditorInterface
     canvas.canvas_dragged           {|x, y, b| e.canvas_dragged  x, y, b}
     canvas.canvas_clicked           {|x, y, b| e.canvas_clicked  x, y, b}
 
-    tools.each  {|button| button.clicked {e.tool  = button.tool}}
-    colors.each {|button| button.clicked {e.color = button.color}}
+    sprite_sizes.each {|button| button.clicked {e.sprite_size = _1.label}}
+    tools.each        {|button| button.clicked {e.tool        = button.tool}}
+    colors.each       {|button| button.clicked {e.color       = button.color}}
 
     e.disable_history do
       sprite_table.assets = e.sprites
@@ -52,9 +55,9 @@ class Reight::SpriteEditorInterface
     end
   end
 
-  def sprite_changed(sprite)
+  def sprite_changed(sprite, old)
     sprite_table.select sprite
-    sprite_name.value = sprite.name
+    bind(__method__, sprite, old) {sprite_name.value = sprite.name}
   end
 
   def sprite_size_changed(size)
@@ -62,13 +65,19 @@ class Reight::SpriteEditorInterface
     sprite_table.size_for_new_asset = size
   end
 
-  def sprite_table_add_clicked()
-    x, y, w, h = sprite_table.get_frame_for_new_asset || return
-    @editor.add_sprite x, y, w, h
+  def anim_changed(anim, old)
+    anim_index.value = get_anim_index + 1
+    anim_images.anim = anim
+    bind(__method__, anim, old) {anim_name.value = anim&.name}
   end
 
-  def get_anim_image_index()
-    @editor.anim.find_index @editor.anim_image
+  def anim_image_changed(image, old)
+    anim_images.select image
+    canvas.image = image
+  end
+
+  def get_anim_index()
+    @editor.sprite&.find_index(@editor&.anim) || 0
   end
 
   def sprites()
@@ -76,14 +85,17 @@ class Reight::SpriteEditorInterface
       sprite_table_page_prev,
       sprite_table_page,
       sprite_table_page_next,
-      #sprite_table_add,
+      sprite_remove,
       *sprite_sizes,
       sprite_table,
       sprite_name,
       anim_name,
       anim_prev,
+      anim_index,
       anim_next,
-      #anim_add,
+      anim_add,
+      anim_remove,
+      anim_image_remove,
       anim_images,
       canvas,
       *tools,
@@ -101,20 +113,27 @@ class Reight::SpriteEditorInterface
 
   def sprite_table_page_next() = @sprite_table_page_next ||= Reight::Button.new(label: '>')
 
-  def sprite_table_add()       = @sprite_table_add       ||= Reight::Button.new(label: '+')
+  def sprite_remove()          = @sprite_remove          ||= Reight::Button.new(label: '-')
 
   def sprite_sizes()           = @sprite_sizes           ||= [8, 16, 32].map {Reight::Button.new(label: _1)}
 
   def sprite_name()            = @sprite_name            ||= Reight::Text.new(
-    label: 'Name: ', editable: true, regexp: /^\w*$/)
+    label: 'Name: ', editable: true, regexp: /^\w+$/)
 
-  def anim_name()              = @anim_name              ||= Reight::Text.new
+  def anim_name()              = @anim_name              ||= Reight::Text.new(
+    editable: true, regexp: /^\w+$/)
+
+  def anim_index()             = @anim_index             ||= Reight::Text.new(1, align: CENTER)
 
   def anim_prev()              = @anim_prev              ||= Reight::Button.new(label: '<')
 
   def anim_next()              = @anim_next              ||= Reight::Button.new(label: '>')
 
   def anim_add()               = @anim_add               ||= Reight::Button.new(label: '+')
+
+  def anim_remove()            = @anim_remove            ||= Reight::Button.new(label: '-')
+
+  def anim_image_remove()      = @anim_image_remove      ||= Reight::Button.new(label: '-')
 
   def anim_images()            = @anim_images            ||= Reight::SpriteEditor::AnimImageList.new
 
@@ -160,11 +179,6 @@ class Reight::SpriteEditorInterface
       sp.y = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
-    prev = sprite_table_add.sprite.tap do |sp|
-      sp.x = prev.right + space_m
-      sp.y = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
     prev = sprite_table.sprite.tap do |sp|
       sp.x = sprite_table_page_prev.sprite.x
       sp.y = sprite_table_page_prev.sprite.bottom + space_m
@@ -174,12 +188,17 @@ class Reight::SpriteEditorInterface
     sprite_sizes.map(&:sprite).reverse.map.with_index do |sp, index|
       sp.w = sp.h = app::BUTTON_SIZE
       sp.x = prev.right - sp.w - (sp.w + space_m) * index
-      sp.y = sprite_table_add.sprite.y
+      sp.y = sprite_table_page_next.sprite.y
+    end
+    prev = sprite_remove.sprite.tap do |sp|
+      sp.w = sp.h = app::BUTTON_SIZE
+      sp.x = sprite_sizes.first.sprite.x - space_l - sp.w
+      sp.y = sprite_sizes.first.sprite.y
     end
     prev = sprite_name.sprite.tap do |sp|
-      sp.x = prev.x
-      sp.y = prev.bottom + space_l
-      sp.w = prev.w
+      sp.x = sprite_table.sprite.x
+      sp.y = sprite_table.sprite.bottom + space_l
+      sp.w = sprite_table.sprite.w
       sp.h = app::BUTTON_SIZE
     end
     prev = anim_prev.sprite.tap do |sp|
@@ -187,20 +206,35 @@ class Reight::SpriteEditorInterface
       sp.y = sprite_table_page_prev.sprite.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
+    prev = anim_index.sprite.tap do |sp|
+      sp.x = prev.right + space_s
+      sp.y = prev.y
+      sp.w = sp.h = app::BUTTON_SIZE
+    end
     prev = anim_next.sprite.tap do |sp|
-      sp.x = prev.right + space_m
+      sp.x = prev.right + space_s
       sp.y = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = anim_add.sprite.tap do |sp|
-      sp.x = prev.right + space_m
+      sp.x = prev.right + space_s
       sp.y = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
+    prev = anim_remove.sprite.tap do |sp|
+      sp.x = prev.right + space_s
+      sp.y = prev.y
+      sp.w = sp.h = app::BUTTON_SIZE
+    end
+    prev = anim_image_remove.sprite.tap do |sp|
+      sp.w = sp.h = app::BUTTON_SIZE
+      sp.x = C.width - space_l - sp.w
+      sp.y = prev.y
+    end
     prev = anim_name.sprite.tap do |sp|
-      sp.x     = prev.right + space_m
+      sp.x     = anim_remove.sprite.right + space_m
       sp.y     = prev.y
-      sp.right = C.width - space_l
+      sp.right = anim_image_remove.sprite.x - space_m
       sp.h     = app::BUTTON_SIZE
     end
     prev = anim_images.sprite.tap do |sp|
@@ -219,8 +253,8 @@ class Reight::SpriteEditorInterface
     tools.map(&:sprite).each.with_index do |sp, index|
       sp.w  = sp.h = app::BUTTON_SIZE
       sp.x  = canvas.sprite.x - space_l - sp.w
-      all_h = (sp.h + 1) * tools.size
-      sp.y  = canvas.sprite.y + ((canvas.sprite.h - all_h) / 2).to_i + (sp.h + 1) * index
+      all_h = (sp.h + space_s) * tools.size
+      sp.y  = canvas.sprite.y + ((canvas.sprite.h - all_h) / 2).to_i + (sp.h + space_s) * index
     end
     colors.map(&:sprite).each.with_index do |sp, index|
       sp.w  = (app::BUTTON_SIZE * 0.8).floor

@@ -1,27 +1,16 @@
-using Reight
+class Reight::MapEditor::Brush < Reight::MapEditor::Tool
 
-
-class Reight::MapEditor::Brush < Reight::MapEditor::BrushBase
-
-  def initialize(app, &block)
-    super app, icon: app.icon(1, 2, 8), &block
-    set_help left: name, right: 'Pick Chip'
+  def canvas_pressed(x, y, button)
+    editor.begin_editing
+    editor.put_sprite x, y
   end
 
-  def brush(cursor_from, cursor_to, chip)
-    x, y, = cursor_to
-    put_or_remove_chip x, y, chip
-    false
+  def canvas_released(x, y, button)
+    editor.end_editing
   end
 
-  def canvas_pressed(...)
-    canvas.begin_editing
-    super
-  end
-
-  def canvas_released(...)
-    super
-    canvas.end_editing
+  def canvas_dragged(x, y, button)
+    editor.put_sprite x, y
   end
 
 end# Brush

@@ -1,6 +1,7 @@
 class Reight::SpriteAnimation < Reight::Asset
 
   include Enumerable
+  include Xot::Inspectable
 
   C = Reight::CONTEXT__
 
@@ -85,10 +86,6 @@ class Reight::SpriteAnimation < Reight::Asset
 
   def create_image()
     C.create_graphics w, h
-  end
-
-  def inspect()
-    "#<#{self.class.name}:0x#{object_id}>"
   end
 
   private

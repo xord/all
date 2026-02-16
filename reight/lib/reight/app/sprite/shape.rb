@@ -7,8 +7,6 @@ class Reight::SpriteEditor::Shape < Reight::SpriteEditor::Tool
     super editor
   end
 
-  def name = "#{@fill ? :Fill : :Stroke} #{@shape.capitalize}"
-
   def draw_shape(x, y)
     editor.begin_drawing do |g|
       @fill ? g.fill(*editor.color) : g.no_fill

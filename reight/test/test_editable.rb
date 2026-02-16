@@ -10,23 +10,24 @@ class TestEditable < Test::Unit::TestCase
 
   def test_save()
     o = obj name: :test
-    assert_true                   o.modified?
-    assert_equal ({name: :test}), o.save(proj)
-    assert_false                  o.modified?
+    assert_true                               o.modified?
+    assert_equal ({child: nil, name: :test}), o.save(proj)
+    assert_false                              o.modified?
   end
 
   def test_project()
-    pj = proj
-    o  = obj
-    o.set_parent pj.root
+    pj, o = proj, obj
+    o.set_parent pj
 
-    assert_equal pj, o.project
+    assert_equal pj,  o.project
+    assert_equal pj, pj.project
   end
 
   def test_parent()
-    parent, child = obj, obj
+    child = obj
     assert_nil child.parent
 
+    parent = obj
     child.set_parent parent
     assert_equal parent, child.parent
 
@@ -35,55 +36,76 @@ class TestEditable < Test::Unit::TestCase
   end
 
   def test_modified?()
-    pj = proj
-    assert_true [pj, pj.root].all?(&:modified?)
+    o = obj child: obj
+    assert_true [o, o.child].all?(&:modified?)
 
-    pj.save
-    assert_true [pj, pj.root].none?(&:modified?)
+    o.save proj
+    assert_true [o, o.child].none?(&:modified?)
 
-    pj.root.modified!
-    assert_true [pj, pj.root].all?(&:modified?)
+    o.child.modified!
+    assert_true [o, o.child].all?(&:modified?)
   end
 
   def test_modified!()
-    pj_modified_event = root_modified_event = false
+    parent, child = obj, obj
+    child.set_parent parent
 
-    pj = proj
-    pj     .modified {  pj_modified_event = true}
-    pj.root.modified {root_modified_event = true}
+    logger = []
+    parent.modified(observe_all: false) {logger << :parent_non_all}
+    parent.modified(observe_all: true)  {logger << :parent_all}
+    child .modified                     {logger << :child}
 
-    pj.root.modified!
-    assert_true  pj     .modified?
-    assert_true  pj.root.modified?
-    assert_false   pj_modified_event
-    assert_true  root_modified_event
+    child.modified!
+    assert_equal [:child, :parent_all],          logger
+
+    logger = []
+    parent.modified!
+    assert_equal [:parent_non_all, :parent_all], logger
+  end
+
+  def test_modified_count()
+    o = obj
+    assert_equal 1, o.modified_count
+
+    o.modified!
+    assert_equal 2, o.modified_count
+
+    o.modified!
+    o.modified!
+    assert_equal 4, o.modified_count
+
+    o.save proj
+    assert_equal 0, o.modified_count
+
+    parent = obj child: o
+    assert_equal [1, 0], [parent.modified_count, o.modified_count]
+
+    o.modified!
+    assert_equal [2, 1], [parent.modified_count, o.modified_count]
+
+    o.modified!
+    o.modified!
+    assert_equal [4, 3], [parent.modified_count, o.modified_count]
+
+    parent.save proj
+    assert_equal [0, 0], [parent.modified_count, o.modified_count]
   end
 
   private
 
   class Obj
     include R8::Editable
-    attr_reader :attrs
-    def initialize(load: nil, **attrs)
+    def initialize(child: nil, load: nil, **attrs)
       super(load: load)
-      @attrs = attrs
+      @child, @attrs = child, attrs
+      @child&.set_parent self
     end
-    def save(proj) = super.merge @attrs
-  end
-
-  class Proj < R8::Project
-    include R8::Editable
-    def initialize(...)
-      super()
-      @root = Obj.new name: :root
-      @root.set_parent self
-    end
-    attr_reader :root
-    def save() = super(self).merge root: root.save(self)
+    attr_reader :child, :attrs
+    def save(proj) = super.merge(child: @child&.save(proj), **@attrs)
   end
 
   def obj(...)           = Obj.new(...)
 
-  def proj(dir = '/tmp') = Proj.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir
 
 end# TestEditable
