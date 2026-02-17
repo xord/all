@@ -243,19 +243,19 @@ class Reight::SpriteEditor
   def undo()
     history__.undo do |action|
       case action
-      in [   :add_sprite,     sprite]        then sprites.remove sprite
-      in [:remove_sprite,     sprite]        then sprites.put    sprite
-      in [   :add_anim,       index, _]      then @sprite.remove_at index
-      in [:remove_anim,       index, anim]   then @sprite.insert    index, anim
-      in [   :add_anim_image, index, _]      then @anim  .remove_at index
-      in [:remove_anim_image, index, image]  then @anim  .insert    index, image
-      in [:set_sprite,      _, before]       then self.sprite     = before
-      in [:set_sprite_name, _, before]       then @sprite.name    = before
-      in [:set_anim,        _, before]       then self.anim       = before
-      in [:set_anim_name,   _, before]       then @anim.name      = before
-      in [:set_anim_image,  _, before]       then self.anim_image = before
-      in [:snapshot,        _, before, x, y] then restore_anim_image__ before, x, y
-      in [  :select,        _, before]       then before ? select(*before) : deselect
+      in [   :add_sprite,     sprite]       then sprites.remove sprite
+      in [:remove_sprite,     sprite]       then sprites.put    sprite
+      in [   :add_anim,       index, _]     then @sprite.remove_at index
+      in [:remove_anim,       index, anim]  then @sprite.insert    index, anim
+      in [   :add_anim_image, index, _]     then @anim  .remove_at index
+      in [:remove_anim_image, index, image] then @anim  .insert    index, image
+      in [:set_sprite,      _, old]         then self.sprite     = old
+      in [:set_sprite_name, _, old]         then @sprite.name    = old
+      in [:set_anim,        _, old]         then self.anim       = old
+      in [:set_anim_name,   _, old]         then @anim.name      = old
+      in [:set_anim_image,  _, old]         then self.anim_image = old
+      in [:snapshot,        _, old, x, y]   then restore_anim_image__ old, x, y
+      in [  :select,        _, old]         then old ? select(*old) : deselect
       end
     end
   end
@@ -269,13 +269,13 @@ class Reight::SpriteEditor
       in [:remove_anim,       index, _]     then @sprite.remove_at index
       in [   :add_anim_image, index, image] then @anim  .insert    index, image
       in [:remove_anim_image, index, _]     then @anim  .remove_at index
-      in [:set_sprite,      after, _]       then self.sprite     = after
-      in [:set_sprite_name, after, _]       then @sprite.name    = after
-      in [:set_anim,        after, _]       then self.anim       = after
-      in [:set_anim_name,   after, _]       then @anim.name      = after
-      in [:set_anim_image,  after, _]       then self.anim_image = after
-      in [:snapshot,        after, _, x, y] then restore_anim_image__ after, x, y
-      in [  :select,        after, _]       then after ? select(*after) : deselect
+      in [:set_sprite,      new, _]         then self.sprite     = new
+      in [:set_sprite_name, new, _]         then @sprite.name    = new
+      in [:set_anim,        new, _]         then self.anim       = new
+      in [:set_anim_name,   new, _]         then @anim.name      = new
+      in [:set_anim_image,  new, _]         then self.anim_image = new
+      in [:snapshot,        new, _, x, y]   then restore_anim_image__ new, x, y
+      in [  :select,        new, _]         then new ? select(*new) : deselect
       end
     end
   end
