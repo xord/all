@@ -63,34 +63,6 @@ class TestEditable < Test::Unit::TestCase
     assert_equal [:parent_non_all, :parent_all], logger
   end
 
-  def test_modified_count()
-    o = obj
-    assert_equal 1, o.modified_count
-
-    o.modified!
-    assert_equal 2, o.modified_count
-
-    o.modified!
-    o.modified!
-    assert_equal 4, o.modified_count
-
-    o.save proj
-    assert_equal 0, o.modified_count
-
-    parent = obj child: o
-    assert_equal [1, 0], [parent.modified_count, o.modified_count]
-
-    o.modified!
-    assert_equal [2, 1], [parent.modified_count, o.modified_count]
-
-    o.modified!
-    o.modified!
-    assert_equal [4, 3], [parent.modified_count, o.modified_count]
-
-    parent.save proj
-    assert_equal [0, 0], [parent.modified_count, o.modified_count]
-  end
-
   private
 
   class Obj

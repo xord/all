@@ -15,7 +15,7 @@ class TestProject < Test::Unit::TestCase
     tmpdir do |dir|
       pj = proj(dir).tap do |pj|
         pj.sprites.put sprite(pj.get_next_id)
-        pj.save
+        pj.save_all
       end
 
       assert_equal(
@@ -31,7 +31,7 @@ class TestProject < Test::Unit::TestCase
     tmpdir do |dir|
       proj(dir).tap do |pj|
         pj.sprites.put sprite(pj.get_next_id), sprite(pj.get_next_id)
-        pj.save
+        pj.save_all
       end
 
       pj = proj dir
