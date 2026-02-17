@@ -60,7 +60,7 @@ class Reight::MapEditor
 
   def add_map(x, y, w, h)
     m = Reight::MapAsset.new(@project.get_next_id, w, h, x, y).tap {|asset|
-      asset.push Reight::Map.new
+      asset.push Reight::MapLayer.new
     }
     group_history do
       maps.put m
