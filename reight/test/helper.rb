@@ -40,7 +40,7 @@ class R8::SpriteAnimation
   end
 end
 
-class R8::Map
+class R8::MapLayer
   include Comparable
   def <=>(o) = state_variables <=> o&.state_variables
 end
