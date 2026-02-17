@@ -59,14 +59,14 @@ class Reight::MapEditor
   end
 
   def add_map(x, y, w, h)
-    m = Reight::MapAsset.new(@project.get_next_id, w, h, x, y).tap {|asset|
-      asset.push Reight::MapLayer.new
+    Reight::MapAsset.new(@project.get_next_id, w, h, x, y).tap {|map|
+      map.push Reight::MapLayer.new
+      group_history do
+        maps.put map
+        append_history [:add_map, map]
+        self.map = map
+      end
     }
-    group_history do
-      maps.put m
-      append_history [:add_map, m]
-      self.map = m
-    end
   end
 
   def append_map()
@@ -75,19 +75,20 @@ class Reight::MapEditor
   end
 
   def remove_map()
-    return unless @map
+    return nil unless @map
     map, index = @map, maps.find_index(@map)
     group_history do
       maps.remove map
       append_history [:remove_map, map]
-      pp [maps.size, maps[index], maps[-1]]
       self.map = maps[index] || maps[-1]
     end
+    map
   end
 
   def set_map_name(name)
     old, @map.name = @map.name, name
-    append_history [:set_map_name, old, @map.name]
+    append_history [:set_map_name, @map.name, old]
+    nil
   end
 
   def put_sprite(x, y, sprite = @sprite)
@@ -96,6 +97,7 @@ class Reight::MapEditor
     return if @layer.each_tile(x, y, w, h).any?
     tile = @layer.put x, y, sprite
     append_history [:put_sprite, tile]
+    nil
   end
 
   def remove_sprite(x, y)
@@ -103,6 +105,7 @@ class Reight::MapEditor
     tile = @layer&.at(x, y) || return
     @layer.remove_tile tile
     append_history [:remove_sprite, tile]
+    nil
   end
 =begin
   def put_or_remove_chip(x, y, chip)
@@ -125,15 +128,15 @@ class Reight::MapEditor
   def undo()
     history__.undo do |action|
       case action
-      in [:set_map,      before, _] then self.map      = before
-      in [:set_map_name, before, _] then self.map.name = before
-      in [:set_layer,    before, _] then self.layer    = before
-      in [   :add_map, map]         then maps.remove map
-      in [:remove_map, map]         then maps.put    map
-      in [   :put_sprite, tile]     then remove_sprite tile.x, tile.y
-      in [:remove_sprite, tile]     then    put_sprite tile.x, tile.y, tile.asset
-      #in [  :select, sel, _]      then sel ? canvas.select(*sel) : canvas.deselect
-      #in [:deselect, sel]         then       canvas.select(*sel)
+      in [:set_map,      _, old] then self.map      = old
+      in [:set_map_name, _, old] then self.map.name = old
+      in [:set_layer,    _, old] then self.layer    = old
+      in [   :add_map, map]      then maps.remove map
+      in [:remove_map, map]      then maps.put    map
+      in [   :put_sprite, tile]  then remove_sprite tile.x, tile.y
+      in [:remove_sprite, tile]  then    put_sprite tile.x, tile.y, tile.asset
+      #in [  :select, sel, _]     then sel ? canvas.select(*sel) : canvas.deselect
+      #in [:deselect, sel]        then       canvas.select(*sel)
       end
     end
   end
@@ -141,13 +144,13 @@ class Reight::MapEditor
   def redo()
     history__.redo do |action|
       case action
-      in [:set_map,      _, after] then self.map      = after
-      in [:set_map_name, _, after] then self.map.name = after
-      in [:set_layer,    _, after] then self.layer    = after
-      in [   :add_map, map]        then maps.put    map
-      in [:remove_map, map]        then maps.remove map
-      in [   :put_sprite, tile]    then    put_sprite tile.x, tile.y, tile.asset
-      in [:remove_sprite, tile]    then remove_sprite tile.x, tile.y
+      in [:set_map,      new, _] then self.map      = new
+      in [:set_map_name, new, _] then self.map.name = new
+      in [:set_layer,    new, _] then self.layer    = new
+      in [   :add_map, map]      then maps.put    map
+      in [:remove_map, map]      then maps.remove map
+      in [   :put_sprite, tile]  then    put_sprite tile.x, tile.y, tile.asset
+      in [:remove_sprite, tile]  then remove_sprite tile.x, tile.y
       #in [:remove_tile, x, y, id] then canvas.map.remove x, y
       #in [  :select, _, sel]      then canvas.select(*sel)
       #in [:deselect, _]           then canvas.deselect
