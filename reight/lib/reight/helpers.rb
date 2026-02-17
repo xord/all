@@ -160,7 +160,7 @@ module Reight::HasState
     hook hook_name
     define_method "#{name}=" do |value|
       old = instance_variable_get ivar_name
-      return if value == old
+      return if value.equal? old
       instance_variable_set ivar_name, value
       instance_exec value, old, &block if block
       __send__ "#{hook_name}!", value, old
