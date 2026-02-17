@@ -1,4 +1,4 @@
-class Reight::Map
+class Reight::MapLayer
 
   C = Reight::CONTEXT__
 
@@ -7,7 +7,7 @@ class Reight::Map
   include Reight::Editable
 
   def self.load(state, project)
-    Reight::Editable.load Reight::Map, state:, project:
+    Reight::Editable.load Reight::MapLayer, state:, project:
   end
 
   def initialize(tile_size: 8, chunk_size: 128, load: nil)
@@ -178,11 +178,11 @@ class Reight::Map
     [x.to_i / s * s, y.to_i / s * s]
   end
 
-end# Map
+end# MapLayer
 
 
 # @private
-class Reight::Map::SpriteArray < Array
+class Reight::MapLayer::SpriteArray < Array
 
   def initialize(world: nil, sprites: [], &each_chunk)
     @world, @each_chunk = world, each_chunk
