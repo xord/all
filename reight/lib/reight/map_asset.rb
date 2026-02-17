@@ -15,9 +15,9 @@ class Reight::MapAsset < Reight::Asset
     if load
       state, project = load.fetch_values :state, :project
       layers,        = state.fetch_values :layers
-      @layers        = Reight::AssetList.load Reight::Map, layers, project
+      @layers        = Reight::AssetList.load Reight::MapLayer, layers, project
     else
-      @layers        = Reight::AssetList.new Reight::Map
+      @layers        = Reight::AssetList.new Reight::MapLayer
     end
 
     @layers.set_parent self
