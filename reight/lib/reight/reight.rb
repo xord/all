@@ -60,13 +60,21 @@ class Reight::R8
     ].join ' '
   end
 
+  def start_auto_save()
+    project.modified observe_all: true do
+      C.set_timeout 0.3, id: :project_auto_save do
+        project.save_all
+      end
+    end
+  end
+
   def setup()
     w, h = Reight::App::SCREEN_WIDTH, Reight::App::SCREEN_HEIGHT
     C.create_canvas w, h, pixelDensity: AUTO
     C.window_resize(*[w, h].map {_1 * 3})
     C.text_font r8.project.font, r8.project.settings.font_size
 
-    project.modified(observe_all: true) {_1.save_all}
+    start_auto_save
   end
 
   def draw()           = current.draw
