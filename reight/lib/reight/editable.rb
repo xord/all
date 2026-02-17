@@ -5,11 +5,11 @@ module Reight::Editable
   end
 
   def initialize(load: nil)
-    @editable_modified_count = 0 if load
+    @editable_modified = false if load
   end
 
   def save(proj)
-    @editable_modified_count = 0
+    @editable_modified = false
     {}
   end
 
@@ -39,24 +39,21 @@ module Reight::Editable
   alias modified add_modified_observer
 
   def modified?()
-    @editable_modified_count == nil || @editable_modified_count > 0
+    @editable_modified == nil || !!@editable_modified
   end
 
   def modified!()
     send_modified_event__
   end
 
-  def modified_count()
-    @editable_modified_count || 1
-  end
-
   protected
 
   # @private
   def send_modified_event__(origin = true)
-    @editable_modified_count ||= 1
-    @editable_modified_count  += 1
-    @editable_observers&.each {|b, k, all| b.call self, k if all || origin}
+    @editable_modified = true
+    @editable_observers&.each do |block, key, observe_all|
+      block.call self, key if observe_all || origin
+    end
     parent.send_modified_event__ false if parent
   end
 
