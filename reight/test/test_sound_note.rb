@@ -26,16 +26,16 @@ class TestSoundNote < Test::Unit::TestCase
   end
 
   def test_load()
-    assert_equal(
+    assert_equal_state(
       note(1, tone(2)),
       Note.load(index: 1, tone: 2))
   end
 
   def test_compare()
-    assert_equal(    note(1, tone(2)), note(1, tone(2)))
+    assert_equal_state(    note(1, tone(2)), note(1, tone(2)))
 
-    assert_not_equal(note(1, tone(2)), note(0, tone(2)))
-    assert_not_equal(note(1, tone(2)), note(1, tone(-1)))
+    assert_not_equal_state(note(1, tone(2)), note(0, tone(2)))
+    assert_not_equal_state(note(1, tone(2)), note(1, tone(-1)))
   end
 
 end# TestSoundNote

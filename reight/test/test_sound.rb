@@ -45,21 +45,21 @@ class TestSound < Test::Unit::TestCase
       sound.tap {_1.add_note 1,       2, tone( 3)}.save(proj))
   end
 
-  def test_compare()
-    assert_equal     sound(1), sound(1)
-    assert_not_equal sound(1), sound(0)
+  def test_compare_by_state()
+    assert_equal_state     sound(1), sound(1)
+    assert_not_equal_state sound(1), sound(0)
 
-    assert_equal(
+    assert_equal_state(
       sound(1).tap {_1.add_note 2, 3, tone(4)},
       sound(1).tap {_1.add_note 2, 3, tone(4)})
 
-    assert_not_equal(
+    assert_not_equal_state(
       sound(1).tap {_1.add_note 2, 3, tone(4)},
       sound(1).tap {_1.add_note 9, 3, tone(4)})
-    assert_not_equal(
+    assert_not_equal_state(
       sound(1).tap {_1.add_note 2, 3, tone(4)},
       sound(1).tap {_1.add_note 2, 9, tone(4)})
-    assert_not_equal(
+    assert_not_equal_state(
       sound(1).tap {_1.add_note 2, 3, tone(4)},
       sound(1).tap {_1.add_note 2, 3, tone(-1)})
   end

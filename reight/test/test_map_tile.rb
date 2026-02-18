@@ -41,6 +41,13 @@ class TestMapTile < Test::Unit::TestCase
     assert_equal [4, 5, 2, 3], tile(sprite(1, 2, 3), 4, 5).frame
   end
 
+  def test_compare_by_state()
+    assert_equal_state     tile(sprite(1, 2, 3), 4, 5), tile(sprite(1, 2, 3), 4, 5)
+    assert_not_equal_state tile(sprite(1, 2, 3), 4, 5), tile(sprite(0, 2, 3), 4, 5)
+    assert_not_equal_state tile(sprite(1, 2, 3), 4, 5), tile(sprite(1, 2, 3), 0, 5)
+    assert_not_equal_state tile(sprite(1, 2, 3), 4, 5), tile(sprite(1, 2, 3), 4, 0)
+  end
+
   private
 
   Tile = R8::MapTile
