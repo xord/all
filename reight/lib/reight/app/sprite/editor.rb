@@ -66,6 +66,130 @@ class Reight::SpriteEditor
       .map {[C.red(_1), C.blue(_1), C.green(_1), C.alpha(_1)].map(&:to_i)}
   end
 
+  def begin_editing(bounds: nil, &block)
+    @image_before_editing = @anim_image.dup
+    block.call @anim_image if block
+  ensure
+    end_editing bounds if block
+  end
+
+  def end_editing(bounds = nil)
+    return unless @image_before_editing
+    before, @image_before_editing = @image_before_editing, nil
+    x, y, w, h                    = get_edited_bounds__ before, bounds
+    return if w == 0 || h == 0
+    before = copy_image__ before,      x, y, w, h
+    after  = copy_image__ @anim_image, x, y, w, h, dup: true
+    append_history [:snapshot, after, before, x, y] if before && after
+    @anim.modified!
+  end
+
+  alias edit begin_editing
+
+  def begin_drawing(bounds: nil, &block)
+    begin_editing
+    @anim_image.begin_draw
+    block.call @anim_image if block
+    @anim_image
+  ensure
+    end_drawing bounds if block
+  end
+
+  def end_drawing(bounds = nil)
+    @anim_image.end_draw
+  ensure
+    end_editing bounds
+  end
+
+  alias draw begin_drawing
+
+  def add_sprite(x, y, w, h)
+    Reight::SpriteAsset.new(@project.get_next_id, w, h, x, y).tap do |sp|
+      group_history do
+        sprites.put sp
+        append_history [:add_sprite, sp]
+        self.sprite = sp
+        add_anim
+      end
+    end
+  end
+
+  def remove_sprite()
+    return nil unless @sprite
+    sprite, index = @sprite, sprites.find_index(@sprite)
+    group_history do
+      sprites.remove sprite
+      append_history [:remove_sprite, sprite]
+      self.sprite = sprites[index] || sprites[-1]
+    end
+    sprite
+  end
+
+  def set_sprite_name(name)
+    old, @sprite.name = @sprite.name, name
+    append_history [:set_sprite_name, name, old]
+  end
+
+  def add_anim(index = nil)
+    sp    = @sprite || return
+    index = sp.find_index(@anim)&.then {_1 + 1} || sp.size unless index
+    Reight::SpriteAnimation.new(@project.get_next_id, sp.w, sp.h).tap do |anim|
+      group_history do
+        @sprite.insert index, anim
+        append_history [:add_anim, index, anim]
+        self.anim = anim
+        add_anim_image 0
+      end
+    end
+  end
+
+  def remove_anim()
+    return nil unless @anim
+    anim, index = @anim, @sprite.find_index(@anim)
+    group_history do
+      @sprite.remove anim
+      append_history [:remove_anim, index, anim]
+      self.anim = @sprite[index] || @sprite[-1]
+    end
+    anim
+  end
+
+  def set_anim_name(name)
+    old, @anim.name = @anim.name, name
+    append_history [:set_anim_name, name, old]
+  end
+
+  def add_anim_image(index = nil)
+    index = @anim.find_index(@anim_image)&.then {_1 + 1} || @anim.size unless index
+    prev_image, insert_pos =
+      if index >= @anim.size
+        [@anim[-1], @anim.size]
+      else
+        [@anim_image, index]
+      end
+    images = (insert_pos..index).map {prev_image&.dup || @anim.create_image}
+    group_history do
+      images.each.with_index do |image, i|
+        pos = insert_pos + i
+        @anim.insert pos, image
+        append_history [:add_anim_image, pos, image]
+      end
+      self.anim_image = @anim[index]
+    end
+    images
+  end
+
+  def remove_anim_image()
+    return nil unless @anim_image
+    image, index = @anim_image, @anim.find_index(@anim_image)
+    group_history do
+      @anim.remove image
+      append_history [:remove_anim_image, index, image]
+      self.anim_image = @anim[index] || @anim[-1]
+    end
+    image
+  end
+
   def select(x, y, w, h)
     x2, y2 = x + w, y + h
     x, x2  = x2, x if x > x2
@@ -88,126 +212,13 @@ class Reight::SpriteEditor
     @selection || ifempty
   end
 
-  def begin_editing(bounds: nil, &block)
-    @image_before_editing = @anim_image.dup
-    block.call @anim_image if block
-  ensure
-    end_editing bounds if block
-  end
-
-  def end_editing(bounds = nil)
-    return unless @image_before_editing
-    before, @image_before_editing = @image_before_editing, nil
-    x, y, w, h                    = get_edited_bounds__ before, bounds
-    return if w == 0 || h == 0
-    before = copy_image__ before,      x, y, w, h
-    after  = copy_image__ @anim_image, x, y, w, h, dup: true
-    append_history [:snapshot, after, before, x, y] if before && after
-    @anim.modified!
-  end
-
-  def begin_drawing(bounds: nil, &block)
-    begin_editing
-    @anim_image.begin_draw
-    block.call @anim_image if block
-    @anim_image
-  ensure
-    end_drawing bounds if block
-  end
-
-  def end_drawing(bounds = nil)
-    @anim_image.end_draw
-  ensure
-    end_editing bounds
-  end
-
-  def add_sprite(x, y, w, h)
-    sp = Reight::SpriteAsset.new @project.get_next_id, w, h, x, y
-    group_history do
-      sprites.put sp
-      append_history [:add_sprite, sp]
-      self.sprite = sp
-      add_anim
-    end
-  end
-
-  def remove_sprite()
-    return unless @sprite
-    sprite, index = @sprite, sprites.find_index(@sprite)
-    group_history do
-      sprites.remove sprite
-      append_history [:remove_sprite, sprite]
-      self.sprite = sprites[index] || sprites[-1]
-    end
-  end
-
-  def set_sprite_name(name)
-    old, @sprite.name = @sprite.name, name
-    append_history [:set_sprite_name, name, old]
-  end
-
-  def add_anim(index = nil)
-    sp    = @sprite || return
-    index = sp.find_index(@anim)&.then {_1 + 1} || sp.size unless index
-    anim  = Reight::SpriteAnimation.new @project.get_next_id, sp.w, sp.h
-    group_history do
-      @sprite.insert index, anim
-      append_history [:add_anim, index, anim]
-      self.anim = anim
-      add_anim_image 0
-    end
-  end
-
-  def remove_anim()
-    return unless @anim
-    anim, index = @anim, @sprite.find_index(@anim)
-    group_history do
-      @sprite.remove anim
-      append_history [:remove_anim, index, anim]
-      self.anim = @sprite[index] || @sprite[-1]
-    end
-  end
-
-  def set_anim_name(name)
-    old, @anim.name = @anim.name, name
-    append_history [:set_anim_name, name, old]
-  end
-
-  def add_anim_image(index = nil)
-    index = @anim.find_index(@anim_image)&.then {_1 + 1} || @anim.size unless index
-    prev_image, insert_pos =
-      if index >= @anim.size
-        [@anim[-1], @anim.size]
-      else
-        [@anim_image, index]
-      end
-    group_history do
-      (insert_pos..index).each do |pos|
-        image = prev_image&.dup || @anim.create_image
-        @anim.insert pos, image
-        append_history [:add_anim_image, pos, image]
-      end
-      self.anim_image = @anim[index]
-    end
-  end
-
-  def remove_anim_image()
-    return unless @anim_image
-    image, index = @anim_image, @anim.find_index(@anim_image)
-    group_history do
-      @anim.remove image
-      append_history [:remove_anim_image, index, image]
-      self.anim_image = @anim[index] || @anim[-1]
-    end
-  end
-
   def cut()
     copy&.tap do |image, x, y|
       w, h = image.w, image.h
       begin_drawing bounds: [x, y, w, h] do |g|
         g.fill(*colors.first)
         g.no_stroke
-        g.blend_mode REPLACE
+        g.blend_mode :replace
         g.rect x, y, w, h
       end
     end
@@ -229,7 +240,7 @@ class Reight::SpriteEditor
       deselect if selection(nil)
       begin_editing do |img|
         img.begin_draw do |g|
-          g.blend image, 0, 0, w, h, x, y, w, h, REPLACE
+          g.blend image, 0, 0, w, h, x, y, w, h, :replace
         end
       end
       select x, y, w, h
