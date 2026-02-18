@@ -44,10 +44,10 @@ class TestAsset < Test::Unit::TestCase
   end
 
   def test_load()
-    assert_equal(
+    assert_equal_state(
       asset(              1,    2,    3,    4,    5,        6,       nil),
       TestAsset.load({id: 1, w: 2, h: 3, x: 4, y: 5, value: 6}, proj))
-    assert_equal(
+    assert_equal_state(
       asset(              1,    2,    3,    4,    5,        6,       'x'),
       TestAsset.load({id: 1, w: 2, h: 3, x: 4, y: 5, value: 6, name: 'x'}, proj))
   end
@@ -55,7 +55,7 @@ class TestAsset < Test::Unit::TestCase
   def test_save_and_load()
     a     = asset 1, 2, 3, 4, 5, 6, 'x'
     state = a.save proj
-    assert_equal a, TestAsset.load(state, proj)
+    assert_equal_state a, TestAsset.load(state, proj)
   end
 
   def test_modified?()
@@ -94,17 +94,17 @@ class TestAsset < Test::Unit::TestCase
     assert_false asset(0, 1, 1, 0, 0).hit?( 0, -1, 1, 1)
   end
 
-  def test_compare_by_state_variables()
-    assert_equal(    asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 6, 'x'))
+  def test_compare_by_state()
+    assert_equal_state     asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 6, 'x')
 
-    assert_not_equal(asset(1, 2, 3, 4, 5, 6, 'x'), asset(0, 2, 3, 4, 5, 6, 'x'))
-    assert_not_equal(asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 9, 3, 4, 5, 6, 'x'))
-    assert_not_equal(asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 9, 4, 5, 6, 'x'))
-    assert_not_equal(asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 0, 5, 6, 'x'))
-    assert_not_equal(asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 0, 6, 'x'))
-    assert_not_equal(asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 0, 'x'))
-    assert_not_equal(asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 0, nil))
-    assert_not_equal(asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 0, '_'))
+    assert_not_equal_state asset(1, 2, 3, 4, 5, 6, 'x'), asset(0, 2, 3, 4, 5, 6, 'x')
+    assert_not_equal_state asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 9, 3, 4, 5, 6, 'x')
+    assert_not_equal_state asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 9, 4, 5, 6, 'x')
+    assert_not_equal_state asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 0, 5, 6, 'x')
+    assert_not_equal_state asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 0, 6, 'x')
+    assert_not_equal_state asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 0, 'x')
+    assert_not_equal_state asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 0, nil)
+    assert_not_equal_state asset(1, 2, 3, 4, 5, 6, 'x'), asset(1, 2, 3, 4, 5, 0, '_')
   end
 
   private
