@@ -23,20 +23,20 @@ class TestMapChunk < Test::Unit::TestCase
       ch.put       tile(asset(1, 10), 20, 30)
       assert_equal 1, count_all_tiles(ch)
 
-      assert_equal tile(asset(1, 10), 20, 30), ch[20, 30]
-      assert_nil                               ch[30, 30]
-      assert_nil                               ch[20, 40]
-      assert_nil                               ch[30, 40]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20, 30]
+      assert_nil                                     ch[30, 30]
+      assert_nil                                     ch[20, 40]
+      assert_nil                                     ch[30, 40]
     end
 
     chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
       ch.put       tile(asset(1, 20), 20, 30)
       assert_equal 4, count_all_tiles(ch)
 
-      assert_equal tile(asset(1, 20), 20, 30), ch[20, 30]
-      assert_equal tile(asset(1, 20), 20, 30), ch[30, 30]
-      assert_equal tile(asset(1, 20), 20, 30), ch[20, 40]
-      assert_equal tile(asset(1, 20), 20, 30), ch[30, 40]
+      assert_equal_state tile(asset(1, 20), 20, 30), ch[20, 30]
+      assert_equal_state tile(asset(1, 20), 20, 30), ch[30, 30]
+      assert_equal_state tile(asset(1, 20), 20, 30), ch[20, 40]
+      assert_equal_state tile(asset(1, 20), 20, 30), ch[30, 40]
 
       assert_equal ch[20, 30].object_id, ch[30, 30].object_id
       assert_equal ch[20, 30].object_id, ch[30, 40].object_id
@@ -107,32 +107,32 @@ class TestMapChunk < Test::Unit::TestCase
     chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
       ch.put       tile(asset(1, 10), 20, 30)
 
-      assert_nil                               ch[19, 30]
-      assert_equal tile(asset(1, 10), 20, 30), ch[20, 30]
-      assert_equal tile(asset(1, 10), 20, 30), ch[21, 30]
-      assert_equal tile(asset(1, 10), 20, 30), ch[29, 30]
-      assert_nil                               ch[30, 30]
+      assert_nil                                     ch[19, 30]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20, 30]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[21, 30]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[29, 30]
+      assert_nil                                     ch[30, 30]
 
-      assert_nil                               ch[20, 29]
-      assert_equal tile(asset(1, 10), 20, 30), ch[20, 30]
-      assert_equal tile(asset(1, 10), 20, 30), ch[20, 31]
-      assert_equal tile(asset(1, 10), 20, 30), ch[20, 39]
-      assert_nil                               ch[20, 40]
+      assert_nil                                     ch[20, 29]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20, 30]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20, 31]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20, 39]
+      assert_nil                                     ch[20, 40]
 
-      assert_equal tile(asset(1, 10), 20, 30), ch[20.0, 30]
-      assert_equal tile(asset(1, 10), 20, 30), ch[20.1, 30]
-      assert_equal tile(asset(1, 10), 20, 30), ch[20,   30.0]
-      assert_equal tile(asset(1, 10), 20, 30), ch[20,   30.1]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20.0, 30]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20.1, 30]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20,   30.0]
+      assert_equal_state tile(asset(1, 10), 20, 30), ch[20,   30.1]
     end
 
     chunk(10, 20, 30, 40, tile_size: 10).tap do |ch|
       ch.put       tile(asset(1, 20), 20, 30)
 
-      assert_equal tile(asset(1, 20), 20, 30), ch[20, 30]
-      assert_equal tile(asset(1, 20), 20, 30), ch[39, 30]
-      assert_nil                               ch[40, 30]
-      assert_equal tile(asset(1, 20), 20, 30), ch[20, 49]
-      assert_nil                               ch[20, 50]
+      assert_equal_state tile(asset(1, 20), 20, 30), ch[20, 30]
+      assert_equal_state tile(asset(1, 20), 20, 30), ch[39, 30]
+      assert_nil                                     ch[40, 30]
+      assert_equal_state tile(asset(1, 20), 20, 30), ch[20, 49]
+      assert_nil                                     ch[20, 50]
     end
   end
 
@@ -167,20 +167,20 @@ class TestMapChunk < Test::Unit::TestCase
     assert_equal [[20, 30], [30, 30]], ch.each_tile_pos(29, 39,  2,  1).to_a
   end
 
-  def test_compare_by_state_variables()
-    assert_not_equal chunk(10, 20, 30, 40, tile_size: 10), chunk( 0, 20, 30, 40, tile_size: 10)
-    assert_not_equal chunk(10, 20, 30, 40, tile_size: 10), chunk(10,  0, 30, 40, tile_size: 10)
-    assert_not_equal chunk(10, 20, 30, 40, tile_size: 10), chunk(10, 20,  0, 40, tile_size: 10)
-    assert_not_equal chunk(10, 20, 30, 40, tile_size: 10), chunk(10, 20, 30,  0, tile_size: 10)
-    assert_not_equal chunk(10, 20, 30, 40, tile_size: 10), chunk(10, 20, 30, 40, tile_size: 1)
+  def test_compare_by_state()
+    assert_not_equal_state chunk(10, 20, 30, 40, tile_size: 10), chunk( 0, 20, 30, 40, tile_size: 10)
+    assert_not_equal_state chunk(10, 20, 30, 40, tile_size: 10), chunk(10,  0, 30, 40, tile_size: 10)
+    assert_not_equal_state chunk(10, 20, 30, 40, tile_size: 10), chunk(10, 20,  0, 40, tile_size: 10)
+    assert_not_equal_state chunk(10, 20, 30, 40, tile_size: 10), chunk(10, 20, 30,  0, tile_size: 10)
+    assert_not_equal_state chunk(10, 20, 30, 40, tile_size: 10), chunk(10, 20, 30, 40, tile_size: 1)
 
     ch1, ch2 = chunk(10, 20, 30, 40, tile_size: 10), chunk(10, 20, 30, 40, tile_size: 10)
-    assert_equal ch1, ch2
+    assert_equal_state ch1, ch2
 
-    ch1.put    tile(asset(1, 10), 10, 20); assert_not_equal ch1, ch2
-    ch2.put    tile(asset(1, 10), 10, 20); assert_equal     ch1, ch2
+    ch1.put    tile(asset(1, 10), 10, 20); assert_not_equal_state ch1, ch2
+    ch2.put    tile(asset(1, 10), 10, 20); assert_equal_state     ch1, ch2
     ch2.remove 10, 20
-    ch2.put    tile(asset(2, 10), 10, 20); assert_not_equal ch1, ch2
+    ch2.put    tile(asset(2, 10), 10, 20); assert_not_equal_state ch1, ch2
   end
 
   private

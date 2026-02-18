@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 
-class TestSpeite < Test::Unit::TestCase
+class TestSprite < Test::Unit::TestCase
 
   def test_prop()
     assert_raise(NoMethodError) {sprite.foo}
