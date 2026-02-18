@@ -25,7 +25,7 @@ class TestMapLayer < Test::Unit::TestCase
       tile_size: 10, chunk_size: 30, tiles: [[1,10,20], [2,20,10]]
     }, pj)
 
-    assert_equal(
+    assert_equal_state(
       layer(tile_size: 10, chunk_size: 30).tap {
         _1.put 10, 20, asset(1, 10,  0, 0)
         _1.put 20, 10, asset(2, 20, 10, 0)
@@ -43,36 +43,36 @@ class TestMapLayer < Test::Unit::TestCase
 
     layer(tile_size: 10, chunk_size: 30).tap do |o|
       o.put     10, 20, asset(1, 10)
-      assert_equal tile(asset(1, 10), 10, 20),   o[10, 20]
+      assert_equal_state tile(asset(1, 10), 10, 20),   o[10, 20]
       assert_equal 1, count_all_tiles(o)
     end
 
     layer(tile_size: 10, chunk_size: 30).tap do |o|
       o.put(  -10, -20, asset(1, 10))
-      assert_equal tile(asset(1, 10), -10, -20), o[-10, -20]
+      assert_equal_state tile(asset(1, 10), -10, -20), o[-10, -20]
       assert_equal 1, count_all_tiles(o)
     end
 
     layer(tile_size: 10, chunk_size: 30).tap do |o|
       o.put     15, 25, asset(1, 10)
-      assert_equal tile(asset(1, 10), 10, 20),   o[15, 25]
-      assert_equal tile(asset(1, 10), 10, 20),   o[10, 20]
+      assert_equal_state tile(asset(1, 10), 10, 20),   o[15, 25]
+      assert_equal_state tile(asset(1, 10), 10, 20),   o[10, 20]
       assert_equal 1, count_all_tiles(o)
     end
 
     layer(tile_size: 10, chunk_size: 30).tap do |o|
       o.put 10.1, 20.2, asset(1, 10)
-      assert_equal tile(asset(1, 10), 10, 20),   o[10.1, 20.2]
-      assert_equal tile(asset(1, 10), 10, 20),   o[10,   20]
+      assert_equal_state tile(asset(1, 10), 10, 20),   o[10.1, 20.2]
+      assert_equal_state tile(asset(1, 10), 10, 20),   o[10,   20]
       assert_equal 1, count_all_tiles(o)
     end
 
     layer(tile_size: 10, chunk_size: 30).tap do |o|
       o.put     10, 20, asset(1, 20)
-      assert_equal tile(asset(1, 20), 10, 20),   o[10, 20]
-      assert_equal tile(asset(1, 20), 10, 20),   o[20, 20]
-      assert_equal tile(asset(1, 20), 10, 20),   o[10, 30]
-      assert_equal tile(asset(1, 20), 10, 20),   o[20, 30]
+      assert_equal_state tile(asset(1, 20), 10, 20),   o[10, 20]
+      assert_equal_state tile(asset(1, 20), 10, 20),   o[20, 20]
+      assert_equal_state tile(asset(1, 20), 10, 20),   o[10, 30]
+      assert_equal_state tile(asset(1, 20), 10, 20),   o[20, 30]
       assert_equal 4, count_all_tiles(o)
 
       assert_equal o[10, 20].object_id, o[20, 20].object_id
@@ -152,17 +152,17 @@ class TestMapLayer < Test::Unit::TestCase
     assert_equal [1, 2, 3], o.each_tile                .map {_1.asset.id}
   end
 
-  def test_compare_by_state_variables()
-    assert_not_equal layer(tile_size: 10, chunk_size: 20), layer(tile_size: 1,  chunk_size: 20)
-    assert_not_equal layer(tile_size: 10, chunk_size: 20), layer(tile_size: 10, chunk_size: 10)
+  def test_compare_by_state()
+    assert_not_equal_state layer(tile_size: 10, chunk_size: 20), layer(tile_size: 1,  chunk_size: 20)
+    assert_not_equal_state layer(tile_size: 10, chunk_size: 20), layer(tile_size: 10, chunk_size: 10)
 
     o1, o2 = layer(tile_size: 10, chunk_size: 30), layer(tile_size: 10, chunk_size: 30)
-    assert_equal o1, o2
+    assert_equal_state o1, o2
 
-    o1.put    10, 20, asset(1, 10); assert_not_equal o1, o2
-    o2.put    10, 20, asset(1, 10); assert_equal     o1, o2
+    o1.put    10, 20, asset(1, 10); assert_not_equal_state o1, o2
+    o2.put    10, 20, asset(1, 10); assert_equal_state     o1, o2
     o2.remove 10, 20
-    o2.put    10, 20, asset(2, 10); assert_not_equal o1, o2
+    o2.put    10, 20, asset(2, 10); assert_not_equal_state o1, o2
   end
 
   private

@@ -19,8 +19,8 @@ class TestEditable < Test::Unit::TestCase
     pj, o = proj, obj
     o.set_parent pj
 
-    assert_equal pj,  o.project
-    assert_equal pj, pj.project
+    assert_equal_state pj,  o.project
+    assert_equal_state pj, pj.project
   end
 
   def test_parent()
@@ -29,7 +29,7 @@ class TestEditable < Test::Unit::TestCase
 
     parent = obj
     child.set_parent parent
-    assert_equal parent, child.parent
+    assert_equal_state parent, child.parent
 
     child.set_parent nil
     assert_nil child.parent
