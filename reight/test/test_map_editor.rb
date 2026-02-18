@@ -6,15 +6,15 @@ class TestMapEditor < Test::Unit::TestCase
   def test_set_map()
     pj = proj
     e  = editor pj
-    assert_equal [nil, nil],  [e.map, e.layer]
+    assert_equal_state [nil, nil],  [e.map, e.layer]
 
     m1    = map pj, layers: [layer, layer]
     e.map = m1
-    assert_equal [m1, m1[0]], [e.map, e.layer]
+    assert_equal_state [m1, m1[0]], [e.map, e.layer]
 
     m2    = map pj, layers: []
     e.map = m2
-    assert_equal [m2, nil],   [e.map, e.layer]
+    assert_equal_state [m2, nil],   [e.map, e.layer]
   end
 
   def test_set_map_history()
@@ -25,24 +25,24 @@ class TestMapEditor < Test::Unit::TestCase
     e.map  = m1
     e.map  = m2
 
-    assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal [m2, l2],      [e.map, e.layer]
+    assert_equal [true, false],    [e.can_undo?, e.can_redo?]
+    assert_equal_state [m2, l2],   [e.map, e.layer]
 
     e.undo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [m1, l1],      [e.map, e.layer]
+    assert_equal [true, true],     [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1, l1],   [e.map, e.layer]
 
     e.undo
-    assert_equal [false, true], [e.can_undo?, e.can_redo?]
-    assert_equal [nil, nil],    [e.map, e.layer]
+    assert_equal [false, true],    [e.can_undo?, e.can_redo?]
+    assert_equal_state [nil, nil], [e.map, e.layer]
 
     e.redo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [m1, l1],      [e.map, e.layer]
+    assert_equal [true, true],     [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1, l1],   [e.map, e.layer]
 
     e.redo
-    assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal [m2, l2],      [e.map, e.layer]
+    assert_equal [true, false],    [e.can_undo?, e.can_redo?]
+    assert_equal_state [m2, l2],   [e.map, e.layer]
   end
 
   def test_map_changed()
@@ -59,15 +59,15 @@ class TestMapEditor < Test::Unit::TestCase
   def test_set_layer()
     pj = proj
     e  = editor pj
-    assert_equal [nil, nil], [e.map, e.layer]
+    assert_equal_state [nil, nil], [e.map, e.layer]
 
     m     = map pj
     e.map = m
-    assert_equal [m, m[0]],  [e.map, e.layer]
+    assert_equal_state [m, m[0]],  [e.map, e.layer]
 
     l       = layer
     e.layer = l
-    assert_equal [m, l],     [e.map, e.layer]
+    assert_equal_state [m, l],     [e.map, e.layer]
   end
 
   def test_set_layer_history()
@@ -78,11 +78,11 @@ class TestMapEditor < Test::Unit::TestCase
     e.layer = l2
 
     assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal l2,            e.layer
+    assert_equal_state l2,      e.layer
 
     e.undo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal l1,            e.layer
+    assert_equal_state l1,      e.layer
 
     e.undo
     assert_equal [false, true], [e.can_undo?, e.can_redo?]
@@ -90,11 +90,11 @@ class TestMapEditor < Test::Unit::TestCase
 
     e.redo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal l1,            e.layer
+    assert_equal_state l1,      e.layer
 
     e.redo
     assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal l2,            e.layer
+    assert_equal_state l2,      e.layer
   end
 
   def test_layer_changed()
@@ -111,15 +111,15 @@ class TestMapEditor < Test::Unit::TestCase
   def test_set_sprite()
     pj = proj
     e  = editor pj
-    assert_nil       e.sprite
+    assert_nil             e.sprite
 
     s1       = sprite pj
     e.sprite = s1
-    assert_equal s1, e.sprite
+    assert_equal_state s1, e.sprite
 
     s2       = sprite pj
     e.sprite = s2
-    assert_equal s2, e.sprite
+    assert_equal_state s2, e.sprite
   end
 
   def test_sprite_changed()
@@ -136,15 +136,15 @@ class TestMapEditor < Test::Unit::TestCase
   def test_set_tool()
     pj = proj
     e  = editor pj
-    assert_nil       e.tool
+    assert_nil             e.tool
 
     t1     = tool e
     e.tool = t1
-    assert_equal t1, e.tool
+    assert_equal_state t1, e.tool
 
     t2     = tool e
     e.tool = t2
-    assert_equal t2, e.tool
+    assert_equal_state t2, e.tool
   end
 
   def test_tool_changed()
@@ -160,18 +160,18 @@ class TestMapEditor < Test::Unit::TestCase
 
   def test_add_map()
     e  = editor
-    assert_equal [],           e.maps.to_a
-    assert_equal [nil, nil],   [e.map, e.layer]
+    assert_equal_state [],          e.maps.to_a
+    assert_equal_state [nil, nil],  [e.map, e.layer]
 
     m1 = e.add_map 1, 2, 3, 4
-    assert_equal [m1],         e.maps.to_a
-    assert_equal [m1, m1[0]],  [e.map, e.layer]
-    assert_equal [1, 2, 3, 4], m1.frame
+    assert_equal_state [m1],        e.maps.to_a
+    assert_equal_state [m1, m1[0]], [e.map, e.layer]
+    assert_equal [1, 2, 3, 4],      m1.frame
 
     m2 = e.add_map 5, 6, 7, 8
-    assert_equal [m1, m2],     e.maps.to_a
-    assert_equal [m2, m2[0]],  [e.map, e.layer]
-    assert_equal [5, 6, 7, 8], m2.frame
+    assert_equal_state [m1, m2],    e.maps.to_a
+    assert_equal_state [m2, m2[0]], [e.map, e.layer]
+    assert_equal [5, 6, 7, 8],      m2.frame
   end
 
   def test_add_map_history()
@@ -180,29 +180,29 @@ class TestMapEditor < Test::Unit::TestCase
     e.add_map 5, 6, 7, 8
     m1, m2 = e.maps[0], e.maps[1]
 
-    assert_equal [true, false],  [e.can_undo?, e.can_redo?]
-    assert_equal [m1, m2],       e.maps.to_a
-    assert_equal [m2, m2[0]],    [e.map, e.layer]
+    assert_equal [true, false],     [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1, m2],    e.maps.to_a
+    assert_equal_state [m2, m2[0]], [e.map, e.layer]
 
     e.undo
-    assert_equal [true, true],   [e.can_undo?, e.can_redo?]
-    assert_equal [m1],           e.maps.to_a
-    assert_equal [m1, m1[0]],    [e.map, e.layer]
+    assert_equal [true, true],      [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1],        e.maps.to_a
+    assert_equal_state [m1, m1[0]], [e.map, e.layer]
 
     e.undo
-    assert_equal [false, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [],             e.maps.to_a
-    assert_equal [nil, nil],     [e.map, e.layer]
+    assert_equal [false, true],     [e.can_undo?, e.can_redo?]
+    assert_equal_state [],          e.maps.to_a
+    assert_equal_state [nil, nil],  [e.map, e.layer]
 
     e.redo
-    assert_equal [true, true],   [e.can_undo?, e.can_redo?]
-    assert_equal [m1],           e.maps.to_a
-    assert_equal [m1, m1[0]],    [e.map, e.layer]
+    assert_equal [true, true],      [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1],        e.maps.to_a
+    assert_equal_state [m1, m1[0]], [e.map, e.layer]
 
     e.redo
-    assert_equal [true, false],  [e.can_undo?, e.can_redo?]
-    assert_equal [m1, m2],       e.maps.to_a
-    assert_equal [m2, m2[0]],    [e.map, e.layer]
+    assert_equal [true, false],     [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1, m2],    e.maps.to_a
+    assert_equal_state [m2, m2[0]], [e.map, e.layer]
   end
 
   def test_append_map()
@@ -219,18 +219,18 @@ class TestMapEditor < Test::Unit::TestCase
     m1 = e.add_map 1, 2, 3, 4
     m2 = e.add_map 5, 6, 7, 8
 
-    assert_equal [m1, m2], e.maps.to_a
-    assert_equal m2,       e.map
+    assert_equal_state [m1, m2], e.maps.to_a
+    assert_equal_state m2,       e.map
 
     removed = e.remove_map
-    assert_equal [m1],     e.maps.to_a
-    assert_equal m1,       e.map
-    assert_equal m2,       removed
+    assert_equal_state [m1],     e.maps.to_a
+    assert_equal_state m1,       e.map
+    assert_equal_state m2,       removed
 
     removed = e.remove_map
-    assert_equal [],       e.maps.to_a
-    assert_nil             e.map
-    assert_equal m1,       removed
+    assert_equal_state [],       e.maps.to_a
+    assert_nil                   e.map
+    assert_equal_state m1,       removed
   end
 
   def test_remove_map_history()
@@ -240,29 +240,29 @@ class TestMapEditor < Test::Unit::TestCase
     e.remove_map
     e.remove_map
 
-    assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal [],            e.maps.to_a
-    assert_nil                  e.map
+    assert_equal [true, false],  [e.can_undo?, e.can_redo?]
+    assert_equal_state [],       e.maps.to_a
+    assert_nil                   e.map
 
     e.undo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [m1],          e.maps.to_a
-    assert_equal m1,            e.map
+    assert_equal [true, true],   [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1],     e.maps.to_a
+    assert_equal_state m1,       e.map
 
     e.undo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [m1, m2],      e.maps.to_a
-    assert_equal m2,            e.map
+    assert_equal [true, true],   [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1, m2], e.maps.to_a
+    assert_equal_state m2,       e.map
 
     e.redo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [m1],          e.maps.to_a
-    assert_equal m1,            e.map
+    assert_equal [true, true],   [e.can_undo?, e.can_redo?]
+    assert_equal_state [m1],     e.maps.to_a
+    assert_equal_state m1,       e.map
 
     e.redo
-    assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal [],            e.maps.to_a
-    assert_nil                  e.map
+    assert_equal [true, false],  [e.can_undo?, e.can_redo?]
+    assert_equal_state [],       e.maps.to_a
+    assert_nil                   e.map
   end
 
   def test_set_map_name()
@@ -290,7 +290,7 @@ class TestMapEditor < Test::Unit::TestCase
 
     e.undo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_match /^map_\d+$/,   e.map.name
+    assert_match(/^map_\d+$/,   e.map.name)
   end
 
   def test_put_sprite()
@@ -301,10 +301,10 @@ class TestMapEditor < Test::Unit::TestCase
     e.sprite = sp1
 
     e.put_sprite 0, 0
-    assert_equal [sp1],      e.layer.each_tile.map(&:asset)
+    assert_equal_state [sp1],      e.layer.each_tile.map(&:asset)
 
     e.put_sprite 10, 0, sp2
-    assert_equal [sp1, sp2], e.layer.each_tile.map(&:asset)
+    assert_equal_state [sp1, sp2], e.layer.each_tile.map(&:asset)
   end
 
   def test_put_sprite_history()
@@ -317,24 +317,24 @@ class TestMapEditor < Test::Unit::TestCase
     e.put_sprite 0, 0
     e.put_sprite 10, 0, sp2
 
-    assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal [sp1, sp2],    e.layer.each_tile.map(&:asset)
+    assert_equal [true, false],    [e.can_undo?, e.can_redo?]
+    assert_equal_state [sp1, sp2], e.layer.each_tile.map(&:asset)
 
     e.undo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [sp1],         e.layer.each_tile.map(&:asset)
+    assert_equal [true, true],     [e.can_undo?, e.can_redo?]
+    assert_equal_state [sp1],      e.layer.each_tile.map(&:asset)
 
     e.undo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [],            e.layer.each_tile.map(&:asset)
+    assert_equal [true, true],     [e.can_undo?, e.can_redo?]
+    assert_equal_state [],         e.layer.each_tile.map(&:asset)
 
     e.redo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal [sp1],         e.layer.each_tile.map(&:asset)
+    assert_equal [true, true],     [e.can_undo?, e.can_redo?]
+    assert_equal_state [sp1],      e.layer.each_tile.map(&:asset)
 
     e.redo
-    assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal [sp1, sp2],    e.layer.each_tile.map(&:asset)
+    assert_equal [true, false],    [e.can_undo?, e.can_redo?]
+    assert_equal_state [sp1, sp2], e.layer.each_tile.map(&:asset)
   end
 
   def test_remove_sprite()
