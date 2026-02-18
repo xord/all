@@ -15,44 +15,28 @@ include Xot::Test
 R8 = Reight
 RS = RubySketch
 
-class R8::Asset
-  include Comparable
-  def <=>(o) = state_variables <=> o&.state_variables
+
+def assert_equal_state(expected, actual, msg = nil)
+  assert_equal     normalize__(expected), normalize__(actual), msg
 end
 
-class R8::AssetList
-  include Comparable
-  def <=>(o) = state_variables <=> o&.state_variables
+def assert_not_equal_state(expected, actual, msg = nil)
+  assert_not_equal normalize__(expected), normalize__(actual), msg
 end
 
-class R8::SpriteAsset
-  include Comparable
-  def <=>(o) = state_variables <=> o&.state_variables
-end
-
-class R8::SpriteAnimation
-  include Comparable
-  def <=>(o)
-    a, b = [state_variables, o.state_variables]
-      .map(&:dup)
-      .each {_1[:images] = _1[:images].map(&:loadPixels)}
-    a <=> b
+private def normalize__(obj)
+  case obj
+  when Array
+    obj.map {normalize__ _1}
+  when Hash
+    obj.map {|k, v| [normalize__(k), normalize__(v)]}.to_h
+  when Processing::Graphics
+    [obj.size, obj.loadPixels]
+  when -> o {o.respond_to? :state_variables, true}
+    obj.__send__(:state_variables).transform_values {normalize__ _1}
+  else
+    obj
   end
-end
-
-class R8::MapLayer
-  include Comparable
-  def <=>(o) = state_variables <=> o&.state_variables
-end
-
-class R8::MapChunk
-  include Comparable
-  def <=>(o) = state_variables <=> o&.state_variables
-end
-
-class R8::MapTile
-  include Comparable
-  def <=>(o) = state_variables <=> o&.state_variables
 end
 
 class R8::Sound

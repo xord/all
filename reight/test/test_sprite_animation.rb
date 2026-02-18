@@ -73,7 +73,7 @@ class TestSpriteAnimation < Test::Unit::TestCase
     tmpdir do |dir|
       a     = anim 100, images: [image(R), image(G), image(B)]
       state = a.save proj(dir)
-      assert_equal a, Anim.load(state, proj(dir))
+      assert_equal_state a, Anim.load(state, proj(dir))
     end
   end
 
@@ -150,15 +150,15 @@ class TestSpriteAnimation < Test::Unit::TestCase
     end
   end
 
-  def test_compare_by_state_variables()
-    assert_equal(    anim(1, 2, 3, 4, 'x'), anim(1, 2, 3, 4, 'x'))
+  def test_compare_by_state()
+    assert_equal_state(    anim(1, 2, 3, 4, 'x'), anim(1, 2, 3, 4, 'x'))
 
-    assert_not_equal(anim(1, 2, 3, 4, 'x'), anim(0, 2, 3, 4, 'x'))
-    assert_not_equal(anim(1, 2, 3, 4, 'x'), anim(1, 9, 3, 4, 'x'))
-    assert_not_equal(anim(1, 2, 3, 4, 'x'), anim(1, 2, 9, 4, 'x'))
-    assert_not_equal(anim(1, 2, 3, 4, 'x'), anim(1, 2, 3, 9, 'x'))
-    assert_not_equal(anim(1, 2, 3, 4, 'x'), anim(1, 2, 3, 4, '_'))
-    assert_not_equal(anim(1, 2, 3, 4, 'x'), anim(1, 2, 3, 4, 'x', images: [image]))
+    assert_not_equal_state(anim(1, 2, 3, 4, 'x'), anim(0, 2, 3, 4, 'x'))
+    assert_not_equal_state(anim(1, 2, 3, 4, 'x'), anim(1, 9, 3, 4, 'x'))
+    assert_not_equal_state(anim(1, 2, 3, 4, 'x'), anim(1, 2, 9, 4, 'x'))
+    assert_not_equal_state(anim(1, 2, 3, 4, 'x'), anim(1, 2, 3, 9, 'x'))
+    assert_not_equal_state(anim(1, 2, 3, 4, 'x'), anim(1, 2, 3, 4, '_'))
+    assert_not_equal_state(anim(1, 2, 3, 4, 'x'), anim(1, 2, 3, 4, 'x', images: [image]))
   end
 
   private

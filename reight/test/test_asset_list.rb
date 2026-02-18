@@ -10,7 +10,7 @@ class TestAssetList < Test::Unit::TestCase
   end
 
   def test_load()
-    assert_equal(
+    assert_equal_state(
       list([
         asset(1, 2, 3),
         asset(5, 6, 7)
@@ -19,7 +19,7 @@ class TestAssetList < Test::Unit::TestCase
         {id:1, w:2, h:3, x:0, y:0},
         {id:5, w:6, h:7, x:0, y:0}
       ]}, proj))
-    assert_equal(
+    assert_equal_state(
       list([
         asset(1, 2, 3),
         asset(5, 6, 7)
@@ -138,15 +138,15 @@ class TestAssetList < Test::Unit::TestCase
     removed.modified!;         assert_false ls.modified?
   end
 
-  def test_compare_by_state_variables()
-    assert_equal list,                         list
-    assert_equal list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 3, 4, 5)])
+  def test_compare_by_state()
+    assert_equal_state     list,                         list
+    assert_equal_state     list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 3, 4, 5)])
 
-    assert_not_equal list([asset(1, 2, 3, 4, 5)]), list([asset(0, 2, 3, 4, 5)])
-    assert_not_equal list([asset(1, 2, 3, 4, 5)]), list([asset(1, 9, 3, 4, 5)])
-    assert_not_equal list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 9, 4, 5)])
-    assert_not_equal list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 3, 0, 5)])
-    assert_not_equal list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 3, 4, 0)])
+    assert_not_equal_state list([asset(1, 2, 3, 4, 5)]), list([asset(0, 2, 3, 4, 5)])
+    assert_not_equal_state list([asset(1, 2, 3, 4, 5)]), list([asset(1, 9, 3, 4, 5)])
+    assert_not_equal_state list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 9, 4, 5)])
+    assert_not_equal_state list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 3, 0, 5)])
+    assert_not_equal_state list([asset(1, 2, 3, 4, 5)]), list([asset(1, 2, 3, 4, 0)])
   end
 
   private
