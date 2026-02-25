@@ -1,12 +1,4 @@
-class Reight::MapEditor::Tool
-
-  def initialize(editor)
-    @editor = editor
-  end
-
-  attr_reader :editor
-
-  def name = self.class.name.split('::').last
+class Reight::MapEditor::Tool < Reight::EditorTool
 
   def canvas_pressed( x, y, button) = nil
   def canvas_released(x, y, button) = nil

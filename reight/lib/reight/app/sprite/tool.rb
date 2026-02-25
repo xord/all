@@ -1,10 +1,4 @@
-class Reight::SpriteEditor::Tool
-
-  def initialize(editor)
-    @editor = editor
-  end
-
-  attr_reader :editor, :label, :icon_index
+class Reight::SpriteEditor::Tool < Reight::EditorTool
 
   def target_image() = editor.anim_image
 
@@ -18,7 +12,7 @@ class Reight::SpriteEditor::Tool
   end
 
   def canvas_pressed( x, y, button) = nil
-  def canvas_released(x, y, button) = @edited_bounds = nil
+  def canvas_released(x, y, button) = nil
   def canvas_moved(   x, y)         = nil
   def canvas_dragged( x, y, button) = nil
   def canvas_clicked( x, y, button) = nil

@@ -1,11 +1,11 @@
 class Reight::SpriteAsset < Reight::Asset
 
-  C = Reight::CONTEXT__
-
   include Enumerable
   include Xot::Inspectable
 
   SHAPES = [:rect, :circle]
+
+  C = Reight::CONTEXT__
 
   def self.load(state, project)
     Reight::Editable.load Reight::SpriteAsset, state:, project:
@@ -41,17 +41,15 @@ class Reight::SpriteAsset < Reight::Asset
 
   protected def state_variables() = super.merge(shape:, sensor:, anims: @anims)
 
+  editable_writer :shape do
+    set_shape__ _1
+  end
+
+  editable_writer :sensor do
+    set_sensor__ _1
+  end
+
   attr_reader :shape, :sensor
-
-  def shape=(type)
-    set_shape__ type
-    modified!
-  end
-
-  def sensor=(bool)
-    set_sensor__ bool
-    modified!
-  end
 
   def sensor? = !!@sensor
 

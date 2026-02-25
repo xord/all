@@ -2,6 +2,10 @@ class Reight::SpriteEditor::Brush < Reight::SpriteEditor::Tool
 
   C = Reight::CONTEXT__
 
+  def initialize(editor)
+    super editor, icon_index: 1
+  end
+
   def brush(x, y, button)
     target_image.begin_draw do |g|
       g.no_fill

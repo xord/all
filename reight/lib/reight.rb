@@ -4,7 +4,7 @@ require 'reight/all'
 begin
   w = Reight::WINDOW__
 
-  reight_classes = %i[Sprite Sound]
+  reight_classes = %i[Sprite]
   w.context.class.constants
     .reject {_1 =~ /__$/}
     .reject {reight_classes.include? _1}

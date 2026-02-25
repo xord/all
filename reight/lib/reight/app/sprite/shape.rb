@@ -2,9 +2,9 @@ class Reight::SpriteEditor::Shape < Reight::SpriteEditor::Tool
 
   C = Reight::CONTEXT__
 
-  def initialize(editor, shape, fill)
+  def initialize(editor, shape, fill, **kwargs)
+    super editor, **kwargs
     @shape, @fill = shape, fill
-    super editor
   end
 
   def draw_shape(x, y)
@@ -32,20 +32,32 @@ end# Shape
 
 
 class Reight::SpriteEditor::StrokeRect < Reight::SpriteEditor::Shape
-  def initialize(editor) = super editor, :rect, false
+
+  def initialize(editor) =
+    super editor, :rect, false, name: 'Stroke Rect', icon_index: 5
+
 end# StrokeRect
 
 
 class Reight::SpriteEditor::FillRect < Reight::SpriteEditor::Shape
-  def initialize(editor) = super editor, :rect, true
+
+  def initialize(editor) =
+    super editor, :rect, true, name: 'Fill Rect', icon_index: 6
+
 end# FillRect
 
 
 class Reight::SpriteEditor::StrokeEllipse < Reight::SpriteEditor::Shape
-  def initialize(editor) = super editor, :ellipse, false
+
+  def initialize(editor) =
+    super editor, :ellipse, false, name: 'Stroke Ellipse', icon_index: 7
+
 end# StrokeEllipse
 
 
 class Reight::SpriteEditor::FillEllipse < Reight::SpriteEditor::Shape
-  def initialize(editor) = super editor, :ellipse, true
+
+  def initialize(editor) =
+    super editor, :ellipse, true, name: 'Fill Ellipse', icon_index: 8
+
 end# FillEllipse
