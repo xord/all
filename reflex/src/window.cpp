@@ -606,9 +606,11 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		window->on_wheel(event);
+		if (!event->is_blocked())
+			window->on_wheel(event);
 
-		View_call_wheel_event(window->root(), event);
+		if (!event->is_blocked())
+			View_call_wheel_event(window->root(), event);
 	}
 
 	static void
