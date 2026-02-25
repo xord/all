@@ -2,9 +2,12 @@
 class Reight::SpriteEditor::Canvas
 
   extend  Reight::Hookable
+  extend  Reight::HasState
   include Reight::Widget
 
   C = Reight::CONTEXT__
+
+  state :image
 
   hook :canvas_pressed
   hook :canvas_released
@@ -14,11 +17,14 @@ class Reight::SpriteEditor::Canvas
 
   attr_accessor :selection
 
-  def image=(image)
-    return if image == @image
-    @image = image
+  alias set_image__ image=
+
+  def image=(...)
+    set_image__(...)
     @grids = nil
   end
+
+  protected
 
   def draw(sp)
     C.clip sp.x, sp.y, sp.w, sp.h
@@ -64,8 +70,6 @@ class Reight::SpriteEditor::Canvas
   def mouse_clicked(x, y, button)
     canvas_clicked! x, y, button if @image
   end
-
-  protected
 
   def to_widget(x, y)
     sp = sprite

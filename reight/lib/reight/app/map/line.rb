@@ -2,6 +2,10 @@ class Reight::MapEditor::Line < Reight::MapEditor::Tool
 
   C = Reight::CONTEXT__
 
+  def initialize(editor)
+    super editor, icon_index: 4
+  end
+
   def line(from, to)
     sp             = editor.sprite || (return false)
     x1, y1, x2, y2 = *from, *to

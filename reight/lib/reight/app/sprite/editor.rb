@@ -1,17 +1,13 @@
-class Reight::SpriteEditor
+class Reight::SpriteEditor < Reight::ModelController
 
-  extend  Forwardable
-  extend  Reight::Hookable
-  extend  Reight::HasState
-  include Reight::ModelController
+  extend Forwardable
+  extend Reight::Hookable
+  extend Reight::HasState
 
   C = Reight::CONTEXT__
 
-  def initialize(project)
-    @project, @settings = project, project.settings
-  end
-
   state :sprite do |new, old|
+    @sprite = new
     group_history do
       self.anim = new&.at 0
       append_history [:set_sprite, new, old]
@@ -19,6 +15,7 @@ class Reight::SpriteEditor
   end
 
   state :anim do |new, old|
+    @anim = new
     group_history do
       self.anim_image = new&.at 0
       append_history [:set_anim, new, old]
@@ -26,6 +23,7 @@ class Reight::SpriteEditor
   end
 
   state :anim_image do |new, old|
+    @anim_image = new
     group_history do
       deselect if selection(nil)
       append_history [:set_anim_image, new, old]
@@ -43,10 +41,10 @@ class Reight::SpriteEditor
   def_delegators :@project, :sprites
 
   def_delegators :@settings,
-    :sprites_width,
-    :sprites_height,
-    :sprites_page_width,
-    :sprites_page_height
+    :asset_table_width,
+    :asset_table_height,
+    :asset_table_page_width,
+    :asset_table_page_height
 
   def tools()
     @tools ||= [
@@ -290,19 +288,6 @@ class Reight::SpriteEditor
       end
     end
   end
-
-  def can_undo?() = history__.can_undo?
-  def can_redo?() = history__.can_redo?
-
-  def canvas_pressed( x, y, button) = @tool&.canvas_pressed  x, y, button
-
-  def canvas_released(x, y, button) = @tool&.canvas_released x, y, button
-
-  def canvas_moved(   x, y)         = @tool&.canvas_moved    x, y
-
-  def canvas_dragged( x, y, button) = @tool&.canvas_dragged  x, y, button
-
-  def canvas_clicked( x, y, button) = @tool&.canvas_clicked  x, y, button
 
   private
 

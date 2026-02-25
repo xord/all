@@ -23,7 +23,7 @@ class Reight::R8
       a << Reight::Runner.new(project)
       a << Reight::App.new(project, Reight::SpriteEditor, Reight::SpriteEditorInterface) if edit?
       a << Reight::App.new(project, Reight::   MapEditor, Reight::   MapEditorInterface) if edit?
-      #a << Reight::App.new(project, Reight:: SoundEditor, Reight:: SoundEditorInterface) if edit?
+      a << Reight::App.new(project, Reight:: SoundEditor, Reight:: SoundEditorInterface) if edit?
     }
   end
 
@@ -39,6 +39,7 @@ class Reight::R8
   end
 
   def icon(xi, yi, size)
+    return nil unless xi && yi && size
     (@icon ||= {})[[xi, yi, size]] ||= C.create_graphics(size, size).tap do |g|
       g.beginDraw do
         g.copy icons, xi * size, yi * size, size, size, 0, 0, size, size
