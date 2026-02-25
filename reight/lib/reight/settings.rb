@@ -43,20 +43,20 @@ class Reight::Settings
     path_for sprites_json_name
   end
 
-  setting :sprites_width do
-    1024
+  setting :asset_table_page_width do
+    96
   end
 
-  setting :sprites_height do
-    1024
+  setting :asset_table_page_height do
+    asset_table_page_width
   end
 
-  setting :sprites_page_width do
-    128
+  setting :asset_table_width do
+    asset_table_page_width * 4
   end
 
-  setting :sprites_page_height do
-    128
+  setting :asset_table_height do
+    asset_table_width
   end
 
   setting :maps_json_name do

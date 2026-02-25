@@ -2,6 +2,10 @@ class Reight::SpriteEditor::Select < Reight::SpriteEditor::Tool
 
   C = Reight::CONTEXT__
 
+  def initialize(editor)
+    super editor, icon_index: 0, help_text: 'Select or Move'
+  end
+
   def move_or_select(x, y)
     x0, y0 = @press_pos || return
     if @moving

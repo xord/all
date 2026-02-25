@@ -4,8 +4,8 @@ require_relative 'helper'
 class TestSettings < Test::Unit::TestCase
 
   def test_initialize()
-    assert_equal 1024, Settings.new(proj).sprites_width
-    assert_equal 1024, Settings.new(proj).sprites_height
+    assert_equal 384, Settings.new(proj).asset_table_width
+    assert_equal 384, Settings.new(proj).asset_table_height
     assert_equal ({}), Settings.new(proj).save(proj)
   end
 
@@ -13,24 +13,24 @@ class TestSettings < Test::Unit::TestCase
     pj = proj
     assert_equal ({}), settings({}, pj).save(pj)
     assert_equal(
-      {         sprites_width: 1, sprites_height: 2},
-      settings({sprites_width: 1, sprites_height: 2, dummy: 9}, pj).save(pj))
+      {         asset_table_width: 1, asset_table_height: 2},
+      settings({asset_table_width: 1, asset_table_height: 2, dummy: 9}, pj).save(pj))
   end
 
   def test_load()
-    Settings.load({sprites_width: 1, sprites_height: 2, dummy: 9}, proj).tap do |o|
-      assert_equal 1, o.sprites_width
-      assert_equal 2, o.sprites_height
-      assert_equal({sprites_width: 1, sprites_height: 2}, o.save(proj))
+    Settings.load({asset_table_width: 1, asset_table_height: 2, dummy: 9}, proj).tap do |o|
+      assert_equal 1, o.asset_table_width
+      assert_equal 2, o.asset_table_height
+      assert_equal({asset_table_width: 1, asset_table_height: 2}, o.save(proj))
     end
   end
 
   def test_clear()
-    o = settings({sprites_width: 1}, proj)
-    assert_equal 1,    o.sprites_width
+    o = settings({asset_table_width: 1}, proj)
+    assert_equal 1,   o.asset_table_width
 
     o.clear
-    assert_equal 1024, o.sprites_width
+    assert_equal 384, o.asset_table_width
   end
 
   def test_project_json_path()
