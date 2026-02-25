@@ -1496,7 +1496,7 @@ namespace Reflex
 			return;
 
 		WheelEvent e = event->dup();
-		WheelEvent_set_position(&e, e.position() - frame.position());
+		WheelEvent_set_position(&e, view->from_parent(e.position()));
 
 		call_children(view, [&](View* child) {
 			View_call_wheel_event(child, &e);
