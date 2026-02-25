@@ -33,7 +33,7 @@ class Reight::SoundEditorInterface < Reight::ViewController
     sound_remove.clicked           {e.remove_sound}
     sound_name.changed             {e.set_sound_name _1}
     sound_bpm.changed              {bpm_changed _1}
-    play_or_stop.clicked           {e.sound.play}
+    play_or_stop.clicked           {e.sound&.tap {_1.playing? ? _1.stop : _1.play}}
     mini_map  .offset_changed      {offset_changed _1}
     piano_roll.offset_x_changed    {offset_changed _1}
     volumes   .offset_changed      {offset_changed _1}
