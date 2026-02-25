@@ -88,7 +88,6 @@ class Reight::SpriteEditor < Reight::ModelController
     begin_editing
     @anim_image.begin_draw
     block.call @anim_image if block
-    @anim_image
   ensure
     end_drawing bounds if block
   end
@@ -197,13 +196,13 @@ class Reight::SpriteEditor < Reight::ModelController
     return deselect if w == 0 || h == 0
     old, @selection = @selection, [x, y, w, h]
     append_history [:select, @selection, old]
-    selection_changed! @selection
+    selection_changed! @selection, old
   end
 
   def deselect()
     old, @selection = @selection, nil
     append_history [:select, @selection, old]
-    selection_changed! @selection
+    selection_changed! @selection, old
   end
 
   def selection(ifempty = [0, 0, @anim_image&.w || 0, @anim_image&.h || 0])
