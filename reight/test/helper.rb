@@ -39,15 +39,5 @@ private def normalize__(obj)
   end
 end
 
-class R8::Sound
-  include Comparable
-  alias <=> cmp__
-end
-
-class R8::Sound::Note
-  include Comparable
-  alias <=> cmp__
-end
-
 
 def tmpdir(&block) = Dir.mktmpdir(&block)

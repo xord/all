@@ -426,6 +426,6 @@ class TestMapEditor < Test::Unit::TestCase
 
   def layer()      = R8::MapLayer.new
 
-  def tool(editor) = R8::MapEditor::Tool.new editor
+  def tool(editor) = R8::EditorTool.new editor
 
 end# TestMapEditor

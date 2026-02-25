@@ -2,6 +2,10 @@ class Reight::SpriteEditor::Fill < Reight::SpriteEditor::Tool
 
   C = Reight::CONTEXT__
 
+  def initialize(editor)
+    super editor, icon_index: 2
+  end
+
   def canvas_clicked(x, y, button)
     x, y           = [x, y].map(&:to_i)
     sx, sy, sw, sh = editor.selection

@@ -1,18 +1,13 @@
-class Reight::MapEditor
+class Reight::MapEditor < Reight::ModelController
 
-  extend  Forwardable
-  extend  Reight::Hookable
-  extend  Reight::HasState
-  include Reight::ModelController
+  extend Forwardable
+  extend Reight::Hookable
+  extend Reight::HasState
 
   C = Reight::CONTEXT__
 
-  def initialize(project)
-    super()
-    @project, @settings = project, project.settings
-  end
-
   state :map do |new, old|
+    @map = new
     group_history do
       self.layer = new&.at 0
       append_history [:set_map, new, old]
@@ -20,6 +15,7 @@ class Reight::MapEditor
   end
 
   state :layer do |new, old|
+    @layer = new
     append_history [:set_layer, new, old]
   end
 
@@ -33,10 +29,10 @@ class Reight::MapEditor
   def_delegators :@project, :maps, :sprites
 
   def_delegators :@settings,
-    :sprites_width,
-    :sprites_height,
-    :sprites_page_width,
-    :sprites_page_height
+    :asset_table_width,
+    :asset_table_height,
+    :asset_table_page_width,
+    :asset_table_page_height
 
   def tools()
     @tools ||= [
@@ -157,19 +153,6 @@ class Reight::MapEditor
       end
     end
   end
-
-  def can_undo?() = history__.can_undo?
-  def can_redo?() = history__.can_redo?
-
-  def canvas_pressed( x, y, button) = @tool&.canvas_pressed  x, y, button
-
-  def canvas_released(x, y, button) = @tool&.canvas_released x, y, button
-
-  def canvas_moved(   x, y)         = @tool&.canvas_moved    x, y
-
-  def canvas_dragged( x, y, button) = @tool&.canvas_dragged  x, y, button
-
-  def canvas_clicked( x, y, button) = @tool&.canvas_clicked  x, y, button
 
   def self.bounds_for_put(x, y, w, h)
     x, y = (x / w).to_i * w, (y / h).to_i * h

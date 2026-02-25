@@ -1,6 +1,9 @@
 class Reight::Asset
 
+  extend  Reight::Editable::Accessor
   include Reight::Editable
+
+  C = Reight::CONTEXT__
 
   def initialize(id = 0, width = 0, height = 0, x = nil, y = nil, name: nil, load: nil)
     super load: load
@@ -26,25 +29,12 @@ class Reight::Asset
 
   protected def state_variables() = {id:, width:, height:, x:, y:, name: @name}
 
+  editable_writer :x, :y, :name
+
   attr_reader :id, :width, :height, :x, :y
 
   alias w width
   alias h height
-
-  def x=(x)
-    @x = x
-    modified!
-  end
-
-  def y=(y)
-    @y = y
-    modified!
-  end
-
-  def name=(name)
-    @name = name
-    modified!
-  end
 
   def name()
     @name || (@name_cache ||= "#{asset_type}_#{id}")
@@ -53,6 +43,8 @@ class Reight::Asset
   def frame()
     [@x, @y, @width, @height]
   end
+
+  def image() = nil
 
   def hit?(x, y, w = 0, h = 0)
     Reight.intersect? @x, @y, @width, @height, x, y, w, h

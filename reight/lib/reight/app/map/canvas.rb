@@ -13,8 +13,8 @@ class Reight::MapEditor::Canvas
 
   state :map
   state :sprite
-  state :offset
-  state :size
+  state :offset, filter: -> *a {Rays::Point.new(*a)}
+  state :size,   filter: -> *a {Rays::Point.new(*a)}
 
   hook :canvas_pressed
   hook :canvas_released
@@ -22,16 +22,7 @@ class Reight::MapEditor::Canvas
   hook :canvas_dragged
   hook :canvas_clicked
 
-  alias set_offset__ offset=
-  alias set_size__   size=
-
-  def offset=(*args)
-    set_offset__ Rays::Point.new(*args)
-  end
-
-  def size=(*args)
-    set_size__ Rays::Point.new(*args)
-  end
+  protected
 
   def draw(sp)
     self.size = [sp.w, sp.h]
@@ -64,11 +55,11 @@ class Reight::MapEditor::Canvas
   end
 
   def mouse_pressed(...)
-    canvas_pressed!(...) unless hand?
+    canvas_pressed!(...)  unless hand__?
   end
 
   def mouse_released(...)
-    canvas_released!(...) unless hand?
+    canvas_released!(...) unless hand__?
   end
 
   def mouse_moved(...)
@@ -77,7 +68,7 @@ class Reight::MapEditor::Canvas
   end
 
   def mouse_dragged(...)
-    if hand?
+    if hand__?
       sp          = sprite
       dx, dy      = sp.mouse_x - sp.pmouse_x, sp.mouse_y - sp.pmouse_y
       self.offset = @offset - Rays::Point.new(dx, dy)
@@ -90,13 +81,13 @@ class Reight::MapEditor::Canvas
     canvas_clicked!(...)
   end
 
-  def hand? = C.keyIsDown(SPACE)
-
   def to_widget(x, y)
     return @offset.x + x, @offset.y + y
   end
 
   private
+
+  def hand__? = C.keyIsDown(SPACE)
 
   # @private
   def draw_grids__()

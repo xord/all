@@ -12,20 +12,9 @@ class Reight::MapEditor::MiniMap
   end
 
   state :map
-  state :offset
-  state :size
+  state :offset, filter: -> *a {Rays::Point.new(*a)}
+  state :size,   filter: -> *a {Rays::Point.new(*a)}
   state :zoom
-
-  alias set_offset__ offset=
-  alias set_size__   size=
-
-  def offset=(*args)
-    set_offset__ Rays::Point.new(*args)
-  end
-
-  def size=(*args)
-    set_size__ Rays::Point.new(*args)
-  end
 
   def draw(sp)
     C.clip sp.x, sp.y, sp.w, sp.h

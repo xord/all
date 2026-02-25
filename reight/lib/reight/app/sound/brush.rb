@@ -1,32 +1,28 @@
 class Reight::SoundEditor::Brush < Reight::SoundEditor::Tool
 
-  def initialize(app, &block)
-    super app, icon: app.icon(1, 2, 8), &block
-    set_help left: name, right: 'Pick Tone'
+  def initialize(editor)
+    super editor, icon_index: 1
   end
 
-  def brush(x, y, button)
-    canvas.put x, y
+  def put(time_index, note_index)
+    tone = editor.tone
+    editor.sound.each_note(time_index: time_index)
+      .select {|note,| (note.index == note_index) != (note.tone == tone)}
+      .each   {|note,| editor.remove_note time_index, note.index}
+    editor.put_note time_index, note_index
   end
 
-  def canvas_pressed(x, y, button)
-    return unless button == LEFT
-    canvas.begin_editing
-    brush x, y, button
+  def note_pressed(ti, ni, button)
+    editor.begin_editing
+    put ti, ni
   end
 
-  def canvas_released(x, y, button)
-    return unless button == LEFT
-    canvas.end_editing
+  def note_released(time_index, note_index, button)
+    editor.end_editing
   end
 
-  def canvas_dragged(x, y, button)
-    return unless button == LEFT
-    brush x, y, button
-  end
-
-  def canvas_clicked(x, y, button)
-    pick_tone x, y if button == RIGHT
+  def note_dragged(time_index, note_index, button)
+    put time_index, note_index
   end
 
 end# Brush

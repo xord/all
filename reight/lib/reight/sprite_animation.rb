@@ -1,5 +1,6 @@
 class Reight::SpriteAnimation < Reight::Asset
 
+  extend  Reight::Editable::Accessor
   include Enumerable
   include Xot::Inspectable
 
@@ -28,7 +29,9 @@ class Reight::SpriteAnimation < Reight::Asset
 
   protected def state_variables() = super.merge(fps:, images: @images)
 
-  attr_accessor :fps
+  editable_writer :fps
+
+  attr_reader :fps
 
   def insert(index, *images)
     raise 'invalid image size' unless

@@ -1,7 +1,7 @@
 class Reight::MapEditor::Rect < Reight::MapEditor::Tool
 
-  def initialize(editor, fill)
-    super editor
+  def initialize(editor, fill, **kwargs)
+    super editor, **kwargs
     @fill = fill
   end
 
@@ -38,10 +38,16 @@ end# Rect
 
 
 class Reight::MapEditor::StrokeRect < Reight::MapEditor::Rect
-  def initialize(editor) = super editor, false
+
+  def initialize(editor) =
+    super editor, false, name: 'Stroke Rect', icon_index: 5
+
 end# StrokeRect
 
 
 class Reight::MapEditor::FillRect < Reight::MapEditor::Rect
-  def initialize(editor) = super editor, true
+
+  def initialize(editor) =
+    super editor, true, name: 'Fill Rect', icon_index: 6
+
 end# FillRect

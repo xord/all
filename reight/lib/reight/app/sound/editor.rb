@@ -1,8 +1,136 @@
-using Reight
+class Reight::SoundEditor < Reight::ModelController
 
+  extend Forwardable
+  extend Reight::Hookable
+  extend Reight::HasState
 
-class Reight::SoundEditor < Reight::App
+  C = Reight::CONTEXT__
 
+  state :sound do |new, old|
+    @sound = new
+    group_history do
+      append_history [:set_sound, new, old]
+    end
+  end
+
+  state :tool
+  state :tone
+
+  attr_reader :sound, :tool, :tone
+
+  def_delegators :@project, :sounds
+
+  def_delegators :@settings,
+    :asset_table_width,
+    :asset_table_height,
+    :asset_table_page_width,
+    :asset_table_page_height
+
+  def tools() = @tools ||= [
+    Reight::SoundEditor::Brush .new(self),
+    Reight::SoundEditor::Eraser.new(self)
+  ]
+
+  def tones() = Reight::SoundNote::TONES
+
+  def begin_editing(&block)
+    history__.begin_grouping
+    block.call @sound if block
+  ensure
+    end_editing if block
+  end
+
+  def end_editing()
+    history__.end_grouping
+  end
+
+  def add_sound(x, y, w, h)
+    Reight::SoundAsset.new(@project.get_next_id, w, h, x, y).tap do |s|
+      group_history do
+        sounds.put s
+        append_history [:add_sound, s]
+        self.sound = s
+      end
+    end
+  end
+
+  def remove_sound()
+    return nil unless @sound
+    sound, index = @sound, sounds.find_index(@sound)
+    group_history do
+      sounds.remove sound
+      append_history [:remove_sound, sound]
+      self.sound = sounds[index] || sounds[-1]
+    end
+  end
+
+  def set_sound_name(name)
+    old, @sound.name = @sound.name, name
+    append_history [:set_sound_name, name, old]
+  end
+
+  def set_sound_bpm(bpm)
+    bpm = bpm.to_i.clamp 0, Reight::SoundAsset::BPM_MAX
+    old, @sound.bpm = @sound.bpm, bpm
+    append_history [:set_sound_bpm, bpm, old]
+  end
+
+  def put_note(time_index, note_index)
+    return unless @sound && @tone
+    ti, ni = time_index, note_index
+    return nil if @sound.at(ti, ni)&.tone == @tone
+    @sound.add ti, ni, @tone
+    @sound.at(ti, ni)&.play 120
+    append_history [:put_note, ti, ni, @tone]
+  end
+
+  def remove_note(time_index, note_index)
+    return nil unless @sound && @tone
+    ti, ni = time_index, note_index
+    @sound.at(ti, ni)&.tap do |note|
+      #note&.play @sound.bpm
+      @sound.remove ti, ni
+      append_history [:remove_note, ti, ni, note.tone]
+    end
+  end
+
+  def set_volume(time_index, volume)
+    return unless @sound
+    old = @sound.set_volume time_index, volume
+    append_history [:set_volume, time_index, volume, old] if volume != old
+  end
+
+  def undo()
+    history__.undo do |action|
+      case action
+      in [:set_sound,      _, old]    then self.sound      = old
+      in [:set_sound_name, _, old]    then self.sound.name = old
+      in [:set_sound_bpm,  _, old]    then self.sound.bpm  = old
+      in [   :add_sound, sound]       then sounds.remove sound
+      in [:remove_sound, sound]       then sounds.put    sound
+      in [   :put_note, ti, ni, _]    then @sound.remove ti, ni
+      in [:remove_note, ti, ni, tone] then @sound.add    ti, ni, tone
+      in [:set_volume, ti, _, old]    then @sound.set_volume ti, old
+      end
+    end
+  end
+
+  def redo()
+    history__.redo do |action|
+      case action
+      in [:set_sound,      new, _]    then self.sound      = new
+      in [:set_sound_name, new, _]    then self.sound.name = new
+      in [:set_sound_bpm,  new, _]    then self.sound.bpm  = new
+      in [   :add_sound, sound]       then sounds.put    sound
+      in [:remove_sound, sound]       then sounds.remove sound
+      in [   :put_note, ti, ni, tone] then @sound.add    ti, ni, tone
+      in [:remove_note, ti, ni, _]    then @sound.remove ti, ni
+      in [:set_volume, ti, new, _]    then @sound.set_volume ti, new
+      end
+    end
+  end
+
+=begin
   def canvas()
     @canvas ||= Canvas.new self
   end
@@ -16,14 +144,6 @@ class Reight::SoundEditor < Reight::App
   end
 
   def key_pressed()
-    super
-    case key_code
-    when ENTER then play_or_stop.click
-    when :b    then  brush.click
-    when :e    then eraser.click
-    when /^[#{(1..Reight::Sound::Note::TONES.size).to_a.join}]$/
-      tones[key_code.to_s.to_i - 1].click
-    end
   end
 
   def window_resized()
@@ -63,26 +183,6 @@ class Reight::SoundEditor < Reight::App
       sp.y      = index.sprite.bottom + SPACE
       sp.right  = width  - SPACE
       sp.bottom = tools.first.sprite.y - SPACE
-    end
-  end
-
-  def undo(flash: true)
-    history.undo do |action|
-      case action
-      in [:put_note,    ti, ni, _]    then canvas.sound.remove ti, ni
-      in [:delete_note, ti, ni, tone] then canvas.sound.add    ti, ni, tone
-      end
-      self.flash 'Undo!' if flash
-    end
-  end
-
-  def redo(flash: true)
-    history.redo do |action|
-      case action
-      in [:put_note,    ti, ni, tone] then canvas.sound.add    ti, ni, tone
-      in [:delete_note, ti, ni, _]    then canvas.sound.remove ti, ni
-      end
-      self.flash 'Redo!' if flash
     end
   end
 
@@ -175,5 +275,5 @@ class Reight::SoundEditor < Reight::App
       end
     })
   end
-
+=end
 end# SoundEditor

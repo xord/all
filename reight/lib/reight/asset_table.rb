@@ -4,8 +4,8 @@ class Reight::AssetTable
   extend  Reight::HasState
   include Reight::Widget
 
-  C       = Reight::CONTEXT__
   PADDING = 1
+  C       = Reight::CONTEXT__
 
   def initialize(width, height, page_width, page_height, size_for_new_asset: nil)
     w = width  / page_width .to_f
@@ -22,6 +22,7 @@ class Reight::AssetTable
   end
 
   state :assets do |assets|
+    @assets = assets
     select assets&.at 0
   end
 
@@ -74,7 +75,7 @@ class Reight::AssetTable
       C.fill 0
       C.no_stroke
       C.rect asset.x, asset.y, asset.w, asset.h
-      C.image asset.image, asset.x, asset.y
+      C.image asset.image, asset.x, asset.y if asset.image
     end
 
     if @asset
@@ -84,7 +85,7 @@ class Reight::AssetTable
     end
 
     bounds = bounds_for_new_asset__ sp.mouse_x, sp.mouse_y
-    if bounds && mouse_hovered? && @assets.none? {Reight.intersect? _1.x, _1.y, _1.w, _1.h, *bounds}
+    if bounds && mouse_hovered? && @assets&.none? {Reight.intersect? _1.x, _1.y, _1.w, _1.h, *bounds}
       x, y, w, h = bounds
       C.fill 220
       C.no_stroke
@@ -97,7 +98,7 @@ class Reight::AssetTable
   end
 
   def mouse_clicked(x, y, button)
-    if asset = @assets.find {|a| a.hit? x, y}
+    if asset = @assets&.find {|a| a.hit? x, y}
       select asset
     elsif bounds = bounds_for_new_asset__(x, y)
       add_asset!(*bounds)

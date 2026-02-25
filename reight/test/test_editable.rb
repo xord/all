@@ -63,6 +63,62 @@ class TestEditable < Test::Unit::TestCase
     assert_equal [:parent_non_all, :parent_all], logger
   end
 
+  def test_editable_writer()
+    c = Class.new do
+      extend  Reight::Editable::Accessor
+      include Reight::Editable
+      editable_writer :value
+      attr_reader     :value
+    end
+
+    o, changed = c.new, false
+    o.modified {changed = true}
+    assert_nil      o.value
+    assert_false    changed
+
+    assert_equal 1, (o.value = 1)
+    assert_equal 1, o.value
+    assert_true     changed
+
+    changed = false
+    assert_equal 1, (o.value = 1)
+    assert_equal 1, o.value
+    assert_false    changed
+
+    changed = false
+    assert_equal 2, (o.value = 2)
+    assert_equal 2, o.value
+    assert_true     changed
+  end
+
+  def test_editable_writer_with_block()
+    c = Class.new do
+      extend  Reight::Editable::Accessor
+      include Reight::Editable
+      editable_writer(:value) {@value = _1}
+      attr_reader     :value
+    end
+
+    o, changed = c.new, false
+    o.modified {changed = true}
+    assert_nil      o.value
+    assert_false    changed
+
+    assert_equal 1, (o.value = 1)
+    assert_equal 1, o.value
+    assert_true     changed
+
+    changed = false
+    assert_equal 1, (o.value = 1)
+    assert_equal 1, o.value
+    assert_false    changed
+
+    changed = false
+    assert_equal 2, (o.value = 2)
+    assert_equal 2, o.value
+    assert_true     changed
+  end
+
   private
 
   class Obj

@@ -11,7 +11,8 @@ class Reight::SpriteEditor::AnimImageList
     self.anim = nil
   end
 
-  state :anim do
+  state :anim do |new|
+    @anim = new
     select anim&.at 0
   end
 

@@ -1,7 +1,7 @@
 require 'reight/app/map/editor'
 require 'reight/app/map/interface'
 require 'reight/app/map/canvas'
-require 'reight/app/map/minimap'
+require 'reight/app/map/mini_map'
 require 'reight/app/map/tool'
 require 'reight/app/map/brush'
 require 'reight/app/map/line'
