@@ -47,27 +47,6 @@ class Reight::SoundAsset < Reight::Asset
 
   attr_reader :bpm
 
-  def play(gain: 1.0, &block)
-    return block&.call false if empty?
-    stop
-    @playing = sound = to_sound__
-    sound.play gain: gain
-
-    if block
-      id = "__sound_playing_check_#{sound.object_id}"
-      set_interval 0.1, id: id do
-        next if sound.playing? == true
-        block.call true
-        clear_interval id
-      end
-    end
-  end
-
-  def stop()
-    @playing&.stop
-    @playing = nil
-  end
-
   def clear()
     @sequence = []
     modified!
@@ -133,20 +112,31 @@ class Reight::SoundAsset < Reight::Asset
   alias     at        note_at
   alias   each   each_note
 
+  def empty?() = @sequence.all? {!_1 || _1.empty?}
+
+  def image()  = icon_image_cache__
+
+  def create_sound()
+    Reight::Sound.new self, *sequencer__
+  end
+
+  def play()
+    stop if playing?
+    @playing = create_sound
+    @playing.play {@playing = nil}
+  end
+
+  def stop()
+    @playing&.stop
+    @playing = nil
+  end
+
   def playing?()
     @playing = nil if @playing&.playing? == false
     !!@playing
   end
 
-  def empty?() = @sequence.all? {!_1 || _1.empty?}
-
-  def image()  = icon_image_cache__
-
   private
-
-  def to_sound__()
-    RubySketch::Sound.new Beeps::Sound.new(*sequencer__)
-  end
 
   def sequencer__()
     seq   = Beeps::Sequencer.new
