@@ -14,21 +14,21 @@ class Reight::Project
       project   = read_json settings.project_json_path
       sprites   = read_json settings.sprites_json_path
       maps      = read_json settings.maps_json_path
-      #sounds    = read_json settings.sounds_json_path
+      sounds    = read_json settings.sounds_json_path
       @next_id, = project.fetch :next_id
       @settings = Reight::Settings .load project.fetch(:settings),     self
       @sprites  = Reight::AssetList.load Reight::SpriteAsset, sprites, self
       @maps     = Reight::AssetList.load Reight::MapAsset,    maps,    self
-      #@sounds   = Reight::AssetList.load Reight::SoundAsset,  sound,   self
+      @sounds   = Reight::AssetList.load Reight::SoundAsset,  sounds,  self
     else
       @next_id  = 1
       @settings = settings
       @sprites  = Reight::AssetList.new Reight::SpriteAsset, type: :grid
       @maps     = Reight::AssetList.new Reight::MapAsset,    type: :grid
-      #@sounds   = Reight::AssetList.new Reight::SoundAsset, type: :grid
+      @sounds   = Reight::AssetList.new Reight::SoundAsset,  type: :grid
     end
 
-    [@settings, @sprites, @maps].each {_1.set_parent self}
+    [@settings, @sprites, @maps, @sounds].each {_1.set_parent self}
   end
 
   def save(proj)
@@ -40,10 +40,10 @@ class Reight::Project
     File.write s.project_json_path, to_json(        save self) if         modified?
     File.write s.sprites_json_path, to_json(sprites.save self) if sprites.modified?
     File.write s   .maps_json_path, to_json(   maps.save self) if maps   .modified?
-    #File.write s .sounds_json_path, to_json( sounds.save self) if sounds .modified?
+    File.write s .sounds_json_path, to_json( sounds.save self) if sounds .modified?
   end
 
-  attr_reader :project_dir, :settings, :sprites, :maps#, :sounds
+  attr_reader :project_dir, :settings, :sprites, :maps, :sounds
 
   def get_next_id()
     @next_id.tap {@next_id += 1}
@@ -72,16 +72,7 @@ class Reight::Project
   end
 
   private
-=begin
-  def load_sounds()
-    if File.file? sounds_json_path
-      json = JSON.parse File.read(sounds_json_path), symbolize_names: true
-      json.map {Reight::Sound.load _1}
-    else
-      [Reight::Sound.new]
-    end
-  end
-=end
+
   def to_json(hash, readable: true)
     if readable
       JSON.pretty_generate hash

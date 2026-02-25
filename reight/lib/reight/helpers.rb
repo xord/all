@@ -21,33 +21,6 @@ module Reight
 end# Reight
 
 
-module Reight::ModelController
-
-  def group_history(&block)   = history__.group(&block)
-
-  def disable_history(&block) = history__.disable(&block)
-
-  private
-
-  def append_history(...)     = history__.append(...)
-
-  def history__()             = @history ||= Reight::History.new
-
-end# ModelController
-
-
-module Reight::ViewController
-
-  def bind(name, new, old, &block)
-    block.call
-    key = [self.class, name]
-    old&.remove_modified_observers key
-    new&.add_modified_observer key, &block
-  end
-
-end# ViewController
-
-
 module Reight::Widget
 
   def mouse_hovered?()
@@ -65,6 +38,7 @@ module Reight::Widget
       sp.mouse_moved    {mouse_moved(   *to_widget(sp.mouse_x, sp.mouse_y))}
       sp.mouse_dragged  {mouse_dragged( *to_widget(sp.mouse_x, sp.mouse_y), sp.mouse_button)}
       sp.mouse_clicked  {mouse_clicked( *to_widget(sp.mouse_x, sp.mouse_y), sp.mouse_button)}
+      sp.mouse_wheel    {mouse_wheel(   *_1.delta)}
     end
   end
 
@@ -81,6 +55,7 @@ module Reight::Widget
   def mouse_leaved()               = nil
   def mouse_dragged( x, y, button) = nil
   def mouse_clicked( x, y, button) = nil
+  def mouse_wheel(dx, dy)          = nil
 
   def to_widget(x, y)
     [x, y]
@@ -155,14 +130,18 @@ end# Hookable
 
 module Reight::HasState
 
-  def state(name, &block)
+  def state(name, filter: nil, &block)
     ivar_name, hook_name = "@#{name}", "#{name}_changed"
     hook hook_name
     define_method "#{name}=" do |value|
+      value = instance_exec value, &filter if filter
       old = instance_variable_get ivar_name
       return if value == old
-      instance_variable_set ivar_name, value
-      instance_exec value, old, &block if block
+      if block
+        instance_exec value, old, &block
+      else
+        instance_variable_set ivar_name, value
+      end
       __send__ "#{hook_name}!", value, old
     end
   end
@@ -195,3 +174,61 @@ module Reight::HasHelp
   end
 
 end# HasHelp
+
+
+class Reight::ModelController
+
+  def initialize(project)
+    @project, @settings = project, project.settings
+  end
+
+  def group_history(&block)   = history__.group(&block)
+
+  def disable_history(&block) = history__.disable(&block)
+
+  def can_cut?   = false
+  def can_copy?  = false
+  def can_paste? = false
+
+  def can_undo?() = history__.can_undo?
+  def can_redo?() = history__.can_redo?
+
+  private
+
+  def append_history(...)     = history__.append(...)
+
+  def history__()             = @history ||= Reight::History.new
+
+end# ModelController
+
+
+class Reight::ViewController
+
+  def initialize(editor)
+    @editor = editor
+  end
+
+  def bind(name, new, old, &block)
+    block.call
+    key = [self.class, name]
+    old&.remove_modified_observers key
+    new&.add_modified_observer key, &block
+  end
+
+end# ViewController
+
+
+class Reight::EditorTool
+
+  def initialize(editor, name: nil, icon_index: nil, help_text: nil)
+    @editor                        = editor
+    @name, @icon_index, @help_text = name, icon_index, help_text
+  end
+
+  attr_reader :editor, :icon_index
+
+  def name()      = @name || self.class.name.split('::').last
+
+  def help_text() = @help_text || name
+
+end# EditorTool
