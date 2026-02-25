@@ -55,12 +55,19 @@ class TestSpriteEditor < Test::Unit::TestCase
   def test_sprite_changed()
     pj      = proj
     e       = editor pj
-    changed = false
-    e.sprite_changed {changed = true}
+    changed = nil
 
-    assert_false changed
-    e.sprite = sprite pj
-    assert_true  changed
+    e.sprite_changed {|new, old| changed = [new, old]}
+    assert_nil                    changed
+
+    e.sprite = s1 = sprite pj
+    assert_equal_state [s1, nil], changed
+
+    e.sprite = s2 = sprite pj
+    assert_equal_state [s2, s1],  changed
+
+    e.sprite = nil
+    assert_equal_state [nil, s2], changed
   end
 
   def test_set_anim()
@@ -108,12 +115,19 @@ class TestSpriteEditor < Test::Unit::TestCase
   def test_anim_changed()
     pj      = proj
     e       = editor pj
-    changed = false
-    e.anim_changed {changed = true}
+    changed = nil
 
-    assert_false changed
-    e.anim = anim pj
-    assert_true  changed
+    e.anim_changed {|new, old| changed = [new, old]}
+    assert_nil                    changed
+
+    e.anim = a1 = anim pj
+    assert_equal_state [a1, nil], changed
+
+    e.anim = a2 = anim pj
+    assert_equal_state [a2, a1],  changed
+
+    e.anim = nil
+    assert_equal_state [nil, a2], changed
   end
 
   def test_set_anim_image()
@@ -158,12 +172,19 @@ class TestSpriteEditor < Test::Unit::TestCase
   def test_anim_image_changed()
     pj      = proj
     e, a    = editor(pj), anim(pj)
-    changed = false
-    e.anim_image_changed {changed = true}
+    changed = nil
 
-    assert_false changed
-    e.anim_image = a.create_image
-    assert_true  changed
+    e.anim_image_changed {|new, old| changed = [new, old]}
+    assert_nil                    changed
+
+    e.anim_image = i1 = a.create_image
+    assert_equal_state [i1, nil], changed
+
+    e.anim_image = i2 = a.create_image
+    assert_equal_state [i2, i1],  changed
+
+    e.anim_image = nil
+    assert_equal_state [nil, i2], changed
   end
 
   def test_set_sprite_size()
@@ -179,12 +200,19 @@ class TestSpriteEditor < Test::Unit::TestCase
 
   def test_sprite_size_changed()
     e       = editor
-    changed = false
-    e.sprite_size_changed {changed = true}
+    changed = nil
 
-    assert_false changed
+    e.sprite_size_changed {|new, old| changed = [new, old]}
+    assert_nil              changed
+
     e.sprite_size = 32
-    assert_true  changed
+    assert_equal [32, nil], changed
+
+    e.sprite_size = 16
+    assert_equal [16, 32],  changed
+
+    e.sprite_size = nil
+    assert_equal [nil, 16], changed
   end
 
   def test_set_tool()
@@ -202,12 +230,19 @@ class TestSpriteEditor < Test::Unit::TestCase
 
   def test_tool_changed()
     e       = editor
-    changed = false
-    e.tool_changed {changed = true}
+    changed = nil
 
-    assert_false changed
-    e.tool = tool e
-    assert_true  changed
+    e.tool_changed {|new, old| changed = [new, old]}
+    assert_nil                    changed
+
+    e.tool = t1 = tool e
+    assert_equal_state [t1, nil], changed
+
+    e.tool = t2 = tool e
+    assert_equal_state [t2, t1],  changed
+
+    e.tool = nil
+    assert_equal_state [nil, t2], changed
   end
 
   def test_set_color()
@@ -223,12 +258,19 @@ class TestSpriteEditor < Test::Unit::TestCase
 
   def test_color_changed()
     e       = editor
-    changed = false
-    e.color_changed {changed = true}
+    changed = nil
 
-    assert_false changed
-    e.color = [255, 0, 0, 255]
-    assert_true  changed
+    e.color_changed {|new, old| changed = [new, old]}
+    assert_nil              changed
+
+    e.color = c1 = [255, 0, 0, 255]
+    assert_equal [c1, nil], changed
+
+    e.color = c2 = [0, 255, 0, 255]
+    assert_equal [c2, c1],  changed
+
+    e.color = nil
+    assert_equal [nil, c2], changed
   end
 
   def test_begin_end_editing()
@@ -709,19 +751,19 @@ class TestSpriteEditor < Test::Unit::TestCase
   end
 
   def test_selection_changed()
-    e       = editor
-    e.add_sprite 0, 0, 8, 8
-    changed = false
-    e.selection_changed {changed = true}
+    e = editor do
+      _1.add_sprite 0, 0, 8, 8
+    end
 
-    assert_false changed
+    changed = nil
+    e.selection_changed {|new, old| changed = [new, old]}
+    assert_nil                        changed
+
     e.select 1, 2, 3, 4
-    assert_true  changed
+    assert_equal [[1, 2, 3, 4], nil], changed
 
-    changed = false
-    assert_false changed
     e.deselect
-    assert_true  changed
+    assert_equal [nil, [1, 2, 3, 4]], changed
   end
 
   def test_cut_paste()
@@ -819,7 +861,7 @@ class TestSpriteEditor < Test::Unit::TestCase
     end
   end
 
-  def proj(dir = '/tmp')       = R8::Project.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir
 
   def sprite(pj, x = 0, y = 0, w = 8, h = 8, anims: nil)
     R8::SpriteAsset.new(pj.get_next_id, w, h, x, y).tap do |sp|
