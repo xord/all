@@ -7,7 +7,7 @@ class TestHasState < Test::Unit::TestCase
     new1 = old1 = nil
     new2 = old2 = nil
 
-    o = klass       {new1, old1 = _1, _2}.new
+    o = klass       {new1, old1 = _1, _2; @value = _1}.new
     o.value_changed {new2, old2 = _1, _2}
     assert_equal [nil, nil, nil, nil, nil], [o.value, new1, old1, new2, old2]
 

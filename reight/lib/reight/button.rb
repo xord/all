@@ -37,7 +37,7 @@ class Reight::Button
       x  = (sp.w - @icon.width)  / 2
       y  = (sp.h - @icon.height) / 2
       y += 1 if pressing?
-      C.image enabled? ? @icon : disabled_icon, x, y
+      C.image enabled? ? @icon : disabled_icon__, x, y
     end
 
     if @label
@@ -61,6 +61,7 @@ class Reight::Button
 
   def mouse_released(x, y, button)
     @pressing = false
+    click
   end
 
   def mouse_moved(x, y)
@@ -68,8 +69,8 @@ class Reight::Button
     r8.flash help, priority: 0.5
   end
 
-  def mouse_clicked(x, y, button)
-    clicked! self if enabled?
+  def click()
+    clicked! self if enabled? && include_mouse__?
   end
 
   def enabled?(&block)
@@ -79,9 +80,11 @@ class Reight::Button
 
   def disabled? = !enabled?
 
-  def pressing? = @pressing
+  def pressing? = @pressing && include_mouse__?
 
-  def disabled_icon()
+  private
+
+  def disabled_icon__()
     @disabled_icon ||= C.createGraphics(@icon.width, @icon.height).tap do |g|
       g.beginDraw {g.image @icon, 0, 0}
       g.load_pixels
@@ -89,5 +92,8 @@ class Reight::Button
       g.update_pixels
     end
   end
+
+  def include_mouse__?() =
+    sprite.then {Reight.include? 0, 0, _1.w, _1.h, _1.mouse_x, _1.mouse_y}
 
 end# Button

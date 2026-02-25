@@ -1,23 +1,22 @@
-class Reight::MapEditorInterface
-
-  include Reight::ViewController
+class Reight::MapEditorInterface < Reight::ViewController
 
   C = Reight::CONTEXT__
 
   def initialize(editor)
-    e = @editor = editor
+    super
 
+    e = editor
     e.map_changed    {map_changed _1, _2}
     e.sprite_changed {sprite_changed _1}
     e.tool_changed   {|tool| tools.each {_1.active = _1.tool == tool}}
 
     sprite_table.selected           {e.sprite = _1}
-    sprite_table.page_changed       {sprite_table_page.value = _1 + 1}
+    sprite_table.page_changed       {sprite_table_page.value = _1}
     sprite_table_page_prev.enabled? {sprite_table.page  > 0}
     sprite_table_page_prev.clicked  {sprite_table.page -= 1}
     sprite_table_page_next.enabled? {sprite_table.page  < sprite_table.npages - 1}
     sprite_table_page_next.clicked  {sprite_table.page += 1}
-    minimap.offset_changed          {canvas.offset = _1}
+    mini_map.offset_changed         {canvas.offset = _1}
     map_prev  .enabled?             {get_map_index > 0}
     map_prev  .clicked              {e.map = e.maps[get_map_index - 1]}
     map_next  .enabled?             {get_map_index < e.maps.size - 1}
@@ -26,13 +25,14 @@ class Reight::MapEditorInterface
     map_remove.enabled?             {e.maps.size > 1}
     map_remove.clicked              {e.remove_map}
     map_name  .changed              {e.set_map_name _1}
-    canvas.offset_changed           {minimap.offset = _1}
-    canvas.size_changed             {minimap.size   = _1}
-    canvas.canvas_pressed           {|x, y, b| e.canvas_pressed  x, y, b}
-    canvas.canvas_released          {|x, y, b| e.canvas_released x, y, b}
-    canvas.canvas_moved             {|x, y|    e.canvas_moved    x, y}
-    canvas.canvas_dragged           {|x, y, b| e.canvas_dragged  x, y, b}
-    canvas.canvas_clicked           {|x, y, b| e.canvas_clicked  x, y, b}
+    canvas.offset_changed           {mini_map.offset = _1}
+    canvas.size_changed             {mini_map.size   = _1}
+
+    canvas.canvas_pressed  {|*a| e.tool&.canvas_pressed(*a)}
+    canvas.canvas_released {|*a| e.tool&.canvas_released(*a)}
+    canvas.canvas_moved    {|*a| e.tool&.canvas_moved(*a)}
+    canvas.canvas_dragged  {|*a| e.tool&.canvas_dragged(*a)}
+    canvas.canvas_clicked  {|*a| e.tool&.canvas_clicked(*a)}
 
     tools.each {|button| button.clicked {e.tool = button.tool}}
 
@@ -47,8 +47,8 @@ class Reight::MapEditorInterface
 
   def map_changed(map, old)
     canvas.map      = map
-    minimap.map     = map
-    map_index.value = get_map_index + 1
+    mini_map.map    = map
+    map_index.value = get_map_index
     bind(__method__, map, old) {map_name.value = map&.name}
   end
 
@@ -67,7 +67,7 @@ class Reight::MapEditorInterface
       sprite_table_page,
       sprite_table_page_next,
       sprite_table,
-      minimap,
+      mini_map,
       map_prev,
       map_index,
       map_next,
@@ -80,18 +80,18 @@ class Reight::MapEditorInterface
   end
 
   def sprite_table()           = @sprite_table           ||= Reight::AssetTable.new(
-    @editor.sprites_width,      @editor.sprites_width,
-    @editor.sprites_page_width, @editor.sprites_page_height)
+    @editor.asset_table_width,      @editor.asset_table_width,
+    @editor.asset_table_page_width, @editor.asset_table_page_height)
 
-  def sprite_table_page()      = @sprite_table_page      ||= Reight::Text.new(1, align: CENTER)
+  def sprite_table_page()      = @sprite_table_page      ||= Reight::Text.new(0, align: CENTER)
 
   def sprite_table_page_prev() = @sprite_table_page_prev ||= Reight::Button.new(label: '<')
 
   def sprite_table_page_next() = @sprite_table_page_next ||= Reight::Button.new(label: '>')
 
-  def minimap()                = @minimap                ||= Reight::MapEditor::MiniMap.new
+  def mini_map()               = @mini_map               ||= Reight::MapEditor::MiniMap.new
 
-  def map_index()              = @map_index              ||= Reight::Text.new(1, align: CENTER)
+  def map_index()              = @map_index              ||= Reight::Text.new(0, align: CENTER)
 
   def map_prev()               = @map_prev               ||= Reight::Button.new(label: '<')
 
@@ -107,15 +107,8 @@ class Reight::MapEditorInterface
   def canvas()                 = @canvas                 ||= Reight::MapEditor::Canvas.new
 
   def tools()                  = @tools                  ||= @editor.tools.map {|tool|
-    name, icon_index, help_text =
-      case tool
-      when Reight::MapEditor::Brush      then ['Brush',      1, 'Brush']
-      when Reight::MapEditor::Line       then ['Line',       4, 'Line']
-      when Reight::MapEditor::StrokeRect then ['StrokeRect', 5, 'Stroke Rect']
-      when Reight::MapEditor::  FillRect then ['FillRect',   6, 'Fill Rect']
-      end
-    Reight::Button.new(name: name, icon: r8.icon(icon_index, 2, 8)).tap do |b|
-      b.set_help left: help_text
+    Reight::Button.new(name: tool.name, icon: r8.icon(tool.icon_index, 2, 8)).tap do |b|
+      b.set_help left: tool.help_text
       b.singleton_class.define_method(:tool) {tool}
     end
   }
@@ -125,55 +118,55 @@ class Reight::MapEditorInterface
     space_l, space_m, space_s = app::SPACE, app::SPACE / 2, 1
 
     prev = sprite_table_page_prev.sprite.tap do |sp|
-      sp.x = space_l
-      sp.y = app::NAVIGATOR_HEIGHT + space_l
+      sp.x        = space_l
+      sp.y        = app::NAVIGATOR_HEIGHT + space_l
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = sprite_table_page.sprite.tap do |sp|
-      sp.x = prev.right + space_s
-      sp.y = prev.y
+      sp.x        = prev.right + space_s
+      sp.y        = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = sprite_table_page_next.sprite.tap do |sp|
-      sp.x = prev.right + space_s
-      sp.y = prev.y
+      sp.x        = prev.right + space_s
+      sp.y        = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = sprite_table.sprite.tap do |sp|
       sp.x = sprite_table_page_prev.sprite.x
       sp.y = sprite_table_page_prev.sprite.bottom + space_m
-      sp.w = @editor.sprites_page_width  + Reight::AssetTable::PADDING * 2
-      sp.h = @editor.sprites_page_height + Reight::AssetTable::PADDING * 2
+      sp.w = @editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
+      sp.h = @editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
     end
-    prev = minimap.sprite.tap do |sp|
+    prev = mini_map.sprite.tap do |sp|
       sp.x      = prev.x
       sp.y      = prev.bottom + space_l
       sp.w      = prev.w
       sp.bottom = C.height - space_l
     end
     prev = map_prev.sprite.tap do |sp|
-      sp.x = prev.right + space_l
-      sp.y = sprite_table_page_prev.sprite.y
+      sp.x        = prev.right + space_l
+      sp.y        = sprite_table_page_prev.sprite.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = map_index.sprite.tap do |sp|
-      sp.x = prev.right + space_s
-      sp.y = prev.y
+      sp.x        = prev.right + space_s
+      sp.y        = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = map_next.sprite.tap do |sp|
-      sp.x = prev.right + space_s
-      sp.y = prev.y
+      sp.x        = prev.right + space_s
+      sp.y        = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = map_add.sprite.tap do |sp|
-      sp.x = prev.right + space_s
-      sp.y = prev.y
+      sp.x        = prev.right + space_s
+      sp.y        = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = map_remove.sprite.tap do |sp|
-      sp.x = prev.right + space_s
-      sp.y = prev.y
+      sp.x        = prev.right + space_s
+      sp.y        = prev.y
       sp.w = sp.h = app::BUTTON_SIZE
     end
     prev = map_name.sprite.tap do |sp|
@@ -184,14 +177,14 @@ class Reight::MapEditorInterface
     end
     tools.map(&:sprite).each.with_index do |sp, index|
       sp.w = sp.h = app::BUTTON_SIZE
-      sp.x = map_prev.sprite.x + (sp.w + space_s) * index
-      sp.y = C.height - space_l - sp.h
+      sp.x        = map_prev.sprite.x + (sp.w + space_s) * index
+      sp.y        = C.height - space_l - sp.h
     end
     prev = canvas.sprite.tap do |sp|
       sp.x      = map_prev.sprite.x
       sp.y      = map_prev.sprite.bottom + space_m
       sp.right  = C.width              - space_l
-      sp.bottom = tools.first.sprite.y - space_l
+      sp.bottom = tools.first.sprite.y - space_m
     end
   end
 

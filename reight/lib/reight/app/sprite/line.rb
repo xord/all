@@ -2,6 +2,10 @@ class Reight::SpriteEditor::Line < Reight::SpriteEditor::Tool
 
   C = Reight::CONTEXT__
 
+  def initialize(editor)
+    super editor, icon_index: 4
+  end
+
   def draw_line(x, y)
     editor.begin_drawing do |g|
       g.stroke(*editor.color)
