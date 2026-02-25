@@ -35,7 +35,7 @@ class Reight::SoundEditor < Reight::ModelController
 
   def begin_editing(&block)
     history__.begin_grouping
-    block.call @sound if block
+    block.call if block
   ensure
     end_editing if block
   end
@@ -43,6 +43,8 @@ class Reight::SoundEditor < Reight::ModelController
   def end_editing()
     history__.end_grouping
   end
+
+  alias edit begin_editing
 
   def add_sound(x, y, w, h)
     Reight::SoundAsset.new(@project.get_next_id, w, h, x, y).tap do |s|
@@ -62,6 +64,7 @@ class Reight::SoundEditor < Reight::ModelController
       append_history [:remove_sound, sound]
       self.sound = sounds[index] || sounds[-1]
     end
+    sound
   end
 
   def set_sound_name(name)
@@ -79,17 +82,17 @@ class Reight::SoundEditor < Reight::ModelController
     return unless @sound && @tone
     ti, ni = time_index, note_index
     return nil if @sound.at(ti, ni)&.tone == @tone
-    @sound.add ti, ni, @tone
-    @sound.at(ti, ni)&.play 120
-    append_history [:put_note, ti, ni, @tone]
+    @sound.add(ti, ni, @tone).tap do |note|
+      note&.play 120
+      append_history [:put_note, ti, ni, @tone]
+    end
   end
 
   def remove_note(time_index, note_index)
     return nil unless @sound && @tone
     ti, ni = time_index, note_index
-    @sound.at(ti, ni)&.tap do |note|
-      #note&.play @sound.bpm
-      @sound.remove ti, ni
+    @sound.remove_note(ti, ni)&.tap do |note|
+      #note.play @sound.bpm
       append_history [:remove_note, ti, ni, note.tone]
     end
   end

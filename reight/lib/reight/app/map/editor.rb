@@ -45,7 +45,7 @@ class Reight::MapEditor < Reight::ModelController
 
   def begin_editing(&block)
     history__.begin_grouping
-    block.call @layer if block
+    block.call if block
   ensure
     end_editing if block
   end
@@ -53,6 +53,8 @@ class Reight::MapEditor < Reight::ModelController
   def end_editing()
     history__.end_grouping
   end
+
+  alias edit begin_editing
 
   def add_map(x, y, w, h)
     Reight::MapAsset.new(@project.get_next_id, w, h, x, y).tap {|map|
