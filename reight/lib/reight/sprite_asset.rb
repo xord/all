@@ -5,8 +5,6 @@ class Reight::SpriteAsset < Reight::Asset
 
   SHAPES = [:rect, :circle]
 
-  C = Reight::CONTEXT__
-
   def self.load(state, project)
     Reight::Editable.load Reight::SpriteAsset, state:, project:
   end
@@ -53,7 +51,7 @@ class Reight::SpriteAsset < Reight::Asset
 
   def sensor? = !!@sensor
 
-  def image   = @anims.first&.image_at C.frame_count
+  def image   = @anims.first&.image_at c__.frame_count
 
   def insert(index, *anims)
     raise 'invalid animation size' unless
@@ -118,7 +116,7 @@ class Reight::SpriteAsset < Reight::Asset
       anims:  kwargs.key?(:anims)  ? anims  : @anims)# fix parent
   end
 
-  def create_sprite()
+  def new_sprite()
     physics, shape =
       case @shape
       when :rect   then [true,  nil]
@@ -126,8 +124,7 @@ class Reight::SpriteAsset < Reight::Asset
       else              [false, nil]
       end
     Reight::Sprite.new(
-      0, 0, w, h, asset: self,
-      image: image, offset: [x, y], shape: shape, physics: physics
+      self, 0, 0, w, h, shape: shape, physics: physics
     ).tap do |sp|
       if physics
         sp.sensor = true if sensor?
@@ -136,17 +133,16 @@ class Reight::SpriteAsset < Reight::Asset
     end
   end
 
-  alias to_sprite create_sprite
-
-  def sprite()
-    @sprite ||= to_sprite
-  end
-
-  def clear_sprite()
-    @sprite = nil
+  def create_sprite()
+    c__.add_sprite new_sprite
   end
 
   private
+
+  # @private
+  def c__()
+    Processing::Context.current__
+  end
 
   # @private
   def set_shape__(type)

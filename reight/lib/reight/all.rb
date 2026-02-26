@@ -31,6 +31,7 @@ require 'reight/text'
 require 'reight/reight'
 require 'reight/context'
 require 'reight/sprite'
+require 'reight/map'
 require 'reight/sound'
 
 require 'reight/project'

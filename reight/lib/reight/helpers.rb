@@ -135,7 +135,7 @@ module Reight::HasState
     hook hook_name
     define_method "#{name}=" do |value|
       value = instance_exec value, &filter if filter
-      old = instance_variable_get ivar_name
+      old   = instance_variable_get ivar_name
       return if value == old
       if block
         instance_exec value, old, &block

@@ -33,7 +33,7 @@ class Reight::MapEditor::Canvas
     C.no_stroke
     C.rect(0, 0, sp.w, sp.h)
 
-    ox, oy = @offset.x, @offset.y
+    ox, oy = @offset.to_a(2).map(&:to_i)
     C.translate(-ox, -oy)
     draw_grids__
 
@@ -79,6 +79,10 @@ class Reight::MapEditor::Canvas
 
   def mouse_clicked(...)
     canvas_clicked!(...)
+  end
+
+  def mouse_wheel(dx, dy)
+    @offset -= [dx, dy]
   end
 
   def to_widget(x, y)

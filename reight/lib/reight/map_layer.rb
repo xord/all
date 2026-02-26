@@ -40,28 +40,6 @@ class Reight::MapLayer
   protected def state_variables() =
     {tile_size: @tile_size, chunk_tile: @chunk_size, chunks: @chunks}
 
-  def activate(x, y, w, h, world = nil, &activated)
-    @sprites   = nil if !activated && @sprites && @sprites.world != world
-    @sprites ||= SpriteArray.new(world: world) {|*a, &b| each_chunk(*a, &b)}
-    @sprites.activate(x, y, w, h, &activated)
-    @sprites
-  end
-
-  def to_sprites()
-    map(&:to_sprite)
-  end
-
-  def sprites()
-    @sprites ||= SpriteArray.new(sprites: to_sprites)
-  end
-
-  alias sprites_at activate
-
-  def clear_sprites()
-    @chunks.each_value {_1&.clear_sprites}
-    @sprites = nil
-  end
-
   def put(x, y, asset)
     return nil unless asset
     tile = Reight::MapTile.new asset, *align_tile_pos__(x, y)
@@ -104,15 +82,6 @@ class Reight::MapLayer
   end
 
   alias [] at
-
-  # @private
-  def drawSprite__(context)
-    if @sprites
-      @sprites.drawSprite__ context
-    else
-      @chunks.each_value {_1.drawSprite__ context}
-    end
-  end
 
   private
 
@@ -179,48 +148,3 @@ class Reight::MapLayer
   end
 
 end# MapLayer
-
-
-# @private
-class Reight::MapLayer::SpriteArray < Array
-
-  def initialize(world: nil, sprites: [], &each_chunk)
-    @world, @each_chunk = world, each_chunk
-    @bounds, @chunks    = nil, []
-    super(sprites)
-  end
-
-  attr_reader :world
-
-  def activate(x, y, w, h, &activated)
-    raise ArgumentError, "missing 'activated' block" if !@world && !activated
-
-    bounds, old_bounds = [x, y, w, h], @bounds
-    return if bounds == old_bounds
-
-    chunks, old_chunks = @each_chunk.call(x, y, w, h).to_a, @chunks || []
-    return if chunks == old_chunks
-
-    activateds, deactivateds = [chunks - old_chunks, old_chunks - chunks]
-      .map {|chunks| chunks.map(&:sprites).flatten.compact}
-    if activated
-      activated.call activateds, deactivateds
-    elsif @world
-        activateds.each {@world   .add_sprite _1}
-      deactivateds.each {@world.remove_sprite _1}
-    end
-
-    @bounds, @chunks = bounds, chunks
-    clear.concat @chunks.map(&:sprites).flatten.compact
-  end
-
-  def delete(sprite)
-    sprite.map_chunk&.delete_sprite__ sprite
-    super
-  end
-
-  def drawSprite__(context)
-    (@chunks&.each || each).each {_1.drawSprite__ context}
-  end
-
-end# SpriteArray
