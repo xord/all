@@ -11,10 +11,10 @@ class Reight::Project
     settings     = Reight::Settings.new self
 
     if File.exist? settings.project_json_path
-      project   = read_json settings.project_json_path
-      sprites   = read_json settings.sprites_json_path
-      maps      = read_json settings.maps_json_path
-      sounds    = read_json settings.sounds_json_path
+      project   = read_json__ settings.project_json_path
+      sprites   = read_json__ settings.sprites_json_path
+      maps      = read_json__ settings   .maps_json_path
+      sounds    = read_json__ settings .sounds_json_path
       @next_id, = project.fetch :next_id
       @settings = Reight::Settings .load project.fetch(:settings),     self
       @sprites  = Reight::AssetList.load Reight::SpriteAsset, sprites, self
@@ -37,13 +37,17 @@ class Reight::Project
 
   def save_all()
     s = settings
-    File.write s.project_json_path, to_json(        save self) if         modified?
-    File.write s.sprites_json_path, to_json(sprites.save self) if sprites.modified?
-    File.write s   .maps_json_path, to_json(   maps.save self) if maps   .modified?
-    File.write s .sounds_json_path, to_json( sounds.save self) if sounds .modified?
+    File.write s.project_json_path, to_json__(        save self) if         modified?
+    File.write s.sprites_json_path, to_json__(sprites.save self) if sprites.modified?
+    File.write s   .maps_json_path, to_json__(   maps.save self) if maps   .modified?
+    File.write s .sounds_json_path, to_json__( sounds.save self) if sounds .modified?
   end
 
   attr_reader :project_dir, :settings, :sprites, :maps, :sounds
+
+  def scripts() = settings.script_paths.map {File.read _1 rescue nil}
+
+  def font      = @font ||= C.create_font(nil, settings.font_size)
 
   def get_next_id()
     @next_id.tap {@next_id += 1}
@@ -54,26 +58,40 @@ class Reight::Project
     @id2asset_cache[id] ||= @sprites.find {_1.id == id} || @maps.find {_1.id == id}
   end
 
+  def find_sprite(name)
+    name = name.to_sym
+    (@sprite_cache ||= {})[name] ||= sprites.find {_1.name == name}
+  end
+
+  def find_map(name)
+    name = name.to_sym
+    (@map_cache    ||= {})[name] ||= maps   .find {_1.name == name}
+  end
+
+  def find_sound(name)
+    name = name.to_sym
+    (@sound_cache  ||= {})[name] ||= sounds .find {_1.name == name}
+  end
+
+  def create_sprite(name) = find_sprite(name)&.create_sprite
+
+  def    new_sprite(name) = find_sprite(name)&.   new_sprite
+
+  def create_map(name)    = find_map(name)&.create_map
+
+  def    new_map(name)    = find_map(name)&.   new_map
+
+  def create_sound(name)  = find_sound(name)&.create_sound
+
+  alias  new_sound create_sound
+
   def path_for(name)
     File.expand_path name, project_dir
   end
 
-  def scripts() = @codes  ||= settings.script_paths.map {File.read _1 rescue nil}
-
-  def font      = @font   ||= C.create_font(nil, settings.font_size)
-
-  def create_sprite(name)
-    sprites.find {_1.name == name}.create_sprite
-  end
-
-  def clear_all_sprites()
-    sprites.each(&:clear_sprite)
-    maps   .each(&:clear_sprites)
-  end
-
   private
 
-  def to_json(hash, readable: true)
+  def to_json__(hash, readable: true)
     if readable
       JSON.pretty_generate hash
     else
@@ -81,7 +99,7 @@ class Reight::Project
     end
   end
 
-  def read_json(path)
+  def read_json__(path)
     JSON.parse File.read(path), symbolize_names: true
   rescue Errno::ENOENT
     nil

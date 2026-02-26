@@ -1,27 +1,12 @@
-using Reight
-
-
 class Reight::Sprite < RubySketch::Sprite
 
-  def initialize(*a, asset: nil, **k, &b)
-    @asset, @state, @props = asset, nil, {}
-    @state_start           = frame_count
+  def initialize(asset, *a, **k, &b)
+    @asset, @props = asset, {}
+    @state_start   = c__.frame_count
     super(*a, **k, &b)
   end
 
-  attr_accessor :map_chunk
-
   attr_reader :asset, :props
-
-  def state=(name)
-    @state       = @asset.states[name] || raise("state '#{name}' not found")
-    @state_start = frame_count
-    @state
-  end
-
-  def state()
-    @state&.name
-  end
 
   def prop(name, value = NilClass, **values)
     @props[name] = value if value != NilClass
@@ -55,10 +40,18 @@ class Reight::Sprite < RubySketch::Sprite
 
   # @private
   def draw__(...)
-    if frame = @state&.frame_at(frame_count - @frame_start)
-      self.offset = [frame.x, frame.y]
-    end
+    #if frame = @state&.frame_at(c__.frame_count - @frame_start)
+    #  self.offset = [frame.x, frame.y]
+    #end
+    self.image = @asset.image
     super(...)
+  end
+
+  private
+
+  # @private
+  def c__()
+    Processing::Context.current__
   end
 
 end# Sprite

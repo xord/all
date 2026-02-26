@@ -15,8 +15,9 @@ class Reight::Asset
         [id, width, height, x, y, name]
       end
     raise ArgumentError if @id < 0 || @width <= 0 || @height <= 0
-    @x ||= 0
-    @y ||= 0
+    @x  ||= 0
+    @y  ||= 0
+    @name = @name&.to_sym
   end
 
   def save(proj)
@@ -29,7 +30,9 @@ class Reight::Asset
 
   protected def state_variables() = {id:, width:, height:, x:, y:, name: @name}
 
-  editable_writer :x, :y, :name
+  editable_writer :x
+  editable_writer :y
+  editable_writer :name, filter: -> s {s&.to_sym}
 
   attr_reader :id, :width, :height, :x, :y
 
@@ -37,7 +40,7 @@ class Reight::Asset
   alias h height
 
   def name()
-    @name || (@name_cache ||= "#{asset_type}_#{id}")
+    @name || (@name_cache ||= :"#{asset_type}_#{id}")
   end
 
   def frame()
