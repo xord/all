@@ -48,19 +48,18 @@ module Reight::Editable
 
   module Accessor
 
-    def editable_writer(*names, &block)
-      names.each do |name|
-        ivar_name = "@#{name}".to_sym
-        define_method "#{name}=" do |value|
-          old = instance_variable_get ivar_name
-          if block
-            instance_exec value, &block
-          else
-            instance_variable_set ivar_name, value
-          end
-          modified! if value != old
-          value
+    def editable_writer(name, filter: nil, &block)
+      ivar_name = "@#{name}".to_sym
+      define_method "#{name}=" do |value|
+        value = instance_exec value, &filter if filter
+        old   = instance_variable_get ivar_name
+        if block
+          instance_exec value, &block
+        else
+          instance_variable_set ivar_name, value
         end
+        modified! if value != old
+        value
       end
     end
 
