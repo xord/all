@@ -34,6 +34,23 @@ class Reight::MapAsset < Reight::Asset
   def_delegators :@layers,
     :insert, :push, :append, :remove, :remove_at, :each, :at, :[], :size, :empty?
 
+  def create_sprites() = to_sprites__ {_1.create_sprite}
+
+  def    new_sprites() = to_sprites__ {_1   .new_sprite}
+
+  def create_map() = Reight::Map.new self, create_sprites
+
+  def    new_map() = Reight::Map.new self,    new_sprites
+
+  private
+
+  def to_sprites__(&block)
+    layers.map do |layer|
+      layer.map do |tile|
+        block.call(tile.asset)&.tap {|sprite| sprite.x, sprite.y = tile.x, tile.y}
+      end
+    end
+  end
 =begin
   SHAPES = [:rect, :circle]
 
