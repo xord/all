@@ -4,6 +4,11 @@ class Reight::Map
     @asset, @sprites = asset, sprites.flatten
   end
 
+  def find(id: nil, name: nil)
+    return @sprites.find {_1.asset.id   == id}   if id
+    return @sprites.find {_1.asset.name == name} if name
+  end
+
   def delete(sprite)
     @sprites.delete sprite
   end
