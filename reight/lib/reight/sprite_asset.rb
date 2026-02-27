@@ -9,13 +9,13 @@ class Reight::SpriteAsset < Reight::Asset
     Reight::Editable.load Reight::SpriteAsset, state:, project:
   end
 
-  def initialize(*args, name: nil, shape: nil, sensor: nil, anims: nil, load: nil)
+  def initialize(*args, name: nil, shape: :rect, sensor: false, anims: [], load: nil)
     super(*args, name: name, load: load)
     if load
-      state, project       = load.fetch_values :state, :project
-      shape, sensor, anims = state.values_at :shape, :sensor, :anims
-      @anims               = anims&.map {Reight::SpriteAnimation.load _1, project}
-      set_shape__  shape&.to_sym
+      state, project = load.fetch_values :state, :project
+      sensor, anims  = state.values_at :sensor, :anims
+      @anims         = anims&.map {Reight::SpriteAnimation.load _1, project}
+      set_shape__  state.key?(:shape) ? state[:shape]&.to_sym : :rect
       set_sensor__ sensor
     else
       @anims = anims
@@ -31,7 +31,7 @@ class Reight::SpriteAsset < Reight::Asset
 
   def save(proj)
     super.tap {|h|
-      h[:shape]  = @shape                    if @shape
+      h[:shape]  = @shape                    if @shape != :rect
       h[:sensor] = true                      if sensor?
       h[:anims]  = @anims.map {_1.save proj} unless @anims.empty?
     }
