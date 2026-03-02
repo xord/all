@@ -12,23 +12,26 @@ class Reight::Project
 
     if File.exist? settings.project_json_path
       project   = read_json__ settings.project_json_path
+      scripts   = read_json__ settings.scripts_json_path
       sprites   = read_json__ settings.sprites_json_path
       maps      = read_json__ settings   .maps_json_path
       sounds    = read_json__ settings .sounds_json_path
       @next_id, = project.fetch :next_id
       @settings = Reight::Settings .load project.fetch(:settings),     self
+      @scripts  = Reight::AssetList.load Reight::ScriptAsset, scripts, self
       @sprites  = Reight::AssetList.load Reight::SpriteAsset, sprites, self
       @maps     = Reight::AssetList.load Reight::MapAsset,    maps,    self
       @sounds   = Reight::AssetList.load Reight::SoundAsset,  sounds,  self
     else
       @next_id  = 1
       @settings = settings
+      @scripts  = Reight::AssetList.new Reight::ScriptAsset
       @sprites  = Reight::AssetList.new Reight::SpriteAsset, type: :grid
       @maps     = Reight::AssetList.new Reight::MapAsset,    type: :grid
       @sounds   = Reight::AssetList.new Reight::SoundAsset,  type: :grid
     end
 
-    [@settings, @sprites, @maps, @sounds].each {_1.set_parent self}
+    [@settings, @scripts, @sprites, @maps, @sounds].each {_1.set_parent self}
   end
 
   def save(proj)
@@ -38,14 +41,13 @@ class Reight::Project
   def save_all()
     s = settings
     File.write s.project_json_path, to_json__(        save self) if         modified?
+    File.write s.scripts_json_path, to_json__(scripts.save self) if scripts.modified?
     File.write s.sprites_json_path, to_json__(sprites.save self) if sprites.modified?
     File.write s   .maps_json_path, to_json__(   maps.save self) if maps   .modified?
     File.write s .sounds_json_path, to_json__( sounds.save self) if sounds .modified?
   end
 
-  attr_reader :project_dir, :settings, :sprites, :maps, :sounds
-
-  def scripts() = settings.script_paths.map {File.read _1 rescue nil}
+  attr_reader :project_dir, :settings, :scripts, :sprites, :maps, :sounds
 
   def font()
     @font ||= C.load_font(settings.font_path, size: settings.font_size, smooth: false)

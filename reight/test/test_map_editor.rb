@@ -348,30 +348,38 @@ class TestMapEditor < Test::Unit::TestCase
   def test_set_map_name()
     e      = editor
     m      = e.add_map 1, 2, 3, 4
-    m.name = 'a'
-    assert_equal 'a', e.map.name
+    m.name =     :a
+    assert_equal :a, e.map.name
 
-    e.set_map_name 'b'
-    assert_equal 'b', e.map.name
+    e.set_map_name :b
+    assert_equal   :b, e.map.name
   end
 
   def test_set_map_name_history()
     e = editor do
       _1.add_map 1, 2, 3, 4
     end
-    e.set_map_name 'a'
-    e.set_map_name 'b'
+    e.set_map_name :a
+    e.set_map_name :b
 
     assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal 'b',           e.map.name
+    assert_equal :b,            e.map.name
 
     e.undo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal 'a',           e.map.name
+    assert_equal :a,            e.map.name
 
     e.undo
     assert_equal [false, true], [e.can_undo?, e.can_redo?]
     assert_match(/^map_\d+$/,   e.map.name)
+
+    e.redo
+    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
+    assert_equal :a,            e.map.name
+
+    e.redo
+    assert_equal [true, false], [e.can_undo?, e.can_redo?]
+    assert_equal :b,            e.map.name
   end
 
   def test_put_sprite()
