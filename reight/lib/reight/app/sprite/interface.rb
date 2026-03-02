@@ -107,7 +107,7 @@ class Reight::SpriteEditorInterface < Reight::ViewController
     @editor.asset_table_width,      @editor.asset_table_width,
     @editor.asset_table_page_width, @editor.asset_table_page_height)
 
-  def sprite_table_page()      = @sprite_table_page      ||= Reight::Text.new(0, align: CENTER)
+  def sprite_table_page()      = @sprite_table_page      ||= Reight::Label.new(0, align: CENTER)
 
   def sprite_table_page_prev() = @sprite_table_page_prev ||= Reight::Button.new(label: '<')
 
@@ -117,13 +117,13 @@ class Reight::SpriteEditorInterface < Reight::ViewController
 
   def sprite_sizes()           = @sprite_sizes           ||= [8, 16, 32].map {Reight::Button.new(label: _1)}
 
-  def sprite_name()            = @sprite_name            ||= Reight::Text.new(
-    editable: true, label: 'Name: ', regexp: /^\w+$/)
+  def sprite_name()            = @sprite_name            ||= Reight::Label.new(
+    editable: true, prefix: 'Name: ', regexp: /^\w+$/)
 
-  def anim_name()              = @anim_name              ||= Reight::Text.new(
+  def anim_name()              = @anim_name              ||= Reight::Label.new(
     editable: true, regexp: /^\w+$/)
 
-  def anim_index()             = @anim_index             ||= Reight::Text.new(0, align: CENTER)
+  def anim_index()             = @anim_index             ||= Reight::Label.new(0, align: CENTER)
 
   def anim_prev()              = @anim_prev              ||= Reight::Button.new(label: '<')
 

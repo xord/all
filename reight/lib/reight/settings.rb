@@ -31,8 +31,12 @@ class Reight::Settings
 
   def project_json_path = path_for "project.json"
 
-  setting :script_paths, proc {|value| [value].flatten.map {path_for _1}} do
-    [path_for('game.rb')]
+  setting :scripts_json_name do
+    'scripts.json'
+  end
+
+  setting :scripts_json_path do
+    path_for scripts_json_name
   end
 
   setting :sprites_json_name do
