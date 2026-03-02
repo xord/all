@@ -119,24 +119,24 @@ class TestSoundAsset < Test::Unit::TestCase
   end
 
   def test_compare_by_state()
-    assert_equal_state     sound(1, name: 2, bpm: 3), sound(1, name: 2, bpm: 3)
-    assert_not_equal_state sound(1, name: 2, bpm: 3), sound(0, name: 2, bpm: 3)
-    assert_not_equal_state sound(1, name: 2, bpm: 3), sound(1, name: 0, bpm: 3)
-    assert_not_equal_state sound(1, name: 2, bpm: 3), sound(1, name: 2, bpm: 9)
+    assert_equal_state     sound(1, name: :a, bpm: 2), sound(1, name: :a, bpm: 2)
+    assert_not_equal_state sound(1, name: :a, bpm: 2), sound(0, name: :a, bpm: 2)
+    assert_not_equal_state sound(1, name: :a, bpm: 2), sound(1, name: :_, bpm: 2)
+    assert_not_equal_state sound(1, name: :a, bpm: 2), sound(1, name: :a, bpm: 9)
 
     assert_equal_state(
-      sound(1, name: 2, bpm: 3) {_1.add_note 4, 5, tone(6)},
-      sound(1, name: 2, bpm: 3) {_1.add_note 4, 5, tone(6)})
+      sound(1, name: :a, bpm: 2) {_1.add_note 3, 4, tone(5)},
+      sound(1, name: :a, bpm: 2) {_1.add_note 3, 4, tone(5)})
 
     assert_not_equal_state(
-      sound(1, name: 2, bpm: 3) {_1.add_note 4, 5, tone(6)},
-      sound(1, name: 2, bpm: 3) {_1.add_note 0, 5, tone(6)})
+      sound(1, name: :a, bpm: 2) {_1.add_note 3, 4, tone(5)},
+      sound(1, name: :a, bpm: 2) {_1.add_note 0, 4, tone(5)})
     assert_not_equal_state(
-      sound(1, name: 2, bpm: 3) {_1.add_note 4, 5, tone(6)},
-      sound(1, name: 2, bpm: 3) {_1.add_note 4, 0, tone(6)})
+      sound(1, name: :a, bpm: 2) {_1.add_note 3, 4, tone(5)},
+      sound(1, name: :a, bpm: 2) {_1.add_note 3, 0, tone(5)})
     assert_not_equal_state(
-      sound(1, name: 2, bpm: 3) {_1.add_note 4, 5, tone(6)},
-      sound(1, name: 2, bpm: 3) {_1.add_note 4, 5, tone(0)})
+      sound(1, name: :a, bpm: 2) {_1.add_note 3, 4, tone(5)},
+      sound(1, name: :a, bpm: 2) {_1.add_note 3, 4, tone(0)})
   end
 
   private
