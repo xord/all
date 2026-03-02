@@ -1,117 +1,119 @@
 class Reight::Text
 
-  extend  Reight::Hookable
-  include Reight::Widget
-  include Reight::Activatable
-  include Reight::HasHelp
+  include Enumerable
+  include Reight::Editable
 
-  C = Reight::CONTEXT__
-
-  def initialize(text = '', editable: false, align: LEFT, label: nil, regexp: nil, &changed)
-    super()
-    @editable, @align, @label, @regexp = editable, align, label, regexp
-    @shake                             = 0
-    self.changed(&changed) if changed
-
-    self.value = text
+  def initialize(str = '')
+    clear
+    insert 0, str
   end
 
-  hook :changed
-
-  attr_accessor :editable, :align, :label
-
-  attr_reader :value
-
-  alias editable? editable
-
-  def revert()
-    self.value = @old_value
-    @shake     = 6
-  end
-
-  def focus=(focus)
-    return if focus && !editable?
-    return if focus == focus?
-    sprite.capture = focus
-    unless focus
-      revert unless valid? value
-      changed! value, self if value != @old_value
+  def insert(index, str)
+    str = str&.to_s
+    return if !str || str.empty?
+    line, row, col = get_line_and_pos index
+    raise ArgumentError unless line
+    line.text[col, 0] = str
+    if line.text =~ /\r|\n/
+      lines = line.to_s.scan Line::SPLIT_REGEXP
+      lines << '' if line.newline.nil? && line.text.match?(/[\r\n]\z/)
+      @lines[row, 1] = lines.map {Line.new _1}
     end
+    modified!
+    nil
   end
 
-  def focus?()
-    sprite.capturing?
-  end
+  def replace(index, size, str)
+    index, size       = index + size, -size if size < 0
+    line1, row1, col1 = get_line_and_pos index
+    line2, row2, col2 = get_line_and_pos index + size
+    raise ArgumentError unless line1 && line2
 
-  def value=(text)
-    str = text&.to_s || ''
-    return if str == @value
-    return unless valid? str
-    @value = str
-  end
+    old =
+      if row1 == row2
+        line1.text[col1...col2]
+      else
+        lines = row2 - row1 >= 2 ? @lines[(row1 + 1)..(row2 - 1)] : []
+        line1.to_s[col1..] + lines.map(&:to_s).join + line2.to_s[...col2]
+      end
+    return nil if str == old
 
-  def valid?(value = self.value, ignore_regexp: focus?)
-    case
-    when !value        then false
-    when ignore_regexp then true
-    when !@regexp      then true
-    else value =~ @regexp
+    if row1 == row2
+      line1.text[col1...col2] = ''
+    else
+      line1.text[col1..]  = ''
+      line2.text[...col2] = ''
+      @lines[row1..row2]  = Line.new line1.text + line2.to_s
     end
+    insert index, str
+    old
   end
 
-  def draw(sp)
-    C.clip sp.x, sp.y, sp.w, sp.h
-
-    C.no_stroke
-
-    if @shake != 0
-      C.translate rand(-@shake.to_f..@shake.to_f), 0
-      @shake *= rand(0.7..0.9)
-      @shake  = 0 if @shake.abs < 0.1
-    end
-
-    C.fill focus? ? 230 : 200
-    C.rect 0, 0, sp.w, sp.h, 3
-
-    show_old = @old_value && (value.nil? || value.empty?)
-    text     = show_old ? @old_value : value
-    text     = label.to_s + (text || '') unless focus?
-    x        = 2
-    C.fill show_old ? 200 : 50
-    C.text_align @align, CENTER
-    C.text text, x, 0, sp.w - x * 2, sp.h
-
-    if focus? && (C.frame_count % 60) < 30
-      C.fill 100
-      bounds = C.text_font.text_bounds value
-      xx     = (@align == LEFT ? x + bounds.w : (sp.w + bounds.w) / 2) - 1
-      C.rect xx, (sp.h - bounds.h) / 2, 2, bounds.h
-    end
+  def clear()
+    @lines = [Line.new]
   end
 
-  def key_pressed(key, code)
-    case code
-    when ESC               then self.value  = @old_value; self.focus = false
-    when ENTER             then self.focus  = false
-    when DELETE, BACKSPACE then self.value  = value.split('').tap {_1.pop}.join
-    else                        self.value += key if key && valid?(key, ignore_regexp: false)
-    end
+  def each(&block)
+    @lines.each(&block)
   end
 
-  def mouse_clicked(x, y, button)
-    if focus?
-      return if hit? x, y
-      self.value = @old_value if value == '' || !valid?(ignore_regexp: false)
-      self.focus = false
-    elsif editable?
-      self.focus         = true
-      @old_value, @value = @value.dup, ''
-    end
+  def size()
+    @lines.size
   end
 
-  def hit?(x, y)
-    sp = sprite
-    (0...sp.w).include?(x) && (0...sp.h).include?(y)
+  def empty?()
+    @lines.size == 1 && @lines.first.empty?
+  end
+
+  def at(row)
+    @lines[row]
+  end
+
+  alias [] at
+
+  def to_s()
+    @lines.map(&:to_s).join
+  end
+
+  def get_line_and_pos(index)
+    raise ArgumentError unless index.is_a? Integer
+    raise ArgumentError if     index < 0
+    @lines.each.with_index do |line, row|
+      return line, row, index if index < line.size + 1
+      index -= line.size + 1
+    end
+    nil
   end
 
 end# Text
+
+
+class Reight::Text::Line
+
+  SPLIT_REGEXP = /.*?(?:\r\n|\r|\n)|.+/
+
+  def initialize(line = '')
+    raise ArgumentError if line.scan(SPLIT_REGEXP).size > 1
+    @text    = line.chomp
+    @newline = line[/[\r\n]+/]
+  end
+
+  attr_reader :text, :newline
+
+  def size(include_newlines = false)
+    @text.size + (include_newlines && @newline ? 1 : 0)
+  end
+
+  def empty?()
+    @text.empty?
+  end
+
+  def to_s()
+    @text + (@newline || '')
+  end
+
+  def [](...)
+    @text.[](...)
+  end
+
+end# Line

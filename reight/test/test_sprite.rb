@@ -24,6 +24,9 @@ class TestSprite < Test::Unit::TestCase
 
   private
 
-  def sprite(...) = R8::Sprite.new(...)
+  def sprite(asset = self.asset, *a, **k, &b) =
+    R8::Sprite.new(asset, *a, **k, &k)
+
+  def asset(id = 1, w = 8, h = 8) = R8::SpriteAsset.new(id, w, h)
 
 end# TestSprite
