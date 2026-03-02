@@ -160,7 +160,7 @@ class Reight::Runner < Reight::App
     @context = create_context
     @paused  = false
     begin_wrapping_user_classes @context
-    eval_user_script @context, project.settings.script_paths.zip(project.scripts).to_h
+    eval_user_script @context, project.scripts.map {[_1.path(project), _1.text.to_s]}.to_h
   end
 
   def pause(state = true)

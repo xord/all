@@ -4,22 +4,23 @@ require_relative 'helper'
 class TestSpriteAsset < Test::Unit::TestCase
 
   def test_initialize()
-    assert_equal 1,              asset(1, 2, 3, 4, 5)               .id
-    assert_equal 2,              asset(1, 2, 3, 4, 5)               .w
-    assert_equal 3,              asset(1, 2, 3, 4, 5)               .h
-    assert_equal 4,              asset(1, 2, 3, 4, 5)               .x
-    assert_equal 5,              asset(1, 2, 3, 4, 5)               .y
-    assert_equal 'sprite_1',     asset(1, 2, 3, 4, 5)               .name
-    assert_equal 'sprite_1',     asset(1, 2, 3, 4, 5, name: nil)    .name
-    assert_equal 'x',            asset(1, 2, 3, 4, 5, name: 'x')    .name
-    assert_nil                   asset(1, 2, 3, 4, 5)               .shape
-    assert_nil                   asset(1, 2, 3, 4, 5, shape: nil)   .shape
-    assert_equal :rect,          asset(1, 2, 3, 4, 5, shape: :rect) .shape
-    assert_false                 asset(1, 2, 3, 4, 5)               .sensor?
-    assert_false                 asset(1, 2, 3, 4, 5, sensor: false).sensor?
-    assert_true                  asset(1, 2, 3, 4, 5, sensor: true) .sensor?
-    assert_equal ([]),           asset(1, 2, 3, 4, 5, anims: nil)   .to_a
-    assert_equal_state ([anim]), asset(1, 2, 3, 4, 5, anims: [anim]).to_a
+    assert_equal 1,              asset(1, 2, 3, 4, 5)                .id
+    assert_equal 2,              asset(1, 2, 3, 4, 5)                .w
+    assert_equal 3,              asset(1, 2, 3, 4, 5)                .h
+    assert_equal 4,              asset(1, 2, 3, 4, 5)                .x
+    assert_equal 5,              asset(1, 2, 3, 4, 5)                .y
+    assert_equal :sprite_1,      asset(1, 2, 3, 4, 5)                .name
+    assert_equal :sprite_1,      asset(1, 2, 3, 4, 5, name: nil)     .name
+    assert_equal :x,             asset(1, 2, 3, 4, 5, name: :x)      .name
+    assert_equal :x,             asset(1, 2, 3, 4, 5, name: 'x')     .name
+    assert_equal :rect,          asset(1, 2, 3, 4, 5)                .shape
+    assert_nil                   asset(1, 2, 3, 4, 5, shape: nil)    .shape
+    assert_equal :circle,        asset(1, 2, 3, 4, 5, shape: :circle).shape
+    assert_false                 asset(1, 2, 3, 4, 5)                .sensor?
+    assert_false                 asset(1, 2, 3, 4, 5, sensor: false) .sensor?
+    assert_true                  asset(1, 2, 3, 4, 5, sensor: true)  .sensor?
+    assert_equal ([]),           asset(1, 2, 3, 4, 5, anims: nil)    .to_a
+    assert_equal_state ([anim]), asset(1, 2, 3, 4, 5, anims: [anim]) .to_a
     assert_nil                   asset(1, 2, 3, 4, 5)                        .image
     assert_nil                   asset(1, 2, 3, 4, 5, anims: nil)            .image
     assert_nil                   asset(1, 2, 3, 4, 5, anims: [])             .image
@@ -32,47 +33,53 @@ class TestSpriteAsset < Test::Unit::TestCase
 
   def test_save()
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5},
-      asset(1,    2,    3,    4,    5)               .save(proj))
+      {id:  1, w:2, h:3, x:4, y:5},
+      asset(1,    2,  3,   4,   5)                .save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5, name: 'x'},
-      asset(1,    2,    3,    4,    5, name: 'x')    .save(proj))
+      {id:  1, w:2, h:3, x:4, y:5, name: :x},
+      asset(1,   2,   3,   4,   5, name: :x)      .save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5},
-      asset(1,    2,    3,    4,    5, shape: nil)   .save(proj))
+      {id:  1, w:2, h:3, x:4, y:5, name: :x},
+      asset(1,   2,   3,   4,   5, name: 'x')     .save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5, shape: :rect},
-      asset(1,    2,    3,    4,    5, shape: :rect) .save(proj))
+      {id:  1, w:2, h:3, x:4, y:5},
+      asset(1,   2,   3,   4,   5, shape: :rect)  .save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5},
-      asset(1,    2,    3,    4,    5, sensor: nil)  .save(proj))
+      {id:  1, w:2, h:3, x:4, y:5, shape: :circle},
+      asset(1,   2,   3,   4,   5, shape: :circle).save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5},
-      asset(1,    2,    3,    4,    5, sensor: false).save(proj))
+      {id:  1, w:2, h:3, x:4, y:5, shape:nil},
+      asset(1,   2,   3,   4,   5, shape:nil)     .save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5, sensor: true},
-      asset(1,    2,    3,    4,    5, sensor: true) .save(proj))
+      {id:  1, w:2, h:3, x:4, y:5},
+      asset(1,   2,   3,   4,   5, sensor:nil)    .save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5},
-      asset(1,    2,    3,    4,    5, anims: [])    .save(proj))
+      {id:  1, w:2, h:3, x:4, y:5},
+      asset(1,   2,   3,   4,   5, sensor:false)  .save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5, anims: [anim.save(proj)]},
-      asset(1,    2,    3,    4,    5, anims: [anim]).save(proj))
+      {id:  1, w:2, h:3, x:4, y:5, sensor:true},
+      asset(1,   2,   3,   4,   5, sensor:true)   .save(proj))
     assert_equal(
-      {id:  1, w: 2, h: 3, x: 4, y: 5, shape: :rect, sensor: true, anims: [anim.save(proj)]},
-      asset(1,    2,    3,    4,    5, shape: :rect, sensor: true, anims: [anim]).save(proj))
+      {id:  1, w:2, h:3, x:4, y:5},
+      asset(1,   2,   3,   4,   5, anims:[])      .save(proj))
+    assert_equal(
+      {id:  1, w:2, h:3, x:4, y:5, anims:[anim.save(proj)]},
+      asset(1,   2,   3,   4,   5, anims:[anim])  .save(proj))
+    assert_equal(
+      {id:  1, w:2, h:3, x:4, y:5, shape: :circle, sensor:true, anims:[anim.save(proj)]},
+      asset(1,   2,   3,   4,   5, shape: :circle, sensor:true, anims:[anim]).save(proj))
   end
 
   def test_load()
     assert_equal_state(
-      asset(         1,   2,   3,   4,   5, name: nil, shape: nil,   sensor:false, anims:nil),
-      Asset.load({id:1, w:2, h:3, x:4, y:5},                                                   proj))
+      asset(         1,   2,   3,   4,   5, name:nil, shape: :rect,   sensor:false, anims:nil),
+      Asset.load({id:1, w:2, h:3, x:4, y:5},                                                    proj))
     assert_equal_state(
-      asset(         1,   2,   3,   4,   5, name: nil, shape: nil,   sensor:false, anims:nil),
-      Asset.load({id:1, w:2, h:3, x:4, y:5, name: nil, shape: nil,   sensor:nil,   anims:nil}, proj))
+      asset(         1,   2,   3,   4,   5, name:nil, shape:nil,      sensor:false, anims:nil),
+      Asset.load({id:1, w:2, h:3, x:4, y:5, name:nil, shape:nil,      sensor:nil,   anims:nil}, proj))
     assert_equal_state(
-      asset(         1,   2,   3,   4,   5, name: 'x', shape: :rect, sensor:true),
-      Asset.load({id:1, w:2, h:3, x:4, y:5, name: 'x', shape: :rect, sensor:true,  anims:[]},  proj))
+      asset(         1,   2,   3,   4,   5, name: :x, shape: :circle, sensor:true),
+      Asset.load({id:1, w:2, h:3, x:4, y:5, name: :x, shape: :circle, sensor:true,  anims:[]},  proj))
 
     assert_raise(ArgumentError) {Asset.load({id: -1, w: 2, h: 3, x: 4, y: 5}, proj)}
     assert_raise(ArgumentError) {Asset.load({id:  1, w: 0, h: 3, x: 4, y: 5}, proj)}
@@ -80,7 +87,7 @@ class TestSpriteAsset < Test::Unit::TestCase
   end
 
   def test_save_and_load()
-    a     = asset 1, 2, 3, 4, 5, name: 'x', shape: :rect, sensor: true, anims: [anim]
+    a     = asset 1, 2, 3, 4, 5, name: :x, shape: :rect, sensor: true, anims: [anim]
     state = a.save proj
     assert_equal_state a, Asset.load(state, proj)
   end
@@ -158,26 +165,26 @@ class TestSpriteAsset < Test::Unit::TestCase
   end
 
   def test_with()
-    assert_equal 9,          asset(1, 2, 3, 4, 5)               .with(id: 9)         .id
-    assert_equal 9,          asset(1, 2, 3, 4, 5)               .with(w:  9)         .w
-    assert_equal 9,          asset(1, 2, 3, 4, 5)               .with(h:  9)         .h
-    assert_equal 9,          asset(1, 2, 3, 4, 5)               .with(x:  9)         .x
-    assert_equal 9,          asset(1, 2, 3, 4, 5)               .with(y:  9)         .y
-    assert_equal 'x',        asset(1, 2, 3, 4, 5, name: nil)    .with(name: 'x')     .name
-    assert_equal 'sprite_1', asset(1, 2, 3, 4, 5, name: 'x')    .with(name: nil)     .name
-    assert_equal :rect,      asset(1, 2, 3, 4, 5, shape: nil)   .with(shape: :rect)  .shape
-    assert_nil               asset(1, 2, 3, 4, 5, shape: :rect) .with(shape: nil)    .shape
-    assert_true              asset(1, 2, 3, 4, 5, sensor: nil)  .with(sensor: true)  .sensor?
-    assert_false             asset(1, 2, 3, 4, 5, sensor: nil)  .with(sensor: false) .sensor?
-    assert_false             asset(1, 2, 3, 4, 5, sensor: true) .with(sensor: false) .sensor?
-    assert_false             asset(1, 2, 3, 4, 5, sensor: true) .with(sensor: nil)   .sensor?
-    assert_equal [],         asset(1, 2, 3, 4, 5, anims: nil)   .with(anims: [])     .to_a
-    assert_equal [],         asset(1, 2, 3, 4, 5, anims: [])    .with(anims: nil)    .to_a
+    assert_equal 9,         asset(1, 2, 3, 4, 5)                .with(id: 9)         .id
+    assert_equal 9,         asset(1, 2, 3, 4, 5)                .with(w:  9)         .w
+    assert_equal 9,         asset(1, 2, 3, 4, 5)                .with(h:  9)         .h
+    assert_equal 9,         asset(1, 2, 3, 4, 5)                .with(x:  9)         .x
+    assert_equal 9,         asset(1, 2, 3, 4, 5)                .with(y:  9)         .y
+    assert_equal :x,        asset(1, 2, 3, 4, 5, name:nil)      .with(name: :x)      .name
+    assert_equal :sprite_1, asset(1, 2, 3, 4, 5, name: :x)      .with(name:nil)      .name
+    assert_equal :circle,   asset(1, 2, 3, 4, 5, shape:nil)     .with(shape: :circle).shape
+    assert_nil              asset(1, 2, 3, 4, 5, shape: :circle).with(shape:nil)     .shape
+    assert_true             asset(1, 2, 3, 4, 5, sensor:nil)    .with(sensor:true)   .sensor?
+    assert_false            asset(1, 2, 3, 4, 5, sensor:nil)    .with(sensor:false)  .sensor?
+    assert_false            asset(1, 2, 3, 4, 5, sensor:true)   .with(sensor:false)  .sensor?
+    assert_false            asset(1, 2, 3, 4, 5, sensor:true)   .with(sensor:nil)    .sensor?
+    assert_equal [],        asset(1, 2, 3, 4, 5, anims:nil)     .with(anims:[])      .to_a
+    assert_equal [],        asset(1, 2, 3, 4, 5, anims:[])      .with(anims:nil)     .to_a
 
-    a1 = asset               1,     2,     3,     4,     5,  name: nil, shape: nil,   sensor: nil
-    a2 = a1.with         id: 10, w: 20, h: 30, x: 40, y: 50, name: 'x', shape: :rect, sensor: true
-    assert_equal_state asset(1,     2,     3,     4,     5,  name: nil, shape: nil,   sensor: nil),  a1
-    assert_equal_state asset(10,    20,    30,    40,    50, name: 'x', shape: :rect, sensor: true), a2
+    a1 = asset               1,    2,    3,    4,    5,  name:nil, shape:nil,      sensor:nil
+    a2 = a1.with          id:10, w:20, h:30, x:40, y:50, name: :x, shape: :circle, sensor:true
+    assert_equal_state asset(1,    2,    3,    4,    5,  name:nil, shape:nil,      sensor:nil),  a1
+    assert_equal_state asset(10,   20,   30,   40,   50, name: :x, shape: :circle, sensor:true), a2
   end
 
   def test_modified_by_initial_anim()
@@ -236,7 +243,7 @@ class TestSpriteAsset < Test::Unit::TestCase
       asset(1, 2, 3, 4, 5, name: 'x'))
     assert_not_equal_state(
       asset(1, 2, 3, 4, 5),
-      asset(1, 2, 3, 4, 5, shape: :rect))
+      asset(1, 2, 3, 4, 5, shape: :circle))
     assert_not_equal_state(
       asset(1, 2, 3, 4, 5),
       asset(1, 2, 3, 4, 5, sensor: true))
