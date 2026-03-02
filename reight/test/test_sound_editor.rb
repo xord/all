@@ -272,26 +272,26 @@ class TestSoundEditor < Test::Unit::TestCase
     e = editor do
       _1.add_sound 1, 2, 3, 4
     end
-    e.sound.name = 'a'
-    assert_equal   'a',   e.sound.name
+    e.sound.name = :a
+    assert_equal   :a,   e.sound.name
 
-    e.set_sound_name 'b'
-    assert_equal     'b', e.sound.name
+    e.set_sound_name :b
+    assert_equal     :b, e.sound.name
   end
 
   def test_set_sound_name_history()
     e = editor do
       _1.add_sound 1, 2, 3, 4
     end
-    e.set_sound_name 'a'
-    e.set_sound_name 'b'
+    e.set_sound_name :a
+    e.set_sound_name :b
 
     assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal 'b',           e.sound.name
+    assert_equal :b,            e.sound.name
 
     e.undo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal 'a',           e.sound.name
+    assert_equal :a,            e.sound.name
 
     e.undo
     assert_equal [false, true], [e.can_undo?, e.can_redo?]
@@ -299,11 +299,11 @@ class TestSoundEditor < Test::Unit::TestCase
 
     e.redo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal 'a',           e.sound.name
+    assert_equal :a,            e.sound.name
 
     e.redo
     assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal 'b',           e.sound.name
+    assert_equal :b,            e.sound.name
   end
 
   def test_set_sound_bpm()

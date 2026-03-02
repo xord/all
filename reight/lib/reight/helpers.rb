@@ -85,26 +85,19 @@ end# Widget
 
 module Reight::Activatable
 
-  def initialize(...)
-    super
-    @active, @activateds = false, []
-  end
-
   def active=(active)
-    active  = !!active
-    return if active == @active
-    @active = active
-    activated!
+    old, @activatable_active__ = !!@activatable_active__, !!active
+    activated! if @activatable_active__ != old
   end
 
-  def active? = @active
+  def active? = !!@activatable_active__
 
   def activated(&block)
-    @activateds.push block if block
+    (@activatable_observers__ ||= []).push block if block
   end
 
   def activated!()
-    @activateds.each {_1.call active}
+    @activatable_observers__&.each {_1.call active}
   end
 
 end# Activatable
@@ -151,20 +144,16 @@ end# HasState
 
 module Reight::HasHelp
 
-  def initialize(...)
-    super
-    set_help name: name
-  end
-
-  def name = @name || self.class.name
+  def name = @hashelp_name__ || self.class.name
 
   def set_help(name: nil, left: nil, right: nil)
-    @helps = {name: name, left: left, right: right}
+    @hashelp_helps__ = {name: name, left: left, right: right}
   end
 
   def help()
-    name   = @helps[:name]
-    mouses = @helps
+    set_help name: self.name unless @hashelp_helps__
+    name     = @hashelp_helps__[:name]
+    mouses   = @hashelp_helps__
       .values_at(:left, :right)
       .zip([:L, :R])
       .map {|help, char| help ? "#{char}: #{help}" : nil}

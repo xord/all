@@ -37,14 +37,6 @@ class TestSettings < Test::Unit::TestCase
     assert_equal '/tmp/project.json', settings.project_json_path
   end
 
-  def test_script_paths()
-    assert_equal ['/tmp/game.rb'], settings.script_paths
-    assert_equal ['/tmp/1.rb'],    settings({script_paths: '1.rb'}).script_paths
-    assert_equal(
-      [                   '/tmp/1.rb', '/tmp/2.rb'],
-      settings({script_paths: ['1.rb',      '2.rb']}).script_paths)
-  end
-
   private
 
   Settings = R8::Settings

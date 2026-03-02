@@ -457,24 +457,24 @@ class TestSpriteEditor < Test::Unit::TestCase
   def test_set_sprite_name()
     e      = editor
     e.add_sprite 0, 0, 8, 8
-    e.set_sprite_name 'a'
-    assert_equal      'a', e.sprite.name
+    e.set_sprite_name :a
+    assert_equal      :a, e.sprite.name
 
-    e.set_sprite_name 'b'
-    assert_equal      'b', e.sprite.name
+    e.set_sprite_name :b
+    assert_equal      :b, e.sprite.name
   end
 
   def test_set_sprite_name_history()
     e = editor {_1.add_sprite 0, 0, 8, 8}
-    e.set_sprite_name 'a'
-    e.set_sprite_name 'b'
+    e.set_sprite_name :a
+    e.set_sprite_name :b
 
     assert_equal [true, false],  [e.can_undo?, e.can_redo?]
-    assert_equal 'b',            e.sprite.name
+    assert_equal :b,             e.sprite.name
 
     e.undo
     assert_equal [true, true],   [e.can_undo?, e.can_redo?]
-    assert_equal 'a',            e.sprite.name
+    assert_equal :a,             e.sprite.name
 
     e.undo
     assert_equal [false, true],  [e.can_undo?, e.can_redo?]
@@ -482,11 +482,11 @@ class TestSpriteEditor < Test::Unit::TestCase
 
     e.redo
     assert_equal [true, true],   [e.can_undo?, e.can_redo?]
-    assert_equal 'a',            e.sprite.name
+    assert_equal :a,             e.sprite.name
 
     e.redo
     assert_equal [true, false],  [e.can_undo?, e.can_redo?]
-    assert_equal 'b',            e.sprite.name
+    assert_equal :b,             e.sprite.name
   end
 
   def test_add_anim()
@@ -569,25 +569,25 @@ class TestSpriteEditor < Test::Unit::TestCase
   def test_set_anim_name()
     e = editor
     e.add_sprite 0, 0, 8, 8
-    e.set_anim_name 'a'
-    assert_equal    'a', e.anim.name
+    e.set_anim_name :a
+    assert_equal    :a, e.anim.name
 
-    e.set_anim_name 'b'
-    assert_equal    'b', e.anim.name
+    e.set_anim_name :b
+    assert_equal    :b, e.anim.name
   end
 
   def test_set_anim_name_history()
     e = editor
     e.add_sprite 0, 0, 8, 8
-    e.set_anim_name 'a'
-    e.set_anim_name 'b'
+    e.set_anim_name :a
+    e.set_anim_name :b
 
     assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal 'b',           e.anim.name
+    assert_equal :b,            e.anim.name
 
     e.undo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal 'a',           e.anim.name
+    assert_equal :a,            e.anim.name
 
     e.undo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
@@ -595,11 +595,11 @@ class TestSpriteEditor < Test::Unit::TestCase
 
     e.redo
     assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal 'a',           e.anim.name
+    assert_equal :a,            e.anim.name
 
     e.redo
     assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal 'b',           e.anim.name
+    assert_equal :b,            e.anim.name
   end
 
   def test_add_anim_image()

@@ -120,10 +120,10 @@ class Reight::SoundAsset < Reight::Asset
     Reight::Sound.new self, *sequencer__
   end
 
-  def play()
+  def play(gain: 1.0)
     stop if playing?
     @playing = create_sound
-    @playing.play {@playing = nil}
+    @playing.play(gain:) {@playing = nil}
   end
 
   def stop()

@@ -83,7 +83,7 @@ class Reight::MapEditorInterface < Reight::ViewController
     @editor.asset_table_width,      @editor.asset_table_width,
     @editor.asset_table_page_width, @editor.asset_table_page_height)
 
-  def sprite_table_page()      = @sprite_table_page      ||= Reight::Text.new(0, align: CENTER)
+  def sprite_table_page()      = @sprite_table_page      ||= Reight::Label.new(0, align: CENTER)
 
   def sprite_table_page_prev() = @sprite_table_page_prev ||= Reight::Button.new(label: '<')
 
@@ -91,7 +91,7 @@ class Reight::MapEditorInterface < Reight::ViewController
 
   def mini_map()               = @mini_map               ||= Reight::MapEditor::MiniMap.new
 
-  def map_index()              = @map_index              ||= Reight::Text.new(0, align: CENTER)
+  def map_index()              = @map_index              ||= Reight::Label.new(0, align: CENTER)
 
   def map_prev()               = @map_prev               ||= Reight::Button.new(label: '<')
 
@@ -101,7 +101,7 @@ class Reight::MapEditorInterface < Reight::ViewController
 
   def map_remove()             = @map_remove             ||= Reight::Button.new(label: '-')
 
-  def map_name()               = @map_name               ||= Reight::Text.new(
+  def map_name()               = @map_name               ||= Reight::Label.new(
     editable: true, regexp: /^\w+$/)
 
   def canvas()                 = @canvas                 ||= Reight::MapEditor::Canvas.new

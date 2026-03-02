@@ -114,7 +114,7 @@ class Reight::SoundEditorInterface < Reight::ViewController
     @editor.asset_table_page_width, @editor.asset_table_page_height,
     size_for_new_asset: 16)
 
-  def sound_table_page()      = @sound_table_page      ||= Reight::Text.new(0, align: CENTER)
+  def sound_table_page()      = @sound_table_page      ||= Reight::Label.new(0, align: CENTER)
 
   def sound_table_page_prev() = @sound_table_page_prev ||= Reight::Button.new(label: '<')
 
@@ -122,11 +122,11 @@ class Reight::SoundEditorInterface < Reight::ViewController
 
   def sound_remove()          = @sound_remove          ||= Reight::Button.new(label: '-')
 
-  def sound_name()            = @sound_name            ||= Reight::Text.new(
-    editable: true, label: 'Name: ', regexp: /^\w+$/)
+  def sound_name()            = @sound_name            ||= Reight::Label.new(
+    editable: true, prefix: 'Name: ', regexp: /^\w+$/)
 
-  def sound_bpm()             = @sound_bpm             ||= Reight::Text.new(
-    editable: true, label: 'BPM: ', regexp: /^\-?\d+$/)
+  def sound_bpm()             = @sound_bpm             ||= Reight::Label.new(
+    editable: true, prefix: 'BPM: ', regexp: /^\-?\d+$/)
 
   def clear_all_notes()       = @clear_all_notes       ||= Reight::Button.new(
     name: 'Clear All Notes', label: 'Clear')
