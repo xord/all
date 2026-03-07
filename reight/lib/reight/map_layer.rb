@@ -44,7 +44,7 @@ class Reight::MapLayer
     return nil unless asset
     tile = Reight::MapTile.new asset, *align_tile_pos__(x, y)
     put_tile__ tile
-    modified!
+    modified!(:asset_put, x: tile.x, y: tile.y, asset:)
     tile
   end
 
@@ -54,7 +54,7 @@ class Reight::MapLayer
     each_chunk__ tx, ty, tw, th, create: false do |chunk|
       each_tile_pos__(tx, ty, tw, th) {|xx, yy| chunk.remove xx, yy}
     end
-    modified!
+    modified! :asset_removed, x: tx, y: ty, asset: tile.asset
   end
 
   def remove_tile(tile)
