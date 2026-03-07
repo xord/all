@@ -42,11 +42,13 @@ class TestText < Test::Unit::TestCase
     assert_equal   "\nxay\nb\nc_z", t.to_s
     assert_false                    modified
 
-    assert_raise(ArgumentError) {t.insert(-1,  "!")}
+    assert_raise(ArgumentError)         {t.insert 0.1, "!"}
     assert_false modified
-    assert_raise(ArgumentError) {t.insert 0.1, "!"}
+
+    assert_raise(R8::Text::NoLineError) {t.insert(-1,  "!")}
     assert_false modified
-    assert_raise(ArgumentError) {t.insert t.to_s.size + 1, "!"}
+
+    assert_raise(R8::Text::NoLineError) {t.insert t.to_s.size + 1, "!"}
     assert_false modified
   end
 
@@ -75,40 +77,45 @@ class TestText < Test::Unit::TestCase
     assert_true                      modified
     modified = false
 
-    t.replace t.to_s.size, -1, "q"
-    assert_equal  "\n1\n2\n3\n\nq",  t.to_s
+    t.replace t.to_s.size, 0,  "q"
+    assert_equal "\n1\n2\n3\n\ncq",  t.to_s
+    assert_true                      modified
+    modified = false
+
+    t.replace t.to_s.size, -1, "p"
+    assert_equal "\n1\n2\n3\n\ncp",  t.to_s
     assert_true                      modified
     modified = false
 
     t.replace 1, 1, "1"
-    assert_equal  "\n1\n2\n3\n\nq",  t.to_s
+    assert_equal  "\n1\n2\n3\n\ncp", t.to_s
     assert_false                     modified
 
     t.replace 1, 3, "1\n2"
-    assert_equal  "\n1\n2\n3\n\nq",  t.to_s
+    assert_equal  "\n1\n2\n3\n\ncp", t.to_s
     assert_false                     modified
 
     t.replace 1, 5, "1\n2\n3"
-    assert_equal  "\n1\n2\n3\n\nq",  t.to_s
+    assert_equal  "\n1\n2\n3\n\ncp", t.to_s
     assert_false                     modified
 
     t.replace 1, 7, "1\n2\n3\n\n"
-    assert_equal  "\n1\n2\n3\n\nq",  t.to_s
+    assert_equal  "\n1\n2\n3\n\ncp", t.to_s
     assert_false                     modified
-
-    assert_raise(ArgumentError) {t.replace(-1, 0,  "!")}
-    assert_false modified
-
-    assert_raise(ArgumentError) {t.replace  0, -1, "!"}
-    assert_false modified
-
-    assert_raise(ArgumentError) {t.replace t.to_s.size, 1, "!"}
-    assert_false modified
 
     assert_raise(ArgumentError) {t.replace  0.1, 0,   "!"}
     assert_false modified
 
     assert_raise(ArgumentError) {t.replace  0,   0.1, "!"}
+    assert_false modified
+
+    assert_raise(R8::Text::NoLineError) {t.replace(-1, 0,  "!")}
+    assert_false modified
+
+    assert_raise(R8::Text::NoLineError) {t.replace  0, -1, "!"}
+    assert_false modified
+
+    assert_raise(R8::Text::NoLineError) {t.replace t.to_s.size, 1, "!"}
     assert_false modified
   end
 

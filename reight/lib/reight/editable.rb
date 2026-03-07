@@ -28,12 +28,13 @@ module Reight::Editable
     @editable_parent = parent
   end
 
-  def add_modified_observer(key = nil, observe_all: false, &block)
-    (@editable_observers ||= []).push [block, key, observe_all]
+  def add_modified_observer(*types, observer_id: nil, observe_all: false, &block)
+    types = nil if types.empty?
+    (@editable_observers ||= []).push [block, types, observer_id, observe_all]
   end
 
-  def remove_modified_observers(key)
-    @editable_observers&.delete_if {_2 == key}
+  def remove_modified_observers(observer_id)
+    @editable_observers&.delete_if {_3 == observer_id}
   end
 
   alias modified add_modified_observer
@@ -42,24 +43,25 @@ module Reight::Editable
     @editable_modified == nil || !!@editable_modified
   end
 
-  def modified!()
-    send_modified_event__
+  def modified!(type, **params)
+    send_modified_event__ self, type, params
   end
 
   module Accessor
 
     def editable_writer(name, filter: nil, &block)
-      ivar_name = "@#{name}".to_sym
+      ivar_name  = "@#{name}".to_sym
+      event_name = :"#{name}_changed"
       define_method "#{name}=" do |value|
         value = instance_exec value, &filter if filter
         old   = instance_variable_get ivar_name
         if block
           instance_exec value, &block
+          value = instance_variable_get ivar_name
         else
           instance_variable_set ivar_name, value
         end
-        modified! if value != old
-        value
+        modified!(event_name, value:, old:) if value != old
       end
     end
 
@@ -68,12 +70,13 @@ module Reight::Editable
   protected
 
   # @private
-  def send_modified_event__(origin = true)
+  def send_modified_event__(origin, type, params)
     @editable_modified = true
-    @editable_observers&.each do |block, key, observe_all|
-      block.call self, key if observe_all || origin
+    @editable_observers&.each do |block, types, observer_id, observe_all|
+      block.call(type:, origin:, observer_id:, **params) if
+        (observe_all || origin == self) && (!types || types.include?(type))
     end
-    parent.send_modified_event__ false if parent
+    parent.send_modified_event__(origin, type, params) if parent
   end
 
 end# Editable

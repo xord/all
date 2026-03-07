@@ -58,7 +58,7 @@ class Reight::SpriteAsset < Reight::Asset
       anims.all? {_1.w == width && _1.h == height}
     @anims.insert index, *anims
     anims.each {_1.set_parent self}
-    modified!
+    modified!(:anim_inserted, anims:, index:)
   end
 
   def push(*anims)
@@ -70,14 +70,14 @@ class Reight::SpriteAsset < Reight::Asset
   def remove(anim)
     @anims.delete(anim)&.tap do
       anim.set_parent nil
-      modified!
+      modified!(:anim_removed, anim:)
     end
   end
 
   def remove_at(index)
-    @anims.delete_at(index)&.tap do |asset|
-      asset.set_parent nil
-      modified!
+    @anims.delete_at(index)&.tap do |anim|
+      anim.set_parent nil
+      modified!(:anim_removed, anim:, index:)
     end
   end
 
