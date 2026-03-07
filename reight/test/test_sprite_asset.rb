@@ -190,21 +190,21 @@ class TestSpriteAsset < Test::Unit::TestCase
   def test_modified_by_initial_anim()
     a = asset 1, 2, 3, anims: [anim(1)]; assert_true  a.modified?
     a.save proj;                         assert_false a.modified?
-    a[0].modified!;                      assert_true  a.modified?
+    a[0].modified! nil;                  assert_true  a.modified?
   end
 
   def test_modified_by_loaded_asset()
     a      = asset anims: [anim(1)];        assert_true  a     .modified?
     loaded = Asset.load a.save(proj), proj; assert_false loaded.modified?
-    loaded[0].modified!;                    assert_true  loaded.modified?
+    loaded[0].modified! nil;                assert_true  loaded.modified?
   end
 
   def test_modified_by_added_anim()
-    a = asset 1, 2, 3; assert_true  a.modified?
-    a.save proj;       assert_false a.modified?
-    a.push anim(1);    assert_true  a.modified?
-    a.save proj;       assert_false a.modified?
-    a[0].modified!;    assert_true  a.modified?
+    a = asset 1, 2, 3;  assert_true  a.modified?
+    a.save proj;        assert_false a.modified?
+    a.push anim(1);     assert_true  a.modified?
+    a.save proj;        assert_false a.modified?
+    a[0].modified! nil; assert_true  a.modified?
   end
 
   def test_modified_by_removed_anim()
@@ -212,7 +212,7 @@ class TestSpriteAsset < Test::Unit::TestCase
     a.save proj;                         assert_false a.modified?
     removed = a.remove a[0];             assert_true  a.modified?
     a.save proj;                         assert_false a.modified?
-    removed.modified!;                   assert_false a.modified?
+    removed.modified! nil;               assert_false a.modified?
   end
 
   def test_compare_by_state()

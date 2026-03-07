@@ -1,5 +1,6 @@
 class Reight::ScriptEditor::TextEditor
 
+  extend  Forwardable
   extend  Reight::Hookable
   include Reight::Widget
   include Reight::Activatable
@@ -8,72 +9,41 @@ class Reight::ScriptEditor::TextEditor
   C = Reight::CONTEXT__
 
   def initialize(text = '')
-    @row, @column, @selection = 0, 0, Selection.new
-    @shake, @start_frame      = 0, C.frame_count
-    self.text = text
+    @cursors, @start_frame, @shake = [], C.frame_count, 0
+    self.text                      = text
   end
 
   hook :changed
 
-  attr_reader :text, :row, :selection
+  attr_reader :text, :cursors
+
+  def_delegators :cursor,
+    :row, :column, :col, :selection
 
   def text=(value)
     case value
     when String
       str = value&.to_s || ''
-      return if str == to_s
+      return if str == @text&.to_s
       @text ||= Reight::Text.new
       @text.clear
       @text.insert 0, str
     when Reight::Text
-      @text    = value
-      self.row = self.column = 0
+      @text = value
     end
-    @text
+    @cursors = [Cursor.new(@text)]
   end
 
-  def row=(row)
-    row, col = clamp_pos row, @column
-    return if row == @row &&  col == @column
-    @row, @column = row, col
-    select pos2index(@row, @column)
-    @row
+  def cursor()
+    @cursors[1..] = [] if @cursors.size > 1
+    @cursors.first
   end
 
-  def column=(col)
-    row, = index2pos selection.index
-    loop do
-      if col < 0
-        prev_row_size = row > 0 ? @text[row - 1].size(true) : 0
-        row, col      = clamp_pos row - 1, col + prev_row_size
-      elsif col >= @text[row].size + 1
-        row_size      = @text[row].size(true)
-        row, col      = clamp_pos row + 1, col - row_size
-      else
-        break
-      end
-    end
-    if row != @row || col != @column
-      @row, @column = row, col
-      select pos2index(@row, @column)
-    end
-    @column
-  end
-
-  def column()
-    row_size = @text[@row].size
-    @column > row_size ? row_size : @column
-  end
-
-  alias col= column=
-  alias col  column
-
-  def select(index, size = nil)
-    sel = Selection.new index, size
-    return if sel == @selection
-    @selection   = sel
+  def redraw_cursors()
     @start_frame = C.frame_count
   end
+
+  protected
 
   def draw(sp)
     C.clip sp.x, sp.y, sp.w, sp.h
@@ -89,29 +59,32 @@ class Reight::ScriptEditor::TextEditor
     C.rect 0, 0, sp.w, sp.h
 
     draw_text
-    draw_cursor
+    draw_cursors if (C.frame_count - @start_frame) % 60 < 30
   end
 
   def draw_text()
     charh = font.text_bounds('X').h
     @text.each.with_index do |line, index|
       C.fill 255
-      C.text line.to_s.gsub(/(\r|\n)/, '_'), 0, charh * index, C.width, charh
+      C.text line.text, 0, charh * index, C.width, charh
     end
   end
 
-  def draw_cursor()
-    return if (C.frame_count - @start_frame) % 60 >= 30
-    row, col = index2pos @selection.index
-    fw, fh   = font_size
-    x,       = font_size @text[row].text[0...col]
-    C.no_stroke
-    C.fill 255
-    C.rect x, row * fh + fh - 2, fw, 2
+  def draw_cursors()
+    fw, fh = font_size
+    @cursors.each do |cursor|
+      row, col = cursor.pos
+      x,       = font_size @text[row][0...col]
+      C.no_stroke
+      C.fill 255
+      C.rect x, row * fh + fh - 2, fw, 2
+    end
   end
 
   def mouse_released(x, y, button)
-    self.row, self.column = get_pos x, y
+    #cursor.pos = get_pos x, y
+    @cursors << Cursor.new(@text, *get_pos(x, y))
+    redraw_cursors
   end
 
   private
@@ -125,39 +98,12 @@ class Reight::ScriptEditor::TextEditor
   end
 
   def get_pos(x, y)
+    return [0, 0] unless @text
     row  = (y / font_size[1]).floor
     col  = 0
     line = row >= 0 ? @text[row] : nil
     col  = line.size.times.find {|n| x <= font_size(line[0..n])[0]} || line.size if line
-    clamp_pos row, col
-  end
-
-  def last_pos()
-    [@text.size - 1, @text[-1].size]
-  end
-
-  def clamp_pos(row, column)
-    if row < 0
-      [0, 0]
-    elsif row >= @text.size
-      last_pos
-    else
-      [row, column]
-    end
-  end
-
-  def pos2index(row, col)
-    row = row.clamp 0..(@text     .size - 1)
-    col = col.clamp 0..(@text[row].size)
-    @text[0...row].map {_1.size true}.sum + col
-  end
-
-  def index2pos(index)
-    @text.each.with_index do |line, row|
-      return row, index if index < line.size(true)
-      index -= line.size(true)
-    end
-    [@text.size - 1, @text[-1].size]
+    [row, col]
   end
 
 end# TextEditor
@@ -165,39 +111,146 @@ end# TextEditor
 
 class Reight::ScriptEditor::TextEditor::Cursor
 
-  def initialize(row = 0, column = 0)
-    @row, @column = row, column
+  def initialize(text, row = 0, column = 0, name: nil)
+    raise ArgumentError unless text
+    @text, @name, @mark = text, name, nil
+    set_pos(*correct_pos(row, column))
+
+    @text.modified :text_replaced do |index:, inserted:, removed:, **|
+      i  = pos2index @row, @column
+      i += inserted.size - removed.size if i >= index
+      set_pos(*correct_pos(*index2pos(i)))
+    end
   end
 
-  attr_accessor :row, :column
+  attr_accessor :name
 
-  alias col column
+  attr_reader :text, :row, :mark
 
-end# Cursor
-
-
-class Reight::ScriptEditor::TextEditor::Selection
-
-  def initialize(index = 0, size = nil)
-    self.index, self.size = index, size || 0
+  def row=(row)
+    set_pos(*clamp_pos(row, @column))
+    @row
   end
 
-  attr_reader :index, :size
+  def column=(col)
+    set_pos(*correct_pos(@row, col))
+    @column
+  end
+
+  def column()
+    row_size = get_row_size @row
+    @column > row_size ? row_size : @column
+  end
+
+  alias col= column=
+  alias col  column
+
+  def position=(pos)
+    raise ArgumentError unless pos in [Integer, Integer]
+    set_pos(*correct_pos(*pos))
+    position
+  end
+
+  def position()
+    [@row, @column]
+  end
+
+  alias pos= position=
+  alias pos  position
 
   def index=(index)
-    raise ArgumentError unless index.is_a? Integer
-    raise ArgumentError if     index < 0
-    @index = index
+    set_pos(*index2pos(index))
+    self.index
   end
 
-  def size=(size)
-    raise ArgumentError unless size.is_a? Integer
-    self.index, size = @index + size, -size if size < 0
-    @size            = size
+  def index()
+    pos2index @row, @column
   end
 
-  def to_range()
-    @index..(@index + @size)
+  def mark=(mark)
+    mark  = pos2index(*correct_pos(*mark))     if mark in [Integer, Integer]
+    mark  = mark.clamp 0..pos2index(*last_pos) if mark
+    mark  = nil                                if mark == index
+    @mark = mark
   end
 
-end# Selection
+  def select(index, size)
+    row, col, mark        = @row, @column, @mark
+    self.index, self.mark = index, index + size
+    @row != row || @column != col || @mark != mark
+  end
+
+  def deselect()
+    @mark = nil
+  end
+
+  def selection(size = 0)
+    i = index
+    [i, @mark ? @mark - i : size]
+  end
+
+  private
+
+  def pos2index(row, col)
+    col = 0              if row < 0
+    col = @text[-1].size if row >= @text.size
+    row = row.clamp 0..(@text     .size - 1)
+    col = col.clamp 0..(@text[row].size)
+    @text[0...row].map {_1.size true}.sum + col
+  end
+
+  def index2pos(index)
+    return [0, 0] if index < 0
+    @text.each.with_index do |line, row|
+      line_size = line.size true
+      return row, index if index < line_size
+      index    -= line_size
+    end
+    last_pos
+  end
+
+  def set_pos(row, col)
+    @row, @column = row, col
+    @mark         = nil if @mark && @mark == index
+  end
+
+  def correct_pos(row, col)
+    nrows = @text.size
+    loop do
+      case
+      when row < 0 || nrows <= row
+        row, col = clamp_pos row, col
+      when col < 0
+        row, col = clamp_pos row - 1, col + get_row_size(row - 1, true)
+      when col >= get_row_size(row) + 1
+        row, col = clamp_pos row + 1, col - get_row_size(row,     true)
+      else
+        return row, col
+      end
+    end
+=begin
+    rs = -> ... {get_row_size(...)}
+    row, col = clamp_pos row,     col                     if row < 0 || @text.size <= row
+    row, col = clamp_pos row - 1, col + rs[row - 1, true] while col < 0
+    row, col = clamp_pos row + 1, col - rs[row,     true] while col >= rs[row] + 1
+    [row, col]
+=end
+  end
+
+  def get_row_size(row, include_newlines = false)
+    (row >= 0 ? @text[row] : nil)&.size(include_newlines) || 0
+  end
+
+  def clamp_pos(row, column)
+    case
+    when row < 0           then [0, 0]
+    when row >= @text.size then last_pos
+    else                        [row, column]
+    end
+  end
+
+  def last_pos()
+    [@text.size - 1, @text[-1].size]
+  end
+
+end# Cursor

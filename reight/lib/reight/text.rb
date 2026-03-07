@@ -9,25 +9,15 @@ class Reight::Text
   end
 
   def insert(index, str)
-    str = str&.to_s
-    return if !str || str.empty?
-    line, row, col = get_line_and_pos index
-    raise ArgumentError unless line
-    line.text[col, 0] = str
-    if line.text =~ /\r|\n/
-      lines = line.to_s.scan Line::SPLIT_REGEXP
-      lines << '' if line.newline.nil? && line.text.match?(/[\r\n]\z/)
-      @lines[row, 1] = lines.map {Line.new _1}
+    if insert! index, str
+      modified!(:text_replaced, inserted: str, removed: '', index:)
     end
-    modified!
-    nil
   end
 
   def replace(index, size, str)
     index, size       = index + size, -size if size < 0
     line1, row1, col1 = get_line_and_pos index
     line2, row2, col2 = get_line_and_pos index + size
-    raise ArgumentError unless line1 && line2
 
     old =
       if row1 == row2
@@ -36,6 +26,7 @@ class Reight::Text
         lines = row2 - row1 >= 2 ? @lines[(row1 + 1)..(row2 - 1)] : []
         line1.to_s[col1..] + lines.map(&:to_s).join + line2.to_s[...col2]
       end
+    raise if old.size != size
     return nil if str == old
 
     if row1 == row2
@@ -45,8 +36,9 @@ class Reight::Text
       line2.text[...col2] = ''
       @lines[row1..row2]  = Line.new line1.text + line2.to_s
     end
-    insert index, str
-    old
+
+    inserted = insert!(index, str) ? str : ''
+    modified!(:text_replaced, inserted:, removed: old, index:)
   end
 
   def clear()
@@ -75,14 +67,33 @@ class Reight::Text
     @lines.map(&:to_s).join
   end
 
+  Error       = Class.new RuntimeError
+
+  NoLineError = Class.new Error
+
+  private
+
   def get_line_and_pos(index)
     raise ArgumentError unless index.is_a? Integer
-    raise ArgumentError if     index < 0
+    raise NoLineError   if     index < 0
     @lines.each.with_index do |line, row|
       return line, row, index if index < line.size + 1
       index -= line.size + 1
     end
-    nil
+    raise NoLineError
+  end
+
+  def insert!(index, str)
+    str = str&.to_s
+    return false if !str || str.empty?
+    line, row, col    = get_line_and_pos index
+    line.text[col, 0] = str
+    if line.text =~ /\r|\n/
+      lines = line.to_s.scan Line::SPLIT_REGEXP
+      lines << '' if line.newline.nil? && line.text.match?(/[\r\n]\z/)
+      @lines[row, 1] = lines.map {Line.new _1}
+    end
+    true
   end
 
 end# Text
