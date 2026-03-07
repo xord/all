@@ -37,7 +37,7 @@ class Reight::SpriteAnimation < Reight::Asset
     raise 'invalid image size' unless
       images.all? {_1.width == width && _1.height == height}
     @images.insert index, *images
-    modified!
+    modified!(:image_added, images:, index:)
   end
 
   def push(*images)
@@ -48,13 +48,13 @@ class Reight::SpriteAnimation < Reight::Asset
 
   def remove(image)
     @images.delete(image)&.tap do
-      modified!
+      modified!(:image_removed, image:)
     end
   end
 
   def remove_at(index)
-    @images.delete_at(index)&.tap do
-      modified!
+    @images.delete_at(index)&.tap do |image|
+      modified!(:image_removed, image:, index:)
     end
   end
 

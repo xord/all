@@ -49,14 +49,14 @@ class Reight::SoundAsset < Reight::Asset
 
   def clear()
     @sequence = []
-    modified!
+    modified! :sound_cleared
   end
 
   def add_note(time_index, note_index, tone)
     raise 'The note already exists' if note_at time_index, note_index
     Reight::SoundNote.new(note_index, tone).tap do |note|
       (@sequence[time_index] ||= []) << note
-      modified!
+      modified! :note_added, time: time_index, note: note_index, tone: tone
     end
   end
 
@@ -64,7 +64,7 @@ class Reight::SoundAsset < Reight::Asset
     note = note_at time_index, note_index
     return nil unless note
     @sequence[time_index].delete(note)&.tap do
-      modified!
+      modified! :note_removed, time: time_index, note: note_index, tone: note.tone
     end
   end
 
@@ -79,7 +79,7 @@ class Reight::SoundAsset < Reight::Asset
     return if volume == old
     @volumes[time_index] = volume
     @volumes = @volumes.reverse.drop_while(&:nil?).reverse if @volumes[-1].nil?
-    modified!
+    modified!(:volume_changed, time: time_index, volume:)
     old
   end
 
