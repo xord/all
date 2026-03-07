@@ -113,21 +113,21 @@ class TestAssetList < Test::Unit::TestCase
   def test_modified_by_initial_asset()
     ls = list [asset(1)]; assert_true  ls.modified?
     ls.save proj;         assert_false ls.modified?
-    ls[0].modified!;      assert_true  ls.modified?
+    ls[0].modified! nil;  assert_true  ls.modified?
   end
 
   def test_modified_by_loaded_list()
     ls     = list [asset(1)];                       assert_true  ls    .modified?
     loaded = List.load(Asset, ls.save(proj), proj); assert_false loaded.modified?
-    loaded[0].modified!;                            assert_true  loaded.modified?
+    loaded[0].modified! nil;                        assert_true  loaded.modified?
   end
 
   def test_modified_by_inserted_asset()
-    ls = list;        assert_true  ls.modified?
-    ls.save proj;     assert_false ls.modified?
-    ls.push asset(1); assert_true  ls.modified?
-    ls.save proj;     assert_false ls.modified?
-    ls[0].modified!;  assert_true  ls.modified?
+    ls = list;           assert_true  ls.modified?
+    ls.save proj;        assert_false ls.modified?
+    ls.push asset(1);    assert_true  ls.modified?
+    ls.save proj;        assert_false ls.modified?
+    ls[0].modified! nil; assert_true  ls.modified?
   end
 
   def test_modified_by_removed_asset()
@@ -135,7 +135,7 @@ class TestAssetList < Test::Unit::TestCase
     ls.save proj;              assert_false ls.modified?
     removed = ls.remove ls[0]; assert_true  ls.modified?
     ls.save proj;              assert_false ls.modified?
-    removed.modified!;         assert_false ls.modified?
+    removed.modified! nil;     assert_false ls.modified?
   end
 
   def test_compare_by_state()

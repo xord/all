@@ -44,7 +44,7 @@ class Reight::AssetList
 
     assets.each {_1.set_parent self}
     @assets.insert index, *assets
-    modified!
+    modified!(:asset_inserted, assets:, index:)
   end
 
   def push(*assets)
@@ -63,20 +63,20 @@ class Reight::AssetList
     assets.each {_1.set_parent self}
     @assets.push(*assets)
     @assets.sort_by! {[_1.y, _1.x]}
-    modified!
+    modified!(:asset_put, assets:)
   end
 
   def remove(asset)
     @assets.delete(asset)&.tap do |asset|
       asset.set_parent nil
-      modified!
+      modified!(:asset_removed, asset:)
     end
   end
 
   def remove_at(index)
     @assets.delete_at(index)&.tap do |asset|
       asset.set_parent nil
-      modified!
+      modified!(:asset_removed, asset:, index:)
     end
   end
 

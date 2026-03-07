@@ -79,7 +79,7 @@ class Reight::SpriteEditor < Reight::ModelController
     before = copy_image__ before,      x, y, w, h
     after  = copy_image__ @anim_image, x, y, w, h, dup: true
     append_history [:snapshot, after, before, x, y] if before && after
-    @anim.modified!
+    @anim.modified!(:image_edited, image: @anim_image, before:, after:, x:, y:)
   end
 
   alias edit begin_editing
