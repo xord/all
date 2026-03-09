@@ -4,62 +4,103 @@ require_relative 'helper'
 class TestTextEditorCursor < Test::Unit::TestCase
 
   def test_initialize()
+    assert_equal '', cursor(text).text.to_s
+    assert_equal 0,  cursor(text).row
+    assert_equal 0,  cursor(text).col
+    assert_nil       cursor(text).mark
+    assert_nil       cursor(text).name
+
     assert_equal "a\nbc", cursor(text("a\nbc"), 1, 2, name: 3).text.to_s
     assert_equal 1,       cursor(text("a\nbc"), 1, 2, name: 3).row
     assert_equal 2,       cursor(text("a\nbc"), 1, 2, name: 3).col
     assert_nil            cursor(text("a\nbc"), 1, 2, name: 3).mark
     assert_equal 3,       cursor(text("a\nbc"), 1, 2, name: 3).name
 
-    assert_equal [0, 0],  cursor(text("a\nbc"), -1,  2).then{[_1.row, _1.col]}
-    assert_equal [1, 2],  cursor(text("a\nbc"),  9,  2).then{[_1.row, _1.col]}
-    assert_equal [0, 1],  cursor(text("a\nbc"),  1, -1).then{[_1.row, _1.col]}
-    assert_equal [1, 2],  cursor(text("a\nbc"),  1,  9).then{[_1.row, _1.col]}
+    assert_equal [0, 0], cursor(text("a\nbc"), -1,  2).then{[_1.row, _1.col]}
+    assert_equal [1, 2], cursor(text("a\nbc"),  9,  2).then{[_1.row, _1.col]}
+    assert_equal [0, 1], cursor(text("a\nbc"),  1, -1).then{[_1.row, _1.col]}
+    assert_equal [1, 2], cursor(text("a\nbc"),  1,  9).then{[_1.row, _1.col]}
 
     assert_raise(ArgumentError) {cursor nil, 1, 2, name: 3}
   end
 
   def test_row()
-    t = text "1\n\r23\n\r\n456"
-    assert_equal ["1\n", "\r", "23\n", "\r\n", "456"], t.map(&:to_s)
+    t = text <<~END.chop
+      123
+      123
+      1
+      123
+      123
+    END
 
-    c = cursor t; assert_equal [0, 0, 0],  [c.row, c.col, c.index]
-    c.row -= 1;   assert_equal [0, 0, 0],  [c.row, c.col, c.index]
-    c.row += 1;   assert_equal [1, 0, 2],  [c.row, c.col, c.index]
-    c.row += 3;   assert_equal [4, 0, 7],  [c.row, c.col, c.index]
-    c.row += 1;   assert_equal [4, 3, 10], [c.row, c.col, c.index]
-    c.row  = 1;   assert_equal [1, 0, 2],  [c.row, c.col, c.index]
-    c.row  = 4;   assert_equal [4, 3, 10], [c.row, c.col, c.index]
-    c.row += 0;   assert_equal [4, 3, 10], [c.row, c.col, c.index]
+    c = cursor t
+    c.pos  = [1, 2]; assert_equal [1, 2], [c.row, c.col]
+    c.row += 1;      assert_equal [2, 1], [c.row, c.col]
+    c.row += 1;      assert_equal [3, 2], [c.row, c.col]
+
+    c = cursor t
+    c.pos  = [3, 2]; assert_equal [3, 2], [c.row, c.col]
+    c.row -= 1;      assert_equal [2, 1], [c.row, c.col]
+    c.row -= 1;      assert_equal [1, 2], [c.row, c.col]
+
+    c = cursor t
+    c.pos  = [0, 1]; assert_equal [0, 1], [c.row, c.col]
+    c.row -= 1;      assert_equal [0, 0], [c.row, c.col]
+    c.row += 1;      assert_equal [1, 1], [c.row, c.col]
+
+    c = cursor t
+    c.pos  = [0, 1]; assert_equal [0, 1], [c.row, c.col]
+    c.row -= 1;      assert_equal [0, 0], [c.row, c.col]
+    c.row -= 1;      assert_equal [0, 0], [c.row, c.col]
+    c.row += 1;      assert_equal [1, 1], [c.row, c.col]
+
+    c = cursor t
+    c.pos  = [0, 1]; assert_equal [0, 1], [c.row, c.col]
+    c.row -= 1;      assert_equal [0, 0], [c.row, c.col]
+    c.col -= 1;      assert_equal [0, 0], [c.row, c.col]
+    c.row += 1;      assert_equal [1, 0], [c.row, c.col]
+
+    c = cursor t
+    c.pos  = [4, 2]; assert_equal [4, 2], [c.row, c.col]
+    c.row += 1;      assert_equal [4, 3], [c.row, c.col]
+    c.row -= 1;      assert_equal [3, 2], [c.row, c.col]
+
+    c = cursor t
+    c.pos  = [4, 2]; assert_equal [4, 2], [c.row, c.col]
+    c.row += 1;      assert_equal [4, 3], [c.row, c.col]
+    c.row += 1;      assert_equal [4, 3], [c.row, c.col]
+    c.row -= 1;      assert_equal [3, 2], [c.row, c.col]
+
+    c = cursor t
+    c.pos  = [4, 2]; assert_equal [4, 2], [c.row, c.col]
+    c.row += 1;      assert_equal [4, 3], [c.row, c.col]
+    c.col += 1;      assert_equal [4, 3], [c.row, c.col]
+    c.row -= 1;      assert_equal [3, 3], [c.row, c.col]
   end
 
   def test_column()
     t = text "1\n\r23\n\r\n456"
-    assert_equal ["1\n", "\r", "23\n", "\r\n", "456"], t.map(&:to_s)
 
-    c = cursor t; assert_equal [0, 0, 0],  [c.row, c.col, c.index]
-    c.col += 1;   assert_equal [0, 1, 1],  [c.row, c.col, c.index]
-    c.col  = 0;   assert_equal [0, 0, 0],  [c.row, c.col, c.index]
-    c.col += 2;   assert_equal [1, 0, 2],  [c.row, c.col, c.index]
-    c.col += 1;   assert_equal [2, 0, 3],  [c.row, c.col, c.index]
-    c.col += 1;   assert_equal [2, 1, 4],  [c.row, c.col, c.index]
-    c.col += 2;   assert_equal [3, 0, 6],  [c.row, c.col, c.index]
-    c.col += 3;   assert_equal [4, 2, 9],  [c.row, c.col, c.index]
-    c.col += 1;   assert_equal [4, 3, 10], [c.row, c.col, c.index]
-    c.col += 1;   assert_equal [4, 3, 10], [c.row, c.col, c.index]
+    c = cursor t
+    c.col += 1; assert_equal [0, 1], [c.row, c.col]
+    c.col  = 0; assert_equal [0, 0], [c.row, c.col]
+    c.col += 2; assert_equal [1, 0], [c.row, c.col]
+    c.col += 1; assert_equal [2, 0], [c.row, c.col]
+    c.col += 1; assert_equal [2, 1], [c.row, c.col]
+    c.col += 2; assert_equal [3, 0], [c.row, c.col]
+    c.col += 3; assert_equal [4, 2], [c.row, c.col]
+    c.col += 1; assert_equal [4, 3], [c.row, c.col]
+    c.col += 1; assert_equal [4, 3], [c.row, c.col]
 
-    c.row -= 2;   assert_equal [2, 2, 5],  [c.row, c.col, c.index]
-    c.col -= 1;   assert_equal [2, 1, 4],  [c.row, c.col, c.index]
-    c.row -= 1;   assert_equal [1, 0, 2],  [c.row, c.col, c.index]
-    c.col += 1;   assert_equal [2, 0, 3],  [c.row, c.col, c.index]
-
-    c.row += 9;   assert_equal [4, 3, 10], [c.row, c.col, c.index]
-    c.col -= 1;   assert_equal [4, 2, 9],  [c.row, c.col, c.index]
-    c.col -= 2;   assert_equal [4, 0, 7],  [c.row, c.col, c.index]
-    c.col -= 1;   assert_equal [3, 0, 6],  [c.row, c.col, c.index]
-    c.col -= 1;   assert_equal [2, 2, 5],  [c.row, c.col, c.index]
-    c.col -= 3;   assert_equal [1, 0, 2],  [c.row, c.col, c.index]
-    c.col -= 2;   assert_equal [0, 0, 0],  [c.row, c.col, c.index]
-    c.col -= 1;   assert_equal [0, 0, 0],  [c.row, c.col, c.index]
+    c.col  = 2; assert_equal [4, 2], [c.row, c.col]
+    c.col  = 3; assert_equal [4, 3], [c.row, c.col]
+    c.col  = 4; assert_equal [4, 3], [c.row, c.col]
+    c.col -= 1; assert_equal [4, 2], [c.row, c.col]
+    c.col -= 2; assert_equal [4, 0], [c.row, c.col]
+    c.col -= 3; assert_equal [2, 1], [c.row, c.col]
+    c.col -= 3; assert_equal [0, 1], [c.row, c.col]
+    c.col -= 1; assert_equal [0, 0], [c.row, c.col]
+    c.col -= 1; assert_equal [0, 0], [c.row, c.col]
   end
 
   def test_position()
