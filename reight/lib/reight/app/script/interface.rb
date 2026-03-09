@@ -34,11 +34,12 @@ class Reight::ScriptEditorInterface < Reight::ViewController
   def key_pressed(pressings)
     #shift, ctrl, cmd = [SHIFT, CONTROL, COMMAND].map {pressings.include? _1}
     e = @editor
-    text_editor.cursors[0, 1].each do |c|
+    text_editor.cursors.each do |c|
       case C.key_code
       when ENTER     then e.replace_text(*c.selection,   "\n")
       when DELETE    then e.replace_text(*c.selection( 1), '')
       when BACKSPACE then e.replace_text(*c.selection(-1), '')
+      when ESC       then text_editor.cursor = text_editor.cursor
       when UP        then c.row -= 1
       when DOWN      then c.row += 1
       when LEFT      then c.col -= 1
