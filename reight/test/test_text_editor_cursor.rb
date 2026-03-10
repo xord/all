@@ -178,6 +178,33 @@ class TestTextEditorCursor < Test::Unit::TestCase
     c.deselect;       assert_equal [[4, 0],  nil], [c.selection, c.mark]
   end
 
+  def test_isnert_text()
+    t     = text "abc"
+    c     = cursor t
+    c.col = 1
+
+    t.insert(1, 'x')
+    assert_equal ["axbc", 2], [t.to_s, c.index]
+  end
+
+  def test_delete_backward()
+    t     = text "abc"
+    c     = cursor t
+    c.col = 1
+
+    t.replace(1, -1, '')
+    assert_equal ["bc", 0], [t.to_s, c.index]
+  end
+
+  def test_delete_forward()
+    t     = text "abc"
+    c     = cursor t
+    c.col = 1
+
+    t.replace(1, 1, '')
+    assert_equal ["ac", 1], [t.to_s, c.index]
+  end
+
   private
 
   Cursor = R8::ScriptEditor::TextEditor::Cursor
