@@ -42,9 +42,9 @@ class Reight::ScriptEditor < Reight::ModelController
   end
 
   def replace_text(index, size, str)
-    old = @script.text.replace index, size, str
-    return unless old
-    append_history [:replace_text, index, str, old]
+    @script.text.replace(index, size, str)&.tap do |old|
+      append_history [:replace_text, index, str, old]
+    end
   end
 
   def undo()
