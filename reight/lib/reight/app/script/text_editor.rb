@@ -132,7 +132,8 @@ class Reight::ScriptEditor::TextEditor::Cursor
     self.position       = [row, column]
 
     @text.modified :text_replaced do |index:, inserted:, removed:, **|
-      self.index += inserted.size - removed.size if @index >= index
+      self.index = adjust_index @index, index, inserted, removed
+      self.mark  = adjust_index @mark,  index, inserted, removed if @mark
     end
   end
 
@@ -222,6 +223,17 @@ class Reight::ScriptEditor::TextEditor::Cursor
 
   def clamp_index(index)
     index.clamp 0..pos2index(*last_pos)
+  end
+
+  def adjust_index(index, replaced_index, inserted, removed)
+    case
+    when index < replaced_index
+      index
+    when index < replaced_index + removed.size
+      replaced_index
+    else
+      index - removed.size + inserted.size
+    end
   end
 
   def correct_pos(row, col)
