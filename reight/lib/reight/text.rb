@@ -39,6 +39,7 @@ class Reight::Text
 
     inserted = insert!(index, str) ? str : ''
     modified!(:text_replaced, inserted:, removed: old, index:)
+    old
   end
 
   def clear()
