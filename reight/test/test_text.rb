@@ -125,6 +125,21 @@ class TestText < Test::Unit::TestCase
     assert_equal '', t.to_s
   end
 
+  def test_enumerable()
+    assert_equal [""],                         text                .map(&:to_s)
+    assert_equal ["abcd"],                     text("abcd")        .map(&:to_s)
+    assert_equal ["a\n", "b\n", "cd"],         text("a\nb\ncd")    .map(&:to_s)
+    assert_equal ["a\r", "b\n", "c\r\n", "d"], text("a\rb\nc\r\nd").map(&:to_s)
+    assert_equal [ "\n",  "\r",  "\r\n", ""],  text("\n\r\r\n")    .map(&:to_s)
+    assert_equal [ "\n",  "\r",  "\r\n", " "], text("\n\r\r\n ")   .map(&:to_s)
+  end
+
+  def test_each_line()
+    assert_equal(
+      [["cd\n", 1..1], ["ef\n", 0..1], ["gh\n", 0..0]],
+      text("ab\ncd\nef\ngh\nij").each_line(4, 6).map {[_1.to_s, _2]})
+  end
+
   def test_size()
     assert_equal 1, text                .size
     assert_equal 1, text("a")           .size
@@ -144,15 +159,6 @@ class TestText < Test::Unit::TestCase
     assert_false text("\n")      .empty?
     assert_false text("\n\r")    .empty?
     assert_false text("\n\r\r\n").empty?
-  end
-
-  def test_enumerable()
-    assert_equal [""],                         text                .map(&:to_s)
-    assert_equal ["abcd"],                     text("abcd")        .map(&:to_s)
-    assert_equal ["a\n", "b\n", "cd"],         text("a\nb\ncd")    .map(&:to_s)
-    assert_equal ["a\r", "b\n", "c\r\n", "d"], text("a\rb\nc\r\nd").map(&:to_s)
-    assert_equal [ "\n",  "\r",  "\r\n", ""],  text("\n\r\r\n")    .map(&:to_s)
-    assert_equal [ "\n",  "\r",  "\r\n", " "], text("\n\r\r\n ")   .map(&:to_s)
   end
 
   def test_at()

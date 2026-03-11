@@ -16,6 +16,12 @@ R8 = Reight
 RS = RubySketch
 
 
+def assert_pattern(&block)
+  block.call
+rescue NoMatchingPatternError => e
+  flunk e.message
+end
+
 def assert_equal_state(expected, actual, msg = nil)
   assert_equal     normalize__(expected), normalize__(actual), msg
 end

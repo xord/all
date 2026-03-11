@@ -27,6 +27,184 @@ class TestTextLine < Test::Unit::TestCase
     assert_equal "\r\n", line("abc\r\n").newline
   end
 
+  def test_apply()
+    line("abcdefg").tap do |l|
+      l.apply nil,  color: 255
+      assert_equal [nil],  l.segments.map {|range,| range}
+    end
+
+    line("abcdefg").tap do |l|
+      l.apply 0..6, color: 255
+      assert_equal [0..6], l.segments.map {|range,| range}
+    end
+
+    line("abcdefg").tap do |l|
+      l.apply 0...7, color: 255
+      assert_equal [0..6], l.segments.map {|range,| range}
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply nil,  color: 255
+      assert_equal [nil],  l.segments.map {|range,| range}
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 0..7, color: 255
+      assert_equal [0..7], l.segments.map {|range,| range}
+    end
+  end
+
+  def test_segments()
+    line("abcdefg\n").tap do |l|
+      l.apply 1..3, layer: 1, color: 1
+      l.apply 1..3, layer: 1, color: 2
+      assert_equal(
+        [[1..3, 2]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply nil,  layer: 1, color: 1
+      l.apply nil,  layer: 1, color: 2
+      assert_equal(
+        [[nil, 2]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 1..3, layer: 1, color: 1
+      l.apply 4..6, layer: 1, color: 2
+      assert_equal(
+        [[1..3, 1], [4..6, 2]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 4..6, layer: 1, color: 1
+      l.apply 1..3, layer: 1, color: 2
+      assert_equal(
+        [[1..3, 2], [4..6, 1]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 1..3, layer: 1, color: 1
+      l.apply 2..4, layer: 1, color: 2
+      assert_equal(
+        [[1..1, 1], [2..4, 2]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 2..4, layer: 1, color: 1
+      l.apply 1..3, layer: 1, color: 2
+      assert_equal(
+        [[1..3, 2], [4..4, 1]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 1..4, layer: 1, color: 1
+      l.apply 2..3, layer: 1, color: 2
+      assert_equal(
+        [[1..1, 1], [2..3, 2], [4..4, 1]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 2..3, layer: 1, color: 1
+      l.apply 1..4, layer: 1, color: 2
+      assert_equal(
+        [[1..4, 2]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 1..3, layer: 1, color: 1
+      l.apply nil,  layer: 1, color: 2
+      assert_equal(
+        [[nil, 2]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply nil,  layer: 1, color: 1
+      l.apply 1..3, layer: 1, color: 2
+      assert_equal(
+        [[nil, 1]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 1..3, layer: 0, color: 1
+      l.apply 1..3, layer: 1, color: 2
+      assert_equal(
+        [[1..3, 2]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply 1..3, layer: 1, color: 1
+      l.apply 1..3, layer: 0, color: 2
+      assert_equal(
+        [[1..3, 1]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply nil,  layer: 0, color: 1
+      l.apply nil,  layer: 1, color: 2
+      assert_equal(
+        [[nil, 2]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+
+    line("abcdefg\n").tap do |l|
+      l.apply nil,  layer: 1, color: 1
+      l.apply nil,  layer: 0, color: 2
+      assert_equal(
+        [[nil, 1]],
+        l.segments.map {|_, a| a.values_at :range, :color})
+    end
+  end
+
+  def test_each_segment()
+    line("abcde\n").tap do |l|
+      assert_pattern {l.each_segment.to_a => [
+        ["abcde", nil]
+      ]}
+    end
+
+    line("abcde\n").tap do |l|
+      l.apply nil,  color: 10
+      assert_pattern {l.each_segment.to_a => [
+        ["abcde", {color: 10}]
+      ]}
+    end
+
+    line("abcde\n").tap do |l|
+      l.apply 0, layer: 10, key: 11, color: [12, 13, 14]
+      l.apply 2, layer: 20, key: 21, color: 22
+      l.apply 4, layer: 30, key: 31, color: '#323334'
+      assert_pattern {l.each_segment.to_a => [
+        ["a", {layer: 10, key: 11, color: [12, 13, 14]}],
+        ["b", nil],
+        ["c", {layer: 20, key: 21, color: 22          }],
+        ["d", nil],
+        ["e", {layer: 30, key: 31, color: '#323334'   }]
+      ]}
+    end
+
+    line("abcde\n").tap do |l|
+      l.apply 1..1, color: 10
+      assert_pattern {l.each_segment.to_a => [
+        ['a',   nil],
+        ['b',   {color: 10}],
+        ['cde', nil]
+      ]}
+    end
+  end
+
   def test_size()
     assert_equal 0, line           .size
     assert_equal 0, line("")       .size
