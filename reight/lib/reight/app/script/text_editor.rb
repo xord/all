@@ -74,10 +74,19 @@ class Reight::ScriptEditor::TextEditor
   end
 
   def draw_text()
-    charh = font.text_bounds('X').h
     @text.each.with_index do |line, index|
-      C.fill 255
-      C.text line.text, 0, charh * index, C.width, charh
+      x = 0
+      line.each_segment do |str, attrib|
+        b = C.text_font.text_bounds str
+        y = b.h * index
+        if back = attrib&.fetch(:background_color)
+          C.fill(*back)
+          C.rect x, y, b.w, b.h
+        end
+        C.fill(*(attrib&.fetch(:color) || 255))
+        C.text str, x, y, C.width, b.h
+        x += b.w
+      end
     end
   end
 
@@ -141,6 +150,42 @@ class Reight::ScriptEditor::TextEditor::Cursor
 
   attr_reader :text, :index, :mark
 
+  def index=(index)
+    @index = clamp_index index
+    update_selection
+  end
+
+  def position=(pos)
+    raise ArgumentError unless pos in [Integer, Integer]
+    self.index = pos2index(*correct_pos(*pos))
+  end
+
+  def position()
+    index2pos @index
+  end
+
+  alias pos= position=
+  alias pos  position
+
+  def mark=(mark)
+    mark  = clamp_index mark if mark
+    @mark = mark
+    update_selection
+  end
+
+  def mark_position=(pos)
+    raise ArgumentError unless pos in [Integer, Integer]
+    self.mark = pos2index(*correct_pos(*pos))
+  end
+
+  def mark_position()
+    return nil unless @mark
+    index2pos @mark
+  end
+
+  alias mark_pos= mark_position=
+  alias mark_pos  mark_position
+
   def row=(row)
     col            = @sticky_column || self.column
     self.index     = pos2index row, col
@@ -163,33 +208,10 @@ class Reight::ScriptEditor::TextEditor::Cursor
   alias col= column=
   alias col  column
 
-  def position=(pos)
-    raise ArgumentError unless pos in [Integer, Integer]
-    self.index = pos2index(*correct_pos(*pos))
-  end
-
-  def position()
-    index2pos @index
-  end
-
-  alias pos= position=
-  alias pos  position
-
-  def index=(index)
-    @index = clamp_index index
-    @mark  = nil if @mark == @index
-  end
-
-  def mark=(mark)
-    mark  = pos2index(*correct_pos(*mark)) if mark in [Integer, Integer]
-    mark  = clamp_index mark               if mark
-    mark  = nil                            if mark == @index
-    @mark = mark
-  end
-
   def select(index, size)
     old                   = [@index, @mark]
     self.index, self.mark = index, index + size
+    self.mark             = nil if self.mark == self.index
     [@index, @mark]      != old
   end
 
@@ -249,6 +271,15 @@ class Reight::ScriptEditor::TextEditor::Cursor
 
   def last_pos()
     [@text.size - 1, @text[-1].size]
+  end
+
+  def update_selection()
+    @text.clear_attributes self
+    return if !mark
+    attribs = {layer: 100, key: self, background_color: [100, 100, 255]}
+    @text.each_line index, mark - index do |line, range|
+      line.apply range, **attribs
+    end
   end
 
 end# Cursor
