@@ -54,20 +54,6 @@ class Reight::ScriptEditor::KeyMap
     commands[name] = {desc:, block:}
   end
 
-  command :replace_text, desc: <<~DOC do |str, cursor:, **|
-    insert or replace text
-  DOC
-    @editor.replace_text(*cursor.selection, str)
-  end
-
-  command :delete_char_forward do |cursor:, **|
-    @editor.replace_text(*cursor.selection( 1), '')
-  end
-
-  command :delete_char_backward do |cursor:, **|
-    @editor.replace_text(*cursor.selection(-1), '')
-  end
-
   command :move_char_forward do |cursor:, **|
     cursor.col += 1
   end
@@ -92,13 +78,39 @@ class Reight::ScriptEditor::KeyMap
     cursor.col = text[cursor.row].size
   end
 
+  command :mark do |cursor:, text:, **|
+    cursor.mark = cursor.index
+  end
+
+  command :unmark do |cursor:, text:, **|
+    cursor.mark = nil
+  end
+
   command :cut_to_line_end do |cursor:, text:, **|
     size = text[cursor.row].size - cursor.col
     size = 1 if size == 0
     @editor.replace_text cursor.index, size, ''
   end
 
-  command :cursor_clear do
+  command :replace_text, desc: <<~DOC do |str, cursor:, **|
+    insert or replace text
+  DOC
+    @editor.replace_text(*cursor.selection, str)
+  end
+
+  command :delete_char_forward do |cursor:, **|
+    @editor.replace_text(*cursor.selection( 1), '')
+  end
+
+  command :delete_char_backward do |cursor:, **|
+    @editor.replace_text(*cursor.selection(-1), '')
+  end
+
+  command :add_cursor do |cursor:, text:, **|
+    @text_editor.add_cursor Reight::ScriptEditor::TextEditor::Cursor.new(text, *cursor.pos)
+  end
+
+  command :clear_cursor do
     @text_editor.cursor = @text_editor.cursor
   end
 
@@ -106,55 +118,54 @@ class Reight::ScriptEditor::KeyMap
     @keymap ||= {}
   end
 
-  def self.map(key, command, *args)
-    keymap[Set.new [key].flatten] = [command, args]
+  def self.map(keys, command, *args)
+    keys.each do |key|
+      (keymap[Set.new [key].flatten] ||= []) << {command:, args:}
+    end
   end
 
-  map :enter,     :replace_text, "\n"
-  map :tab,       :replace_text, "\t"
-  map :backspace, :delete_char_backward
-  map :delete,    :delete_char_forward
-  map :left,      :move_char_backward
-  map :right,     :move_char_forward
-  map :up,        :move_line_backward
-  map :down,      :move_line_forward
-  map :home,      :move_to_line_head
-  map :end,       :move_to_line_end
-  map :escape,    :cursor_clear
-
-  map [:m, :control], :replace_text, "\n"
-  map [:i, :control], :replace_text, "\t"
-  map [:b, :control], :move_char_backward
-  map [:f, :control], :move_char_forward
-  map [:p, :control], :move_line_backward
-  map [:n, :control], :move_line_forward
-  map [:a, :control], :move_to_line_head
-  map [:e, :control], :move_to_line_end
-  map [:h, :control], :delete_char_backward
-  map [:d, :control], :delete_char_forward
-  map [:k, :control], :cut_to_line_end
+  map [:left,      [:control, :b    ]], :move_char_backward
+  map [:right,     [:control, :f    ]], :move_char_forward
+  map [:up,        [:control, :p    ]], :move_line_backward
+  map [:down,      [:control, :n    ]], :move_line_forward
+  map [:home,      [:control, :a    ]], :move_to_line_head
+  map [:end,       [:control, :e    ]], :move_to_line_end
+  map [            [:control, :space]],   :mark
+  map [            [:control, :g    ]], :unmark
+  map [:enter,     [:control, :m    ]], :replace_text, "\n"
+  map [:tab,       [:control, :i    ]], :replace_text, "\t"
+  map [:backspace, [:control, :h    ]], :delete_char_backward
+  map [:delete,    [:control, :d    ]], :delete_char_forward
+  map [            [:control, :w    ]], :cut
+  map [            [:control, :k    ]], :cut_to_line_end
+  map [            [:control, :y    ]], :paste
+  map [            [:control, :c    ]],   :add_cursor
+  map [            [:control, :g    ]], :clear_cursor
 
   def do(command, *args)
-    block = self.class.commands[command]&.fetch(:block, nil) || return
+    block = self.class.commands[command]&.fetch :block, nil
+    raise "command '#{command}' not found" unless block
     @text_editor.cursors[0, 1].each do |cursor|
-      instance_exec *args, editor: @editor, text: @text_editor.text, cursor:, &block
+      instance_exec(*args, editor: @editor, text: @text_editor.text, cursor:, &block)
     end
   end
 
   def key_pressed(key, code, pressings)
-    mods          = [:shift, :control, :command].select {pressings.include? _1}
-    keymap        = self.class.keymap
-    command, args = [[key, *mods], [code, *mods], [key], [code]]
-      .lazy.filter_map {keymap[Set.new _1]}.first
+    mods     = [:shift, :control, :command].select {pressings.include? _1}
+    keymap   = self.class.keymap
+    commands = [[key, *mods], [code, *mods]].map {keymap[Set.new _1]}.compact.flatten
 
-    if command
-      self.do command, *args
-    elsif key&.match?(/^[[:print:]]+$/)
-      self.do :replace_text, key
-    else
-      return
+    done = false
+    commands.each do |command|
+      cmd, args = command.fetch_values :command, :args
+      self.do cmd, *args
+      done = true
     end
-    @text_editor.redraw_cursors
+    if !done && key&.match?(/^[[:print:]]+$/)
+      self.do :replace_text, key
+      done = true
+    end
+    @text_editor.redraw_cursors if done
   rescue Reight::Text::NoLineError
   end
 
