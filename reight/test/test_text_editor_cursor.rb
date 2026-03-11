@@ -16,12 +16,67 @@ class TestTextEditorCursor < Test::Unit::TestCase
     assert_nil            cursor(text("a\nbc"), 1, 2, name: 3).mark
     assert_equal 3,       cursor(text("a\nbc"), 1, 2, name: 3).name
 
-    assert_equal [0, 0], cursor(text("a\nbc"), -1,  2).then{[_1.row, _1.col]}
-    assert_equal [1, 2], cursor(text("a\nbc"),  9,  2).then{[_1.row, _1.col]}
-    assert_equal [0, 1], cursor(text("a\nbc"),  1, -1).then{[_1.row, _1.col]}
-    assert_equal [1, 2], cursor(text("a\nbc"),  1,  9).then{[_1.row, _1.col]}
+    assert_equal [0, 0], cursor(text("a\nbc"), -1,  2).pos
+    assert_equal [1, 2], cursor(text("a\nbc"),  9,  2).pos
+    assert_equal [0, 1], cursor(text("a\nbc"),  1, -1).pos
+    assert_equal [1, 2], cursor(text("a\nbc"),  1,  9).pos
 
     assert_raise(ArgumentError) {cursor nil, 1, 2, name: 3}
+  end
+
+  def test_index()
+    c = cursor text("a\nbc"), 1, 2
+                  assert_equal [4, [1, 2]], [c.index, c.pos]
+    c.index = -1; assert_equal [0, [0, 0]], [c.index, c.pos]
+    c.index =  1; assert_equal [1, [0, 1]], [c.index, c.pos]
+    c.index =  0; assert_equal [0, [0, 0]], [c.index, c.pos]
+    c.index =  2; assert_equal [2, [1, 0]], [c.index, c.pos]
+    c.index =  3; assert_equal [3, [1, 1]], [c.index, c.pos]
+    c.index =  4; assert_equal [4, [1, 2]], [c.index, c.pos]
+    c.index =  5; assert_equal [4, [1, 2]], [c.index, c.pos]
+  end
+
+  def test_position()
+    c = cursor text("a\nbc"), 1, 2
+    assert_equal [1, 2], c.pos
+
+    c.pos = [-1,  1]; assert_equal [0, 0], c.pos
+    c.pos = [ 0,  1]; assert_equal [0, 1], c.pos
+    c.pos = [ 9,  1]; assert_equal [1, 2], c.pos
+
+    c.pos = [ 1, -1]; assert_equal [0, 1], c.pos
+    c.pos = [ 1,  0]; assert_equal [1, 0], c.pos
+    c.pos = [ 1,  2]; assert_equal [1, 2], c.pos
+    c.pos = [ 1,  1]; assert_equal [1, 1], c.pos
+    c.pos = [ 1,  9]; assert_equal [1, 2], c.pos
+  end
+
+  def test_mark()
+    c = cursor text("a\nbc")
+    assert_nil c.mark
+
+    c.mark = -1; assert_equal [0, [0, 0]], [c.mark, c.mark_pos]
+    c.mark =  1; assert_equal [1, [0, 1]], [c.mark, c.mark_pos]
+    c.mark =  0; assert_equal [0, [0, 0]], [c.mark, c.mark_pos]
+    c.mark =  2; assert_equal [2, [1, 0]], [c.mark, c.mark_pos]
+    c.mark =  3; assert_equal [3, [1, 1]], [c.mark, c.mark_pos]
+    c.mark =  4; assert_equal [4, [1, 2]], [c.mark, c.mark_pos]
+    c.mark =  5; assert_equal [4, [1, 2]], [c.mark, c.mark_pos]
+  end
+
+  def test_mark_position()
+    c = cursor text("a\nbc")
+    assert_nil c.mark_pos
+
+    c.mark_pos = [-1,  1]; assert_equal [0, 0], c.mark_pos
+    c.mark_pos = [ 0,  1]; assert_equal [0, 1], c.mark_pos
+    c.mark_pos = [ 9,  1]; assert_equal [1, 2], c.mark_pos
+
+    c.mark_pos = [ 1, -1]; assert_equal [0, 1], c.mark_pos
+    c.mark_pos = [ 1,  0]; assert_equal [1, 0], c.mark_pos
+    c.mark_pos = [ 1,  2]; assert_equal [1, 2], c.mark_pos
+    c.mark_pos = [ 1,  1]; assert_equal [1, 1], c.mark_pos
+    c.mark_pos = [ 1,  9]; assert_equal [1, 2], c.mark_pos
   end
 
   def test_row()
@@ -101,63 +156,6 @@ class TestTextEditorCursor < Test::Unit::TestCase
     c.col -= 3; assert_equal [0, 1], [c.row, c.col]
     c.col -= 1; assert_equal [0, 0], [c.row, c.col]
     c.col -= 1; assert_equal [0, 0], [c.row, c.col]
-  end
-
-  def test_position()
-    c = cursor text("a\nbc"), 1, 2
-    assert_equal [1, 2], c.pos
-
-    c.pos = [-1,  1]; assert_equal [0, 0], c.pos
-    c.pos = [ 0,  1]; assert_equal [0, 1], c.pos
-    c.pos = [ 9,  1]; assert_equal [1, 2], c.pos
-
-    c.pos = [ 1, -1]; assert_equal [0, 1], c.pos
-    c.pos = [ 1,  0]; assert_equal [1, 0], c.pos
-    c.pos = [ 1,  1]; assert_equal [1, 1], c.pos
-    c.pos = [ 1,  2]; assert_equal [1, 2], c.pos
-    c.pos = [ 1,  9]; assert_equal [1, 2], c.pos
-  end
-
-  def test_index()
-    c = cursor text("a\nbc"), 1, 2
-                  assert_equal [4, [1, 2]], [c.index, c.pos]
-    c.index = -1; assert_equal [0, [0, 0]], [c.index, c.pos]
-    c.index =  0; assert_equal [0, [0, 0]], [c.index, c.pos]
-    c.index =  1; assert_equal [1, [0, 1]], [c.index, c.pos]
-    c.index =  2; assert_equal [2, [1, 0]], [c.index, c.pos]
-    c.index =  3; assert_equal [3, [1, 1]], [c.index, c.pos]
-    c.index =  4; assert_equal [4, [1, 2]], [c.index, c.pos]
-    c.index =  5; assert_equal [4, [1, 2]], [c.index, c.pos]
-  end
-
-  def test_mark()
-    c = cursor text("a\nbc")
-    assert_nil c.mark
-
-    c.index =  1
-    c.mark  = -1; assert_equal 0, c.mark
-    c.mark  =  0; assert_equal 0, c.mark
-    c.index =  0
-    c.mark  =  1; assert_equal 1, c.mark
-    c.mark  =  2; assert_equal 2, c.mark
-    c.mark  =  3; assert_equal 3, c.mark
-    c.mark  =  4; assert_equal 4, c.mark
-    c.mark  =  5; assert_equal 4, c.mark
-
-    c.index = 0
-    c.mark  = 1; c.mark  =  0;     assert_nil c.mark
-    c.mark  = 1; c.mark  = -1;     assert_nil c.mark
-    c.mark  = 1; c.index =  1;     assert_nil c.mark
-    c.mark  = 2; c.pos   = [1, 0]; assert_nil c.mark
-
-    c.index = 1
-    c.mark  = [ 1,  1]; assert_equal 3, c.mark
-    c.mark  = [-9,  1]; assert_equal 0, c.mark
-    c.mark  = [ 9,  1]; assert_equal 4, c.mark
-    c.mark  = [ 1, -9]; assert_equal 0, c.mark
-    c.mark  = [ 1,  9]; assert_equal 4, c.mark
-    c.index = 0
-    c.mark  = [0, 0];   assert_nil      c.mark
   end
 
   def test_select_and_deselect()
