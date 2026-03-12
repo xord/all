@@ -136,34 +136,34 @@ class Reight::Text::Line
 
   def initialize(line = '')
     raise ArgumentError if line.scan(SPLIT_REGEXP).size > 1
-    @text    = line.chomp
-    @newline = line[/[\r\n]+/]
-    @attribs = []
+    @text       = line.chomp
+    @newline    = line[/[\r\n]+/]
+    @attributes = []
   end
 
-  attr_reader :text, :newline
+  attr_reader :text, :newline, :attributes
 
   def apply(range, layer: 0, key: nil, color: nil, background_color: nil)
     return unless color || background_color
     range = range..range                if range.is_a? Integer
     range = range.begin..(range.end - 1)if range&.exclude_end?
-    index = @attribs.bsearch_index {|attrib|
+    index = @attributes.bsearch_index {|attrib|
       attrib_range = attrib[:range]
       if range != attrib_range
         range && !attrib_range
       else
         layer < attrib[:layer]
       end
-    } || @attribs.size
-    @attribs.insert index, {range:, layer:, key:, color:, background_color:}
+    } || @attributes.size
+    @attributes.insert index, {range:, layer:, key:, color:, background_color:}
     @segments = nil
   end
 
   def clear_attributes(key = nil)
     if key
-      return unless @attribs.reject! {_1[:key] == key}
+      return unless @attributes.reject! {_1[:key] == key}
     else
-      @attribs.clear
+      @attributes.clear
     end
     @segments = nil
   end
@@ -207,12 +207,12 @@ class Reight::Text::Line
   private
 
   def compile()
-    last = @attribs.last
+    last = @attributes.last
     return []            if !last
     return [[nil, last]] if !last[:range]
 
     segments = []
-    @attribs.reverse_each do |attrib|
+    @attributes.reverse_each do |attrib|
       ranges = [attrib[:range]]
       segments.each do |seg_range,|
         ranges = ranges.map {|range| exclude_range range, seg_range}.flatten
@@ -238,10 +238,12 @@ end# Line
 
 class Reight::Text::Cursor
 
+  include Comparable
+
   def initialize(text, row = 0, column = 0, name: nil)
     raise ArgumentError unless text
-    @text, @name, @mark = text, name, nil
-    self.position       = [row, column]
+    @name, @text, @mark, @active = name, text, nil, true
+    self.position                = [row, column]
 
     @text.modified :text_replaced do |index:, inserted:, removed:, **|
       self.index = adjust_index @index, index, inserted, removed
@@ -326,6 +328,18 @@ class Reight::Text::Cursor
     [@index, @mark ? @mark - @index : size]
   end
 
+  def active=(bool)
+    @active = !!bool
+  end
+
+  def active?()
+    @active
+  end
+
+  def <=>(o)
+    index <=> o.index
+  end
+
   private
 
   def pos2index(row, col)
@@ -377,9 +391,9 @@ class Reight::Text::Cursor
   end
 
   def update_selection()
-    @text.clear_attributes self
+    @text.clear_attributes object_id
     return if !mark
-    attribs = {layer: 100, key: self, background_color: [100, 100, 255]}
+    attribs = {layer: 100, key: object_id, background_color: [100, 100, 255]}
     @text.each_line index, mark - index do |line, range|
       line.apply range, **attribs
     end

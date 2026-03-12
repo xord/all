@@ -9,8 +9,8 @@ class Reight::ScriptEditor::TextEditor
   C = Reight::CONTEXT__
 
   def initialize(text = '')
-    @cursors, @start_frame, @shake = [], C.frame_count, 0
-    self.text                      = text
+    @start_frame, @shake = C.frame_count, 0
+    self.text            = text
   end
 
   hook :changed
@@ -34,20 +34,9 @@ class Reight::ScriptEditor::TextEditor
     @cursors = [Reight::Text::Cursor.new(@text)]
   end
 
-  def cursor=(cursor)
-    @cursors = [cursor]
-  end
-
-  def cursor()
-    @cursors.first
-  end
-
-  def add_cursor(cursor)
-    @cursors.push cursor
-  end
-
-  def remove_cursor(cursor)
-    @cursors.delete cursor
+  def cursors(active_only = false)
+    @cursors ||= []
+    active_only ? @cursors.select(&:active?) : @cursors
   end
 
   def redraw_cursors()
@@ -96,8 +85,13 @@ class Reight::ScriptEditor::TextEditor
       row, col = cursor.pos
       x,       = font_size @text[row][0...col]
       C.no_stroke
-      C.fill 255
-      C.rect x, row * fh + fh - 2, fw, 2
+      if cursor.active?
+        C.fill 255
+        C.rect x, fh * row,           1,  fh
+      else
+        C.fill 255, 127
+        C.rect x, fh * (row + 1) - 1, fw, 1
+      end
     end
   end
 
@@ -105,8 +99,8 @@ class Reight::ScriptEditor::TextEditor
     row, col = get_pos x, y
     if C.key_is_down C.class::COMMAND
       @cursors << Cursor.new(@text, row, col)
-    else
-      cursor.pos = [row, col]
+    elsif cursors(true).size == 1
+      cursors(true).each {_1.pos = [row, col]}
     end
     redraw_cursors
   end
