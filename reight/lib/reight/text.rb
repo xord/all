@@ -234,3 +234,155 @@ class Reight::Text::Line
   end
 
 end# Line
+
+
+class Reight::Text::Cursor
+
+  def initialize(text, row = 0, column = 0, name: nil)
+    raise ArgumentError unless text
+    @text, @name, @mark = text, name, nil
+    self.position       = [row, column]
+
+    @text.modified :text_replaced do |index:, inserted:, removed:, **|
+      self.index = adjust_index @index, index, inserted, removed
+      self.mark  = adjust_index @mark,  index, inserted, removed if @mark
+    end
+  end
+
+  attr_accessor :name
+
+  attr_reader :text, :index, :mark
+
+  def index=(index)
+    @index = clamp_index index
+    update_selection
+  end
+
+  def position=(pos)
+    raise ArgumentError unless pos in [Integer, Integer]
+    self.index = pos2index(*correct_pos(*pos))
+  end
+
+  def position()
+    index2pos @index
+  end
+
+  alias pos= position=
+  alias pos  position
+
+  def mark=(mark)
+    mark  = clamp_index mark if mark
+    @mark = mark
+    update_selection
+  end
+
+  def mark_position=(pos)
+    raise ArgumentError unless pos in [Integer, Integer]
+    self.mark = pos2index(*correct_pos(*pos))
+  end
+
+  def mark_position()
+    return nil unless @mark
+    index2pos @mark
+  end
+
+  alias mark_pos= mark_position=
+  alias mark_pos  mark_position
+
+  def row=(row)
+    col            = @sticky_column || self.column
+    self.index     = pos2index row, col
+    @sticky_column = col != self.column ? col : nil
+  end
+
+  def row()
+    index2pos(@index)[0]
+  end
+
+  def column=(col)
+    self.position  = [self.row, col]
+    @sticky_column = nil
+  end
+
+  def column()
+    index2pos(@index)[1]
+  end
+
+  alias col= column=
+  alias col  column
+
+  def select(index, size)
+    old                   = [@index, @mark]
+    self.index, self.mark = index, index + size
+    self.mark             = nil if self.mark == self.index
+    [@index, @mark]      != old
+  end
+
+  def deselect()
+    @mark = nil
+  end
+
+  def selection(size = 0)
+    [@index, @mark ? @mark - @index : size]
+  end
+
+  private
+
+  def pos2index(row, col)
+    return 0             if row < 0
+    col = @text[-1].size if row >= @text.size
+    row = row.clamp 0..(@text     .size - 1)
+    col = col.clamp 0..(@text[row].size)
+    @text[0...row].map {_1.size true}.sum + col
+  end
+
+  def index2pos(index)
+    return [0, 0] if index < 0
+    @text.each.with_index do |line, row|
+      line_size = line.size true
+      return row, index if index < line_size
+      index    -= line_size
+    end
+    last_pos
+  end
+
+  def clamp_index(index)
+    index.clamp 0..pos2index(*last_pos)
+  end
+
+  def adjust_index(index, replaced_index, inserted, removed)
+    case
+    when index < replaced_index
+      index
+    when index < replaced_index + removed.size
+      replaced_index
+    else
+      index - removed.size + inserted.size
+    end
+  end
+
+  def correct_pos(row, col)
+    case
+    when row < 0
+      [0, 0]
+    when row >= @text.size || row == @text.size - 1 && col >= @text[-1].size
+      last_pos
+    else
+      index2pos pos2index(row, 0) + col
+    end
+  end
+
+  def last_pos()
+    [@text.size - 1, @text[-1].size]
+  end
+
+  def update_selection()
+    @text.clear_attributes self
+    return if !mark
+    attribs = {layer: 100, key: self, background_color: [100, 100, 255]}
+    @text.each_line index, mark - index do |line, range|
+      line.apply range, **attribs
+    end
+  end
+
+end# Cursor
