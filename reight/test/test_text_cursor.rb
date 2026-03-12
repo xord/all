@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 
-class TestTextEditorCursor < Test::Unit::TestCase
+class TestTextCursor < Test::Unit::TestCase
 
   def test_initialize()
     assert_equal '', cursor(text).text.to_s
@@ -205,10 +205,10 @@ class TestTextEditorCursor < Test::Unit::TestCase
 
   private
 
-  Cursor = R8::ScriptEditor::TextEditor::Cursor
+  Cursor = R8::Text::Cursor
 
   def cursor(...)    = Cursor.new(...)
 
   def text(str = '') = R8::Text.new str
 
-end# TestTextEditorCursor
+end# TestTextCursor

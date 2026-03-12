@@ -107,7 +107,7 @@ class Reight::ScriptEditor::KeyMap
   end
 
   command :add_cursor do |cursor:, text:, **|
-    @text_editor.add_cursor Reight::ScriptEditor::TextEditor::Cursor.new(text, *cursor.pos)
+    @text_editor.add_cursor Reight::Text::Cursor.new(text, *cursor.pos)
   end
 
   command :clear_cursor do
