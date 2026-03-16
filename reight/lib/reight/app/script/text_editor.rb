@@ -1,6 +1,5 @@
 class Reight::ScriptEditor::TextEditor
 
-  extend  Forwardable
   extend  Reight::Hookable
   include Reight::Widget
   include Reight::Activatable
@@ -15,28 +14,50 @@ class Reight::ScriptEditor::TextEditor
 
   hook :changed
 
-  attr_reader :text, :cursors
-
-  def_delegators :cursor,
-    :row, :column, :col, :selection
+  attr_reader :text
 
   def text=(value)
     case value
     when String
       str = value&.to_s || ''
       return if str == @text&.to_s
+      clear_cursors
       @text ||= Reight::Text.new
       @text.clear
       @text.insert 0, str
     when Reight::Text
+      clear_cursors
       @text = value
     end
-    @cursors = [Reight::Text::Cursor.new(@text)]
+    add_cursor Reight::Text::Cursor.new(@text)
   end
 
-  def cursors(active_only = false)
-    @cursors ||= []
-    active_only ? @cursors.select(&:active?) : @cursors
+  def add_cursor(cursor)
+    return unless cursor
+    raise if cursor.text != @text
+    (@cursors ||= []) << cursor
+    @text.modified :text_replaced, observer_id: cursor.object_id do
+      |index:, inserted:, removed:, **|
+      cursor.index = adjust_index cursor.index, index, inserted, removed
+      cursor.mark  = adjust_index cursor.mark,  index, inserted, removed if cursor.mark
+    end
+  end
+
+  def remove_cursor(cursor)
+    @cursors&.delete(cursor)&.tap do
+      cursor.text.remove_modified_observer cursor.object_id
+    end
+  end
+
+  def clear_cursors()
+    return unless @cursors
+    remove_cursor @cursors.last until @cursors.empty?
+  end
+
+  def each_cursor(active_only = false, &block)
+    return enum_for :each_cursor, active_only unless block
+    return unless @cursors
+    (active_only ? @cursors.select(&:active?) : @cursors).each(&block)
   end
 
   def redraw_cursors()
@@ -73,7 +94,7 @@ class Reight::ScriptEditor::TextEditor
           C.rect x, y, b.w, b.h
         end
         C.fill(*(attrib&.fetch(:color) || 255))
-        C.text str, x, y, C.width, b.h
+        C.text expand_tabs(str), x, y, C.width, b.h
         x += b.w
       end
     end
@@ -81,9 +102,9 @@ class Reight::ScriptEditor::TextEditor
 
   def draw_cursors()
     fw, fh = font_size
-    @cursors.each do |cursor|
+    each_cursor do |cursor|
       row, col = cursor.pos
-      x,       = font_size @text[row][0...col]
+      x,       = font_size expand_tabs(@text[row][0...col])
       C.no_stroke
       if cursor.active?
         C.fill 255
@@ -98,14 +119,18 @@ class Reight::ScriptEditor::TextEditor
   def mouse_released(x, y, button)
     row, col = get_pos x, y
     if C.key_is_down C.class::COMMAND
-      @cursors << Cursor.new(@text, row, col)
-    elsif cursors(true).size == 1
-      cursors(true).each {_1.pos = [row, col]}
+      add_cursor Reight::Text::Cursor.new(@text, row, col)
+    elsif each_cursor(true).to_a.size == 1
+      each_cursor(true) {_1.pos = [row, col]}
     end
     redraw_cursors
   end
 
   private
+
+  def expand_tabs(str, tabstop = 4)
+    str.gsub(/\t/) {' ' * (tabstop - $~.begin(0) % tabstop)}
+  end
 
   def font()
     C.text_font
@@ -122,6 +147,17 @@ class Reight::ScriptEditor::TextEditor
     line = row >= 0 ? @text[row] : nil
     col  = line.size.times.find {|n| x <= font_size(line[0..n])[0]} || line.size if line
     [row, col]
+  end
+
+  def adjust_index(index, replaced_index, inserted, removed)
+    case
+    when index < replaced_index
+      index
+    when index < replaced_index + removed.size
+      replaced_index
+    else
+      index - removed.size + inserted.size
+    end
   end
 
 end# TextEditor
