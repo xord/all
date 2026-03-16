@@ -33,7 +33,7 @@ module Reight::Editable
     (@editable_observers ||= []).push [block, types, observer_id, observe_all]
   end
 
-  def remove_modified_observers(observer_id)
+  def remove_modified_observer(observer_id)
     @editable_observers&.delete_if {_3 == observer_id}
   end
 
