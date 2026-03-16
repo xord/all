@@ -101,7 +101,7 @@ class TestEditable < Test::Unit::TestCase
       event_params)
 
     event_params = nil
-    o.remove_modified_observers :hoge
+    o.remove_modified_observer :hoge
     o.modified! :changed, key1: 1, key2: 2
     assert_nil event_params
   end
