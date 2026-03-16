@@ -119,6 +119,38 @@ class TestText < Test::Unit::TestCase
     assert_false modified
   end
 
+  def test_index2pos()
+    assert_equal [0, 0], text("ab\ncd\nef").index2pos(0)
+    assert_equal [0, 1], text("ab\ncd\nef").index2pos(1)
+    assert_equal [0, 2], text("ab\ncd\nef").index2pos(2)
+    assert_equal [1, 0], text("ab\ncd\nef").index2pos(3)
+    assert_equal [1, 1], text("ab\ncd\nef").index2pos(4)
+    assert_equal [1, 2], text("ab\ncd\nef").index2pos(5)
+    assert_equal [2, 0], text("ab\ncd\nef").index2pos(6)
+    assert_equal [2, 1], text("ab\ncd\nef").index2pos(7)
+    assert_equal [2, 2], text("ab\ncd\nef").index2pos(8)
+
+    assert_equal [0, 0], text("ab\ncd\nef").index2pos(-1)
+    assert_equal [2, 2], text("ab\ncd\nef").index2pos(9)
+  end
+
+  def test_pos2index()
+    assert_equal 0, text("ab\ncd\nef").pos2index(0, 0)
+    assert_equal 1, text("ab\ncd\nef").pos2index(0, 1)
+    assert_equal 2, text("ab\ncd\nef").pos2index(0, 2)
+    assert_equal 3, text("ab\ncd\nef").pos2index(1, 0)
+    assert_equal 4, text("ab\ncd\nef").pos2index(1, 1)
+    assert_equal 5, text("ab\ncd\nef").pos2index(1, 2)
+    assert_equal 6, text("ab\ncd\nef").pos2index(2, 0)
+    assert_equal 7, text("ab\ncd\nef").pos2index(2, 1)
+    assert_equal 8, text("ab\ncd\nef").pos2index(2, 2)
+
+    assert_equal 0, text("ab\ncd\nef").pos2index(-1,  0)
+    assert_equal 0, text("ab\ncd\nef").pos2index( 0, -1)
+    assert_equal 8, text("ab\ncd\nef").pos2index( 3,  0)
+    assert_equal 8, text("ab\ncd\nef").pos2index( 2,  3)
+  end
+
   def test_clear()
     t = text "a\nb\nc"
     t.clear

@@ -1,5 +1,6 @@
 require 'forwardable'
 require 'json'
+require 'prism'
 require 'rubysketch/all'
 
 
