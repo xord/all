@@ -33,6 +33,8 @@ Gem::Specification.new do |s|
   s.add_dependency 'processing', '~> 1.2.1'
   s.add_dependency 'rubysketch', '~> 0.8.1'
 
+  s.add_dependency 'prism'
+
   s.files            = `git ls-files`.split $/
   s.executables      = s.files.grep(%r{^bin/}) {|f| File.basename f}
   s.test_files       = s.files.grep %r{^(test|spec|features)/}

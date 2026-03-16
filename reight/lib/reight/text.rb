@@ -3,9 +3,14 @@ class Reight::Text
   include Enumerable
   include Reight::Editable
 
+  C = Reight::CONTEXT__
+
   def initialize(str = '')
     clear
     insert 0, str
+
+    highlight
+    modified {C.set_timeout(0.3, id: "highlight_#{object_id}") {highlight}}
   end
 
   def insert(index, str)
@@ -41,6 +46,24 @@ class Reight::Text
     get_slice(
       *get_line_and_pos(index),
       *get_line_and_pos(index + size))
+  end
+
+  def index2pos(index)
+    return [0, 0] if index < 0
+    @lines.each.with_index do |line, row|
+      line_size = line.size true
+      return row, index if index < line_size
+      index    -= line_size
+    end
+    [@lines.size - 1, @lines[-1].size]
+  end
+
+  def pos2index(row, column)
+    return 0                 if row < 0
+    column = @lines[-1].size if row >= @lines.size
+    row    = row   .clamp 0..(@lines     .size - 1)
+    column = column.clamp 0..(@lines[row].size)
+    @lines[0...row].map {_1.size true}.sum + column
   end
 
   def clear()
@@ -125,6 +148,47 @@ class Reight::Text
     end
   end
 
+  HIGHLIGHT_COLORS = {
+    KEYWORD_CLASS:           [249,  38, 114], # pink   (keyword)
+    CONSTANT:                [102, 217, 239], # cyan   (type/constant)
+    KEYWORD_DEF:             [249,  38, 114], # pink   (keyword)
+    PARENTHESIS_LEFT:        [158, 158, 152], # white  (punctuation)
+    PARENTHESIS_RIGHT:       [158, 158, 152], # white  (punctuation)
+    BRACKET_LEFT:            [158, 158, 152], # white  (punctuation)
+    BRACKET_LEFT_ARRAY:      [158, 158, 152], # white  (punctuation)
+    BRACKET_RIGHT:           [158, 158, 152], # white  (punctuation)
+    BRACE_LEFT:              [158, 158, 152], # white  (punctuation)
+    BRACE_RIGHT:             [158, 158, 152], # white  (punctuation)
+    INTEGER:                 [174, 129, 255], # purple (number)
+    KEYWORD_END:             [249,  38, 114], # pink   (keyword)
+    INSTANCE_VARIABLE:       [253, 151,  31], # orange (ivar)
+    SYMBOL_BEGIN:            [174, 129, 255], # purple (symbol)
+    SYMBOL:                  [174, 129, 255], # purple (symbol)
+    KEYWORD_DO:              [249,  38, 114], # pink   (keyword)
+    STRING_CONTENT:          [230, 219, 116], # yellow (string)
+    STRING_BEGIN:            [230, 219, 116], # yellow (string)
+    STRING_END:              [230, 219, 116], # yellow (string)
+    HEREDOC_START:           [230, 219, 116], # yellow (string)
+    HEREDOC_END:             [230, 219, 116], # yellow (string)
+    GLOBAL_VARIABLE:         [253, 151,  31], # orange (gvar)
+    KEYWORD_UNLESS_MODIFIER: [249,  38, 114], # pink   (keyword)
+  }
+
+  def highlight()
+    key, prev_type = :highlight, nil
+    clear_attributes key
+    Prism.lex(to_s).value
+      .map {[_1[0].type, _1[0].location.start_offset..._1[0].location.end_offset]}
+      .each {|type, range|
+        type       = :SYMBOL if prev_type == :SYMBOL_BEGIN && type == :IDENTIFIER
+        prev_type  = type
+        color      = HIGHLIGHT_COLORS[type] || next
+        row1, col1 = index2pos range.begin
+        row2, col2 = index2pos range.end - 1
+        self[row1].apply (col1..col2), key:, color:
+      }
+  end
+
 end# Text
 
 
@@ -144,6 +208,7 @@ class Reight::Text::Line
   attr_reader :text, :newline, :attributes
 
   def apply(range, layer: 0, key: nil, color: nil, background_color: nil)
+    return if range.begin > range.end
     return unless color || background_color
     range = range..range                if range.is_a? Integer
     range = range.begin..(range.end - 1)if range&.exclude_end?
@@ -244,11 +309,6 @@ class Reight::Text::Cursor
     raise ArgumentError unless text
     @name, @text, @mark, @active = name, text, nil, true
     self.position                = [row, column]
-
-    @text.modified :text_replaced do |index:, inserted:, removed:, **|
-      self.index = adjust_index @index, index, inserted, removed
-      self.mark  = adjust_index @mark,  index, inserted, removed if @mark
-    end
   end
 
   attr_accessor :name
@@ -262,11 +322,11 @@ class Reight::Text::Cursor
 
   def position=(pos)
     raise ArgumentError unless pos in [Integer, Integer]
-    self.index = pos2index(*correct_pos(*pos))
+    self.index = @text.pos2index(*correct_pos(*pos))
   end
 
   def position()
-    index2pos @index
+    @text.index2pos @index
   end
 
   alias pos= position=
@@ -280,12 +340,12 @@ class Reight::Text::Cursor
 
   def mark_position=(pos)
     raise ArgumentError unless pos in [Integer, Integer]
-    self.mark = pos2index(*correct_pos(*pos))
+    self.mark = @text.pos2index(*correct_pos(*pos))
   end
 
   def mark_position()
     return nil unless @mark
-    index2pos @mark
+    @text.index2pos @mark
   end
 
   alias mark_pos= mark_position=
@@ -293,12 +353,12 @@ class Reight::Text::Cursor
 
   def row=(row)
     col            = @sticky_column || self.column
-    self.index     = pos2index row, col
+    self.index     = @text.pos2index row, col
     @sticky_column = col != self.column ? col : nil
   end
 
   def row()
-    index2pos(@index)[0]
+    @text.index2pos(@index)[0]
   end
 
   def column=(col)
@@ -307,7 +367,7 @@ class Reight::Text::Cursor
   end
 
   def column()
-    index2pos(@index)[1]
+    @text.index2pos(@index)[1]
   end
 
   alias col= column=
@@ -342,37 +402,8 @@ class Reight::Text::Cursor
 
   private
 
-  def pos2index(row, col)
-    return 0             if row < 0
-    col = @text[-1].size if row >= @text.size
-    row = row.clamp 0..(@text     .size - 1)
-    col = col.clamp 0..(@text[row].size)
-    @text[0...row].map {_1.size true}.sum + col
-  end
-
-  def index2pos(index)
-    return [0, 0] if index < 0
-    @text.each.with_index do |line, row|
-      line_size = line.size true
-      return row, index if index < line_size
-      index    -= line_size
-    end
-    last_pos
-  end
-
   def clamp_index(index)
-    index.clamp 0..pos2index(*last_pos)
-  end
-
-  def adjust_index(index, replaced_index, inserted, removed)
-    case
-    when index < replaced_index
-      index
-    when index < replaced_index + removed.size
-      replaced_index
-    else
-      index - removed.size + inserted.size
-    end
+    index.clamp 0..@text.pos2index(*last_pos)
   end
 
   def correct_pos(row, col)
@@ -382,7 +413,7 @@ class Reight::Text::Cursor
     when row >= @text.size || row == @text.size - 1 && col >= @text[-1].size
       last_pos
     else
-      index2pos pos2index(row, 0) + col
+      @text.index2pos @text.pos2index(row, 0) + col
     end
   end
 
