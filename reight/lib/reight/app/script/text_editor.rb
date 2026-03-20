@@ -8,8 +8,8 @@ class Reight::ScriptEditor::TextEditor
   C = Reight::CONTEXT__
 
   def initialize(text = '')
-    @start_frame, @shake = C.frame_count, 0
-    self.text            = text
+    @cursors, @start_frame, @shake = [], C.frame_count, 0
+    self.text                      = text
   end
 
   hook :changed
@@ -70,6 +70,11 @@ class Reight::ScriptEditor::TextEditor
     C.clip sp.x, sp.y, sp.w, sp.h
     C.no_stroke
 
+    cursor, fonth = @cursors.find(&:active?), font_size[1]
+    scroll        = (sp.h - fonth) / 2 - cursor.row * fonth
+    scroll        = -scroll.clamp([sp.h - @text.size * fonth].min, 0)
+    C.translate 0, -scroll
+
     if @shake != 0
       C.translate rand(-@shake.to_f..@shake.to_f), 0
       @shake *= rand(0.7..0.9)
@@ -77,7 +82,7 @@ class Reight::ScriptEditor::TextEditor
     end
 
     C.fill 100
-    C.rect 0, 0, sp.w, sp.h
+    C.rect 0, scroll, sp.w, sp.h
 
     draw_text
     draw_cursors if (C.frame_count - @start_frame) % 60 < 30
