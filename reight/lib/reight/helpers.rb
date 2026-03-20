@@ -200,7 +200,7 @@ class Reight::ViewController
   def bind(name, new, old, &block)
     block.call
     key = [self.class, name]
-    old&.remove_modified_observers key
+    old&.remove_modified_observer key
     new&.add_modified_observer key, &block
   end
 
