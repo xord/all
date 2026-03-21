@@ -8,8 +8,9 @@ class Reight::ScriptEditor::TextEditor
   C = Reight::CONTEXT__
 
   def initialize(text = '')
-    @cursors, @start_frame, @shake = [], C.frame_count, 0
-    self.text                      = text
+    @cursors, @scroll, @shake = [], [0, 0], 0
+    @start_frame              = C.frame_count
+    self.text                 = text
   end
 
   hook :changed
@@ -70,10 +71,8 @@ class Reight::ScriptEditor::TextEditor
     C.clip sp.x, sp.y, sp.w, sp.h
     C.no_stroke
 
-    cursor, fonth = @cursors.find(&:active?), font_size[1]
-    scroll        = (sp.h - fonth) / 2 - cursor.row * fonth
-    scroll        = -scroll.clamp([sp.h - @text.size * fonth].min, 0)
-    C.translate 0, -scroll
+    update_scroll sp
+    C.translate(*@scroll.map {-_1})
 
     if @shake != 0
       C.translate rand(-@shake.to_f..@shake.to_f), 0
@@ -82,7 +81,7 @@ class Reight::ScriptEditor::TextEditor
     end
 
     C.fill 100
-    C.rect 0, scroll, sp.w, sp.h
+    C.rect(*@scroll, sp.w, sp.h)
 
     draw_text
     draw_cursors if (C.frame_count - @start_frame) % 60 < 30
@@ -147,7 +146,7 @@ class Reight::ScriptEditor::TextEditor
 
   def get_pos(x, y)
     return [0, 0] unless @text
-    row  = (y / font_size[1]).floor
+    row  = ((@scroll[1] + y) / font_size[1]).floor
     col  = 0
     line = row >= 0 ? @text[row] : nil
     col  = line.size.times.find {|n| x <= font_size(line[0..n])[0]} || line.size if line
@@ -163,6 +162,20 @@ class Reight::ScriptEditor::TextEditor
     else
       index - removed.size + inserted.size
     end
+  end
+
+  def update_scroll(sp, margin = 32)
+    cursor = @cursors.find(&:active?) || return
+    fonth  = font_size[1]
+    miny   = @scroll[1]        + margin - fonth / 2
+    maxy   = @scroll[1] + sp.h - margin - fonth / 2
+    cury   = cursor.row * fonth
+    if cury < miny
+      @scroll[1] += (cury - miny) * 0.2
+    elsif cury > maxy
+      @scroll[1] += (cury - maxy) * 0.2
+    end
+    @scroll[1] = @scroll[1].clamp 0, @text.size * fonth
   end
 
 end# TextEditor
