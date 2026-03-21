@@ -61,7 +61,7 @@ class Reight::SpriteEditor < Reight::ModelController
 
   def colors()
     @colors ||= @project.settings.palette_colors.map {C.color _1}
-      .map {[C.red(_1), C.blue(_1), C.green(_1), C.alpha(_1)].map(&:to_i)}
+      .map {[C.red(_1), C.green(_1), C.blue(_1), C.alpha(_1)].map(&:to_i)}
   end
 
   def begin_editing(bounds: nil, &block)
