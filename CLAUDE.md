@@ -1,68 +1,68 @@
 # CLAUDE.md
 
-このリポジトリ (xord/all) は Ruby 向けの主要ライブラリをまとめたモノレポです。
+This repository (xord/all) is a monorepo of core Ruby libraries.
 
-## モジュール構成
+## Module Structure
 
-ルート直下に各ライブラリが配置されています:
+Each library lives at the repository root:
 `xot`, `rucy`, `beeps`, `rays`, `reflex`, `processing`, `rubysketch`, `reight`
 
-各モジュールの構造:
+Each module follows this layout:
 - `src/`, `include/` — C/C++
-- `ext/` — Ruby 拡張ライブラリー
-- `lib/` — Ruby コード
-- `test/` — ユニットテスト
-- `samples/`, `examples/` — 実行例
+- `ext/` — Ruby extension library
+- `lib/` — Ruby code
+- `test/` — Unit tests
+- `samples/`, `examples/` — Examples
 
-共通の Rakefile がモジュール単位のビルド・テストを委譲します。
-`.hooks/` と `.workflows/` は Git フックと CI 定義を生成して各モジュールに配布します。
+A shared Rakefile delegates build and test tasks per module.
+`.hooks/` and `.workflows/` generate Git hooks and CI definitions and distribute them to each module.
 
-## ビルド・テスト
+## Build & Test
 
 ```bash
-# 依存関係のインストール
+# Install dependencies
 bundle install
 
-# C/C++ ライブラリのビルド
+# Build C/C++ libraries
 bundle exec rake lib
 
-# 拡張ライブラリのビルド
+# Build extension libraries
 bundle exec rake ext
 
-# テスト実行
+# Run tests
 bundle exec rake test
 
-# 個別モジュールのテスト
+# Test a specific module
 bundle exec rake rays test
 
-# 対象を絞ったビルド
+# Build specific modules only
 bundle exec rake rays reflex ext
 
-# サンプル実行
+# Run a sample
 bundle exec rake run sample=hello
 ```
 
-## コーディングスタイル
+## Coding Style
 
 ### C/C++
-- タブによるインデント
-- インデント以外の空白調整は空白文字
-- ヘッダーは `<xot/...>` 形式で参照
-- クラス名は `CamelCase`、メンバは `snake_case`
+- Tab indentation
+- Spaces for alignment beyond indentation
+- Headers referenced as `<xot/...>`
+- Class names: `CamelCase`, members: `snake_case`
 
 ### Ruby
-- 2 スペースインデント
-- `snake_case` メソッド名、`SCREAMING_SNAKE_CASE` 定数
-- 既存ファイルの require 順序とガード節のスタイルを踏襲
+- 2-space indentation
+- `snake_case` methods, `SCREAMING_SNAKE_CASE` constants
+- Follow existing require order and guard clause style
 
-## テスト
+## Testing
 
-- `test/` ディレクトリに `test_対象名.rb` の命名で配置
-- C 拡張を伴う変更では Ruby とネイティブ両方のカバレッジを持たせる
-- 新しい API には正のテスト + エラーハンドリングケースを最低 1 件追加
-- `bundle exec rake test` がローカルで緑になってから PR を出す
+- Place tests in `test/` as `test_<name>.rb`
+- Changes involving C extensions need both Ruby and native coverage
+- New APIs require at least one positive test + one error handling case
+- Ensure `bundle exec rake test` passes locally before submitting a PR
 
-## コミット
+## Commits
 
-- 命令形の 1 行サマリ: `Add feature`, `Fix issue`
-- 関連モジュール名を先頭に付ける（例: `rays: Fix rendering bug`）
+- Imperative one-line summary: `Add feature`, `Fix issue`
+- Prefix with module name (e.g., `rays: Fix rendering bug`)

@@ -1,25 +1,25 @@
 # Rays
 
-OpenGL ベースの 2D 描画エンジン。
+OpenGL-based 2D drawing engine.
 
-## 外部ライブラリ
+## External Libraries
 
-ビルド時に自動取得:
-- GLM 1.0.1 — 数学ライブラリ
-- Clipper 6.4.2 — ポリゴンクリッピング
-- Earcut.hpp v2.2.4 — ポリゴン三角形分割
-- Splines-lib — フィルタリング
-- STB (Windows/Linux のみ) — 画像読み込み
+Automatically fetched at build time:
+- GLM 1.0.1 — Math library
+- Clipper 6.4.2 — Polygon clipping
+- Earcut.hpp v2.2.4 — Polygon triangulation
+- Splines-lib — Filtering
+- STB (Windows/Linux only) — Image loading
 
-## プラットフォーム固有コード
+## Platform-Specific Code
 
-`src/` 以下にプラットフォーム別実装がある:
+Platform implementations under `src/`:
 - `src/osx/` — macOS (AppKit, OpenGL)
 - `src/ios/` — iOS
 - `src/win32/` — Windows (GDI32, OpenGL32)
 - `src/sdl/` — Linux (SDL2, GLEW)
 
-## テスト
+## Testing
 
-- `test_rays_init.rb` は単独実行が必要（`TESTS_ALONE`）
-- `assert_equal_color` — カスタムカラー比較アサーション
+- `test_rays_init.rb` must run alone (`TESTS_ALONE`)
+- `assert_equal_color` — Custom color comparison assertion

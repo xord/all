@@ -1,30 +1,30 @@
 # Reflex
 
-Ruby 向け GUI ツールキット。Window と View を中心としたイベント駆動アーキテクチャ。
+GUI toolkit for Ruby. Event-driven architecture centered on Window and View.
 
-## gem 名
+## Gem Name
 
-公開 gem 名は **`reflexion`**（`reflex` ではない）。
+The published gem name is **`reflexion`** (not `reflex`).
 
-## 外部ライブラリ
+## External Libraries
 
-- Box2D v2.4.1 — 物理エンジン
-- RtMidi 6.0.0 — MIDI デバイスサポート
+- Box2D v2.4.1 — Physics engine
+- RtMidi 6.0.0 — MIDI device support
 
-## プラットフォーム固有コード
+## Platform-Specific Code
 
-`src/` 以下:
+Under `src/`:
 - `src/osx/` — macOS
 - `src/ios/` — iOS
 - `src/win32/` — Windows
 - `src/sdl/` — Linux (SDL2)
 
-## イベントシステム
+## Event System
 
-19 種以上のイベント型（KeyEvent, PointerEvent, DrawEvent, MidiEvent 等）。
-View のフックメソッド: `on_draw`, `on_update`, `on_key`, `on_pointer` など。
+19+ event types (KeyEvent, PointerEvent, DrawEvent, MidiEvent, etc.).
+View hook methods: `on_draw`, `on_update`, `on_key`, `on_pointer`, etc.
 
-## テスト
+## Testing
 
-- `test_reflex_init.rb` は単独実行が必要（`TESTS_ALONE`）
-- CI は macOS のみ（GUI が必要なため）
+- `test_reflex_init.rb` must run alone (`TESTS_ALONE`)
+- CI runs on macOS only (requires GUI)
