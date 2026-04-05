@@ -20,26 +20,23 @@ A shared Rakefile delegates build and test tasks per module.
 ## Build & Test
 
 ```bash
-# Install dependencies
-bundle install
-
 # Build C/C++ libraries
-bundle exec rake lib
+rake lib
 
 # Build extension libraries
-bundle exec rake ext
+rake ext
 
 # Run tests
-bundle exec rake test
+rake test
 
 # Test a specific module
-bundle exec rake rays test
+rake rays test
 
 # Build specific modules only
-bundle exec rake rays reflex ext
+rake rays reflex ext
 
 # Run a sample
-bundle exec rake run sample=hello
+rake run sample=hello
 ```
 
 ## Coding Style
