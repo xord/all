@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This repository (xord/all) is a monorepo of core Ruby libraries.
+This repository (xord/all) is a monorepo of core libraries.
 
 ## Module Structure
 
