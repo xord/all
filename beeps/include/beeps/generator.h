@@ -4,11 +4,78 @@
 #define __BEEPS_GENERATOR_H__
 
 
+#include <list>
 #include <beeps/processor.h>
 
 
 namespace Beeps
 {
+
+
+	class Value : public Generator
+	{
+
+		typedef Generator Super;
+
+		public:
+
+			enum Type
+			{
+				TYPE_NONE = 0, LINEAR
+			};
+
+			struct Point
+			{
+
+				float value;
+
+				float time;
+
+				Point (float value, float time);
+
+			};// Point
+
+			typedef std::vector<Point> PointList;
+
+			typedef PointList::      iterator       iterator;
+
+			typedef PointList::const_iterator const_iterator;
+
+			Value (float value = 0, Type type = LINEAR);
+
+			virtual ~Value ();
+
+			virtual void set_type (Type type);
+
+			virtual Type     type () const;
+
+			virtual void set_value (float value);
+
+			virtual void insert    (float value, float time);
+
+			virtual void clear ();
+
+			virtual       iterator begin ();
+
+			virtual const_iterator begin () const;
+
+			virtual       iterator end ();
+
+			virtual const_iterator end () const;
+
+			struct Data;
+
+			Xot::PImpl<Data> self;
+
+		private:
+
+			virtual void generate (
+				Context* context, Signals* signals, uint* offset) override;
+
+			virtual int max_segment_size_for_process (
+				double sample_rate, uint nsamples) const override;
+
+	};// Value
 
 
 	class Oscillator : public Generator
@@ -95,6 +162,23 @@ namespace Beeps
 
 		public:
 
+			struct Note
+			{
+
+				Processor::Ref processor;
+
+				float offset, duration;
+
+				Note (Processor* processor, float offset, float duration);
+
+			};// Note
+
+			typedef std::list<Note> NoteList;
+
+			typedef NoteList::      iterator       iterator;
+
+			typedef NoteList::const_iterator const_iterator;
+
 			Sequencer ();
 
 			virtual ~Sequencer ();
@@ -106,6 +190,14 @@ namespace Beeps
 			virtual void set_time_scale (float scale);
 
 			virtual float    time_scale () const;
+
+			virtual       iterator begin ();
+
+			virtual const_iterator begin () const;
+
+			virtual       iterator end ();
+
+			virtual const_iterator end () const;
 
 			virtual operator bool () const override;
 

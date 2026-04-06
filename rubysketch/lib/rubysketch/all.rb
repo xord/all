@@ -1,5 +1,6 @@
-require 'processing/all'
+require 'strscan'
 require 'beeps'
+require 'processing/all'
 
 
 module RubySketch
@@ -20,3 +21,5 @@ require 'rubysketch/sound'
 require 'rubysketch/easings'
 require 'rubysketch/graphics_context'
 require 'rubysketch/context'
+
+require 'rubysketch/mml'
