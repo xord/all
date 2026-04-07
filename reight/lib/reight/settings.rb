@@ -77,7 +77,9 @@ class Reight::Settings
 
   def palette_colors = Reight::App::PALETTE_COLORS.dup
 
-  def font_size      = 8
+  def font_path      = 'https://raw.githubusercontent.com/itouhiro/PixelMplus/master/PixelMplus10-Regular.ttf'
+
+  def font_size      = 10
 
   private
 
