@@ -47,7 +47,9 @@ class Reight::Project
 
   def scripts() = settings.script_paths.map {File.read _1 rescue nil}
 
-  def font      = @font ||= C.create_font(nil, settings.font_size)
+  def font()
+    @font ||= C.load_font(settings.font_path, size: settings.font_size, smooth: false)
+  end
 
   def get_next_id()
     @next_id.tap {@next_id += 1}
