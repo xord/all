@@ -149,7 +149,7 @@ namespace Reflex
 	handle_gamepad_events (Gamepad* gamepad, GCController* controller)
 	{
 		GCExtendedGamepad* g = controller.extendedGamepad;
-		if (!gamepad) return;
+		if (!g) return;
 
 		static const Gamepad::Index L = Gamepad::INDEX_LEFT, R = Gamepad::INDEX_RIGHT;
 

@@ -58,6 +58,8 @@ namespace Reflex
 
 	Gamepad* Gamepad_find (void* handle);
 
+	Gamepad* Gamepad_find_by_name (const char* name);
+
 	float Gamepad_get_button_press_threshold ();
 
 

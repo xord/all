@@ -9,6 +9,7 @@
 #import <IOKit/hid/IOHIDDevice.h>
 #import <GameController/GameController.h>
 #include <xot/util.h>
+#include "reflex/application.h"
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "event.h"
@@ -247,12 +248,68 @@ namespace Reflex
 	}
 
 	static void
-	handle_disconnect_event (void* context, IOReturn result, void* sender)
+	unregister_device (void* context, IOReturn result, void* sender)
 	{
 		IOHIDDeviceRef device = (IOHIDDeviceRef) context;
 
 		remove_gamepad(app(), device);
 		unregister_to_device_map(device);
+	}
+
+	static void
+	register_device (Application* app, IOHIDDeviceRef device)
+	{
+		IOHIDDeviceRegisterRemovalCallback(device, unregister_device, device);
+		register_to_device_map(device);
+		add_gamepad(app, device);
+	}
+
+	struct PendingDevice
+	{
+
+		Application::Ref app;
+
+		IOHIDDeviceRef device;
+
+		String name;
+
+		PendingDevice (Application* app, IOHIDDeviceRef device, const char* name)
+		:	app(app), device(device), name(name)
+		{
+			CFRetain(device);
+		}
+
+		~PendingDevice ()
+		{
+			CFRelease(device);
+		}
+
+	};// PendingDevice
+
+	static std::vector<std::shared_ptr<PendingDevice>> pending_devices;
+
+	static void
+	register_pending_devices ()
+	{
+		for (auto& pending : pending_devices)
+		{
+			if (!Gamepad_find_by_name(pending->name.c_str()))
+				register_device(pending->app, pending->device);
+		}
+		pending_devices.clear();
+	}
+
+	static void
+	queue_device (Application* app, IOHIDDeviceRef device, const char* name)
+	{
+		pending_devices.push_back(std::make_shared<PendingDevice>(app, device, name));
+		if (pending_devices.size() == 1)
+		{
+			dispatch_after(
+				dispatch_time(DISPATCH_TIME_NOW, (int64_t) (0.5 * NSEC_PER_SEC)),
+				dispatch_get_main_queue(),
+				^{register_pending_devices();});
+		}
 	}
 
 	static void
@@ -267,13 +324,13 @@ namespace Reflex
 		if (@available(macOS 11.0, *))
 		{
 			if ([GCController supportsHIDDevice: device])
-				return;
+			{
+				String name = get_string_property(device, CFSTR(kIOHIDProductKey));
+				return queue_device(app, device, name);
+			}
 		}
 
-		IOHIDDeviceRegisterRemovalCallback(device, handle_disconnect_event, device);
-
-		register_to_device_map(device);
-		add_gamepad(app, device);
+		register_device(app, device);
 	}
 
 	enum
@@ -554,6 +611,8 @@ namespace Reflex
 	{
 		if (!manager)
 			invalid_state_error(__FILE__, __LINE__);
+
+		pending_devices.clear();
 
 		IOHIDManagerUnscheduleFromRunLoop(
 			manager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);

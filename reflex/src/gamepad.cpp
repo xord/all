@@ -87,6 +87,21 @@ namespace Reflex
 		return it->get();
 	}
 
+	Gamepad*
+	Gamepad_find_by_name (const char* name)
+	{
+		if (!name)
+			return NULL;
+
+		auto it = std::find_if(
+			gamepads.begin(), gamepads.end(),
+			[&](auto& gamepad) {return strcmp(gamepad->name(), name) == 0;});
+		if (it == gamepads.end())
+			return NULL;
+
+		return it->get();
+	}
+
 	float
 	Gamepad_get_button_press_threshold ()
 	{
