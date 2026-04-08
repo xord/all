@@ -51,8 +51,8 @@ namespace Reflex
 		return Window_dispatch_event(win, event);
 	}
 
-	static bool
-	dispatch_events ()
+	static void
+	dispatch_events (Application* app)
 	{
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
@@ -60,13 +60,9 @@ namespace Reflex
 			if (dispatch_window_event(event))
 				continue;
 
-			switch (event.type)
-			{
-				case SDL_QUIT: return false;
-			}
+			if (event.type == SDL_QUIT)
+				app->quit();
 		}
-
-		return true;
 	}
 
 	static void
@@ -87,7 +83,7 @@ namespace Reflex
 		double prev = Xot::time();
 		while (!self->quit)
 		{
-			if (!dispatch_events()) break;
+			dispatch_events(this);
 
 			static const double INTERVAL  = 1.0 / 60.0;
 			static const double SLEEPABLE = INTERVAL * 0.9;
