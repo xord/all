@@ -16,6 +16,8 @@ namespace Reflex
 
 		String name;
 
+		bool quitting = false;
+
 	};// Application::Data
 
 

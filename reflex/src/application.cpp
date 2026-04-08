@@ -29,12 +29,24 @@ namespace Reflex
 		MIDI_init(app);
 	}
 
+	static void
+	close_all_windows (Application* app)
+	{
+		for (auto it = app->window_begin(), end = app->window_end(); it != end; ++it)
+			(*it)->close(true);
+	}
+
 	void
 	Application_call_quit (Application* app, Event* e)
 	{
+		if (app->self->quitting) return;
+
 		app->on_quit(e);
 		if (e->is_blocked()) return;
 
+		app->self->quitting = true;
+
+		close_all_windows(app);
 		MIDI_fin(app);
 		Gamepad_fin(app);
 	}
