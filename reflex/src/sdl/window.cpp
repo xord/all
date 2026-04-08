@@ -5,6 +5,7 @@
 #include "reflex/debug.h"
 #include "reflex/screen.h"
 #include "../view.h"
+#include "event.h"
 #include "screen.h"
 #include "opengl.h"
 
@@ -318,32 +319,90 @@ namespace Reflex
 	bool
 	Window_dispatch_event (Window* win, const SDL_Event& event)
 	{
-		if (event.type != SDL_WINDOWEVENT) return true;
-
 		WindowData* self = get_data(win);
 
-		switch (event.window.event)
+		switch (event.type)
 		{
-			case SDL_WINDOWEVENT_CLOSE:
-				Window_close(win);
-				break;
-
-			case SDL_WINDOWEVENT_EXPOSED:
+			case SDL_WINDOWEVENT:
 			{
-				self->context.make_current();
-				draw(win);
-				self->context.swap_buffers();
+				switch (event.window.event)
+				{
+					case SDL_WINDOWEVENT_CLOSE:
+						Window_close(win);
+						break;
+
+					case SDL_WINDOWEVENT_EXPOSED:
+						self->context.make_current();
+						draw(win);
+						self->context.swap_buffers();
+						break;
+
+					case SDL_WINDOWEVENT_MOVED:
+					case SDL_WINDOWEVENT_RESIZED:
+					case SDL_WINDOWEVENT_SIZE_CHANGED:
+					case SDL_WINDOWEVENT_RESTORED:
+					case SDL_WINDOWEVENT_MAXIMIZED:
+					case SDL_WINDOWEVENT_MINIMIZED:
+						frame_changed(win);
+						break;
+
+					case SDL_WINDOWEVENT_FOCUS_GAINED:
+						Window_call_activate_event(win);
+						break;
+
+					case SDL_WINDOWEVENT_FOCUS_LOST:
+						Window_call_deactivate_event(win);
+						break;
+				}
 				break;
 			}
 
-			case SDL_WINDOWEVENT_MOVED:
-			case SDL_WINDOWEVENT_RESIZED:
-			case SDL_WINDOWEVENT_SIZE_CHANGED:
-			case SDL_WINDOWEVENT_RESTORED:
-			case SDL_WINDOWEVENT_MAXIMIZED:
-			case SDL_WINDOWEVENT_MINIMIZED:
-				frame_changed(win);
+			case SDL_KEYDOWN:
+			{
+				NativeKeyEvent e(event.key, KeyEvent::DOWN);
+				Window_call_key_event(win, &e);
 				break;
+			}
+
+			case SDL_KEYUP:
+			{
+				NativeKeyEvent e(event.key, KeyEvent::UP);
+				Window_call_key_event(win, &e);
+				break;
+			}
+
+			case SDL_MOUSEBUTTONDOWN:
+			{
+				NativePointerEvent e(
+					event.button, self->native, Pointer::DOWN);
+				Window_call_pointer_event(win, &e);
+				break;
+			}
+
+			case SDL_MOUSEBUTTONUP:
+			{
+				NativePointerEvent e(
+					event.button, self->native, Pointer::UP);
+				Window_call_pointer_event(win, &e);
+				break;
+			}
+
+			case SDL_MOUSEMOTION:
+			{
+				NativePointerEvent e(event.motion, self->native);
+				Window_call_pointer_event(win, &e);
+				break;
+			}
+
+			case SDL_MOUSEWHEEL:
+			{
+				NativeWheelEvent e(event.wheel, self->native);
+				Window_call_wheel_event(win, &e);
+				break;
+			}
+
+			default:
+				return false;
 		}
 
 		return true;
