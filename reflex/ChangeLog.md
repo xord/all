@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.3.12] - 2026-04-10
+
+- Work around macOS 15 HID gamepad Y-axis inversion
+
+
 ## [v0.3.11] - 2026-04-09
 
 - Add minimal support for SDL2
