@@ -87,8 +87,8 @@ namespace :changelog do
     hash = `git log -1 #{version}`.lines(chomp: true).first.split[1]
     `git log #{hash}..HEAD #{target}/`
       .split(/commit.*\nAuthor:.*\nDate:.*\n/)
-      .map    {|commit| commit.lines.select {|line| line =~ /^ /}.join}
-      .reject {|s| s.strip.empty?}
+      .map    {|commit| commit.lines.find {_1 =~ /\w/}}
+      .compact
   end
 
   get_depends = -> target do
