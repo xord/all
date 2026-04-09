@@ -1,6 +1,12 @@
 # rucy ChangeLog
 
 
+## [v0.3.10] - 2026-04-09
+
+- Remove non-const VALUE* operator[] from Value wrapper for arrays
+- Update dependencies
+
+
 ## [v0.3.9] - 2025-07-06
 
 - Add deepwiki badge

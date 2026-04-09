@@ -1,6 +1,21 @@
 # reflex ChangeLog
 
 
+## [v0.3.11] - 2026-04-09
+
+- Add minimal support for SDL2
+- Add 'apt' for install_packages()
+- Check is_blocked() before dispatching wheel event
+- Change C-Extension name from 'native.so' to 'reflex_ext.so'
+- Captured key and pointer events cannot prevent the event from being sent to the window
+- Update dependencies
+
+- Fix coordinate transformation for wheel event
+- Fix touch continuity by using UITouch address as system ID (UP event coords may shift on iOS)
+- Fix USB gamepad not detected on macOS 11+
+- Fix inverted Y-axis stick button events in HID gamepad
+
+
 ## [v0.3.10] - 2025-07-06
 
 - Add deepwiki badge

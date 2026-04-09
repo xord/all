@@ -1,6 +1,16 @@
 # rays ChangeLog
 
 
+## [v0.3.10] - 2026-04-09
+
+- Add Font::smooth
+- Add minimal support for SDL2
+- Add 'apt' for install_packages()
+- Image.load raises Errno::ENOENT when the file does not exist
+- Change C-Extension name from 'native.so' to 'rays_ext.so'
+- Update dependencies
+
+
 ## [v0.3.9] - 2025-07-06
 
 - Add deepwiki badge

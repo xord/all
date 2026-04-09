@@ -1,6 +1,17 @@
 # xot ChangeLog
 
 
+## [v0.3.10] - 2026-04-09
+
+- Add minimal support for SDL2
+- Add '-bind_at_load' linker option for C-extension
+- Add '-Wl,-bind_at_load' for linker option for debug builds on Mac
+- Add 'apt' for install_packages()
+- Compile .swift files
+- Copy import lib file on mingw or cygwin
+- Move utilities like get_env() from Xot::Rake to Xot::Util
+
+
 ## [v0.3.9] - 2025-07-06
 
 - Add deepwiki badge
