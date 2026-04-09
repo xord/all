@@ -49,7 +49,7 @@ begin
     versions.each do |name, min_ver|
       gem = RENAMES[name.to_sym].then {|s| s || name}
       re  = /add_dependency.*['"]#{gem}['"].*['"]\s*~>\s*[\d\.]+\s*['"]/
-      gemspec.sub!(re) {_1.sub(/~>\s*([\d\.]+)/) {|s| s.sub $1, min_ver}}
+      gemspec.sub!(re) {|line| line.sub(/~>\s*([\d\.]+)/) {|s| s.sub $1, min_ver}}
     end
 
     if gemspec != old
