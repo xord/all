@@ -468,9 +468,9 @@ namespace Reflex
 				switch (usage)
 				{
 					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
-					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, UP,   DOWN,  sticks[0].y, -centered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -centered); break;
 					case kHIDUsage_GD_Rx: HANDLE_DPAD(RSTICK, LEFT, RIGHT, sticks[1].x,  centered); break;
-					case kHIDUsage_GD_Ry: HANDLE_DPAD(RSTICK, UP,   DOWN,  sticks[1].y, -centered); break;
+					case kHIDUsage_GD_Ry: HANDLE_DPAD(RSTICK, DOWN, UP,    sticks[1].y, -centered); break;
 					case kHIDUsage_GD_Z:  HANDLE_TRIGGER(LTRIGGER,         triggers[0],  linear);   break;
 					case kHIDUsage_GD_Rz: HANDLE_TRIGGER(RTRIGGER,         triggers[1],  linear);   break;
 				}
@@ -480,9 +480,9 @@ namespace Reflex
 				switch (usage)
 				{
 					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
-					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, UP,   DOWN,  sticks[0].y, -centered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -centered); break;
 					case kHIDUsage_GD_Z:  HANDLE_DPAD(RSTICK, LEFT, RIGHT, sticks[1].x,  centered); break;
-					case kHIDUsage_GD_Rz: HANDLE_DPAD(RSTICK, UP,   DOWN,  sticks[1].y, -centered); break;
+					case kHIDUsage_GD_Rz: HANDLE_DPAD(RSTICK, DOWN, UP,    sticks[1].y, -centered); break;
 					case kHIDUsage_GD_Rx: HANDLE_TRIGGER(LTRIGGER,         triggers[0],  linear);   break;
 					case kHIDUsage_GD_Ry: HANDLE_TRIGGER(RTRIGGER,         triggers[1],  linear);   break;
 				}
@@ -492,7 +492,7 @@ namespace Reflex
 				switch (usage)
 				{
 					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
-					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, UP,   DOWN,  sticks[0].y, -centered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -centered); break;
 				}
 				break;
 		}
