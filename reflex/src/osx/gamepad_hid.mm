@@ -445,8 +445,11 @@ namespace Reflex
 		float range = min == max ? max : max - min;
 		if (range == 0) range = 1;
 
-		float linear   = (value - min) / range;
-		float centered = linear * 2 - 1;
+		float linear    = (value - min) / range;
+		float xcentered = linear * 2 - 1;
+		float ycentered = xcentered;
+		if (NSProcessInfo.processInfo.operatingSystemVersion.majorVersion == 15)
+			ycentered = -ycentered;
 
 		#define HANDLE_DPAD(stick, neg, pos, var, value) \
 			handle_stick_dpad_event( \
@@ -467,32 +470,32 @@ namespace Reflex
 			case HIDGamepadData::RSTICK_RxRy:
 				switch (usage)
 				{
-					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
-					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -centered); break;
-					case kHIDUsage_GD_Rx: HANDLE_DPAD(RSTICK, LEFT, RIGHT, sticks[1].x,  centered); break;
-					case kHIDUsage_GD_Ry: HANDLE_DPAD(RSTICK, DOWN, UP,    sticks[1].y, -centered); break;
-					case kHIDUsage_GD_Z:  HANDLE_TRIGGER(LTRIGGER,         triggers[0],  linear);   break;
-					case kHIDUsage_GD_Rz: HANDLE_TRIGGER(RTRIGGER,         triggers[1],  linear);   break;
+					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  xcentered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -ycentered); break;
+					case kHIDUsage_GD_Rx: HANDLE_DPAD(RSTICK, LEFT, RIGHT, sticks[1].x,  xcentered); break;
+					case kHIDUsage_GD_Ry: HANDLE_DPAD(RSTICK, DOWN, UP,    sticks[1].y, -ycentered); break;
+					case kHIDUsage_GD_Z:  HANDLE_TRIGGER(LTRIGGER,         triggers[0],  linear);    break;
+					case kHIDUsage_GD_Rz: HANDLE_TRIGGER(RTRIGGER,         triggers[1],  linear);    break;
 				}
 				break;
 
 			case HIDGamepadData::RSTICK_ZRz:
 				switch (usage)
 				{
-					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
-					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -centered); break;
-					case kHIDUsage_GD_Z:  HANDLE_DPAD(RSTICK, LEFT, RIGHT, sticks[1].x,  centered); break;
-					case kHIDUsage_GD_Rz: HANDLE_DPAD(RSTICK, DOWN, UP,    sticks[1].y, -centered); break;
-					case kHIDUsage_GD_Rx: HANDLE_TRIGGER(LTRIGGER,         triggers[0],  linear);   break;
-					case kHIDUsage_GD_Ry: HANDLE_TRIGGER(RTRIGGER,         triggers[1],  linear);   break;
+					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  xcentered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -ycentered); break;
+					case kHIDUsage_GD_Z:  HANDLE_DPAD(RSTICK, LEFT, RIGHT, sticks[1].x,  xcentered); break;
+					case kHIDUsage_GD_Rz: HANDLE_DPAD(RSTICK, DOWN, UP,    sticks[1].y, -ycentered); break;
+					case kHIDUsage_GD_Rx: HANDLE_TRIGGER(LTRIGGER,         triggers[0],  linear);    break;
+					case kHIDUsage_GD_Ry: HANDLE_TRIGGER(RTRIGGER,         triggers[1],  linear);    break;
 				}
 				break;
 
 			default:
 				switch (usage)
 				{
-					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  centered); break;
-					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -centered); break;
+					case kHIDUsage_GD_X:  HANDLE_DPAD(LSTICK, LEFT, RIGHT, sticks[0].x,  xcentered); break;
+					case kHIDUsage_GD_Y:  HANDLE_DPAD(LSTICK, DOWN, UP,    sticks[0].y, -ycentered); break;
 				}
 				break;
 		}
