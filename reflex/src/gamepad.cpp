@@ -1,6 +1,7 @@
 #include "gamepad.h"
 
 
+#include <string.h>
 #include <algorithm>
 #include "reflex/exception.h"
 #include "application.h"
