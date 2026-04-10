@@ -4,6 +4,7 @@
 #define __RUCY_EXTENSION_H__
 
 
+#include <typeinfo>
 #include <xot/ref.h>
 #include <xot/string.h>
 #include <rucy/defs.h>
@@ -384,81 +385,99 @@ namespace Rucy
 	};// ClassWrapper
 
 
-	template <typename T> inline void delete_type (void* p)
+	template <typename T>
+	inline void delete_type (void* p)
 	{
 		delete (T*) p;
 	}
 
-	template <typename T> inline void release_ref (void* p)
+	template <typename T>
+	inline void release_ref (void* p)
 	{
 		if (p) ((T*) p)->release();
 	}
 
-	template <typename T> inline void release_wrapper (void* p)
+	template <typename T>
+	inline void release_wrapper (void* p)
 	{
 		if (p) ((T*) p)->release(true);
 	}
 
 
-	template <typename T> inline Value new_type (
-		Value klass, T* ptr,
-		RUBY_DATA_FUNC mark = NULL,
-		RUBY_DATA_FUNC free = delete_type<T>)
+	template <typename T, RUBY_DATA_FUNC mark, RUBY_DATA_FUNC free>
+	inline const rb_data_type_t* get_data_type ()
+	{
+		static const rb_data_type_t data_type = {
+			typeid(T).name(),
+			{mark, free, NULL, NULL, {NULL}},
+			NULL, NULL, RUBY_TYPED_FREE_IMMEDIATELY
+		};
+		return &data_type;
+	}
+
+
+	template <
+		typename T,
+		RUBY_DATA_FUNC mark = nullptr,
+		RUBY_DATA_FUNC free = delete_type<T>>
+	inline Value new_type (Value klass, T* ptr)
 	{
 		if (!ptr) return nil();
-		return Data_Wrap_Struct(klass, mark, free, ptr);
+		return rb_data_typed_object_wrap(klass, ptr, get_data_type<T, mark, free>());
 	}
 
-	template <typename T> inline Value new_type (
-		Value klass,
-		RUBY_DATA_FUNC mark = NULL,
-		RUBY_DATA_FUNC free = delete_type<T>)
+	template <
+		typename T,
+		RUBY_DATA_FUNC mark = nullptr,
+		RUBY_DATA_FUNC free = delete_type<T>>
+	inline Value new_type (Value klass)
 	{
-		return new_type(klass, new T, mark, free);
+		return new_type<T, mark, free>(klass, new T);
 	}
 
-	template <typename T> inline Value new_ref (
-		Value klass, T* ptr,
-		RUBY_DATA_FUNC mark = NULL,
-		RUBY_DATA_FUNC free = release_ref<T>)
+	template <
+		typename T,
+		RUBY_DATA_FUNC mark = nullptr,
+		RUBY_DATA_FUNC free = release_ref<T>>
+	inline Value new_ref (Value klass, T* ptr)
 	{
 		if (ptr) ptr->retain();
-		return new_type(klass, ptr, mark, free);
+		return new_type<T, mark, free>(klass, ptr);
 	}
 
-	template <typename T> inline Value new_ref (
-		Value klass,
-		RUBY_DATA_FUNC mark = NULL,
-		RUBY_DATA_FUNC free = release_ref<T>)
+	template <
+		typename T,
+		RUBY_DATA_FUNC mark = nullptr,
+		RUBY_DATA_FUNC free = release_ref<T>>
+	inline Value new_ref (Value klass)
 	{
-		return new_ref(klass, new T, mark, free);
+		return new_ref<T, mark, free>(klass, new T);
 	}
 
-	template <typename T> inline Value new_wrapper (
-		Value klass, T* ptr,
-		RUBY_DATA_FUNC mark = NULL,
-		RUBY_DATA_FUNC free = release_wrapper<T>)
+	template <
+		typename T,
+		RUBY_DATA_FUNC mark = nullptr,
+		RUBY_DATA_FUNC free = release_wrapper<T>>
+	inline Value new_wrapper (Value klass, T* ptr)
 	{
 		if (ptr) ptr->retain(true);
-		return new_type(klass, ptr, mark, free);
+		return new_type<T, mark, free>(klass, ptr);
 	}
 
-	template <typename T> inline Value new_wrapper (
-		Value klass,
-		RUBY_DATA_FUNC mark = NULL,
-		RUBY_DATA_FUNC free = release_wrapper<T>)
+	template <
+		typename T,
+		RUBY_DATA_FUNC mark = nullptr,
+		RUBY_DATA_FUNC free = release_wrapper<T>>
+	inline Value new_wrapper (Value klass)
 	{
-		return new_wrapper(klass, new T, mark, free);
+		return new_wrapper<T, mark, free>(klass, new T);
 	}
 
 
 	template <typename T> inline T* get_type_ptr (Value obj, Value klass = nil())
 	{
 		if (!klass.is_nil()) check_class(obj, klass);
-		RubyValue o = obj.value();
-		T* p        = NULL;
-		Data_Get_Struct(o, T, p);
-		return p;
+		return (T*) DATA_PTR(obj.value());
 	}
 
 
