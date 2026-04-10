@@ -66,13 +66,15 @@ namespace Rucy
 	void
 	Module::<%= op %> (const char* name, RubyFunctionN fun)
 	{
-		<%= rb_op %>(value(), name, RUBY_METHOD_FUNC(fun), -1);
+		typedef VALUE (*Fun) (int, const VALUE*, VALUE);
+		<%= rb_op %>(value(), name, (Fun) fun, -1);
 	}
 %		NTIMES.each do |n|
 	void
 	Module::<%= op %> (const char* name, RubyFunction<%= n %> fun)
 	{
-		<%= rb_op %>(value(), name, RUBY_METHOD_FUNC(fun), <%= n %>);
+		typedef VALUE (*Fun) (<%= (['VALUE'] * (n + 1)).join(', ') %>);
+		<%= rb_op %>(value(), name, (Fun) fun, <%= n %>);
 	}
 %		end
 %	end
@@ -100,14 +102,16 @@ namespace Rucy
 	void
 	define_function (const char* name, RubyFunctionN fun)
 	{
-		rb_define_global_function(name, RUBY_METHOD_FUNC(fun), -1);
+		typedef VALUE (*Fun) (int, const VALUE*, VALUE);
+		rb_define_global_function(name, (Fun) fun, -1);
 	}
 %	NTIMES.each do |n|
 
 	void
 	define_function (const char* name, RubyFunction<%= n %> fun)
 	{
-		rb_define_global_function(name, RUBY_METHOD_FUNC(fun), <%= n %>);
+		typedef VALUE (*Fun) (<%= (['VALUE'] * (n + 1)).join(', ') %>);
+		rb_define_global_function(name, (Fun) fun, <%= n %>);
 	}
 %	end
 
