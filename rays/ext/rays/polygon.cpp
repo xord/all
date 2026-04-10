@@ -27,7 +27,7 @@ RUCY_DEF4(setup, args, loop, colors, texcoords)
 {
 	CHECK;
 
-	if (args[0].is_a(Rays::polyline_class()))
+	if (args.size() >= 1 && args[0].is_a(Rays::polyline_class()))
 		*THIS = to<Rays::Polygon>(args.size(), args.as_array());
 	else
 	{
