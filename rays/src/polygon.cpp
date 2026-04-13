@@ -50,6 +50,32 @@ namespace Rays
 {
 
 
+	static void
+	draw_polygon (
+		Painter* painter, PrimitiveMode mode, const Color& color,
+		const Coord3* points,           size_t npoints,
+		const uint*   indices   = NULL, size_t nindices = 0,
+		const Coord3* texcoords = NULL)
+	{
+		Painter_draw(
+			painter, mode, &color, points, npoints, indices, nindices,
+			NULL, texcoords);
+	}
+
+	static void
+	draw_polygon (
+		Painter* painter, PrimitiveMode mode,
+		const Coord3* points,  size_t npoints,
+		const uint*   indices   = NULL, size_t nindices = 0,
+		const Color*  colors    = NULL,
+		const Coord3* texcoords = NULL)
+	{
+		Painter_draw(
+			painter, mode, NULL, points, npoints, indices, nindices,
+			colors, texcoords);
+	}
+
+
 	class Triangles
 	{
 
@@ -119,7 +145,7 @@ namespace Rays
 
 				if (pcolors)
 				{
-					Painter_draw(
+					draw_polygon(
 						painter, MODE_TRIANGLES,
 						&points[0],  points.size(),
 						&indices[0], indices.size(),
@@ -128,7 +154,7 @@ namespace Rays
 				}
 				else
 				{
-					Painter_draw(
+					draw_polygon(
 						painter, MODE_TRIANGLES, color,
 						&points[0],  points.size(),
 						&indices[0], indices.size(),
@@ -383,7 +409,7 @@ namespace Rays
 
 				for (const auto& polyline : polylines)
 				{
-					Painter_draw(
+					draw_polygon(
 						painter, polyline.loop() ? MODE_LINE_LOOP : MODE_LINE_STRIP, color,
 						&polyline[0], polyline.size());
 				}
@@ -666,8 +692,7 @@ namespace Rays
 				invalid_state_error(__FILE__, __LINE__);
 
 			const auto& outline = polylines[0];
-			Painter_draw(
-				painter, MODE_TRIANGLE_FAN, color, &outline[0], outline.size());
+			draw_polygon(painter, MODE_TRIANGLE_FAN, color, &outline[0], outline.size());
 		}
 
 		private:
@@ -836,7 +861,7 @@ namespace Rays
 				invalid_state_error(__FILE__, __LINE__);
 
 			const auto& outline = polylines[0];
-			Painter_draw(painter, mode, color, &outline[0], outline.size());
+			draw_polygon(painter, mode, color, &outline[0], outline.size());
 		}
 
 		private:

@@ -1,653 +1,28 @@
 #include "painter.h"
 
 
-#include <math.h>
 #include <string.h>
 #include <assert.h>
-#include <memory>
-#include <vector>
-#include <algorithm>
-#include <functional>
 #include "rays/exception.h"
 #include "rays/debug.h"
-#include "rays/point.h"
-#include "rays/bounds.h"
-#include "rays/color.h"
-#include "glm.h"
-#include "matrix.h"
 #include "polygon.h"
-#include "bitmap.h"
 #include "image.h"
-#include "font.h"
-#include "opengl/opengl.h"
-#include "opengl/texture.h"
-#include "opengl/frame_buffer.h"
-#include "opengl/shader.h"
-#include "opengl/shader_program.h"
-#include "opengl/shader_source.h"
 
 
 namespace Rays
 {
 
 
-	enum ColorType
-	{
-
-		FILL = 0,
-		STROKE,
-
-		COLOR_TYPE_MAX
-
-	};// ColorType
-
-
-	struct State
-	{
-
-		Color background, colors[COLOR_TYPE_MAX];
-
-		bool nocolors[COLOR_TYPE_MAX];
-
-		coord stroke_width;
-
-		float stroke_outset;
-
-		CapType stroke_cap;
-
-		JoinType stroke_join;
-
-		coord miter_limit;
-
-		uint nsegment;
-
-		coord line_height;
-
-		BlendMode blend_mode;
-
-		Bounds clip;
-
-		Font font;
-
-		Image texture;
-
-		TexCoordMode texcoord_mode;
-
-		TexCoordWrap texcoord_wrap;
-
-		Shader shader;
-
-		void init ()
-		{
-			background       .reset(0, 0);
-			  colors[FILL]   .reset(1, 1);
-			  colors[STROKE] .reset(1, 0);
-			nocolors[FILL]   = false;
-			nocolors[STROKE] = true;
-			stroke_width     = 0;
-			stroke_outset    = 0;
-			stroke_cap       = CAP_DEFAULT;
-			stroke_join      = JOIN_DEFAULT;
-			miter_limit      = JOIN_DEFAULT_MITER_LIMIT;
-			nsegment         = 0;
-			line_height      = -1;
-			blend_mode       = BLEND_NORMAL;
-			clip             .reset(-1);
-			font             = get_default_font();
-			texture          = Image();
-			texcoord_mode    = TEXCOORD_IMAGE;
-			texcoord_wrap    = TEXCOORD_CLAMP;
-			shader           = Shader();
-		}
-
-		bool get_color (Color* color, ColorType type) const
-		{
-			const Color& c = colors[type];
-			if (blend_mode == BLEND_REPLACE ? nocolors[type] : !c)
-				return false;
-
-			*color = c;
-			return true;
-		}
-
-		bool has_color () const
-		{
-			if (blend_mode == BLEND_REPLACE)
-				return !nocolors[FILL] || !nocolors[STROKE];
-			else
-				return colors[FILL] || colors[STROKE];
-		}
-
-	};// State
-
-
-	struct TextureInfo
-	{
-
-		const Texture& texture;
-
-		Point min, max;
-
-		TextureInfo (
-			const Texture& texture,
-			coord x_min, coord y_min,
-			coord x_max, coord y_max)
-		:	texture(texture)
-		{
-			min.reset(x_min, y_min);
-			max.reset(x_max, y_max);
-		}
-
-		operator bool () const
-		{
-			return
-				texture &&
-				min.x < max.x &&
-				min.y < max.y;
-		}
-
-		bool operator ! () const
-		{
-			return !operator bool();
-		}
-
-	};// TextureInfo
-
-
-	struct OpenGLState
-	{
-
-		GLint viewport[4];
-
-		GLclampf color_clear[4];
-
-		GLboolean depth_test;
-		GLint depth_func;
-
-		GLboolean scissor_test;
-		GLint scissor_box[4];
-
-		GLboolean blend;
-		GLint blend_equation_rgb, blend_equation_alpha;
-		GLint blend_src_rgb, blend_src_alpha, blend_dst_rgb, blend_dst_alpha;
-
-		GLint framebuffer_binding;
-
-		void push ()
-		{
-			glGetIntegerv(GL_VIEWPORT, viewport);
-
-			glGetFloatv(GL_COLOR_CLEAR_VALUE, color_clear);
-
-			glGetBooleanv(GL_DEPTH_TEST, &depth_test);
-			glGetIntegerv(GL_DEPTH_FUNC, &depth_func);
-
-			glGetBooleanv(GL_SCISSOR_TEST, &scissor_test);
-			glGetIntegerv(GL_SCISSOR_BOX, scissor_box);
-
-			glGetBooleanv(GL_BLEND, &blend);
-			glGetIntegerv(GL_BLEND_EQUATION_RGB,   &blend_equation_rgb);
-			glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &blend_equation_alpha);
-			glGetIntegerv(GL_BLEND_SRC_RGB,   &blend_src_rgb);
-			glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_src_alpha);
-			glGetIntegerv(GL_BLEND_DST_RGB,   &blend_dst_rgb);
-			glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_dst_alpha);
-
-			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
-		}
-
-		void pop ()
-		{
-			glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-			glClearColor(
-				color_clear[0], color_clear[1], color_clear[2], color_clear[3]);
-
-			enable(GL_DEPTH_TEST, depth_test);
-			glDepthFunc(depth_func);
-
-			enable(GL_SCISSOR_TEST, scissor_test);
-			glScissor(scissor_box[0], scissor_box[1], scissor_box[2], scissor_box[3]);
-
-			enable(GL_BLEND, blend);
-			glBlendEquationSeparate(blend_equation_rgb, blend_equation_alpha);
-			glBlendFuncSeparate(
-				blend_src_rgb, blend_dst_rgb, blend_src_alpha, blend_dst_alpha);
-
-			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);
-		}
-
-		private:
-
-			void enable(GLenum type, GLboolean value)
-			{
-				if (value)
-					glEnable(type);
-				else
-					glDisable(type);
-			}
-
-	};// OpenGLState
-
-
-	class DefaultIndices
-	{
-
-		public:
-
-			void resize (size_t size)
-			{
-				indices.reserve(size);
-				while (indices.size() < size)
-					indices.emplace_back(indices.size());
-			}
-
-			void clear ()
-			{
-				decltype(indices)().swap(indices);
-			}
-
-			const uint* get () const
-			{
-				return &indices[0];
-			}
-
-		private:
-
-			std::vector<uint> indices;
-
-	};// DefaultIndices
-
-
-	template <typename COORD>
-	static GLenum get_gl_type ();
-
-	template <>
-	GLenum
-	get_gl_type<float> ()
-	{
-		return GL_FLOAT;
-	}
-
-
-	struct Painter::Data
-	{
-
-		bool painting = false;
-
-		float pixel_density = 1;
-
-		Bounds viewport;
-
-		State              state;
-
-		std::vector<State> state_stack;
-
-		Matrix              position_matrix;
-
-		std::vector<Matrix> position_matrix_stack;
-
-		FrameBuffer frame_buffer;
-
-		Image text_image;
-
-		OpenGLState opengl_state;
-
-		DefaultIndices default_indices;
-
-		Data ()
-		{
-			state.init();
-		}
-
-		void set_pixel_density (float density)
-		{
-			if (density <= 0)
-				argument_error(__FILE__, __LINE__, "invalid pixel_density.");
-
-			this->pixel_density = density;
-			text_image = Image();
-		}
-
-		void update_clip ()
-		{
-			const Bounds& clip = state.clip;
-			if (clip)
-			{
-				coord y = frame_buffer ? clip.y : viewport.h - (clip.y + clip.h);
-				glEnable(GL_SCISSOR_TEST);
-				glScissor(
-					pixel_density * clip.x,
-					pixel_density * y,
-					pixel_density * clip.width,
-					pixel_density * clip.height);
-			}
-			else
-			{
-				glDisable(GL_SCISSOR_TEST);
-			}
-
-			OpenGL_check_error(__FILE__, __LINE__);
-		}
-
-		void draw (
-			GLenum mode, const Color* color,
-			const Coord3* points,           size_t npoints,
-			const uint*   indices   = NULL, size_t nindices = 0,
-			const Color*  colors    = NULL,
-			const Coord3* texcoords = NULL,
-			const TextureInfo* texinfo = NULL,
-			const Shader* shader       = NULL)
-		{
-			if (!points)
-				argument_error(__FILE__, __LINE__);
-			if (npoints <= 0)
-				argument_error(__FILE__, __LINE__);
-
-			if (!painting)
-				invalid_state_error(__FILE__, __LINE__, "'painting' should be true.");
-
-			std::unique_ptr<TextureInfo> ptexinfo;
-			texinfo = setup_texinfo(texinfo, ptexinfo);
-			shader  = setup_shader(shader, texinfo);
-
-			const ShaderProgram* program = Shader_get_program(*shader);
-			if (!program || !*program) return;
-
-			ShaderProgram_activate(*program);
-
-			const auto& names = Shader_get_builtin_variable_names(*shader);
-			apply_builtin_uniforms(*program, names, texinfo);
-			apply_attributes(*program, names, points, npoints, texcoords, color, colors);
-			draw_indices(mode, indices, nindices, npoints);
-			cleanup();
-
-			ShaderProgram_deactivate();
-		}
-
-		private:
-
-			std::vector<GLint> locations;
-
-			std::vector<GLuint> buffers;
-
-			const TextureInfo* setup_texinfo (const TextureInfo* texinfo, auto& ptr)
-			{
-				if (texinfo) return texinfo;
-
-				const Texture* tex =
-					state.texture ? &Image_get_texture(state.texture) : NULL;
-				if (!tex) return NULL;
-
-				ptr.reset(new TextureInfo(*tex, 0, 0, tex->width(), tex->height()));
-				return ptr.get();
-			}
-
-			const Shader* setup_shader (const Shader* shader, bool for_texture)
-			{
-				if (state.shader) return &state.shader;
-				if (shader)       return shader;
-				return for_texture
-					?	&Shader_get_default_shader_for_texture(state.texcoord_wrap)
-					:	&Shader_get_default_shader_for_shape();
-			}
-
-			void apply_builtin_uniforms (
-				const ShaderProgram& program, const ShaderBuiltinVariableNames& names,
-				const TextureInfo* texinfo)
-			{
-				const Texture* texture = texinfo ? &texinfo->texture : NULL;
-
-				Matrix texcoord_matrix(1);
-				if (texture && *texture)
-				{
-					bool normal = state.texcoord_mode == TEXCOORD_NORMAL;
-					texcoord_matrix.scale(
-						(normal ? texture->width()  : 1.0) / texture->reserved_width(),
-						(normal ? texture->height() : 1.0) / texture->reserved_height());
-				}
-
-				for (const auto& name : names.uniform_position_matrix_names)
-				{
-					apply_uniform(program, name, [&](GLint loc) {
-						glUniformMatrix4fv(loc, 1, GL_FALSE, position_matrix.array);
-					});
-				}
-				for (const auto& name : names.uniform_texcoord_matrix_names)
-				{
-					apply_uniform(program, name, [&](GLint loc) {
-						glUniformMatrix4fv(loc, 1, GL_FALSE, texcoord_matrix.array);
-					});
-				}
-
-				if (!texinfo || !texture || !*texture) return;
-
-				coord tw = texture->reserved_width();
-				coord th = texture->reserved_height();
-				Point min(texinfo->min.x / tw, texinfo->min.y / th);
-				Point max(texinfo->max.x / tw, texinfo->max.y / th);
-				Point offset(          1 / tw,              1 / th);
-
-				for (const auto& name : names.uniform_texcoord_min_names)
-				{
-					apply_uniform(program, name, [&](GLint loc) {
-						glUniform3fv(loc, 1, min.array);
-					});
-				}
-				for (const auto& name : names.uniform_texcoord_max_names)
-				{
-					apply_uniform(program, name, [&](GLint loc) {
-						glUniform3fv(loc, 1, max.array);
-					});
-				}
-				for (const auto& name : names.uniform_texcoord_offset_names)
-				{
-					apply_uniform(program, name, [&](GLint loc) {
-						glUniform3fv(loc, 1, offset.array);
-					});
-				}
-				for (const auto& name : names.uniform_texture_names)
-				{
-					apply_uniform(program, name, [&](GLint loc) {
-						glActiveTexture(GL_TEXTURE0);
-						OpenGL_check_error(__FILE__, __LINE__);
-
-						glBindTexture(GL_TEXTURE_2D, Texture_get_id(*texture));
-						OpenGL_check_error(__FILE__, __LINE__);
-
-						glUniform1i(loc, 0);
-					});
-				}
-			}
-
-			void apply_attributes (
-				const ShaderProgram& program, const ShaderBuiltinVariableNames& names,
-				const Coord3* points, size_t npoints, const Coord3* texcoords,
-				const Color* color, const Color* colors)
-			{
-				assert(npoints > 0);
-				assert(!!color != !!colors);
-
-				apply_attribute(
-					program, names.attribute_position_names,
-					points, npoints);
-
-				apply_attribute(
-					program, names.attribute_texcoord_names,
-					texcoords ? texcoords : points, npoints);
-
-				if (colors)
-				{
-					apply_attribute(
-						program, names.attribute_color_names,
-						colors, npoints);
-				}
-				else if (color)
-				{
-#if defined(GL_VERSION_2_1) && !defined(GL_VERSION_3_0)
-					// to fix that GL 2.1 with glVertexAttrib4fv() draws nothing
-					// with specific glsl 'attribute' name.
-					std::vector<Color> colors_(npoints, *color);
-					apply_attribute(
-						program, names.attribute_color_names,
-						(const Coord4*) &colors_[0], npoints);
-#else
-					for (const auto& name : names.attribute_color_names)
-					{
-						apply_attribute(program, name, [&](GLint loc) {
-							glVertexAttrib4fv(loc, color->array);
-						});
-					}
-#endif
-				}
-			}
-
-			template <typename CoordN>
-			void apply_attribute(
-				const ShaderProgram& program, const auto& names,
-				const CoordN* values, size_t nvalues)
-			{
-				GLuint buffer = 0;
-				for (const auto& name : names)
-				{
-					#ifndef IOS
-						if (buffer == 0)
-						{
-							buffer = create_and_bind_buffer(
-								GL_ARRAY_BUFFER, values, sizeof(CoordN) * nvalues);
-							values = 0;
-						}
-					#endif
-
-					apply_attribute(program, name, [&](GLint loc) {
-						glEnableVertexAttribArray(loc);
-						OpenGL_check_error(
-							__FILE__, __LINE__, "loc: %d %s\n", loc, name.c_str());
-
-						glVertexAttribPointer(
-							loc, CoordN::SIZE, get_gl_type<coord>(), GL_FALSE, 0, values);
-
-						locations.push_back(loc);
-					});
-				}
-
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-				OpenGL_check_error(__FILE__, __LINE__);
-			}
-
-			void apply_attribute (
-				const ShaderProgram& program, const char* name,
-				std::function<void(GLint)> apply_fun)
-			{
-				GLint loc = glGetAttribLocation(program.id(), name);
-				if (loc < 0) return;
-
-				apply_fun(loc);
-				OpenGL_check_error(__FILE__, __LINE__);
-			}
-
-			void apply_uniform (
-				const ShaderProgram& program, const char* name,
-				std::function<void(GLint)> apply_fun)
-			{
-				GLint loc = glGetUniformLocation(program.id(), name);
-				if (loc < 0) return;
-
-				apply_fun(loc);
-				OpenGL_check_error(__FILE__, __LINE__);
-			}
-
-			void draw_indices (
-				GLenum mode, const uint* indices, size_t nindices, size_t npoints)
-			{
-				if (!indices || nindices <= 0)
-				{
-					default_indices.resize(npoints);
-					indices  = default_indices.get();
-					nindices = npoints;
-				}
-
-				#ifdef IOS
-					glDrawElements(mode, (GLsizei) nindices, GL_UNSIGNED_INT, indices);
-					OpenGL_check_error(__FILE__, __LINE__);
-				#else
-					create_and_bind_buffer(
-						GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(uint) * nindices);
-
-					glDrawElements(mode, (GLsizei) nindices, GL_UNSIGNED_INT, 0);
-					OpenGL_check_error(__FILE__, __LINE__);
-
-					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-					OpenGL_check_error(__FILE__, __LINE__);
-				#endif
-			}
-
-			GLuint create_and_bind_buffer (
-				GLenum target, const void* data, GLsizeiptr size)
-			{
-				GLuint id = 0;
-				glGenBuffers(1, &id);
-				OpenGL_check_error(__FILE__, __LINE__);
-
-				buffers.push_back(id);
-
-				glBindBuffer(target, id);
-				OpenGL_check_error(__FILE__, __LINE__);
-
-				glBufferData(target, size, data, GL_STREAM_DRAW);
-				OpenGL_check_error(__FILE__, __LINE__);
-
-				return id;
-			}
-
-			void cleanup ()
-			{
-				for (auto loc : locations)
-				{
-					glDisableVertexAttribArray(loc);
-					OpenGL_check_error(__FILE__, __LINE__);
-				}
-
-				if (!buffers.empty())
-				{
-					glDeleteBuffers((GLsizei) buffers.size(), &buffers[0]);
-					OpenGL_check_error(__FILE__, __LINE__);
-				}
-
-				locations.clear();
-				buffers.clear();
-			}
-
-	};// Painter::Data
-
-
 	void
-	Painter_draw (
-		Painter* painter, PrimitiveMode mode, const Color& color,
-		const Coord3* points,  size_t npoints,
-		const uint*   indices, size_t nindices,
-		const Coord3* texcoords)
+	Painter::Data::set_pixel_density (float density)
 	{
-		painter->self->draw(
-			(GLenum) mode, &color, points, npoints, indices, nindices, NULL, texcoords);
+		if (density <= 0)
+			argument_error(__FILE__, __LINE__, "invalid pixel_density.");
+
+		this->pixel_density = density;
+		text_image = Image();
 	}
 
-	void
-	Painter_draw (
-		Painter* painter, PrimitiveMode mode,
-		const Coord3* points,  size_t npoints,
-		const uint*   indices, size_t nindices,
-		const Color*  colors,
-		const Coord3* texcoords)
-	{
-		painter->self->draw(
-			(GLenum) mode, NULL, points, npoints, indices, nindices, colors, texcoords);
-	}
-
-
-	Painter::Painter ()
-	{
-	}
 
 	Painter::~Painter ()
 	{
@@ -681,34 +56,6 @@ namespace Rays
 		self->set_pixel_density(pixel_density);
 	}
 
-	void
-	Painter::bind (const Image& image)
-	{
-		if (!image)
-			argument_error(__FILE__, __LINE__, "invalid image.");
-
-		if (self->painting)
-			invalid_state_error(__FILE__, __LINE__, "painting flag should be false.");
-
-		FrameBuffer fb(Image_get_texture(image));
-		if (!fb)
-			rays_error(__FILE__, __LINE__, "invalid frame buffer.");
-
-		unbind();
-
-		self->frame_buffer = fb;
-		canvas(0, 0, image.width(), image.height(), image.pixel_density());
-	}
-
-	void
-	Painter::unbind ()
-	{
-		if (self->painting)
-			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
-
-		self->frame_buffer = FrameBuffer();
-	}
-
 	const Bounds&
 	Painter::bounds () const
 	{
@@ -721,99 +68,10 @@ namespace Rays
 		return self->pixel_density;
 	}
 
-	void
-	Painter::begin ()
-	{
-		if (self->painting)
-			invalid_state_error(__FILE__, __LINE__, "painting flag should be false.");
-
-		self->opengl_state.push();
-
-		//glEnable(GL_CULL_FACE);
-
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-		OpenGL_check_error(__FILE__, __LINE__);
-
-		glEnable(GL_BLEND);
-		set_blend_mode(self->state.blend_mode);
-
-		FrameBuffer& fb = self->frame_buffer;
-		if (fb)
-		{
-			FrameBuffer_bind(fb.id());
-
-			Texture& tex = fb.texture();
-			if (tex) tex.set_modified();
-		}
-
-		const Bounds& vp = self->viewport;
-		float density    = self->pixel_density;
-		glViewport(
-			(int) (vp.x      * density), (int) (vp.y      * density),
-			(int) (vp.width  * density), (int) (vp.height * density));
-		OpenGL_check_error(__FILE__, __LINE__);
-
-		coord x1 = vp.x, x2 = vp.x + vp.width;
-		coord y1 = vp.y, y2 = vp.y + vp.height;
-		coord z1 = vp.z, z2 = vp.z + vp.depth;
-		if (z1 == 0 && z2 == 0) {z1 = -1000; z2 = 1000;}
-		if (!fb) std::swap(y1, y2);
-
-		self->position_matrix.reset(1);
-		self->position_matrix *= to_rays(glm::ortho(x1, x2, y1, y2));
-
-		// map z to 0.0-1.0
-		self->position_matrix.scale(1, 1, 1.0 / (z2 - z1));
-		self->position_matrix.translate(0, 0, -z2);
-
-		//self->position_matrix.translate(0.375f, 0.375f);
-
-		self->update_clip();
-
-		self->painting = true;
-
-		glClear(GL_DEPTH_BUFFER_BIT);
-	}
-
-	void
-	Painter::end ()
-	{
-		if (!self->painting)
-			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
-
-		if (!self->state_stack.empty())
-			invalid_state_error(__FILE__, __LINE__, "state stack is not empty.");
-
-		if (!self->position_matrix_stack.empty())
-			invalid_state_error(__FILE__, __LINE__, "position matrix stack is not empty.");
-
-		self->painting = false;
-		self->opengl_state.pop();
-		self->default_indices.clear();
-
-		glFinish();
-
-		if (self->frame_buffer)
-			FrameBuffer_unbind();
-	}
-
 	bool
 	Painter::painting () const
 	{
 		return self->painting;
-	}
-
-	void
-	Painter::clear ()
-	{
-		if (!self->painting)
-			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
-
-		const Color& c = self->state.background;
-		glClearColor(c.red, c.green, c.blue, c.alpha);
-		glClear(GL_COLOR_BUFFER_BIT);
-		OpenGL_check_error(__FILE__, __LINE__);
 	}
 
 	static inline void
@@ -832,7 +90,7 @@ namespace Rays
 		if (Polygon_triangulate(&triangles, polygon))
 		{
 			for (size_t i = 0; i < triangles.size(); i += 3)
-				painter->self->draw(GL_LINE_LOOP, &invert_color, &triangles[i], 3);
+				Painter_draw(painter, MODE_LINE_LOOP, &invert_color, &triangles[i], 3);
 		}
 #endif
 	}
@@ -1065,15 +323,15 @@ namespace Rays
 		polygon(create_bezier(points, size, loop, nsegment()));
 	}
 
-	static void
-	draw_image (
+	void
+	Painter_draw_image (
 		Painter* painter, const Image& image,
 		coord src_x, coord src_y, coord src_w, coord src_h,
 		coord dst_x, coord dst_y, coord dst_w, coord dst_h,
-		bool nofill = false, bool nostroke = false,
-		const Shader* shader = NULL)
+		bool nofill, bool nostroke,
+		const Shader* shader)
 	{
-		static const GLenum MODES[] = {GL_TRIANGLE_FAN, GL_LINE_LOOP};
+		static const PrimitiveMode MODES[] = {MODE_TRIANGLE_FAN, MODE_LINE_LOOP};
 
 		assert(painter && image);
 
@@ -1116,8 +374,8 @@ namespace Rays
 			if (!painter->self->state.get_color(&color, (ColorType) type))
 				continue;
 
-			painter->self->draw(
-				MODES[type], &color, points, 4, NULL, 0, NULL, texcoords,
+			Painter_draw(
+				painter, MODES[type], &color, points, 4, NULL, 0, NULL, texcoords,
 				&texinfo, shader);
 		}
 	}
@@ -1128,7 +386,7 @@ namespace Rays
 		if (!image_)
 			argument_error(__FILE__, __LINE__);
 
-		draw_image(
+		Painter_draw_image(
 			this, image_,
 			0, 0, image_.width(), image_.height(),
 			x, y, image_.width(), image_.height());
@@ -1147,7 +405,7 @@ namespace Rays
 		if (!image_)
 			argument_error(__FILE__, __LINE__);
 
-		draw_image(
+		Painter_draw_image(
 			this, image_,
 			0, 0, image_.width(), image_.height(),
 			x, y, width,          height);
@@ -1169,7 +427,7 @@ namespace Rays
 		if (!image_)
 			argument_error(__FILE__, __LINE__);
 
-		draw_image(
+		Painter_draw_image(
 			this, image_,
 			src_x, src_y, src_width,      src_height,
 			dst_x, dst_y, image_.width(), image_.height());
@@ -1194,7 +452,7 @@ namespace Rays
 		if (!image_)
 			argument_error(__FILE__, __LINE__);
 
-		draw_image(
+		Painter_draw_image(
 			this, image_,
 			src_x, src_y, src_width, src_height,
 			dst_x, dst_y, dst_width, dst_height);
@@ -1208,88 +466,6 @@ namespace Rays
 			image_,
 			src_bounds.x, src_bounds.y, src_bounds.width, src_bounds.height,
 			dst_bounds.x, dst_bounds.y, dst_bounds.width, dst_bounds.height);
-	}
-
-	static inline void
-	debug_draw_line (
-		Painter* painter, const Font& font,
-		coord x, coord y, coord str_width, coord str_height)
-	{
-#if 0
-		painter->self->text_image.save("/tmp/font.png");
-
-		painter->push_state();
-		{
-			coord asc, desc, lead;
-			font.get_height(&asc, &desc, &lead);
-			//printf("%f %f %f %f \n", str_height, asc, desc, lead);
-
-			painter->set_stroke(0.5, 0.5, 1);
-			painter->no_fill();
-			painter->rect(x - 1, y - 1, str_width + 2, str_height + 2);
-
-			coord yy = y;
-			painter->set_stroke(1, 0.5, 0.5, 0.4);
-			painter->rect(x, yy, str_width, asc);//str_height);
-
-			yy += asc;
-			painter->set_stroke(1, 1, 0.5, 0.4);
-			painter->rect(x, yy, str_width, desc);
-
-			yy += desc;
-			painter->set_stroke(1, 0.5, 1, 0.4);
-			painter->rect(x, yy, str_width, lead);
-		}
-		painter->pop_state();
-#endif
-	}
-
-	static void
-	draw_line (
-		Painter* painter, const Font& font,
-		const char* line, coord x, coord y, coord width = 0, coord height = 0)
-	{
-		assert(painter && font && line && *line != '\0');
-
-		Painter::Data* self = painter->self.get();
-
-		float density          = self->pixel_density;
-		const RawFont& rawfont = Font_get_raw(font, density);
-		coord str_w            = rawfont.get_width(line);
-		coord str_h            = rawfont.get_height();
-		int tex_w              = ceil(str_w);
-		int tex_h              = ceil(str_h);
-		const Texture& texture = Image_get_texture(self->text_image);
-		if (
-			texture.width()  < tex_w ||
-			texture.height() < tex_h ||
-			self->text_image.pixel_density() != density)
-		{
-			int bmp_w = std::max(texture.width(),  tex_w);
-			int bmp_h = std::max(texture.height(), tex_h);
-			self->text_image = Image(Bitmap(bmp_w, bmp_h), density);
-		}
-
-		if (!self->text_image)
-			invalid_state_error(__FILE__, __LINE__);
-
-		assert(self->text_image.pixel_density() == density);
-
-		Bitmap_draw_string(
-			&self->text_image.bitmap(), rawfont, line, 0, 0, font.smooth());
-
-		str_w /= density;
-		str_h /= density;
-		if (width  == 0) width  = str_w;
-		if (height == 0) height = str_h;
-
-		draw_image(
-			painter, self->text_image,
-			0, 0, str_w, str_h,
-			x, y, str_w, str_h,
-			false, true, &Shader_get_shader_for_text());
-
-		debug_draw_line(painter, font, x, y, str_w / density, str_h / density);
 	}
 
 	static void
@@ -1308,7 +484,7 @@ namespace Rays
 			return;
 
 		if (!strchr(str, '\n'))
-			draw_line(painter, font, str, x, y, width, height);
+			Painter_draw_text_line(painter, font, str, x, y, width, height);
 		else
 		{
 			coord line_height = painter->line_height();
@@ -1317,7 +493,7 @@ namespace Rays
 			split(&lines, str, '\n');
 			for (const auto& line : lines)
 			{
-				draw_line(painter, font, line.c_str(), x, y, width, height);
+				Painter_draw_text_line(painter, font, line.c_str(), x, y, width, height);
 				y += line_height;
 			}
 		}
@@ -1534,66 +710,6 @@ namespace Rays
 		return height;
 	}
 
-	void
-	Painter::set_blend_mode (BlendMode mode)
-	{
-		self->state.blend_mode = mode;
-		switch (mode)
-		{
-			case BLEND_NORMAL:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(
-					GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_ADD:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_SUBTRACT:
-				glBlendEquationSeparate(GL_FUNC_REVERSE_SUBTRACT, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_LIGHTEST:
-				glBlendEquationSeparate(GL_MAX, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_DARKEST:
-				glBlendEquationSeparate(GL_MIN, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_EXCLUSION:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(
-					GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_MULTIPLY:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ZERO, GL_SRC_COLOR, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_SCREEN:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ONE_MINUS_DST_COLOR, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_REPLACE:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-				break;
-
-			default:
-				argument_error(__FILE__, __LINE__, "unknown blend mode");
-				break;
-		}
-		OpenGL_check_error(__FILE__, __LINE__);
-	}
-
 	BlendMode
 	Painter::blend_mode () const
 	{
@@ -1610,7 +726,7 @@ namespace Rays
 	Painter::set_clip (const Bounds& bounds)
 	{
 		self->state.clip = bounds;
-		self->update_clip();
+		Painter_update_clip(this);
 	}
 
 	void
@@ -1728,7 +844,7 @@ namespace Rays
 
 		self->state = self->state_stack.back();
 		self->state_stack.pop_back();
-		self->update_clip();
+		Painter_update_clip(this);
 	}
 
 	void
