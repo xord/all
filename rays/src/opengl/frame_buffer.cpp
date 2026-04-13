@@ -105,7 +105,7 @@ namespace Rays
 		FrameBufferBinder binder(id());
 
 		glFramebufferTexture2D(
-			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id(), 0);
+			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Texture_get_id(texture), 0);
 		OpenGL_check_error(__FILE__, __LINE__);
 
 		self->texture = texture;

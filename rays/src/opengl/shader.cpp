@@ -3,8 +3,7 @@
 
 #include <assert.h>
 #include "rays/exception.h"
-#include "opengl.h"
-#include "image.h"
+#include "../image.h"
 #include "shader_program.h"
 #include "shader_source.h"
 

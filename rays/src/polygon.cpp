@@ -50,6 +50,32 @@ namespace Rays
 {
 
 
+	static void
+	draw_polygon (
+		Painter* painter, PrimitiveMode mode, const Color& color,
+		const Coord3* points,           size_t npoints,
+		const uint*   indices   = NULL, size_t nindices = 0,
+		const Coord3* texcoords = NULL)
+	{
+		Painter_draw(
+			painter, mode, &color, points, npoints, indices, nindices,
+			NULL, texcoords);
+	}
+
+	static void
+	draw_polygon (
+		Painter* painter, PrimitiveMode mode,
+		const Coord3* points,  size_t npoints,
+		const uint*   indices   = NULL, size_t nindices = 0,
+		const Color*  colors    = NULL,
+		const Coord3* texcoords = NULL)
+	{
+		Painter_draw(
+			painter, mode, NULL, points, npoints, indices, nindices,
+			colors, texcoords);
+	}
+
+
 	class Triangles
 	{
 
@@ -119,8 +145,8 @@ namespace Rays
 
 				if (pcolors)
 				{
-					Painter_draw(
-						painter, GL_TRIANGLES,
+					draw_polygon(
+						painter, MODE_TRIANGLES,
 						&points[0],  points.size(),
 						&indices[0], indices.size(),
 						&(*pcolors)[0],
@@ -128,8 +154,8 @@ namespace Rays
 				}
 				else
 				{
-					Painter_draw(
-						painter, GL_TRIANGLES, color,
+					draw_polygon(
+						painter, MODE_TRIANGLES, color,
 						&points[0],  points.size(),
 						&indices[0], indices.size(),
 						ptexcoords ? &(*ptexcoords)[0] : NULL);
@@ -383,8 +409,8 @@ namespace Rays
 
 				for (const auto& polyline : polylines)
 				{
-					Painter_draw(
-						painter, polyline.loop() ? GL_LINE_LOOP : GL_LINE_STRIP, color,
+					draw_polygon(
+						painter, polyline.loop() ? MODE_LINE_LOOP : MODE_LINE_STRIP, color,
 						&polyline[0], polyline.size());
 				}
 			}
@@ -666,8 +692,7 @@ namespace Rays
 				invalid_state_error(__FILE__, __LINE__);
 
 			const auto& outline = polylines[0];
-			Painter_draw(
-				painter, GL_TRIANGLE_FAN, color, &outline[0], outline.size());
+			draw_polygon(painter, MODE_TRIANGLE_FAN, color, &outline[0], outline.size());
 		}
 
 		private:
@@ -802,7 +827,7 @@ namespace Rays
 
 		typedef Polygon::Data Super;
 
-		GLenum mode = 0;
+		PrimitiveMode mode = MODE_NONE;
 
 		EllipseData (
 			coord x, coord y, coord width, coord height,
@@ -826,7 +851,7 @@ namespace Rays
 			if (polylines.size() <= 0)
 				invalid_state_error(__FILE__, __LINE__);
 
-			if (mode == 0)
+			if (mode == MODE_NONE)
 			{
 				Super::fill(painter, color);
 				return;
@@ -836,7 +861,7 @@ namespace Rays
 				invalid_state_error(__FILE__, __LINE__);
 
 			const auto& outline = polylines[0];
-			Painter_draw(painter, mode, color, &outline[0], outline.size());
+			draw_polygon(painter, mode, color, &outline[0], outline.size());
 		}
 
 		private:
@@ -867,7 +892,7 @@ namespace Rays
 				float radian_from = Xot::deg2rad(0);
 				float radian_to   = Xot::deg2rad(360);
 
-				if (!has_hole) mode = GL_TRIANGLE_FAN;
+				if (!has_hole) mode = MODE_TRIANGLE_FAN;
 
 				std::vector<Point> points;
 				points.reserve(nsegment);
@@ -915,7 +940,7 @@ namespace Rays
 				if (!has_hole)
 				{
 					points.emplace_back(x + width / 2, y + height / 2);
-					mode = GL_TRIANGLE_FAN;
+					mode = MODE_TRIANGLE_FAN;
 				}
 
 				for (uint seg = 0; seg <= nsegment; ++seg)

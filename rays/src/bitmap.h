@@ -16,6 +16,10 @@ namespace Rays
 	class RawFont;
 
 
+	void Bitmap_setup (
+		Bitmap* bitmap, int w, int h, const ColorSpace& cs,
+		const void* pixels = NULL, bool clear_pixels = true);
+
 	Bitmap Bitmap_from (const Texture& texture);
 
 	void Bitmap_draw_string (

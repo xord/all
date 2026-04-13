@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __RAYS_SRC_OPENGL_H__
-#define __RAYS_SRC_OPENGL_H__
+#ifndef __RAYS_SRC_OPENGL_OPENGL_H__
+#define __RAYS_SRC_OPENGL_OPENGL_H__
 
 
 #if defined(OSX)
@@ -20,10 +20,6 @@
 namespace Rays
 {
 
-
-	void OpenGL_init ();
-
-	void OpenGL_fin ();
 
 	bool OpenGL_has_error ();
 

@@ -2,7 +2,7 @@
 
 
 #include "rays/exception.h"
-#include "../opengl.h"
+#include "../renderer.h"
 
 
 namespace Rays
@@ -25,7 +25,7 @@ namespace Rays
 
 		global::initialized = true;
 
-		OpenGL_init();
+		Renderer_init();
 	}
 
 	void
@@ -34,7 +34,7 @@ namespace Rays
 		if (!global::initialized)
 			rays_error(__FILE__, __LINE__, "not initialized.");
 
-		OpenGL_fin();
+		Renderer_fin();
 
 		global::initialized = false;
 	}

@@ -4,7 +4,7 @@
 #include <SDL.h>
 #include "rays/exception.h"
 #include "rays/debug.h"
-#include "../opengl.h"
+#include "../renderer.h"
 
 
 namespace Rays
@@ -28,7 +28,7 @@ namespace Rays
 		if (SDL_Init(SDL_INIT_VIDEO) < 0)
 			rays_error(__FILE__, __LINE__, SDL_GetError());
 
-		OpenGL_init();
+		Renderer_init();
 
 		global::initialized = true;
 	}
@@ -39,7 +39,7 @@ namespace Rays
 		if (!global::initialized)
 			rays_error(__FILE__, __LINE__, "not initialized");
 
-		OpenGL_fin();
+		Renderer_fin();
 
 		SDL_Quit();
 

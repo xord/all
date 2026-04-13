@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __RAYS_SRC_SHADER_SOURCE_H__
-#define __RAYS_SRC_SHADER_SOURCE_H__
+#ifndef __RAYS_SRC_OPENGL_SHADER_SOURCE_H__
+#define __RAYS_SRC_OPENGL_SHADER_SOURCE_H__
 
 
 #include <xot/pimpl.h>
