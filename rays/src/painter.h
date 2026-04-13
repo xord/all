@@ -5,7 +5,7 @@
 
 
 #include "rays/painter.h"
-#include "opengl.h"
+#include "opengl/opengl.h"
 
 
 namespace Rays

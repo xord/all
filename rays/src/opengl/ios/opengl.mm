@@ -1,5 +1,5 @@
 // -*- objc -*-
-#include "../opengl.h"
+#include "../../renderer.h"
 
 
 #import <OpenGLES/EAGL.h>
@@ -22,13 +22,13 @@ namespace Rays
 
 
 	void
-	OpenGL_init ()
+	Renderer_init ()
 	{
 		activate_offscreen_context();
 	}
 
 	void
-	OpenGL_fin ()
+	Renderer_fin ()
 	{
 	}
 

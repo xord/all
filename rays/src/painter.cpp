@@ -13,7 +13,7 @@
 #include "rays/point.h"
 #include "rays/bounds.h"
 #include "rays/color.h"
-#include "opengl.h"
+#include "opengl/opengl.h"
 #include "glm.h"
 #include "matrix.h"
 #include "polygon.h"

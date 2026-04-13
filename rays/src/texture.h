@@ -7,7 +7,7 @@
 #include <xot/pimpl.h>
 #include "rays/defs.h"
 #include "rays/color_space.h"
-#include "opengl.h"
+#include "opengl/opengl.h"
 
 
 namespace Rays

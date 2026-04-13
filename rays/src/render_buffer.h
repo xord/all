@@ -6,7 +6,7 @@
 
 #include <xot/pimpl.h>
 #include "rays/defs.h"
-#include "opengl.h"
+#include "opengl/opengl.h"
 
 
 namespace Rays

@@ -5,7 +5,7 @@
 #include "rays/exception.h"
 #include "rays/bitmap.h"
 #include "rays/debug.h"
-#include "opengl.h"
+#include "opengl/opengl.h"
 #include "color_space.h"
 #include "frame_buffer.h"
 

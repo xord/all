@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "rays/exception.h"
 #include "rays/debug.h"
-#include "opengl.h"
+#include "opengl/opengl.h"
 #include "bitmap.h"
 #include "texture.h"
 

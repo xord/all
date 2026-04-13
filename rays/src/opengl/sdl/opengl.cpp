@@ -1,7 +1,8 @@
-#include "../opengl.h"
+#include "../../renderer.h"
 
 
 #include <SDL.h>
+#include "../opengl.h"
 #include "rays/rays.h"
 #include "rays/exception.h"
 
@@ -66,7 +67,7 @@ namespace Rays
 
 
 	void
-	OpenGL_init ()
+	Renderer_init ()
 	{
 		activate_offscreen_context();
 
@@ -80,7 +81,7 @@ namespace Rays
 	}
 
 	void
-	OpenGL_fin ()
+	Renderer_fin ()
 	{
 	}
 

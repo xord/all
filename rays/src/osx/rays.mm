@@ -4,7 +4,7 @@
 
 #import <Foundation/Foundation.h>
 #include "rays/exception.h"
-#include "../opengl.h"
+#include "../renderer.h"
 
 
 namespace Rays
@@ -29,7 +29,7 @@ namespace Rays
 
 		global::pool = [[NSAutoreleasePool alloc] init];
 
-		OpenGL_init();
+		Renderer_init();
 	}
 
 	void
@@ -38,7 +38,7 @@ namespace Rays
 		if (!global::pool)
 			rays_error(__FILE__, __LINE__, "not initialized.");
 
-		OpenGL_fin();
+		Renderer_fin();
 
 		[global::pool release];
 		global::pool = nil;

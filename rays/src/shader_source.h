@@ -5,7 +5,7 @@
 
 
 #include <xot/pimpl.h>
-#include "opengl.h"
+#include "opengl/opengl.h"
 
 
 namespace Rays
