@@ -9,7 +9,7 @@
 #include <SDL.h>
 #include <xot/util.h>
 #include "rays/exception.h"
-#include "../color_space.h"
+#include "../opengl/color_space.h"
 #include "../font.h"
 #include "../texture.h"
 #include "../frame_buffer.h"

@@ -6,7 +6,7 @@
 #include "rays/bitmap.h"
 #include "rays/debug.h"
 #include "opengl/opengl.h"
-#include "color_space.h"
+#include "opengl/color_space.h"
 #include "frame_buffer.h"
 
 
