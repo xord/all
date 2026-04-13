@@ -623,25 +623,25 @@ namespace Rays
 
 	void
 	Painter_draw (
-		Painter* painter, GLenum mode, const Color& color,
+		Painter* painter, PrimitiveMode mode, const Color& color,
 		const Coord3* points,  size_t npoints,
 		const uint*   indices, size_t nindices,
 		const Coord3* texcoords)
 	{
 		painter->self->draw(
-			mode, &color, points, npoints, indices, nindices, NULL, texcoords);
+			(GLenum) mode, &color, points, npoints, indices, nindices, NULL, texcoords);
 	}
 
 	void
 	Painter_draw (
-		Painter* painter, GLenum mode,
+		Painter* painter, PrimitiveMode mode,
 		const Coord3* points,  size_t npoints,
 		const uint*   indices, size_t nindices,
 		const Color*  colors,
 		const Coord3* texcoords)
 	{
 		painter->self->draw(
-			mode, NULL, points, npoints, indices, nindices, colors, texcoords);
+			(GLenum) mode, NULL, points, npoints, indices, nindices, colors, texcoords);
 	}
 
 

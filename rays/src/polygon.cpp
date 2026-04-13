@@ -120,7 +120,7 @@ namespace Rays
 				if (pcolors)
 				{
 					Painter_draw(
-						painter, GL_TRIANGLES,
+						painter, MODE_TRIANGLES,
 						&points[0],  points.size(),
 						&indices[0], indices.size(),
 						&(*pcolors)[0],
@@ -129,7 +129,7 @@ namespace Rays
 				else
 				{
 					Painter_draw(
-						painter, GL_TRIANGLES, color,
+						painter, MODE_TRIANGLES, color,
 						&points[0],  points.size(),
 						&indices[0], indices.size(),
 						ptexcoords ? &(*ptexcoords)[0] : NULL);
@@ -384,7 +384,7 @@ namespace Rays
 				for (const auto& polyline : polylines)
 				{
 					Painter_draw(
-						painter, polyline.loop() ? GL_LINE_LOOP : GL_LINE_STRIP, color,
+						painter, polyline.loop() ? MODE_LINE_LOOP : MODE_LINE_STRIP, color,
 						&polyline[0], polyline.size());
 				}
 			}
@@ -667,7 +667,7 @@ namespace Rays
 
 			const auto& outline = polylines[0];
 			Painter_draw(
-				painter, GL_TRIANGLE_FAN, color, &outline[0], outline.size());
+				painter, MODE_TRIANGLE_FAN, color, &outline[0], outline.size());
 		}
 
 		private:
@@ -802,7 +802,7 @@ namespace Rays
 
 		typedef Polygon::Data Super;
 
-		GLenum mode = 0;
+		PrimitiveMode mode = MODE_NONE;
 
 		EllipseData (
 			coord x, coord y, coord width, coord height,
@@ -826,7 +826,7 @@ namespace Rays
 			if (polylines.size() <= 0)
 				invalid_state_error(__FILE__, __LINE__);
 
-			if (mode == 0)
+			if (mode == MODE_NONE)
 			{
 				Super::fill(painter, color);
 				return;
@@ -867,7 +867,7 @@ namespace Rays
 				float radian_from = Xot::deg2rad(0);
 				float radian_to   = Xot::deg2rad(360);
 
-				if (!has_hole) mode = GL_TRIANGLE_FAN;
+				if (!has_hole) mode = MODE_TRIANGLE_FAN;
 
 				std::vector<Point> points;
 				points.reserve(nsegment);
@@ -915,7 +915,7 @@ namespace Rays
 				if (!has_hole)
 				{
 					points.emplace_back(x + width / 2, y + height / 2);
-					mode = GL_TRIANGLE_FAN;
+					mode = MODE_TRIANGLE_FAN;
 				}
 
 				for (uint seg = 0; seg <= nsegment; ++seg)
