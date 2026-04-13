@@ -174,7 +174,7 @@ namespace Rays
 	struct Painter::Data
 	{
 
-		bool painting = false;
+		bool painting       = false;
 
 		float pixel_density = 1;
 
@@ -206,29 +206,23 @@ namespace Rays
 
 	void Painter_draw (
 		Painter* painter, PrimitiveMode mode, const Color* color,
-		const Coord3* points,           size_t npoints,
-		const uint*   indices   = NULL, size_t nindices = 0,
-		const Color*  colors    = NULL,
-		const Coord3* texcoords = NULL,
+		const Coord3* points,              size_t npoints,
+		const uint*   indices      = NULL, size_t nindices = 0,
+		const Color*  colors       = NULL,
+		const Coord3* texcoords    = NULL,
 		const TextureInfo* texinfo = NULL,
 		const Shader* shader       = NULL);
 
 	void Painter_draw_image (
-		Painter* painter,
-		const Image& image,
+		Painter* painter, const Image& image,
 		coord src_x, coord src_y, coord src_w, coord src_h,
 		coord dst_x, coord dst_y, coord dst_w, coord dst_h,
-		bool nofill          = false,
-		bool nostroke        = false,
+		bool nofill = false, bool nostroke = false,
 		const Shader* shader = NULL);
 
 	void Painter_draw_text_line (
-		Painter* painter,
-		const Font& font,
-		const char* line,
-		coord x, coord y,
-		coord width  = 0,
-		coord height = 0);
+		Painter* painter, const Font& font, const char* line, coord x, coord y,
+		coord width = 0, coord height = 0);
 
 
 }// Rays
