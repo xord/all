@@ -3,10 +3,9 @@
 
 #include <assert.h>
 #include "rays/exception.h"
-#include "image.h"
-#include "opengl/opengl.h"
-#include "opengl/shader_program.h"
-#include "opengl/shader_source.h"
+#include "../image.h"
+#include "shader_program.h"
+#include "shader_source.h"
 
 
 namespace Rays

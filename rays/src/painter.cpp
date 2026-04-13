@@ -19,10 +19,10 @@
 #include "bitmap.h"
 #include "image.h"
 #include "font.h"
-#include "shader.h"
 #include "opengl/opengl.h"
 #include "opengl/texture.h"
 #include "opengl/frame_buffer.h"
+#include "opengl/shader.h"
 #include "opengl/shader_program.h"
 #include "opengl/shader_source.h"
 
