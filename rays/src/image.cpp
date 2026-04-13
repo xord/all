@@ -7,7 +7,6 @@
 #include "rays/debug.h"
 #include "bitmap.h"
 #include "texture.h"
-#include "opengl/opengl.h"
 
 
 #if 0
