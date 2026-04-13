@@ -11,8 +11,6 @@
 #include "rays/exception.h"
 #include "../font.h"
 #include "../texture.h"
-#include "../opengl/color_space.h"
-#include "../opengl/frame_buffer.h"
 
 
 namespace Rays
@@ -50,11 +48,10 @@ namespace Rays
 	};// Bitmap::Data
 
 
-	static void
-	setup_bitmap (
-		Bitmap* bitmap,
-		int w, int h, const ColorSpace& cs,
-		const void* pixels = NULL, bool clear_pixels = true)
+	void
+	Bitmap_setup (
+		Bitmap* bitmap, int w, int h, const ColorSpace& cs,
+		const void* pixels, bool clear_pixels)
 	{
 		if (w <= 0)
 			argument_error(__FILE__, __LINE__);
@@ -102,31 +99,6 @@ namespace Rays
 		}
 		else if (clear_pixels)
 			SDL_FillRect(self->surface, NULL, 0);
-	}
-
-	Bitmap
-	Bitmap_from (const Texture& tex)
-	{
-		if (!tex)
-			argument_error(__FILE__, __LINE__);
-
-		Bitmap bmp;
-		setup_bitmap(
-			&bmp, tex.width(), tex.height(), tex.color_space(), NULL, false);
-
-		GLenum format, type;
-		ColorSpace_get_gl_format_and_type(&format, &type, tex.color_space());
-
-		FrameBuffer fb(tex);
-		FrameBufferBinder binder(fb.id());
-
-		for (int y = 0; y < bmp.height(); ++y)
-		{
-			GLvoid* ptr = (GLvoid*) bmp.at<uchar>(0, y);
-			glReadPixels(0, y, bmp.width(), 1, format, type, ptr);
-		}
-
-		return bmp;
 	}
 
 	void
@@ -248,7 +220,7 @@ namespace Rays
 	Bitmap::Bitmap (
 		int width, int height, const ColorSpace& color_space, const void* pixels)
 	{
-		setup_bitmap(this, width, height, color_space, pixels);
+		Bitmap_setup(this, width, height, color_space, pixels);
 	}
 
 	Bitmap::~Bitmap ()
