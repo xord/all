@@ -4,7 +4,7 @@
 #include <vector>
 #include "rays/exception.h"
 #include "rays/debug.h"
-#include "texture.h"
+#include "../texture.h"
 #include "render_buffer.h"
 
 

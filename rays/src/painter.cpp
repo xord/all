@@ -21,7 +21,7 @@
 #include "texture.h"
 #include "image.h"
 #include "font.h"
-#include "frame_buffer.h"
+#include "opengl/frame_buffer.h"
 #include "shader.h"
 #include "shader_program.h"
 #include "shader_source.h"

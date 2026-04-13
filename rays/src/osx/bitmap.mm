@@ -8,7 +8,7 @@
 #include "../opengl/color_space.h"
 #include "../font.h"
 #include "../texture.h"
-#include "../frame_buffer.h"
+#include "../opengl/frame_buffer.h"
 
 
 namespace Rays

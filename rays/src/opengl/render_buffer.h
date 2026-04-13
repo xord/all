@@ -1,12 +1,12 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __RAYS_SRC_RENDER_BUFFER_H__
-#define __RAYS_SRC_RENDER_BUFFER_H__
+#ifndef __RAYS_SRC_OPENGL_RENDER_BUFFER_H__
+#define __RAYS_SRC_OPENGL_RENDER_BUFFER_H__
 
 
 #include <xot/pimpl.h>
 #include "rays/defs.h"
-#include "opengl/opengl.h"
+#include "opengl.h"
 
 
 namespace Rays

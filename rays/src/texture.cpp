@@ -7,7 +7,7 @@
 #include "rays/debug.h"
 #include "opengl/opengl.h"
 #include "opengl/color_space.h"
-#include "frame_buffer.h"
+#include "opengl/frame_buffer.h"
 
 
 namespace Rays
