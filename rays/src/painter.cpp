@@ -13,18 +13,18 @@
 #include "rays/point.h"
 #include "rays/bounds.h"
 #include "rays/color.h"
-#include "opengl/opengl.h"
 #include "glm.h"
 #include "matrix.h"
 #include "polygon.h"
 #include "bitmap.h"
-#include "opengl/texture.h"
 #include "image.h"
 #include "font.h"
-#include "opengl/frame_buffer.h"
 #include "shader.h"
 #include "shader_program.h"
 #include "shader_source.h"
+#include "opengl/opengl.h"
+#include "opengl/texture.h"
+#include "opengl/frame_buffer.h"
 
 
 namespace Rays

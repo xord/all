@@ -5,9 +5,9 @@
 #include <assert.h>
 #include "rays/exception.h"
 #include "rays/debug.h"
-#include "opengl/opengl.h"
 #include "bitmap.h"
 #include "texture.h"
+#include "opengl/opengl.h"
 
 
 #if 0

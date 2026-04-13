@@ -5,9 +5,9 @@
 #import <Cocoa/Cocoa.h>
 #include <xot/util.h>
 #include "rays/exception.h"
-#include "../opengl/color_space.h"
 #include "../font.h"
 #include "../texture.h"
+#include "../opengl/color_space.h"
 #include "../opengl/frame_buffer.h"
 
 

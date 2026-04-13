@@ -8,8 +8,8 @@
 #include "rays/shader.h"
 #include "rays/exception.h"
 #include "shader_source.h"
-#include "opengl/texture.h"
 #include "painter.h"
+#include "opengl/texture.h"
 
 
 namespace Rays
