@@ -7,9 +7,9 @@
 #include <algorithm>
 #include "rays/shader.h"
 #include "rays/exception.h"
+#include "../painter.h"
+#include "texture.h"
 #include "shader_source.h"
-#include "painter.h"
-#include "opengl/texture.h"
 
 
 namespace Rays
