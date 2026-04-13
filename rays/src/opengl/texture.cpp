@@ -5,9 +5,8 @@
 #include "rays/exception.h"
 #include "rays/bitmap.h"
 #include "rays/debug.h"
-#include "opengl/opengl.h"
-#include "opengl/color_space.h"
-#include "opengl/frame_buffer.h"
+#include "color_space.h"
+#include "frame_buffer.h"
 
 
 namespace Rays
@@ -320,9 +319,9 @@ namespace Rays
 	}
 
 	GLuint
-	Texture::id () const
+	Texture_get_id (const Texture& texture)
 	{
-		return self->id;
+		return texture.self->id;
 	}
 
 	void

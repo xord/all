@@ -8,7 +8,7 @@
 #include "rays/shader.h"
 #include "rays/exception.h"
 #include "shader_source.h"
-#include "texture.h"
+#include "opengl/texture.h"
 #include "painter.h"
 
 
@@ -169,7 +169,7 @@ namespace Rays
 					shader_error(__FILE__, __LINE__, "texture unit must be less than %d", max);
 
 				glActiveTexture(GL_TEXTURE0 + unit);
-				glBindTexture(GL_TEXTURE_2D, texture.id());
+				glBindTexture(GL_TEXTURE_2D, Texture_get_id(texture));
 				glUniform1i(location, unit);
 				return !OpenGL_has_error();
 			}

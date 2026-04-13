@@ -18,7 +18,7 @@
 #include "matrix.h"
 #include "polygon.h"
 #include "bitmap.h"
-#include "texture.h"
+#include "opengl/texture.h"
 #include "image.h"
 #include "font.h"
 #include "opengl/frame_buffer.h"
@@ -452,7 +452,7 @@ namespace Rays
 						glActiveTexture(GL_TEXTURE0);
 						OpenGL_check_error(__FILE__, __LINE__);
 
-						glBindTexture(GL_TEXTURE_2D, texture->id());
+						glBindTexture(GL_TEXTURE_2D, Texture_get_id(*texture));
 						OpenGL_check_error(__FILE__, __LINE__);
 
 						glUniform1i(loc, 0);

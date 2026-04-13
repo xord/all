@@ -7,7 +7,6 @@
 #include <xot/pimpl.h>
 #include "rays/defs.h"
 #include "rays/color_space.h"
-#include "opengl/opengl.h"
 
 
 namespace Rays
@@ -45,8 +44,6 @@ namespace Rays
 			const ColorSpace& color_space () const;
 
 			bool smooth () const;
-
-			GLuint id () const;
 
 			void set_modified (bool modified = true);
 
