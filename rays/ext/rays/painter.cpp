@@ -809,6 +809,21 @@ RUCY_DEF0(pop_matrix)
 }
 RUCY_END
 
+static
+RUCY_DEF1(set_global_debug, debug)
+{
+	Rays::Painter::set_debug(debug);
+	return debug;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_global_debug)
+{
+	return value(Rays::Painter::debug());
+}
+RUCY_END
+
 
 static Class cPainter;
 
@@ -890,6 +905,9 @@ Init_rays_painter ()
 	cPainter.define_method("matrix",  get_matrix);
 	cPainter.define_method("push_matrix", push_matrix);
 	cPainter.define_method( "pop_matrix",  pop_matrix);
+
+	cPainter.define_singleton_method("debug=", set_global_debug);
+	cPainter.define_singleton_method("debug?", get_global_debug);
 }
 
 

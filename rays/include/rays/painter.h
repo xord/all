@@ -340,6 +340,10 @@ namespace Rays
 
 			bool operator ! () const;
 
+			static void set_debug (bool debug);
+
+			static bool     debug ();
+
 			struct Data;
 
 			Xot::PSharedImpl<Data> self;

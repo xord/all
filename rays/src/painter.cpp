@@ -954,5 +954,19 @@ namespace Rays
 		return !operator bool();
 	}
 
+	static bool g_debug = false;
+
+	void
+	Painter::set_debug (bool debug)
+	{
+		g_debug = debug;
+	}
+
+	bool
+	Painter::debug ()
+	{
+		return g_debug;
+	}
+
 
 }// Rays
