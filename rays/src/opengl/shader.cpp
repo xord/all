@@ -34,22 +34,20 @@ namespace Rays
 
 		std::unique_ptr<ShaderProgram> program;
 
-		std::unique_ptr<ShaderEnv> env;
+		ShaderEnv env;
 
 		Data (
 			const char* fragment_shader_source,
 			const char*   vertex_shader_source,
 			ShaderEnv* env_)
+		:	env(env_ ? *env_ : DEFAULT_ENV)
 		{
 			if (!fragment_shader_source) return;
-
-			if (env_)
-				this->env.reset(new ShaderEnv(*env_));
 
 			program.reset(new ShaderProgram(
 				make_vertex_shader_source(vertex_shader_source),
 				ShaderSource(GL_FRAGMENT_SHADER, fragment_shader_source),
-				env_ ? ShaderEnv_get_flags(*env_) : 0));
+				env));
 		}
 
 		ShaderSource make_vertex_shader_source (const char* source)
@@ -57,10 +55,7 @@ namespace Rays
 			if (source)
 				return ShaderSource(GL_VERTEX_SHADER, source);
 			else
-			{
-				return ShaderEnv_get_default_vertex_shader_source(
-					env ? env.get() : &DEFAULT_ENV);
-			}
+				return ShaderEnv_get_default_vertex_shader_source(&env);
 		}
 
 	};// Shader::Data
@@ -157,8 +152,7 @@ namespace Rays
 	const ShaderBuiltinVariableNames&
 	Shader_get_builtin_variable_names (const Shader& shader)
 	{
-		return ShaderEnv_get_builtin_variable_names(
-			shader.self->env ? *shader.self->env : DEFAULT_ENV);
+		return ShaderEnv_get_builtin_variable_names(shader.self->env);
 	}
 
 	const Shader&

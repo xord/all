@@ -5,10 +5,10 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include "rays/shader.h"
 #include "rays/exception.h"
 #include "../painter.h"
 #include "texture.h"
+#include "shader.h"
 #include "shader_source.h"
 
 
@@ -253,11 +253,11 @@ namespace Rays
 	struct ShaderProgram::Data
 	{
 
-		GLuint id  = 0;
-
-		uint flags = 0;
+		GLuint id = 0;
 
 		ShaderSource vertex, fragment;
+
+		ShaderEnv env;
 
 		UniformList uniform_values, uniform_textures;
 
@@ -370,7 +370,8 @@ namespace Rays
 			if (applied) return;
 			applied = true;
 
-			bool ignore_no_loc = flags & ShaderEnv::IGNORE_NO_UNIFORM_LOCATION_ERROR;
+			bool ignore_no_loc =
+				ShaderEnv_get_flags(env) & ShaderEnv::IGNORE_NO_UNIFORM_LOCATION_ERROR;
 
 			for (size_t i = 0; i < uniform_values.size(); ++i)
 				uniform_values[i].apply(i, program, ignore_no_loc);
@@ -406,11 +407,12 @@ namespace Rays
 
 
 	ShaderProgram::ShaderProgram (
-		const ShaderSource& vertex, const ShaderSource& fragment, uint flags)
+		const ShaderSource& vertex, const ShaderSource& fragment,
+		const ShaderEnv& env)
 	{
 		self->vertex   = vertex;
 		self->fragment = fragment;
-		self->flags    = flags;
+		self->env      = env;
 	}
 
 	ShaderProgram::~ShaderProgram ()

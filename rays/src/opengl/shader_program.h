@@ -7,6 +7,7 @@
 #include <xot/pimpl.h>
 #include "rays/defs.h"
 #include "rays/coord.h"
+#include "rays/shader.h"
 #include "opengl.h"
 
 
@@ -28,7 +29,7 @@ namespace Rays
 			ShaderProgram (
 				const ShaderSource& vertex,
 				const ShaderSource& fragment,
-				uint flags);
+				const ShaderEnv& env);
 
 			~ShaderProgram ();
 
