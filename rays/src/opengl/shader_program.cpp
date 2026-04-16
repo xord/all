@@ -322,6 +322,18 @@ namespace Rays
 			attach_shader(vertex);
 			attach_shader(fragment);
 
+#ifdef OSX
+			// OpenGL compatibility profile historically aliases attribute
+			// location 0 with gl_Vertex; some drivers refuse to draw when
+			// location 0 is not enabled. Pin position there as a safeguard.
+			for (const auto& name :
+				ShaderEnv_get_builtin_variable_names(env).attribute_position_names)
+			{
+				glBindAttribLocation(id, 0, name.c_str());
+				OpenGL_check_error(__FILE__, __LINE__);
+			}
+#endif
+
 			glLinkProgram(id);
 			OpenGL_check_error(__FILE__, __LINE__);
 
