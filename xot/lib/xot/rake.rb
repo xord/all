@@ -295,26 +295,29 @@ module Xot
         namespace name do
           desc "clone #{name}"
           file dir do
-            opts  = '-c advice.detachedHead=false --depth 1'
+            rake_puts "vendoring #{name}"
+            q     = ::Rake.verbose ? '' : '-q'
+            opts  = "#{q} -c advice.detachedHead=false --depth 1"
             opts += " --branch #{branch || tag}" if branch || tag
             opts += " --recursive"               if submodules.empty?
             sh %( git clone #{opts} #{repos} #{dir} )
             Dir.chdir dir do
-              sh %( git fetch --depth 1 origin #{commit} )
-              sh %( git checkout #{commit} )
+              sh %( git fetch #{q} --depth 1 origin #{commit} )
+              sh %( git checkout #{q} #{commit} )
             end if commit
             unless submodules.empty?
               Dir.chdir dir do
                 submodules.each do |path|
-                  sh %( git submodule init #{path} )
+                  sh %( git submodule #{q} init #{path} )
                 end
-                sh %( git submodule update --depth=1 )
+                sh %( git submodule #{q} update --depth=1 )
                 sh post_submodules if post_submodules
               end
             end
             Dir.chdir(dir) {after_clone_block.call} if after_clone_block
             unless get_env :VENDOR_NOCOMPILE, false
               vendor_srcs_map(*srcdirs).each do |src, obj|
+                rake_puts "compiling #{src}"
                 sh %( #{cxx} -c #{cppflags} #{cxxflags false} -o #{obj} #{src} )
               end
             end
