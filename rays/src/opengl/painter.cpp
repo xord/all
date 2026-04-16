@@ -560,7 +560,7 @@ namespace Rays
 			painter, self->text_image,
 			0, 0, str_w, str_h,
 			x, y, str_w, str_h,
-			false, true, &Shader_get_shader_for_text());
+			&Shader_get_shader_for_text());
 
 		debug_draw_text_line(painter, font, x, y, str_w / density, str_h / density);
 	}

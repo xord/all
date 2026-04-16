@@ -217,7 +217,6 @@ namespace Rays
 		Painter* painter, const Image& image,
 		coord src_x, coord src_y, coord src_w, coord src_h,
 		coord dst_x, coord dst_y, coord dst_w, coord dst_h,
-		bool nofill = false, bool nostroke = false,
 		const Shader* shader = NULL);
 
 	void Painter_draw_text_line (

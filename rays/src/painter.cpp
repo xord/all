@@ -328,11 +328,8 @@ namespace Rays
 		Painter* painter, const Image& image,
 		coord src_x, coord src_y, coord src_w, coord src_h,
 		coord dst_x, coord dst_y, coord dst_w, coord dst_h,
-		bool nofill, bool nostroke,
 		const Shader* shader)
 	{
-		static const PrimitiveMode MODES[] = {MODE_TRIANGLE_FAN, MODE_LINE_LOOP};
-
 		assert(painter && image);
 
 		Painter::Data* self = painter->self.get();
@@ -340,7 +337,8 @@ namespace Rays
 		if (!self->painting)
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
-		if (!self->state.has_color())
+		Color color;
+		if (!self->state.get_color(&color, FILL))
 			return;
 
 		const Texture& texture = Image_get_texture(image);
@@ -365,19 +363,9 @@ namespace Rays
 
 		TextureInfo texinfo(texture, src_x, src_y, src_x + src_w, src_y + src_h);
 
-		Color color;
-		for (int type = 0; type < COLOR_TYPE_MAX; ++type)
-		{
-			if ((nofill && type == FILL) || (nostroke && type == STROKE))
-				continue;
-
-			if (!painter->self->state.get_color(&color, (ColorType) type))
-				continue;
-
-			Painter_draw(
-				painter, MODES[type], &color, points, 4, NULL, 0, NULL, texcoords,
-				&texinfo, shader);
-		}
+		Painter_draw(
+			painter, MODE_TRIANGLE_FAN, &color, points, 4, NULL, 0, NULL, texcoords,
+			&texinfo, shader);
 	}
 
 	void
