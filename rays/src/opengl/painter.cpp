@@ -459,7 +459,7 @@ namespace Rays
 
 		PainterData* self = get_data(painter);
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "'painting' should be true.");
 
 		std::unique_ptr<TextureInfo> ptexinfo;
@@ -577,7 +577,7 @@ namespace Rays
 		if (!image)
 			argument_error(__FILE__, __LINE__, "invalid image.");
 
-		if (self->painting)
+		if (self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be false.");
 
 		FrameBuffer fb(Image_get_texture(image));
@@ -593,7 +593,7 @@ namespace Rays
 	void
 	Painter::unbind ()
 	{
-		if (self->painting)
+		if (self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		get_data(this)->frame_buffer = FrameBuffer();
@@ -604,7 +604,7 @@ namespace Rays
 	{
 		PainterData* self = get_data(this);
 
-		if (self->painting)
+		if (self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be false.");
 
 		self->opengl_state.push();
@@ -651,7 +651,7 @@ namespace Rays
 
 		Painter_update_clip(this);
 
-		self->painting = true;
+		Xot::add_flag(&self->flags, Painter::Data::PAINTING);
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
@@ -661,7 +661,7 @@ namespace Rays
 	{
 		PainterData* self = get_data(this);
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		if (!self->state_stack.empty())
@@ -670,7 +670,7 @@ namespace Rays
 		if (!self->position_matrix_stack.empty())
 			invalid_state_error(__FILE__, __LINE__, "position matrix stack is not empty.");
 
-		self->painting = false;
+		Xot::remove_flag(&self->flags, Painter::Data::PAINTING);
 		self->opengl_state.pop();
 		self->default_indices.clear();
 
@@ -683,7 +683,7 @@ namespace Rays
 	void
 	Painter::clear ()
 	{
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		const Color& c = self->state.background;

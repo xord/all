@@ -49,7 +49,7 @@ namespace Rays
 		if (!viewport)
 			argument_error(__FILE__, __LINE__);
 
-		if (self->painting)
+		if (self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be false.");
 
 		self->viewport = viewport;
@@ -71,7 +71,7 @@ namespace Rays
 	bool
 	Painter::painting () const
 	{
-		return self->painting;
+		return self->is_painting();
 	}
 
 	static inline void
@@ -102,7 +102,7 @@ namespace Rays
 	{
 		Painter::Data* self = painter->self.get();
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		if (!self->state.has_color())
@@ -334,7 +334,7 @@ namespace Rays
 
 		Painter::Data* self = painter->self.get();
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		Color color;
@@ -465,7 +465,7 @@ namespace Rays
 
 		Painter::Data* self = painter->self.get();
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		if (!self->state.has_color())
@@ -541,7 +541,7 @@ namespace Rays
 	{
 		self->state.background = color;
 
-		if (self->painting && clear) this->clear();
+		if (self->is_painting() && clear) this->clear();
 	}
 
 	void
@@ -923,6 +923,24 @@ namespace Rays
 
 		self->position_matrix = self->position_matrix_stack.back();
 		self->position_matrix_stack.pop_back();
+	}
+
+	void
+	Painter::add_flag (uint flags)
+	{
+		Xot::add_flag(&self->flags, flags);
+	}
+
+	void
+	Painter::remove_flag (uint flags)
+	{
+		Xot::remove_flag(&self->flags, flags);
+	}
+
+	bool
+	Painter::has_flag (uint flags) const
+	{
+		return Xot::has_flag(self->flags, flags);
 	}
 
 	Painter::operator bool () const
