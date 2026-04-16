@@ -19,6 +19,8 @@ namespace Rays
 	class Texture
 	{
 
+		typedef Texture This;
+
 		public:
 
 			Texture ();
@@ -52,6 +54,10 @@ namespace Rays
 			operator bool () const;
 
 			bool operator ! () const;
+
+			friend bool operator == (const This& lhs, const This& rhs);
+
+			friend bool operator != (const This& lhs, const This& rhs);
 
 			struct Data;
 

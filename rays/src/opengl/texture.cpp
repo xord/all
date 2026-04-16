@@ -228,6 +228,12 @@ namespace Rays
 		self->modified    = true;
 	}
 
+	GLuint
+	Texture_get_id (const Texture& texture)
+	{
+		return texture.self->id;
+	}
+
 
 	Texture::Texture ()
 	{
@@ -318,12 +324,6 @@ namespace Rays
 		return self->smooth;
 	}
 
-	GLuint
-	Texture_get_id (const Texture& texture)
-	{
-		return texture.self->id;
-	}
-
 	void
 	Texture::set_modified (bool modified)
 	{
@@ -349,6 +349,18 @@ namespace Rays
 	Texture::operator ! () const
 	{
 		return !operator bool();
+	}
+
+	bool
+	operator == (const Texture& lhs, const Texture& rhs)
+	{
+		return lhs.self->id == rhs.self->id;
+	}
+
+	bool
+	operator != (const Texture& lhs, const Texture& rhs)
+	{
+		return !operator==(lhs, rhs);
 	}
 
 
