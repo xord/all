@@ -25,9 +25,9 @@ namespace Rays
 			coord array[SIZE];
 		};
 
-		Coord2& reset (coord value = 0);
+		This& reset (coord value = 0);
 
-		Coord2& reset (coord x, coord y);
+		This& reset (coord x, coord y);
 
 		size_t size () const;
 
@@ -58,9 +58,9 @@ namespace Rays
 
 		This& operator = (const Coord2& rhs);
 
-		Coord3& reset (coord value = 0);
+		This& reset (coord value = 0);
 
-		Coord3& reset (coord x, coord y, coord z = 0);
+		This& reset (coord x, coord y, coord z = 0);
 
 		size_t size () const;
 
@@ -93,9 +93,9 @@ namespace Rays
 
 		This& operator = (const Coord3& rhs);
 
-		Coord4& reset (coord value = 0);
+		This& reset (coord value = 0);
 
-		Coord4& reset (coord x, coord y, coord z = 0, coord w = 1);
+		This& reset (coord x, coord y, coord z = 0, coord w = 1);
 
 		size_t size () const;
 

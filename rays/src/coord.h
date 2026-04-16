@@ -21,11 +21,21 @@ namespace Rays
 
 	inline const Vec3& to_glm (const Coord3& val) {return *(const Vec3*) &val;}
 
+	inline       Vec4& to_glm (      Coord4& val) {return *(      Vec4*) &val;}
+
+	inline const Vec4& to_glm (const Coord4& val) {return *(const Vec4*) &val;}
+
 	template <typename T>
 	inline       T&    to_rays (      Vec3&  val) {return *(      T*)    &val;}
 
 	template <typename T>
 	inline const T&    to_rays (const Vec3&  val) {return *(const T*)    &val;}
+
+	template <typename T>
+	inline       T&    to_rays (      Vec4&  val) {return *(      T*)    &val;}
+
+	template <typename T>
+	inline const T&    to_rays (const Vec4&  val) {return *(const T*)    &val;}
 
 
 }// Rays
