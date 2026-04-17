@@ -30,7 +30,7 @@ namespace Rays
 		ShaderEnv::NameList uniform_texcoord_matrix_names;
 		ShaderEnv::NameList uniform_texcoord_min_names;
 		ShaderEnv::NameList uniform_texcoord_max_names;
-		ShaderEnv::NameList uniform_texcoord_offset_names;
+		ShaderEnv::NameList uniform_texcoord_pixel_names;
 		ShaderEnv::NameList uniform_texture_names;
 
 		ShaderBuiltinVariableNames (
@@ -44,7 +44,7 @@ namespace Rays
 			const ShaderEnv::NameList& uniform_texcoord_matrix_names,
 			const ShaderEnv::NameList& uniform_texcoord_min_names,
 			const ShaderEnv::NameList& uniform_texcoord_max_names,
-			const ShaderEnv::NameList& uniform_texcoord_offset_names,
+			const ShaderEnv::NameList& uniform_texcoord_pixel_names,
 			const ShaderEnv::NameList& uniform_texture_names);
 
 	};// ShaderBuiltinVariableNames

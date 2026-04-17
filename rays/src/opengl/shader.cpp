@@ -22,7 +22,7 @@ namespace Rays
 	#define U_TEXCOORD_MATRIX (names.uniform_texcoord_matrix_names[0])
 	#define U_TEXCOORD_MIN    (names.uniform_texcoord_min_names[0])
 	#define U_TEXCOORD_MAX    (names.uniform_texcoord_max_names[0])
-	#define U_TEXCOORD_OFFSET (names.uniform_texcoord_offset_names[0])
+	#define U_TEXCOORD_PIXEL  (names.uniform_texcoord_pixel_names[0])
 	#define U_TEXTURE         (names.uniform_texture_names[0])
 
 
@@ -84,14 +84,14 @@ namespace Rays
 			"varying vec4 "      + V_COLOR + ";\n"
 			"uniform vec3 "      + U_TEXCOORD_MIN + ";\n"
 			"uniform vec3 "      + U_TEXCOORD_MAX + ";\n"
-			"uniform vec3 "      + U_TEXCOORD_OFFSET + ";\n"
+			"uniform vec3 "      + U_TEXCOORD_PIXEL + ";\n"
 			"uniform sampler2D " + U_TEXTURE + ";\n"
 			"void main ()\n"
 			"{\n"
 			"  vec2 _rays_texcoord = clamp(" +
 				V_TEXCOORD     + ".xy, " +
 				U_TEXCOORD_MIN + ".xy, " +
-				U_TEXCOORD_MAX + ".xy - " + U_TEXCOORD_OFFSET + ".xy);\n"
+				U_TEXCOORD_MAX + ".xy - " + U_TEXCOORD_PIXEL + ".xy);\n"
 			"  vec4 _rays_color    = texture2D(" + U_TEXTURE + ", _rays_texcoord);\n"
 			"  gl_FragColor        = " + V_COLOR + " * _rays_color;\n"
 			"}\n");
@@ -451,7 +451,7 @@ namespace Rays
 		const NameList& u_texcoord_matrix_names,
 		const NameList& u_texcoord_min_names,
 		const NameList& u_texcoord_max_names,
-		const NameList& u_texcoord_offset_names,
+		const NameList& u_texcoord_pixel_names,
 		const NameList& u_texture_names,
 		uint flags)
 	:	self(new Data(
@@ -459,7 +459,7 @@ namespace Rays
 				a_position_names, a_texcoord_names, a_color_names,
 				v_position_name,  v_texcoord_name,  v_color_name,
 				u_position_matrix_names, u_texcoord_matrix_names,
-				u_texcoord_min_names, u_texcoord_max_names, u_texcoord_offset_names,
+				u_texcoord_min_names, u_texcoord_max_names, u_texcoord_pixel_names,
 				u_texture_names),
 			flags))
 	{
@@ -504,7 +504,7 @@ namespace Rays
 		const ShaderEnv::NameList& u_texcoord_matrix,
 		const ShaderEnv::NameList& u_texcoord_min,
 		const ShaderEnv::NameList& u_texcoord_max,
-		const ShaderEnv::NameList& u_texcoord_offset,
+		const ShaderEnv::NameList& u_texcoord_pixel,
 		const ShaderEnv::NameList& u_texture)
 	:	attribute_position_names(a_position),
 		attribute_texcoord_names(a_texcoord),
@@ -516,7 +516,7 @@ namespace Rays
 		uniform_texcoord_matrix_names(u_texcoord_matrix),
 		uniform_texcoord_min_names(u_texcoord_min),
 		uniform_texcoord_max_names(u_texcoord_max),
-		uniform_texcoord_offset_names(u_texcoord_offset),
+		uniform_texcoord_pixel_names(u_texcoord_pixel),
 		uniform_texture_names(u_texture)
 	{
 		validate_names(&attribute_position_names,      "attribute_position",      "a_Position");
@@ -529,7 +529,7 @@ namespace Rays
 		validate_names(&uniform_texcoord_matrix_names, "uniform_texcoord_matrix", "u_TexCoordMatrix");
 		validate_names(&uniform_texcoord_min_names,    "uniform_texcoord_min",    "u_TexCoordMin");
 		validate_names(&uniform_texcoord_max_names,    "uniform_texcoord_max",    "u_TexCoordMax");
-		validate_names(&uniform_texcoord_offset_names, "uniform_texcoord_offset", "u_TexCoordOffset");
+		validate_names(&uniform_texcoord_pixel_names,  "uniform_texcoord_pixel",  "u_TexCoordPixel");
 		validate_names(&uniform_texture_names,         "uniform_texture",         "u_Texture");
 	}
 

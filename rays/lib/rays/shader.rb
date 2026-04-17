@@ -20,7 +20,7 @@ module Rays
           :attribute_position, :attribute_texcoord, :attribute_color,
             :varying_position,   :varying_texcoord,   :varying_color,
           :uniform_position_matrix, :uniform_texcoord_matrix,
-          :uniform_texcoord_min, :uniform_texcoord_max, :uniform_texcoord_offset,
+          :uniform_texcoord_min, :uniform_texcoord_max, :uniform_texcoord_pixel,
           :uniform_texture),
         ignore_no_uniform_location_error)
 

@@ -306,7 +306,7 @@ namespace Rays
 				glUniform3fv(loc, 1, max.array);
 			});
 		}
-		for (const auto& name : names.uniform_texcoord_offset_names)
+		for (const auto& name : names.uniform_texcoord_pixel_names)
 		{
 			apply_uniform(program, name, [&](GLint loc) {
 				glUniform3fv(loc, 1, offset.array);
