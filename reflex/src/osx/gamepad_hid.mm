@@ -424,9 +424,15 @@ namespace Reflex
 		*state = value;
 
 		if (value < 0)
+		{
+			call_button_event(gamepad, button_positive, key_code_positive,  0);
 			call_button_event(gamepad, button_negative, key_code_negative, -value);
+		}
 		else
+		{
+			call_button_event(gamepad, button_negative, key_code_negative,  0);
 			call_button_event(gamepad, button_positive, key_code_positive,  value);
+		}
 	}
 
 	static void
