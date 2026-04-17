@@ -1,6 +1,13 @@
 # rays ChangeLog
 
 
+## [v0.3.11] - 2026-04-17
+
+- Move OpenGL code into src/opengl/ and introduce Renderer abstraction
+
+- Fix Polygon#initialize crash on empty args
+
+
 ## [v0.3.10] - 2026-04-09
 
 - Add Font::smooth

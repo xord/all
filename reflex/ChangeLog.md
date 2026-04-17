@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.3.14] - 2026-04-17
+
+- Fix HID gamepad stick direction release not firing on direction switch
+
+
 ## [v0.3.13] - 2026-04-10
 
 - Revert "Work around macOS 15 HID gamepad Y-axis inversion"

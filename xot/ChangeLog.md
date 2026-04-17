@@ -1,6 +1,12 @@
 # xot ChangeLog
 
 
+## [v0.3.11] - 2026-04-17
+
+- Invert build script default verbosity: quiet by default, add verbose option
+- Improve vendor task output with quiet git and progress messages
+
+
 ## [v0.3.10] - 2026-04-09
 
 - Add minimal support for SDL2

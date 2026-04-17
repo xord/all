@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.3.11] - 2026-04-17
+
+- Fix ANYARGS function pointer warnings in module bindings
+
+
 ## [v0.3.10] - 2026-04-09
 
 - Remove non-const VALUE* operator[] from Value wrapper for arrays
