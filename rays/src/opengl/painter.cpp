@@ -245,18 +245,6 @@ namespace Rays
 	}
 
 	static void
-	apply_attribute (
-		const ShaderProgram& program, const char* name,
-		std::function<void(GLint)> apply_fun)
-	{
-		GLint loc = glGetAttribLocation(program.id(), name);
-		if (loc < 0) return;
-
-		apply_fun(loc);
-		OpenGL_check_error(__FILE__, __LINE__);
-	}
-
-	static void
 	apply_builtin_uniforms (
 		const ShaderProgram& program, const ShaderBuiltinVariableNames& names,
 		const Matrix& position_matrix, const State& state,
@@ -288,24 +276,10 @@ namespace Rays
 
 		if (!texinfo || !texture || !*texture) return;
 
-		coord tw = texture->reserved_width();
-		coord th = texture->reserved_height();
-		Point min(texinfo->min.x / tw, texinfo->min.y / th);
-		Point max(texinfo->max.x / tw, texinfo->max.y / th);
-		Point offset(          1 / tw,              1 / th);
+		Point offset(
+			1 / texture->reserved_width(),
+			1 / texture->reserved_height());
 
-		for (const auto& name : names.uniform_texcoord_min_names)
-		{
-			apply_uniform(program, name, [&](GLint loc) {
-				glUniform3fv(loc, 1, min.array);
-			});
-		}
-		for (const auto& name : names.uniform_texcoord_max_names)
-		{
-			apply_uniform(program, name, [&](GLint loc) {
-				glUniform3fv(loc, 1, max.array);
-			});
-		}
 		for (const auto& name : names.uniform_texcoord_pixel_names)
 		{
 			apply_uniform(program, name, [&](GLint loc) {
@@ -336,6 +310,18 @@ namespace Rays
 		return GL_FLOAT;
 	}
 
+	static void
+	apply_attribute (
+		const ShaderProgram& program, const char* name,
+		std::function<void(GLint)> apply_fun)
+	{
+		GLint loc = glGetAttribLocation(program.id(), name);
+		if (loc < 0) return;
+
+		apply_fun(loc);
+		OpenGL_check_error(__FILE__, __LINE__);
+	}
+
 	template <typename CoordN>
 	static void
 	apply_attribute (
@@ -355,7 +341,8 @@ namespace Rays
 				}
 			#endif
 
-			apply_attribute(program, name, [&](GLint loc) {
+			apply_attribute(program, name, [&](GLint loc)
+			{
 				glEnableVertexAttribArray(loc);
 				OpenGL_check_error(
 					__FILE__, __LINE__, "loc: %d %s\n", loc, name.c_str());
@@ -375,7 +362,8 @@ namespace Rays
 	apply_attributes (
 		PainterData* self,
 		const ShaderProgram& program, const ShaderBuiltinVariableNames& names,
-		const Coord3* points, size_t npoints, const Coord3* texcoords,
+		const Coord3* points, size_t npoints,
+		const Coord3* texcoords, const TextureInfo* texinfo,
 		const Color* color, const Color* colors)
 	{
 		assert(npoints > 0);
@@ -388,6 +376,24 @@ namespace Rays
 		apply_attribute(
 			self, program, names.attribute_texcoord_names,
 			texcoords ? texcoords : points, npoints);
+
+		if (texinfo && texinfo->texture)
+		{
+			coord tw = texinfo->texture.reserved_width();
+			coord th = texinfo->texture.reserved_height();
+			Point min(texinfo->min.x / tw, texinfo->min.y / th);
+			Point max(texinfo->max.x / tw, texinfo->max.y / th);
+			for (const auto& name : names.attribute_texcoord_min_names)
+			{
+				apply_attribute(
+					program, name, [&](GLint loc) {glVertexAttrib3fv(loc, min.array);});
+			}
+			for (const auto& name : names.attribute_texcoord_max_names)
+			{
+				apply_attribute(
+					program, name, [&](GLint loc) {glVertexAttrib3fv(loc, max.array);});
+			}
+		}
 
 		if (colors)
 		{
@@ -407,9 +413,8 @@ namespace Rays
 #else
 			for (const auto& name : names.attribute_color_names)
 			{
-				apply_attribute(program, name, [&](GLint loc) {
-					glVertexAttrib4fv(loc, color->array);
-				});
+				apply_attribute(
+					program, name, [&](GLint loc) {glVertexAttrib4fv(loc, color->array);});
 			}
 #endif
 		}
@@ -475,7 +480,7 @@ namespace Rays
 		apply_builtin_uniforms(
 			*program, names, self->position_matrix, self->state, texinfo);
 		apply_attributes(
-			self, *program, names, points, npoints, texcoords, color, colors);
+			self, *program, names, points, npoints, texcoords, texinfo, color, colors);
 		draw_indices(self, (GLenum) mode, indices, nindices, npoints);
 		self->cleanup();
 

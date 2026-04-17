@@ -67,15 +67,17 @@ make_env (const Value& names, const Value& ignore_no_uniform_location_error)
 		to_name_list(names, 0),
 		to_name_list(names, 1),
 		to_name_list(names, 2),
-		to_name(     names, 3),
-		to_name(     names, 4),
+		to_name_list(names, 3),
+		to_name_list(names, 4),
 		to_name(     names, 5),
-		to_name_list(names, 6),
-		to_name_list(names, 7),
-		to_name_list(names, 8),
-		to_name_list(names, 9),
+		to_name(     names, 6),
+		to_name(     names, 7),
+		to_name(     names, 8),
+		to_name(     names, 9),
 		to_name_list(names, 10),
 		to_name_list(names, 11),
+		to_name_list(names, 12),
+		to_name_list(names, 13),
 		flags);
 }
 
