@@ -410,9 +410,7 @@ namespace Rucy
 		static const rb_data_type_t data_type = {
 			typeid(T).name(),
 			{mark, free, NULL, NULL, {NULL}},
-			NULL, NULL,
-			RUBY_TYPED_FREE_IMMEDIATELY |
-				(mark == nullptr ? RUBY_TYPED_WB_PROTECTED : 0)
+			NULL, NULL, RUBY_TYPED_FREE_IMMEDIATELY
 		};
 		return &data_type;
 	}
