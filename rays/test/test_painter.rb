@@ -234,6 +234,15 @@ class TestPainter < Test::Unit::TestCase
     assert_equal              20, pa.font.size
   end
 
+  def test_debug_accessor()
+    pa       = painter
+    assert_false pa.debug?
+    pa.debug = true
+    assert_true  pa.debug?
+    pa.debug = false
+    assert_false pa.debug?
+  end
+
   def test_color_by_name()
     pa = painter
     pa.fill =         :rgb001

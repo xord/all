@@ -174,7 +174,14 @@ namespace Rays
 	struct Painter::Data
 	{
 
-		bool painting       = false;
+		enum Flag
+		{
+
+			PAINTING = Xot::bit(1, Painter::FLAG_LAST)
+
+		};// Flag
+
+		uint flags          = Painter::FLAG_BATCHING;
 
 		float pixel_density = 1;
 
@@ -197,12 +204,19 @@ namespace Rays
 
 		virtual ~Data () = default;
 
+		bool is_painting () const
+		{
+			return Xot::has_flag(flags, PAINTING);
+		}
+
 		void set_pixel_density (float density);
 
 	};// Painter::Data
 
 
 	void Painter_update_clip (Painter* painter);
+
+	void Painter_flush (Painter* painter);
 
 	void Painter_draw (
 		Painter* painter, PrimitiveMode mode, const Color* color,

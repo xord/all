@@ -20,30 +20,34 @@ namespace Rays
 
 		ShaderEnv::NameList attribute_position_names;
 		ShaderEnv::NameList attribute_texcoord_names;
+		ShaderEnv::NameList attribute_texcoord_min_names;
+		ShaderEnv::NameList attribute_texcoord_max_names;
 		ShaderEnv::NameList attribute_color_names;
 
 		String varying_position_name;
 		String varying_texcoord_name;
+		String varying_texcoord_min_name;
+		String varying_texcoord_max_name;
 		String varying_color_name;
 
 		ShaderEnv::NameList uniform_position_matrix_names;
 		ShaderEnv::NameList uniform_texcoord_matrix_names;
-		ShaderEnv::NameList uniform_texcoord_min_names;
-		ShaderEnv::NameList uniform_texcoord_max_names;
 		ShaderEnv::NameList uniform_texcoord_pixel_names;
 		ShaderEnv::NameList uniform_texture_names;
 
 		ShaderBuiltinVariableNames (
 			const ShaderEnv::NameList& attribute_position_names,
 			const ShaderEnv::NameList& attribute_texcoord_names,
+			const ShaderEnv::NameList& attribute_texcoord_min_names,
+			const ShaderEnv::NameList& attribute_texcoord_max_names,
 			const ShaderEnv::NameList& attribute_color_names,
 			const char* varying_position_name,
 			const char* varying_texcoord_name,
+			const char* varying_texcoord_min_name,
+			const char* varying_texcoord_max_name,
 			const char* varying_color_name,
 			const ShaderEnv::NameList& uniform_position_matrix_names,
 			const ShaderEnv::NameList& uniform_texcoord_matrix_names,
-			const ShaderEnv::NameList& uniform_texcoord_min_names,
-			const ShaderEnv::NameList& uniform_texcoord_max_names,
 			const ShaderEnv::NameList& uniform_texcoord_pixel_names,
 			const ShaderEnv::NameList& uniform_texture_names);
 

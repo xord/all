@@ -98,14 +98,16 @@ namespace Rays
 			ShaderEnv (
 				const NameList& attribute_position_names      = {},
 				const NameList& attribute_texcoord_names      = {},
+				const NameList& attribute_texcoord_min_names  = {},
+				const NameList& attribute_texcoord_max_names  = {},
 				const NameList& attribute_color_names         = {},
 				const char*     varying_position_name         = NULL,
 				const char*     varying_texcoord_name         = NULL,
+				const char*     varying_texcoord_min_name     = NULL,
+				const char*     varying_texcoord_max_name     = NULL,
 				const char*     varying_color_name            = NULL,
 				const NameList& uniform_position_matrix_names = {},
 				const NameList& uniform_texcoord_matrix_names = {},
-				const NameList& uniform_texcoord_min_names    = {},
-				const NameList& uniform_texcoord_max_names    = {},
 				const NameList& uniform_texcoord_pixel_names  = {},
 				const NameList& uniform_texture_names         = {},
 				uint flags                                    = 0);

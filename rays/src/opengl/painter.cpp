@@ -9,6 +9,7 @@
 #include <functional>
 #include "rays/exception.h"
 #include "../glm.h"
+#include "../coord.h"
 #include "../bitmap.h"
 #include "../image.h"
 #include "../font.h"
@@ -21,6 +22,14 @@
 
 namespace Rays
 {
+
+
+	struct Vector4 : Coord4
+	{
+
+		Vector4 (const Coord3& p) {Coord4::operator=(p);}
+
+	};// Vector4
 
 
 	struct OpenGLState
@@ -128,6 +137,43 @@ namespace Rays
 	};// DefaultIndices
 
 
+	struct Batcher
+	{
+
+		int count = 0;
+
+		Shader shader;
+
+		Texture texture;
+
+		std::vector<Vector4> points;
+
+		std::vector<uint>    indices;
+
+		std::vector<Color>   colors;
+
+		std::vector<Vector4> texcoords;
+
+		std::vector<Coord3>  texcoord_mins;
+
+		std::vector<Coord3>  texcoord_maxes;
+
+		void clear ()
+		{
+			count   = 0;
+			shader  = Shader();
+			texture = Texture();
+			points        .clear();
+			indices       .clear();
+			colors        .clear();
+			texcoords     .clear();
+			texcoord_mins .clear();
+			texcoord_maxes.clear();
+		}
+
+	};// Batcher
+
+
 	struct PainterData : Painter::Data
 	{
 
@@ -140,6 +186,10 @@ namespace Rays
 		std::vector<GLint> locations;
 
 		std::vector<GLuint> buffers;
+
+		std::vector<GLuint> triangle_fan_indices_buffer;
+
+		Batcher batcher;
 
 		GLuint create_and_bind_buffer (GLenum target, const void* data, GLsizeiptr size)
 		{
@@ -206,32 +256,6 @@ namespace Rays
 		OpenGL_check_error(__FILE__, __LINE__);
 	}
 
-	static const TextureInfo*
-	setup_texinfo (
-		PainterData* self, const TextureInfo* texinfo,
-		std::unique_ptr<TextureInfo>& ptr)
-	{
-		if (texinfo) return texinfo;
-
-		const Texture* tex =
-			self->state.texture ? &Image_get_texture(self->state.texture) : NULL;
-		if (!tex) return NULL;
-
-		ptr.reset(new TextureInfo(*tex, 0, 0, tex->width(), tex->height()));
-		return ptr.get();
-	}
-
-	static const Shader*
-	setup_shader (
-		PainterData* self, const Shader* shader, bool for_texture)
-	{
-		if (self->state.shader) return &self->state.shader;
-		if (shader)             return shader;
-		return for_texture
-			?	&Shader_get_default_shader_for_texture(self->state.texcoord_wrap)
-			:	&Shader_get_default_shader_for_shape();
-	}
-
 	static void
 	apply_uniform (
 		const ShaderProgram& program, const char* name,
@@ -245,34 +269,11 @@ namespace Rays
 	}
 
 	static void
-	apply_attribute (
-		const ShaderProgram& program, const char* name,
-		std::function<void(GLint)> apply_fun)
-	{
-		GLint loc = glGetAttribLocation(program.id(), name);
-		if (loc < 0) return;
-
-		apply_fun(loc);
-		OpenGL_check_error(__FILE__, __LINE__);
-	}
-
-	static void
-	apply_builtin_uniforms (
+	apply_uniforms (
 		const ShaderProgram& program, const ShaderBuiltinVariableNames& names,
-		const Matrix& position_matrix, const State& state,
-		const TextureInfo* texinfo)
+		const Matrix& position_matrix, const Matrix& texcoord_matrix,
+		const Texture* texture)
 	{
-		const Texture* texture = texinfo ? &texinfo->texture : NULL;
-
-		Matrix texcoord_matrix(1);
-		if (texture && *texture)
-		{
-			bool normal = state.texcoord_mode == TEXCOORD_NORMAL;
-			texcoord_matrix.scale(
-				(normal ? texture->width()  : 1.0) / texture->reserved_width(),
-				(normal ? texture->height() : 1.0) / texture->reserved_height());
-		}
-
 		for (const auto& name : names.uniform_position_matrix_names)
 		{
 			apply_uniform(program, name, [&](GLint loc) {
@@ -286,43 +287,28 @@ namespace Rays
 			});
 		}
 
-		if (!texinfo || !texture || !*texture) return;
-
-		coord tw = texture->reserved_width();
-		coord th = texture->reserved_height();
-		Point min(texinfo->min.x / tw, texinfo->min.y / th);
-		Point max(texinfo->max.x / tw, texinfo->max.y / th);
-		Point offset(          1 / tw,              1 / th);
-
-		for (const auto& name : names.uniform_texcoord_min_names)
+		if (texture && *texture)
 		{
-			apply_uniform(program, name, [&](GLint loc) {
-				glUniform3fv(loc, 1, min.array);
-			});
-		}
-		for (const auto& name : names.uniform_texcoord_max_names)
-		{
-			apply_uniform(program, name, [&](GLint loc) {
-				glUniform3fv(loc, 1, max.array);
-			});
-		}
-		for (const auto& name : names.uniform_texcoord_pixel_names)
-		{
-			apply_uniform(program, name, [&](GLint loc) {
-				glUniform3fv(loc, 1, offset.array);
-			});
-		}
-		for (const auto& name : names.uniform_texture_names)
-		{
-			apply_uniform(program, name, [&](GLint loc) {
-				glActiveTexture(GL_TEXTURE0);
-				OpenGL_check_error(__FILE__, __LINE__);
+			Point pixel_size(
+				1 / texture->reserved_width(),
+				1 / texture->reserved_height());
+			for (const auto& name : names.uniform_texcoord_pixel_names)
+			{
+				apply_uniform(
+					program, name, [&](GLint loc) {glUniform3fv(loc, 1, pixel_size.array);});
+			}
+			for (const auto& name : names.uniform_texture_names)
+			{
+				apply_uniform(program, name, [&](GLint loc) {
+					glActiveTexture(GL_TEXTURE0);
+					OpenGL_check_error(__FILE__, __LINE__);
 
-				glBindTexture(GL_TEXTURE_2D, Texture_get_id(*texture));
-				OpenGL_check_error(__FILE__, __LINE__);
+					glBindTexture(GL_TEXTURE_2D, Texture_get_id(*texture));
+					OpenGL_check_error(__FILE__, __LINE__);
 
-				glUniform1i(loc, 0);
-			});
+					glUniform1i(loc, 0);
+				});
+			}
 		}
 	}
 
@@ -334,6 +320,18 @@ namespace Rays
 	get_gl_type<float> ()
 	{
 		return GL_FLOAT;
+	}
+
+	static void
+	apply_attribute (
+		const ShaderProgram& program, const char* name,
+		std::function<void(GLint)> apply_fun)
+	{
+		GLint loc = glGetAttribLocation(program.id(), name);
+		if (loc < 0) return;
+
+		apply_fun(loc);
+		OpenGL_check_error(__FILE__, __LINE__);
 	}
 
 	template <typename CoordN>
@@ -355,7 +353,8 @@ namespace Rays
 				}
 			#endif
 
-			apply_attribute(program, name, [&](GLint loc) {
+			apply_attribute(program, name, [&](GLint loc)
+			{
 				glEnableVertexAttribArray(loc);
 				OpenGL_check_error(
 					__FILE__, __LINE__, "loc: %d %s\n", loc, name.c_str());
@@ -371,12 +370,16 @@ namespace Rays
 		OpenGL_check_error(__FILE__, __LINE__);
 	}
 
+	template <typename CoordN>
 	static void
 	apply_attributes (
 		PainterData* self,
 		const ShaderProgram& program, const ShaderBuiltinVariableNames& names,
-		const Coord3* points, size_t npoints, const Coord3* texcoords,
-		const Color* color, const Color* colors)
+		const CoordN* points, size_t npoints,
+		const Color* color, const Color* colors,
+		const CoordN* texcoords,
+		const Coord3* texcoord_min,  const Coord3* texcoord_max,
+		const Coord3* texcoord_mins, const Coord3* texcoord_maxes)
 	{
 		assert(npoints > 0);
 		assert(!!color != !!colors);
@@ -384,10 +387,6 @@ namespace Rays
 		apply_attribute(
 			self, program, names.attribute_position_names,
 			points, npoints);
-
-		apply_attribute(
-			self, program, names.attribute_texcoord_names,
-			texcoords ? texcoords : points, npoints);
 
 		if (colors)
 		{
@@ -407,18 +406,51 @@ namespace Rays
 #else
 			for (const auto& name : names.attribute_color_names)
 			{
-				apply_attribute(program, name, [&](GLint loc) {
-					glVertexAttrib4fv(loc, color->array);
-				});
+				apply_attribute(
+					program, name, [&](GLint loc) {glVertexAttrib4fv(loc, color->array);});
 			}
 #endif
+		}
+
+		apply_attribute(
+			self, program, names.attribute_texcoord_names,
+			texcoords ? texcoords : points, npoints);
+
+		if (texcoord_mins)
+		{
+			apply_attribute(
+				self, program, names.attribute_texcoord_min_names,
+				texcoord_mins, npoints);
+		}
+		else if (texcoord_min)
+		{
+			for (const auto& name : names.attribute_texcoord_min_names)
+			{
+				apply_attribute(
+					program, name, [&](GLint loc) {glVertexAttrib3fv(loc, texcoord_min->array);});
+			}
+		}
+
+		if (texcoord_maxes)
+		{
+			apply_attribute(
+				self, program, names.attribute_texcoord_max_names,
+				texcoord_maxes, npoints);
+		}
+		else if (texcoord_max)
+		{
+			for (const auto& name : names.attribute_texcoord_max_names)
+			{
+				apply_attribute(
+					program, name, [&](GLint loc) {glVertexAttrib3fv(loc, texcoord_max->array);});
+			}
 		}
 	}
 
 	static void
 	draw_indices (
-		PainterData* self,
-		GLenum mode, const uint* indices, size_t nindices, size_t npoints)
+		PainterData* self, PrimitiveMode mode,
+		const uint* indices, size_t nindices, size_t npoints)
 	{
 		if (!indices || nindices <= 0)
 		{
@@ -428,18 +460,230 @@ namespace Rays
 		}
 
 		#ifdef IOS
-			glDrawElements(mode, (GLsizei) nindices, GL_UNSIGNED_INT, indices);
+			glDrawElements((GLenum) mode, (GLsizei) nindices, GL_UNSIGNED_INT, indices);
 			OpenGL_check_error(__FILE__, __LINE__);
 		#else
 			self->create_and_bind_buffer(
 				GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(uint) * nindices);
 
-			glDrawElements(mode, (GLsizei) nindices, GL_UNSIGNED_INT, 0);
+			glDrawElements((GLenum) mode, (GLsizei) nindices, GL_UNSIGNED_INT, 0);
 			OpenGL_check_error(__FILE__, __LINE__);
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			OpenGL_check_error(__FILE__, __LINE__);
 		#endif
+	}
+
+	static void
+	setup_texcoord_variables (
+		Matrix* matrix, Point* min, Point* max,
+		const State& state, const TextureInfo& texinfo)
+	{
+		if (!texinfo.texture) return;
+
+		coord tw = texinfo.texture.reserved_width();
+		coord th = texinfo.texture.reserved_height();
+
+		bool normal = state.texcoord_mode == TEXCOORD_NORMAL;
+		matrix->scale(
+			(normal ? texinfo.texture.width()  : 1.0) / tw,
+			(normal ? texinfo.texture.height() : 1.0) / th);
+
+		min->reset(texinfo.min.x / tw, texinfo.min.y / th);
+		max->reset(texinfo.max.x / tw, texinfo.max.y / th);
+	}
+
+	static void
+	draw (
+		PainterData* self, PrimitiveMode mode,
+		const Color* color,
+		const Coord3* points,  size_t npoints,
+		const uint*   indices, size_t nindices,
+		const Color*  colors,
+		const Coord3* texcoords, const TextureInfo* texinfo,
+		const Shader& shader, const Matrix& position_matrix)
+	{
+		const ShaderProgram* program = Shader_get_program(shader);
+		if (!program || !*program) return;
+
+		ShaderProgram_activate(*program);
+
+		Matrix texcoord_matrix(1);
+		Point texcoord_min(0, 0), texcoord_max(1, 1);
+		if (texinfo)
+		{
+			setup_texcoord_variables(
+				&texcoord_matrix, &texcoord_min, &texcoord_max, self->state, *texinfo);
+		}
+
+		const auto& names = Shader_get_builtin_variable_names(shader);
+		apply_uniforms(
+			*program, names, position_matrix, texcoord_matrix,
+			texinfo ? &texinfo->texture : NULL);
+		apply_attributes(
+			self, *program, names, points, npoints, color, colors,
+			texcoords, &texcoord_min, &texcoord_max, NULL, NULL);
+		draw_indices(self, mode, indices, nindices, npoints);
+		self->cleanup();
+
+		ShaderProgram_deactivate();
+	}
+
+	static void
+	draw_batch (PainterData* self)
+	{
+		Batcher& batcher = self->batcher;
+		if (batcher.points.empty()) return;
+
+		const ShaderProgram* program = Shader_get_program(batcher.shader);
+		if (!program || !*program)
+			return batcher.clear();
+
+		ShaderProgram_activate(*program);
+
+		const auto& names = Shader_get_builtin_variable_names(batcher.shader);
+		Matrix identity(1);
+		apply_uniforms(
+			*program, names, identity, identity, batcher.texture ? &batcher.texture : NULL);
+		apply_attributes(
+			self, *program, names, &batcher.points[0], batcher.points.size(),
+			NULL, &batcher.colors[0],
+			&batcher.texcoords[0],
+			NULL, NULL, &batcher.texcoord_mins[0], &batcher.texcoord_maxes[0]);
+		draw_indices(
+			self, MODE_TRIANGLES,
+			&batcher.indices[0], batcher.indices.size(), batcher.points.size());
+		self->cleanup();
+
+		ShaderProgram_deactivate();
+		batcher.clear();
+	}
+
+	static inline Vector4
+	apply_matrix (const Matrix& matrix, const Coord3& point)
+	{
+		return to_rays<Vector4>(to_glm(matrix) * Vec4(point.x, point.y, point.z, 1));
+	}
+
+	static void
+	batch (
+		Painter* painter, PrimitiveMode mode, const Color* color,
+		const Coord3* points,  size_t npoints,
+		const uint*   indices, size_t nindices,
+		const Color*  colors,
+		const Coord3* texcoords, const TextureInfo* texinfo,
+		const Shader& shader)
+	{
+		PainterData* self = get_data(painter);
+		Batcher& batcher  = self->batcher;
+
+		Texture texture = texinfo ? texinfo->texture : Texture();
+		if (
+			batcher.points.empty()    ||
+			batcher.shader  != shader ||
+			batcher.texture != texture)
+		{
+			Painter_flush(painter);
+			batcher.shader  = shader;
+			batcher.texture = texture;
+		}
+
+		if (++batcher.count <= 5)
+		{
+			return draw(
+				self, mode, color, points, npoints, indices, nindices, colors,
+				texcoords, texinfo, shader, self->position_matrix);
+		}
+
+		size_t points0 = batcher.points.size();
+
+		for (size_t i = 0; i < npoints; ++i)
+			batcher.points.push_back(apply_matrix(self->position_matrix, points[i]));
+
+		if (indices && nindices > 0)
+		{
+			for (size_t i = 0; i < nindices; ++i)
+				batcher.indices.push_back((uint) (points0 + indices[i]));
+		}
+		else
+		{
+			for (size_t i = 0; i < npoints; ++i)
+				batcher.indices.push_back((uint) (points0 + i));
+		}
+
+		if (colors)
+			batcher.colors.insert(batcher.colors.end(), colors, colors + npoints);
+		else if (color)
+			batcher.colors.insert(batcher.colors.end(), npoints, *color);
+
+		if (texture)
+		{
+			Matrix matrix(1);
+			Point min(0, 0), max(1, 1);
+			setup_texcoord_variables(&matrix, &min, &max, self->state, *texinfo);
+
+			const Coord3* src = texcoords ? texcoords : points;
+			for (size_t i = 0; i < npoints; ++i)
+				batcher.texcoords.push_back(apply_matrix(matrix, src[i]));
+
+			batcher.texcoord_mins .insert(batcher.texcoord_mins.end(),  npoints, min);
+			batcher.texcoord_maxes.insert(batcher.texcoord_maxes.end(), npoints, max);
+		}
+		else
+		{
+			const Coord3* src = texcoords ? texcoords : points;
+			batcher.texcoords     .insert(batcher.texcoords.end(),      src, src + npoints);
+			batcher.texcoord_mins .insert(batcher.texcoord_mins.end(),  npoints, Point(0, 0));
+			batcher.texcoord_maxes.insert(batcher.texcoord_maxes.end(), npoints, Point(1, 1));
+		}
+	}
+
+	void
+	Painter_flush (Painter* painter)
+	{
+		draw_batch(get_data(painter));
+	}
+
+	static const TextureInfo*
+	setup_texinfo (
+		PainterData* self, const TextureInfo* texinfo,
+		std::unique_ptr<TextureInfo>* ptr)
+	{
+		assert(ptr);
+
+		if (texinfo) return texinfo;
+
+		const Texture* tex =
+			self->state.texture ? &Image_get_texture(self->state.texture) : NULL;
+		if (!tex) return NULL;
+
+		ptr->reset(new TextureInfo(*tex, 0, 0, tex->width(), tex->height()));
+		return ptr->get();
+	}
+
+	static const Shader*
+	setup_shader (PainterData* self, const Shader* shader, bool for_texture)
+	{
+		if (self->state.shader) return &self->state.shader;
+		if (shader)             return shader;
+		return for_texture
+			?	&Shader_get_default_shader_for_texture(self->state.texcoord_wrap)
+			:	&Shader_get_default_shader_for_shape();
+	}
+
+	static bool
+	setup_triangle_fan_indices (auto* indices, size_t npoints)
+	{
+		if (npoints < 3) return false;
+
+		indices->reserve((npoints - 2) * 3);
+		for (size_t i = 1; i + 1 < npoints; ++i)
+		{
+			indices->push_back(0);
+			indices->push_back((uint) i);
+			indices->push_back((uint) (i + 1));
+		}
+		return true;
 	}
 
 	void
@@ -459,27 +703,40 @@ namespace Rays
 
 		PainterData* self = get_data(painter);
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "'painting' should be true.");
 
 		std::unique_ptr<TextureInfo> ptexinfo;
-		texinfo = setup_texinfo(self, texinfo, ptexinfo);
+		texinfo = setup_texinfo(self, texinfo, &ptexinfo);
 		shader  = setup_shader(self, shader, texinfo);
 
-		const ShaderProgram* program = Shader_get_program(*shader);
-		if (!program || !*program) return;
-
-		ShaderProgram_activate(*program);
-
-		const auto& names = Shader_get_builtin_variable_names(*shader);
-		apply_builtin_uniforms(
-			*program, names, self->position_matrix, self->state, texinfo);
-		apply_attributes(
-			self, *program, names, points, npoints, texcoords, color, colors);
-		draw_indices(self, (GLenum) mode, indices, nindices, npoints);
-		self->cleanup();
-
-		ShaderProgram_deactivate();
+		bool batchable =
+			painter->has_flag(Painter::FLAG_BATCHING) &&
+			!Painter::debug() &&
+			!self->state.shader;
+		if (batchable && mode == MODE_TRIANGLES)
+		{
+			batch(
+				painter, mode, color, points, npoints, indices, nindices,
+				colors, texcoords, texinfo, *shader);
+		}
+		else if (batchable && mode == MODE_TRIANGLE_FAN && (!indices || nindices == 0))
+		{
+			auto& fan_indices = self->triangle_fan_indices_buffer;
+			fan_indices.clear();
+			if (!setup_triangle_fan_indices(&fan_indices, npoints))
+				return;
+			batch(
+				painter, MODE_TRIANGLES, color, points, npoints, &fan_indices[0], fan_indices.size(),
+				colors, texcoords, texinfo, *shader);
+		}
+		else
+		{
+			Painter_flush(painter);
+			draw(
+				self, mode, color, points, npoints, indices, nindices,
+				colors, texcoords, texinfo, *shader, self->position_matrix);
+		}
 	}
 
 	static inline void
@@ -577,7 +834,7 @@ namespace Rays
 		if (!image)
 			argument_error(__FILE__, __LINE__, "invalid image.");
 
-		if (self->painting)
+		if (self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be false.");
 
 		FrameBuffer fb(Image_get_texture(image));
@@ -593,7 +850,7 @@ namespace Rays
 	void
 	Painter::unbind ()
 	{
-		if (self->painting)
+		if (self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		get_data(this)->frame_buffer = FrameBuffer();
@@ -604,7 +861,7 @@ namespace Rays
 	{
 		PainterData* self = get_data(this);
 
-		if (self->painting)
+		if (self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be false.");
 
 		self->opengl_state.push();
@@ -651,7 +908,7 @@ namespace Rays
 
 		Painter_update_clip(this);
 
-		self->painting = true;
+		Xot::add_flag(&self->flags, Painter::Data::PAINTING);
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
@@ -661,7 +918,7 @@ namespace Rays
 	{
 		PainterData* self = get_data(this);
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		if (!self->state_stack.empty())
@@ -670,7 +927,9 @@ namespace Rays
 		if (!self->position_matrix_stack.empty())
 			invalid_state_error(__FILE__, __LINE__, "position matrix stack is not empty.");
 
-		self->painting = false;
+		Painter_flush(this);
+
+		Xot::remove_flag(&self->flags, Painter::Data::PAINTING);
 		self->opengl_state.pop();
 		self->default_indices.clear();
 
@@ -683,8 +942,10 @@ namespace Rays
 	void
 	Painter::clear ()
 	{
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
+
+		Painter_flush(this);
 
 		const Color& c = self->state.background;
 		glClearColor(c.red, c.green, c.blue, c.alpha);
@@ -695,6 +956,9 @@ namespace Rays
 	void
 	Painter::set_blend_mode (BlendMode mode)
 	{
+		if (self->state.blend_mode != mode)
+			Painter_flush(this);
+
 		self->state.blend_mode = mode;
 		switch (mode)
 		{

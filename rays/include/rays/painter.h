@@ -5,6 +5,7 @@
 
 
 #include <xot/pimpl.h>
+#include <xot/util.h>
 #include <rays/defs.h>
 #include <rays/point.h>
 
@@ -28,6 +29,15 @@ namespace Rays
 	{
 
 		public:
+
+			enum Flag
+			{
+
+				FLAG_BATCHING = Xot::bit(0),
+
+				FLAG_LAST     = FLAG_BATCHING
+
+			};// Flag
 
 			Painter ();
 
@@ -322,10 +332,19 @@ namespace Rays
 			void pop_matrix ();
 
 
+			void    add_flag (uint flags);
+
+			void remove_flag (uint flags);
+
+			bool    has_flag (uint flags) const;
+
 			operator bool () const;
 
 			bool operator ! () const;
 
+			static void set_debug (bool debug);
+
+			static bool     debug ();
 
 			struct Data;
 

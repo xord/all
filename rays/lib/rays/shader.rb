@@ -17,10 +17,19 @@ module Rays
       setup(
         fragment_shader_source, vertex_shader_source,
         builtin_variable_names&.values_at(
-          :attribute_position, :attribute_texcoord, :attribute_color,
-            :varying_position,   :varying_texcoord,   :varying_color,
-          :uniform_position_matrix, :uniform_texcoord_matrix,
-          :uniform_texcoord_min, :uniform_texcoord_max, :uniform_texcoord_pixel,
+          :attribute_position,
+          :attribute_texcoord,
+          :attribute_texcoord_min,
+          :attribute_texcoord_max,
+          :attribute_color,
+            :varying_position,
+            :varying_texcoord,
+            :varying_texcoord_min,
+            :varying_texcoord_max,
+            :varying_color,
+          :uniform_position_matrix,
+          :uniform_texcoord_matrix,
+          :uniform_texcoord_pixel,
           :uniform_texture),
         ignore_no_uniform_location_error)
 

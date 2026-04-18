@@ -49,7 +49,7 @@ namespace Rays
 		if (!viewport)
 			argument_error(__FILE__, __LINE__);
 
-		if (self->painting)
+		if (self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be false.");
 
 		self->viewport = viewport;
@@ -71,7 +71,7 @@ namespace Rays
 	bool
 	Painter::painting () const
 	{
-		return self->painting;
+		return self->is_painting();
 	}
 
 	static inline void
@@ -102,7 +102,7 @@ namespace Rays
 	{
 		Painter::Data* self = painter->self.get();
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		if (!self->state.has_color())
@@ -334,7 +334,7 @@ namespace Rays
 
 		Painter::Data* self = painter->self.get();
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		Color color;
@@ -465,7 +465,7 @@ namespace Rays
 
 		Painter::Data* self = painter->self.get();
 
-		if (!self->painting)
+		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "painting flag should be true.");
 
 		if (!self->state.has_color())
@@ -541,7 +541,7 @@ namespace Rays
 	{
 		self->state.background = color;
 
-		if (self->painting && clear) this->clear();
+		if (self->is_painting() && clear) this->clear();
 	}
 
 	void
@@ -713,6 +713,10 @@ namespace Rays
 	void
 	Painter::set_clip (const Bounds& bounds)
 	{
+		if (self->state.clip == bounds) return;
+
+		Painter_flush(this);
+
 		self->state.clip = bounds;
 		Painter_update_clip(this);
 	}
@@ -761,12 +765,18 @@ namespace Rays
 	void
 	Painter::set_texture (const Image& image)
 	{
+		Painter_flush(this);
+
 		self->state.texture = image;
 	}
 
 	void
 	Painter::no_texture ()
 	{
+		if (!self->state.texture) return;
+
+		Painter_flush(this);
+
 		self->state.texture = Image();
 	}
 
@@ -779,6 +789,10 @@ namespace Rays
 	void
 	Painter::set_texcoord_mode (TexCoordMode mode)
 	{
+		if (self->state.texcoord_mode == mode) return;
+
+		Painter_flush(this);
+
 		self->state.texcoord_mode = mode;
 	}
 
@@ -791,6 +805,10 @@ namespace Rays
 	void
 	Painter::set_texcoord_wrap (TexCoordWrap wrap)
 	{
+		if (self->state.texcoord_wrap == wrap) return;
+
+		Painter_flush(this);
+
 		self->state.texcoord_wrap = wrap;
 	}
 
@@ -803,12 +821,20 @@ namespace Rays
 	void
 	Painter::set_shader (const Shader& shader)
 	{
+		if (self->state.shader == shader) return;
+
+		Painter_flush(this);
+
 		self->state.shader = shader;
 	}
 
 	void
 	Painter::no_shader ()
 	{
+		if (!self->state.shader) return;
+
+		Painter_flush(this);
+
 		self->state.shader = Shader();
 	}
 
@@ -829,6 +855,8 @@ namespace Rays
 	{
 		if (self->state_stack.empty())
 			invalid_state_error(__FILE__, __LINE__, "state stack underflow.");
+
+		Painter_flush(this);
 
 		self->state = self->state_stack.back();
 		self->state_stack.pop_back();
@@ -925,6 +953,24 @@ namespace Rays
 		self->position_matrix_stack.pop_back();
 	}
 
+	void
+	Painter::add_flag (uint flags)
+	{
+		Xot::add_flag(&self->flags, flags);
+	}
+
+	void
+	Painter::remove_flag (uint flags)
+	{
+		Xot::remove_flag(&self->flags, flags);
+	}
+
+	bool
+	Painter::has_flag (uint flags) const
+	{
+		return Xot::has_flag(self->flags, flags);
+	}
+
 	Painter::operator bool () const
 	{
 		return self->viewport;
@@ -934,6 +980,20 @@ namespace Rays
 	Painter::operator ! () const
 	{
 		return !operator bool();
+	}
+
+	static bool g_debug = false;
+
+	void
+	Painter::set_debug (bool debug)
+	{
+		g_debug = debug;
+	}
+
+	bool
+	Painter::debug ()
+	{
+		return g_debug;
 	}
 
 
