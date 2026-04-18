@@ -184,6 +184,8 @@ namespace Rays
 
 		std::vector<GLuint> buffers;
 
+		std::vector<GLuint> triangle_fan_indices_buffer;
+
 		Batcher batcher;
 
 		GLuint create_and_bind_buffer (GLenum target, const void* data, GLsizeiptr size)
@@ -710,7 +712,8 @@ namespace Rays
 		}
 		else if (batchable && mode == MODE_TRIANGLE_FAN && (!indices || nindices == 0))
 		{
-			std::vector<uint> fan_indices;
+			auto& fan_indices = self->triangle_fan_indices_buffer;
+			fan_indices.clear();
 			if (!setup_triangle_fan_indices(&fan_indices, npoints))
 				return;
 			batch(
