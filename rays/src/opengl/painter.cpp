@@ -717,7 +717,7 @@ namespace Rays
 			if (!setup_triangle_fan_indices(&fan_indices, npoints))
 				return;
 			batch(
-				painter, mode, color, points, npoints, &fan_indices[0], fan_indices.size(),
+				painter, MODE_TRIANGLES, color, points, npoints, &fan_indices[0], fan_indices.size(),
 				colors, texcoords, texinfo, *shader);
 		}
 		else
