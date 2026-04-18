@@ -193,43 +193,45 @@ class TestPainter < Test::Unit::TestCase
   end
 
   def test_clip_accessor()
-    pa = painter
-    pa.clip = [1, 2, 3, 4]
-    assert_equal [1, 2, 3, 4], pa.clip.to_a
-    pa.clip = [5, 6, 7, 8]
-    assert_equal [5, 6, 7, 8], pa.clip.to_a
-    pa.clip    1, 2, 3, 4
-    assert_equal [1, 2, 3, 4], pa.clip.to_a
-    pa.push clip: [5, 6, 7, 8] do |_|
+    pa      = painter
+    pa.clip =      [1, 2, 3, 4]
+    assert_equal   [1, 2, 3, 4], pa.clip.to_a
+    pa.clip =      [5, 6, 7, 8]
+    assert_equal   [5, 6, 7, 8], pa.clip.to_a
+    pa.clip         1, 2, 3, 4
+    assert_equal   [1, 2, 3, 4], pa.clip.to_a
+    pa.push clip:  [5, 6, 7, 8] do |_|
       assert_equal [5, 6, 7, 8], pa.clip.to_a
     end
-    assert_equal [1, 2, 3, 4], pa.clip.to_a
+    assert_equal   [1, 2, 3, 4], pa.clip.to_a
   end
 
   def test_font_accessor()
-    pa = painter
+    pa       = painter
     f10, f20 = font(nil, 10), font(nil, 20)
-    pa.font = f10
-    assert_equal f10, pa.font
-    pa.font = f20
-    assert_equal f20, pa.font
-    pa.font   f10
-    assert_equal f10, pa.font
-    pa.push font: f20 do |_|
+    pa.font  =     f10
+    assert_equal   f10, pa.font
+    pa.font  =     f20
+    assert_equal   f20, pa.font
+    pa.font        f10
+    assert_equal   f10, pa.font
+    pa.push font:  f20 do |_|
       assert_equal f20, pa.font
     end
-    assert_equal f10, pa.font
+    assert_equal   f10, pa.font
   end
 
   def test_font_name_size()
     pa = painter
-    pa.font "Arial", 10
-    assert_equal "Arial", pa.font.name
-    assert_equal 10, pa.font.size
-    pa.font nil
-    assert_not_equal "Arial", pa.font.name
-    pa.font nil, 20
-    assert_equal 20, pa.font.size
+    pa.font          "Arial", 10
+    assert_equal     "Arial",     pa.font.name
+    assert_equal              10, pa.font.size
+    pa.font          nil
+    assert_not_equal "Arial",     pa.font.name
+    assert_not_equal          10, pa.font.size
+    pa.font          nil,     20
+    assert_not_equal "Arial",     pa.font.name
+    assert_equal              20, pa.font.size
   end
 
   def test_color_by_name()
