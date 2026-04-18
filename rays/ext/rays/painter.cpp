@@ -809,6 +809,27 @@ RUCY_DEF0(pop_matrix)
 }
 RUCY_END
 
+
+static
+RUCY_DEF1(set_debug, debug)
+{
+	CHECK;
+	if (debug)
+		THIS->remove_flag(Rays::Painter::FLAG_BATCHING);
+	else
+		THIS->   add_flag(Rays::Painter::FLAG_BATCHING);
+	return debug;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_debug)
+{
+	CHECK;
+	return value(!THIS->has_flag(Rays::Painter::FLAG_BATCHING));
+}
+RUCY_END
+
 static
 RUCY_DEF1(set_global_debug, debug)
 {
@@ -905,6 +926,9 @@ Init_rays_painter ()
 	cPainter.define_method("matrix",  get_matrix);
 	cPainter.define_method("push_matrix", push_matrix);
 	cPainter.define_method( "pop_matrix",  pop_matrix);
+
+	cPainter.define_method("debug=", set_debug);
+	cPainter.define_method("debug?", get_debug);
 
 	cPainter.define_singleton_method("debug=", set_global_debug);
 	cPainter.define_singleton_method("debug?", get_global_debug);

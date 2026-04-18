@@ -713,6 +713,10 @@ namespace Rays
 	void
 	Painter::set_clip (const Bounds& bounds)
 	{
+		if (self->state.clip == bounds) return;
+
+		Painter_flush(this);
+
 		self->state.clip = bounds;
 		Painter_update_clip(this);
 	}
@@ -761,12 +765,18 @@ namespace Rays
 	void
 	Painter::set_texture (const Image& image)
 	{
+		Painter_flush(this);
+
 		self->state.texture = image;
 	}
 
 	void
 	Painter::no_texture ()
 	{
+		if (!self->state.texture) return;
+
+		Painter_flush(this);
+
 		self->state.texture = Image();
 	}
 
@@ -779,6 +789,10 @@ namespace Rays
 	void
 	Painter::set_texcoord_mode (TexCoordMode mode)
 	{
+		if (self->state.texcoord_mode == mode) return;
+
+		Painter_flush(this);
+
 		self->state.texcoord_mode = mode;
 	}
 
@@ -791,6 +805,10 @@ namespace Rays
 	void
 	Painter::set_texcoord_wrap (TexCoordWrap wrap)
 	{
+		if (self->state.texcoord_wrap == wrap) return;
+
+		Painter_flush(this);
+
 		self->state.texcoord_wrap = wrap;
 	}
 
@@ -803,12 +821,20 @@ namespace Rays
 	void
 	Painter::set_shader (const Shader& shader)
 	{
+		if (self->state.shader == shader) return;
+
+		Painter_flush(this);
+
 		self->state.shader = shader;
 	}
 
 	void
 	Painter::no_shader ()
 	{
+		if (!self->state.shader) return;
+
+		Painter_flush(this);
+
 		self->state.shader = Shader();
 	}
 
@@ -829,6 +855,8 @@ namespace Rays
 	{
 		if (self->state_stack.empty())
 			invalid_state_error(__FILE__, __LINE__, "state stack underflow.");
+
+		Painter_flush(this);
 
 		self->state = self->state_stack.back();
 		self->state_stack.pop_back();

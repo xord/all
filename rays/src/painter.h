@@ -181,7 +181,7 @@ namespace Rays
 
 		};// Flag
 
-		uint flags          = 0;
+		uint flags          = Painter::FLAG_BATCHING;
 
 		float pixel_density = 1;
 
@@ -215,6 +215,8 @@ namespace Rays
 
 
 	void Painter_update_clip (Painter* painter);
+
+	void Painter_flush (Painter* painter);
 
 	void Painter_draw (
 		Painter* painter, PrimitiveMode mode, const Color* color,

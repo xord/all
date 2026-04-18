@@ -391,8 +391,8 @@ namespace Rays
 		String make_default_vertex_shader_source_code ()
 		{
 			return
-				"attribute vec3 " + A_POSITION + ";\n"
-				"attribute vec3 " + A_TEXCOORD + ";\n"
+				"attribute vec4 " + A_POSITION + ";\n"
+				"attribute vec4 " + A_TEXCOORD + ";\n"
 				"attribute vec3 " + A_TEXCOORD_MIN + ";\n"
 				"attribute vec3 " + A_TEXCOORD_MAX + ";\n"
 				"attribute vec4 " + A_COLOR + ";\n"
@@ -405,14 +405,12 @@ namespace Rays
 				"uniform mat4 "   + U_TEXCOORD_MATRIX + ";\n"
 				"void main ()\n"
 				"{\n"
-				"  vec4 _rays_pos         = vec4(" + A_POSITION + ", 1.0);\n"
-				"  vec4 _rays_texcoord    = vec4(" + A_TEXCOORD + ", 1.0);\n"
-				"  " + V_POSITION     + " = _rays_pos;\n"
-				"  " + V_TEXCOORD     + " = " + U_TEXCOORD_MATRIX + " * _rays_texcoord;\n"
+				"  " + V_POSITION     + " = " + A_POSITION + ";\n"
+				"  " + V_TEXCOORD     + " = " + U_TEXCOORD_MATRIX + " * " + A_TEXCOORD + ";\n"
 				"  " + V_TEXCOORD_MIN + " = " + A_TEXCOORD_MIN + ";\n"
 				"  " + V_TEXCOORD_MAX + " = " + A_TEXCOORD_MAX + ";\n"
 				"  " + V_COLOR        + " = " + A_COLOR + ";\n"
-				"  gl_Position            = " + U_POSITION_MATRIX + " * _rays_pos;\n"
+				"  gl_Position            = " + U_POSITION_MATRIX + " * " + A_POSITION + ";\n"
 				"}\n";
 		}
 

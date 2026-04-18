@@ -33,7 +33,9 @@ namespace Rays
 			enum Flag
 			{
 
-				FLAG_LAST = Xot::bit(0)
+				FLAG_BATCHING = Xot::bit(0),
+
+				FLAG_LAST     = FLAG_BATCHING
 
 			};// Flag
 
