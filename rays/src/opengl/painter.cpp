@@ -140,6 +140,8 @@ namespace Rays
 	struct Batcher
 	{
 
+		int count = 0;
+
 		Shader shader;
 
 		Texture texture;
@@ -158,6 +160,7 @@ namespace Rays
 
 		void clear ()
 		{
+			count   = 0;
 			shader  = Shader();
 			texture = Texture();
 			points        .clear();
@@ -583,6 +586,13 @@ namespace Rays
 			Painter_flush(painter);
 			batcher.shader  = shader;
 			batcher.texture = texture;
+		}
+
+		if (++batcher.count <= 5)
+		{
+			return draw(
+				self, mode, color, points, npoints, indices, nindices, colors,
+				texcoords, texinfo, shader, self->position_matrix);
 		}
 
 		size_t points0 = batcher.points.size();
