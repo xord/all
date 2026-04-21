@@ -765,6 +765,9 @@ namespace Rays
 	void
 	Painter::set_texture (const Image& image)
 	{
+		if (image == self->state.texture)
+			return;
+
 		Painter_flush(this);
 
 		self->state.texture = image;

@@ -7,7 +7,8 @@ module Rays
 
   class Image
 
-    extend Forwardable
+    include Comparable
+    extend  Forwardable
 
     def_delegators :bitmap,           :pixels,  :[]
 

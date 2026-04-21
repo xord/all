@@ -300,5 +300,17 @@ namespace Rays
 		return !operator bool();
 	}
 
+	bool
+	operator == (const Image& lhs, const Image& rhs)
+	{
+		return lhs.self == rhs.self;
+	}
+
+	bool
+	operator != (const Image& lhs, const Image& rhs)
+	{
+		return !operator==(lhs, rhs);
+	}
+
 
 }// Rays

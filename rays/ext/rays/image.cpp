@@ -135,6 +135,16 @@ RUCY_DEF0(get_smooth)
 RUCY_END
 
 static
+RUCY_DEF1(compare, other)
+{
+	CHECK;
+	auto* a = THIS->self.get();
+	auto* b = to<const Rays::Image*>(other)->self.get();
+	return value(a < b ? -1 : a > b ? 1 : 0);
+}
+RUCY_END
+
+static
 RUCY_DEF1(load, path)
 {
 	return value(Rays::load_image(path.c_str()));
@@ -162,6 +172,7 @@ Init_rays_image ()
 	cImage.define_private_method("get_bitmap", get_bitmap);
 	cImage.define_method("smooth=", set_smooth);
 	cImage.define_method("smooth",  get_smooth);
+	cImage.define_method("<=>", compare);
 	cImage.define_module_function("load!", load);
 }
 
