@@ -646,29 +646,16 @@ namespace Rucy
 		return (bool) obj;
 	}
 
-	template <> int
-	value_to<int> (Value obj, bool convert)
-	{
-		if (convert) obj = obj.to_i();
-		return NUM2INT(obj.value());
-	}
-
-	template <> unsigned int
-	value_to<unsigned int> (Value obj, bool convert)
-	{
-		if (convert) obj = obj.to_i();
-		return NUM2UINT(obj.value());
-	}
-
 	template <> char
 	value_to<char> (Value obj, bool convert)
 	{
-		int n = value_to<int>(obj, convert);
+		if (convert) obj = obj.to_i();
+		int n = NUM2INT(obj.value());
 		if (
 			n < std::numeric_limits<char>::min() ||
 			n > std::numeric_limits<char>::max())
 		{
-			range_error(__FILE__, __LINE__, "cannot cast '%d' to char");
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to char", n);
 		}
 		return (char) n;
 	}
@@ -676,12 +663,13 @@ namespace Rucy
 	template <> unsigned char
 	value_to<unsigned char> (Value obj, bool convert)
 	{
-		int n = value_to<int>(obj, convert);
+		if (convert) obj = obj.to_i();
+		int n = NUM2INT(obj.value());
 		if (
 			n < std::numeric_limits<unsigned char>::min() ||
 			n > std::numeric_limits<unsigned char>::max())
 		{
-			range_error(__FILE__, __LINE__, "cannot cast '%d' to unsigned char");
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to unsigned char", n);
 		}
 		return (unsigned char) n;
 	}
@@ -689,12 +677,13 @@ namespace Rucy
 	template <> short
 	value_to<short> (Value obj, bool convert)
 	{
-		int n = value_to<int>(obj, convert);
+		if (convert) obj = obj.to_i();
+		int n = NUM2INT(obj.value());
 		if (
 			n < std::numeric_limits<short>::min() ||
 			n > std::numeric_limits<short>::max())
 		{
-			range_error(__FILE__, __LINE__, "cannot cast '%d' to short");
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to short", n);
 		}
 		return (short) n;
 	}
@@ -702,28 +691,67 @@ namespace Rucy
 	template <> unsigned short
 	value_to<unsigned short> (Value obj, bool convert)
 	{
-		int n = value_to<int>(obj, convert);
+		if (convert) obj = obj.to_i();
+		int n = NUM2INT(obj.value());
 		if (
 			n < std::numeric_limits<unsigned short>::min() ||
 			n > std::numeric_limits<unsigned short>::max())
 		{
-			range_error(__FILE__, __LINE__, "cannot cast '%d' to unsigned short");
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to unsigned short", n);
 		}
 		return (unsigned short) n;
+	}
+
+	template <> int
+	value_to<int> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_i();
+		long long n = NUM2LL(obj.value());
+		if (
+			n < std::numeric_limits<int>::min() ||
+			n > std::numeric_limits<int>::max())
+		{
+			range_error(__FILE__, __LINE__, "cannot cast '%lld' to int", n);
+		}
+		return (int) n;
+	}
+
+	template <> unsigned int
+	value_to<unsigned int> (Value obj, bool convert)
+	{
+		if (convert) obj = obj.to_i();
+		long long n = NUM2LL(obj.value());
+		if (
+			n < std::numeric_limits<unsigned int>::min() ||
+			n > std::numeric_limits<unsigned int>::max())
+		{
+			range_error(__FILE__, __LINE__, "cannot cast '%lld' to unsigned int", n);
+		}
+		return (unsigned int) n;
 	}
 
 	template <> long
 	value_to<long> (Value obj, bool convert)
 	{
 		if (convert) obj = obj.to_i();
-		return NUM2LONG(obj.value());
+		long long n = NUM2LL(obj.value());
+		if (
+			n < std::numeric_limits<long>::min() ||
+			n > std::numeric_limits<long>::max())
+		{
+			range_error(__FILE__, __LINE__, "cannot cast '%lld' to long", n);
+		}
+		return (long) n;
 	}
 
 	template <> unsigned long
 	value_to<unsigned long> (Value obj, bool convert)
 	{
 		if (convert) obj = obj.to_i();
-		return NUM2ULONG(obj.value());
+		long long n = NUM2LL(obj.value());
+		if (n < 0)
+			range_error(__FILE__, __LINE__, "cannot cast '%lld' to unsigned long", n);
+		return (unsigned long) n;
 	}
 
 	template <> long long
@@ -737,6 +765,9 @@ namespace Rucy
 	value_to<unsigned long long> (Value obj, bool convert)
 	{
 		if (convert) obj = obj.to_i();
+		long long n = NUM2LL(obj.value());
+		if (n < 0)
+			range_error(__FILE__, __LINE__, "cannot cast '%lld' to unsigned long long", n);
 		return NUM2ULL(obj.value());
 	}
 

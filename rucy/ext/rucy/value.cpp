@@ -33,6 +33,34 @@ RUCY_DEF1(value_to_ushort, num)
 RUCY_END
 
 static
+RUCY_DEF1(value_to_int, num)
+{
+	return value(to<int>(num));
+}
+RUCY_END
+
+static
+RUCY_DEF1(value_to_uint, num)
+{
+	return value(to<unsigned int>(num));
+}
+RUCY_END
+
+static
+RUCY_DEF1(value_to_long, num)
+{
+	return value(to<long>(num));
+}
+RUCY_END
+
+static
+RUCY_DEF1(value_to_ulong, num)
+{
+	return value(to<unsigned long>(num));
+}
+RUCY_END
+
+static
 RUCY_DEFN(true_to_value)
 {
 	return value(true);
@@ -89,10 +117,14 @@ Init_value ()
 	Module mRucy   =       define_module("Rucy");
 	Module mTester = mRucy.define_module("Tester");
 
-	mTester.define_method("value_to_char",  value_to_char);
-	mTester.define_method("value_to_uchar", value_to_uchar);
+	mTester.define_method("value_to_char",   value_to_char);
+	mTester.define_method("value_to_uchar",  value_to_uchar);
 	mTester.define_method("value_to_short",  value_to_short);
 	mTester.define_method("value_to_ushort", value_to_ushort);
+	mTester.define_method("value_to_int",    value_to_int);
+	mTester.define_method("value_to_uint",   value_to_uint);
+	mTester.define_method("value_to_long",   value_to_long);
+	mTester.define_method("value_to_ulong",  value_to_ulong);
 
 	mTester.define_method("true_to_value", true_to_value);
 	mTester.define_method("false_to_value", false_to_value);
