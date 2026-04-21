@@ -308,6 +308,12 @@ namespace Rucy
 		return rb_obj_is_kind_of(val, klass);
 	}
 
+	bool
+	Value::respond_to (Symbol name) const
+	{
+		return rb_respond_to(val, name.symbol());
+	}
+
 	Value
 	Value::inspect () const
 	{
