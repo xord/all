@@ -28,7 +28,7 @@ module Xot
       yield if block_given?
 
       extensions.each do |ext|
-        name = ext.name.downcase
+        name = ext.name(true)
         headers    << "#{name}.h"
         local_libs << name
       end
@@ -51,7 +51,7 @@ module Xot
 
     def create_makefile(*args)
       extensions.each do |ext|
-        dir_config ext.name.downcase, ext.inc_dir, ext.lib_dir
+        dir_config ext.name(true), ext.inc_dir, ext.lib_dir
       end
 
       exit 1 unless headers.all? {|s| have_header s}

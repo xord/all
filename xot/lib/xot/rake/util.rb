@@ -19,7 +19,7 @@ module Xot
     end
 
     def target_name()
-      get_env :EXTNAME, target.name.downcase
+      get_env :EXTNAME, target.name(true)
     end
 
     def inc_dir()
@@ -186,7 +186,7 @@ module Xot
     def make_cppflags_defs(defs = [])
       a  = defs.dup
       a << (debug? ? '_DEBUG' : 'NDEBUG')
-      a << target.name.upcase
+      a << target_name.gsub('-', '_').upcase
       a << $~[0].upcase        if RUBY_PLATFORM =~ /mswin|mingw|cygwin|darwin/i
       a << 'WIN32'             if win32?
       a << 'OSX'               if osx?

@@ -104,7 +104,7 @@ module Xot
     end
 
     def build_ruby_extension(dlname: nil, dlext: nil, liboutput: true)
-      dlname = get_env :DLNAME, dlname || "#{target_name}_ext"
+      dlname = get_env :DLNAME, dlname || "#{target_name.gsub('-', '_')}_ext"
       dlext  = get_env :DLEXT,  dlext  || RbConfig::CONFIG['DLEXT'] || 'so'
 
       extconf  = File.join ext_dir, 'extconf.rb'
@@ -116,7 +116,7 @@ module Xot
       libout  = File.join lib_dir, outname
 
       srcs = FileList["#{ext_dir}/**/*.cpp"]
-      libs = extensions.map {|x| "#{x.lib_dir}/lib#{x.name.downcase}.a"}
+      libs = extensions.map {|x| "#{x.lib_dir}/lib#{x.name(true)}.a"}
 
       alias_task :ext     => (liboutput ? libout : extout)
       alias_task :clean   => 'ext:clean'
