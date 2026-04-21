@@ -713,7 +713,8 @@ namespace Rays
 	void
 	Painter::set_clip (const Bounds& bounds)
 	{
-		if (self->state.clip == bounds) return;
+		if (bounds == self->state.clip)
+			return;
 
 		Painter_flush(this);
 
@@ -792,7 +793,8 @@ namespace Rays
 	void
 	Painter::set_texcoord_mode (TexCoordMode mode)
 	{
-		if (self->state.texcoord_mode == mode) return;
+		if (mode == self->state.texcoord_mode)
+			return;
 
 		Painter_flush(this);
 
@@ -808,7 +810,8 @@ namespace Rays
 	void
 	Painter::set_texcoord_wrap (TexCoordWrap wrap)
 	{
-		if (self->state.texcoord_wrap == wrap) return;
+		if (wrap == self->state.texcoord_wrap)
+			return;
 
 		Painter_flush(this);
 
@@ -824,7 +827,8 @@ namespace Rays
 	void
 	Painter::set_shader (const Shader& shader)
 	{
-		if (self->state.shader == shader) return;
+		if (shader == self->state.shader)
+			return;
 
 		Painter_flush(this);
 

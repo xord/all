@@ -217,8 +217,7 @@ RUCY_DEF0(each_child)
 	CHECK;
 
 	Value ret;
-	Reflex::View::child_iterator end = THIS->child_end();
-	for (Reflex::View::child_iterator it = THIS->child_begin(); it != end; ++it)
+	for (auto it = THIS->child_begin(), end = THIS->child_end(); it != end; ++it)
 		ret = rb_yield(value(it->get()));
 	return ret;
 }
