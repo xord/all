@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __RAYS_H__
-#define __RAYS_H__
+#ifndef __RAYS_ALL_H__
+#define __RAYS_ALL_H__
 
 
 #include <rays/defs.h>

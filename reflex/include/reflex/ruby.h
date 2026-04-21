@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __REFLEX_RUBY_H__
-#define __REFLEX_RUBY_H__
+#ifndef __REFLEX_RUBY_ALL_H__
+#define __REFLEX_RUBY_ALL_H__
 
 
 #include <reflex/ruby/defs.h>

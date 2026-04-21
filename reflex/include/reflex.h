@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __REFLEX_H__
-#define __REFLEX_H__
+#ifndef __REFLEX_ALL_H__
+#define __REFLEX_ALL_H__
 
 
 #include <reflex/defs.h>

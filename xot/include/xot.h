@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __XOT_H__
-#define __XOT_H__
+#ifndef __XOT_ALL_H__
+#define __XOT_ALL_H__
 
 
 #include <xot/defs.h>

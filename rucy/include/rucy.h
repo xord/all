@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __RUCY_H__
-#define __RUCY_H__
+#ifndef __RUCY_ALL_H__
+#define __RUCY_ALL_H__
 
 
 #include <rucy/ruby.h>

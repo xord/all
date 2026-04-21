@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __RAYS_RUBY_H__
-#define __RAYS_RUBY_H__
+#ifndef __RAYS_RUBY_ALL_H__
+#define __RAYS_RUBY_ALL_H__
 
 
 #include <rays/ruby/defs.h>
