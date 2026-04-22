@@ -477,7 +477,7 @@ namespace Rays
 		{
 			coord line_height = painter->line_height();
 
-			Xot::StringList lines;
+			StringList lines;
 			split(&lines, str, '\n');
 			for (const auto& line : lines)
 			{

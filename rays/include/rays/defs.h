@@ -26,6 +26,8 @@ namespace Rays
 
 	using Xot::String;
 
+	using Xot::StringList;
+
 
 	typedef float coord;
 

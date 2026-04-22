@@ -48,6 +48,8 @@ namespace Reflex
 
 	using Rays::String;
 
+	using Rays::StringList;
+
 
 	using Rays::coord;
 

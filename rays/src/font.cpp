@@ -121,7 +121,7 @@ namespace Rays
 		if (!strchr(str, '\n'))
 			return self->rawfont.get_width(str);
 
-		Xot::StringList lines;
+		StringList lines;
 		split(&lines, str);
 
 		coord width = 0;
