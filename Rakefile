@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 
 
-%w[xot rucy beeps rays reflex processing rubysketch]
+%w[xot rucy beeps rays rays-video reflex processing rubysketch reight]
   .map  {|s| File.expand_path "#{s}/lib", __dir__}
   .each {|s| $:.unshift s if !$:.include?(s) && File.directory?(s)}
 
@@ -10,7 +10,7 @@ require 'xot/rake/util'
 include Xot::Rake
 
 
-EXTS  = %i[xot rucy beeps rays reflex]
+EXTS  = %i[xot rucy beeps rays rays-video reflex]
 GEMS  = EXTS + %i[processing rubysketch reight]
 REPOS = %i[cruby] + GEMS
 TASKS = %i[
