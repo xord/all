@@ -65,9 +65,15 @@ namespace Rays
 
 			friend bool operator != (const This& lhs, const This& rhs);
 
-			struct Data;
+			struct Data
+			{
+				virtual ~Data ();
+				virtual void preprocess (const Image* image) const;
+			};
 
 			Xot::PSharedImpl<Data> self;
+
+			Image (Data* data);
 
 	};// Image
 

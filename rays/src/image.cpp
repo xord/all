@@ -10,7 +10,7 @@
 
 
 #if 0
-#define PRINT_MODIFIED_FLAGS(message) self->print_modified_flags(message)
+#define PRINT_MODIFIED_FLAGS(message) get_data(this)->print_modified_flags(message)
 #else
 #define PRINT_MODIFIED_FLAGS(message)
 #endif
@@ -20,16 +20,16 @@ namespace Rays
 {
 
 
-	struct Image::Data
+	struct ImageData : Image::Data
 	{
 
 		int width = 0, height = 0;
 
-		ColorSpace color_space;
-
 		float pixel_density = 1;
 
-		bool smooth = false;
+		bool smooth         = false;
+
+		ColorSpace color_space;
 
 		mutable Bitmap bitmap;
 
@@ -48,10 +48,23 @@ namespace Rays
 	};// Image::Data
 
 
+	static ImageData*
+	get_data (Image* image)
+	{
+		return (ImageData*) image->self.get();
+	}
+
+	static const ImageData*
+	get_data (const Image* image)
+	{
+		return (const ImageData*) image->self.get();
+	}
+
+
 	static void
 	clear_modified_flags (Image* image)
 	{
-		Image::Data* self = image->self.get();
+		ImageData* self = get_data(image);
 
 		if (self->bitmap)  Bitmap_set_modified(&self->bitmap, false);
 		if (self->texture) self->texture.set_modified(false);
@@ -61,7 +74,7 @@ namespace Rays
 	invalidate_texture (Image* image)
 	{
 		image->bitmap();// update bitmap
-		image->self->texture = Texture();
+		get_data(image)->texture = Texture();
 	}
 
 	static Bitmap&
@@ -69,7 +82,7 @@ namespace Rays
 	{
 		assert(image);
 
-		Image::Data* self = image->self.get();
+		ImageData* self = get_data(image);
 
 		if (!*image)
 		{
@@ -112,7 +125,7 @@ namespace Rays
 	Texture&
 	Image_get_texture (Image& image)
 	{
-		Image::Data* self = image.self.get();
+		ImageData* self = get_data(&image);
 
 		if (!image)
 		{
@@ -171,17 +184,30 @@ namespace Rays
 	}
 
 
+	Image::Data::~Data ()
+	{
+	}
+
+	void
+	Image::Data::preprocess (const Image*) const
+	{
+	}
+
+
 	Image::Image ()
+	:	self(new ImageData())
 	{
 	}
 
 	Image::Image (
 		int width, int height, const ColorSpace& cs,
 		float pixel_density, bool smooth)
+	:	self(new ImageData())
 	{
 		if (pixel_density <= 0)
 			argument_error(__FILE__, __LINE__, "invalid pixel_density.");
 
+		ImageData* self     = get_data(this);
 		self->width         = (int) (width  * pixel_density);
 		self->height        = (int) (height * pixel_density);
 		self->color_space   = cs;
@@ -190,16 +216,23 @@ namespace Rays
 	}
 
 	Image::Image (const Bitmap& bitmap, float pixel_density, bool smooth)
+	:	self(new ImageData())
 	{
 		if (pixel_density <= 0)
 			argument_error(__FILE__, __LINE__, "invalid pixel_density.");
 
+		ImageData* self     = get_data(this);
 		self->bitmap        = bitmap;
 		self->width         = bitmap.width();
 		self->height        = bitmap.height();
 		self->color_space   = bitmap.color_space();
 		self->pixel_density = pixel_density;
 		self->smooth        = smooth;
+	}
+
+	Image::Image (Data* data)
+	:	self(data)
+	{
 	}
 
 	Image::~Image ()
@@ -209,12 +242,16 @@ namespace Rays
 	Image
 	Image::dup () const
 	{
+		self->preprocess(this);
+
 		return Image(bitmap().dup(), pixel_density());
 	}
 
 	void
 	Image::save (const char* path)
 	{
+		self->preprocess(this);
+
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
@@ -224,32 +261,47 @@ namespace Rays
 	coord
 	Image::width () const
 	{
+		self->preprocess(this);
+
+		const ImageData* self = get_data(this);
 		return self->width / self->pixel_density;
 	}
 
 	coord
 	Image::height () const
 	{
+		self->preprocess(this);
+
+		const ImageData* self = get_data(this);
 		return self->height / self->pixel_density;
 	}
 
 	const ColorSpace&
 	Image::color_space () const
 	{
+		self->preprocess(this);
+
+		const ImageData* self = get_data(this);
 		return self->color_space;
 	}
 
 	float
 	Image::pixel_density () const
 	{
+		self->preprocess(this);
+
+		const ImageData* self = get_data(this);
 		return self->pixel_density;
 	}
 
 	void
 	Image::set_smooth (bool smooth)
 	{
-		if (smooth == self->smooth) return;
+		self->preprocess(this);
 
+		ImageData* self = get_data(this);
+
+		if (smooth == self->smooth) return;
 		self->smooth = smooth;
 		invalidate_texture(this);
 	}
@@ -257,12 +309,17 @@ namespace Rays
 	bool
 	Image::smooth () const
 	{
+		self->preprocess(this);
+
+		const ImageData* self = get_data(this);
 		return self->smooth;
 	}
 
 	Painter
 	Image::painter ()
 	{
+		self->preprocess(this);
+
 		Painter p;
 		p.bind(*this);
 		return p;
@@ -271,6 +328,9 @@ namespace Rays
 	Bitmap&
 	Image::bitmap (bool modify)
 	{
+		self->preprocess(this);
+
+		ImageData* self = get_data(this);
 		if (modify)
 		{
 			if (!self->bitmap) get_bitmap(this);
@@ -287,6 +347,9 @@ namespace Rays
 
 	Image::operator bool () const
 	{
+		self->preprocess(this);
+
+		const ImageData* self = get_data(this);
 		return
 			self->width         > 0 &&
 			self->height        > 0 &&

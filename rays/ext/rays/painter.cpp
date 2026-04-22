@@ -266,7 +266,17 @@ RUCY_DEFN(image)
 	CHECK;
 	check_arg_count(__FILE__, __LINE__, "Painter#image", argc, 1, 3, 5, 7, 9);
 
-	const Rays::Image* image = to<Rays::Image*>(argv[0]);
+	RUCY_SYM(to_image);
+	std::unique_ptr<Rays::Image> pimage;
+
+	const Rays::Image* image = NULL;
+	if (argv[0].is_a(Rays::image_class()))
+		image = to<Rays::Image*>(argv[0]);
+	else if (argv[0].respond_to(to_image))
+	{
+		pimage.reset(new Rays::Image(to<const Rays::Image&>(argv[0].call(to_image))));
+		image = pimage.get();
+	}
 	if (!image)
 		argument_error(__FILE__, __LINE__, "%s is not an image.", argv[0].inspect().c_str());
 
