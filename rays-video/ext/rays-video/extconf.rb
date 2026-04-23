@@ -14,9 +14,14 @@ require 'rays-video/extension'
 Xot::ExtConf.new Xot, Rucy, Beeps, Rays, RaysVideo do
   setup do
     headers    << 'ruby.h'
-    frameworks << 'AppKit' << 'AVFoundation' if osx?
-
+    libs.unshift 'gdi32', 'opengl32', 'glew32'           if win32?
+    frameworks << 'AppKit' << 'AVFoundation'             if osx?
     $LDFLAGS << ' -Wl,--out-implib=rays_video_ext.dll.a' if mingw? || cygwin?
+
+    unless osx? || linux?
+      lib_dirs << Rays::Extension.ext_dir
+      libs     << 'rays_ext'
+    end
   end
 
   create_makefile 'rays_video_ext'
