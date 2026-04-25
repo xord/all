@@ -130,7 +130,8 @@ module Xot
           sh %( cp #{extout} #{libdir} )
           if mingw? || cygwin?
             sh %( cp #{libimp} #{libdir} )
-            sh %( nm #{libimp} | head -50 )
+            sh %( nm #{libimp} | wc -l )
+            sh %( nm #{libimp} | grep -i "T " | head -20 )
           end
         end
 
