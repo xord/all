@@ -139,7 +139,6 @@ module Xot
 
         desc "create #{makefile}"
         file makefile => [extconf, depend] + libs do
-          sh %( echo ";" > #{ext_dir}/#{dlname}.def ) if mingw? || cygwin?
           sh %( cd #{ext_dir} && ruby #{File.basename extconf} )
         end
 

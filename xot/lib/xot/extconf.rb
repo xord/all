@@ -59,6 +59,8 @@ module Xot
       exit 1 unless libs.all?    {|s| have_library s, 't'}
 
       super
+
+      filter_file('Makefile') {_1.sub /^DEFFILE\s*=.*$/, 'DEFFILE ='} if mingw? || cygwin?
     end
 
   end# ExtConf
