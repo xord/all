@@ -42,7 +42,6 @@ namespace Reflex
 	}
 
 
-
 	static uint
 	get_mouse_type (UINT msg, WPARAM wp)
 	{
