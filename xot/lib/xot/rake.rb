@@ -126,7 +126,7 @@ module Xot
         desc "build #{libout}"
         file libout => extout do
           libdir = File.dirname libout
-          libimp = extout.sub(/\.#{dlext}$/, '.dll.a')
+          libimp = File.join File.dirname(extout), "lib#{target_name}.dll.a"
           sh %( cp #{extout} #{libdir} )
           sh %( cp #{libimp} #{libdir} ) if mingw? || cygwin?
         end

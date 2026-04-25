@@ -15,12 +15,7 @@ Xot::ExtConf.new Xot, Rucy, Rays, Reflex do
     headers    << 'ruby.h'
     libs.unshift 'gdi32', 'winmm', 'opengl32', 'glew32', 'xinput' if win32?
     frameworks << 'Cocoa' << 'GameController'                     if osx?
-    $LDFLAGS   << ' -Wl,--out-implib=reflex_ext.dll.a'            if mingw? || cygwin?
-
-    unless osx? || linux?
-      lib_dirs << Rays::Extension.ext_dir
-      libs     << 'rays_ext'
-    end
+    $LDFLAGS   << ' -Wl,--out-implib=libreflex.dll.a'             if mingw? || cygwin?
   end
 
   create_makefile 'reflex_ext'

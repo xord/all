@@ -16,8 +16,8 @@ Xot::ExtConf.new Xot, Rucy, Rays do
     libs.unshift 'SDL2', 'GLEW', 'GL'                    if linux?
     frameworks << 'AppKit' << 'OpenGL' << 'AVFoundation' if osx?
 
-    $CPPFLAGS << ' -DRAYS_32BIT_PIXELS_STRING'      if RUBY_PLATFORM == 'x64-mingw-ucrt'
-    $LDFLAGS  << ' -Wl,--out-implib=rays_ext.dll.a' if mingw? || cygwin?
+    $CPPFLAGS << ' -DRAYS_32BIT_PIXELS_STRING'     if RUBY_PLATFORM == 'x64-mingw-ucrt'
+    $LDFLAGS  << ' -Wl,--out-implib=librays.dll.a' if mingw? || cygwin?
   end
 
   create_makefile 'rays_ext'

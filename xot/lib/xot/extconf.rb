@@ -28,9 +28,10 @@ module Xot
       yield if block_given?
 
       extensions.each do |ext|
-        name = ext.name(true)
-        headers    << "#{name}.h"
-        local_libs << name if ext == extensions.last || !native?(ext)
+        name     = ext.name true
+        lib_name = ext == extensions.last ? name : ext.lib_name
+        headers << "#{name}.h"
+        local_libs << lib_name if lib_name
       end
 
       ldflags = $LDFLAGS.dup
@@ -58,13 +59,6 @@ module Xot
       exit 1 unless libs.all?    {|s| have_library s, 't'}
 
       super
-    end
-
-    private
-
-    def native?(ext)
-      name = ext.name(true)
-      File.exist? File.join(ext.lib_dir, name, 'ext.rb')
     end
 
   end# ExtConf
