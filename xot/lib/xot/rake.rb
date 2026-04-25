@@ -128,7 +128,10 @@ module Xot
           libdir = File.dirname libout
           libimp = File.join File.dirname(extout), "lib#{target_name}.dll.a"
           sh %( cp #{extout} #{libdir} )
-          sh %( cp #{libimp} #{libdir} ) if mingw? || cygwin?
+          if mingw? || cygwin?
+            sh %( cp #{libimp} #{libdir} )
+            sh %( nm #{libimp} | head -50 )
+          end
         end
 
         desc "build #{extout}"
