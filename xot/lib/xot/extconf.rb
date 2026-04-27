@@ -65,7 +65,7 @@ module Xot
         filter_file('Makefile') {|s|
           s.sub!(/^DEFFILE\s*=.*$/, 'DEFFILE =')
           s.sub!(" -l#{own_lib}") {
-            " -Wl,--whole-archive -l#{own_lib} -Wl,--no-whole-archive"
+            " -Wl,--export-all-symbols,--whole-archive -l#{own_lib} -Wl,--no-whole-archive"
           }
           s
         }
