@@ -31,6 +31,10 @@ module Xot
       root_dir 'ext'
     end
 
+    def lib_name()
+      name true
+    end
+
   end# Extension
 
 
