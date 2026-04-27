@@ -11,13 +11,17 @@ module Xot
     include Xot::Rake
     include Xot::Util
 
-    attr_reader :extensions, :defs, :inc_dirs, :lib_dirs, :headers, :libs, :local_libs, :frameworks
-
     def initialize(*extensions, &block)
       @extensions = extensions.map {|x| x.const_get :Extension}
       @defs, @inc_dirs, @lib_dirs, @headers, @libs, @local_libs, @frameworks =
         ([[]] * 7).map(&:dup)
       Xot::BlockUtil.instance_eval_or_block_call self, &block if block
+    end
+
+    attr_reader :extensions, :defs, :inc_dirs, :lib_dirs, :headers, :libs, :local_libs, :frameworks
+
+    def my_ext()
+      extensions.last
     end
 
     def debug()
@@ -29,7 +33,7 @@ module Xot
 
       extensions.each do |ext|
         name     = ext.name true
-        lib_name = ext == extensions.last ? name : ext.lib_name
+        lib_name = ext == my_ext ? name : ext.lib_name
         headers << "#{name}.h"
         local_libs << lib_name if lib_name
       end
@@ -61,13 +65,15 @@ module Xot
       super
 
       if mingw? || cygwin?
-        own_lib = extensions.last.name(true)
+        name = my_ext.name true
+        opts = %w[
+          -Wl,--export-all-symbols,--whole-archive
+          -l#{name}
+          -Wl,--no-whole-archive
+        ].join ' '
         filter_file('Makefile') {|s|
-          s.sub!(/^DEFFILE\s*=.*$/, 'DEFFILE =')
-          s.sub!(" -l#{own_lib}") {
-            " -Wl,--export-all-symbols,--whole-archive -l#{own_lib} -Wl,--no-whole-archive"
-          }
-          s
+          s.sub(/^DEFFILE\s*=.*$/, 'DEFFILE =')
+           .sub(/^(LOCAL_LIBS\s*=.*) -l#{name}\b/) {"#{$1} #{opts}"}
         }
       end
     end
