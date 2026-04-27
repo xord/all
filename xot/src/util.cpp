@@ -53,6 +53,22 @@ namespace Xot
 	}
 
 
+	static HintMemoryUsageFun hint_memory_usage_fun = NULL;
+
+	void
+	set_hint_memory_usage_fun (HintMemoryUsageFun fun)
+	{
+		hint_memory_usage_fun = fun;
+	}
+
+	void
+	hint_memory_usage (ssize_t size)
+	{
+		if (hint_memory_usage_fun && size != 0)
+			hint_memory_usage_fun(size);
+	}
+
+
 #if defined(OSX) || defined(IOS)
 
 	void
