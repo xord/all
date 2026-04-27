@@ -66,7 +66,7 @@ module Xot
 
       if mingw? || cygwin?
         name = my_ext.name true
-        opts = %w[
+        opts = %W[
           -Wl,--export-all-symbols,--whole-archive
           -l#{name}
           -Wl,--no-whole-archive
