@@ -20,7 +20,7 @@ namespace Rays
 
 			VideoReader (const char* path);
 
-			Image decode (size_t index, float pixel_density) const;
+			Image decode_image (size_t index, float pixel_density) const;
 
 			coord width () const;
 

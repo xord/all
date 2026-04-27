@@ -19,7 +19,7 @@ namespace Rays
 
 		virtual ~Data () {}
 
-		virtual Image decode (size_t index, float pixel_density) const = 0;
+		virtual Image decode_image (size_t index, float pixel_density) const = 0;
 
 		virtual coord width () const   = 0;
 
@@ -95,7 +95,7 @@ namespace Rays
 			[asset       release];
 		}
 
-		Image decode (size_t index, float pixel_density) const override
+		Image decode_image (size_t index, float pixel_density) const override
 		{
 			AVAssetImageGenerator* generator =
 				[[[AVAssetImageGenerator alloc] initWithAsset: asset] autorelease];
@@ -187,7 +187,7 @@ namespace Rays
 			this->fps_   = delay > 0 ? std::round(1 / delay) : DEFAULT_FPS;
 		}
 
-		Image decode (size_t index, float pixel_density) const override
+		Image decode_image (size_t index, float pixel_density) const override
 		{
 			std::shared_ptr<CGImage> cgimage(
 				CGImageSourceCreateImageAtIndex(source.get(), index, NULL),
@@ -288,12 +288,12 @@ namespace Rays
 	}
 
 	Image
-	VideoReader::decode (size_t index, float pixel_density) const
+	VideoReader::decode_image (size_t index, float pixel_density) const
 	{
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
-		return self->decode(index, pixel_density);
+		return self->decode_image(index, pixel_density);
 	}
 
 	coord
