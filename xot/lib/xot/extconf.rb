@@ -47,7 +47,14 @@ module Xot
       $CFLAGS   = make_cflags   $CFLAGS   + ' -x c++'
       $CXXFLAGS = make_cflags   $CXXFLAGS + ' -x c++' if $CXXFLAGS
       $LDFLAGS  = make_ldflags  ldflags, lib_dirs, frameworks
-      $LOCAL_LIBS << local_libs.reverse.map {|s| " -l#{s}"}.join
+      libs_str = local_libs.reverse.map {|s| " -l#{s}"}.join
+      if mingw? || cygwin?
+        own_lib = extensions.last.name(true)
+        libs_str.sub!(" -l#{own_lib}") {
+          " -Wl,--whole-archive -l#{own_lib} -Wl,--no-whole-archive"
+        }
+      end
+      $LOCAL_LIBS << libs_str
     end
 
     def create_makefile(*args)
