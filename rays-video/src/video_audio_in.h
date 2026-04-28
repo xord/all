@@ -4,6 +4,7 @@
 #define __RAYS_VIDEO_SRC_VIDEO_AUDIO_IN_H__
 
 
+#include <vector>
 #include <beeps/processor.h>
 
 
@@ -44,6 +45,9 @@ namespace Rays
 				Context* context, Beeps::Signals* signals, uint* offset) override;
 
 	};// VideoAudioIn
+
+
+	typedef std::vector<Xot::Ref<VideoAudioIn>> VideoAudioInList;
 
 
 }// Rays

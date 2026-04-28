@@ -1,6 +1,9 @@
 #include "video.h"
 
 
+#include <xot/util.h>
+#include <beeps/sound.h>
+#include "rays/bitmap.h"
 #include "rays/exception.h"
 
 
@@ -19,6 +22,10 @@ namespace Rays
 
 		std::vector<Image> images;
 
+		VideoAudioInList audio_tracks;
+
+		Beeps::SoundPlayer player;
+
 	};// Video::Data
 
 
@@ -36,7 +43,10 @@ namespace Rays
 
 		void preprocess (const Image* image) const override
 		{
-			const_cast<Image*>(image)->self = reader.decode(index, 1).self;
+			Image decoded = reader.decode_image(index, 1);
+			Bitmap bitmap = decoded.bitmap();
+			if (bitmap) Xot::hint_memory_usage(bitmap.size());
+			const_cast<Image*>(image)->self = decoded.self;
 		}
 
 	};// VideoImageData
@@ -61,6 +71,8 @@ namespace Rays
 		self->images.reserve(size);
 		for (size_t i = 0; i < size; ++i)
 			self->images.push_back(Image(new VideoImageData(reader, i)));
+
+		self->audio_tracks = reader.get_audio_tracks();
 
 		return video;
 	}
@@ -119,6 +131,43 @@ namespace Rays
 	{
 		if (index >= size()) return;
 		self->images.erase(self->images.begin() + index);
+	}
+
+	void
+	Video::play ()
+	{
+		if (empty())
+			invalid_state_error(__FILE__, __LINE__, "video is empty");
+
+		if (self->audio_tracks.empty())
+			invalid_state_error(__FILE__, __LINE__, "playing video without audio is not yet supported");
+
+		VideoAudioIn* in = self->audio_tracks[0].get();
+		self->player = Beeps::Sound(in, 0, in->nchannels(), in->sample_rate()).play();
+	}
+
+	void
+	Video::pause ()
+	{
+		if (self->player) self->player.pause();
+	}
+
+	void
+	Video::stop ()
+	{
+		if (self->player) self->player.stop();
+	}
+
+	void
+	Video::set_time_scale (float scale)
+	{
+		if (self->player) self->player.set_time_scale(scale);
+	}
+
+	float
+	Video::time_scale () const
+	{
+		return self->player ? self->player.time_scale() : 1;
 	}
 
 	coord
@@ -205,6 +254,12 @@ namespace Rays
 
 	Video::operator Image () const
 	{
+		if (self->player)
+		{
+			size_t index = (size_t) (self->player.time() * self->fps);
+			if (index >= size()) index = size() - 1;
+			self->position = index;
+		}
 		return operator[](self->position);
 	}
 

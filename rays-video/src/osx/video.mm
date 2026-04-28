@@ -8,6 +8,7 @@
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #include "rays/bitmap.h"
 #include "rays/exception.h"
+#include "video_audio_in.h"
 
 
 namespace Rays
@@ -20,6 +21,11 @@ namespace Rays
 		virtual ~Data () {}
 
 		virtual Image decode_image (size_t index, float pixel_density) const = 0;
+
+		virtual VideoAudioInList get_audio_tracks () const
+		{
+			return {};
+		}
 
 		virtual coord width () const   = 0;
 
@@ -116,6 +122,20 @@ namespace Rays
 			}
 
 			return Image(to_bitmap(cgimage.get()), pixel_density);
+		}
+
+		VideoAudioInList get_audio_tracks () const override
+		{
+			NSArray<AVAssetTrack*>* tracks =
+				[asset tracksWithMediaType: AVMediaTypeAudio];
+			if (!tracks || tracks.count == 0)
+				return {};
+
+			VideoAudioInList list;
+			for (AVAssetTrack* track in tracks)
+				list.emplace_back(new VideoAudioIn(VideoAudioIn_Data_create(asset, track)));
+
+			return list;
 		}
 
 		coord width () const override
@@ -294,6 +314,13 @@ namespace Rays
 			invalid_state_error(__FILE__, __LINE__);
 
 		return self->decode_image(index, pixel_density);
+	}
+
+	VideoAudioInList
+	VideoReader::get_audio_tracks () const
+	{
+		if (!*this) return {};
+		return self->get_audio_tracks();
 	}
 
 	coord

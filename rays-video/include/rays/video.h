@@ -44,6 +44,16 @@ namespace Rays
 
 			void remove (size_t index);
 
+			void play ();
+
+			void pause ();
+
+			void stop ();
+
+			void set_time_scale (float scale);
+
+			float    time_scale () const;
+
 			void save (const char* path);
 
 			coord width () const;

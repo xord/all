@@ -171,6 +171,50 @@ RUCY_DEF1(at, index)
 RUCY_END
 
 static
+RUCY_DEF0(play)
+{
+	CHECK;
+	THIS->play();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(pause)
+{
+	CHECK;
+	THIS->pause();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(stop)
+{
+	CHECK;
+	THIS->stop();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_time_scale, scale)
+{
+	CHECK;
+	THIS->set_time_scale(to<float>(scale));
+	return scale;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_time_scale)
+{
+	CHECK;
+	return value(THIS->time_scale());
+}
+RUCY_END
+
+static
 RUCY_DEF1(load, path)
 {
 	return value(Rays::load_video(path.c_str()));
@@ -211,6 +255,11 @@ Init_rays_video ()
 	cVideo.define_method("empty?",        empty);
 	cVideo.define_method("position=", set_position);
 	cVideo.define_method("position",  get_position);
+	cVideo.define_method("play",  play);
+	cVideo.define_method("pause", pause);
+	cVideo.define_method("stop",  stop);
+	cVideo.define_method("time_scale=", set_time_scale);
+	cVideo.define_method("time_scale",  get_time_scale);
 	cVideo.define_method("each!", each);
 	cVideo.define_method("to_image", to_image);
 	cVideo.define_method("[]", at);

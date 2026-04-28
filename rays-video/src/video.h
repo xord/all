@@ -5,6 +5,7 @@
 
 
 #include "rays/video.h"
+#include "video_audio_in.h"
 
 
 namespace Rays
@@ -21,6 +22,8 @@ namespace Rays
 			VideoReader (const char* path);
 
 			Image decode_image (size_t index, float pixel_density) const;
+
+			VideoAudioInList get_audio_tracks () const;
 
 			coord width () const;
 

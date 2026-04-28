@@ -1,5 +1,5 @@
 // -*- mode: objc -*-
-#import "../video_audio_in.h"
+#import "video_audio_in.h"
 
 
 #import <AVFoundation/AVFoundation.h>
@@ -43,7 +43,8 @@ namespace Rays
 
 			this->asset       = [asset       retain];
 			this->audio_track = [audio_track retain];
-			this->buffer      = Beeps::Signals(2048, desc->mChannelsPerFrame, desc->mSampleRate);
+			uint nchannels    = std::min<uint>(desc->mChannelsPerFrame, 2);
+			this->buffer      = Beeps::Signals(2048, nchannels, desc->mSampleRate);
 			double duration   = CMTimeGetSeconds(audio_track.timeRange.duration);
 			this->nsamples    = (uint) (duration * buffer.sample_rate());
 		}
@@ -72,6 +73,7 @@ namespace Rays
 					AVLinearPCMBitDepthKey:      @32,
 					AVLinearPCMIsFloatKey:       @YES,
 					AVLinearPCMIsNonInterleaved: @YES,
+					AVNumberOfChannelsKey:       @(buffer.nchannels()),
 				}];
 			if (![reader canAddOutput: output])
 				rays_error(__FILE__, __LINE__, "cannot add audio output");
@@ -174,6 +176,13 @@ namespace Rays
 		}
 
 	};// VideoAudioIn::Data
+
+
+	VideoAudioIn::Data*
+	VideoAudioIn_Data_create (AVAsset* asset, AVAssetTrack* audio_track)
+	{
+		return new VideoAudioIn::Data(asset, audio_track);
+	}
 
 
 	VideoAudioIn::VideoAudioIn (Data* data)
