@@ -16,7 +16,7 @@ TESTS_ALONE = ['test/test_rays_init.rb']
 
 install_packages(
   mingw: %w[MINGW_PACKAGE_PREFIX-glew],
-  apt:   %w[libglew-dev libsdl2-dev])
+  apt:   %w[libglew-dev libsdl2-dev libsdl2-ttf-dev])
 
 use_external_library 'https://github.com/g-truc/glm',
   tag:     '1.0.1',
