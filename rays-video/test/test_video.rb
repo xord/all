@@ -1,6 +1,9 @@
 require_relative 'helper'
 
 
+return unless osx? || ios?
+
+
 class TestVideo < Test::Unit::TestCase
 
   def video(w = 10, h = 10, fps = 0, pd = 1)
