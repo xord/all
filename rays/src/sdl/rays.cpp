@@ -2,6 +2,7 @@
 
 
 #include <SDL.h>
+#include <SDL_ttf.h>
 #include "rays/exception.h"
 #include "rays/debug.h"
 #include "../renderer.h"
@@ -28,6 +29,9 @@ namespace Rays
 		if (SDL_Init(SDL_INIT_VIDEO) < 0)
 			rays_error(__FILE__, __LINE__, SDL_GetError());
 
+		if (TTF_Init() < 0)
+			rays_error(__FILE__, __LINE__, "TTF_Init failed: %s", TTF_GetError());
+
 		Renderer_init();
 
 		global::initialized = true;
@@ -41,6 +45,7 @@ namespace Rays
 
 		Renderer_fin();
 
+		TTF_Quit();
 		SDL_Quit();
 
 		global::initialized = false;
