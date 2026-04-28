@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <beeps/processor.h>
+#include <rays/defs.h>
 
 
 namespace Rays
