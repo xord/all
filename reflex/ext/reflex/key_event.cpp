@@ -156,14 +156,18 @@ RUCY_DEF0(get_key)
 		CASE(LCONTROL):
 		CASE(RCONTROL): SYMBOL1(control);
 		CASE(ALT):
+#if !defined(LINUX)
 		CASE(LALT):
+#endif
 		CASE(RALT):     SYMBOL1(alt);
 		CASE(LWIN):
 		CASE(RWIN):     SYMBOL1(win);
+#if !defined(LINUX)
 		CASE(LCOMMAND):
 		CASE(RCOMMAND): SYMBOL1(command);
 		CASE(LOPTION):
 		CASE(ROPTION):  SYMBOL1(option);
+#endif
 		CASE(FUNCTION): SYMBOL1(function);
 
 		CASE(F1):  SYMBOL1(f1);
@@ -198,7 +202,9 @@ RUCY_DEF0(get_key)
 		CASE(NUM_EQUAL):    SYMBOL1(equal);
 		CASE(NUM_COMMA):    SYMBOL1(comma);
 		CASE(NUM_DECIMAL):  SYMBOL1(decimal);
+#if !defined(LINUX)
 		CASE(NUM_CLEAR):    SYMBOL1(clear);
+#endif
 		CASE(NUM_ENTER):    SYMBOL1(enter);
 
 		CASE(CAPSLOCK):   SYMBOL1(capslock);
