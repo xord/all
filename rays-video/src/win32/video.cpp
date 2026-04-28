@@ -23,9 +23,15 @@ namespace Rays
 	}
 
 	Image
-	VideoReader::decode (size_t, float) const
+	VideoReader::decode_image (size_t, float) const
 	{
 		not_implemented_error(__FILE__, __LINE__);
+	}
+
+	VideoAudioInList
+	VideoReader::get_audio_tracks () const
+	{
+		return {};
 	}
 
 	coord

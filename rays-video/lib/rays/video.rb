@@ -1,4 +1,6 @@
 require 'xot/block_util'
+require 'beeps/ext'
+require 'rays/ext'
 require 'rays-video/ext'
 
 
