@@ -45,7 +45,7 @@ namespace Rays
 
 		Renderer_fin();
 
-		TTF_Quit();
+		//TTF_Quit();
 		SDL_Quit();
 
 		global::initialized = false;
