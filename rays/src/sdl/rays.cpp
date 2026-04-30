@@ -2,7 +2,9 @@
 
 
 #include <SDL.h>
-#include <SDL_ttf.h>
+#ifndef WASM
+	#include <SDL_ttf.h>
+#endif
 #include "rays/exception.h"
 #include "rays/debug.h"
 #include "../renderer.h"
@@ -29,8 +31,10 @@ namespace Rays
 		if (SDL_Init(SDL_INIT_VIDEO) < 0)
 			rays_error(__FILE__, __LINE__, SDL_GetError());
 
+#ifndef WASM
 		if (TTF_Init() < 0)
 			rays_error(__FILE__, __LINE__, "TTF_Init failed: %s", TTF_GetError());
+#endif
 
 		Renderer_init();
 
