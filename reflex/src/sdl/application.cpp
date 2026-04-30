@@ -83,7 +83,7 @@ namespace Reflex
 		double prev = Xot::time();
 		while (!self->quit)
 		{
-			dispatch_events(this);
+			dispatch_events(app);
 
 			static const double INTERVAL  = 1.0 / 60.0;
 			static const double SLEEPABLE = INTERVAL * 0.9;
@@ -107,7 +107,9 @@ namespace Reflex
 	{
 		Application* app = (Application*) arg;
 
-		if (get_data(app)->quit || !dispatch_events())
+		dispatch_events(app);
+
+		if (get_data(app)->quit)
 			emscripten_cancel_main_loop();
 		else
 			update_all_windows(app);
