@@ -2,7 +2,9 @@
 
 
 #include <SDL.h>
-#include <SDL_ttf.h>
+#ifndef WASM
+	#include <SDL_ttf.h>
+#endif
 #include "rays/exception.h"
 
 
@@ -13,7 +15,9 @@ namespace Rays
 	struct RawFont::Data
 	{
 
+#ifndef WASM
 		TTF_Font* font = NULL;
+#endif
 
 		String name, path;
 
@@ -21,11 +25,14 @@ namespace Rays
 
 		~Data ()
 		{
+#ifndef WASM
 			if (font) TTF_CloseFont(font);
+#endif
 		}
 
 		void load (const char* path, coord size)
 		{
+#ifndef WASM
 			if (font)
 				invalid_state_error(__FILE__, __LINE__);
 
@@ -41,6 +48,7 @@ namespace Rays
 
 			const char* family = TTF_FontFaceFamilyName(font);
 			if (family) this->name = family;
+#endif
 		}
 
 	};// RawFont::Data
@@ -49,7 +57,11 @@ namespace Rays
 	static String
 	get_default_font_path ()
 	{
+#ifndef WASM
 		return "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
+#else
+		return "";
+#endif
 	}
 
 	const FontFamilyMap&
@@ -100,6 +112,7 @@ namespace Rays
 		void* context_, coord context_height,
 		const char* str, coord x, coord y) const
 	{
+#ifndef WASM
 		SDL_Surface* target = (SDL_Surface*) context_;
 
 		if (!target)
@@ -122,6 +135,7 @@ namespace Rays
 		SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 		SDL_BlitSurface(surface, NULL, target, &dst);
 		SDL_FreeSurface(surface);
+#endif
 	}
 
 	String
@@ -141,6 +155,7 @@ namespace Rays
 	coord
 	RawFont::get_width (const char* str) const
 	{
+#ifndef WASM
 		if (!str)
 			argument_error(__FILE__, __LINE__);
 
@@ -154,11 +169,15 @@ namespace Rays
 			rays_error(__FILE__, __LINE__, "TTF_SizeUTF8 failed: %s", TTF_GetError());
 
 		return (coord) w;
+#else
+		return 0;
+#endif
 	}
 
 	coord
 	RawFont::get_height (coord* ascent, coord* descent, coord* leading) const
 	{
+#ifndef WASM
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
@@ -171,11 +190,21 @@ namespace Rays
 		if (leading) *leading = (coord) (skip - asc + desc);
 
 		return (coord) (asc - desc);
+#else
+		if (ascent)  *ascent  = 0;
+		if (descent) *descent = 0;
+		if (leading) *leading = 0;
+		return 0;
+#endif
 	}
 
 	RawFont::operator bool () const
 	{
+#ifndef WASM
 		return self->font;
+#else
+		return true;
+#endif
 	}
 
 	bool
