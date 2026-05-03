@@ -57,7 +57,7 @@ namespace Rays
 
 			glRenderbufferStorage(
 				GL_RENDERBUFFER,
-				#ifdef IOS
+				#if defined(IOS) || defined(WASM)
 					GL_DEPTH_COMPONENT16,
 				#else
 					GL_DEPTH_COMPONENT24,
