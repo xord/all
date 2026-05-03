@@ -29,7 +29,7 @@ use_external_library 'https://github.com/skyrpex/clipper',
   excludes: 'clipper/cpp/cpp_'
 
 use_external_library 'https://github.com/mapbox/earcut.hpp',
-  tag:     'v2.2.4',
+  commit:  '365be263bfed498f9d3d3bf065bcb39b0d0e4ba6',
   incdirs: 'include/mapbox',
   srcdirs: 'NOSRC'
 
