@@ -401,6 +401,27 @@ namespace Reflex
 				break;
 			}
 
+			case SDL_FINGERDOWN:
+			{
+				NativePointerEvent e(event.tfinger, self->native, Pointer::DOWN);
+				Window_call_pointer_event(win, &e);
+				break;
+			}
+
+			case SDL_FINGERUP:
+			{
+				NativePointerEvent e(event.tfinger, self->native, Pointer::UP);
+				Window_call_pointer_event(win, &e);
+				break;
+			}
+
+			case SDL_FINGERMOTION:
+			{
+				NativePointerEvent e(event.tfinger, self->native, Pointer::MOVE);
+				Window_call_pointer_event(win, &e);
+				break;
+			}
+
 			default:
 				return false;
 		}

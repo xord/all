@@ -34,6 +34,10 @@ namespace Reflex
 			NativePointerEvent (
 				const SDL_MouseMotionEvent& event, SDL_Window* window);
 
+			NativePointerEvent (
+				const SDL_TouchFingerEvent& event, SDL_Window* window,
+				Pointer::Action action);
+
 	};// NativePointerEvent
 
 
