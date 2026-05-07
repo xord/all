@@ -94,10 +94,10 @@ module Xot
         CXX:      '',
         AR:       '',
         RANLIB:   '',
-        CPPFLAGS: ' -sUSE_SDL=2',
-        CFLAGS:   ' -sUSE_SDL=2',
+        CPPFLAGS: ' -sUSE_SDL=2 -sUSE_SDL_TTF=2',
+        CFLAGS:   ' -sUSE_SDL=2 -sUSE_SDL_TTF=2',
         CXXFLAGS: '',
-        LDFLAGS:  ' -sUSE_SDL=2',
+        LDFLAGS:  ' -sUSE_SDL=2 -sUSE_SDL_TTF=2',
         INCDIRS:  ruby_dirs.join(' ')
       }.map {|k, v| "#{k}='#{(RbConfig::CONFIG[k.to_s] || '') + v}'"}
 
