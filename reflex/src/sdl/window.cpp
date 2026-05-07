@@ -69,7 +69,7 @@ namespace Reflex
 
 		Uint32 to_sdl_flags (uint flags)
 		{
-			Uint32 sdl_flags = SDL_WINDOW_OPENGL;
+			Uint32 sdl_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
 
 			if (Xot::has_flag(flags, Window::FLAG_RESIZABLE))
 				sdl_flags |= SDL_WINDOW_RESIZABLE;
@@ -299,15 +299,16 @@ namespace Reflex
 			return 1;
 
 		SDL_Window* native = get_native(const_cast<Window*>(&win));
-		int display_index  = SDL_GetWindowDisplayIndex(native);
-		if (display_index < 0)
+		if (!native)
 			return 1;
 
-		float dpi = 0;
-		if (SDL_GetDisplayDPI(display_index, &dpi, NULL, NULL) != 0)
+		int win_w = 0, draw_w = 0;
+		SDL_GetWindowSize(     native, &win_w,  NULL);
+		SDL_GL_GetDrawableSize(native, &draw_w, NULL);
+		if (win_w <= 0 || draw_w <= 0)
 			return 1;
 
-		return dpi / 96.f;
+		return (float) draw_w / (float) win_w;
 	}
 
 	Window*
