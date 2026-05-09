@@ -7,7 +7,7 @@ on:
     branches: [master]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,17 +21,15 @@ jobs:
 
       - name: install emscripten
         uses: mymindstorm/setup-emsdk@v14
-
-      - name: install gems
-        run: gem install ruby_wasm
+        with:
+          version: 5.0.7
 
       - name: build
-        run: |
-          (cd reight/wasm && rake build)
-          mv reight/wasm/output reight.wasm
+        run: cd reight/wasm && rake build
 
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: reight.wasm
-          path: reight.wasm
+          name: reight-wasm
+          path: reight/wasm/output/
+          retention-days: 7
