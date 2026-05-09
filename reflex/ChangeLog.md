@@ -1,6 +1,18 @@
 # reflex ChangeLog
 
 
+## [v0.3.15] - 2026-05-10
+
+- Support WebAssembly
+- Dispatch SDL touch events as multi-pointer PointerEvents
+- Add SDL scancode mapping and input event handling
+- Enable HiDPI support on SDL backend
+- Handle SDL_QUIT via app->quit() instead of breaking loop
+- Remove deprecated has_rdoc= from gemspecs
+
+- Fix quit re-entrancy in Application_call_quit
+
+
 ## [v0.3.14] - 2026-04-17
 
 - Fix HID gamepad stick direction release not firing on direction switch

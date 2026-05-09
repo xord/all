@@ -1,6 +1,23 @@
 # rays ChangeLog
 
 
+## [v0.3.12] - 2026-05-10
+
+- Support WebAssembly
+- Implement batch rendering
+- Implement WASM font rendering via HTMLCanvasElement
+- Implement SDL_ttf font rendering for SDL backend
+- Use GL_DEPTH_COMPONENT16 on WASM builds
+- Rename texcoord_offset to texcoord_pixel
+- Pin external library versions
+- Add Image and Texture comparison operators
+- Add Painter::set_debug / debug singleton API
+- Pin position attribute to location 0 on macOS
+- Simplify Painter_draw_image to fill-only
+- Add libsdl2-ttf-dev to CI apt packages
+- Remove deprecated has_rdoc= from gemspecs
+
+
 ## [v0.3.11] - 2026-04-17
 
 - Move OpenGL code into src/opengl/ and introduce Renderer abstraction

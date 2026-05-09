@@ -1,6 +1,16 @@
 # rucy ChangeLog
 
 
+## [v0.3.12] - 2026-05-10
+
+- Migrate to TypedData API for Ruby 4.x compatibility
+- Enable WB_PROTECTED for TypedData with no mark function
+- Add range checks to integer value_to conversions
+- Add Value::respond_to wrapping rb_respond_to
+- Use hint_memory_usage callback for external memory GC integration
+- Remove deprecated has_rdoc= from gemspecs
+
+
 ## [v0.3.11] - 2026-04-17
 
 - Fix ANYARGS function pointer warnings in module bindings

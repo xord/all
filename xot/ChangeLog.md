@@ -1,6 +1,20 @@
 # xot ChangeLog
 
 
+## [v0.3.12] - 2026-05-10
+
+- Add hint_memory_usage callback for external memory GC integration
+- Add release helper that uploads to GitHub Releases via gh CLI
+- Add Extension.name(downcase) for kebab-case module naming
+- Add lib_name to Extension and use import libraries on Windows
+- Clear DEFFILE in generated Makefile on Windows
+- Resolve dependencies by monorepo commit UUID in CI
+- Remove deprecated has_rdoc= from gemspecs
+
+- Skip linking dependency native extensions to avoid duplicate symbols
+- Fix compiler and linker warnings
+
+
 ## [v0.3.11] - 2026-04-17
 
 - Invert build script default verbosity: quiet by default, add verbose option
