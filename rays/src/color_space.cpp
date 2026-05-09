@@ -133,7 +133,7 @@ namespace Rays
 	ColorSpace::has_alpha () const
 	{
 		return
-			(ALPHA_FIRST <= type_ && type_ <= ALPHA_LAST) ||
+			(ALPHA_FIRST <= (int) type_ && (int) type_ <= ALPHA_LAST) ||
 			type_ == RGBA_8888  || type_ == ARGB_8888  ||
 			type_ == BGRA_8888  || type_ == ABGR_8888  ||
 			type_ == RGBA_float || type_ == ARGB_float ||

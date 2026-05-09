@@ -45,7 +45,7 @@ module Xot
         ldflags << ' -Wl,-bind_at_load' if osx? && debug?
       end
 
-      local_libs << (clang? ? 'c++' : 'stdc++')
+      local_libs << 'stdc++' if gcc?
 
       $CPPFLAGS = make_cppflags $CPPFLAGS, defs, inc_dirs
       $CFLAGS   = make_cflags   $CFLAGS   + ' -x c++'

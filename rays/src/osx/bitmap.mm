@@ -263,7 +263,7 @@ namespace Rays
 
 		NSString* path = [NSString stringWithUTF8String: path_];
 		NSBitmapImageRep* imagerep =
-			[NSBitmapImageRep imageRepWithContentsOfFile: path];
+			(NSBitmapImageRep*) [NSBitmapImageRep imageRepWithContentsOfFile: path];
 		if (!imagerep)
 			rays_error(__FILE__, __LINE__, "[NSBitmapImageRep imageRepWithContentsOfFile] failed.");
 

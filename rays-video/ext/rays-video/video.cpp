@@ -28,7 +28,7 @@ RUCY_DEF4(initialize, width, height, fps, pixel_density)
 	*THIS = Rays::Video(
 		to<int>(width),
 		to<int>(height),
-		fps_ > 0 ? fps_ : Rays::Video::DEFAULT_FPS,
+		fps_ > 0 ? fps_ : (float) Rays::Video::DEFAULT_FPS,
 		to<float>(pixel_density));
 }
 RUCY_END

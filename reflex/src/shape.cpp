@@ -852,7 +852,7 @@ namespace Reflex
 				b2points[i] = to_b2vec2(polyline[i], ppm);
 
 			b2PolygonShape b2shape;
-			b2shape.Set(&b2points[0], polyline.size());
+			b2shape.Set(&b2points[0], (int32) polyline.size());
 
 			return FixtureBuilder(shape, &b2shape).fixtures();
 		}
@@ -1211,12 +1211,6 @@ namespace Reflex
 	get_data (WallShape& shape)
 	{
 		return (WallShapeData&) *shape.self;
-	}
-
-	static const WallShapeData&
-	get_data (const WallShape& shape)
-	{
-		return get_data(const_cast<WallShape&>(shape));
 	}
 
 

@@ -268,6 +268,8 @@ namespace Reflex
 			timers.pop_front();
 	}
 
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wmissing-noreturn"
 	void
 	Timers::find_timers (
 		TimerList* result, const Selector& selector, bool recursive) const
@@ -277,6 +279,7 @@ namespace Reflex
 
 		not_implemented_error(__FILE__, __LINE__);
 	}
+	#pragma GCC diagnostic pop
 
 
 }// Reflex

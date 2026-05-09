@@ -204,7 +204,7 @@ namespace Rays
 			this->w      = (int) CGImageGetWidth(first_frame.get());
 			this->h      = (int) CGImageGetHeight(first_frame.get());
 			float delay  = get_frame_delay(0);
-			this->fps_   = delay > 0 ? std::round(1 / delay) : DEFAULT_FPS;
+			this->fps_   = delay > 0 ? std::round(1 / delay) : (float) DEFAULT_FPS;
 		}
 
 		Image decode_image (size_t index, float pixel_density) const override

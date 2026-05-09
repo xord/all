@@ -321,7 +321,7 @@ namespace Reflex
 
 		bool set_flow (Flow main, Flow sub)
 		{
-			return flow.set((main & FLOW_MASK) | ((sub & FLOW_MASK) << FLOW_SHIFT));
+			return flow.set(((int) main & FLOW_MASK) | (((int) sub & FLOW_MASK) << FLOW_SHIFT));
 		}
 
 		Flow flow_main () const
