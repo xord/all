@@ -27,9 +27,15 @@ jobs:
       - name: build
         run: cd reight/wasm && rake build
 
+      - name: get version and sha
+        id: ver
+        run: |
+          echo "version=$(cat reight/VERSION)"       >> $GITHUB_OUTPUT
+          echo "sha=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
+
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: reight-wasm
+          name: reight-${{ steps.ver.outputs.version }}-${{ steps.ver.outputs.sha }}
           path: reight/wasm/output/
           retention-days: 7
