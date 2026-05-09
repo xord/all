@@ -29,9 +29,11 @@ jobs:
 
       - name: get version and sha
         id: ver
+        env:
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          echo "version=$(cat reight/VERSION)"       >> $GITHUB_OUTPUT
-          echo "sha=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
+          echo "version=$(cat reight/VERSION)" >> $GITHUB_OUTPUT
+          echo "sha=${SHA:0:8}"                >> $GITHUB_OUTPUT
 
       - name: upload artifact
         uses: actions/upload-artifact@v4
