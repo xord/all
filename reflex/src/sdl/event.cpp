@@ -121,6 +121,42 @@ namespace Reflex
 			time()));
 	}
 
+	NativePointerEvent::NativePointerEvent (
+		const SDL_TouchFingerEvent& e, SDL_Window* window, Pointer::Action action)
+	{
+		uint mods = get_modifiers(SDL_GetModState());
+		double t  = time();
+
+		int w = 0, h = 0;
+		if (window) SDL_GetWindowSize(window, &w, &h);
+
+		PointerEvent_add_pointer(this, Pointer(
+			(uint) e.fingerId,
+			Pointer::TOUCH,
+			action,
+			Point(e.x * w, e.y * h),
+			mods,
+			0,
+			action == Pointer::MOVE,
+			t));
+
+		int size = SDL_GetNumTouchFingers(e.touchId);
+		for (int i = 0; i < size; ++i)
+		{
+			SDL_Finger* finger = SDL_GetTouchFinger(e.touchId, i);
+			if (!finger || finger->id == e.fingerId) continue;
+			PointerEvent_add_pointer(this, Pointer(
+				(uint) finger->id,
+				Pointer::TOUCH,
+				Pointer::STAY,
+				Point(finger->x * w, finger->y * h),
+				mods,
+				0,
+				true,
+				t));
+		}
+	}
+
 
 	NativeWheelEvent::NativeWheelEvent (
 		const SDL_MouseWheelEvent& e, SDL_Window* window)

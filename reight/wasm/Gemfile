@@ -1,0 +1,13 @@
+source 'https://rubygems.org'
+
+gem 'rake'
+gem 'ruby_wasm',  '~> 2.9.4'
+
+gem 'xot',        path: '../../xot'
+gem 'rucy',       path: '../../rucy'
+gem 'beeps',      path: '../../beeps'
+gem 'rays',       path: '../../rays'
+gem 'reflexion',  path: '../../reflex'
+gem 'processing', path: '../../processing'
+gem 'rubysketch', path: '../../rubysketch'
+gem 'reight',     path: '../../reight'

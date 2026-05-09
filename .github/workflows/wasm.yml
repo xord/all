@@ -1,0 +1,43 @@
+name: Build WASM
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ruby 3.2
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: install emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 5.0.7
+
+      - name: build
+        run: cd reight/wasm && rake build
+
+      - name: get version and sha
+        id: ver
+        env:
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          echo "version=$(cat reight/VERSION)" >> $GITHUB_OUTPUT
+          echo "sha=${SHA:0:8}"                >> $GITHUB_OUTPUT
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reight-${{ steps.ver.outputs.version }}-${{ steps.ver.outputs.sha }}
+          path: reight/wasm/output/
+          retention-days: 7
