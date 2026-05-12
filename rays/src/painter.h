@@ -181,7 +181,7 @@ namespace Rays
 
 		};// Flag
 
-		uint flags          = Painter::FLAG_BATCHING;
+		uint flags          = 0;//Painter::FLAG_BATCHING;
 
 		float pixel_density = 1;
 
