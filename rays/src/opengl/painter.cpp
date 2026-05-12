@@ -711,7 +711,7 @@ namespace Rays
 		shader  = setup_shader(self, shader, texinfo);
 
 		bool batchable =
-			painter->has_flag(Painter::FLAG_BATCHING) &&
+			false &&// painter->has_flag(Painter::FLAG_BATCHING) &&
 			!Painter::debug() &&
 			!self->state.shader;
 		if (batchable && mode == MODE_TRIANGLES)
