@@ -4,7 +4,7 @@
 #define __REFLEX_SRC_IOS_EVENT_H__
 
 
-#import <UIKit/UIEvent.h>
+#import <UIKit/UIKit.h>
 #include "../event.h"
 
 
@@ -19,7 +19,20 @@ namespace Reflex
 
 			NativePointerEvent (NSSet* touches, UIEvent* event, UIView* view);
 
+			NativePointerEvent (UIHoverGestureRecognizer* recognizer, UIView* view);
+
 	};// NativePointerEvent
+
+
+	class NativeWheelEvent : public WheelEvent
+	{
+
+		public:
+
+			NativeWheelEvent (
+				UIPanGestureRecognizer* recognizer, UIView* view, CGPoint position);
+
+	};// NativeWheelEvent
 
 
 }// Reflex

@@ -3,6 +3,7 @@
 
 
 #include <assert.h>
+#include <xot/util.h>
 #include "window.h"
 
 
@@ -11,7 +12,23 @@ namespace Reflex
 
 
 	static uint
-	get_type (UITouch* touch)
+	get_mouse_button_types (UIEvent* event)
+	{
+		if (!event) return 0;
+
+		uint ret = 0;
+		if (@available(iOS 13.4, *))
+		{
+			UIEventButtonMask mask = event.buttonMask;
+			if (mask & UIEventButtonMaskPrimary)            ret |= Pointer::MOUSE_LEFT;
+			if (mask & UIEventButtonMaskSecondary)          ret |= Pointer::MOUSE_RIGHT;
+			if (mask & UIEventButtonMaskForButtonNumber(3)) ret |= Pointer::MOUSE_MIDDLE;
+		}
+		return ret;
+	}
+
+	static uint
+	get_type (UITouch* touch, UIEvent* event)
 	{
 		assert(touch);
 
@@ -22,8 +39,15 @@ namespace Reflex
 		{
 			case UITouchTypeDirect: return Pointer::TOUCH;
 			case UITouchTypePencil: return Pointer::PEN;
-			default:                return Pointer::TYPE_NONE;
 		}
+
+		if (@available(iOS 13.4, *))
+		{
+			if (type == UITouchTypeIndirectPointer)
+				return Pointer::MOUSE | get_mouse_button_types(event);
+		}
+
+		return Pointer::TYPE_NONE;
 	}
 
 	static Pointer::Action
@@ -82,19 +106,22 @@ namespace Reflex
 		for (UITouch* touch in touches)
 		{
 			Pointer::Action action = get_action(touch);
+			uint type              = get_type(touch, event);
 
 			Pointer pointer(
 				0,
-				get_type(touch),
+				type,
 				action,
 				to_point([touch locationInView: view]),
 				get_modifiers(event),
 				(uint) touch.tapCount,
 				action == Pointer::MOVE,
 				touch.timestamp);
-			Pointer_set_system_id(&pointer, (Pointer::ID) touch);
 
-			if (pointer.action() != Pointer::DOWN)
+			if (!(type & Pointer::MOUSE))
+				Pointer_set_system_id(&pointer, (Pointer::ID) touch);
+
+			if (action != Pointer::DOWN)
 			{
 				Pointer_set_prev_position(
 					&pointer, to_point([touch previousLocationInView: view]));
@@ -103,6 +130,39 @@ namespace Reflex
 			if (pointer)
 				PointerEvent_add_pointer(this, pointer);
 		}
+	}
+
+	NativePointerEvent::NativePointerEvent (
+		UIHoverGestureRecognizer* recognizer, UIView* view)
+	{
+		assert(recognizer && view);
+
+		Pointer pointer(
+			0,
+			Pointer::MOUSE,
+			Pointer::MOVE,
+			to_point([recognizer locationInView: view]),
+			get_modifiers(nil),
+			0,
+			false,
+			Xot::time());
+
+		if (pointer)
+			PointerEvent_add_pointer(this, pointer);
+	}
+
+
+	NativeWheelEvent::NativeWheelEvent (
+		UIPanGestureRecognizer* recognizer, UIView* view, CGPoint position)
+	:	WheelEvent(0, 0, 0, 0, 0, 0, get_modifiers(nil))
+	{
+		assert(recognizer && view);
+
+		WheelEvent_set_position(this, to_point(position));
+
+		CGPoint delta       = [recognizer translationInView: view];
+		this->dposition().x = delta.x;
+		this->dposition().y = delta.y;
 	}
 
 
