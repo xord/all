@@ -12,6 +12,17 @@ namespace Reflex
 {
 
 
+	class NativeKeyEvent : public KeyEvent
+	{
+
+		public:
+
+			NativeKeyEvent (UIPress* press, Action action)
+				API_AVAILABLE(ios(13.4));
+
+	};// NativeKeyEvent
+
+
 	class NativePointerEvent : public PointerEvent
 	{
 

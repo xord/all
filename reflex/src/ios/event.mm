@@ -76,14 +76,8 @@ namespace Reflex
 	}
 
 	static uint
-	get_modifiers (const UIEvent* event)
+	to_modifiers (NSInteger flags)
 	{
-		if (!event) return 0;
-
-		NSInteger flags = 0;
-		if (@available(iOS 13.4, *))
-			flags = event.modifierFlags;
-
 		return
 			(flags & UIKeyModifierAlphaShift) ? MOD_CAPS    : 0 |
 			(flags & UIKeyModifierShift)      ? MOD_SHIFT   : 0 |
@@ -93,10 +87,39 @@ namespace Reflex
 			(flags & UIKeyModifierNumericPad) ? MOD_NUMPAD  : 0;
 	}
 
+	static uint
+	get_modifiers (const UIEvent* event)
+	{
+		if (!event) return 0;
+
+		NSInteger flags = 0;
+		if (@available(iOS 13.4, *))
+			flags = event.modifierFlags;
+
+		return to_modifiers(flags);
+	}
+
 	uint
 	KeyEvent_get_modifiers ()
 	{
 		return get_modifiers(nil);
+	}
+
+
+	static const char*
+	get_chars (UIKey* key) API_AVAILABLE(ios(13.4))
+	{
+		NSString* s = key.characters;
+		if (!s || [s hasPrefix: @"UIKeyInput"])
+			return NULL;
+		return s.UTF8String;
+	}
+
+	NativeKeyEvent::NativeKeyEvent (UIPress* press, Action action)
+	:	KeyEvent(
+			action, get_chars(press.key), (int) press.key.keyCode,
+			to_modifiers(press.key.modifierFlags), 0)
+	{
 	}
 
 

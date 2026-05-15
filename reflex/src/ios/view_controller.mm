@@ -327,10 +327,14 @@ ReflexViewController_get_show_fun ()
 			selector: @selector(willResignActive)
 			name: UIApplicationWillResignActiveNotification
 			object: nil];
+
+		[self becomeFirstResponder];
 	}
 
 	- (void) viewDidDisappear: (BOOL) animated
 	{
+		[self resignFirstResponder];
+
 		[NSNotificationCenter.defaultCenter
 			removeObserver: self
 			name: UIApplicationDidBecomeActiveNotification
@@ -360,6 +364,11 @@ ReflexViewController_get_show_fun ()
 	{
 		[super viewDidLayoutSubviews];
 		self.reflexView.frame = self.view.bounds;
+	}
+
+	- (BOOL) canBecomeFirstResponder
+	{
+		return YES;
 	}
 
 	- (void) startTimer
@@ -591,6 +600,45 @@ ReflexViewController_get_show_fun ()
 		// every call here already involves one of ours, and we want it to run
 		// alongside whatever else is on the view (touches, app-added gestures).
 		return YES;
+	}
+
+	- (void) pressesBegan: (NSSet<UIPress*>*) presses
+		withEvent: (UIPressesEvent*) event
+	{
+		if (@available(iOS 13.4, *))
+			[self handlePresses: presses action: Reflex::KeyEvent::DOWN];
+		[super pressesBegan: presses withEvent: event];
+	}
+
+	- (void) pressesEnded: (NSSet<UIPress*>*) presses
+		withEvent: (UIPressesEvent*) event
+	{
+		if (@available(iOS 13.4, *))
+			[self handlePresses: presses action: Reflex::KeyEvent::UP];
+		[super pressesEnded: presses withEvent: event];
+	}
+
+	- (void) pressesCancelled: (NSSet<UIPress*>*) presses
+		withEvent: (UIPressesEvent*) event
+	{
+		if (@available(iOS 13.4, *))
+			[self handlePresses: presses action: Reflex::KeyEvent::UP];
+		[super pressesCancelled: presses withEvent: event];
+	}
+
+	- (void) handlePresses: (NSSet<UIPress*>*) presses
+		action: (Reflex::KeyEvent::Action) action
+		API_AVAILABLE(ios(13.4))
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		for (UIPress* press in presses)
+		{
+			if (!press.key) continue;
+			Reflex::NativeKeyEvent e(press, action);
+			Window_call_key_event(win, &e);
+		}
 	}
 
 @end// ReflexViewController
