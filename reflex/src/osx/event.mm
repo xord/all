@@ -163,7 +163,7 @@ namespace Reflex
 
 
 	NativeWheelEvent::NativeWheelEvent (NSEvent* e, NSView* view)
-	:	WheelEvent(0, 0, 0, [e deltaX], [e deltaY], [e deltaZ], get_modifiers(e))
+	:	WheelEvent(0, 0, 0, [e deltaX], -[e deltaY], [e deltaZ], get_modifiers(e))
 	{
 		WheelEvent_set_position(this, get_pointer_position(e, view));
 	}
