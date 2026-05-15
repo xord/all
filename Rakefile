@@ -67,7 +67,7 @@ end
 task :ext => :clean_bundles
 
 task :clean_bundles do
-  exts = Dir.glob('*/ext/*/native.bundle')
+  exts = Dir.glob('*/ext/*/*_ext.bundle')
   sh %( rm #{exts.join ' '} ) unless exts.empty?
 end
 
