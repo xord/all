@@ -711,7 +711,7 @@ namespace Rays
 		shader  = setup_shader(self, shader, texinfo);
 
 		bool batchable =
-			false &&// painter->has_flag(Painter::FLAG_BATCHING) &&
+			painter->has_flag(Painter::FLAG_BATCHING) &&
 			!Painter::debug() &&
 			!self->state.shader;
 		if (batchable && mode == MODE_TRIANGLES)
@@ -780,6 +780,10 @@ namespace Rays
 		coord width, coord height)
 	{
 		assert(painter && font && line && *line != '\0');
+
+		// exclude text rendering from batching for now;
+		// text_image is shared and gets overwritten by next text draw
+		Painter_flush(painter);
 
 		Painter::Data* self = painter->self.get();
 
