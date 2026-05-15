@@ -121,11 +121,13 @@ ReflexViewController_get_show_fun ()
 @end
 
 
-@interface ReflexViewController () <GLKViewDelegate>
+@interface ReflexViewController () <GLKViewDelegate, UIGestureRecognizerDelegate>
 
 	@property(nonatomic, strong) ReflexView* reflexView;
 
 	@property(nonatomic, strong) CADisplayLink* displayLink;
+
+	@property(nonatomic, strong) UIHoverGestureRecognizer* hoverRecognizer;
 
 @end
 
@@ -264,8 +266,34 @@ ReflexViewController_get_show_fun ()
 		//view.drawableMultisample   = GLKViewDrawableMultisample4X;
 
 		[self.view addSubview: view];
+		[self setupMouseRecognizers: view];
 
 		self.reflexView = view;
+	}
+
+	- (void) setupMouseRecognizers: (UIView*) view
+	{
+		if (@available(iOS 13.4, *))
+		{
+			UIHoverGestureRecognizer* hover = [[[UIHoverGestureRecognizer alloc]
+				initWithTarget: self action: @selector(hoverChanged:)]
+				autorelease];
+			hover.delegate       = self;
+			[view addGestureRecognizer: hover];
+			self.hoverRecognizer = hover;
+
+			UIPanGestureRecognizer* pan = [[[UIPanGestureRecognizer alloc]
+				initWithTarget: self action: @selector(scrollChanged:)]
+				autorelease];
+			pan.allowedScrollTypesMask = UIScrollTypeMaskAll;
+			// 0/0 touches means the recognizer only fires from indirect scroll
+			// (mouse wheel / trackpad scroll) — touch-based panning is left to
+			// the touchesBegan/etc. path so this won't intercept finger pans.
+			pan.minimumNumberOfTouches = 0;
+			pan.maximumNumberOfTouches = 0;
+			pan.delegate               = self;
+			[view addGestureRecognizer: pan];
+		}
 	}
 
 	- (void) cleanupReflexView
@@ -299,10 +327,14 @@ ReflexViewController_get_show_fun ()
 			selector: @selector(willResignActive)
 			name: UIApplicationWillResignActiveNotification
 			object: nil];
+
+		[self becomeFirstResponder];
 	}
 
 	- (void) viewDidDisappear: (BOOL) animated
 	{
+		[self resignFirstResponder];
+
 		[NSNotificationCenter.defaultCenter
 			removeObserver: self
 			name: UIApplicationDidBecomeActiveNotification
@@ -332,6 +364,11 @@ ReflexViewController_get_show_fun ()
 	{
 		[super viewDidLayoutSubviews];
 		self.reflexView.frame = self.view.bounds;
+	}
+
+	- (BOOL) canBecomeFirstResponder
+	{
+		return YES;
 	}
 
 	- (void) startTimer
@@ -507,6 +544,101 @@ ReflexViewController_get_show_fun ()
 
 		Reflex::NativePointerEvent e(touches, event, self.reflexView);
 		Window_call_pointer_event(win, &e);
+	}
+
+	- (void) hoverChanged: (UIHoverGestureRecognizer*) recognizer
+		API_AVAILABLE(ios(13.4))
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		if (touching_count > 0) return;
+
+		if (
+			recognizer.state != UIGestureRecognizerStateBegan &&
+			recognizer.state != UIGestureRecognizerStateChanged)
+		{
+			return;
+		}
+
+		Reflex::NativePointerEvent e(recognizer, self.reflexView);
+		if (e.size() > 0)
+			Window_call_pointer_event(win, &e);
+	}
+
+	- (void) scrollChanged: (UIPanGestureRecognizer*) recognizer
+		API_AVAILABLE(ios(13.4))
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		if (
+			recognizer.state != UIGestureRecognizerStateBegan &&
+			recognizer.state != UIGestureRecognizerStateChanged)
+		{
+			return;
+		}
+
+		// The pan recognizer's locationInView drifts with the synthetic scroll
+		// touch, so use the hover recognizer's location — it tracks the actual
+		// cursor and exposes the last known position regardless of its state.
+		CGPoint pos = [self.hoverRecognizer locationInView: self.reflexView];
+
+		Reflex::NativeWheelEvent e(recognizer, self.reflexView, pos);
+		Window_call_wheel_event(win, &e);
+
+		// reset translation so subsequent deltas are incremental
+		[recognizer setTranslation: CGPointZero inView: self.reflexView];
+	}
+
+	- (BOOL) gestureRecognizer: (UIGestureRecognizer*) recognizer
+		shouldRecognizeSimultaneouslyWithGestureRecognizer: (UIGestureRecognizer*) other
+	{
+		// UIKit only calls this delegate method when at least one of the two
+		// recognizers has us set as its delegate, and we only set ourselves as
+		// the delegate for our mouse recognizers (hover / indirect scroll). So
+		// every call here already involves one of ours, and we want it to run
+		// alongside whatever else is on the view (touches, app-added gestures).
+		return YES;
+	}
+
+	- (void) pressesBegan: (NSSet<UIPress*>*) presses
+		withEvent: (UIPressesEvent*) event
+	{
+		if (@available(iOS 13.4, *))
+			[self handlePresses: presses action: Reflex::KeyEvent::DOWN];
+		[super pressesBegan: presses withEvent: event];
+	}
+
+	- (void) pressesEnded: (NSSet<UIPress*>*) presses
+		withEvent: (UIPressesEvent*) event
+	{
+		if (@available(iOS 13.4, *))
+			[self handlePresses: presses action: Reflex::KeyEvent::UP];
+		[super pressesEnded: presses withEvent: event];
+	}
+
+	- (void) pressesCancelled: (NSSet<UIPress*>*) presses
+		withEvent: (UIPressesEvent*) event
+	{
+		if (@available(iOS 13.4, *))
+			[self handlePresses: presses action: Reflex::KeyEvent::UP];
+		[super pressesCancelled: presses withEvent: event];
+	}
+
+	- (void) handlePresses: (NSSet<UIPress*>*) presses
+		action: (Reflex::KeyEvent::Action) action
+		API_AVAILABLE(ios(13.4))
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		for (UIPress* press in presses)
+		{
+			if (!press.key) continue;
+			Reflex::NativeKeyEvent e(press, action);
+			Window_call_key_event(win, &e);
+		}
 	}
 
 @end// ReflexViewController

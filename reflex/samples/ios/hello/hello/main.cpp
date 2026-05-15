@@ -21,7 +21,7 @@ class Win : public Window
 
 		void on_draw (DrawEvent* e)
 		{
-			e->painter->text(stringf("%f", e->fps), 10, 10);
+			e->painter()->text(stringf("%f", e->fps()), 10, 10);
 		}
 
 };// Window
@@ -64,8 +64,8 @@ class App : public Application
 
 				win->root()->add_child(view);
 
-				view->body()->set_dynamic(true);
-				view->body()->set_density(1);
+				view->set_dynamic(true);
+				view->set_density(1);
 			}
 		}
 

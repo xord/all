@@ -77,12 +77,12 @@ namespace Reflex
 
 		KEY_NONE = -1,
 
-		#if defined(WIN32)
-			#define NATIVE_VK(darwin, win32, sdl) win32
-		#elif defined(LINUX)
-			#define NATIVE_VK(darwin, win32, sdl) sdl
+		#if defined(OSX)
+			#define NATIVE_VK(darwin, win32, hid) darwin
+		#elif defined(WIN32)
+			#define NATIVE_VK(darwin, win32, hid) win32
 		#else
-			#define NATIVE_VK(darwin, win32, sdl) darwin
+			#define NATIVE_VK(darwin, win32, hid) hid
 		#endif
 
 		KEY_A = NATIVE_VK(0x00, 0x41, 0x04),
@@ -231,16 +231,16 @@ namespace Reflex
 		KEY_SECTION     = NATIVE_VK(0x0A, 0xE2, 0x64),
 		KEY_HELP        = NATIVE_VK(0x72, 0x2F, 0x75),
 
-		KEY_EISU           = NATIVE_VK(0x66, -33,  -4),
-		KEY_KANA           = NATIVE_VK(0x68, 0x15, -5),
-		KEY_KANJI          = NATIVE_VK(-18,  0x19, -6),
-		KEY_IME_ON         = NATIVE_VK(-19,  0x16, -7),
-		KEY_IME_OFF        = NATIVE_VK(-20,  0x1A, -8),
-		KEY_IME_MODECHANGE = NATIVE_VK(-21,  0x1F, -9),
-		KEY_CONVERT        = NATIVE_VK(-22,  0x1C, -10),
-		KEY_NONCONVERT     = NATIVE_VK(-23,  0x1D, -11),
-		KEY_ACCEPT         = NATIVE_VK(-24,  0x1E, -12),
-		KEY_PROCESS        = NATIVE_VK(-25,  0xE5, -13),
+		KEY_EISU           = NATIVE_VK(0x66, -33,  0x90),
+		KEY_KANA           = NATIVE_VK(0x68, 0x15, 0x91),
+		KEY_KANJI          = NATIVE_VK(-18,  0x19, 0x94),
+		KEY_IME_ON         = NATIVE_VK(-19,  0x16, -4),
+		KEY_IME_OFF        = NATIVE_VK(-20,  0x1A, -5),
+		KEY_IME_MODECHANGE = NATIVE_VK(-21,  0x1F, -6),
+		KEY_CONVERT        = NATIVE_VK(-22,  0x1C, -7),
+		KEY_NONCONVERT     = NATIVE_VK(-23,  0x1D, -8),
+		KEY_ACCEPT         = NATIVE_VK(-24,  0x1E, -9),
+		KEY_PROCESS        = NATIVE_VK(-25,  0xE5, -10),
 
 		KEY_VOLUME_UP   = NATIVE_VK(0x48, 0xAF, 0x80),
 		KEY_VOLUME_DOWN = NATIVE_VK(0x49, 0xAE, 0x81),
@@ -248,19 +248,19 @@ namespace Reflex
 
 		KEY_SLEEP  = NATIVE_VK(-26, 0x5F, 0x11A),
 		KEY_EXEC   = NATIVE_VK(-27, 0x2B, 0x74),
-		KEY_PRINT  = NATIVE_VK(-28, 0x2A, -14),
+		KEY_PRINT  = NATIVE_VK(-28, 0x2A, -11),
 		KEY_APPS   = NATIVE_VK(-29, 0x5D, 0x65),
 		KEY_SELECT = NATIVE_VK(-30, 0x29, 0x77),
 		KEY_CLEAR  = NATIVE_VK(-31, 0x0C, 0x9C),
 
-		KEY_NAVIGATION_VIEW   = NATIVE_VK(-32, 0x88, -15),
-		KEY_NAVIGATION_MENU   = NATIVE_VK(-33, 0x89, -16),
-		KEY_NAVIGATION_UP     = NATIVE_VK(-34, 0x8A, -17),
-		KEY_NAVIGATION_DOWN   = NATIVE_VK(-35, 0x8B, -18),
-		KEY_NAVIGATION_LEFT   = NATIVE_VK(-36, 0x8C, -19),
-		KEY_NAVIGATION_RIGHT  = NATIVE_VK(-37, 0x8D, -20),
-		KEY_NAVIGATION_ACCEPT = NATIVE_VK(-38, 0x8E, -21),
-		KEY_NAVIGATION_CANCEL = NATIVE_VK(-39, 0x8F, -22),
+		KEY_NAVIGATION_VIEW   = NATIVE_VK(-32, 0x88, -12),
+		KEY_NAVIGATION_MENU   = NATIVE_VK(-33, 0x89, -13),
+		KEY_NAVIGATION_UP     = NATIVE_VK(-34, 0x8A, -14),
+		KEY_NAVIGATION_DOWN   = NATIVE_VK(-35, 0x8B, -15),
+		KEY_NAVIGATION_LEFT   = NATIVE_VK(-36, 0x8C, -16),
+		KEY_NAVIGATION_RIGHT  = NATIVE_VK(-37, 0x8D, -17),
+		KEY_NAVIGATION_ACCEPT = NATIVE_VK(-38, 0x8E, -18),
+		KEY_NAVIGATION_CANCEL = NATIVE_VK(-39, 0x8F, -19),
 
 		KEY_BROWSER_BACK      = NATIVE_VK(-40, 0xA6, 0x10E),
 		KEY_BROWSER_FORWARD   = NATIVE_VK(-41, 0xA7, 0x10F),
