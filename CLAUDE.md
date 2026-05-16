@@ -4,38 +4,60 @@ This repository (xord/all) is a monorepo of core libraries.
 
 ## Module Structure
 
-Each library lives at the repository root:
-`xot`, `rucy`, `beeps`, `rays`, `reflex`, `processing`, `rubysketch`, `reight`
+Each library lives at the repository root.
 
-Each module follows this layout:
+Ruby gems (published to RubyGems):
+`xot`, `rucy`, `beeps`, `rays`, `rays-video`, `reflex` (gem name: `reflexion`),
+`processing`, `rubysketch`, `reight`
+
+Native runtime distributed as a CocoaPod (not a gem):
+`cruby` — embeds CRuby (MRI) into macOS / iOS apps; Objective-C.
+
+Each Ruby gem module follows this layout:
 - `src/`, `include/` — C/C++
 - `ext/` — Ruby extension library
 - `lib/` — Ruby code
 - `test/` — Unit tests
 - `samples/`, `examples/` — Examples
+- `vendor/` — Cloned upstream third-party libs (populated by `rake vendor`)
+
+`cruby` differs: Objective-C source under `src/`, headers under `include/`,
+the framework is built via `rake build` and consumed via `CRuby.podspec`.
 
 A shared Rakefile delegates build and test tasks per module.
-`.hooks/` and `.workflows/` generate Git hooks and CI definitions and distribute them to each module.
+- `.hooks/` — Source Git hook scripts, distributed into each module's `.git/hooks/`
+- `.workflows/` — Source GitHub Actions workflow templates, distributed into each module's `.github/workflows/`
 
 ## Build & Test
 
+The root Rakefile delegates to per-module Rakefiles. Without a scope it
+operates on all gems; pass a module name (or a scope selector) to narrow it.
+
 ```bash
-# Build C/C++ libraries
-rake lib
+# Build everything (all gems)
+rake lib            # C/C++ libraries
+rake ext            # Ruby native extensions
+rake test           # run tests
 
-# Build extension libraries
-rake ext
-
-# Run tests
-rake test
-
-# Test a specific module
+# Scope to one or more modules
 rake rays test
-
-# Build specific modules only
 rake rays reflex ext
+rake xot rucy beeps lib
 
-# Run a sample
+# Scope selectors
+rake :all  test     # all repos including cruby
+rake :exts test     # only modules with a native extension
+rake :gems test     # all published Ruby gems (same as default)
+
+# Other useful tasks
+rake vendor         # clone third-party libs into each module's vendor/
+rake erb            # expand ERB-templated headers (mostly rucy)
+rake gem            # build .gem files
+rake install        # gem install built gems
+rake clean
+rake clobber
+
+# Run a Reflex sample
 rake run sample=hello
 ```
 
