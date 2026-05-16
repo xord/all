@@ -24,7 +24,7 @@ win = Reflex::Window.new do
       angle = 0
       speed = (rand * 2 - 1) * 30
 
-      on :update do
+      on :update do |e|
         move_by rand(5) - 2, rand(5) - 2
         angle += speed
         angle %= 360
@@ -71,7 +71,7 @@ win = Reflex::Window.new do
   end
 
   add Reflex::TextView.new {
-    set name: :count, pos: [10, 10], model: model
+    set name: :count, frame: [10, 10, 100, 30], model: model
   }
 
   root.on :draw do |e|
