@@ -698,6 +698,15 @@ namespace Rays
 		return height;
 	}
 
+	void
+	Painter::set_blend_mode (BlendMode mode)
+	{
+		if (self->state.blend_mode == mode) return;
+
+		self->state.blend_mode = mode;
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
+	}
+
 	BlendMode
 	Painter::blend_mode () const
 	{
@@ -716,10 +725,8 @@ namespace Rays
 		if (bounds == self->state.clip)
 			return;
 
-		Painter_flush(this);
-
 		self->state.clip = bounds;
-		Painter_update_clip(this);
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
 	}
 
 	void
@@ -769,9 +776,8 @@ namespace Rays
 		if (image == self->state.texture)
 			return;
 
-		Painter_flush(this);
-
 		self->state.texture = image;
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
 	}
 
 	void
@@ -779,9 +785,8 @@ namespace Rays
 	{
 		if (!self->state.texture) return;
 
-		Painter_flush(this);
-
 		self->state.texture = Image();
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
 	}
 
 	const Image&
@@ -796,9 +801,8 @@ namespace Rays
 		if (mode == self->state.texcoord_mode)
 			return;
 
-		Painter_flush(this);
-
 		self->state.texcoord_mode = mode;
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
 	}
 
 	TexCoordMode
@@ -813,9 +817,8 @@ namespace Rays
 		if (wrap == self->state.texcoord_wrap)
 			return;
 
-		Painter_flush(this);
-
 		self->state.texcoord_wrap = wrap;
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
 	}
 
 	TexCoordWrap
@@ -830,9 +833,8 @@ namespace Rays
 		if (shader == self->state.shader)
 			return;
 
-		Painter_flush(this);
-
 		self->state.shader = shader;
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
 	}
 
 	void
@@ -840,9 +842,8 @@ namespace Rays
 	{
 		if (!self->state.shader) return;
 
-		Painter_flush(this);
-
 		self->state.shader = Shader();
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
 	}
 
 	const Shader&
@@ -863,11 +864,9 @@ namespace Rays
 		if (self->state_stack.empty())
 			invalid_state_error(__FILE__, __LINE__, "state stack underflow.");
 
-		Painter_flush(this);
-
 		self->state = self->state_stack.back();
 		self->state_stack.pop_back();
-		Painter_update_clip(this);
+		Xot::add_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
 	}
 
 	void

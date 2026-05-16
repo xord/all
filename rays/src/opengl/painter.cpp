@@ -24,6 +24,11 @@ namespace Rays
 {
 
 
+	static const Shader  INVALID_SHADER;
+
+	static const Texture INVALID_TEXTURE;
+
+
 	struct Vector4 : Coord4
 	{
 
@@ -140,11 +145,23 @@ namespace Rays
 	struct Batcher
 	{
 
+		GLuint cached_shader_id  = 0;
+
+		GLuint cached_texture_id = 0;
+
 		int count = 0;
 
-		Shader shader;
+		BlendMode blend_mode;
 
-		Texture texture;
+		TexCoordMode texcoord_mode;
+
+		TexCoordWrap texcoord_wrap;
+
+		Bounds clip;
+
+		Shader shader   = INVALID_SHADER;
+
+		Texture texture = INVALID_TEXTURE;
 
 		std::vector<Vector4> points;
 
@@ -158,11 +175,25 @@ namespace Rays
 
 		std::vector<Coord3>  texcoord_maxes;
 
-		void clear ()
+		void init (const PainterState& state)
 		{
-			count   = 0;
-			shader  = Shader();
-			texture = Texture();
+			cached_shader_id  = 0;
+			cached_texture_id = 0;
+			blend_mode        = state.blend_mode;
+			texcoord_mode     = state.texcoord_mode;
+			texcoord_wrap     = state.texcoord_wrap;
+			clip              = state.clip;
+		}
+
+		void cleanup ()
+		{
+			shader  = INVALID_SHADER;
+			texture = INVALID_TEXTURE;
+		}
+
+		void clear_buffers ()
+		{
+			count = 0;
 			points        .clear();
 			indices       .clear();
 			colors        .clear();
@@ -226,6 +257,83 @@ namespace Rays
 			buffers.clear();
 		}
 
+		void apply_blend_mode ()
+		{
+			switch (state.blend_mode)
+			{
+				case BLEND_NORMAL:
+					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+					glBlendFuncSeparate(
+						GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+					break;
+
+				case BLEND_ADD:
+					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE);
+					break;
+
+				case BLEND_SUBTRACT:
+					glBlendEquationSeparate(GL_FUNC_REVERSE_SUBTRACT, GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE);
+					break;
+
+				case BLEND_LIGHTEST:
+					glBlendEquationSeparate(GL_MAX, GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
+					break;
+
+				case BLEND_DARKEST:
+					glBlendEquationSeparate(GL_MIN, GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
+					break;
+
+				case BLEND_EXCLUSION:
+					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+					glBlendFuncSeparate(
+						GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_ONE, GL_ONE);
+					break;
+
+				case BLEND_MULTIPLY:
+					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_ZERO, GL_SRC_COLOR, GL_ONE, GL_ONE);
+					break;
+
+				case BLEND_SCREEN:
+					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_ONE_MINUS_DST_COLOR, GL_ONE, GL_ONE, GL_ONE);
+					break;
+
+				case BLEND_REPLACE:
+					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+					glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+					break;
+
+				default:
+					argument_error(__FILE__, __LINE__, "unknown blend mode");
+					break;
+			}
+			OpenGL_check_error(__FILE__, __LINE__);
+		}
+
+		void apply_clipping ()
+		{
+			const Bounds& clip = state.clip;
+			if (clip)
+			{
+				coord y = frame_buffer ? clip.y : viewport.h - (clip.y + clip.h);
+				glEnable(GL_SCISSOR_TEST);
+				glScissor(
+					pixel_density * clip.x,
+					pixel_density * y,
+					pixel_density * clip.width,
+					pixel_density * clip.height);
+			}
+			else
+				glDisable(GL_SCISSOR_TEST);
+
+			OpenGL_check_error(__FILE__, __LINE__);
+		}
+
 	};// PainterData
 
 
@@ -233,27 +341,6 @@ namespace Rays
 	get_data (Painter* painter)
 	{
 		return (PainterData*) painter->self.get();
-	}
-
-	void
-	Painter_update_clip (Painter* painter)
-	{
-		PainterData* self = get_data(painter);
-		const Bounds& clip = self->state.clip;
-		if (clip)
-		{
-			coord y = self->frame_buffer ? clip.y : self->viewport.h - (clip.y + clip.h);
-			glEnable(GL_SCISSOR_TEST);
-			glScissor(
-				self->pixel_density * clip.x,
-				self->pixel_density * y,
-				self->pixel_density * clip.width,
-				self->pixel_density * clip.height);
-		}
-		else
-			glDisable(GL_SCISSOR_TEST);
-
-		OpenGL_check_error(__FILE__, __LINE__);
 	}
 
 	static void
@@ -477,7 +564,7 @@ namespace Rays
 	static void
 	setup_texcoord_variables (
 		Matrix* matrix, Point* min, Point* max,
-		const State& state, const TextureInfo& texinfo)
+		const PainterState& state, const TextureInfo& texinfo)
 	{
 		if (!texinfo.texture) return;
 
@@ -537,7 +624,7 @@ namespace Rays
 
 		const ShaderProgram* program = Shader_get_program(batcher.shader);
 		if (!program || !*program)
-			return batcher.clear();
+			return batcher.clear_buffers();
 
 		ShaderProgram_activate(*program);
 
@@ -556,7 +643,63 @@ namespace Rays
 		self->cleanup();
 
 		ShaderProgram_deactivate();
-		batcher.clear();
+		batcher.clear_buffers();
+	}
+
+	static inline GLuint
+	get_shader_program_id (const Shader& shader)
+	{
+		const ShaderProgram* p = Shader_get_program(shader);
+		return p ? p->id() : 0;
+	}
+
+	static void
+	ensure_state_and_flush_batch (
+		Painter* painter, const Shader& shader, const Texture& texture)
+	{
+		PainterData* self     = get_data(painter);
+		Batcher&            b = self->batcher;
+		const PainterState& s = self->state;
+		GLuint  shader_id     = get_shader_program_id(shader);
+		GLuint texture_id     = Texture_get_id(texture);
+
+		bool state_changed = Xot::check_and_remove_flag(
+			&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
+		if (
+			!state_changed                   &&
+			b.cached_shader_id  == shader_id &&
+			b.cached_texture_id == texture_id)
+		{
+			return;
+		}
+
+		bool blend_changed = b.blend_mode != s.blend_mode;
+		bool clip_changed  = b.clip       != s.clip;
+		if (
+			b.count > 0 &&
+			(
+				blend_changed                          ||
+				clip_changed                           ||
+				b.cached_shader_id  != shader_id       ||
+				b.cached_texture_id != texture_id      ||
+				b.texcoord_mode     != s.texcoord_mode ||
+				b.texcoord_wrap     != s.texcoord_wrap
+			))
+		{
+			Painter_flush(painter);
+		}
+
+		if (blend_changed) self->apply_blend_mode();
+		if (clip_changed)  self->apply_clipping();
+
+		b.cached_shader_id  = shader_id;
+		b.cached_texture_id = texture_id;
+		b.blend_mode        = s.blend_mode;
+		b.texcoord_mode     = s.texcoord_mode;
+		b.texcoord_wrap     = s.texcoord_wrap;
+		b.clip              = s.clip;
+		b.shader            = shader;
+		b.texture           = texture;
 	}
 
 	static inline Vector4
@@ -577,16 +720,8 @@ namespace Rays
 		PainterData* self = get_data(painter);
 		Batcher& batcher  = self->batcher;
 
-		Texture texture = texinfo ? texinfo->texture : Texture();
-		if (
-			batcher.points.empty()    ||
-			batcher.shader  != shader ||
-			batcher.texture != texture)
-		{
-			Painter_flush(painter);
-			batcher.shader  = shader;
-			batcher.texture = texture;
-		}
+		Texture texture = texinfo ? texinfo->texture : INVALID_TEXTURE;
+		ensure_state_and_flush_batch(painter, shader, texture);
 
 		if (++batcher.count <= 5)
 		{
@@ -732,7 +867,8 @@ namespace Rays
 		}
 		else
 		{
-			Painter_flush(painter);
+			ensure_state_and_flush_batch(
+				painter, *shader, texinfo ? texinfo->texture : INVALID_TEXTURE);
 			draw(
 				self, mode, color, points, npoints, indices, nindices,
 				colors, texcoords, texinfo, *shader, self->position_matrix);
@@ -870,15 +1006,6 @@ namespace Rays
 
 		self->opengl_state.push();
 
-		//glEnable(GL_CULL_FACE);
-
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-		OpenGL_check_error(__FILE__, __LINE__);
-
-		glEnable(GL_BLEND);
-		set_blend_mode(self->state.blend_mode);
-
 		FrameBuffer& fb = self->frame_buffer;
 		if (fb)
 		{
@@ -910,9 +1037,20 @@ namespace Rays
 
 		//self->position_matrix.translate(0.375f, 0.375f);
 
-		Painter_update_clip(this);
+		//glEnable(GL_CULL_FACE);
 
-		Xot::add_flag(&self->flags, Painter::Data::PAINTING);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		OpenGL_check_error(__FILE__, __LINE__);
+
+		glEnable(GL_BLEND);
+		self->apply_blend_mode();
+		self->apply_clipping();
+
+		self->batcher.init(self->state);
+
+		Xot::remove_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
+		Xot::   add_flag(&self->flags, Painter::Data::PAINTING);
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
@@ -941,6 +1079,8 @@ namespace Rays
 
 		if (self->frame_buffer)
 			FrameBuffer_unbind();
+
+		self->batcher.cleanup();
 	}
 
 	void
@@ -954,69 +1094,6 @@ namespace Rays
 		const Color& c = self->state.background;
 		glClearColor(c.red, c.green, c.blue, c.alpha);
 		glClear(GL_COLOR_BUFFER_BIT);
-		OpenGL_check_error(__FILE__, __LINE__);
-	}
-
-	void
-	Painter::set_blend_mode (BlendMode mode)
-	{
-		if (self->state.blend_mode != mode)
-			Painter_flush(this);
-
-		self->state.blend_mode = mode;
-		switch (mode)
-		{
-			case BLEND_NORMAL:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(
-					GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_ADD:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_SUBTRACT:
-				glBlendEquationSeparate(GL_FUNC_REVERSE_SUBTRACT, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_LIGHTEST:
-				glBlendEquationSeparate(GL_MAX, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_DARKEST:
-				glBlendEquationSeparate(GL_MIN, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_EXCLUSION:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(
-					GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_MULTIPLY:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ZERO, GL_SRC_COLOR, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_SCREEN:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ONE_MINUS_DST_COLOR, GL_ONE, GL_ONE, GL_ONE);
-				break;
-
-			case BLEND_REPLACE:
-				glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-				break;
-
-			default:
-				argument_error(__FILE__, __LINE__, "unknown blend mode");
-				break;
-		}
 		OpenGL_check_error(__FILE__, __LINE__);
 	}
 

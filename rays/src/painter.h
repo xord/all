@@ -59,7 +59,7 @@ namespace Rays
 	};// PrimitiveMode
 
 
-	struct State
+	struct PainterState
 	{
 
 		Color background, colors[COLOR_TYPE_MAX];
@@ -82,15 +82,15 @@ namespace Rays
 
 		BlendMode blend_mode;
 
+		TexCoordMode texcoord_mode;
+
+		TexCoordWrap texcoord_wrap;
+
 		Bounds clip;
 
 		Font font;
 
 		Image texture;
-
-		TexCoordMode texcoord_mode;
-
-		TexCoordWrap texcoord_wrap;
 
 		Shader shader;
 
@@ -109,11 +109,11 @@ namespace Rays
 			nsegment         = 0;
 			line_height      = -1;
 			blend_mode       = BLEND_NORMAL;
+			texcoord_mode    = TEXCOORD_IMAGE;
+			texcoord_wrap    = TEXCOORD_CLAMP;
 			clip             .reset(-1);
 			font             = get_default_font();
 			texture          = Image();
-			texcoord_mode    = TEXCOORD_IMAGE;
-			texcoord_wrap    = TEXCOORD_CLAMP;
 			shader           = Shader();
 		}
 
@@ -135,7 +135,7 @@ namespace Rays
 				return colors[FILL] || colors[STROKE];
 		}
 
-	};// State
+	};// PainterState
 
 
 	struct TextureInfo
@@ -177,7 +177,9 @@ namespace Rays
 		enum Flag
 		{
 
-			PAINTING = Xot::bit(1, Painter::FLAG_LAST)
+			PAINTING                  = Xot::bit(1, Painter::FLAG_LAST),
+
+			UNBATCHABLE_STATE_CHANGED = Xot::bit(2, Painter::FLAG_LAST),
 
 		};// Flag
 
@@ -187,9 +189,9 @@ namespace Rays
 
 		Bounds viewport;
 
-		State              state;
+		PainterState              state;
 
-		std::vector<State> state_stack;
+		std::vector<PainterState> state_stack;
 
 		Matrix              position_matrix;
 
@@ -213,8 +215,6 @@ namespace Rays
 
 	};// Painter::Data
 
-
-	void Painter_update_clip (Painter* painter);
 
 	void Painter_flush (Painter* painter);
 
