@@ -1,6 +1,15 @@
 # rays ChangeLog
 
 
+## [v0.3.13] - 2026-05-17
+
+- Improve batch rendering: defer flush until state actually changes
+- Rewrite README.md
+- CI: Migrate release-gem.yml from actions/create-release to gh release create
+
+- Fix text rendering corruption when batching is enabled
+
+
 ## [v0.3.12] - 2026-05-10
 
 - Support WebAssembly

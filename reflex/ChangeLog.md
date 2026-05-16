@@ -1,6 +1,19 @@
 # reflex ChangeLog
 
 
+## [v0.4.0] - 2026-05-17
+
+- [BREAKING] Normalize wheel Y delta to top-left origin convention
+
+- Add keyboard event handling on iOS
+- Add mouse event handling on iOS
+- Rewrite README.md
+- CI: Migrate release-gem.yml from actions/create-release to gh release create
+- Refresh hello sample Xcode projects
+
+- Skip duplicate KEY_CODE aliases on WASM build
+
+
 ## [v0.3.15] - 2026-05-10
 
 - Support WebAssembly
