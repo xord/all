@@ -512,8 +512,8 @@
 				8C9EB4E12FB6D14F0015F5D4 /* xot.h */,
 			);
 			name = include;
-			path = /Users/nori/dev/all.claude/ios_mouse_and_key_event/xot/include;
-			sourceTree = "<absolute>";
+			path = ../../../../xot/include;
+			sourceTree = SOURCE_ROOT;
 		};
 		8C9EB4ED2FB6D15F0015F5D4 /* src */ = {
 			isa = PBXGroup;
@@ -525,8 +525,8 @@
 				8C9EB4EB2FB6D15F0015F5D4 /* util.cpp */,
 			);
 			name = src;
-			path = /Users/nori/dev/all.claude/ios_mouse_and_key_event/xot/src;
-			sourceTree = "<absolute>";
+			path = ../../../../xot/src;
+			sourceTree = SOURCE_ROOT;
 		};
 		8C9EB51D2FB6D1F50015F5D4 /* rays */ = {
 			isa = PBXGroup;
@@ -562,8 +562,8 @@
 				8C9EB51E2FB6D1F50015F5D4 /* rays.h */,
 			);
 			name = include;
-			path = /Users/nori/dev/all.claude/ios_mouse_and_key_event/rays/include;
-			sourceTree = "<absolute>";
+			path = ../../../../rays/include;
+			sourceTree = SOURCE_ROOT;
 		};
 		8C9EB5292FB6D2320015F5D4 /* osx */ = {
 			isa = PBXGroup;
@@ -642,8 +642,8 @@
 				8C9EB56A2FB6D2320015F5D4 /* util.cpp */,
 			);
 			name = src;
-			path = /Users/nori/dev/all.claude/ios_mouse_and_key_event/rays/src;
-			sourceTree = "<absolute>";
+			path = ../../../../rays/src;
+			sourceTree = SOURCE_ROOT;
 		};
 		8C9EB5E02FB6D2810015F5D4 /* cpp */ = {
 			isa = PBXGroup;
@@ -676,8 +676,8 @@
 				8C9EC0862FB6D2810015F5D4 /* splines-lib */,
 			);
 			name = vendor;
-			path = /Users/nori/dev/all.claude/ios_mouse_and_key_event/rays/vendor;
-			sourceTree = "<absolute>";
+			path = ../../../../rays/vendor;
+			sourceTree = SOURCE_ROOT;
 		};
 		8C9EC95D2FB6D2D60015F5D4 /* reflex */ = {
 			isa = PBXGroup;
@@ -713,8 +713,8 @@
 				8C9EC95E2FB6D2D60015F5D4 /* reflex.h */,
 			);
 			name = include;
-			path = /Users/nori/dev/all.claude/ios_mouse_and_key_event/reflex/include;
-			sourceTree = "<absolute>";
+			path = ../../../../reflex/include;
+			sourceTree = SOURCE_ROOT;
 		};
 		8C9EC9832FB6D2EB0015F5D4 /* osx */ = {
 			isa = PBXGroup;
@@ -782,8 +782,8 @@
 				8C9EC9C02FB6D2EB0015F5D4 /* world.cpp */,
 			);
 			name = src;
-			path = /Users/nori/dev/all.claude/ios_mouse_and_key_event/reflex/src;
-			sourceTree = "<absolute>";
+			path = ../../../../reflex/src;
+			sourceTree = SOURCE_ROOT;
 		};
 		8C9ECAC62FB6D30B0015F5D4 /* collision */ = {
 			isa = PBXGroup;
@@ -900,8 +900,8 @@
 				8C9ECC262FB6D30B0015F5D4 /* rtmidi */,
 			);
 			name = vendor;
-			path = /Users/nori/dev/all.claude/ios_mouse_and_key_event/reflex/vendor;
-			sourceTree = "<absolute>";
+			path = ../../../../reflex/vendor;
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
