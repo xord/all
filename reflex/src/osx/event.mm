@@ -52,10 +52,8 @@ namespace Reflex
 		return [chars UTF8String];
 	}
 
-	NativeKeyEvent::NativeKeyEvent (NSEvent* e, Action action)
-	:	KeyEvent(
-			action, get_chars(e), [e keyCode],
-			get_modifiers(e), [e isARepeat] ? 1 : 0)
+	NativeKeyEvent::NativeKeyEvent (NSEvent* e, Action action, int repeat)
+	:	KeyEvent(action, get_chars(e), [e keyCode], get_modifiers(e), repeat)
 	{
 	}
 

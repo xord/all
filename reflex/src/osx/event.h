@@ -17,7 +17,7 @@ namespace Reflex
 
 		public:
 
-			NativeKeyEvent (NSEvent* event, Action action);
+			NativeKeyEvent (NSEvent* event, Action action, int repeat = 0);
 
 	};// NativeKeyEvent
 

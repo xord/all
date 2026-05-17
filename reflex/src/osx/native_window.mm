@@ -56,6 +56,8 @@ move_to_main_screen_origin (NativeWindow* window)
 		OpenGLView* view;
 		NSTimer* timer;
 		int update_count;
+		int repeating_key_code;
+		int repeating_key_count;
 	}
 
 	- (id) init
@@ -67,11 +69,13 @@ move_to_main_screen_origin (NativeWindow* window)
 			defer: NO];
 		if (!self) return nil;
 
-		pwindow        =
-		ptr_for_rebind = NULL;
-		view           = nil;
-		timer          = nil;
-		update_count   = 0;
+		pwindow             =
+		ptr_for_rebind      = NULL;
+		view                = nil;
+		timer               = nil;
+		update_count        = 0;
+		repeating_key_code  = -1;
+		repeating_key_count = 0;
 
 		[self setDelegate: self];
 		[self setupContentView];
@@ -365,7 +369,16 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativeKeyEvent e(event, Reflex::KeyEvent::DOWN);
+		int code = (int) event.keyCode;
+		if (event.isARepeat && code == repeating_key_code)
+			++repeating_key_count;
+		else
+		{
+			repeating_key_code  = code;
+			repeating_key_count = 0;
+		}
+
+		Reflex::NativeKeyEvent e(event, Reflex::KeyEvent::DOWN, repeating_key_count);
 		Window_call_key_event(win, &e);
 	}
 
