@@ -115,10 +115,10 @@ namespace Reflex
 		return s.UTF8String;
 	}
 
-	NativeKeyEvent::NativeKeyEvent (UIPress* press, Action action)
+	NativeKeyEvent::NativeKeyEvent (UIPress* press, Action action, int repeat)
 	:	KeyEvent(
 			action, get_chars(press.key), (int) press.key.keyCode,
-			to_modifiers(press.key.modifierFlags), 0)
+			to_modifiers(press.key.modifierFlags), repeat)
 	{
 	}
 

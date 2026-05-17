@@ -17,7 +17,7 @@ namespace Reflex
 
 		public:
 
-			NativeKeyEvent (UIPress* press, Action action)
+			NativeKeyEvent (UIPress* press, Action action, int repeat = 0)
 				API_AVAILABLE(ios(13.4));
 
 	};// NativeKeyEvent

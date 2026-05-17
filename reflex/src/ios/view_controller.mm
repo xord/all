@@ -65,6 +65,14 @@ show_reflex_view_controller (
 		[top presentViewController: reflex_vc animated: YES completion: nil];
 }
 
+static BOOL
+is_modifier_key (long keyCode) API_AVAILABLE(ios(13.4))
+{
+	return
+		keyCode >= UIKeyboardHIDUsageKeyboardLeftControl &&
+		keyCode <= UIKeyboardHIDUsageKeyboardRightGUI;
+}
+
 
 namespace global
 {
@@ -129,6 +137,10 @@ ReflexViewController_get_show_fun ()
 
 	@property(nonatomic, strong) UIHoverGestureRecognizer* hoverRecognizer;
 
+	@property(nonatomic, strong) UIPress* repeatingKeyPress;
+
+	@property(nonatomic, strong) NSTimer* repeatingKeyTimer;
+
 @end
 
 
@@ -138,6 +150,7 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window *pwindow, *ptr_for_rebind;
 		int update_count;
 		int touching_count;
+		int repeating_key_count;
 	}
 
 	- (id) init
@@ -145,10 +158,11 @@ ReflexViewController_get_show_fun ()
 		self = [super init];
 		if (!self) return nil;
 
-		pwindow        =
-		ptr_for_rebind = NULL;
-		update_count   = 0;
-		touching_count = 0;
+		pwindow             =
+		ptr_for_rebind      = NULL;
+		update_count        = 0;
+		touching_count      = 0;
+		repeating_key_count = 0;
 
 		return self;
 	}
@@ -301,6 +315,8 @@ ReflexViewController_get_show_fun ()
 		ReflexView* view = self.reflexView;
 		if (!view) return;
 
+		[self stopKeyRepeat];
+
 		if (view.context && view.context == [EAGLContext currentContext])
 			Rays::activate_offscreen_context();
 
@@ -333,6 +349,7 @@ ReflexViewController_get_show_fun ()
 
 	- (void) viewDidDisappear: (BOOL) animated
 	{
+		[self stopKeyRepeat];
 		[self resignFirstResponder];
 
 		[NSNotificationCenter.defaultCenter
@@ -357,6 +374,7 @@ ReflexViewController_get_show_fun ()
 
 	- (void) willResignActive
 	{
+		[self stopKeyRepeat];
 		Window_call_deactivate_event(self.window);
 	}
 
@@ -638,7 +656,56 @@ ReflexViewController_get_show_fun ()
 			if (!press.key) continue;
 			Reflex::NativeKeyEvent e(press, action);
 			Window_call_key_event(win, &e);
+
+			if (action == Reflex::KeyEvent::DOWN)
+			{
+				if (!is_modifier_key(press.key.keyCode))
+					[self startKeyRepeat: press];
+			}
+			else if (
+				self.repeatingKeyPress &&
+				press.key.keyCode == self.repeatingKeyPress.key.keyCode)
+			{
+				[self stopKeyRepeat];
+			}
 		}
+	}
+
+	- (void) startKeyRepeat: (UIPress*) press
+		API_AVAILABLE(ios(13.4))
+	{
+		[self stopKeyRepeat];
+
+		repeating_key_count    = 0;
+		self.repeatingKeyPress = press;
+		self.repeatingKeyTimer = [NSTimer scheduledTimerWithTimeInterval: 0.4
+			target: self selector: @selector(keyRepeatFired:) userInfo: nil repeats: NO];
+	}
+
+	- (void) keyRepeatFired: (NSTimer*) timer
+		API_AVAILABLE(ios(13.4))
+	{
+		Reflex::Window* win = self.window;
+		UIPress* press      = self.repeatingKeyPress;
+		if (!win || !press || !press.key)
+		{
+			[self stopKeyRepeat];
+			return;
+		}
+
+		Reflex::NativeKeyEvent e(press, Reflex::KeyEvent::DOWN, ++repeating_key_count);
+		Window_call_key_event(win, &e);
+
+		self.repeatingKeyTimer = [NSTimer scheduledTimerWithTimeInterval: 0.1
+			target: self selector: @selector(keyRepeatFired:) userInfo: nil repeats: NO];
+	}
+
+	- (void) stopKeyRepeat
+	{
+		[self.repeatingKeyTimer invalidate];
+		self.repeatingKeyTimer = nil;
+		self.repeatingKeyPress = nil;
+		repeating_key_count    = 0;
 	}
 
 @end// ReflexViewController
