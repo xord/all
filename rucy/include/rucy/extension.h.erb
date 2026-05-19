@@ -425,7 +425,8 @@ namespace Rucy
 	inline Value new_type (Value klass, T* ptr)
 	{
 		if (!ptr) return nil();
-		return rb_data_typed_object_wrap(klass, ptr, get_data_type<T, mark, free>());
+		const rb_data_type_t* type = get_data_type<T, mark, free>();
+		return TypedData_Wrap_Struct(klass, type, ptr);
 	}
 
 	template <
@@ -479,7 +480,7 @@ namespace Rucy
 	template <typename T> inline T* get_type_ptr (Value obj, Value klass = nil())
 	{
 		if (!klass.is_nil()) check_class(obj, klass);
-		return (T*) DATA_PTR(obj.value());
+		return (T*) RTYPEDDATA_GET_DATA(obj.value());
 	}
 
 
