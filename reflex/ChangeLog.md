@@ -1,6 +1,12 @@
 # reflex ChangeLog
 
 
+## [v0.4.1] - 2026-05-20
+
+- Track actual key repeat count on macOS
+- Add key repeat on iOS
+
+
 ## [v0.4.0] - 2026-05-17
 
 - [BREAKING] Normalize wheel Y delta to top-left origin convention

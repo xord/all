@@ -1,6 +1,11 @@
 # rays-video ChangeLog
 
 
+## [v0.1.3] - 2026-05-20
+
+- Update dependencies
+
+
 ## [v0.1.2] - 2026-05-17
 
 - Rewrite README.md

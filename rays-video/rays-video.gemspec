@@ -27,8 +27,8 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'xot',   '~> 0.3.13'
   s.add_dependency 'rucy',  '~> 0.3.13'
-  s.add_dependency 'beeps', '~> 0.3.13'
-  s.add_dependency 'rays',  '~> 0.3.13'
+  s.add_dependency 'beeps', '~> 0.3.14'
+  s.add_dependency 'rays',  '~> 0.3.14'
 
   s.files            = `git ls-files`.split $/
   s.executables      = s.files.grep(%r{^bin/}) {|f| File.basename f}

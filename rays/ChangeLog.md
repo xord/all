@@ -1,6 +1,11 @@
 # rays ChangeLog
 
 
+## [v0.3.14] - 2026-05-20
+
+- Skip glGetError on WASM build for performance
+
+
 ## [v0.3.13] - 2026-05-17
 
 - Improve batch rendering: defer flush until state actually changes
