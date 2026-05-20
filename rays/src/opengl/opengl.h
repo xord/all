@@ -23,9 +23,15 @@ namespace Rays
 
 	bool OpenGL_has_error ();
 
+#ifdef WASM
+	inline void OpenGL_check_error (const char*, int) {}
+
+	inline void OpenGL_check_error (const char*, int, const char*, ...) {}
+#else
 	void OpenGL_check_error (const char* file, int line);
 
 	void OpenGL_check_error (const char* file, int line, const char* format, ...);
+#endif
 
 
 }// Rays

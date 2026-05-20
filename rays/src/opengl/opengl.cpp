@@ -33,7 +33,7 @@ namespace Rays
 			default:                   return "UNKNOWN ERROR";
 		}
 	}
-
+#ifndef WASM
 	void
 	OpenGL_check_error (const char* file, int line)
 	{
@@ -54,7 +54,7 @@ namespace Rays
 				"OpenGL error %s: %s", get_error_name(e).c_str(), s.c_str());
 		}
 	}
-
+#endif
 
 	String
 	get_renderer_info ()
