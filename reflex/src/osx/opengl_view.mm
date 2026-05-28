@@ -2,52 +2,13 @@
 #import "opengl_view.h"
 
 
-#include <vector>
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/OpenGL.h>
+#include <rays/rays.h>
 #import "native_window.h"
 
 
 //#define TRANSPARENT_BACKGROUND
-
-
-static bool
-is_valid_antialias_nsample (int n)
-{
-	return n == 0 || n == 2 || n == 4 || n == 6 || n == 8 || n == 16 || n == 32;
-}
-
-static NSOpenGLPixelFormat*
-make_pixelformat (int antialias_nsample = 0)
-{
-	if (!is_valid_antialias_nsample(antialias_nsample))
-		return nil;
-
-	static const NSOpenGLPixelFormatAttribute DEFAULT[] =
-	{
-		//NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
-		NSOpenGLPFAAccelerated, NSOpenGLPFANoRecovery,
-		NSOpenGLPFADoubleBuffer,
-		NSOpenGLPFAColorSize, 32,
-		NSOpenGLPFADepthSize, 32,
-	};
-	static const NSOpenGLPixelFormatAttribute ANTIALIAS[] =
-	{
-		NSOpenGLPFAMultisample,
-		NSOpenGLPFASampleBuffers, 1,
-		NSOpenGLPFASamples, (NSOpenGLPixelFormatAttribute) antialias_nsample,
-	};
-	static const size_t DEFAULT_SIZE   = sizeof(DEFAULT)   / sizeof(DEFAULT[0]);
-	static const size_t ANTIALIAS_SIZE = sizeof(ANTIALIAS) / sizeof(ANTIALIAS[0]);
-
-	std::vector<NSOpenGLPixelFormatAttribute> attr(
-		DEFAULT, DEFAULT + DEFAULT_SIZE);
-	if (antialias_nsample > 0)
-		attr.insert(attr.end(), ANTIALIAS, ANTIALIAS + ANTIALIAS_SIZE);
-	attr.push_back(0);
-
-	return [[[NSOpenGLPixelFormat alloc] initWithAttributes: &attr[0]] autorelease];
-}
 
 
 @implementation OpenGLView
@@ -59,9 +20,12 @@ make_pixelformat (int antialias_nsample = 0)
 
 	- (id) initWithFrame: (NSRect) frame antiAlias: (int) nsample
 	{
-		self = [super initWithFrame: frame pixelFormat: make_pixelformat(nsample)];
+		NSOpenGLContext* context = (NSOpenGLContext*) Rays::get_offscreen_context();
+
+		self = [super initWithFrame: frame pixelFormat: context.pixelFormat];
 		if (!self) return nil;
 
+		[self setOpenGLContext: context];
 		[self setWantsBestResolutionOpenGLSurface: YES];
 		[self activateContext];
 
@@ -82,7 +46,9 @@ make_pixelformat (int antialias_nsample = 0)
 
 	- (void) activateContext
 	{
-		[[self openGLContext] makeCurrentContext];
+		NSOpenGLContext* context = self.openGLContext;
+		if (context.view != self) [context setView: self];
+		[context makeCurrentContext];
 	}
 
 	- (BOOL) acceptsFirstResponder
