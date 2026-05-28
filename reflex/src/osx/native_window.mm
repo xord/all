@@ -106,8 +106,8 @@ move_to_main_screen_origin (NativeWindow* window)
 		// ruby value references native window weakly.
 		data.native = self;
 
-		// Reflex::Window is not constructed completely,
-		// so can not call ClassWrapper::retain().
+		// Reflex::Window is not fully constructed yet,
+		// so cannot call ClassWrapper::retain().
 		window->Xot::template RefCountable<>::retain();
 
 		// defer calling ClassWrapper::retain() to rebind.

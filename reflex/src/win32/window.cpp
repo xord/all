@@ -32,7 +32,9 @@ namespace Reflex
 	struct WindowData : public Window::Data
 	{
 
-		HWND hwnd = NULL;
+		HWND hwnd        = NULL;
+
+		bool need_rebind = false;
 
 		OpenGLContext context;
 
@@ -118,7 +120,24 @@ namespace Reflex
 
 		self->hwnd = hwnd;
 		self->context.init(hwnd);
+
+		// Reflex::Window is not fully constructed yet,
+		// so cannot call ClassWrapper::retain().
+		win->Xot::template RefCountable<>::retain();
+	}
+
+	static inline void
+	rebind (Window* win)
+	{
+		WindowData* self = get_data(win);
+		if (!self->need_rebind) return;
+
+		// deferred call of ClassWrapper::retain().
 		win->retain();
+
+		win->Xot::template RefCountable<>::release();
+
+		self->need_rebind = false;
 	}
 
 	static void
@@ -460,8 +479,8 @@ namespace Reflex
 			Window_register(win);
 		}
 
-		if (!win)
-			win = get_window_from_hwnd(hwnd);
+		if (!win) win = get_window_from_hwnd(hwnd);
+		if  (win) rebind(win);
 
 		LRESULT ret = window_proc(win, hwnd, msg, wp, lp);
 
@@ -546,6 +565,8 @@ namespace Reflex
 	Window_initialize (Window* window)
 	{
 		create_window(window);
+
+		get_data(window)->need_rebind = true;
 	}
 
 	void
