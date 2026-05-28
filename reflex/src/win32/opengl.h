@@ -29,8 +29,6 @@ namespace Reflex
 
 			void swap_buffers ();
 
-			bool is_active () const;
-
 			operator bool () const;
 
 			bool operator ! () const;
