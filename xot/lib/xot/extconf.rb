@@ -75,7 +75,7 @@ module Xot
       name = my_ext.name true
       opts = %W[
         -Wl,--export-all-symbols,--whole-archive
-        -l#{name}
+        -l:lib#{name}.a
         -Wl,--no-whole-archive
       ].join ' '
       filter_file('Makefile') {|s|
