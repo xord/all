@@ -1,6 +1,7 @@
 #include "opengl.h"
 
 
+#include <rays/rays.h>
 #include "reflex/exception.h"
 
 
@@ -37,7 +38,8 @@ namespace Reflex
 	void
 	OpenGLContext::fin ()
 	{
-		if (!*this) return;
+		if (is_active())
+			Rays::activate_offscreen_context();
 
 		if (context)
 		{
@@ -68,7 +70,7 @@ namespace Reflex
 	bool
 	OpenGLContext::is_active () const
 	{
-		return *this && context == SDL_GL_GetCurrentContext();
+		return context && context == SDL_GL_GetCurrentContext();
 	}
 
 	OpenGLContext::operator bool () const

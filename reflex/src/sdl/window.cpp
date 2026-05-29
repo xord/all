@@ -22,6 +22,8 @@ namespace Reflex
 
 		SDL_Window* native = NULL;
 
+		bool need_rebind   = false;
+
 		OpenGLContext context;
 
 		mutable String title_tmp;
@@ -47,6 +49,21 @@ namespace Reflex
 
 			context.init(native);
 
+			// Reflex::Window is not fully constructed yet,
+			// so cannot call ClassWrapper::retain().
+			win->Xot::template RefCountable<>::retain();
+		}
+
+		void rebind (Window* win)
+		{
+			if (!need_rebind) return;
+
+			// deferred call of ClassWrapper::retain().
+			win->retain();
+
+			win->Xot::template RefCountable<>::release();
+			need_rebind = false;
+
 			Window_register(win);
 		}
 
@@ -54,14 +71,20 @@ namespace Reflex
 		{
 			if (!native) return;
 
-			context.fin();
-
 			Window* win = Window_from(native);
-			if (win) Window_unregister(win);
+			if (win)
+			{
+				rebind(win);
+				Window_unregister(win);
+			}
+
+			context.fin();
 
 			SDL_SetWindowData(native, WINDOW_DATA_KEY, NULL);
 			SDL_DestroyWindow(native);
 			native = NULL;
+
+			if (win) win->release();
 
 			if (Window_all().empty())
 				Reflex::app()->quit();
@@ -181,7 +204,11 @@ namespace Reflex
 	void
 	Window_initialize (Window* win)
 	{
-		get_data(win)->create(win);
+		WindowData* self = get_data(win);
+
+		self->create(win);
+
+		self->need_rebind = true;
 	}
 
 	void
@@ -321,6 +348,8 @@ namespace Reflex
 	Window_dispatch_event (Window* win, const SDL_Event& event)
 	{
 		WindowData* self = get_data(win);
+
+		self->rebind(win);
 
 		switch (event.type)
 		{
