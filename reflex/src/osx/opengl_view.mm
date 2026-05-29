@@ -20,10 +20,13 @@
 
 	- (id) initWithFrame: (NSRect) frame antiAlias: (int) nsample
 	{
-		NSOpenGLContext* context = (NSOpenGLContext*) Rays::get_offscreen_context();
+		NSOpenGLContext* shared = (NSOpenGLContext*) Rays::get_offscreen_context();
 
-		self = [super initWithFrame: frame pixelFormat: context.pixelFormat];
+		self = [super initWithFrame: frame pixelFormat: shared.pixelFormat];
 		if (!self) return nil;
+
+		NSOpenGLContext* context = [[[NSOpenGLContext alloc]
+			initWithFormat: shared.pixelFormat shareContext: shared] autorelease];
 
 		[self setOpenGLContext: context];
 		[self setWantsBestResolutionOpenGLSurface: YES];
