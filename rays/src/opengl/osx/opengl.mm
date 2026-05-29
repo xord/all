@@ -20,7 +20,7 @@ namespace Rays
 			NSOpenGLPixelFormatAttribute attribs[] =
 			{
 				//NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
-				NSOpenGLPFAAccelerated, NSOpenGLPFANoRecovery,
+				//NSOpenGLPFAAccelerated, NSOpenGLPFANoRecovery,
 				NSOpenGLPFADoubleBuffer,
 				NSOpenGLPFAAllowOfflineRenderers,
 				NSOpenGLPFAColorSize, 32,
