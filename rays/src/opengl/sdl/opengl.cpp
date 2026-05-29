@@ -93,7 +93,10 @@ namespace Rays
 	Context
 	get_offscreen_context ()
 	{
-		return get_opengl_offscreen_context();
+		const auto* c = get_opengl_offscreen_context();
+		if (!c) return NULL;
+
+		return (Context) c->context;
 	}
 
 	void

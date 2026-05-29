@@ -27,8 +27,18 @@ namespace Reflex
 		if (*this)
 			invalid_state_error(__FILE__, __LINE__);
 
-		window  = win;
+		window = win;
+
+		Rays::Context shared = Rays::get_offscreen_context();
+		if (shared)
+		{
+			Rays::activate_offscreen_context();
+			SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
+		}
+
 		context = SDL_GL_CreateContext(win);
+		if (shared)
+			SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
 		if (!context)
 			reflex_error(__FILE__, __LINE__, SDL_GetError());
 
@@ -43,11 +53,14 @@ namespace Reflex
 
 		if (context)
 		{
+			if (context == SDL_GL_GetCurrentContext())
+				SDL_GL_MakeCurrent(NULL, NULL);
+
 			SDL_GL_DeleteContext(context);
-			context = NULL;
 		}
 
-		window = NULL;
+		window  = NULL;
+		context = NULL;
 	}
 
 	void

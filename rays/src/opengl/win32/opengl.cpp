@@ -14,6 +14,20 @@ namespace Rays
 	static const char* WINDOW_CLASS = "Rays:OffscreenWindow";
 
 
+	const PIXELFORMATDESCRIPTOR*
+	get_pixel_format_descriptor ()
+	{
+		static const PIXELFORMATDESCRIPTOR PFD =
+		{
+			sizeof(PIXELFORMATDESCRIPTOR), 1,
+			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+			PFD_TYPE_RGBA, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0,
+			PFD_MAIN_PLANE, 0, 0, 0, 0
+		};
+		return &PFD;
+	}
+
+
 	struct OffscreenContext
 	{
 
@@ -25,14 +39,6 @@ namespace Rays
 
 		OffscreenContext ()
 		{
-			static const PIXELFORMATDESCRIPTOR PFD =
-			{
-				sizeof(PIXELFORMATDESCRIPTOR), 1,
-				PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,
-				PFD_TYPE_RGBA, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0,
-				PFD_MAIN_PLANE, 0, 0, 0, 0
-			};
-
 			WNDCLASS wc      = {0};
 			wc.lpfnWndProc   = DefWindowProc;
 			wc.hInstance     = GetModuleHandle(NULL);
@@ -51,9 +57,10 @@ namespace Rays
 			if (!hwnd)
 				system_error(__FILE__, __LINE__);
 
-			hdc    = GetDC(hwnd);
-			int pf = ChoosePixelFormat(hdc, &PFD);
-			if (!SetPixelFormat(hdc, pf, &PFD))
+			hdc             = GetDC(hwnd);
+			const auto* pfd = get_pixel_format_descriptor();
+			int pf          = ChoosePixelFormat(hdc, pfd);
+			if (!SetPixelFormat(hdc, pf, pfd))
 				system_error(__FILE__, __LINE__);
 
 			hrc = wglCreateContext(hdc);
@@ -113,7 +120,7 @@ namespace Rays
 	Context
 	get_offscreen_context ()
 	{
-		return get_opengl_offscreen_context();
+		return (Context) get_opengl_offscreen_context()->hrc;
 	}
 
 	void

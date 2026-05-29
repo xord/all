@@ -5,6 +5,14 @@
 #include "reflex/exception.h"
 
 
+namespace Rays
+{
+
+	const PIXELFORMATDESCRIPTOR* get_pixel_format_descriptor ();
+
+}// Rays
+
+
 namespace Reflex
 {
 
@@ -32,23 +40,20 @@ namespace Reflex
 		if (!hdc)
 			system_error(__FILE__, __LINE__);
 
-		static const PIXELFORMATDESCRIPTOR PFD =
-		{
-			sizeof(PIXELFORMATDESCRIPTOR), 1,
-			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-			PFD_TYPE_RGBA, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0,
-			PFD_MAIN_PLANE, 0, 0, 0, 0
-		};
-
-		int pf = ChoosePixelFormat(hdc, &PFD);
+		const auto* pfd = Rays::get_pixel_format_descriptor();
+		int pf          = ChoosePixelFormat(hdc, pfd);
 		if (pf == 0)
 			system_error(__FILE__, __LINE__);
 
-		if (!SetPixelFormat(hdc, pf, &PFD))
+		if (!SetPixelFormat(hdc, pf, pfd))
 			system_error(__FILE__, __LINE__);
 
 		hrc = wglCreateContext(hdc);
 		if (!hrc)
+			system_error(__FILE__, __LINE__);
+
+		HGLRC shared = (HGLRC) Rays::get_offscreen_context();
+		if (shared && !wglShareLists(shared, hrc))
 			system_error(__FILE__, __LINE__);
 
 		make_current();
@@ -60,23 +65,15 @@ namespace Reflex
 		if (is_active())
 			Rays::activate_offscreen_context();
 
-		if (hrc)
-		{
-			if (!wglDeleteContext(hrc))
-				system_error(__FILE__, __LINE__);
+		if (hrc && !wglDeleteContext(hrc))
+			system_error(__FILE__, __LINE__);
 
-			hrc = NULL;
-		}
-
-		if (hdc)
-		{
-			if (!ReleaseDC(hwnd, hdc))
-				system_error(__FILE__, __LINE__);
-
-			hdc = NULL;
-		}
+		if (hdc && !ReleaseDC(hwnd, hdc))
+			system_error(__FILE__, __LINE__);
 
 		hwnd = NULL;
+		hdc  = NULL;
+		hrc  = NULL;
 	}
 
 	void
