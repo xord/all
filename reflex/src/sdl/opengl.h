@@ -28,6 +28,8 @@ namespace Reflex
 
 			void swap_buffers ();
 
+			bool is_active () const;
+
 			operator bool () const;
 
 			bool operator ! () const;
@@ -37,8 +39,6 @@ namespace Reflex
 			SDL_Window* window    = NULL;
 
 			SDL_GLContext context = NULL;
-
-			bool owner            = false;
 
 	};// OpenGLContext
 
