@@ -28,9 +28,14 @@ namespace Reflex
 			invalid_state_error(__FILE__, __LINE__);
 
 		window  = win;
-		context = SDL_GL_CreateContext(win);
-		if (!context)
-			reflex_error(__FILE__, __LINE__, SDL_GetError());
+		context = (SDL_GLContext) Rays::get_offscreen_context();
+		if (!context)// wasm build returns NULL
+		{
+			context = SDL_GL_CreateContext(win);
+			if (!context)
+				reflex_error(__FILE__, __LINE__, SDL_GetError());
+			owner   = true;
+		}
 
 		make_current();
 	}
@@ -38,16 +43,17 @@ namespace Reflex
 	void
 	OpenGLContext::fin ()
 	{
-		if (is_active())
-			Rays::activate_offscreen_context();
-
-		if (context)
+		if (owner && context)
 		{
+			if (context == SDL_GL_GetCurrentContext())
+				SDL_GL_MakeCurrent(NULL, NULL);
+
 			SDL_GL_DeleteContext(context);
-			context = NULL;
 		}
 
-		window = NULL;
+		window  = NULL;
+		context = NULL;
+		owner   = false;
 	}
 
 	void
@@ -65,12 +71,6 @@ namespace Reflex
 		if (!*this) return;
 
 		SDL_GL_SwapWindow(window);
-	}
-
-	bool
-	OpenGLContext::is_active () const
-	{
-		return context && context == SDL_GL_GetCurrentContext();
 	}
 
 	OpenGLContext::operator bool () const
