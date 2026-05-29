@@ -136,8 +136,9 @@ namespace Reflex
 		win->retain();
 
 		win->Xot::template RefCountable<>::release();
-
 		self->need_rebind = false;
+
+		Window_register(win);
 	}
 
 	static void
@@ -145,6 +146,9 @@ namespace Reflex
 	{
 		if (!*win)
 			Xot::invalid_state_error(__FILE__, __LINE__);
+
+		rebind(win);
+		Window_unregister(win);
 
 		WindowData* self = get_data(win);
 
@@ -161,12 +165,13 @@ namespace Reflex
 				system_error(__FILE__, __LINE__);
 		}
 
-		if (self->context.is_active())
-			Rays::activate_offscreen_context();
-
 		self->context.fin();
 		self->hwnd = NULL;
+
 		win->release();
+
+		if (Window_all().empty())
+			Reflex::app()->quit();
 	}
 
 	void
@@ -475,8 +480,6 @@ namespace Reflex
 			CREATESTRUCT* cs = (CREATESTRUCT*) lp;
 			win = (Window*) cs->lpCreateParams;
 			setup_window(win, hwnd);
-
-			Window_register(win);
 		}
 
 		if (!win) win = get_window_from_hwnd(hwnd);
@@ -485,14 +488,7 @@ namespace Reflex
 		LRESULT ret = window_proc(win, hwnd, msg, wp, lp);
 
 		if (msg == WM_NCDESTROY)
-		{
-			Window_unregister(win);
-
 			cleanup_window(win);
-
-			if (Window_all().empty())
-				Reflex::app()->quit();
-		}
 
 		return ret;
 	}

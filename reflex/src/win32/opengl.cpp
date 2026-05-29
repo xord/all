@@ -1,6 +1,7 @@
 #include "opengl.h"
 
 
+#include <rays/rays.h>
 #include "reflex/exception.h"
 
 
@@ -56,16 +57,11 @@ namespace Reflex
 	void
 	OpenGLContext::fin ()
 	{
-		if (!*this) return;
+		if (is_active())
+			Rays::activate_offscreen_context();
 
 		if (hrc)
 		{
-			if (hrc == wglGetCurrentContext())
-			{
-				if (!wglMakeCurrent(NULL, NULL))
-					system_error(__FILE__, __LINE__);
-			}
-
 			if (!wglDeleteContext(hrc))
 				system_error(__FILE__, __LINE__);
 
@@ -104,7 +100,7 @@ namespace Reflex
 	bool
 	OpenGLContext::is_active () const
 	{
-		return *this && hrc == wglGetCurrentContext();
+		return hrc && hrc == wglGetCurrentContext();
 	}
 
 	OpenGLContext::operator bool () const
