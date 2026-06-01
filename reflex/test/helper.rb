@@ -9,4 +9,8 @@ require 'test/unit'
 
 STDOUT.sync = true
 
+Test::Unit::TestCase.add_setup_hook do |t|
+  puts "[run] #{t.class}##{t.method_name}"
+end
+
 include Xot::Test

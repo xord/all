@@ -36,8 +36,10 @@ jobs:
 
       - name: test
         if: runner.os == 'macos'
+        timeout-minutes: 30
         run: rake verbose test TESTOPTS='--verbose=verbose'
 
       - name: test
         if: runner.os == 'windows'
+        timeout-minutes: 30
         run: rake verbose xot rucy rays reflex test
