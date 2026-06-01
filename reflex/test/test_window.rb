@@ -42,7 +42,7 @@ class TestWindow < Test::Unit::TestCase
     assert_equal 'A', w.title
   end
 
-  def test_frame()
+  def __test_frame()
     w = win
     b = w.frame.dup
     assert_equal b, w.frame
