@@ -48,12 +48,8 @@ namespace Reflex
 		if (!SetPixelFormat(hdc, pf, pfd))
 			system_error(__FILE__, __LINE__);
 
-		hrc = wglCreateContext(hdc);
+		hrc = (HGLRC) Rays::get_offscreen_context();
 		if (!hrc)
-			system_error(__FILE__, __LINE__);
-
-		HGLRC shared = (HGLRC) Rays::get_offscreen_context();
-		if (shared && !wglShareLists(shared, hrc))
 			system_error(__FILE__, __LINE__);
 
 		make_current();
@@ -62,12 +58,6 @@ namespace Reflex
 	void
 	OpenGLContext::fin ()
 	{
-		if (is_active())
-			Rays::activate_offscreen_context();
-
-		if (hrc && !wglDeleteContext(hrc))
-			system_error(__FILE__, __LINE__);
-
 		if (hdc && !ReleaseDC(hwnd, hdc))
 			system_error(__FILE__, __LINE__);
 
@@ -92,12 +82,6 @@ namespace Reflex
 
 		if (!SwapBuffers(hdc))
 			system_error(__FILE__, __LINE__);
-	}
-
-	bool
-	OpenGLContext::is_active () const
-	{
-		return hrc && hrc == wglGetCurrentContext();
 	}
 
 	OpenGLContext::operator bool () const
