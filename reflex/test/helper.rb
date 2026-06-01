@@ -9,8 +9,12 @@ require 'test/unit'
 
 STDOUT.sync = true
 
-Test::Unit::TestCase.add_setup_hook do |t|
-  puts "[run] #{t.class}##{t.method_name}"
+module TestRunNameLogger
+  def setup
+    puts "[run] #{self.class}##{method_name}"
+    super
+  end
 end
+Test::Unit::TestCase.prepend(TestRunNameLogger)
 
 include Xot::Test
