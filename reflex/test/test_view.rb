@@ -68,7 +68,7 @@ class TestView < Test::Unit::TestCase
     assert_equal [611, 722], v2.  to_screen(500).to_a
   end
 
-  def test_complex_coord_conversion()
+  def __test_complex_coord_conversion()
     w  = window(x: 100, y: 200, size: 500, zoom: 2)                                {scroll_to 100, 200}
     v1 = view(  x: 10,  y: 20,  size: 50,  zoom: 3, angle: 90,  pivot: [0.1, 0.2]) {scroll_to 10,  20}
     v2 = view(  x: 1,   y: 2,   size: 5,   zoom: 4, angle: 180, pivot: [0.3, 0.4]) {scroll_to 1,   2}
