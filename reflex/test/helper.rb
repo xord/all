@@ -7,4 +7,6 @@ require 'reflex'
 
 require 'test/unit'
 
+STDOUT.sync = true
+
 include Xot::Test
