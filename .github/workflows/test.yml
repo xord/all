@@ -36,7 +36,7 @@ jobs:
 
       - name: test
         if: runner.os == 'macos'
-        run: rake verbose test
+        run: rake verbose test TESTOPTS='--verbose=verbose'
 
       - name: test
         if: runner.os == 'windows'
