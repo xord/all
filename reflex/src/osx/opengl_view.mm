@@ -13,6 +13,10 @@
 
 @implementation OpenGLView
 
+	{
+		bool setup_context_done;
+	}
+
 	- (id) initWithFrame: (NSRect) frame
 	{
 		return [self initWithFrame: frame antiAlias: 0];
@@ -25,27 +29,34 @@
 		self = [super initWithFrame: frame pixelFormat: context.pixelFormat];
 		if (!self) return nil;
 
-		[self setOpenGLContext: context];
-		[self setWantsBestResolutionOpenGLSurface: YES];
-		[self activateContext];
-
-		GLint swapInterval = 1;
-		[[self openGLContext]
-			setValues: &swapInterval
-			forParameter: NSOpenGLCPSwapInterval];
-
-#ifdef TRANSPARENT_BACKGROUND
-		GLint opacity = 0;
-		[[self openGLContext]
-			setValues: &opacity
-			forParameter: NSOpenGLCPSurfaceOpacity];
-#endif
+		setup_context_done = false;
 
 		return self;
 	}
 
+	- (void) setupContext
+	{
+		if (setup_context_done) return;
+		setup_context_done = true;
+
+		[self setWantsBestResolutionOpenGLSurface: YES];
+
+		NSOpenGLContext* context = (NSOpenGLContext*) Rays::get_offscreen_context();
+		[self setOpenGLContext: context];
+
+		GLint swapInterval = 1;
+		[context setValues: &swapInterval forParameter: NSOpenGLCPSwapInterval];
+
+#ifdef TRANSPARENT_BACKGROUND
+		GLint opacity = 0;
+		[context setValues: &opacity forParameter: NSOpenGLCPSurfaceOpacity];
+#endif
+	}
+
 	- (void) activateContext
 	{
+		[self setupContext];
+
 		NSOpenGLContext* context = self.openGLContext;
 		if (context.view != self) [context setView: self];
 		[context makeCurrentContext];
