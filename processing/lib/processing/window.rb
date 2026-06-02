@@ -7,14 +7,18 @@ module Processing
     include Xot::Inspectable
 
     def initialize(width = 500, height = 500, *args, context_class: Context, **kwargs, &block)
+      $stderr.puts "[win] 1 enter"; $stderr.flush
       Processing.instance_variable_set :@window, self
 
       @events       = []
       @active       = false
       @error        = nil
       @auto_resize  = true
+      $stderr.puts "[win] 2 Canvas.new"; $stderr.flush
       @canvas       = Canvas.new self, width, height
+      $stderr.puts "[win] 3 canvas_view"; $stderr.flush
       @canvas_view  =              add   CanvasView.new name: :canvas
+      $stderr.puts "[win] 4 overlay_view"; $stderr.flush
       @overlay_view = @canvas_view.add Reflex::View.new name: :overlay
 
       # On WASM, auto-GC may yield mid-draw via Asyncify and cause partial
@@ -22,12 +26,17 @@ module Processing
       # at a safe point (on_canvas_update) to avoid this.
       GC.disable if Xot.wasm?
 
+      $stderr.puts "[win] 5 super"; $stderr.flush
       super(*args, size: [width, height], **kwargs, &block)
 
+      $stderr.puts "[win] 6 self.center = screen.center"; $stderr.flush
       self.center = screen.center
+      $stderr.puts "[win] 7 canvas_view.focus"; $stderr.flush
       @canvas_view.focus
 
+      $stderr.puts "[win] 8 Context.new"; $stderr.flush
       @context = context_class.new self
+      $stderr.puts "[win] 9 done"; $stderr.flush
     end
 
     attr_accessor :setup, :update, :draw, :move, :resize, :motion,

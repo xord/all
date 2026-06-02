@@ -43,14 +43,21 @@ module Processing
 
     # @private
     def initialize(window)
+      $stderr.puts "[ctx] 1 enter"; $stderr.flush
       @@rootContext__ = self
 
+      $stderr.puts "[ctx] 2 tmpdir cleanup"; $stderr.flush
       tmpdir__.tap {|dir| FileUtils.rm_r dir.to_s if dir.directory?} unless Xot.wasm?
 
+      $stderr.puts "[ctx] 3 @window__ ="; $stderr.flush
       @window__ = window
-      init__(
-        @window__.canvas.image,
-        @window__.canvas.painter.paint {background 0.8})
+      $stderr.puts "[ctx] 4 canvas.image"; $stderr.flush
+      _img = @window__.canvas.image
+      $stderr.puts "[ctx] 5 painter.paint background"; $stderr.flush
+      _bg = @window__.canvas.painter.paint {background 0.8}
+      $stderr.puts "[ctx] 6 init__"; $stderr.flush
+      init__(_img, _bg)
+      $stderr.puts "[ctx] 7 done init__"; $stderr.flush
 
       @smooth__           = true
       @loop__             = true
