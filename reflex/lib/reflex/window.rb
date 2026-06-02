@@ -75,9 +75,13 @@ module Reflex
       fullscreen:  {reader: :fullscreen?}
 
     def initialize(options = nil, &block)
+      $stderr.puts "[rw] 1 super()"; $stderr.flush
       super()
+      $stderr.puts "[rw] 2 set options=#{options.inspect}"; $stderr.flush
       set options if options
+      $stderr.puts "[rw] 3 show_block ="; $stderr.flush
       @show_block = block
+      $stderr.puts "[rw] 4 done"; $stderr.flush
     end
 
     def paint(&block)
