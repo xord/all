@@ -4,11 +4,24 @@
 
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/OpenGL.h>
+#import <Security/AuthSession.h>
 #include <rays/rays.h>
 #import "native_window.h"
 
 
 //#define TRANSPARENT_BACKGROUND
+
+
+static bool
+has_graphic_access ()
+{
+	uid_t uid;
+	SessionAttributeBits attrs;
+	if (SessionGetInfo(callerSecuritySession, &uid, &attrs) != noErr)
+		return false;
+
+	return attrs & sessionHasGraphicAccess;
+}
 
 
 @implementation OpenGLView
@@ -25,14 +38,18 @@
 		self = [super initWithFrame: frame pixelFormat: context.pixelFormat];
 		if (!self) return nil;
 
-		[self setOpenGLContext: context];
 		[self setWantsBestResolutionOpenGLSurface: YES];
-		[self activateContext];
 
-		GLint swapInterval = 1;
-		[[self openGLContext]
-			setValues: &swapInterval
-			forParameter: NSOpenGLCPSwapInterval];
+		if (has_graphic_access())
+		{
+			[self setOpenGLContext: context];
+			[self activateContext];
+
+			GLint swapInterval = 1;
+			[[self openGLContext]
+				setValues: &swapInterval
+				forParameter: NSOpenGLCPSwapInterval];
+		}
 
 #ifdef TRANSPARENT_BACKGROUND
 		GLint opacity = 0;
