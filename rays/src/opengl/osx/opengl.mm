@@ -21,7 +21,7 @@ namespace Rays
 			{
 				//NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
 				//NSOpenGLPFAAccelerated, NSOpenGLPFANoRecovery,
-				NSOpenGLPFADoubleBuffer,
+				//NSOpenGLPFADoubleBuffer,
 				NSOpenGLPFAAllowOfflineRenderers,
 				NSOpenGLPFAColorSize, 32,
 				NSOpenGLPFADepthSize, 32,
