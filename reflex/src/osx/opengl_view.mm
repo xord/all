@@ -20,7 +20,7 @@ has_graphic_access ()
 	if (SessionGetInfo(callerSecuritySession, &uid, &attrs) != noErr)
 		return false;
 
-	return attrs & sessionHasGraphicAccess;
+	return false;// attrs & sessionHasGraphicAccess;
 }
 
 
