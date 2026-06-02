@@ -7,7 +7,7 @@ class TestContext < Test::Unit::TestCase
   P  = Processing
 
   def context()
-    RS::Context.new P::Window.new
+    RS::Window.new.context
   end
 
   def sprite(*args, **kwargs)
