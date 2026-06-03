@@ -86,8 +86,8 @@ class TestMIDIEvent < Test::Unit::TestCase
     assert_equal  5, event(0xC5, 1, 2, 3).channel
     assert_equal  6, event(0xD6, 1, 2, 3).channel
     assert_equal  7, event(0xE7, 1, 2, 3).channel
-    assert_equal -1, event(0xF8, 1, 2, 3).channel
-    assert_equal -1, event(0x00, 1, 2, 3).channel
+    assert_equal(-1, event(0xF8, 1, 2, 3).channel)
+    assert_equal(-1, event(0x00, 1, 2, 3).channel)
   end
 
 end# TestMIDIEvent
