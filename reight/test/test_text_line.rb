@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestTextLine < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_nothing_raised       {line}
     assert_nothing_raised       {line "abc"}

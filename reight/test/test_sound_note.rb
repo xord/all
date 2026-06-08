@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestSoundNote < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal 1,     note(1, :sine).index
     assert_equal :sine, note(1, :sine).tone
@@ -44,7 +46,6 @@ class TestSoundNote < Test::Unit::TestCase
 
   private
 
-  C    = R8::CONTEXT__
   Note = R8::SoundNote
 
   def note(index = 1, tone = self.tone) = Note.new index, tone

@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestMapLayer < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_nothing_raised       {layer tile_size: 2,   chunk_size: 6}
     assert_raise(ArgumentError) {layer tile_size: 2,   chunk_size: 7}
@@ -166,8 +168,6 @@ class TestMapLayer < Test::Unit::TestCase
   end
 
   private
-
-  C = R8::CONTEXT__
 
   def layer(...)                    = R8::MapLayer.new(...)
 

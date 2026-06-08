@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestMapEditor < Test::Unit::TestCase
 
+  include HasContext
+
   def test_set_map()
     pj = proj
     e  = editor pj

@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestText < Test::Unit::TestCase
 
+  include HasContext
+
   def test_insert()
     t        = text
     modified = false

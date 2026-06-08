@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestMapTile < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal 1, tile(sprite(1), 2, 3).asset.id
     assert_equal 2, tile(sprite(1), 2, 3).x

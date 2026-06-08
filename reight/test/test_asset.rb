@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestAsset < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal 1,            asset(1, 2, 3, 4, 5, 6, :x) .id
     assert_equal 2,            asset(1, 2, 3, 4, 5, 6, :x) .w
@@ -129,8 +131,6 @@ class TestAsset < Test::Unit::TestCase
   end
 
   private
-
-  C = R8::CONTEXT__
 
   class TestAsset < R8::Asset
     def initialize(value = 0, *args, load: nil, **kwargs)

@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestSettings < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal 384, Settings.new(proj).asset_table_width
     assert_equal 384, Settings.new(proj).asset_table_height
