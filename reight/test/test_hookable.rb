@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestHookable < Test::Unit::TestCase
 
+  include HasContext
+
   def test_hook()
     result = nil
     o      = obj

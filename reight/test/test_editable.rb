@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestEditable < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_true  obj          .modified?
     assert_false obj(load: {}).modified?

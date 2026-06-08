@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestSpriteAnimation < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal 1,       anim(1, 2, 3, 4)     .id
     assert_equal 2,       anim(1, 2, 3, 4)     .w
@@ -34,7 +36,7 @@ class TestSpriteAnimation < Test::Unit::TestCase
       assert_equal ({id: 100, w: 1, h: 2, fps: 3, name: :x}), a.save(pj)
 
       path = "#{dir}/anim_100.png"
-      img  = C.load_image path
+      img  = context.load_image path
       assert_equal [3, 2],    img.size
       assert_equal [R, G, B], [0, 1, 2].map {|x| rgb img, x}
 
@@ -165,7 +167,6 @@ class TestSpriteAnimation < Test::Unit::TestCase
 
   private
 
-  C    = R8::CONTEXT__
   Anim = R8::SpriteAnimation
 
   R, G, B, Y = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0]]
@@ -177,7 +178,7 @@ class TestSpriteAnimation < Test::Unit::TestCase
   def proj(dir = '/tmp') = R8::Project.new dir
 
   def image(color = nil, w = 2, h = 3, &block)
-    C.create_graphics(w, h).tap do |g|
+    context.create_graphics(w, h).tap do |g|
       g.begin_draw do
         g.background(*(color || [0, 0, 0, 0]))
         g.no_stroke
@@ -188,7 +189,7 @@ class TestSpriteAnimation < Test::Unit::TestCase
 
   def rgb(img, index = 0)
     c = img.loadPixels[index]
-    [C.red(c), C.green(c), C.blue(c)]
+    [context.red(c), context.green(c), context.blue(c)]
   end
 
 end# TestSpriteAnimation
