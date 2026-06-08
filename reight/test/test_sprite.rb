@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestSprite < Test::Unit::TestCase
 
+  include HasContext
+
   def test_prop()
     assert_raise(NoMethodError) {sprite.foo}
     assert_raise(NoMethodError) {sprite.foo = 9}

@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestSpriteEditor < Test::Unit::TestCase
 
+  include HasContext
+
   def test_set_sprite()
     pj = proj
     e  = editor pj
@@ -277,12 +279,12 @@ class TestSpriteEditor < Test::Unit::TestCase
     pj       = proj
     e        = editor pj
     e.sprite = sprite pj, 0, 0, 1, 1
-    assert_equal [C.color(0, 0, 0, 0)], e.anim_image.load_pixels.to_a
+    assert_equal [context.color(0, 0, 0, 0)], e.anim_image.load_pixels.to_a
 
     e.edit do |img|
       img.begin_draw {_1.fill 255, 0, 0; _1.rect 0, 0, 2, 2}
     end
-    assert_equal [C.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
   end
 
   def test_begin_end_editing_history()
@@ -298,33 +300,33 @@ class TestSpriteEditor < Test::Unit::TestCase
     end
 
     assert_equal [true, false],         [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(0, 255, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(0, 255, 0)],  e.anim_image.load_pixels.to_a
 
     e.undo
     assert_equal [true, true],          [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
 
     e.undo
     assert_equal [false, true],         [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(0, 0, 0, 0)], e.anim_image.load_pixels.to_a
+    assert_equal [context.color(0, 0, 0, 0)], e.anim_image.load_pixels.to_a
 
     e.redo
     assert_equal [true, true],          [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
 
     e.redo
     assert_equal [true, false],         [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(0, 255, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(0, 255, 0)],  e.anim_image.load_pixels.to_a
   end
 
   def test_begin_end_drawing()
     pj       = proj
     e        = editor pj
     e.sprite = sprite pj, 0, 0, 1, 1
-    assert_equal [C.color(0, 0, 0, 0)], e.anim_image.load_pixels.to_a
+    assert_equal [context.color(0, 0, 0, 0)], e.anim_image.load_pixels.to_a
 
     e.draw {_1.fill 255, 0, 0; _1.rect 0, 0, 2, 2}
-    assert_equal [C.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
   end
 
   def test_begin_end_drawing_history()
@@ -336,23 +338,23 @@ class TestSpriteEditor < Test::Unit::TestCase
     e.draw {_1.fill 0, 255, 0; _1.rect 0, 0, 2, 2}
 
     assert_equal [true, false],         [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(0, 255, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(0, 255, 0)],  e.anim_image.load_pixels.to_a
 
     e.undo
     assert_equal [true, true],          [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
 
     e.undo
     assert_equal [false, true],         [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(0, 0, 0, 0)], e.anim_image.load_pixels.to_a
+    assert_equal [context.color(0, 0, 0, 0)], e.anim_image.load_pixels.to_a
 
     e.redo
     assert_equal [true, true],          [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(255, 0, 0)],  e.anim_image.load_pixels.to_a
 
     e.redo
     assert_equal [true, false],         [e.can_undo?, e.can_redo?]
-    assert_equal [C.color(0, 255, 0)],  e.anim_image.load_pixels.to_a
+    assert_equal [context.color(0, 255, 0)],  e.anim_image.load_pixels.to_a
   end
 
   def test_add_sprite()
@@ -844,16 +846,16 @@ class TestSpriteEditor < Test::Unit::TestCase
 
   private
 
-  C = Reight::CONTEXT__
-
-  TRANSPARENT, WHITE, RED, GREEN, BLUE, YELLOW = [
-    [0,   0,   0,   0],
-    [255, 255, 255, 255],
-    [255, 0,   0,   255],
-    [0,   255, 0,   255],
-    [0,   0,   255, 255],
-    [255, 255, 0,   255]
-  ].map {C.color(*_1)}
+  TRANSPARENT, WHITE, RED, GREEN, BLUE, YELLOW = RS::Window.new.context.then {|c|
+    [
+      [0,   0,   0,   0],
+      [255, 255, 255, 255],
+      [255, 0,   0,   255],
+      [0,   255, 0,   255],
+      [0,   0,   255, 255],
+      [255, 255, 0,   255]
+    ].map {c.color(*_1)}
+  }
 
   def editor(proj = self.proj, &block)
     R8::SpriteEditor.new(proj).tap do |e|
