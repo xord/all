@@ -7,10 +7,6 @@ require 'rubysketch/all'
 module Reight
   Processing.alias_snake_case_methods__ Processing, RubySketch
 
-  WINDOW__              = Processing.setup__ RubySketch::Window, RubySketch::Context
-  CONTEXT__             = WINDOW__.context
-  $processing_context__ = CONTEXT__
-
   refine Object do
     klass = RubySketch::Context
     (Processing.funcs__(klass) - Processing.events__(klass)).each do |func|
@@ -31,6 +27,7 @@ require 'reight/label'
 
 require 'reight/reight'
 require 'reight/context'
+require 'reight/window'
 require 'reight/sprite'
 require 'reight/map'
 require 'reight/sound'

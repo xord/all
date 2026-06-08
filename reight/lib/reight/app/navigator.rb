@@ -76,9 +76,9 @@ class Reight::Navigator
   private
 
   def app_buttons()
-    @app_buttons ||= r8.apps.map.with_index {|app, index|
+    @app_buttons ||= @app.window.apps.map.with_index {|app, index|
       Reight::Button.new(name: app.label, icon: r8.icon(index, 0, 8)) {
-        r8.current = app
+        @app.window.app = app
       }
     }
   end
