@@ -1,3 +1,6 @@
+using Reight
+
+
 class Reight::AssetTable
 
   extend  Reight::Hookable
@@ -5,7 +8,6 @@ class Reight::AssetTable
   include Reight::Widget
 
   PADDING = 1
-  C       = Reight::CONTEXT__
 
   def initialize(width, height, page_width, page_height, size_for_new_asset: nil)
     w = width  / page_width .to_f
@@ -65,35 +67,35 @@ class Reight::AssetTable
   end
 
   def draw(sp)
-    C.clip sp.x, sp.y, sp.w, sp.h
-    C.fill 190
-    C.no_stroke
-    C.rect 0, 0, sp.w, sp.h
-    C.translate PADDING + -@offset.x, PADDING + -@offset.y
+    clip sp.x, sp.y, sp.w, sp.h
+    fill 190
+    no_stroke
+    rect 0, 0, sp.w, sp.h
+    translate PADDING + -@offset.x, PADDING + -@offset.y
 
     @assets&.each do |asset|
-      C.fill 0
-      C.no_stroke
-      C.rect asset.x, asset.y, asset.w, asset.h
-      C.image asset.image, asset.x, asset.y if asset.image
+      fill 0
+      no_stroke
+      rect asset.x, asset.y, asset.w, asset.h
+      image asset.image, asset.x, asset.y if asset.image
     end
 
     if @asset
-      C.no_fill
-      C.stroke 255
-      C.rect @asset.x, @asset.y, @asset.w + 1, @asset.h + 1
+      no_fill
+      stroke 255
+      rect @asset.x, @asset.y, @asset.w + 1, @asset.h + 1
     end
 
     bounds = bounds_for_new_asset__ sp.mouse_x, sp.mouse_y
     if bounds && mouse_hovered? && @assets&.none? {Reight.intersect? _1.x, _1.y, _1.w, _1.h, *bounds}
       x, y, w, h = bounds
-      C.fill 220
-      C.no_stroke
-      C.rect x, y, w, h, 2
-      C.text_align CENTER, CENTER
-      C.text_size 12
-      C.fill 190
-      C.text "+", x, y - 1, w, h
+      fill 220
+      no_stroke
+      rect x, y, w, h, 2
+      text_align CENTER, CENTER
+      text_size 12
+      fill 190
+      text "+", x, y - 1, w, h
     end
   end
 

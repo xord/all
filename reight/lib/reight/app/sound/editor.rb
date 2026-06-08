@@ -4,8 +4,6 @@ class Reight::SoundEditor < Reight::ModelController
   extend Reight::Hookable
   extend Reight::HasState
 
-  C = Reight::CONTEXT__
-
   state :sound do |new, old|
     @sound = new
     group_history do
