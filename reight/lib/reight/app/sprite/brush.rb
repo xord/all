@@ -1,7 +1,5 @@
 class Reight::SpriteEditor::Brush < Reight::SpriteEditor::Tool
 
-  C = Reight::CONTEXT__
-
   def initialize(editor)
     super editor, icon_index: 1
   end

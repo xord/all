@@ -3,8 +3,6 @@ class Reight::Asset
   extend  Reight::Editable::Accessor
   include Reight::Editable
 
-  C = Reight::CONTEXT__
-
   def initialize(id = 0, width = 0, height = 0, x = nil, y = nil, name: nil, load: nil)
     super load: load
     @id, @width, @height, @x, @y, @name =

@@ -1,6 +1,7 @@
-class Reight::SpriteEditorInterface < Reight::ViewController
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::SpriteEditorInterface < Reight::ViewController
 
   def initialize(editor)
     super
@@ -217,7 +218,7 @@ class Reight::SpriteEditorInterface < Reight::ViewController
     end
     prev = anim_image_remove.sprite.tap do |sp|
       sp.w = sp.h = app::BUTTON_SIZE
-      sp.x        = C.width - space_l - sp.w
+      sp.x        = width - space_l - sp.w
       sp.y        = prev.y
     end
     prev = anim_name.sprite.tap do |sp|
@@ -229,12 +230,12 @@ class Reight::SpriteEditorInterface < Reight::ViewController
     prev = anim_images.sprite.tap do |sp|
       sp.x     = anim_prev.sprite.x
       sp.y     = anim_prev.sprite.bottom + space_m
-      sp.right = C.width - space_l
+      sp.right = width - space_l
       sp.h     = 32 + Reight::SpriteEditor::AnimImageList::PADDING * 2
     end
     prev = canvas.sprite.tap do |sp|
       x, y = prev.x, prev.bottom + space_l
-      w, h = C.width - x - space_l, C.height - y - space_l
+      w, h = width - x - space_l, height - y - space_l
       sp.w = sp.h = h
       sp.x = x + ((w - sp.w) / 2).to_i
       sp.y = y
@@ -256,7 +257,7 @@ class Reight::SpriteEditorInterface < Reight::ViewController
   def key_pressed(pressings)
     shift, ctrl, cmd = [SHIFT, CONTROL, COMMAND].map {pressings.include? _1}
     e, se            = @editor, Reight::SpriteEditor
-    case C.key_code
+    case key_code
     when :z then shift ? e.redo : e.undo if ctrl || cmd
     when :c then e.copy  if ctrl || cmd
     when :x then e.cut   if ctrl || cmd

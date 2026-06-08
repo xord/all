@@ -1,10 +1,11 @@
+using Reight
+
+
 class Reight::SpriteAnimation < Reight::Asset
 
   extend  Reight::Editable::Accessor
   include Enumerable
   include Xot::Inspectable
-
-  C = Reight::CONTEXT__
 
   def self.load(state, project)
     Reight::Editable.load Reight::SpriteAnimation, state:, project:
@@ -88,7 +89,7 @@ class Reight::SpriteAnimation < Reight::Asset
   end
 
   def create_image()
-    C.create_graphics w, h
+    create_graphics w, h
   end
 
   private
@@ -107,7 +108,7 @@ class Reight::SpriteAnimation < Reight::Asset
   def load_images__(project)
     path = image_path__ project
     return [] unless File.exist? path
-    from_atlas_image__ C.load_image path
+    from_atlas_image__ load_image path
   end
 
   # @private
@@ -117,7 +118,7 @@ class Reight::SpriteAnimation < Reight::Asset
 
   # @private
   def to_atlas_image__()
-    C.create_graphics(w * @images.size, h).tap do |g|
+    create_graphics(w * @images.size, h).tap do |g|
       g.begin_draw do
         @images.each.with_index do |img, index|
           g.blend img, 0, 0, w, h, w * index, 0, w, h, :replace
@@ -129,7 +130,7 @@ class Reight::SpriteAnimation < Reight::Asset
   # @private
   def from_atlas_image__(image)
     [(image.width / w).floor, 1].max.times.map do |index|
-      C.create_graphics(w, h).tap do |g|
+      create_graphics(w, h).tap do |g|
         g.begin_draw do
           g.background 0, 0, 0, 0
           g.blend image, w * index, 0, w, h, 0, 0, w, h, :replace

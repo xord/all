@@ -1,6 +1,7 @@
-class Reight::Navigator
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::Navigator
 
   def initialize(app)
     @app, @visible = app, true
@@ -23,14 +24,14 @@ class Reight::Navigator
 
   def draw()
     return unless visible?
-    C.fill 220
-    C.no_stroke
-    C.rect 0, 0, C.width, Reight::App::NAVIGATOR_HEIGHT
-    C.sprite(*sprites)
+    fill 220
+    no_stroke
+    rect 0, 0, width, Reight::App::NAVIGATOR_HEIGHT
+    sprite(*sprites)
   end
 
   def key_pressed()
-    index = [F1, F2, F3, F4, F5].index(C.key_code)
+    index = [F1, F2, F3, F4, F5].index(key_code)
     app_buttons[index]&.click if index
   end
 
@@ -69,7 +70,7 @@ class Reight::Navigator
       sp.x     = x + space
       sp.y     = 0
       sp.h     = Reight::App::NAVIGATOR_HEIGHT
-      sp.right = C.width - space
+      sp.right = width - space
     end
   end
 
@@ -131,8 +132,6 @@ class Reight::Navigator::Message
 
   include Reight::Widget
 
-  C = Reight::CONTEXT__
-
   def initialize()
     @priority = 0
   end
@@ -142,16 +141,16 @@ class Reight::Navigator::Message
   def flash(str, priority: 1)
     return if priority < @priority
     @text, @priority = str, priority
-    C.set_timeout 2, id: :message_flash do
+    set_timeout 2, id: :message_flash do
       @text, @priority = '', 0
     end
   end
 
   def draw(sp)
     return unless @text
-    C.fill 100
-    C.text_align LEFT, CENTER
-    C.text @text, 0, 0, sp.w, sp.h
+    fill 100
+    text_align LEFT, CENTER
+    Processing.context.text @text, 0, 0, sp.w, sp.h
   end
 
 end# Message

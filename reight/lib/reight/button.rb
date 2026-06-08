@@ -1,11 +1,12 @@
+using Reight
+
+
 class Reight::Button
 
   extend  Reight::Hookable
   include Reight::Widget
   include Reight::Activatable
   include Reight::HasHelp
-
-  C = Reight::CONTEXT__
 
   def initialize(name: nil, icon: nil, label: nil, &clicked)
     raise if icon && label
@@ -21,36 +22,36 @@ class Reight::Button
   attr_accessor :name, :icon, :label
 
   def draw(sp)
-    C.no_stroke
+    no_stroke
 
     if @label
-      C.fill 210
-      C.rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
+      fill 210
+      rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
     end
 
     if active?
-      C.fill 230
-      C.rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
+      fill 230
+      rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
     end
 
     if @icon
       x  = (sp.w - @icon.width)  / 2
       y  = (sp.h - @icon.height) / 2
       y += 1 if pressing?
-      C.image enabled? ? @icon : disabled_icon__, x, y
+      image enabled? ? @icon : disabled_icon__, x, y
     end
 
     if @label
       y = pressing? ? 1 : 0
-      C.text_align CENTER, CENTER
+      text_align CENTER, CENTER
       if enabled?
-        C.fill active? ? 250 : 230
-        C.text @label, 0, y + 1, sp.w, sp.h
-        C.fill active? ? 70  : 50
-        C.text @label, 0, y,     sp.w, sp.h
+        fill active? ? 250 : 230
+        text @label, 0, y + 1, sp.w, sp.h
+        fill active? ? 70  : 50
+        text @label, 0, y,     sp.w, sp.h
       else
-        C.fill 180
-        C.text @label, 0, y,     sp.w, sp.h
+        fill 180
+        text @label, 0, y,     sp.w, sp.h
       end
     end
   end
@@ -85,10 +86,10 @@ class Reight::Button
   private
 
   def disabled_icon__()
-    @disabled_icon ||= C.createGraphics(@icon.width, @icon.height).tap do |g|
+    @disabled_icon ||= createGraphics(@icon.width, @icon.height).tap do |g|
       g.beginDraw {g.image @icon, 0, 0}
       g.load_pixels
-      g.pixels.map! {|c| C.alpha(c) > 0 ? C.color(180) : c}
+      g.pixels.map! {|c| alpha(c) > 0 ? color(180) : c}
       g.update_pixels
     end
   end

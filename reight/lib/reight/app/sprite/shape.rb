@@ -1,7 +1,5 @@
 class Reight::SpriteEditor::Shape < Reight::SpriteEditor::Tool
 
-  C = Reight::CONTEXT__
-
   def initialize(editor, shape, fill, **kwargs)
     super editor, **kwargs
     @shape, @fill = shape, fill

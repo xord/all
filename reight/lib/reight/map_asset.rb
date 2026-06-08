@@ -4,8 +4,6 @@ class Reight::MapAsset < Reight::Asset
   include Enumerable
   include Xot::Inspectable
 
-  C = Reight::CONTEXT__
-
   def self.load(state, project)
     Reight::Editable.load Reight::MapAsset, state:, project:
   end

@@ -1,6 +1,7 @@
-class Reight::ScriptEditorInterface < Reight::ViewController
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::ScriptEditorInterface < Reight::ViewController
 
   def initialize(editor)
     super
@@ -28,13 +29,13 @@ class Reight::ScriptEditorInterface < Reight::ViewController
     text_editor.sprite.tap do |sp|
       sp.x      = 0
       sp.y      = app::NAVIGATOR_HEIGHT
-      sp.right  = C.width
-      sp.bottom = C.height
+      sp.right  = width
+      sp.bottom = height
     end
   end
 
   def key_pressed(pressings)
-    @keymap.key_pressed C.key, C.key_code, pressings
+    @keymap.key_pressed key, key_code, pressings
   end
 
 end# ScriptEditorInterface

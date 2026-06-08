@@ -1,3 +1,6 @@
+using Reight
+
+
 class Reight::SpriteAsset < Reight::Asset
 
   include Enumerable
@@ -51,7 +54,7 @@ class Reight::SpriteAsset < Reight::Asset
 
   def sensor? = !!@sensor
 
-  def image   = @anims.first&.image_at c__.frame_count
+  def image   = @anims.first&.image_at frame_count
 
   def insert(index, *anims)
     raise 'invalid animation size' unless
@@ -134,15 +137,10 @@ class Reight::SpriteAsset < Reight::Asset
   end
 
   def create_sprite()
-    c__.add_sprite new_sprite
+    add_sprite new_sprite
   end
 
   private
-
-  # @private
-  def c__()
-    Processing::Context.current__
-  end
 
   # @private
   def set_shape__(type)

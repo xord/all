@@ -1,16 +1,17 @@
+using Reight
+
+
 class Reight::Text
 
   include Enumerable
   include Reight::Editable
-
-  C = Reight::CONTEXT__
 
   def initialize(str = '')
     clear
     insert 0, str
 
     highlight
-    modified {C.set_timeout(0.3, id: "highlight_#{object_id}") {highlight}}
+    modified {set_timeout(0.3, id: "highlight_#{object_id}") {highlight}}
   end
 
   def insert(index, str)
