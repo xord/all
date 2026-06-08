@@ -1,3 +1,6 @@
+using Reight
+
+
 class Reight::ScriptEditor::TextEditor
 
   extend  Reight::Hookable
@@ -5,11 +8,9 @@ class Reight::ScriptEditor::TextEditor
   include Reight::Activatable
   include Reight::HasHelp
 
-  C = Reight::CONTEXT__
-
   def initialize(text = '')
     @cursors, @scroll, @shake = [], [0, 0], 0
-    @start_frame              = C.frame_count
+    @start_frame              = frame_count
     self.text                 = text
   end
 
@@ -62,43 +63,43 @@ class Reight::ScriptEditor::TextEditor
   end
 
   def redraw_cursors()
-    @start_frame = C.frame_count
+    @start_frame = frame_count
   end
 
   protected
 
   def draw(sp)
-    C.clip sp.x, sp.y, sp.w, sp.h
-    C.no_stroke
+    clip sp.x, sp.y, sp.w, sp.h
+    no_stroke
 
     update_scroll sp
-    C.translate(*@scroll.map {-_1})
+    translate(*@scroll.map {-_1})
 
     if @shake != 0
-      C.translate rand(-@shake.to_f..@shake.to_f), 0
+      translate rand(-@shake.to_f..@shake.to_f), 0
       @shake *= rand(0.7..0.9)
       @shake  = 0 if @shake.abs < 0.1
     end
 
-    C.fill 100
-    C.rect(*@scroll, sp.w, sp.h)
+    fill 100
+    rect(*@scroll, sp.w, sp.h)
 
     draw_text
-    draw_cursors if (C.frame_count - @start_frame) % 60 < 30
+    draw_cursors if (frame_count - @start_frame) % 60 < 30
   end
 
   def draw_text()
     @text.each.with_index do |line, index|
       x = 0
       line.each_segment do |str, attrib|
-        b = C.text_font.text_bounds str
+        b = text_font.text_bounds str
         y = b.h * index
         if back = attrib&.fetch(:background_color)
-          C.fill(*back)
-          C.rect x, y, b.w, b.h
+          fill(*back)
+          rect x, y, b.w, b.h
         end
-        C.fill(*(attrib&.fetch(:color) || 255))
-        C.text expand_tabs(str), x, y, C.width, b.h
+        fill(*(attrib&.fetch(:color) || 255))
+        Processing.context.text expand_tabs(str), x, y, width, b.h
         x += b.w
       end
     end
@@ -109,20 +110,20 @@ class Reight::ScriptEditor::TextEditor
     each_cursor do |cursor|
       row, col = cursor.pos
       x,       = font_size expand_tabs(@text[row][0...col])
-      C.no_stroke
+      no_stroke
       if cursor.active?
-        C.fill 255
-        C.rect x, fh * row,           1,  fh
+        fill 255
+        rect x, fh * row,           1,  fh
       else
-        C.fill 255, 127
-        C.rect x, fh * (row + 1) - 1, fw, 1
+        fill 255, 127
+        rect x, fh * (row + 1) - 1, fw, 1
       end
     end
   end
 
   def mouse_released(x, y, button)
     row, col = get_pos x, y
-    if C.key_is_down C.class::COMMAND
+    if key_is_down COMMAND
       add_cursor Reight::Text::Cursor.new(@text, row, col)
     elsif each_cursor(true).to_a.size == 1
       each_cursor(true) {_1.pos = [row, col]}
@@ -137,7 +138,7 @@ class Reight::ScriptEditor::TextEditor
   end
 
   def font()
-    C.text_font
+    text_font
   end
 
   def font_size(str = 'X')

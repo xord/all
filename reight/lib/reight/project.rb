@@ -1,6 +1,7 @@
-class Reight::Project
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::Project
 
   include Xot::Inspectable
   include Reight::Editable
@@ -50,7 +51,7 @@ class Reight::Project
   attr_reader :project_dir, :settings, :scripts, :sprites, :maps, :sounds
 
   def font()
-    @font ||= C.load_font(settings.font_path, size: settings.font_size, smooth: false)
+    @font ||= load_font(settings.font_path, size: settings.font_size, smooth: false)
   end
 
   def get_next_id()

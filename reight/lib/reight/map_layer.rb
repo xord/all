@@ -1,7 +1,5 @@
 class Reight::MapLayer
 
-  C = Reight::CONTEXT__
-
   include Enumerable
   include Xot::Inspectable
   include Reight::Editable

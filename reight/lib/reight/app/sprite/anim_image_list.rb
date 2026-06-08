@@ -1,10 +1,12 @@
+using Reight
+
+
 class Reight::SpriteEditor::AnimImageList
 
   extend  Reight::Hookable
   extend  Reight::HasState
   include Reight::Widget
 
-  C       = Reight::CONTEXT__
   PADDING = 1
 
   def initialize()
@@ -28,29 +30,29 @@ class Reight::SpriteEditor::AnimImageList
   end
 
   def draw(sp)
-    C.clip sp.x, sp.y, sp.w, sp.h
+    clip sp.x, sp.y, sp.w, sp.h
 
     image_frames.each do |image, x, y, w, h|
       if image
-        C.blend image, 0, 0, image.w, image.h, x, y, w, h, REPLACE
+        blend image, 0, 0, image.w, image.h, x, y, w, h, REPLACE
       else
         inside = mouse_hovered? &&
           (x..(x + w)).include?(sp.mouse_x) &&
           (y..(y + h)).include?(sp.mouse_y)
-        C.fill inside ? 220 : 190
-        C.no_stroke
-        C.rect x, y, w, h, 2
+        fill inside ? 220 : 190
+        no_stroke
+        rect x, y, w, h, 2
         if inside
-          C.text_align CENTER, CENTER
-          C.text_size 20
-          C.fill 190
-          C.text "+", x, y - 3, w, h
+          text_align CENTER, CENTER
+          text_size 20
+          fill 190
+          text "+", x, y - 3, w, h
         end
       end
       if image && image == @image
-        C.no_fill
-        C.stroke 255
-        C.rect x, y, w + 1, h + 1
+        no_fill
+        stroke 255
+        rect x, y, w + 1, h + 1
       end
     end
   end

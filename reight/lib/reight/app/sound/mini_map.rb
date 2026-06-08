@@ -1,10 +1,12 @@
+using Reight
+
+
 class Reight::SoundEditor::MiniMap
 
   extend  Reight::Hookable
   extend  Reight::HasState
   include Reight::Widget
 
-  C = Reight::CONTEXT__
   I = Reight::SoundEditorInterface
 
   def initialize()
@@ -15,21 +17,21 @@ class Reight::SoundEditor::MiniMap
   state :offset, filter: -> n {n.clamp 0..}
 
   def draw(sp)
-    C.clip sp.x, sp.y, sp.w, sp.h
+    clip sp.x, sp.y, sp.w, sp.h
 
-    C.fill 0
-    C.no_stroke
-    C.rect 0, 0, sp.w, sp.h
+    fill 0
+    no_stroke
+    rect 0, 0, sp.w, sp.h
 
     sx, sy = 1 / I::NOTE_WIDTH.to_f, sprite.h / Reight::SoundNote::MAX.to_f
 
-    C.fill 100
-    C.rect @offset * sx, 1, sp.w * sx, sp.h - 2
+    fill 100
+    rect @offset * sx, 1, sp.w * sx, sp.h - 2
 
     colors = Reight::SoundEditorInterface::TONE_COLORS
     @sound&.each_note do |note, time_index|
-      C.fill colors[note.tone]
-      C.rect time_index, sp.h - (note.index * sy), 1, 1
+      fill colors[note.tone]
+      rect time_index, sp.h - (note.index * sy), 1, 1
     end
   end
 

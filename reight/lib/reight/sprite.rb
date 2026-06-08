@@ -1,8 +1,11 @@
+using Reight
+
+
 class Reight::Sprite < RubySketch::Sprite
 
   def initialize(asset, *a, **k, &b)
     @asset, @props = asset, {}
-    @state_start   = c__.frame_count
+    @state_start   = frame_count
     super(*a, **k, &b)
   end
 
@@ -45,13 +48,6 @@ class Reight::Sprite < RubySketch::Sprite
     #end
     self.image = @asset.image
     super(...)
-  end
-
-  private
-
-  # @private
-  def c__()
-    Processing::Context.current__
   end
 
 end# Sprite

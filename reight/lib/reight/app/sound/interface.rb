@@ -1,3 +1,6 @@
+using Reight
+
+
 class Reight::SoundEditorInterface < Reight::ViewController
 
   NOTE_WIDTH  = 10
@@ -12,8 +15,6 @@ class Reight::SoundEditorInterface < Reight::ViewController
     pulse25:   14,
     noise:     12
   }.transform_values {Reight::App::PALETTE_COLORS[_1]}
-
-  C = Reight::CONTEXT__
 
   def initialize(editor)
     super
@@ -163,11 +164,11 @@ class Reight::SoundEditorInterface < Reight::ViewController
         alias draw_ draw
         def draw(sp)
           draw_ sp
-          C.no_fill
-          C.stroke @color
-          C.stroke_weight 1
+          no_fill
+          stroke @color
+          stroke_weight 1
           w, h = sprite.width, sprite.height
-          C.line 3, h - 1, w - 3, h - 1
+          line 3, h - 1, w - 3, h - 1
         end
       end
     end
@@ -223,13 +224,13 @@ class Reight::SoundEditorInterface < Reight::ViewController
     prev = mini_map.sprite.tap do |sp|
       sp.x     = prev.x
       sp.y     = prev.bottom + space_m
-      sp.right = C.width - space_l
+      sp.right = width - space_l
       sp.h     = 10
     end
     tools.map(&:sprite).each.with_index do |sp, index|
       sp.w = sp.h = app::BUTTON_SIZE
       sp.x        = play_or_stop.sprite.x + (sp.w + space_s) * index
-      sp.y        = C.height - space_l - sp.h
+      sp.y        = height - space_l - sp.h
     end
     tones.map(&:sprite).each.with_index do |sp, index|
       sp.w = sp.h = app::BUTTON_SIZE
@@ -263,7 +264,7 @@ class Reight::SoundEditorInterface < Reight::ViewController
   end
 
   def key_pressed(pressings)
-    case C.key_code
+    case key_code
     when ENTER then play_or_stop.click
     #when :b    then  brush.click
     #when :e    then eraser.click

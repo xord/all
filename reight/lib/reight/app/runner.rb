@@ -2,11 +2,11 @@ class Reight::Runner < Reight::App
 
   include Xot::Inspectable
 
-  ROOT_CONTEXT   = Reight::WINDOW__.context
-
   TEMPORARY_HASH = {}
 
-  def label = 'Run'
+  def root_context() = window.context
+
+  def label() = 'Run'
 
   def setup()
     navigator.visible = false
@@ -28,14 +28,14 @@ class Reight::Runner < Reight::App
   def draw()
     return unless @context
     @initial_resize ||= true.tap do
-      call_event {@context.size ROOT_CONTEXT.width, ROOT_CONTEXT.height}
+      call_event {@context.size root_context.width, root_context.height}
     end
     @context.call_draw__ {|push: true, &b| call_event(push: push, &b)}
     if canvasFrame = @context.canvasFrame__
-      ROOT_CONTEXT.background 0
-      ROOT_CONTEXT.image @context, *canvasFrame
+      root_context.background 0
+      root_context.image @context, *canvasFrame
     else
-      ROOT_CONTEXT.image @context, 0, 0
+      root_context.image @context, 0, 0
     end
     navigator.draw
   end
@@ -67,7 +67,7 @@ class Reight::Runner < Reight::App
 
   def mouse_moved()
     super
-    navigator.visible = ROOT_CONTEXT.mouse_y < NAVIGATOR_HEIGHT if r8.edit?
+    navigator.visible = root_context.mouse_y < NAVIGATOR_HEIGHT if r8.edit?
     call_event {@context.mouse_moved}
   end
 
@@ -168,7 +168,7 @@ class Reight::Runner < Reight::App
   end
 
   def cleanup()
-    ROOT_CONTEXT.remove_world @context.spriteWorld__ if @context
+    root_context.remove_world @context.spriteWorld__ if @context
     @context = nil
     end_wrapping_user_classes
     clear_all_timers
@@ -178,6 +178,7 @@ class Reight::Runner < Reight::App
   end
 
   def create_context()
+    root_context = self.root_context
     klass = Class.new do
       include Xot::Inspectable
       include Reight::Context
@@ -220,12 +221,12 @@ class Reight::Runner < Reight::App
         alias_method snake, camel if snake != camel
       end
 
-      Processing.funcs__(ROOT_CONTEXT.class).each do |func|
+      Processing.funcs__(root_context.class).each do |func|
         next if method_defined? func
-        define_method(func) {|*a, **k, &b| ROOT_CONTEXT.__send__ func, *a, **k, &b}
+        define_method(func) {|*a, **k, &b| root_context.__send__ func, *a, **k, &b}
       end
     end
-    klass.new(ROOT_CONTEXT, project)
+    klass.new(root_context, project)
   end
 
   def begin_wrapping_user_classes(context)
@@ -311,7 +312,7 @@ class Reight::Runner < Reight::App
 
   def clear_all_timers()
     prefix = Reight::Context::TIMER_PREFIX__
-    ROOT_CONTEXT.instance_eval do
+    root_context.instance_eval do
       @timers__      .delete_if {|id| id in [^prefix, _]}
       @firingTimers__.delete_if {|id| id in [^prefix, _]}
     end

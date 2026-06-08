@@ -1,11 +1,12 @@
+using Reight
+
+
 # @private
 class Reight::MapChunk
 
   include Enumerable
   include Xot::Inspectable
   include Reight::Editable
-
-  C = Reight::CONTEXT__
 
   def initialize(x, y, width = 128, height = 128, tile_size: 8)
     raise ArgumentError, "Invalid tile_size: #{tile_size}" if tile_size.to_i != tile_size
@@ -104,7 +105,7 @@ class Reight::MapChunk
   # @private
   def drawSprite__(context)
     @cached ||= true.tap do
-      @cache ||= C.create_graphics @width, @height
+      @cache ||= create_graphics @width, @height
       @cache.begin_draw do |g|
         g.background 0, 0
         g.translate(-@x, -@y)
