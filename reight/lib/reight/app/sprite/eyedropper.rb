@@ -1,6 +1,7 @@
-class Reight::SpriteEditor::Eyedropper < Reight::SpriteEditor::Tool
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::SpriteEditor::Eyedropper < Reight::SpriteEditor::Tool
 
   def canvas_clicked(x, y, button)
     editor.color = pixel_at__ image, x, y
@@ -9,11 +10,11 @@ class Reight::SpriteEditor::Eyedropper < Reight::SpriteEditor::Tool
   private
 
   def pixel_at__(image, x, y)
-    c = C.create_graphics(w, h).then do |g|
+    c = create_graphics(w, h).then do |g|
       g.begin_draw {g.blend image, x, y, w, h, 0, 0, 1, 1, REPLACE}
       g.load_pixels[0]
     end
-    [C.red(c), C.green(c), C.blue(c), C.alpha(c)].map(&:to_i)
+    [red(c), green(c), blue(c), alpha(c)].map(&:to_i)
   end
 
 end# Eyedropper

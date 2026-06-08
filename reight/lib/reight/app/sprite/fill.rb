@@ -1,6 +1,7 @@
-class Reight::SpriteEditor::Fill < Reight::SpriteEditor::Tool
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::SpriteEditor::Fill < Reight::SpriteEditor::Tool
 
   def initialize(editor)
     super editor, icon_index: 2
@@ -15,7 +16,7 @@ class Reight::SpriteEditor::Fill < Reight::SpriteEditor::Tool
     count = 0
     target_image.update_pixels do |pixels|
       from = pixels[y * w + x]
-      to   = C.color(*editor.color)
+      to   = color(*editor.color)
       rest = [[x, y]]
       until rest.empty?
         xx, yy = rest.shift

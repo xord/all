@@ -1,9 +1,10 @@
+using Reight
+
+
 def r8 = $r8__
 
 
 class Reight::R8
-
-  C = Reight::CONTEXT__
 
   def initialize(path, edit: false)
     raise if $r8__
@@ -20,17 +21,17 @@ class Reight::R8
   end
 
   def icons()
-    @icons ||= C.load_image(File.expand_path('../../res/icons.png', __dir__)).tap do |img|
-      transp = C.color '#FF77A8'
+    @icons ||= load_image(File.expand_path('../../res/icons.png', __dir__)).tap do |img|
+      transp = color '#FF77A8'
       img.load_pixels
-      img.pixels.map! {|c| c == transp ? C.color(0, 0, 0, 0) : c}
+      img.pixels.map! {|c| c == transp ? color(0, 0, 0, 0) : c}
       img.update_pixels
     end
   end
 
   def icon(xi, yi, size)
     return nil unless xi && yi && size
-    (@icon ||= {})[[xi, yi, size]] ||= C.create_graphics(size, size).tap do |g|
+    (@icon ||= {})[[xi, yi, size]] ||= create_graphics(size, size).tap do |g|
       g.beginDraw do
         g.copy icons, xi * size, yi * size, size, size, 0, 0, size, size
       end
@@ -40,7 +41,7 @@ class Reight::R8
 
   def start_auto_save()
     project.modified observe_all: true do
-      C.set_timeout 0.3, id: :project_auto_save do
+      set_timeout 0.3, id: :project_auto_save do
         project.save_all
       end
     end
