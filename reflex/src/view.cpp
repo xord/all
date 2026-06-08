@@ -1890,11 +1890,9 @@ namespace Reflex
 	void
 	View::clear_children ()
 	{
-		auto* children = self->children();
-		if (!children || children->empty()) return;
-
-		for (auto& child : *children)
-			remove_child(child);
+		const auto& children = self->pchildren;
+		while (children && !children->empty())
+			remove_child(children->back());
 	}
 
 	View::ChildList
