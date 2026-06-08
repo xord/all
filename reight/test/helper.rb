@@ -16,6 +16,25 @@ R8 = Reight
 RS = RubySketch
 
 
+module HasContext
+
+  def setup()
+    $processing_context__ = RS::Window.new.context
+    super
+  end
+
+  def teardown()
+    super
+    $processing_context__ = nil
+  end
+
+  def context()
+    $processing_context__
+  end
+
+end# HasContext
+
+
 def assert_pattern(&block)
   block.call
 rescue NoMatchingPatternError => e

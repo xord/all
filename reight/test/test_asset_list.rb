@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestAssetList < Test::Unit::TestCase
 
+  include HasContext
+
   def test_save()
     assert_equal(
       {class: 'TestAssetList::Asset', assets: [{id:1, w:2, h:3},   {id:5, w:6, h:7}], type: :array},
@@ -151,7 +153,6 @@ class TestAssetList < Test::Unit::TestCase
 
   private
 
-  C    = R8::CONTEXT__
   List = R8::AssetList
 
   class Asset < R8::Asset

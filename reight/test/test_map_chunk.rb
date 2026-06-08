@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestMapChunk < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal [1, 3, 4, 6], chunk(1,   3,   4, 6, tile_size: 2).frame
     assert_equal [1, 3, 4, 6], chunk(1.1, 3,   4, 6, tile_size: 2).frame
@@ -185,7 +187,6 @@ class TestMapChunk < Test::Unit::TestCase
 
   private
 
-  C     = R8::CONTEXT__
   Chunk = R8::MapChunk
 
   def chunk(...)                          = Chunk.new(...)

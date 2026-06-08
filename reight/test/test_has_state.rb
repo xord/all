@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestHasState < Test::Unit::TestCase
 
+  include HasContext
+
   def test_state()
     new1 = old1 = nil
     new2 = old2 = nil
