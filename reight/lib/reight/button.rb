@@ -13,7 +13,7 @@ class Reight::Button
     super()
 
     self.clicked(&clicked) if clicked
-    self.clicked {r8.flash name}
+    self.clicked {window&.flash name}
   end
 
   hook :clicked
@@ -66,7 +66,7 @@ class Reight::Button
 
   def mouse_moved(x, y)
     super
-    r8.flash help, priority: 0.5
+    window.flash help, priority: 0.5
   end
 
   def click()

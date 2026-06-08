@@ -42,6 +42,10 @@ module Reight::Widget
     end
   end
 
+  def window()
+    @widget_sprite&.getInternal__.window
+  end
+
   protected
 
   def draw(sp)                     = nil
