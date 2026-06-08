@@ -1,11 +1,12 @@
+using Reight
+
+
 class Reight::SoundAsset < Reight::Asset
 
   include Enumerable
   include Xot::Inspectable
 
   BPM_MAX = 999
-
-  C = Reight::CONTEXT__
 
   def self.load(state, project)
     Reight::Editable.load Reight::SoundAsset, state:, project:
@@ -169,7 +170,7 @@ class Reight::SoundAsset < Reight::Asset
     return seq >> Reight::SoundNote.gain, time
   end
 
-  def icon_image_cache__() = @icon_image_cache ||= C.create_graphics(w, h).tap do |g|
+  def icon_image_cache__() = @icon_image_cache ||= create_graphics(w, h).tap do |g|
     colors   = Reight::SoundEditorInterface::TONE_COLORS
     notes    = take w
     next if notes.empty?
@@ -182,7 +183,7 @@ class Reight::SoundAsset < Reight::Asset
       g.no_stroke
       each_note do |note, time_index|
         g.fill colors[note.tone]
-        g.rect time_index, C.map(note.index, min, max, h, 0), 1, 1
+        g.rect time_index, Processing.context.map(note.index, min, max, h, 0), 1, 1
       end
     end
   end

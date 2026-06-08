@@ -1,6 +1,7 @@
-class Reight::MapEditor::Line < Reight::MapEditor::Tool
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::MapEditor::Line < Reight::MapEditor::Tool
 
   def initialize(editor)
     super editor, icon_index: 4
@@ -15,13 +16,13 @@ class Reight::MapEditor::Line < Reight::MapEditor::Tool
       dy = y1 < y2 ? sp.h : -sp.h
       if (x2 - x1).abs > (y2 - y1).abs
         (x1..x2).step(dx).each do |x|
-          y = y1 == y2 ? y2 : C.map(x, x1, x2, y1, y2)
+          y = y1 == y2 ? y2 : map(x, x1, x2, y1, y2)
           y = y / sp.h * sp.h
           result |= editor.put_sprite x, y, sp
         end
       else
         (y1..y2).step(dy).each do |y|
-          x = x1 == x2 ? x2 : C.map(y, y1, y2, x1, x2)
+          x = x1 == x2 ? x2 : map(y, y1, y2, x1, x2)
           x = x / sp.w * sp.w
           result |= editor.put_sprite x, y, sp
         end

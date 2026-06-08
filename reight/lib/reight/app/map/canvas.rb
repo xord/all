@@ -1,10 +1,11 @@
+using Reight
+
+
 class Reight::MapEditor::Canvas
 
   extend  Reight::Hookable
   extend  Reight::HasState
   include Reight::Widget
-
-  C = Reight::CONTEXT__
 
   def initialize()
     super
@@ -28,29 +29,29 @@ class Reight::MapEditor::Canvas
     self.size = [sp.w, sp.h]
 
     sp = sprite
-    C.clip sp.x, sp.y, sp.w, sp.h
-    C.fill 0
-    C.no_stroke
-    C.rect(0, 0, sp.w, sp.h)
+    clip sp.x, sp.y, sp.w, sp.h
+    fill 0
+    no_stroke
+    rect 0, 0, sp.w, sp.h
 
     ox, oy = @offset.to_a(2).map(&:to_i)
-    C.translate(-ox, -oy)
+    translate(-ox, -oy)
     draw_grids__
 
     @map&.layers&.each do |layer|
       layer.each_tile(ox, oy, sp.w, sp.h, clip_by_chunk: true) do |tile|
         image = tile.asset.image
-        C.copy image, 0, 0, *image.size, *tile.frame
+        copy image, 0, 0, *image.size, *tile.frame
       end
     end
 
     if @sprite && mouse_hovered?
       x, y       = sp.mouse_x + ox, sp.mouse_y + oy
       x, y, w, h = Reight::MapEditor.bounds_for_put x, y, @sprite.w, @sprite.h
-      C.no_fill
-      C.stroke 255
-      C.stroke_weight 1
-      C.rect x, y, w, h
+      no_fill
+      stroke 255
+      stroke_weight 1
+      rect x, y, w, h
     end
   end
 
@@ -91,26 +92,26 @@ class Reight::MapEditor::Canvas
 
   private
 
-  def hand__? = C.keyIsDown(SPACE)
+  def hand__? = key_is_down(SPACE)
 
   # @private
   def draw_grids__()
-    C.push do
+    push do
       app    = Reight::App
       sw, sh = app::SCREEN_WIDTH, app::SCREEN_HEIGHT
       mw, mh = sw * 10, sh * 10
-      C.stroke 20
-      C.shape grid__ 8,      8,      mw, mh #if @app.pressing?(SPACE)
-      C.stroke 50
-      C.shape grid__ sw / 2, sh / 2, mw, mh
-      C.stroke 100
-      C.shape grid__ sw,     sh,     mw, mh
+      stroke 20
+      shape grid__ 8,      8,      mw, mh #if @app.pressing?(SPACE)
+      stroke 50
+      shape grid__ sw / 2, sh / 2, mw, mh
+      stroke 100
+      shape grid__ sw,     sh,     mw, mh
     end
   end
 
   # @private
   def grid__(xinterval, yinterval, xmax, ymax)
-    (@grids ||= {})[xinterval] ||= C.create_shape.tap do |sh|
+    (@grids ||= {})[xinterval] ||= create_shape.tap do |sh|
       sh.begin_shape LINES
       (0..xmax).step(xinterval).each do |x|
         sh.vertex x, 0

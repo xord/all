@@ -1,10 +1,11 @@
+using Reight
+
+
 class Reight::SpriteEditor < Reight::ModelController
 
   extend Forwardable
   extend Reight::Hookable
   extend Reight::HasState
-
-  C = Reight::CONTEXT__
 
   state :sprite do |new, old|
     @sprite = new
@@ -60,8 +61,8 @@ class Reight::SpriteEditor < Reight::ModelController
   end
 
   def colors()
-    @colors ||= @project.settings.palette_colors.map {C.color _1}
-      .map {[C.red(_1), C.green(_1), C.blue(_1), C.alpha(_1)].map(&:to_i)}
+    @colors ||= @project.settings.palette_colors.map {Processing.context.color _1}
+      .map {[red(_1), green(_1), blue(_1), alpha(_1)].map(&:to_i)}
   end
 
   def begin_editing(bounds: nil, &block)
@@ -307,7 +308,7 @@ class Reight::SpriteEditor < Reight::ModelController
     if x == 0 && y == 0 && w == image.w && h == image.h
       dup ? image.dup : image
     else
-      C.create_graphics(w, h).tap do |img|
+      create_graphics(w, h).tap do |img|
         img.begin_draw {img.blend image, x, y, w, h, 0, 0, w, h, :replace}
       end
     end

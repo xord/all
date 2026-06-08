@@ -1,7 +1,5 @@
 class Reight::SpriteEditor::Select < Reight::SpriteEditor::Tool
 
-  C = Reight::CONTEXT__
-
   def initialize(editor)
     super editor, icon_index: 0, help_text: 'Select or Move'
   end

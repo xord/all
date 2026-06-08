@@ -4,8 +4,6 @@ class Reight::MapEditor < Reight::ModelController
   extend Reight::Hookable
   extend Reight::HasState
 
-  C = Reight::CONTEXT__
-
   state :map do |new, old|
     @map = new
     group_history do
