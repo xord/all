@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestTextCursor < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal '', cursor(text).text.to_s
     assert_equal 0,  cursor(text).row

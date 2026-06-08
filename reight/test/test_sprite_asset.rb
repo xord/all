@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestSpriteAsset < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal 1,              asset(1, 2, 3, 4, 5)                .id
     assert_equal 2,              asset(1, 2, 3, 4, 5)                .w
@@ -254,7 +256,6 @@ class TestSpriteAsset < Test::Unit::TestCase
 
   private
 
-  C     = R8::CONTEXT__
   Asset = R8::SpriteAsset
 
   def asset(id = 0, w = 8, h = 8, *a, **k) = Asset.new(id, w, h, *a, **k)
@@ -263,7 +264,7 @@ class TestSpriteAsset < Test::Unit::TestCase
     R8::SpriteAnimation.new(id, w, h, fps: fps).tap {_1.push(*images)}
 
   def image(color = nil, w = 2, h = 3, &block)
-    C.create_graphics(w, h).tap do |g|
+    context.create_graphics(w, h).tap do |g|
       g.begin_draw do
         g.background(*(color || [0, 0, 0, 0]))
         g.no_stroke

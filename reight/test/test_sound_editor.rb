@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestSoundEditor < Test::Unit::TestCase
 
+  include HasContext
+
   def test_set_sound()
     pj = proj
     e  = editor pj

@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestSoundAsset < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     assert_equal 2, sound(bpm: 2).bpm
 
@@ -141,7 +143,6 @@ class TestSoundAsset < Test::Unit::TestCase
 
   private
 
-  C     = R8::CONTEXT__
   Sound = R8::SoundAsset
 
   def sound(id = 1, name: nil, bpm: 10, &block)

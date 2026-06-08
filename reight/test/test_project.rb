@@ -3,6 +3,8 @@ require_relative 'helper'
 
 class TestProject < Test::Unit::TestCase
 
+  include HasContext
+
   def test_initialize()
     tmpdir do |dir|
       pj = proj dir
