@@ -55,11 +55,11 @@ module Reight
     def apps()
       @apps ||= [].tap {|a|
         r, w, p, e = Reight, self, project, r8.edit?
-        a << r::Runner.new(w, p)
-        a << r::App.new(w, p, r::ScriptEditor, r::ScriptEditorInterface) if e
-        a << r::App.new(w, p, r::SpriteEditor, r::SpriteEditorInterface) if e
-        a << r::App.new(w, p, r::   MapEditor, r::   MapEditorInterface) if e
-        a << r::App.new(w, p, r:: SoundEditor, r:: SoundEditorInterface) if e
+        a << r::Runner.new(w, p, 0)
+        #a << r::App.new(w, p, 1, r::ScriptEditor, r::ScriptEditorInterface) if e
+        a << r::App.new(w, p, 2, r::SpriteEditor, r::SpriteEditorInterface) if e
+        a << r::App.new(w, p, 3, r::   MapEditor, r::   MapEditorInterface) if e
+        a << r::App.new(w, p, 4, r:: SoundEditor, r:: SoundEditorInterface) if e
       }
     end
 
