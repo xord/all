@@ -1,10 +1,12 @@
+using Reight
+
+
 class Reight::SoundEditor::PianoRoll
 
   extend  Reight::Hookable
   extend  Reight::HasState
   include Reight::Widget
 
-  C = Reight::CONTEXT__
   I = Reight::SoundEditorInterface
 
   def initialize()
@@ -36,13 +38,13 @@ class Reight::SoundEditor::PianoRoll
       self.offset_y = (Reight::SoundNote::MAX * I::NOTE_HEIGHT - sp.h) / 2
     end
 
-    C.clip sp.x, sp.y, sp.w, sp.h
+    clip sp.x, sp.y, sp.w, sp.h
 
-    C.no_stroke
-    C.fill 0
-    C.rect 0, 0, sp.w, sp.h
+    no_stroke
+    fill 0
+    rect 0, 0, sp.w, sp.h
 
-    C.translate(-@offset_x, -@offset_y)
+    translate(-@offset_x, -@offset_y)
     draw_grids__
     draw_note_names__
     draw_notes__
@@ -100,31 +102,31 @@ class Reight::SoundEditor::PianoRoll
     sp, notew, noteh, max =
       sprite, I::NOTE_WIDTH, I::NOTE_HEIGHT, Reight::SoundNote::MAX
 
-    C.no_stroke
+    no_stroke
     max.downto(0).with_index do |y, index|
-      C.fill NOTE_INDEX_COLORS[index % NOTE_INDEX_COLORS.size]
-      C.rect 0, y * noteh, @offset_x + sp.w, noteh
+      fill NOTE_INDEX_COLORS[index % NOTE_INDEX_COLORS.size]
+      rect 0, y * noteh, @offset_x + sp.w, noteh
     end
 
-    C.no_fill
-    (0...(@offset_x + C.width)).step(notew * 4).with_index do |x, index|
+    no_fill
+    (0...(@offset_x + width)).step(notew * 4).with_index do |x, index|
       color = GRID_COLORS[index % 16 == 0 ? 0 : (index % 4 == 0 ? 1 : 2)]
-      C.stroke(*color)
-      C.line x, 0, x, noteh * max
+      stroke(*color)
+      line x, 0, x, noteh * max
     end
   end
 
   def draw_notes__()
     notew, noteh, colors, max =
       I::NOTE_WIDTH, I::NOTE_HEIGHT, I::TONE_COLORS, Reight::SoundNote::MAX
-    C.no_stroke
+    no_stroke
     @sound&.each_note do |note, index|
       x, y    = index * notew, (max - note.index) * noteh
-      r, g, b = C.color(colors[note.tone]).then {[C.red(_1), C.green(_1), C.blue(_1)]}
-      C.fill r, g, b
-      C.rect x, y, notew, noteh
-      C.fill(*[r, g, b].map {(_1 - 50).clamp 0..})
-      C.rect x, y, 1, noteh
+      r, g, b = color(colors[note.tone]).then {[red(_1), green(_1), blue(_1)]}
+      fill r, g, b
+      rect x, y, notew, noteh
+      fill(*[r, g, b].map {(_1 - 50).clamp 0..})
+      rect x, y, 1, noteh
     end
   end
 
@@ -133,20 +135,20 @@ class Reight::SoundEditor::PianoRoll
     notew, noteh, max = I::NOTE_WIDTH, I::NOTE_HEIGHT, Reight::SoundNote::MAX
     ti, ni            = note_pos_at__ @offset_x + sp.mouse_x, @offset_y + sp.mouse_y
     x, y              = ti * notew, (max - ni) * noteh
-    C.no_stroke
-    C.fill 200, 200, 200, 128
-    C.rect x, y, notew, noteh
+    no_stroke
+    fill 200, 200, 200, 128
+    rect x, y, notew, noteh
   end
 
   def draw_note_names__()
-    C.no_stroke
-    C.fill 150
-    C.text_size 10
-    C.text_align LEFT, CENTER
+    no_stroke
+    fill 150
+    text_size 10
+    text_align LEFT, CENTER
     noteh = I::NOTE_HEIGHT
     max   = Reight::SoundNote::MAX
     (0..Reight::SoundNote::MAX).step(12).with_index do |y, index|
-      C.text "C#{index}", 2, (max - y) * noteh, 10, noteh
+      text "C#{index}", 2, (max - y) * noteh, 10, noteh
     end
   end
 

@@ -4,8 +4,6 @@ class Reight::ScriptEditor < Reight::ModelController
   extend Reight::Hookable
   extend Reight::HasState
 
-  C = Reight::CONTEXT__
-
   state :script do |new, old|
     @script = new
     group_history do

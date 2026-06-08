@@ -1,6 +1,7 @@
-class Reight::Sound
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::Sound
 
   def initialize(asset, sequencer, time)
     @asset, @sequencer, @time = asset, sequencer, time
@@ -14,10 +15,10 @@ class Reight::Sound
 
     if block
       id = "__sound_playing_check_#{sound.object_id}"
-      C.set_interval 0.1, id: id do
+      set_interval 0.1, id: id do
         next if sound.playing? == true
         block.call true
-        C.clear_interval id
+        clear_interval id
       end
     end
   end

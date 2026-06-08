@@ -1,6 +1,7 @@
-class Reight::MapEditorInterface < Reight::ViewController
+using Reight
 
-  C = Reight::CONTEXT__
+
+class Reight::MapEditorInterface < Reight::ViewController
 
   def initialize(editor)
     super
@@ -142,7 +143,7 @@ class Reight::MapEditorInterface < Reight::ViewController
       sp.x      = prev.x
       sp.y      = prev.bottom + space_l
       sp.w      = prev.w
-      sp.bottom = C.height - space_l
+      sp.bottom = height - space_l
     end
     prev = map_prev.sprite.tap do |sp|
       sp.x        = prev.right + space_l
@@ -173,17 +174,17 @@ class Reight::MapEditorInterface < Reight::ViewController
       sp.x     = prev.right + space_m
       sp.y     = prev.y
       sp.h     = prev.h
-      sp.right = C.width - space_l
+      sp.right = width - space_l
     end
     tools.map(&:sprite).each.with_index do |sp, index|
       sp.w = sp.h = app::BUTTON_SIZE
       sp.x        = map_prev.sprite.x + (sp.w + space_s) * index
-      sp.y        = C.height - space_l - sp.h
+      sp.y        = height - space_l - sp.h
     end
     prev = canvas.sprite.tap do |sp|
       sp.x      = map_prev.sprite.x
       sp.y      = map_prev.sprite.bottom + space_m
-      sp.right  = C.width              - space_l
+      sp.right  = width                - space_l
       sp.bottom = tools.first.sprite.y - space_m
     end
   end

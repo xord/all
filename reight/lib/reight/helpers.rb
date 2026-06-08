@@ -68,7 +68,7 @@ module Reight::Widget
   private
 
   def mouse_moved_and_start_checking_mouse_leave()
-    sp, c = sprite, Reight::CONTEXT__
+    sp, c = sprite, Processing.context
     unless @widget_mouse_entered
       @widget_mouse_entered = true
       mouse_entered(*to_widget(sp.mouse_x, sp.mouse_y))
