@@ -1,6 +1,14 @@
 require 'reight/all'
 
 
+module Reight
+
+  WINDOW__              = Processing.setup__ Reight::Window, RubySketch::Context
+  $processing_context__ = WINDOW__.context
+
+end# Reight
+
+
 begin
   w = Reight::WINDOW__
 

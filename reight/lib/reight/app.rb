@@ -21,14 +21,14 @@ class Reight::App
     #1e5359   #2d8750 #3eb250 #4fe436 #95f041 #f8ec27 #f3a207 #e26b02
   ]
 
-  def initialize(project, editor_class = nil, interface_class = nil)
-    @project   = project
-    @editor    = editor_class&.new project
-    @interface = interface_class&.new @editor
-    @active    = false
+  def initialize(window, project, editor_class = nil, interface_class = nil)
+    @window, @project = window, project
+    @editor           = editor_class&.new project
+    @interface        = interface_class&.new @editor
+    @active           = false
   end
 
-  attr_reader :project
+  attr_reader :window, :project
 
   def label()
     @editor.class.name.split('::').last.gsub(/([a-z])([A-Z])/) {"#{$1} #{$2}"}
