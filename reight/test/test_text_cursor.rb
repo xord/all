@@ -23,7 +23,11 @@ class TestTextCursor < Test::Unit::TestCase
     assert_equal [0, 1], cursor(text("a\nbc"),  1, -1).pos
     assert_equal [1, 2], cursor(text("a\nbc"),  1,  9).pos
 
-    assert_raise(ArgumentError) {cursor nil, 1, 2, name: 3}
+    assert_nil      cursor(nil, 1, 2, name: 3).text
+    assert_equal 0, cursor(nil, 1, 2, name: 3).row
+    assert_equal 0, cursor(nil, 1, 2, name: 3).col
+    assert_nil      cursor(nil, 1, 2, name: 3).mark
+    assert_equal 3, cursor(nil, 1, 2, name: 3).name
   end
 
   def test_index()
@@ -36,6 +40,9 @@ class TestTextCursor < Test::Unit::TestCase
     c.index =  3; assert_equal [3, [1, 1]], [c.index, c.pos]
     c.index =  4; assert_equal [4, [1, 2]], [c.index, c.pos]
     c.index =  5; assert_equal [4, [1, 2]], [c.index, c.pos]
+
+    assert_equal 0,                     cursor(nil).index
+    assert_raise(Cursor::InvalidError) {cursor(nil).index = 1}
   end
 
   def test_position()
@@ -51,6 +58,9 @@ class TestTextCursor < Test::Unit::TestCase
     c.pos = [ 1,  2]; assert_equal [1, 2], c.pos
     c.pos = [ 1,  1]; assert_equal [1, 1], c.pos
     c.pos = [ 1,  9]; assert_equal [1, 2], c.pos
+
+    assert_equal [0, 0],                cursor(nil).pos
+    assert_raise(Cursor::InvalidError) {cursor(nil).pos = [1, 2]}
   end
 
   def test_mark()
@@ -64,6 +74,9 @@ class TestTextCursor < Test::Unit::TestCase
     c.mark =  3; assert_equal [3, [1, 1]], [c.mark, c.mark_pos]
     c.mark =  4; assert_equal [4, [1, 2]], [c.mark, c.mark_pos]
     c.mark =  5; assert_equal [4, [1, 2]], [c.mark, c.mark_pos]
+
+    assert_nil                          cursor(nil).mark
+    assert_raise(Cursor::InvalidError) {cursor(nil).mark = 1}
   end
 
   def test_mark_position()
@@ -79,6 +92,9 @@ class TestTextCursor < Test::Unit::TestCase
     c.mark_pos = [ 1,  2]; assert_equal [1, 2], c.mark_pos
     c.mark_pos = [ 1,  1]; assert_equal [1, 1], c.mark_pos
     c.mark_pos = [ 1,  9]; assert_equal [1, 2], c.mark_pos
+
+    assert_nil                          cursor(nil).mark_pos
+    assert_raise(Cursor::InvalidError) {cursor(nil).mark_pos = [1, 2]}
   end
 
   def test_row()
@@ -133,6 +149,9 @@ class TestTextCursor < Test::Unit::TestCase
     c.row += 1;      assert_equal [4, 3], [c.row, c.col]
     c.col += 1;      assert_equal [4, 3], [c.row, c.col]
     c.row -= 1;      assert_equal [3, 3], [c.row, c.col]
+
+    assert_equal 0,                     cursor(nil).row
+    assert_raise(Cursor::InvalidError) {cursor(nil).row = 1}
   end
 
   def test_column()
@@ -158,6 +177,9 @@ class TestTextCursor < Test::Unit::TestCase
     c.col -= 3; assert_equal [0, 1], [c.row, c.col]
     c.col -= 1; assert_equal [0, 0], [c.row, c.col]
     c.col -= 1; assert_equal [0, 0], [c.row, c.col]
+
+    assert_equal 0,                     cursor(nil).col
+    assert_raise(Cursor::InvalidError) {cursor(nil).col = 1}
   end
 
   def test_select_and_deselect()
@@ -176,6 +198,30 @@ class TestTextCursor < Test::Unit::TestCase
     c.select  9, -5;  assert_equal [[4,  0], nil], [c.selection, c.mark]
     c.select  9, -6;  assert_equal [[4, -1], 3],   [c.selection, c.mark]
     c.deselect;       assert_equal [[4, 0],  nil], [c.selection, c.mark]
+
+    assert_raise(Cursor::InvalidError) {cursor(nil).select 0, 1}
+    assert_nothing_raised              {cursor(nil).deselect}
+  end
+
+  def test_bind_unbind()
+    t, c = text("x"), cursor
+
+    t.insert c.index, 'a'
+    assert_equal 0,      c.index
+    assert_equal 'ax',   t.to_s
+
+    c.bind t
+    t.insert c.index, 'b'
+    assert_equal 1,      c.index
+    assert_equal 'bax',  t.to_s
+
+    c.unbind
+    t.insert c.index, 'c'
+    assert_equal 0,      c.index
+    assert_equal 'cbax', t.to_s
+
+    assert_nothing_raised       {c     .unbind}
+    assert_raise(ArgumentError) {cursor.bind nil}
   end
 
   def test_isnert_text()
