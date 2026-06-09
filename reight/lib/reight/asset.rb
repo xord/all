@@ -12,7 +12,8 @@ class Reight::Asset
       else
         [id, width, height, x, y, name]
       end
-    raise ArgumentError if @id < 0 || @width <= 0 || @height <= 0
+    raise ArgumentError if @id < 0
+    raise ArgumentError if @width <= 0 || @height <= 0
     @x  ||= 0
     @y  ||= 0
     @name = @name&.to_sym

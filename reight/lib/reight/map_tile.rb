@@ -11,7 +11,8 @@ class Reight::MapTile
     if load
       state, project   = load.fetch_values :state, :project
       asset_id, @x, @y = state
-      @asset           = project.get_asset asset_id
+      @asset           = project.get_asset(asset_id) ||
+        raise(Reight::AssetNotFoundError, "Asset '#{asset_id}' not found")
     else
       @asset,   @x, @y = asset, x, y
     end
