@@ -38,16 +38,11 @@ class Reight::ScriptEditor::TextEditor
     return unless cursor
     raise if cursor.text != @text
     (@cursors ||= []) << cursor
-    @text.modified :text_replaced, observer_id: cursor.object_id do
-      |index:, inserted:, removed:, **|
-      cursor.index = adjust_index cursor.index, index, inserted, removed
-      cursor.mark  = adjust_index cursor.mark,  index, inserted, removed if cursor.mark
-    end
   end
 
   def remove_cursor(cursor)
-    @cursors&.delete(cursor)&.tap do
-      cursor.text.remove_modified_observer cursor.object_id
+    if @cursors&.delete cursor
+      cursor.unbind
     end
   end
 
@@ -152,17 +147,6 @@ class Reight::ScriptEditor::TextEditor
     line = row >= 0 ? @text[row] : nil
     col  = line.size.times.find {|n| x <= font_size(line[0..n])[0]} || line.size if line
     [row, col]
-  end
-
-  def adjust_index(index, replaced_index, inserted, removed)
-    case
-    when index < replaced_index
-      index
-    when index < replaced_index + removed.size
-      replaced_index
-    else
-      index - removed.size + inserted.size
-    end
   end
 
   def update_scroll(sp, margin = 32)
