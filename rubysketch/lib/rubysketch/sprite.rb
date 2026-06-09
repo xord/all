@@ -1045,7 +1045,7 @@ module RubySketch
 
     # @private
     def getContext__()
-      @world__&.getContext__ || Context.current__
+      @world__&.getContext__ || Processing.context
     end
 
     # @private
@@ -1160,7 +1160,7 @@ module RubySketch
     # @return [Sprite] the new sprite object
     #
     def createSprite(*args, klass: nil, **kwargs)
-      klass   ||= RubySketch::Sprite
+      klass ||= RubySketch::Sprite
       addSprite klass.new(*args, **kwargs)
     end
 
