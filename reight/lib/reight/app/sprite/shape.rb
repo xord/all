@@ -9,7 +9,7 @@ class Reight::SpriteEditor::Shape < Reight::SpriteEditor::Tool
     editor.begin_drawing do |g|
       @fill ? g.fill(*editor.color) : g.no_fill
       g.stroke(*editor.color)
-      g.stroke_weight 0
+      g.stroke_weight 1
       g.rect_mode    CORNER
       g.ellipse_mode CORNER
       g.send @shape, *[@x, @y, x - @x, y - @y].map {_1.floor}

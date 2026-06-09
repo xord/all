@@ -1,4 +1,5 @@
 require 'forwardable'
+require 'fileutils'
 require 'json'
 require 'prism'
 require 'rubysketch/all'
