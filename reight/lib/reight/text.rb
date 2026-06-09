@@ -209,10 +209,11 @@ class Reight::Text::Line
   attr_reader :text, :newline, :attributes
 
   def apply(range, layer: 0, key: nil, color: nil, background_color: nil)
-    return if range.begin > range.end
-    return unless color || background_color
-    range = range..range                if range.is_a? Integer
-    range = range.begin..(range.end - 1)if range&.exclude_end?
+    return if !color && !background_color
+    range = range..range                 if range.is_a? Integer
+    range = range.begin..(range.end - 1) if range&.exclude_end?
+    return if range && range.begin > range.end
+
     index = @attributes.bsearch_index {|attrib|
       attrib_range = attrib[:range]
       if range != attrib_range
