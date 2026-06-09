@@ -8,8 +8,9 @@ class Reight::Project
 
   def initialize(project_dir)
     raise 'the project directory is required' unless project_dir
+    r            = Reight
     @project_dir = project_dir
-    settings     = Reight::Settings.new self
+    settings     = r::Settings.new self
 
     if File.exist? settings.project_json_path
       project   = read_json__ settings.project_json_path
@@ -18,18 +19,24 @@ class Reight::Project
       maps      = read_json__ settings   .maps_json_path
       sounds    = read_json__ settings .sounds_json_path
       @next_id, = project.fetch :next_id
-      @settings = Reight::Settings .load project.fetch(:settings),     self
-      @scripts  = Reight::AssetList.load Reight::ScriptAsset, scripts, self
-      @sprites  = Reight::AssetList.load Reight::SpriteAsset, sprites, self
-      @maps     = Reight::AssetList.load Reight::MapAsset,    maps,    self
-      @sounds   = Reight::AssetList.load Reight::SoundAsset,  sounds,  self
+      @settings = r::Settings .load project.fetch(:settings), self
+      @scripts  = r::AssetList.load r::ScriptAsset, scripts,  self
+      @sprites  = r::AssetList.load r::SpriteAsset, sprites,  self
+      @maps     = r::AssetList.load r::   MapAsset, maps,     self
+      @sounds   = r::AssetList.load r:: SoundAsset, sounds,   self
     else
+      raise "'#{project_dir}' is not a directory" if File.file? project_dir
+      FileUtils.mkdir_p project_dir
       @next_id  = 1
       @settings = settings
-      @scripts  = Reight::AssetList.new Reight::ScriptAsset
-      @sprites  = Reight::AssetList.new Reight::SpriteAsset, type: :grid
-      @maps     = Reight::AssetList.new Reight::MapAsset,    type: :grid
-      @sounds   = Reight::AssetList.new Reight::SoundAsset,  type: :grid
+      @scripts  = r::AssetList.new r::ScriptAsset
+      @sprites  = r::AssetList.new r::SpriteAsset, type: :grid
+      @maps     = r::AssetList.new r::   MapAsset, type: :grid
+      @sounds   = r::AssetList.new r:: SoundAsset, type: :grid
+      r::ScriptEditor.new(self).disable_history {_1.add_script 'game.rb'}
+      r::SpriteEditor.new(self).disable_history {_1.add_sprite 0, 0, 16, 16}
+      r::   MapEditor.new(self).disable_history {_1.add_map    0, 0, 32, 32}
+      r:: SoundEditor.new(self).disable_history {_1.add_sound  0, 0, 16, 16}
     end
 
     [@settings, @scripts, @sprites, @maps, @sounds].each {_1.set_parent self}
@@ -60,7 +67,7 @@ class Reight::Project
 
   def get_asset(id)
     @id2asset_cache     ||= {}
-    @id2asset_cache[id] ||= @sprites.find {_1.id == id} || @maps.find {_1.id == id}
+    @id2asset_cache[id] ||= @sprites&.find {_1.id == id} || @maps&.find {_1.id == id}
   end
 
   def find_sprite(name)

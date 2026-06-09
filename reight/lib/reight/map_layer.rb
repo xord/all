@@ -15,7 +15,11 @@ class Reight::MapLayer
     if load
       state, project                 = load.fetch_values :state, :project
       @tile_size, @chunk_size, tiles = state.fetch_values :tile_size, :chunk_size, :tiles
-      tiles.each {put_tile__ Reight::MapTile.load _1, project}
+      tiles.each do |tile|
+        put_tile__ Reight::MapTile.load(tile, project)
+      rescue Reight::AssetNotFoundError => e
+        $stderr.puts "Skip tile at x:#{tile[1]} y:#{tile[2]} (#{e.message})"
+      end
     else
       @tile_size, @chunk_size = tile_size, chunk_size
     end
