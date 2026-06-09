@@ -8,3 +8,22 @@ require 'rubysketch/all'
 require 'test/unit'
 
 include Xot::Test
+
+
+module HasContext
+
+  def setup()
+    $processing_context__ = RubySketch::Window.new.context
+    super
+  end
+
+  def teardown()
+    super
+    $processing_context__ = nil
+  end
+
+  def context()
+    $processing_context__
+  end
+
+end# HasContext
