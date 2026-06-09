@@ -306,10 +306,9 @@ class Reight::Text::Cursor
 
   include Comparable
 
-  def initialize(text, row = 0, column = 0, name: nil)
-    raise ArgumentError unless text
-    @name, @text, @mark, @active = name, text, nil, true
-    self.position                = [row, column]
+  def initialize(text = nil, row = 0, column = 0, name: nil)
+    @text, @index, @mark, @name, @active = nil, 0, nil, name, true
+    bind text, row, column if text
   end
 
   attr_accessor :name
@@ -317,16 +316,19 @@ class Reight::Text::Cursor
   attr_reader :text, :index, :mark
 
   def index=(index)
+    raise InvalidError unless @text
     @index = clamp_index index
     update_selection
   end
 
   def position=(pos)
     raise ArgumentError unless pos in [Integer, Integer]
+    raise InvalidError  unless @text
     self.index = @text.pos2index(*correct_pos(*pos))
   end
 
   def position()
+    return [0, 0] unless @text
     @text.index2pos @index
   end
 
@@ -334,6 +336,7 @@ class Reight::Text::Cursor
   alias pos  position
 
   def mark=(mark)
+    raise InvalidError unless @text
     mark  = clamp_index mark if mark
     @mark = mark
     update_selection
@@ -341,11 +344,12 @@ class Reight::Text::Cursor
 
   def mark_position=(pos)
     raise ArgumentError unless pos in [Integer, Integer]
+    raise InvalidError  unless @text
     self.mark = @text.pos2index(*correct_pos(*pos))
   end
 
   def mark_position()
-    return nil unless @mark
+    return nil if !@text || !@mark
     @text.index2pos @mark
   end
 
@@ -353,28 +357,55 @@ class Reight::Text::Cursor
   alias mark_pos  mark_position
 
   def row=(row)
+    raise InvalidError unless @text
     col            = @sticky_column || self.column
     self.index     = @text.pos2index row, col
     @sticky_column = col != self.column ? col : nil
   end
 
   def row()
+    return 0 unless @text
     @text.index2pos(@index)[0]
   end
 
   def column=(col)
+    raise InvalidError unless @text
     self.position  = [self.row, col]
     @sticky_column = nil
   end
 
   def column()
+    return 0 unless @text
     @text.index2pos(@index)[1]
   end
 
   alias col= column=
   alias col  column
 
+  def bind(text, row = 0, column = 0)
+    raise ArgumentError unless text
+
+    unbind
+
+    @text, @index, @mark = text, 0, nil
+    self.position        = [row, column]
+
+    @text.modified :text_replaced, observer_id: object_id do
+      |index:, inserted:, removed:, **|
+      self.index = adjust_index self.index, index, inserted, removed
+      self.mark  = adjust_index self.mark,  index, inserted, removed if self.mark
+    end
+  end
+
+  def unbind()
+    return unless @text
+    self.mark     = nil# to clear text line attributes
+    @text.remove_modified_observer object_id
+    @text, @index = nil, 0
+  end
+
   def select(index, size)
+    raise InvalidError unless @text
     old                   = [@index, @mark]
     self.index, self.mark = index, index + size
     self.mark             = nil if self.mark == self.index
@@ -386,6 +417,7 @@ class Reight::Text::Cursor
   end
 
   def selection(size = 0)
+    return [0, size] unless @text
     [@index, @mark ? @mark - @index : size]
   end
 
@@ -401,10 +433,23 @@ class Reight::Text::Cursor
     index <=> o.index
   end
 
+  class InvalidError < RuntimeError; end
+
   private
 
   def clamp_index(index)
     index.clamp 0..@text.pos2index(*last_pos)
+  end
+
+  def adjust_index(index, replaced_index, inserted, removed)
+    case
+    when index < replaced_index
+      index
+    when index < replaced_index + removed.size
+      replaced_index
+    else
+      index - removed.size + inserted.size
+    end
   end
 
   def correct_pos(row, col)
