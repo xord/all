@@ -1,5 +1,11 @@
 module Reight
 
+  class Error < RuntimeError; end
+
+  class AssetError < Error; end
+
+  class AssetNotFoundError < AssetError; end
+
   module_function
 
   def include?(x, y, w, h, px, py)
@@ -175,9 +181,9 @@ class Reight::ModelController
     @project, @settings = project, project.settings
   end
 
-  def group_history(&block)   = history__.group(&block)
+  def group_history(&block)   = history__.group(self, &block)
 
-  def disable_history(&block) = history__.disable(&block)
+  def disable_history(&block) = history__.disable(self, &block)
 
   def can_cut?   = false
   def can_copy?  = false
