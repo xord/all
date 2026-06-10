@@ -76,6 +76,11 @@ ReflexViewController_show (UIViewController*, ReflexViewController*)
 	+ (BOOL) start: (NSString*) path rescue: (RescueBlock) rescue
 	{
 #ifdef OSX
+		// add the script directory to the load path so that sketches
+		// split into multiple files can require each other
+		[CRuby evaluate:[NSString stringWithFormat:
+			@"$LOAD_PATH.unshift '%@'", [path stringByDeletingLastPathComponent]]];
+
 		// CRuby finalizes the interpreter after loading the script, which
 		// fires the at_exit hook in lib/rubysketch.rb that starts the
 		// application event loop just like 'ruby main.rb' does
