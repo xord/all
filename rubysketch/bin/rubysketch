@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'rubysketch/packager/cli'
+
+RubySketch::Packager::CLI.run ARGV
