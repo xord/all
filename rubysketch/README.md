@@ -215,6 +215,58 @@ end
 
 See [`examples/`](./examples) for `hello.rb`, `sprite.rb`, `physics.rb`, and `toon.rb`.
 
+## 📦 Packaging as an Application (macOS)
+
+The `rubysketch` command packages a sketch into a standalone `.app` bundle that embeds the Ruby interpreter ([CRuby](https://github.com/xord/cruby)), so users can run it without installing Ruby.
+
+### Requirements
+
+- Xcode (`xcode-select --switch /Applications/Xcode.app`)
+- [CocoaPods](https://cocoapods.org) — `brew install cocoapods`
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen) — `brew install xcodegen`
+
+### Quick start
+
+```bash
+$ rubysketch new mygame        # scaffold main.rb + rubysketch.yml
+$ cd mygame
+$ ruby main.rb                 # develop and run as usual
+$ rubysketch package .         # build dist/MyGame.app
+```
+
+`package` generates an Xcode project under `build/macos/`, runs `xcodegen` / `pod install` / `xcodebuild`, and copies the result to `dist/`. The first build downloads the CRuby binary and builds the native libraries, which takes a while; later builds reuse them.
+
+The same `main.rb` runs unmodified by `ruby main.rb` and inside the packaged app: the app loads it with the working directory set to the bundled sketch folder, so relative asset paths (`loadImage 'data/player.png'`, ...) keep working.
+
+### rubysketch.yml
+
+All keys are optional.
+
+```yaml
+name: My Game                   # app name        (default: directory name)
+bundle_id: com.example.mygame   # bundle id       (default: org.rubysketch.<name>)
+version: 1.0.0                  # app version     (default: 0.1.0)
+main: main.rb                   # entry script    (default: main.rb)
+icon: icon.png                  # app icon source (1024x1024 png recommended)
+resources:                      # files to bundle (default: everything except build/ and dist/)
+  - data
+macos:
+  deployment_target: "11.0"
+  archs: arm64
+  codesign:
+    identity: "-"               # default: ad-hoc signing
+    team_id: XXXXXXXXXX
+pods:                           # override pod sources, e.g. to pin a version
+  cruby:      {git: "https://github.com/xord/cruby"}
+  rubysketch: {git: "https://github.com/xord/rubysketch", tag: v0.8.1}
+```
+
+### Notes
+
+- The default ad-hoc signature is fine for your own machine; distributing to others requires a Developer ID identity and notarization.
+- `at_exit` blocks in a sketch do not run inside the packaged app.
+- Developing rubysketch itself? Set `RUBYSKETCH_PODS_PATH=/path/to/repos` to use local `cruby` / `rubysketch` checkouts instead of the released pods. They must be set up once with `rake -f pod.rake setup` (rubysketch) and `rake download_or_build os=macos` (cruby).
+
 ## 🛠️ Development
 
 ```bash
