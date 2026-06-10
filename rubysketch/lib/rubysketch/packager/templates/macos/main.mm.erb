@@ -1,0 +1,21 @@
+// -*- mode: objc -*-
+#import <Cocoa/Cocoa.h>
+#import <RubySketch.h>
+
+
+int main (int argc, const char* argv[])
+{
+	@autoreleasepool
+	{
+		NSString* sketchDir = [NSBundle.mainBundle.resourcePath
+			stringByAppendingPathComponent:@"sketch"];
+
+		// the sketch loads images and sounds by paths relative to itself
+		[NSFileManager.defaultManager changeCurrentDirectoryPath:sketchDir];
+
+		[RubySketch setup];
+		[RubySketch start:
+			[sketchDir stringByAppendingPathComponent:@"<%= config.main %>"]];
+	}
+	return 0;
+}
