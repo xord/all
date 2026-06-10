@@ -96,6 +96,7 @@ Pod::Spec.new do |s|
     spec    .source_files = "rays/src/*.cpp", "rays/src/opengl/*.cpp"
     spec.osx.source_files = "rays/src/**/osx/*.{cpp,mm}"
     spec.ios.source_files = "rays/src/**/ios/*.{cpp,mm}"
+    spec.osx.frameworks   = %w[AppKit OpenGL CoreImage CoreVideo CoreMedia AVFoundation]
     spec.ios.frameworks   = %w[GLKit MobileCoreServices AVFoundation]# ImageIO
 
     spec.subspec "Clipper" do |sub|
@@ -115,6 +116,7 @@ Pod::Spec.new do |s|
     spec    .source_files = "reflex/src/*.cpp"
     spec.osx.source_files = "reflex/src/osx/*.{cpp,mm}"
     spec.ios.source_files = "reflex/src/ios/*.{cpp,mm}"
+    spec.osx.frameworks   = %w[Cocoa IOKit GameController]
     spec.ios.frameworks   = %w[CoreMotion GameController]
 
     spec.subspec "Box2D" do |sub|
@@ -122,7 +124,9 @@ Pod::Spec.new do |s|
     end
 
     spec.subspec "RtMidi" do |sub|
-      sub.source_files = "reflex/vendor/rtmidi/rtmidi/**/*.cpp"
+      sub.source_files       = "reflex/vendor/rtmidi/rtmidi/**/*.cpp"
+      sub.osx.compiler_flags = "-D__MACOSX_CORE__"
+      sub.osx.frameworks     = %w[CoreMIDI CoreAudio]
     end
 
     spec.subspec "Ext" do |ext|

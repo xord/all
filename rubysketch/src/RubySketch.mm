@@ -1,7 +1,9 @@
 // -*- mode: objc -*-
 #import <CRuby.h>
 #import "RubySketch.h"
+#ifdef IOS
 #include "../reflex/src/ios/view_controller.h"
+#endif
 
 
 extern "C"
@@ -12,6 +14,7 @@ extern "C"
 }
 
 
+#ifdef IOS
 static ReflexViewController* active_reflex_view_controller = nil;
 
 static ReflexViewController*
@@ -24,6 +27,7 @@ static void
 ReflexViewController_show (UIViewController*, ReflexViewController*)
 {
 }
+#endif
 
 
 @implementation RubySketch
@@ -48,8 +52,10 @@ ReflexViewController_show (UIViewController*, ReflexViewController*)
 			@"RubySketch"
 		]) [CRuby addLibrary:ext bundle:[NSBundle bundleForClass:RubySketch.class]];
 
+#ifdef IOS
 		ReflexViewController_set_create_fun(ReflexViewController_create);
 		ReflexViewController_set_show_fun(ReflexViewController_show);
+#endif
 	}
 
 	+ (BOOL) start
@@ -69,16 +75,28 @@ ReflexViewController_show (UIViewController*, ReflexViewController*)
 
 	+ (BOOL) start: (NSString*) path rescue: (RescueBlock) rescue
 	{
-		CRBValue* ret = [CRuby evaluate:[NSString stringWithFormat:@
+#ifdef OSX
+		// CRuby finalizes the interpreter after loading the script, which
+		// fires the at_exit hook in lib/rubysketch.rb that starts the
+		// application event loop just like 'ruby main.rb' does
+		return rescue ? [CRuby start:path rescue:rescue] : [CRuby start:path];
+#else
+		// the host UIApplication is already running the event loop,
+		// so showing the window is enough
+		NSString* script = [NSString stringWithFormat:@
 			"raise 'already started' unless require 'rubysketch'\n"
 			"load '%@'\n"
 			"RubySketch::WINDOW__.__send__ :end_draw\n"
 			"RubySketch::WINDOW__.show",
-			path
-		]];
+			path];
+		CRBValue* ret = rescue
+			? [CRuby evaluate:script rescue:rescue]
+			: [CRuby evaluate:script];
 		return ret && ret.toBOOL;
+#endif
 	}
 
+#ifdef IOS
 	+ (void) setActiveReflexViewController: (id) reflexViewController
 	{
 		active_reflex_view_controller = reflexViewController;
@@ -88,5 +106,6 @@ ReflexViewController_show (UIViewController*, ReflexViewController*)
 	{
 		active_reflex_view_controller = nil;
 	}
+#endif
 
 @end
