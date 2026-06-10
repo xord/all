@@ -1,6 +1,7 @@
 #import "CRuby.h"
 #import "CRubyConfig.h"
 #import "CRBValue.h"
+#include <dlfcn.h>
 #include <ruby.h>
 #include <ruby/version.h>
 
@@ -48,13 +49,11 @@ static BOOL gYJIT = NO;
 
 	gExtensions = [[NSMutableDictionary alloc] init];
 
+	// modern Ruby initializes the prelude as builtin features and no
+	// longer exports Init_prelude, so look it up at runtime
 	void CRuby_init(void (*)(), bool);
-	#ifdef CRUBY_TEST
-		void* Init_prelude = NULL;
-	#else
-		void Init_prelude();
-	#endif
-	CRuby_init(Init_prelude, gYJIT);
+	void (*init_prelude)() = (void (*)()) dlsym(RTLD_DEFAULT, "Init_prelude");
+	CRuby_init(init_prelude, gYJIT);
 
 	NSBundle* bundle = [NSBundle bundleForClass:CRuby.class];
 	[self addLibrary:@"CRuby" bundle:bundle dir:@"lib/ruby/" CRUBY_LIB_DIR_VERSION];
