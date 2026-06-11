@@ -787,7 +787,6 @@ namespace Reflex
 		if (!force && e.is_blocked()) return;
 
 		View_set_window(self->root.get(), NULL);
-		self->root.reset();
 
 		Window_close(this);
 	}
