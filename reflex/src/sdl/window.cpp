@@ -358,7 +358,7 @@ namespace Reflex
 				switch (event.window.event)
 				{
 					case SDL_WINDOWEVENT_CLOSE:
-						Window_close(win);
+						win->close();
 						break;
 
 					case SDL_WINDOWEVENT_EXPOSED:
