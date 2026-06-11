@@ -46,10 +46,8 @@ static BOOL gYJIT = NO;
 	if (done) return;
 	done = YES;
 
-	gExtensions = [[NSMutableDictionary alloc] init];
-
 	void CRuby_init(void (*)(), bool);
-	#ifdef CRUBY_TEST
+	#if RUBY_API_VERSION_MAJOR >= 3
 		void* Init_prelude = NULL;
 	#else
 		void Init_prelude();
@@ -208,6 +206,8 @@ static BOOL gYJIT = NO;
 
 + (void)addExtension:(NSString*)path init:(InitBlock)init
 {
+	if (!gExtensions) gExtensions = [[NSMutableDictionary alloc] init];
+
 	[gExtensions[path] release];
 	gExtensions[path] = [init copy];
 }
