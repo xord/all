@@ -13,6 +13,10 @@ module Reflex
       url
     end
 
+    # Called when a page finishes loading. Override in a subclass.
+    def on_load(e)
+    end
+
   end# WebView
 
 
