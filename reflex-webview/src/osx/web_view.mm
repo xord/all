@@ -350,9 +350,8 @@ namespace Reflex
 
 				if (image)
 				{
-					blit_to_image(image);
+					if (blit_to_image(image)) dirty = true;
 					CGImageRelease(image);
-					dirty = true;
 				}
 
 				bool d = dirty;
@@ -519,6 +518,7 @@ namespace Reflex
 			WebView*        owner;
 			ReflexWKHost*   host;
 			Rays::Image     image_;
+			Rays::Bitmap    scratch_;
 			WKCaptureMethod method;
 			bool            probed;
 			bool            dirty;
@@ -530,16 +530,48 @@ namespace Reflex
 				*h = (int) f.h > 0 ? (int) f.h : 1;
 			}
 
-			void blit_to_image (CGImageRef src)
+			// Returns whether the page pixels actually changed. Grabbing
+			// runs every frame (cheap); decoding into the scratch bitmap
+			// and comparing here keeps the texture upload and redraw --
+			// the expensive part -- for frames that really differ.
+			bool blit_to_image (CGImageRef src)
 			{
 				int w = (int) CGImageGetWidth(src);
 				int h = (int) CGImageGetHeight(src);
-				if (w <= 0 || h <= 0) return;
+				if (w <= 0 || h <= 0) return false;
 
-				if (!image_ || image_.width() != w || image_.height() != h)
+				if (!scratch_ || scratch_.width() != w || scratch_.height() != h)
+					scratch_ = Rays::Bitmap(w, h, Rays::RGBA);
+
+				WKCapture_blit(src, &scratch_);
+
+				bool same_size =
+					image_ && image_.width() == w && image_.height() == h;
+				if (same_size)
+				{
+					const Rays::Bitmap& bmp = image_.bitmap();
+					if (
+						bmp.pitch() == scratch_.pitch() &&
+						memcmp(
+							bmp.pixels(), scratch_.pixels(),
+							(size_t) scratch_.pitch() * h) == 0)
+					{
+						return false;
+					}
+				}
+				else
 					image_ = Rays::Image(w, h, Rays::RGBA);
 
-				WKCapture_blit(src, &image_.bitmap(true));
+				Rays::Bitmap& dst = image_.bitmap(true);
+				int rowbytes      = dst.pitch() < scratch_.pitch() ?
+					dst.pitch() : scratch_.pitch();
+				for (int y = 0; y < h; ++y)
+				{
+					memcpy(
+						dst.at<void>(0, y), scratch_.at<void>(0, y),
+						(size_t) rowbytes);
+				}
+				return true;
 			}
 
 	};// WKBackend
