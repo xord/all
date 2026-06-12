@@ -50,6 +50,17 @@
 			              defer: NO];
 		[window setReleasedWhenClosed: NO];
 
+		// Keep the host window out of the user-facing window lists. It must
+		// stay shareable (the default sharing type) so the capture APIs can
+		// still read it, so it remains visible to screen-share pickers --
+		// but it is excluded from the Window menu, window cycling, and
+		// Mission Control, and is off the desktop anyway.
+		[window setExcludedFromWindowsMenu: YES];
+		[window setCollectionBehavior:
+			NSWindowCollectionBehaviorTransient |
+			NSWindowCollectionBehaviorIgnoresCycle |
+			NSWindowCollectionBehaviorStationary];
+
 		WKWebViewConfiguration* conf = [[[WKWebViewConfiguration alloc] init] autorelease];
 		webView = [[WKWebView alloc] initWithFrame: rect configuration: conf];
 		[webView setNavigationDelegate: self];
