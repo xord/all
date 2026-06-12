@@ -19,6 +19,8 @@
 
 RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView)
 
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::LoadEvent)
+
 
 namespace Reflex
 {
@@ -26,6 +28,9 @@ namespace Reflex
 
 	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_class ();
 	// class Reflex::WebView
+
+	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_load_event_class ();
+	// class Reflex::WebView::LoadEvent
 
 
 	template <typename T>
@@ -36,13 +41,49 @@ namespace Reflex
 
 		public:
 
-			virtual void on_load (Event* e)
+			virtual void on_load_start (WebView::LoadEvent* e)
+			{
+				RUCY_SYM(on_load_start);
+				if (this->is_overridable())
+					this->value.call(on_load_start, Rucy::value(e));
+				else
+					Super::on_load_start(e);
+			}
+
+			virtual void on_load (WebView::LoadEvent* e)
 			{
 				RUCY_SYM(on_load);
 				if (this->is_overridable())
 					this->value.call(on_load, Rucy::value(e));
 				else
 					Super::on_load(e);
+			}
+
+			virtual void on_load_fail (WebView::LoadEvent* e)
+			{
+				RUCY_SYM(on_load_fail);
+				if (this->is_overridable())
+					this->value.call(on_load_fail, Rucy::value(e));
+				else
+					Super::on_load_fail(e);
+			}
+
+			virtual void on_title_change (Event* e)
+			{
+				RUCY_SYM(on_title_change);
+				if (this->is_overridable())
+					this->value.call(on_title_change, Rucy::value(e));
+				else
+					Super::on_title_change(e);
+			}
+
+			virtual void on_url_change (Event* e)
+			{
+				RUCY_SYM(on_url_change);
+				if (this->is_overridable())
+					this->value.call(on_url_change, Rucy::value(e));
+				else
+					Super::on_url_change(e);
 			}
 
 	};// RubyWebView
@@ -59,6 +100,12 @@ namespace Rucy
 	get_ruby_class<Reflex::WebView> ()
 	{
 		return Reflex::web_view_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::WebView::LoadEvent> ()
+	{
+		return Reflex::web_view_load_event_class();
 	}
 
 

@@ -3,11 +3,43 @@
 
 
 #include <string.h>
+#include <string>
+#include <vector>
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 #include <reflex/web_view.h>
 #include <reflex/pointer.h>
 #include "wk_capture.h"
+
+
+namespace
+{
+
+	// Page-load notifications queued by the navigation delegate and
+	// drained on the next update() so Ruby handlers run inside the
+	// normal event cycle.
+	struct LoadItem
+	{
+
+		enum Type {START, FINISH, FAIL};
+
+		Type type;
+
+		std::string url, description;
+
+		long code;
+
+		LoadItem (
+			Type type, const char* url,
+			long code = 0, const char* description = NULL)
+		:	type(type), url(url ? url : ""),
+			description(description ? description : ""), code(code)
+		{
+		}
+
+	};// LoadItem
+
+}// namespace
 
 
 namespace
@@ -110,13 +142,12 @@ namespace
 	@public
 	ReflexWKHostWindow* window;
 	WKWebView* webView;
-	BOOL       loadFinished;
 	BOOL       snapshotPending;
 	CGImageRef pendingSnapshot;
+	std::vector<LoadItem> loadQueue;
 }
 - (instancetype) initWithWidth: (int) w height: (int) h;
 - (void) setSizeWidth: (int) w height: (int) h;
-- (BOOL) consumeLoadFinished;
 - (void) requestSnapshot;
 - (CGImageRef) takePendingSnapshot;  // returns +1, caller releases
 @end
@@ -204,10 +235,48 @@ namespace
 		[webView setFrame: NSMakeRect(0, 0, w, h)];
 	}
 
+	- (const char*) currentURL
+	{
+		NSString* u = [[webView URL] absoluteString];
+		return u ? [u UTF8String] : "";
+	}
+
+	- (void) webView: (WKWebView*) wv
+		didStartProvisionalNavigation: (WKNavigation*) nav
+	{
+		loadQueue.emplace_back(LoadItem::START, [self currentURL]);
+	}
+
 	- (void) webView: (WKWebView*) wv
 		didFinishNavigation: (WKNavigation*) nav
 	{
-		loadFinished = YES;
+		loadQueue.emplace_back(LoadItem::FINISH, [self currentURL]);
+	}
+
+	- (void) queueLoadFail: (NSError*) error
+	{
+		// stop() and superseding navigations cancel the current load;
+		// browsers do not surface that as a page error.
+		if (error.code == NSURLErrorCancelled) return;
+
+		loadQueue.emplace_back(
+			LoadItem::FAIL, [self currentURL],
+			(long) error.code,
+			error.localizedDescription.UTF8String);
+	}
+
+	- (void) webView: (WKWebView*) wv
+		didFailProvisionalNavigation: (WKNavigation*) nav
+		withError: (NSError*) error
+	{
+		[self queueLoadFail: error];
+	}
+
+	- (void) webView: (WKWebView*) wv
+		didFailNavigation: (WKNavigation*) nav
+		withError: (NSError*) error
+	{
+		[self queueLoadFail: error];
 	}
 
 	// SPI (WKUIDelegatePrivate): intercept the context menu WebKit is
@@ -229,13 +298,6 @@ namespace
 				atLocation: [NSEvent mouseLocation]
 				inView: nil];
 		});
-	}
-
-	- (BOOL) consumeLoadFinished
-	{
-		BOOL f = loadFinished;
-		loadFinished = NO;
-		return f;
 	}
 
 	- (void) requestSnapshot
@@ -366,11 +428,7 @@ namespace Reflex
 			{
 				if (!host) return false;
 
-				if ([host consumeLoadFinished] && owner)
-				{
-					Event e;
-					owner->on_load(&e);
-				}
+				pump_events();
 
 				uint32_t win = (uint32_t) [host->window windowNumber];
 
@@ -612,6 +670,48 @@ namespace Reflex
 			bool            probed;
 			bool            dirty;
 			bool            key_down_sent_[128] = {false};
+			Xot::String     last_title_, last_url_;
+
+			// Drains queued page-load notifications and polls title/URL
+			// for changes; handlers run here, inside the update cycle.
+			void pump_events ()
+			{
+				if (!owner) return;
+
+				if (!host->loadQueue.empty())
+				{
+					std::vector<LoadItem> queue;
+					queue.swap(host->loadQueue);
+					for (const auto& item : queue)
+					{
+						WebView::LoadEvent e(
+							item.url.c_str(), (int) item.code,
+							item.description.c_str());
+						switch (item.type)
+						{
+							case LoadItem::START:  owner->on_load_start(&e); break;
+							case LoadItem::FINISH: owner->on_load(&e);       break;
+							case LoadItem::FAIL:   owner->on_load_fail(&e);  break;
+						}
+					}
+				}
+
+				Xot::String t = title();
+				if (t != last_title_)
+				{
+					last_title_ = t;
+					Event e;
+					owner->on_title_change(&e);
+				}
+
+				Xot::String u = url();
+				if (u != last_url_)
+				{
+					last_url_ = u;
+					Event e;
+					owner->on_url_change(&e);
+				}
+			}
 
 			void owner_size (int* w, int* h)
 			{

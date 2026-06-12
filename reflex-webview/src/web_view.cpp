@@ -11,6 +11,65 @@ namespace Reflex
 {
 
 
+	struct WebView::LoadEvent::Data
+	{
+
+		Xot::String url, description;
+
+		int code;
+
+		Data (
+			const char* url = NULL, int code = 0,
+			const char* description = NULL)
+		:	url(url ? url : ""), description(description ? description : ""),
+			code(code)
+		{
+		}
+
+	};// WebView::LoadEvent::Data
+
+
+	WebView::LoadEvent::LoadEvent ()
+	:	self(new Data())
+	{
+	}
+
+	WebView::LoadEvent::LoadEvent (
+		const char* url, int code, const char* description)
+	:	self(new Data(url, code, description))
+	{
+	}
+
+	WebView::LoadEvent::LoadEvent (const LoadEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	WebView::LoadEvent
+	WebView::LoadEvent::dup () const
+	{
+		return LoadEvent(this);
+	}
+
+	const char*
+	WebView::LoadEvent::url () const
+	{
+		return self->url.c_str();
+	}
+
+	int
+	WebView::LoadEvent::code () const
+	{
+		return self->code;
+	}
+
+	const char*
+	WebView::LoadEvent::description () const
+	{
+		return self->description.c_str();
+	}
+
+
 	struct WebView::Data
 	{
 
@@ -114,7 +173,31 @@ namespace Reflex
 	}
 
 	void
-	WebView::on_load (Event* e)
+	WebView::on_load_start (LoadEvent* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
+	}
+
+	void
+	WebView::on_load (LoadEvent* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
+	}
+
+	void
+	WebView::on_load_fail (LoadEvent* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
+	}
+
+	void
+	WebView::on_title_change (Event* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
+	}
+
+	void
+	WebView::on_url_change (Event* e)
 	{
 		// default: nothing. overridden in Ruby via RubyWebView.
 	}

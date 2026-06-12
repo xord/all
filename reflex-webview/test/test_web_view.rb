@@ -36,6 +36,23 @@ class TestWebView < Test::Unit::TestCase
     assert_equal false, wv.loading?
   end
 
+  def test_responds_to_event_handlers()
+    wv = web_view
+    %i[
+      on_load_start on_load on_load_fail on_title_change on_url_change
+    ].each do |name|
+      assert_respond_to wv, name
+    end
+  end
+
+  def test_load_event()
+    e = Reflex::WebView::LoadEvent.new 'https://example.com', 42, 'oops'
+    assert_kind_of Reflex::Event, e
+    assert_equal 'https://example.com', e.url
+    assert_equal 42,     e.code
+    assert_equal 'oops', e.description
+  end
+
   def test_can_set_frame()
     wv = web_view
     wv.frame = [1, 2, 30, 40]

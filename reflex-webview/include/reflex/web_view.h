@@ -27,6 +27,36 @@ namespace Reflex
 
 		public:
 
+			// Page-load lifecycle details for on_load_start/on_load/
+			// on_load_fail. code/description are zero/empty except on
+			// failure.
+			class LoadEvent : public Event
+			{
+
+				public:
+
+					LoadEvent ();
+
+					LoadEvent (
+						const char* url, int code = 0,
+						const char* description = NULL);
+
+					LoadEvent (const LoadEvent* src);
+
+					LoadEvent dup () const;
+
+					const char* url () const;
+
+					int code () const;
+
+					const char* description () const;
+
+					struct Data;
+
+					Xot::PSharedImpl<Data> self;
+
+			};// LoadEvent
+
 			WebView (const char* name = NULL);
 
 			virtual ~WebView ();
@@ -55,7 +85,15 @@ namespace Reflex
 
 			virtual Xot::String title () const;
 
-			virtual void on_load (Event* e);
+			virtual void on_load_start (LoadEvent* e);
+
+			virtual void on_load (LoadEvent* e);
+
+			virtual void on_load_fail (LoadEvent* e);
+
+			virtual void on_title_change (Event* e);
+
+			virtual void on_url_change (Event* e);
 
 			virtual void on_update (UpdateEvent* e);
 
