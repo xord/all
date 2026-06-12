@@ -2,6 +2,7 @@
 #include "../web_view.h"
 
 
+#include <string.h>
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 #include <reflex/web_view.h>
@@ -321,7 +322,17 @@ namespace Reflex
 
 				if (!probed)
 				{
-					method = WKCapture_probe(win);
+					// REFLEX_WEBVIEW_CAPTURE=cgs|cgwindow|snapshot skips the
+					// probe; "snapshot" forces the async fallback path.
+					const char* force = getenv("REFLEX_WEBVIEW_CAPTURE");
+					if      (force && strcmp(force, "cgs")      == 0)
+						method = WK_CAPTURE_CGS;
+					else if (force && strcmp(force, "cgwindow") == 0)
+						method = WK_CAPTURE_CGWINDOW;
+					else if (force && strcmp(force, "snapshot") == 0)
+						method = WK_CAPTURE_NONE;
+					else
+						method = WKCapture_probe(win);
 					probed = true;
 				}
 
