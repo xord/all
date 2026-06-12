@@ -213,20 +213,26 @@ module Xot
       [root, RbConfig::CONFIG['rubyarchhdrdir'] || "#{root}/#{RUBY_PLATFORM}"]
     end
 
-    def make_cflags(flags = '')
-      warning_opts  = %w[no-unknown-pragmas]
-      warning_opts += %w[
+    def make_cflags(flags = '', std: 'gnu17', stdlib: nil)
+      warn_opts  = %w[no-unknown-pragmas]
+      warn_opts += %w[
         no-deprecated-register
         no-reserved-user-defined-literal
       ] if clang?
+
       s  = flags.dup
-      s << warning_opts.map {|s| " -W#{s}"}.join
-      s << " -arch arm64"                                          if osx? && arm64?
-      s << ' -std=c++20'                                           if gcc? || emcc?
-      s << ' -std=c++20 -stdlib=libc++ -mmacosx-version-min=10.10' if clang?
-      s << ' ' + RbConfig::CONFIG['debugflags']                    if debug?
-      s.gsub!(/-O\d?\w*/, '-O0')                                   if debug?
+      s << " -arch arm64"                       if osx? && arm64?
+      s << " -std=#{std}"                       if clang? || gcc? || emcc?
+      s << " -stdlib=#{stdlib}"                 if clang? && stdlib
+      s << ' -mmacosx-version-min=10.10'        if clang? && osx?
+      s << ' ' + RbConfig::CONFIG['debugflags'] if debug?
+      s.gsub!(/-O\d?\w*/, '-O0')                if debug?
+      s << warn_opts.map {|s| " -W#{s}"}.join
       s
+    end
+
+    def make_cxxflags(flags = '')
+      make_cflags flags, std: 'c++20', stdlib: 'libc++'
     end
 
     def make_ldflags(flags = '', libdirs = [], frameworks = [])
@@ -242,11 +248,17 @@ module Xot
       make_cppflags flags, defs, inc_dirs
     end
 
+    def cflags(warnings = true)
+      cflags = get_env :CFLAGS, RbConfig::CONFIG['CFLAGS']
+      cflags = cflags.gsub(/-W[\w\-\=]+/, '') + ' -w' unless warnings
+      make_cflags cflags
+    end
+
     def cxxflags(warnings = true)
       cflags   = get_env :CFLAGS,   RbConfig::CONFIG['CFLAGS']
       cxxflags = get_env :CXXFLAGS, RbConfig::CONFIG['CXXFLAGS']
       cflags   = cflags.gsub(/-W[\w\-\=]+/, '') + ' -w' unless warnings
-      make_cflags "#{cflags} #{cxxflags}"
+      make_cxxflags "#{cflags} #{cxxflags}"
     end
 
     def arflags()

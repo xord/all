@@ -51,8 +51,8 @@ module Xot
       local_libs << 'stdc++' if gcc?
 
       $CPPFLAGS = make_cppflags $CPPFLAGS, defs, inc_dirs
-      $CFLAGS   = make_cflags   $CFLAGS   + ' -x c++'
-      $CXXFLAGS = make_cflags   $CXXFLAGS + ' -x c++' if $CXXFLAGS
+      $CFLAGS   = make_cxxflags $CFLAGS   + ' -x c++'
+      $CXXFLAGS = make_cxxflags $CXXFLAGS + ' -x c++' if $CXXFLAGS
       $LDFLAGS  = make_ldflags  ldflags, lib_dirs, frameworks
       $LOCAL_LIBS << local_libs.reverse.map {|s| " -l#{s}"}.join
     end

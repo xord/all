@@ -327,7 +327,11 @@ module Xot
             unless get_env :VENDOR_NOCOMPILE, false
               vendor_srcs_map(*srcdirs).each do |src, obj|
                 rake_puts "compiling #{src}"
-                sh %( #{cxx} -c #{cppflags} #{cxxflags false} -o #{obj} #{src} )
+                if File.extname(src) == '.c'
+                  sh %( #{cc} -c #{cppflags} #{cflags false} -o #{obj} #{src} )
+                else
+                  sh %( #{cxx} -c #{cppflags} #{cxxflags false} -o #{obj} #{src} )
+                end
               end
             end
           end
