@@ -8,7 +8,8 @@ The published gem name is **`reflexion`** (not `reflex`).
 
 ## External Libraries
 
-- Box2D v2.4.1 — Physics engine
+- Box2D v3.1.1 — Physics engine (C API; world/body/shape handles, contact
+  events polled after `b2World_Step`, single-threaded by default)
 - RtMidi 6.0.0 — MIDI device support
 
 ## Platform-Specific Code

@@ -19,9 +19,10 @@ TESTS_ALONE = ['test/test_reflex_init.rb']
 install_packages apt: %w[libsdl2-dev]
 
 use_external_library 'https://github.com/erincatto/box2d',
-  tag:    'v2.4.1',
+  tag:    'v3.1.1',
   incdirs: %w[include src],
-  srcdirs: 'src'
+  srcdirs: 'src',
+  defs:    'B2_MAX_WORLDS=256'
 
 use_external_library 'https://github.com/thestk/rtmidi',
   tag:     '6.0.0',

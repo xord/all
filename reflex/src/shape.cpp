@@ -2,12 +2,8 @@
 
 
 #include <assert.h>
-#include <box2d/b2_body.h>
-#include <box2d/b2_fixture.h>
-#include <box2d/b2_circle_shape.h>
-#include <box2d/b2_edge_shape.h>
-#include <box2d/b2_chain_shape.h>
-#include <box2d/b2_polygon_shape.h>
+#include <box2d/box2d.h>
+#include <box2d/collision.h>
 #include <rays/polygon.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
@@ -105,23 +101,25 @@ namespace Reflex
 
 		public:
 
-			FixtureBuilder (Shape* shape, const b2Shape* head = NULL)
+			FixtureBuilder (Shape* shape)
 			:	shape(shape), head(NULL), tail(NULL)
 			{
 				assert(shape);
-
-				if (head) add(head);
 			}
 
-			void add (const b2Shape* b2shape)
+			void add (const b2Circle& b2circle)
 			{
-				assert(b2shape);
+				append(new Fixture(get_body(), b2circle, shape));
+			}
 
-				Body* body = View_get_body(shape->owner());
-				if (!body)
-					invalid_state_error(__FILE__, __LINE__);
+			void add (const b2Polygon& b2polygon)
+			{
+				append(new Fixture(get_body(), b2polygon, shape));
+			}
 
-				append(new Fixture(body, b2shape, shape));
+			void add_chain (const b2Vec2* points, size_t size, bool loop)
+			{
+				append(new Fixture(get_body(), points, size, loop, shape));
 			}
 
 			Fixture* fixtures () const
@@ -134,6 +132,15 @@ namespace Reflex
 			Shape* shape;
 
 			Fixture *head, *tail;
+
+			Body* get_body ()
+			{
+				Body* body = View_get_body(shape->owner());
+				if (!body)
+					invalid_state_error(__FILE__, __LINE__);
+
+				return body;
+			}
 
 			void append (Fixture* fixture)
 			{
@@ -159,8 +166,11 @@ namespace Reflex
 	{
 		assert(shape);
 
-		b2CircleShape b2shape;
-		return FixtureBuilder(shape, &b2shape).fixtures();
+		b2Circle b2shape = {{0, 0}, 0};
+
+		FixtureBuilder builder(shape);
+		builder.add(b2shape);
+		return builder.fixtures();
 	}
 
 	static Fixture*
@@ -185,12 +195,11 @@ namespace Reflex
 		FixtureBuilder builder(shape);
 		for (size_t i = 0; i < b2points.size(); i += 3)
 		{
-			b2PolygonShape b2shape;
-			b2shape.Set(&b2points[i], 3);
-			if (b2shape.m_count != 3)
+			b2Hull hull = b2ComputeHull(&b2points[i], 3);
+			if (hull.count != 3)
 				continue;// skip too small triangle
 
-			builder.add(&b2shape);
+			builder.add(b2MakePolygon(&hull, 0));
 		}
 
 		return builder.fixtures();
@@ -203,24 +212,15 @@ namespace Reflex
 	{
 		assert(builder && buffer);
 
+		if (polyline.size() < 2)
+			return;
+
 		buffer->clear();
 		buffer->reserve(polyline.size());
 		for (const auto& point : polyline)
 			buffer->emplace_back(to_b2vec2(point, ppm));
 
-		b2ChainShape b2shape;
-		if (polyline.loop())
-			b2shape.CreateLoop(&(*buffer)[0], (int32) buffer->size());
-		else
-		{
-			b2shape.CreateChain(
-				&(*buffer)[0],
-				(int32) buffer->size(),
-				(*buffer)[0],
-				(*buffer)[buffer->size() - 1]);
-		}
-
-		builder->add(&b2shape);
+		builder->add_chain(buffer->data(), buffer->size(), polyline.loop());
 	}
 
 	static Fixture*
@@ -816,16 +816,19 @@ namespace Reflex
 				invalid_state_error(__FILE__, __LINE__);
 
 			float ppm = owner->meter2pixel();
-			coord l   = to_b2coord(frame.x,           ppm);
-			coord t   = to_b2coord(frame.y,           ppm);
-			coord r   = to_b2coord(frame.x + frame.w, ppm);
-			coord b   = to_b2coord(frame.y + frame.h, ppm);
+			float l   = to_b2coord(frame.x,           ppm);
+			float t   = to_b2coord(frame.y,           ppm);
+			float r   = to_b2coord(frame.x + frame.w, ppm);
+			float b   = to_b2coord(frame.y + frame.h, ppm);
 			b2Vec2 b2points[] = {{l, t}, {l, b}, {r, b}, {r, t}};
 
-			b2PolygonShape b2shape;
-			b2shape.Set(&b2points[0], 4);
+			b2Hull hull = b2ComputeHull(&b2points[0], 4);
+			if (hull.count < 3)
+				return NULL;
 
-			return FixtureBuilder(shape, &b2shape).fixtures();
+			FixtureBuilder builder(shape);
+			builder.add(b2MakePolygon(&hull, 0));
+			return builder.fixtures();
 		}
 
 		Fixture* create_rect_fixture_without_division (
@@ -851,10 +854,13 @@ namespace Reflex
 			for (size_t i = 0; i < polyline.size(); ++i)
 				b2points[i] = to_b2vec2(polyline[i], ppm);
 
-			b2PolygonShape b2shape;
-			b2shape.Set(&b2points[0], (int32) polyline.size());
+			b2Hull hull = b2ComputeHull(&b2points[0], (int32_t) polyline.size());
+			if (hull.count < 3)
+				return NULL;
 
-			return FixtureBuilder(shape, &b2shape).fixtures();
+			FixtureBuilder builder(shape);
+			builder.add(b2MakePolygon(&hull, 0));
+			return builder.fixtures();
 		}
 
 		Polygon get_polygon_for_shape () const override
@@ -1049,11 +1055,13 @@ namespace Reflex
 
 			float ppm = owner->meter2pixel();
 
-			b2CircleShape b2shape;
-			b2shape.m_p      = to_b2vec2(frame.center(), ppm);
-			b2shape.m_radius = to_b2coord(frame.width / 2, ppm);
+			b2Circle b2shape;
+			b2shape.center = to_b2vec2(frame.center(), ppm);
+			b2shape.radius = to_b2coord(frame.width / 2, ppm);
 
-			return FixtureBuilder(shape, &b2shape).fixtures();
+			FixtureBuilder builder(shape);
+			builder.add(b2shape);
+			return builder.fixtures();
 		}
 
 		Polygon get_polygon_for_shape () const override

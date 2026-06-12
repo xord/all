@@ -4,13 +4,11 @@
 #define __REFLEX_SRC_BODY_H__
 
 
+#include <box2d/id.h>
 #include <xot/noncopyable.h>
 #include <xot/pimpl.h>
 #include <rays/point.h>
 #include "reflex/defs.h"
-
-
-class b2Body;
 
 
 namespace Reflex
@@ -88,9 +86,7 @@ namespace Reflex
 
 	bool Body_is_temporary (const Body& body);
 
-	      b2Body* Body_get_b2ptr (      Body* body);
-
-	const b2Body* Body_get_b2ptr (const Body* body);
+	b2BodyId Body_get_b2id (const Body* body);
 
 
 }// Reflex

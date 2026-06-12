@@ -8,9 +8,6 @@
 #include "reflex/shape.h"
 
 
-class b2Shape;
-
-
 namespace Reflex
 {
 

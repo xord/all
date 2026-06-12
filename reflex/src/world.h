@@ -4,16 +4,13 @@
 #define __REFLEX_SRC_WORLD_H__
 
 
-#include <box2d/b2_math.h>
-#include <box2d/b2_world_callbacks.h>
+#include <box2d/id.h>
+#include <box2d/math_functions.h>
 #include <xot/noncopyable.h>
 #include <xot/pimpl.h>
 #include <rays/point.h>
 #include <rays/painter.h>
 #include "reflex/defs.h"
-
-
-class b2World;
 
 
 namespace Reflex
@@ -24,7 +21,7 @@ namespace Reflex
 	class Body;
 
 
-	class World : public Xot::NonCopyable, private b2ContactFilter, b2ContactListener
+	class World : public Xot::NonCopyable
 	{
 
 		public:
@@ -62,14 +59,6 @@ namespace Reflex
 
 			Xot::PImpl<Data> self;
 
-		protected:
-
-			virtual bool ShouldCollide (b2Fixture* f1, b2Fixture* f2) override;
-
-			virtual void BeginContact (b2Contact* contact) override;
-
-			virtual void   EndContact (b2Contact* contact) override;
-
 	};// World
 
 
@@ -84,18 +73,18 @@ namespace Reflex
 	inline b2Vec2
 	to_b2vec2 (T x, T y, float scale)
 	{
-		return b2Vec2(
+		return b2Vec2{
 			to_b2coord(x, scale),
-			to_b2coord(y, scale));
+			to_b2coord(y, scale)};
 	}
 
 	template <typename VEC>
 	inline b2Vec2
 	to_b2vec2 (const VEC& v, float scale)
 	{
-		return b2Vec2(
+		return b2Vec2{
 			to_b2coord(v.x, scale),
-			to_b2coord(v.y, scale));
+			to_b2coord(v.y, scale)};
 	}
 
 	inline coord
@@ -115,9 +104,11 @@ namespace Reflex
 
 	World* World_get_temporary ();
 
-	      b2World* World_get_b2ptr (      World* world);
+	b2WorldId World_get_b2id (const World* world);
 
-	const b2World* World_get_b2ptr (const World* world);
+	// deliver contact-end events for active pairs that contain 'shape_id'
+	// before Box2D forgets the pair on shape destruction
+	void World_end_contacts_for (World* world, b2ShapeId shape_id);
 
 
 }// Reflex

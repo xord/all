@@ -5,12 +5,11 @@
 
 
 #include <memory>
+#include <vector>
+#include <box2d/id.h>
+#include <box2d/collision.h>
 #include <xot/noncopyable.h>
 #include "reflex/defs.h"
-
-
-class b2Fixture;
-class b2Shape;
 
 
 namespace Reflex
@@ -25,7 +24,15 @@ namespace Reflex
 
 		public:
 
-			Fixture (Body* body, const b2Shape* b2shape, void* userdata = NULL);
+			Fixture (Body* body, const b2Circle&  circle,  void* userdata = NULL);
+
+			Fixture (Body* body, const b2Polygon& polygon, void* userdata = NULL);
+
+			Fixture (Body* body, const b2Segment& segment, void* userdata = NULL);
+
+			Fixture (
+				Body* body, const b2Vec2* points, size_t size, bool loop,
+				void* userdata = NULL);
 
 			~Fixture ();
 
@@ -45,10 +52,6 @@ namespace Reflex
 
 			bool  is_sensor () const;
 
-			      b2Fixture* b2ptr ();
-
-			const b2Fixture* b2ptr () const;
-
 			void       set_next (Fixture* fixture);
 
 			      Fixture* next ();
@@ -57,9 +60,37 @@ namespace Reflex
 
 		private:
 
-			b2Fixture* b2fixture;
+			Body* body;
+
+			void* userdata;
+
+			b2ChainId b2chain;
+
+			std::vector<b2ShapeId> b2shapes;
+
+			// keep chain points to recreate fixtures on is_sensor change
+			// because Box2D chains do not support sensors
+			std::vector<b2Vec2> chain_points;
+
+			bool chain_loop   = false;
+
+			float density_    = 0;
 
 			std::unique_ptr<Fixture> pnext;
+
+			void create_chain (float friction, float restitution);
+
+			void create_chain_sensors (float friction, float restitution);
+
+			void apply_density (float density);
+
+			void apply_sensor (bool state);
+
+			void destroy_shapes ();
+
+			b2ShapeId head_shape () const;
+
+			friend bool Fixture_is_temporary (const Fixture& fixture);
 
 	};// Fixture
 
