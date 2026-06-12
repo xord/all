@@ -300,6 +300,66 @@ namespace
 			allow ? WKNavigationActionPolicyAllow : WKNavigationActionPolicyCancel);
 	}
 
+	// JavaScript dialogs would otherwise try to present inside the
+	// off-desktop host window where nobody can see (or dismiss) them,
+	// silently breaking alert/confirm/prompt. Present app-modal
+	// NSAlerts instead, titled by the requesting page's host like a
+	// browser would.
+
+	- (NSAlert*) dialogWithMessage: (NSString*) message
+		frame: (WKFrameInfo*) frame
+	{
+		NSString* host = frame.request.URL.host;
+		NSAlert* alert = [[[NSAlert alloc] init] autorelease];
+		alert.messageText     = host && host.length > 0 ? host : @"JavaScript";
+		alert.informativeText = message ? message : @"";
+		return alert;
+	}
+
+	- (void) webView: (WKWebView*) wv
+		runJavaScriptAlertPanelWithMessage: (NSString*) message
+		initiatedByFrame: (WKFrameInfo*) frame
+		completionHandler: (void (^)(void)) completionHandler
+	{
+		NSAlert* alert = [self dialogWithMessage: message frame: frame];
+		[alert addButtonWithTitle: @"OK"];
+		[alert runModal];
+		completionHandler();
+	}
+
+	- (void) webView: (WKWebView*) wv
+		runJavaScriptConfirmPanelWithMessage: (NSString*) message
+		initiatedByFrame: (WKFrameInfo*) frame
+		completionHandler: (void (^)(BOOL)) completionHandler
+	{
+		NSAlert* alert = [self dialogWithMessage: message frame: frame];
+		[alert addButtonWithTitle: @"OK"];
+		[alert addButtonWithTitle: @"Cancel"];
+		completionHandler([alert runModal] == NSAlertFirstButtonReturn);
+	}
+
+	- (void) webView: (WKWebView*) wv
+		runJavaScriptTextInputPanelWithPrompt: (NSString*) prompt
+		defaultText: (NSString*) defaultText
+		initiatedByFrame: (WKFrameInfo*) frame
+		completionHandler: (void (^)(NSString*)) completionHandler
+	{
+		NSAlert* alert = [self dialogWithMessage: prompt frame: frame];
+		[alert addButtonWithTitle: @"OK"];
+		[alert addButtonWithTitle: @"Cancel"];
+
+		NSTextField* input = [[[NSTextField alloc]
+			initWithFrame: NSMakeRect(0, 0, 260, 24)] autorelease];
+		[input setStringValue: defaultText ? defaultText : @""];
+		[alert setAccessoryView: input];
+		[[alert window] setInitialFirstResponder: input];
+
+		if ([alert runModal] == NSAlertFirstButtonReturn)
+			completionHandler([input stringValue]);
+		else
+			completionHandler(nil);
+	}
+
 	// window.open / target=_blank. Never creates a real web view;
 	// queues the request for WebView::on_open, whose default opens the
 	// URL in the same view.
