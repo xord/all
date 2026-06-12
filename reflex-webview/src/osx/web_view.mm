@@ -78,6 +78,19 @@ namespace
 		}
 	}
 
+	// Encodes a string as a JS string literal (incl. surrounding quotes)
+	// by JSON-serializing it, so it can be spliced into a script safely.
+	NSString*
+	escape_js_string (NSString* s)
+	{
+		NSData* data = [NSJSONSerialization
+			dataWithJSONObject: @[s ? s : @""] options: 0 error: NULL];
+		NSString* arr = [[[NSString alloc]
+			initWithData: data encoding: NSUTF8StringEncoding] autorelease];
+		// arr is ["..."]; strip the brackets to get the quoted string.
+		return [arr substringWithRange: NSMakeRange(1, arr.length - 2)];
+	}
+
 	void
 	dispatch_mouse (WKWebView* wv, NSEvent* e)
 	{
@@ -163,6 +176,7 @@ namespace
 	std::vector<std::string> messageQueue;
 	std::vector<std::pair<std::string, std::string>> consoleQueue;
 	std::vector<std::pair<long, std::string>> evalResults;
+	std::vector<std::pair<long, bool>> findResults;
 	std::string favicon, hoveredUrl;
 	BOOL crashed;
 	ReflexWKMessageProxy* messageProxy;
@@ -645,6 +659,39 @@ namespace Reflex
 				[host->webView evaluateJavaScript: s completionHandler: nil];
 			}
 
+			void find (
+				const char* text, WebView::FindCallback callback) override
+			{
+				NSString* s = text ? [NSString stringWithUTF8String: text] : @"";
+
+				if (![host->webView respondsToSelector:
+					@selector(findString:withConfiguration:completionHandler:)])
+				{
+					// Pre-macOS 13: best-effort highlight via window.find,
+					// no result available.
+					NSString* js = [NSString stringWithFormat:
+						@"window.find(%@)",
+						escape_js_string(s)];
+					[host->webView evaluateJavaScript: js completionHandler: nil];
+					if (callback) callback(false);
+					return;
+				}
+
+				long fid = ++last_eval_id_;
+				ReflexWKHost* h = host;
+				bool wants_result = (bool) callback;
+				if (wants_result) find_callbacks_[fid] = callback;
+
+				WKFindConfiguration* conf =
+					[[[WKFindConfiguration alloc] init] autorelease];
+				[host->webView findString: s withConfiguration: conf
+					completionHandler: ^(WKFindResult* result)
+				{
+					if (wants_result)
+						h->findResults.emplace_back(fid, (bool) result.matchFound);
+				}];
+			}
+
 			void post_message (const char* data_json) override
 			{
 				// The JSON payload is itself a valid JS expression, so it
@@ -1051,6 +1098,7 @@ namespace Reflex
 			Xot::String     last_title_, last_url_, last_favicon_, last_hover_;
 			long            last_eval_id_ = 0;
 			std::map<long, WebView::EvalCallback> eval_callbacks_;
+			std::map<long, WebView::FindCallback> find_callbacks_;
 
 			// Drains queued page-load notifications and polls title/URL
 			// for changes; handlers run here, inside the update cycle.
@@ -1106,6 +1154,21 @@ namespace Reflex
 					{
 						WebView::ConsoleEvent e(level.c_str(), message.c_str());
 						owner->on_console(&e);
+					}
+				}
+
+				if (!host->findResults.empty())
+				{
+					std::vector<std::pair<long, bool>> results;
+					results.swap(host->findResults);
+					for (const auto& [fid, found] : results)
+					{
+						auto it = find_callbacks_.find(fid);
+						if (it == find_callbacks_.end()) continue;
+
+						WebView::FindCallback callback = it->second;
+						find_callbacks_.erase(it);
+						callback(found);
 					}
 				}
 

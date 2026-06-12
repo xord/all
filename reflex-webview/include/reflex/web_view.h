@@ -138,6 +138,9 @@ namespace Reflex
 			typedef std::function<void (const char* result_json)>
 				EvalCallback;
 
+			// Receives whether find() located a match.
+			typedef std::function<void (bool found)> FindCallback;
+
 			WebView (const char* name = NULL);
 
 			virtual ~WebView ();
@@ -154,6 +157,11 @@ namespace Reflex
 			// __REFLEX__.onmessage(data); data_json is the JSON-encoded
 			// payload. No-op if the page set no onmessage handler.
 			virtual void post_message (const char* data_json);
+
+			// Searches the page for text, highlighting and scrolling to
+			// the next match. callback (if any) receives whether a match
+			// was found.
+			virtual void find (const char* text, FindCallback callback);
 
 			virtual void reload ();
 

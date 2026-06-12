@@ -84,6 +84,33 @@ RUCY_DEF1(post_message_raw, data_json)
 }
 RUCY_END
 
+// Keeps pending find blocks alive against GC until their result arrives.
+static Rucy::GlobalValue find_blocks;
+
+static
+RUCY_DEF1(find, text)
+{
+	CHECK;
+
+	if (rb_block_given_p())
+	{
+		Value block = rb_block_proc();
+		find_blocks.call("push", block);
+
+		THIS->find(text.c_str(), [block](bool found)
+		{
+			Value b = block;
+			find_blocks.call("delete", b);
+			b.call("call", value(found));
+		});
+	}
+	else
+		THIS->find(text.c_str(), Reflex::WebView::FindCallback());
+
+	return self;
+}
+RUCY_END
+
 static
 RUCY_DEF0(go_back)
 {
@@ -247,6 +274,7 @@ Init_reflex_web_view ()
 	Module mReflex = define_module("Reflex");
 
 	eval_blocks = Value(rb_ary_new());
+	find_blocks = Value(rb_ary_new());
 
 	cWebView = mReflex.define_class("WebView", Reflex::view_class());
 	cWebView.define_alloc_func(alloc);
@@ -255,6 +283,7 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "eval_js",   eval_js);
 	cWebView.define_private_method("reload!", reload_bang);
 	cWebView.define_private_method("post_message!", post_message_raw);
+	cWebView.define_method(     "find",      find);
 	cWebView.define_method(     "go_back",    go_back);
 	cWebView.define_method(     "go_forward", go_forward);
 	cWebView.define_method(     "stop",       stop);

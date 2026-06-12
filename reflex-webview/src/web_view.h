@@ -38,6 +38,9 @@ namespace Reflex
 
 		virtual void post_message (const char* data_json) = 0;
 
+		virtual void find (
+			const char* text, WebView::FindCallback callback) = 0;
+
 		virtual void reload () = 0;
 
 		virtual void reload (bool ignore_cache) = 0;

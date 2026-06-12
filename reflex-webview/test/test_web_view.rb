@@ -56,6 +56,10 @@ class TestWebView < Test::Unit::TestCase
     assert_respond_to web_view, :post_message
   end
 
+  def test_responds_to_find()
+    assert_respond_to web_view, :find
+  end
+
   def test_console_event()
     e = Reflex::WebView::ConsoleEvent.new 'warn', 'hello world'
     assert_kind_of Reflex::Event, e
