@@ -1,6 +1,7 @@
 #include "reflex-webview/ruby/web_view.h"
 
 
+#include "rays/ruby/image.h"
 #include "reflex/ruby/view.h"
 #include "defs.h"
 
@@ -141,6 +142,15 @@ RUCY_DEF0(get_title)
 }
 RUCY_END
 
+static
+RUCY_DEF0(to_image)
+{
+	CHECK;
+	Rays::Image image = THIS->to_image();
+	return image ? value(image) : nil();
+}
+RUCY_END
+
 
 static Class cWebView;
 
@@ -165,6 +175,7 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "loading?",  loading);
 	cWebView.define_method(     "url",       get_url);
 	cWebView.define_method(     "title",     get_title);
+	cWebView.define_method(     "to_image",  to_image);
 }
 
 

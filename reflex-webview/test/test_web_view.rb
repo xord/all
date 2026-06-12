@@ -90,6 +90,10 @@ class TestWebView < Test::Unit::TestCase
     end
   end
 
+  def test_to_image_is_nil_before_any_capture()
+    assert_nil web_view.to_image
+  end
+
   def test_can_set_frame()
     wv = web_view
     wv.frame = [1, 2, 30, 40]

@@ -261,6 +261,14 @@ namespace Reflex
 		return self->backend->title();
 	}
 
+	Rays::Image
+	WebView::to_image () const
+	{
+		assert(self->backend);
+		const Rays::Image* image = self->backend->image();
+		return image && *image ? image->dup() : Rays::Image();
+	}
+
 	void
 	WebView::on_message (MessageEvent* e)
 	{

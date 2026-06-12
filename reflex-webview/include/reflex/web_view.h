@@ -7,6 +7,7 @@
 #include <functional>
 #include <xot/pimpl.h>
 #include <xot/string.h>
+#include <rays/image.h>
 #include <reflex/view.h>
 
 
@@ -140,6 +141,10 @@ namespace Reflex
 			virtual Xot::String url () const;
 
 			virtual Xot::String title () const;
+
+			// A copy of the latest rendered page image, or an empty image
+			// if no frame has been captured yet.
+			virtual Rays::Image to_image () const;
 
 			virtual void on_message (MessageEvent* e);
 
