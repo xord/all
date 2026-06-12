@@ -180,6 +180,12 @@ namespace Reflex
 
 			virtual Xot::String title () const;
 
+			// The page's favicon URL, or empty if none.
+			virtual Xot::String favicon () const;
+
+			// The link URL currently under the pointer, or empty if none.
+			virtual Xot::String hovered_url () const;
+
 			virtual void set_user_agent (const char* user_agent);
 
 			virtual Xot::String user_agent () const;
@@ -220,6 +226,11 @@ namespace Reflex
 			virtual void on_title_change (Event* e);
 
 			virtual void on_url_change (Event* e);
+
+			virtual void on_favicon_change (Event* e);
+
+			// Called when the hovered link URL changes (see hovered_url()).
+			virtual void on_hover (Event* e);
 
 			virtual void on_update (UpdateEvent* e);
 

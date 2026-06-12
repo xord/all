@@ -60,6 +60,10 @@ namespace Reflex
 
 		virtual Xot::String title () const = 0;
 
+		virtual Xot::String favicon () const = 0;
+
+		virtual Xot::String hovered_url () const = 0;
+
 		virtual void set_user_agent (const char* user_agent) = 0;
 
 		virtual Xot::String user_agent () const = 0;

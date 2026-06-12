@@ -163,6 +163,7 @@ namespace
 	std::vector<std::string> messageQueue;
 	std::vector<std::pair<std::string, std::string>> consoleQueue;
 	std::vector<std::pair<long, std::string>> evalResults;
+	std::string favicon, hoveredUrl;
 	BOOL crashed;
 	ReflexWKMessageProxy* messageProxy;
 	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
@@ -232,6 +233,39 @@ static NSString* const REFLEX_CONSOLE_SCRIPT =
 	@"})();";
 
 
+// Injected at document end. Reports the page favicon (and changes to
+// it) and the hovered link URL over the reflexInternal channel.
+static NSString* const REFLEX_PAGE_SCRIPT =
+	@"(function(){"
+	@"  var send = function(o){ try {"
+	@"    window.webkit.messageHandlers.reflexInternal.postMessage(JSON.stringify(o));"
+	@"  } catch (e) {} };"
+	@"  var faviconURL = function(){"
+	@"    var links = document.querySelectorAll('link[rel~=\"icon\"]');"
+	@"    if (links.length) return links[links.length - 1].href;"
+	@"    return location.origin ? location.origin + '/favicon.ico' : '';"
+	@"  };"
+	@"  var lastFav = null;"
+	@"  var reportFav = function(){ var u = faviconURL();"
+	@"    if (u !== lastFav) { lastFav = u; send({kind:'favicon', url:u}); } };"
+	@"  reportFav();"
+	@"  try {"
+	@"    var mo = new MutationObserver(reportFav);"
+	@"    if (document.head) mo.observe(document.head, {childList:true, subtree:true, attributes:true});"
+	@"  } catch (e) {}"
+	@"  var lastHover = null;"
+	@"  var report = function(u){"
+	@"    if (u !== lastHover) { lastHover = u; send({kind:'hover', url:u}); }"
+	@"  };"
+	@"  var hover = function(e){"
+	@"    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;"
+	@"    report(a ? a.href : '');"
+	@"  };"
+	@"  document.addEventListener('mouseover', hover, true);"
+	@"  document.addEventListener('mouseleave', function(){ report(''); }, true);"
+	@"})();";
+
+
 @implementation ReflexWKHost
 
 	- (instancetype) initWithWidth: (int) w height: (int) h
@@ -275,6 +309,13 @@ static NSString* const REFLEX_CONSOLE_SCRIPT =
 			 injectionTime: WKUserScriptInjectionTimeAtDocumentStart
 			forMainFrameOnly: NO] autorelease];
 		[[conf userContentController] addUserScript: console];
+
+		WKUserScript* page = [[[WKUserScript alloc]
+			initWithSource: REFLEX_PAGE_SCRIPT
+			 injectionTime: WKUserScriptInjectionTimeAtDocumentEnd
+			forMainFrameOnly: YES] autorelease];
+		[[conf userContentController] addUserScript: page];
+
 		[[conf userContentController]
 			addScriptMessageHandler: messageProxy name: @"reflexInternal"];
 
@@ -349,6 +390,16 @@ static NSString* const REFLEX_CONSOLE_SCRIPT =
 			NSString* level = d[@"level"]   ?: @"log";
 			NSString* msg   = d[@"message"] ?: @"";
 			consoleQueue.emplace_back([level UTF8String], [msg UTF8String]);
+		}
+		else if ([kind isEqualToString: @"favicon"])
+		{
+			NSString* u = d[@"url"] ?: @"";
+			favicon = [u UTF8String];
+		}
+		else if ([kind isEqualToString: @"hover"])
+		{
+			NSString* u = d[@"url"] ?: @"";
+			hoveredUrl = [u UTF8String];
 		}
 	}
 
@@ -700,6 +751,16 @@ namespace Reflex
 				return t ? Xot::String([t UTF8String]) : Xot::String("");
 			}
 
+			Xot::String favicon () const override
+			{
+				return host->favicon.c_str();
+			}
+
+			Xot::String hovered_url () const override
+			{
+				return host->hoveredUrl.c_str();
+			}
+
 			void set_user_agent (const char* user_agent) override
 			{
 				host->webView.customUserAgent = user_agent ?
@@ -987,7 +1048,7 @@ namespace Reflex
 			bool            probed;
 			bool            dirty;
 			bool            key_down_sent_[128] = {false};
-			Xot::String     last_title_, last_url_;
+			Xot::String     last_title_, last_url_, last_favicon_, last_hover_;
 			long            last_eval_id_ = 0;
 			std::map<long, WebView::EvalCallback> eval_callbacks_;
 
@@ -1084,6 +1145,22 @@ namespace Reflex
 					last_url_ = u;
 					Event e;
 					owner->on_url_change(&e);
+				}
+
+				Xot::String fav = favicon();
+				if (fav != last_favicon_)
+				{
+					last_favicon_ = fav;
+					Event e;
+					owner->on_favicon_change(&e);
+				}
+
+				Xot::String hov = hovered_url();
+				if (hov != last_hover_)
+				{
+					last_hover_ = hov;
+					Event e;
+					owner->on_hover(&e);
 				}
 			}
 

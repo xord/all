@@ -40,10 +40,16 @@ class TestWebView < Test::Unit::TestCase
     wv = web_view
     %i[
       on_load_start on_load on_load_fail on_title_change on_url_change
-      on_crash on_message on_console
+      on_crash on_message on_console on_favicon_change on_hover
     ].each do |name|
       assert_respond_to wv, name
     end
+  end
+
+  def test_favicon_and_hovered_url_initially_nil()
+    wv = web_view
+    assert_nil wv.favicon
+    assert_nil wv.hovered_url
   end
 
   def test_responds_to_post_message()

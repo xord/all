@@ -160,6 +160,24 @@ RUCY_DEF0(get_title)
 RUCY_END
 
 static
+RUCY_DEF0(get_favicon)
+{
+	CHECK;
+	Xot::String f = THIS->favicon();
+	return f.empty() ? nil() : value(f.c_str());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_hovered_url)
+{
+	CHECK;
+	Xot::String u = THIS->hovered_url();
+	return u.empty() ? nil() : value(u.c_str());
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_user_agent, ua)
 {
 	CHECK;
@@ -246,6 +264,8 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "progress",  get_progress);
 	cWebView.define_method(     "url",       get_url);
 	cWebView.define_method(     "title",     get_title);
+	cWebView.define_method(     "favicon",     get_favicon);
+	cWebView.define_method(     "hovered_url", get_hovered_url);
 	cWebView.define_method(     "user_agent",  get_user_agent);
 	cWebView.define_method(     "user_agent=", set_user_agent);
 	cWebView.define_method(     "zoom",        get_zoom);

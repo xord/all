@@ -146,6 +146,24 @@ namespace Reflex
 					Super::on_url_change(e);
 			}
 
+			virtual void on_favicon_change (Event* e)
+			{
+				RUCY_SYM(on_favicon_change);
+				if (this->is_overridable())
+					this->value.call(on_favicon_change, Rucy::value(e));
+				else
+					Super::on_favicon_change(e);
+			}
+
+			virtual void on_hover (Event* e)
+			{
+				RUCY_SYM(on_hover);
+				if (this->is_overridable())
+					this->value.call(on_hover, Rucy::value(e));
+				else
+					Super::on_hover(e);
+			}
+
 	};// RubyWebView
 
 

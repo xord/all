@@ -70,6 +70,16 @@ module Reflex
     def on_console(e)
     end
 
+    # Called when the page favicon URL changes (see #favicon).
+    # Override in a subclass.
+    def on_favicon_change(e)
+    end
+
+    # Called when the hovered link URL changes (see #hovered_url).
+    # Override in a subclass.
+    def on_hover(e)
+    end
+
     # Called before each main-frame navigation. Call e.block to cancel
     # the navigation. Override in a subclass.
     def on_navigate(e)

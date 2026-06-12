@@ -329,6 +329,20 @@ namespace Reflex
 		return self->backend->title();
 	}
 
+	Xot::String
+	WebView::favicon () const
+	{
+		assert(self->backend);
+		return self->backend->favicon();
+	}
+
+	Xot::String
+	WebView::hovered_url () const
+	{
+		assert(self->backend);
+		return self->backend->hovered_url();
+	}
+
 	void
 	WebView::set_user_agent (const char* user_agent)
 	{
@@ -438,6 +452,18 @@ namespace Reflex
 
 	void
 	WebView::on_url_change (Event* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
+	}
+
+	void
+	WebView::on_favicon_change (Event* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
+	}
+
+	void
+	WebView::on_hover (Event* e)
 	{
 		// default: nothing. overridden in Ruby via RubyWebView.
 	}
@@ -590,6 +616,16 @@ namespace Reflex
 			}
 
 			Xot::String title () const override
+			{
+				return "";
+			}
+
+			Xot::String favicon () const override
+			{
+				return "";
+			}
+
+			Xot::String hovered_url () const override
 			{
 				return "";
 			}
