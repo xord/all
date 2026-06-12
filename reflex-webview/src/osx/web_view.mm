@@ -142,11 +142,34 @@ namespace
 		[window setFrameOrigin: NSMakePoint(-10000, -10000)];
 		[window orderBack: nil];
 
+		// An ordered-in window keeps the app alive after the user closes
+		// the last real window; watch for that and bow out.
+		[[NSNotificationCenter defaultCenter]
+			addObserver: self
+			   selector: @selector(otherWindowWillClose:)
+			       name: NSWindowWillCloseNotification
+			     object: nil];
+
 		return self;
+	}
+
+	- (void) otherWindowWillClose: (NSNotification*) notification
+	{
+		NSWindow* closing = (NSWindow*) [notification object];
+		if (closing == window) return;
+
+		for (NSWindow* w in [NSApp windows])
+		{
+			if (w == closing || w == window) continue;
+			if ([w isVisible] && ![w isKindOfClass: [ReflexWKHostWindow class]])
+				return;// a user-facing window remains
+		}
+		[window orderOut: nil];
 	}
 
 	- (void) dealloc
 	{
+		[[NSNotificationCenter defaultCenter] removeObserver: self];
 		if (pendingSnapshot) CGImageRelease(pendingSnapshot);
 		[webView setNavigationDelegate: nil];
 		[webView setUIDelegate: nil];
