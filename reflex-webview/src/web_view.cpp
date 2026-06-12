@@ -111,6 +111,47 @@ namespace Reflex
 	}
 
 
+	struct WebView::MessageEvent::Data
+	{
+
+		Xot::String data;
+
+		Data (const char* data = NULL)
+		:	data(data ? data : "null")
+		{
+		}
+
+	};// WebView::MessageEvent::Data
+
+
+	WebView::MessageEvent::MessageEvent ()
+	:	self(new Data())
+	{
+	}
+
+	WebView::MessageEvent::MessageEvent (const char* data)
+	:	self(new Data(data))
+	{
+	}
+
+	WebView::MessageEvent::MessageEvent (const MessageEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	WebView::MessageEvent
+	WebView::MessageEvent::dup () const
+	{
+		return MessageEvent(this);
+	}
+
+	const char*
+	WebView::MessageEvent::data () const
+	{
+		return self->data.c_str();
+	}
+
+
 	struct WebView::Data
 	{
 
@@ -211,6 +252,12 @@ namespace Reflex
 	{
 		assert(self->backend);
 		return self->backend->title();
+	}
+
+	void
+	WebView::on_message (MessageEvent* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
 	}
 
 	void

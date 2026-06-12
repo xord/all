@@ -68,6 +68,22 @@ class TestWebView < Test::Unit::TestCase
     assert_respond_to wv, :on_open
   end
 
+  def test_message_event()
+    e = Reflex::WebView::MessageEvent.new '{"a": 1, "b": [true, null]}'
+    assert_kind_of Reflex::Event, e
+    assert_equal({'a' => 1, 'b' => [true, nil]}, e.data)
+  end
+
+  def test_message_event_with_scalar_data()
+    assert_equal 42,    Reflex::WebView::MessageEvent.new('42').data
+    assert_equal 'hi',  Reflex::WebView::MessageEvent.new('"hi"').data
+    assert_nil          Reflex::WebView::MessageEvent.new('null').data
+  end
+
+  def test_responds_to_on_message()
+    assert_respond_to web_view, :on_message
+  end
+
   def test_can_set_frame()
     wv = web_view
     wv.frame = [1, 2, 30, 40]

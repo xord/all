@@ -134,6 +134,19 @@ namespace
 @end
 
 
+@class ReflexWKHost;
+
+// WKUserContentController retains its script message handlers, which
+// would create a retain cycle if the host registered itself. This proxy
+// holds the host unretained and is detached when the backend goes away.
+@interface ReflexWKMessageProxy : NSObject <WKScriptMessageHandler>
+{
+	@public
+	ReflexWKHost* host;  // assigned
+}
+@end
+
+
 // Hosts the WKWebView in an invisible, off-desktop-but-ordered-in window
 // and owns the bits that must outlive an async snapshot completion. All
 // access is on the main thread.
@@ -146,13 +159,42 @@ namespace
 	CGImageRef pendingSnapshot;
 	std::vector<LoadItem> loadQueue;
 	std::vector<std::string> openQueue;
+	std::vector<std::string> messageQueue;
+	ReflexWKMessageProxy* messageProxy;
 	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
 }
+- (void) didReceiveMessage: (NSString*) json;
 - (instancetype) initWithWidth: (int) w height: (int) h;
 - (void) setSizeWidth: (int) w height: (int) h;
 - (void) requestSnapshot;
 - (CGImageRef) takePendingSnapshot;  // returns +1, caller releases
 @end
+
+
+@implementation ReflexWKMessageProxy
+
+	- (void) userContentController: (WKUserContentController*) controller
+		didReceiveScriptMessage: (WKScriptMessage*) message
+	{
+		if (!host) return;
+		if (![message.body isKindOfClass: [NSString class]]) return;
+		[host didReceiveMessage: (NSString*) message.body];
+	}
+
+@end
+
+
+// Injected into every page at document start. postMessage() funnels
+// into the script message handler as a JSON string; onmessage is the
+// page-side hook for messages from the app.
+static NSString* const REFLEX_BRIDGE_SCRIPT =
+	@"window.__REFLEX__ = {"
+	@"  postMessage: function (data) {"
+	@"    window.webkit.messageHandlers.reflex.postMessage("
+	@"      JSON.stringify(data === undefined ? null : data));"
+	@"  },"
+	@"  onmessage: null"
+	@"};";
 
 
 @implementation ReflexWKHost
@@ -182,6 +224,17 @@ namespace
 			NSWindowCollectionBehaviorStationary];
 
 		WKWebViewConfiguration* conf = [[[WKWebViewConfiguration alloc] init] autorelease];
+
+		messageProxy = [[ReflexWKMessageProxy alloc] init];
+		messageProxy->host = self;
+		WKUserScript* bridge = [[[WKUserScript alloc]
+			initWithSource: REFLEX_BRIDGE_SCRIPT
+			 injectionTime: WKUserScriptInjectionTimeAtDocumentStart
+			forMainFrameOnly: YES] autorelease];
+		[[conf userContentController] addUserScript: bridge];
+		[[conf userContentController]
+			addScriptMessageHandler: messageProxy name: @"reflex"];
+
 		webView = [[WKWebView alloc] initWithFrame: rect configuration: conf];
 		[webView setNavigationDelegate: self];
 		[webView setUIDelegate: self];
@@ -223,11 +276,20 @@ namespace
 	{
 		[[NSNotificationCenter defaultCenter] removeObserver: self];
 		if (pendingSnapshot) CGImageRelease(pendingSnapshot);
+		messageProxy->host = nil;
+		[[[webView configuration] userContentController]
+			removeScriptMessageHandlerForName: @"reflex"];
+		[messageProxy release];
 		[webView setNavigationDelegate: nil];
 		[webView setUIDelegate: nil];
 		[webView release];
 		[window release];
 		[super dealloc];
+	}
+
+	- (void) didReceiveMessage: (NSString*) json
+	{
+		messageQueue.emplace_back([json UTF8String]);
 	}
 
 	- (void) setSizeWidth: (int) w height: (int) h
@@ -789,6 +851,17 @@ namespace Reflex
 							case LoadItem::FINISH: owner->on_load(&e);       break;
 							case LoadItem::FAIL:   owner->on_load_fail(&e);  break;
 						}
+					}
+				}
+
+				if (!host->messageQueue.empty())
+				{
+					std::vector<std::string> queue;
+					queue.swap(host->messageQueue);
+					for (const auto& json : queue)
+					{
+						WebView::MessageEvent e(json.c_str());
+						owner->on_message(&e);
 					}
 				}
 

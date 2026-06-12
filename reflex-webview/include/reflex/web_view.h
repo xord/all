@@ -80,6 +80,30 @@ namespace Reflex
 
 			};// NavigateEvent
 
+			// A message posted from page JavaScript via
+			// __REFLEX__.postMessage(). data() is its JSON
+			// serialization; treat the content as untrusted input.
+			class MessageEvent : public Event
+			{
+
+				public:
+
+					MessageEvent ();
+
+					MessageEvent (const char* data);
+
+					MessageEvent (const MessageEvent* src);
+
+					MessageEvent dup () const;
+
+					const char* data () const;
+
+					struct Data;
+
+					Xot::PSharedImpl<Data> self;
+
+			};// MessageEvent
+
 			WebView (const char* name = NULL);
 
 			virtual ~WebView ();
@@ -107,6 +131,8 @@ namespace Reflex
 			virtual Xot::String url () const;
 
 			virtual Xot::String title () const;
+
+			virtual void on_message (MessageEvent* e);
 
 			virtual void on_navigate (NavigateEvent* e);
 

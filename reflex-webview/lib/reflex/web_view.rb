@@ -1,3 +1,4 @@
+require 'json'
 require 'reflex/view'
 require 'reflex-webview/ext'
 
@@ -7,10 +8,25 @@ module Reflex
 
   class WebView
 
+    class MessageEvent
+
+      # The message posted from page JavaScript, parsed from JSON.
+      # The page is free to send anything: treat as untrusted input.
+      def data()
+        @data ||= JSON.parse raw_data
+      end
+
+    end# MessageEvent
+
     # Navigates to +url+. Equivalent to #load.
     def url=(url)
       load url.to_s
       url
+    end
+
+    # Called when page JavaScript posts a message via
+    # __REFLEX__.postMessage(data). Override in a subclass.
+    def on_message(e)
     end
 
     # Called before each main-frame navigation. Call e.block to cancel
