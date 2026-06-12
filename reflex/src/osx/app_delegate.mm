@@ -103,15 +103,17 @@
 			[NSApp orderFrontStandardAboutPanel: nil];
 	}
 
+	- (void) applicationWillFinishLaunching: (NSNotification*) notification
+	{
+		[self setupMenu];
+	}
+
 	- (void) applicationDidFinishLaunching: (NSNotification*) notification
 	{
 		[NSApp setActivationPolicy: NSApplicationActivationPolicyRegular];
 		[NSApp activateIgnoringOtherApps: YES];
 
-		if (![self callOnStart])
-			return;
-
-		[self setupMenu];
+		[self callOnStart];
 	}
 
 	- (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication*) application
