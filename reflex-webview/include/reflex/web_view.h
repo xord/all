@@ -57,6 +57,29 @@ namespace Reflex
 
 			};// LoadEvent
 
+			// A pending navigation for on_navigate (call block() to
+			// cancel it) or a new-window request for on_open.
+			class NavigateEvent : public Event
+			{
+
+				public:
+
+					NavigateEvent ();
+
+					NavigateEvent (const char* url);
+
+					NavigateEvent (const NavigateEvent* src);
+
+					NavigateEvent dup () const;
+
+					const char* url () const;
+
+					struct Data;
+
+					Xot::PSharedImpl<Data> self;
+
+			};// NavigateEvent
+
 			WebView (const char* name = NULL);
 
 			virtual ~WebView ();
@@ -84,6 +107,10 @@ namespace Reflex
 			virtual Xot::String url () const;
 
 			virtual Xot::String title () const;
+
+			virtual void on_navigate (NavigateEvent* e);
+
+			virtual void on_open (NavigateEvent* e);
 
 			virtual void on_load_start (LoadEvent* e);
 

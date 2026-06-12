@@ -21,6 +21,8 @@ RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::LoadEvent)
 
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::NavigateEvent)
+
 
 namespace Reflex
 {
@@ -32,6 +34,9 @@ namespace Reflex
 	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_load_event_class ();
 	// class Reflex::WebView::LoadEvent
 
+	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_navigate_event_class ();
+	// class Reflex::WebView::NavigateEvent
+
 
 	template <typename T>
 	class RubyWebView : public RubyView<T>
@@ -40,6 +45,24 @@ namespace Reflex
 		typedef RubyView<T> Super;
 
 		public:
+
+			virtual void on_navigate (WebView::NavigateEvent* e)
+			{
+				RUCY_SYM(on_navigate);
+				if (this->is_overridable())
+					this->value.call(on_navigate, Rucy::value(e));
+				else
+					Super::on_navigate(e);
+			}
+
+			virtual void on_open (WebView::NavigateEvent* e)
+			{
+				RUCY_SYM(on_open);
+				if (this->is_overridable())
+					this->value.call(on_open, Rucy::value(e));
+				else
+					Super::on_open(e);
+			}
 
 			virtual void on_load_start (WebView::LoadEvent* e)
 			{
@@ -106,6 +129,12 @@ namespace Rucy
 	get_ruby_class<Reflex::WebView::LoadEvent> ()
 	{
 		return Reflex::web_view_load_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::WebView::NavigateEvent> ()
+	{
+		return Reflex::web_view_navigate_event_class();
 	}
 
 

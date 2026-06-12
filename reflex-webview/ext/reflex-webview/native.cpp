@@ -3,6 +3,7 @@
 
 void Init_reflex_web_view ();
 void Init_reflex_web_view_load_event ();
+void Init_reflex_web_view_navigate_event ();
 
 
 extern "C" void
@@ -14,6 +15,7 @@ Init_reflex_webview_ext ()
 
 	Init_reflex_web_view();
 	Init_reflex_web_view_load_event();
+	Init_reflex_web_view_navigate_event();
 
 	RUCY_CATCH
 }

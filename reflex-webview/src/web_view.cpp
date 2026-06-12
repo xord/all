@@ -70,6 +70,47 @@ namespace Reflex
 	}
 
 
+	struct WebView::NavigateEvent::Data
+	{
+
+		Xot::String url;
+
+		Data (const char* url = NULL)
+		:	url(url ? url : "")
+		{
+		}
+
+	};// WebView::NavigateEvent::Data
+
+
+	WebView::NavigateEvent::NavigateEvent ()
+	:	self(new Data())
+	{
+	}
+
+	WebView::NavigateEvent::NavigateEvent (const char* url)
+	:	self(new Data(url))
+	{
+	}
+
+	WebView::NavigateEvent::NavigateEvent (const NavigateEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	WebView::NavigateEvent
+	WebView::NavigateEvent::dup () const
+	{
+		return NavigateEvent(this);
+	}
+
+	const char*
+	WebView::NavigateEvent::url () const
+	{
+		return self->url.c_str();
+	}
+
+
 	struct WebView::Data
 	{
 
@@ -170,6 +211,20 @@ namespace Reflex
 	{
 		assert(self->backend);
 		return self->backend->title();
+	}
+
+	void
+	WebView::on_navigate (NavigateEvent* e)
+	{
+		// default: nothing (allow). overridden in Ruby via RubyWebView.
+	}
+
+	void
+	WebView::on_open (NavigateEvent* e)
+	{
+		// default: open the new-window request in this view. a browser
+		// app overrides this to create a tab or window instead.
+		if (e && !e->is_blocked()) load(e->url());
 	}
 
 	void

@@ -53,6 +53,21 @@ class TestWebView < Test::Unit::TestCase
     assert_equal 'oops', e.description
   end
 
+  def test_navigate_event()
+    e = Reflex::WebView::NavigateEvent.new 'https://example.com'
+    assert_kind_of Reflex::Event, e
+    assert_equal 'https://example.com', e.url
+    assert_equal false, e.blocked?
+    e.block
+    assert_equal true, e.blocked?
+  end
+
+  def test_responds_to_navigate_handlers()
+    wv = web_view
+    assert_respond_to wv, :on_navigate
+    assert_respond_to wv, :on_open
+  end
+
   def test_can_set_frame()
     wv = web_view
     wv.frame = [1, 2, 30, 40]

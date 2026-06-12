@@ -145,6 +145,8 @@ namespace
 	BOOL       snapshotPending;
 	CGImageRef pendingSnapshot;
 	std::vector<LoadItem> loadQueue;
+	std::vector<std::string> openQueue;
+	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
 }
 - (instancetype) initWithWidth: (int) w height: (int) h;
 - (void) setSizeWidth: (int) w height: (int) h;
@@ -279,6 +281,38 @@ namespace
 		[self queueLoadFail: error];
 	}
 
+	// Synchronous by design: the policy decision needs the handler's
+	// verdict. Only main-frame navigations are offered to the app;
+	// subframes always load.
+	- (void) webView: (WKWebView*) wv
+		decidePolicyForNavigationAction: (WKNavigationAction*) action
+		decisionHandler: (void (^)(WKNavigationActionPolicy)) decisionHandler
+	{
+		BOOL allow = YES;
+		if (owner && action.targetFrame && action.targetFrame.isMainFrame)
+		{
+			NSString* u = [[[action request] URL] absoluteString];
+			Reflex::WebView::NavigateEvent e(u ? [u UTF8String] : "");
+			owner->on_navigate(&e);
+			allow = !e.is_blocked();
+		}
+		decisionHandler(
+			allow ? WKNavigationActionPolicyAllow : WKNavigationActionPolicyCancel);
+	}
+
+	// window.open / target=_blank. Never creates a real web view;
+	// queues the request for WebView::on_open, whose default opens the
+	// URL in the same view.
+	- (WKWebView*) webView: (WKWebView*) wv
+		createWebViewWithConfiguration: (WKWebViewConfiguration*) conf
+		forNavigationAction: (WKNavigationAction*) action
+		windowFeatures: (WKWindowFeatures*) features
+	{
+		NSString* u = [[[action request] URL] absoluteString];
+		if (u) openQueue.emplace_back([u UTF8String]);
+		return nil;
+	}
+
 	// SPI (WKUIDelegatePrivate): intercept the context menu WebKit is
 	// about to open. Its own popup would appear inside the off-desktop
 	// host window where nobody can see it, so suppress that and pop the
@@ -345,10 +379,12 @@ namespace Reflex
 				int w, h;
 				owner_size(&w, &h);
 				host = [[ReflexWKHost alloc] initWithWidth: w height: h];
+				host->owner = owner;
 			}
 
 			~WKBackend ()
 			{
+				host->owner = NULL;
 				[host release];
 			}
 
@@ -693,6 +729,17 @@ namespace Reflex
 							case LoadItem::FINISH: owner->on_load(&e);       break;
 							case LoadItem::FAIL:   owner->on_load_fail(&e);  break;
 						}
+					}
+				}
+
+				if (!host->openQueue.empty())
+				{
+					std::vector<std::string> queue;
+					queue.swap(host->openQueue);
+					for (const auto& url : queue)
+					{
+						WebView::NavigateEvent e(url.c_str());
+						owner->on_open(&e);
 					}
 				}
 
