@@ -36,6 +36,8 @@ namespace Reflex
 		virtual void eval (
 			const char* script, WebView::EvalCallback callback) = 0;
 
+		virtual void post_message (const char* data_json) = 0;
+
 		virtual void reload () = 0;
 
 		virtual void reload (bool ignore_cache) = 0;

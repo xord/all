@@ -124,6 +124,11 @@ namespace Reflex
 
 			virtual void eval (const char* script, EvalCallback callback);
 
+			// Delivers a message to page JavaScript by invoking
+			// __REFLEX__.onmessage(data); data_json is the JSON-encoded
+			// payload. No-op if the page set no onmessage handler.
+			virtual void post_message (const char* data_json);
+
 			virtual void reload ();
 
 			// When ignore_cache is true, bypasses the cache and revalidates

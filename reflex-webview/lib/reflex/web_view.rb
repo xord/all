@@ -31,6 +31,14 @@ module Reflex
       self
     end
 
+    # Sends a message to page JavaScript, delivered to the page's
+    # __REFLEX__.onmessage handler. +data+ is serialized to JSON, so it
+    # must be JSON-encodable.
+    def post_message(data)
+      post_message! JSON.generate(data)
+      self
+    end
+
     alias eval_js! eval_js
 
     # Runs JavaScript in the page. With a block, the result is

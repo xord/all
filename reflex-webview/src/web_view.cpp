@@ -199,6 +199,13 @@ namespace Reflex
 	}
 
 	void
+	WebView::post_message (const char* data_json)
+	{
+		assert(self->backend);
+		self->backend->post_message(data_json);
+	}
+
+	void
 	WebView::reload ()
 	{
 		assert(self->backend);
@@ -466,6 +473,11 @@ namespace Reflex
 
 			void eval (
 				const char* script, WebView::EvalCallback callback) override
+			{
+				not_available();
+			}
+
+			void post_message (const char* data_json) override
 			{
 				not_available();
 			}

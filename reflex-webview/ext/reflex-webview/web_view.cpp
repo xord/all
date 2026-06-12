@@ -76,6 +76,15 @@ RUCY_DEF1(reload_bang, ignore_cache)
 RUCY_END
 
 static
+RUCY_DEF1(post_message_raw, data_json)
+{
+	CHECK;
+	THIS->post_message(data_json.c_str());
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF0(go_back)
 {
 	CHECK;
@@ -227,6 +236,7 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "load_html", load_html);
 	cWebView.define_method(     "eval_js",   eval_js);
 	cWebView.define_private_method("reload!", reload_bang);
+	cWebView.define_private_method("post_message!", post_message_raw);
 	cWebView.define_method(     "go_back",    go_back);
 	cWebView.define_method(     "go_forward", go_forward);
 	cWebView.define_method(     "stop",       stop);

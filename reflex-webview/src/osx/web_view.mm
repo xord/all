@@ -531,6 +531,19 @@ namespace Reflex
 				[host->webView evaluateJavaScript: s completionHandler: nil];
 			}
 
+			void post_message (const char* data_json) override
+			{
+				// The JSON payload is itself a valid JS expression, so it
+				// can be spliced straight in as the argument.
+				NSString* json = data_json ?
+					[NSString stringWithUTF8String: data_json] : @"null";
+				NSString* script = [NSString stringWithFormat:
+					@"if(window.__REFLEX__&&"
+					@"typeof __REFLEX__.onmessage==='function')"
+					@"__REFLEX__.onmessage(%@);", json];
+				[host->webView evaluateJavaScript: script completionHandler: nil];
+			}
+
 			void eval (
 				const char* script, WebView::EvalCallback callback) override
 			{
