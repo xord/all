@@ -434,7 +434,7 @@ namespace Reflex
 						mouseEventWithType: type
 						          location: loc
 						     modifierFlags: m
-						         timestamp: 0
+						         timestamp: NSProcessInfo.processInfo.systemUptime
 						      windowNumber: wn
 						           context: nil
 						       eventNumber: 0
@@ -497,7 +497,7 @@ namespace Reflex
 						keyEventWithType: NSEventTypeFlagsChanged
 						        location: NSZeroPoint
 						   modifierFlags: to_ns_modifiers(e->modifiers())
-						       timestamp: 0
+						       timestamp: NSProcessInfo.processInfo.systemUptime
 						    windowNumber: [host->window windowNumber]
 						         context: nil
 						      characters: @""
@@ -515,7 +515,7 @@ namespace Reflex
 					keyEventWithType: type
 					        location: NSZeroPoint
 					   modifierFlags: to_ns_modifiers(e->modifiers())
-					       timestamp: 0
+					       timestamp: NSProcessInfo.processInfo.systemUptime
 					    windowNumber: [host->window windowNumber]
 					         context: nil
 					      characters: chars
