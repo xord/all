@@ -1,6 +1,18 @@
 # reflex ChangeLog
 
 
+## [v0.4.2] - 2026-06-12
+
+- Share single offscreen GL context across windows
+- Apply GC-root rebind pattern to window lifecycle on Win32 and SDL
+- Lazy-initialize OpenGL context until first drawRect:
+- Fire on_close by the close button on SDL
+- Do not destroy the view tree in Window#close to survive closing on event handlers
+- Add multi_window sample to demonstrate cross-window texture sharing
+
+- Fix iterator invalidation in View::clear_children
+
+
 ## [v0.4.1] - 2026-05-20
 
 - Track actual key repeat count on macOS

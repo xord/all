@@ -1,6 +1,11 @@
 # rays-video ChangeLog
 
 
+## [v0.1.4] - 2026-06-12
+
+- Update dependencies
+
+
 ## [v0.1.3] - 2026-05-20
 
 - Update dependencies

@@ -1,6 +1,13 @@
 # rays ChangeLog
 
 
+## [v0.3.15] - 2026-06-12
+
+- Share single offscreen GL context across windows
+- Drop NSOpenGLPFAAccelerated/NoRecovery from offscreen pixel format for headless macOS
+- Tighten Win32 window lifecycle around rebind / unbind
+
+
 ## [v0.3.14] - 2026-05-20
 
 - Skip glGetError on WASM build for performance

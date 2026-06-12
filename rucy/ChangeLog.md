@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.3.14] - 2026-06-12
+
+- Use modern TypedData API
+
+
 ## [v0.3.13] - 2026-05-17
 
 - Rewrite README.md

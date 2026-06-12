@@ -1,6 +1,11 @@
 # xot ChangeLog
 
 
+## [v0.3.14] - 2026-06-12
+
+- Link static archive explicitly in export_all_symbols on ucrt32
+
+
 ## [v0.3.13] - 2026-05-17
 
 - Rewrite README.md
