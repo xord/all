@@ -130,7 +130,8 @@ namespace Reflex
 	void
 	WebView::on_focus (FocusEvent* e)
 	{
-		if (self->backend) self->backend->focus(true);
+		if (self->backend && e->action() != FocusEvent::ACTION_NONE)
+			self->backend->focus(e->action() == FocusEvent::FOCUS);
 	}
 
 

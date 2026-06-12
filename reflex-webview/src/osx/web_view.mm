@@ -55,13 +55,41 @@ namespace
 @end
 
 
+// WebKit only draws the caret and active selection while its window is
+// key, but the off-desktop host window must never actually take key
+// status away from the user-facing Reflex window. Instead, report key
+// status as a flag the backend toggles on Reflex focus changes; posting
+// the matching NSWindow key notifications makes WebKit re-evaluate its
+// activity state.
+@interface ReflexWKHostWindow : NSWindow
+{
+	@public
+	BOOL fakeKey;
+}
+@end
+
+@implementation ReflexWKHostWindow
+
+	- (BOOL) canBecomeKeyWindow
+	{
+		return YES;
+	}
+
+	- (BOOL) isKeyWindow
+	{
+		return fakeKey ? YES : [super isKeyWindow];
+	}
+
+@end
+
+
 // Hosts the WKWebView in an invisible, off-desktop-but-ordered-in window
 // and owns the bits that must outlive an async snapshot completion. All
 // access is on the main thread.
 @interface ReflexWKHost : NSObject <WKNavigationDelegate>
 {
 	@public
-	NSWindow*  window;
+	ReflexWKHostWindow* window;
 	WKWebView* webView;
 	BOOL       loadFinished;
 	BOOL       snapshotPending;
@@ -83,7 +111,7 @@ namespace
 		if (!self) return nil;
 
 		NSRect rect = NSMakeRect(0, 0, w, h);
-		window = [[NSWindow alloc]
+		window = [[ReflexWKHostWindow alloc]
 			initWithContentRect: rect
 			          styleMask: NSWindowStyleMaskBorderless
 			            backing: NSBackingStoreBuffered
@@ -410,8 +438,23 @@ namespace Reflex
 			void focus (bool in) override
 			{
 				if (!host) return;
-				if (in) [host->window makeFirstResponder: host->webView];
-				else    [host->window makeFirstResponder: nil];
+
+				ReflexWKHostWindow* w = host->window;
+				NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+				if (in)
+				{
+					[w makeFirstResponder: host->webView];
+					w->fakeKey = YES;
+					[nc postNotificationName: NSWindowDidBecomeKeyNotification
+					                  object: w];
+				}
+				else
+				{
+					w->fakeKey = NO;
+					[nc postNotificationName: NSWindowDidResignKeyNotification
+					                  object: w];
+					[w makeFirstResponder: nil];
+				}
 			}
 
 		private:
