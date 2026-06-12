@@ -70,10 +70,10 @@ namespace
 
 @implementation ReflexWKHostWindow
 
-	- (BOOL) canBecomeKeyWindow
-	{
-		return YES;
-	}
+	// Note: canBecomeKeyWindow stays NO (the borderless default). If this
+	// window could really take key status -- e.g. while the intercepted
+	// context menu runs -- every key event including Cmd+Q would route to
+	// the WKWebView and get swallowed there.
 
 	- (BOOL) isKeyWindow
 	{
