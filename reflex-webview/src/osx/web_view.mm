@@ -27,6 +27,24 @@ namespace
 		return f;
 	}
 
+	// Left/right modifier keys, caps lock, and fn. AppKit reports these
+	// via flagsChanged:, never keyDown:/keyUp:. Forwarding them as
+	// keyDown would make WebKit re-dispatch the (characterless) event to
+	// the menu's key-equivalent matching, where it hits the first item
+	// with an empty key equivalent -- the About panel.
+	bool
+	is_modifier_key (unsigned short code)
+	{
+		switch (code)
+		{
+			case 54: case 55: case 56: case 57: case 58:
+			case 59: case 60: case 61: case 62: case 63:
+				return true;
+			default:
+				return false;
+		}
+	}
+
 	void
 	dispatch_mouse (WKWebView* wv, NSEvent* e)
 	{
@@ -471,6 +489,25 @@ namespace Reflex
 					default: return;
 				}
 
+				unsigned short code = (unsigned short) e->code();
+
+				if (is_modifier_key(code))
+				{
+					NSEvent* ev = [NSEvent
+						keyEventWithType: NSEventTypeFlagsChanged
+						        location: NSZeroPoint
+						   modifierFlags: to_ns_modifiers(e->modifiers())
+						       timestamp: 0
+						    windowNumber: [host->window windowNumber]
+						         context: nil
+						      characters: @""
+						charactersIgnoringModifiers: @""
+						       isARepeat: NO
+						         keyCode: code];
+					if (ev) [host->webView flagsChanged: ev];
+					return;
+				}
+
 				NSString* chars = e->chars() ?
 					[NSString stringWithUTF8String: e->chars()] : @"";
 
@@ -484,7 +521,7 @@ namespace Reflex
 					      characters: chars
 					charactersIgnoringModifiers: chars
 					       isARepeat: (e->repeat() > 0)
-					         keyCode: (unsigned short) e->code()];
+					         keyCode: code];
 				if (!ev) return;
 
 				if (type == NSEventTypeKeyDown) [host->webView keyDown: ev];
