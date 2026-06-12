@@ -86,7 +86,7 @@ namespace
 // Hosts the WKWebView in an invisible, off-desktop-but-ordered-in window
 // and owns the bits that must outlive an async snapshot completion. All
 // access is on the main thread.
-@interface ReflexWKHost : NSObject <WKNavigationDelegate>
+@interface ReflexWKHost : NSObject <WKNavigationDelegate, WKUIDelegate>
 {
 	@public
 	ReflexWKHostWindow* window;
@@ -132,6 +132,7 @@ namespace
 		WKWebViewConfiguration* conf = [[[WKWebViewConfiguration alloc] init] autorelease];
 		webView = [[WKWebView alloc] initWithFrame: rect configuration: conf];
 		[webView setNavigationDelegate: self];
+		[webView setUIDelegate: self];
 		[[window contentView] addSubview: webView];
 
 		if ([webView respondsToSelector: @selector(_setWindowOcclusionDetectionEnabled:)])
@@ -148,6 +149,7 @@ namespace
 	{
 		if (pendingSnapshot) CGImageRelease(pendingSnapshot);
 		[webView setNavigationDelegate: nil];
+		[webView setUIDelegate: nil];
 		[webView release];
 		[window release];
 		[super dealloc];
@@ -164,6 +166,27 @@ namespace
 		didFinishNavigation: (WKNavigation*) nav
 	{
 		loadFinished = YES;
+	}
+
+	// SPI (WKUIDelegatePrivate): intercept the context menu WebKit is
+	// about to open. Its own popup would appear inside the off-desktop
+	// host window where nobody can see it, so suppress that and pop the
+	// proposed menu (whose items still target WebKit's internals) at the
+	// real cursor position instead.
+	- (void) _webView: (WKWebView*) wv
+		getContextMenuFromProposedMenu: (NSMenu*) menu
+		forElement: (id) element
+		userInfo: (id) userInfo
+		completionHandler: (void (^)(NSMenu*)) completionHandler
+	{
+		completionHandler(nil);
+		if (!menu || menu.numberOfItems == 0) return;
+
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[menu popUpMenuPositioningItem: nil
+				atLocation: [NSEvent mouseLocation]
+				inView: nil];
+		});
 	}
 
 	- (BOOL) consumeLoadFinished
