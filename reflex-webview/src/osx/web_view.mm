@@ -5,7 +5,47 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 #include <reflex/web_view.h>
+#include <reflex/pointer.h>
 #include "wk_capture.h"
+
+
+namespace
+{
+
+	NSUInteger
+	to_ns_modifiers (unsigned mods)
+	{
+		using namespace Reflex;
+		NSUInteger f = 0;
+		if (mods & MOD_SHIFT)    f |= NSEventModifierFlagShift;
+		if (mods & MOD_CONTROL)  f |= NSEventModifierFlagControl;
+		if (mods & MOD_OPTION)   f |= NSEventModifierFlagOption;
+		if (mods & MOD_COMMAND)  f |= NSEventModifierFlagCommand;
+		if (mods & MOD_CAPS)     f |= NSEventModifierFlagCapsLock;
+		if (mods & MOD_FUNCTION) f |= NSEventModifierFlagFunction;
+		return f;
+	}
+
+	void
+	dispatch_mouse (WKWebView* wv, NSEvent* e)
+	{
+		switch (e.type)
+		{
+			case NSEventTypeLeftMouseDown:     [wv mouseDown:        e]; break;
+			case NSEventTypeLeftMouseUp:       [wv mouseUp:          e]; break;
+			case NSEventTypeLeftMouseDragged:  [wv mouseDragged:     e]; break;
+			case NSEventTypeRightMouseDown:    [wv rightMouseDown:   e]; break;
+			case NSEventTypeRightMouseUp:      [wv rightMouseUp:     e]; break;
+			case NSEventTypeRightMouseDragged: [wv rightMouseDragged:e]; break;
+			case NSEventTypeOtherMouseDown:    [wv otherMouseDown:   e]; break;
+			case NSEventTypeOtherMouseUp:      [wv otherMouseUp:     e]; break;
+			case NSEventTypeOtherMouseDragged: [wv otherMouseDragged:e]; break;
+			case NSEventTypeMouseMoved:        [wv mouseMoved:       e]; break;
+			default: break;
+		}
+	}
+
+}// namespace
 
 
 // SPI: keep the page rendering (visibilityState == "visible") even though
@@ -240,13 +280,139 @@ namespace Reflex
 				return image_ ? &image_ : NULL;
 			}
 
-			void pointer (PointerEvent* e) override {}
+			void pointer (PointerEvent* e) override
+			{
+				if (!host || !e) return;
 
-			void wheel (WheelEvent* e) override {}
+				WKWebView* wv = host->webView;
+				CGFloat    vh = wv.frame.size.height;
+				NSInteger  wn = [host->window windowNumber];
 
-			void key (KeyEvent* e) override {}
+				for (size_t i = 0; i < e->size(); ++i)
+				{
+					const Pointer& p   = (*e)[i];
+					const Point&   pos = p.position();
+					// Reflex is top-left; AppKit window coords are bottom-left.
+					NSPoint loc  = NSMakePoint(pos.x, vh - pos.y);
+					NSUInteger m = to_ns_modifiers(p.modifiers());
 
-			void focus (bool in) override {}
+					Pointer::Action a = p.action();
+					bool down = a == Pointer::DOWN;
+					bool up   = a == Pointer::UP;
+					bool drag = a == Pointer::MOVE && p.is_drag();
+
+					uint t = p.types();
+					NSEventType type;
+					if (t & Pointer::MOUSE_RIGHT)
+					{
+						type = down ? NSEventTypeRightMouseDown :
+						       up   ? NSEventTypeRightMouseUp   :
+						              NSEventTypeRightMouseDragged;
+					}
+					else if (t & Pointer::MOUSE_MIDDLE)
+					{
+						type = down ? NSEventTypeOtherMouseDown :
+						       up   ? NSEventTypeOtherMouseUp   :
+						              NSEventTypeOtherMouseDragged;
+					}
+					else
+					{
+						type = down ? NSEventTypeLeftMouseDown :
+						       up   ? NSEventTypeLeftMouseUp   :
+						              NSEventTypeLeftMouseDragged;
+					}
+					if (a == Pointer::MOVE && !drag)
+						type = NSEventTypeMouseMoved;
+
+					NSInteger clicks = (down || up) ?
+						(NSInteger) (p.click_count() > 0 ? p.click_count() : 1) : 0;
+					CGFloat pressure = (down || drag) ? 1.0 : 0.0;
+
+					NSEvent* ev = [NSEvent
+						mouseEventWithType: type
+						          location: loc
+						     modifierFlags: m
+						         timestamp: 0
+						      windowNumber: wn
+						           context: nil
+						       eventNumber: 0
+						        clickCount: clicks
+						          pressure: pressure];
+					if (ev) dispatch_mouse(wv, ev);
+				}
+			}
+
+			void wheel (WheelEvent* e) override
+			{
+				if (!host || !e) return;
+
+				CGEventRef cg = CGEventCreateScrollWheelEvent(
+					NULL, kCGScrollEventUnitLine, 2, 0, 0);
+				if (!cg) return;
+
+				// NativeWheelEvent stores dy as -deltaY; mirror that back.
+				// Use the fixed-point fields: trackpads emit fractional
+				// line deltas that would truncate to zero as integers.
+				const Point& d = e->dposition();
+				CGEventSetDoubleValueField(
+					cg, kCGScrollWheelEventFixedPtDeltaAxis1, -d.y);
+				CGEventSetDoubleValueField(
+					cg, kCGScrollWheelEventFixedPtDeltaAxis2, d.x);
+
+				// The event has no window, so -locationInWindow yields the
+				// CG location flipped against the primary screen -- and
+				// WebKit feeds that straight to convertPoint:fromView:nil
+				// as window coordinates. Pre-bake the window-local point so
+				// it comes out right after that flip.
+				WKWebView*   wv  = host->webView;
+				const Point& pos = e->position();
+				NSPoint local = NSMakePoint(pos.x, wv.frame.size.height - pos.y);
+				CGFloat sh = NSScreen.screens.firstObject.frame.size.height;
+				CGEventSetLocation(cg, CGPointMake(local.x, sh - local.y));
+
+				NSEvent* ev = [NSEvent eventWithCGEvent: cg];
+				CFRelease(cg);
+				if (ev) [wv scrollWheel: ev];
+			}
+
+			void key (KeyEvent* e) override
+			{
+				if (!host || !e) return;
+
+				NSEventType type;
+				switch (e->action())
+				{
+					case KeyEvent::DOWN: type = NSEventTypeKeyDown; break;
+					case KeyEvent::UP:   type = NSEventTypeKeyUp;   break;
+					default: return;
+				}
+
+				NSString* chars = e->chars() ?
+					[NSString stringWithUTF8String: e->chars()] : @"";
+
+				NSEvent* ev = [NSEvent
+					keyEventWithType: type
+					        location: NSZeroPoint
+					   modifierFlags: to_ns_modifiers(e->modifiers())
+					       timestamp: 0
+					    windowNumber: [host->window windowNumber]
+					         context: nil
+					      characters: chars
+					charactersIgnoringModifiers: chars
+					       isARepeat: (e->repeat() > 0)
+					         keyCode: (unsigned short) e->code()];
+				if (!ev) return;
+
+				if (type == NSEventTypeKeyDown) [host->webView keyDown: ev];
+				else                            [host->webView keyUp:   ev];
+			}
+
+			void focus (bool in) override
+			{
+				if (!host) return;
+				if (in) [host->window makeFirstResponder: host->webView];
+				else    [host->window makeFirstResponder: nil];
+			}
 
 		private:
 
