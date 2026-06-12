@@ -37,7 +37,21 @@ namespace Reflex
 
 		virtual void reload () = 0;
 
+		virtual void go_back () = 0;
+
+		virtual void go_forward () = 0;
+
+		virtual void stop () = 0;
+
+		virtual bool can_go_back () const = 0;
+
+		virtual bool can_go_forward () const = 0;
+
+		virtual bool loading () const = 0;
+
 		virtual Xot::String url () const = 0;
+
+		virtual Xot::String title () const = 0;
 
 		virtual void set_size (int width, int height, float pixel_density) = 0;
 

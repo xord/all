@@ -39,7 +39,21 @@ namespace Reflex
 
 			virtual void reload ();
 
+			virtual void go_back ();
+
+			virtual void go_forward ();
+
+			virtual void stop ();
+
+			virtual bool can_go_back () const;
+
+			virtual bool can_go_forward () const;
+
+			virtual bool loading () const;
+
 			virtual Xot::String url () const;
+
+			virtual Xot::String title () const;
 
 			virtual void on_load (Event* e);
 

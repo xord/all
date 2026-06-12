@@ -56,10 +56,69 @@ RUCY_DEF0(reload)
 RUCY_END
 
 static
+RUCY_DEF0(go_back)
+{
+	CHECK;
+	THIS->go_back();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(go_forward)
+{
+	CHECK;
+	THIS->go_forward();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(stop)
+{
+	CHECK;
+	THIS->stop();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(can_go_back)
+{
+	CHECK;
+	return value(THIS->can_go_back());
+}
+RUCY_END
+
+static
+RUCY_DEF0(can_go_forward)
+{
+	CHECK;
+	return value(THIS->can_go_forward());
+}
+RUCY_END
+
+static
+RUCY_DEF0(loading)
+{
+	CHECK;
+	return value(THIS->loading());
+}
+RUCY_END
+
+static
 RUCY_DEF0(get_url)
 {
 	CHECK;
 	return value(THIS->url().c_str());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_title)
+{
+	CHECK;
+	return value(THIS->title().c_str());
 }
 RUCY_END
 
@@ -77,7 +136,14 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "load_html", load_html);
 	cWebView.define_method(     "eval_js",   eval_js);
 	cWebView.define_method(     "reload",    reload);
+	cWebView.define_method(     "go_back",    go_back);
+	cWebView.define_method(     "go_forward", go_forward);
+	cWebView.define_method(     "stop",       stop);
+	cWebView.define_method(     "can_go_back?",    can_go_back);
+	cWebView.define_method(     "can_go_forward?", can_go_forward);
+	cWebView.define_method(     "loading?",  loading);
 	cWebView.define_method(     "url",       get_url);
+	cWebView.define_method(     "title",     get_title);
 }
 
 

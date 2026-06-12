@@ -57,11 +57,60 @@ namespace Reflex
 		self->backend->reload();
 	}
 
+	void
+	WebView::go_back ()
+	{
+		assert(self->backend);
+		self->backend->go_back();
+	}
+
+	void
+	WebView::go_forward ()
+	{
+		assert(self->backend);
+		self->backend->go_forward();
+	}
+
+	void
+	WebView::stop ()
+	{
+		assert(self->backend);
+		self->backend->stop();
+	}
+
+	bool
+	WebView::can_go_back () const
+	{
+		assert(self->backend);
+		return self->backend->can_go_back();
+	}
+
+	bool
+	WebView::can_go_forward () const
+	{
+		assert(self->backend);
+		return self->backend->can_go_forward();
+	}
+
+	bool
+	WebView::loading () const
+	{
+		assert(self->backend);
+		return self->backend->loading();
+	}
+
 	Xot::String
 	WebView::url () const
 	{
 		assert(self->backend);
 		return self->backend->url();
+	}
+
+	Xot::String
+	WebView::title () const
+	{
+		assert(self->backend);
+		return self->backend->title();
 	}
 
 	void
@@ -164,7 +213,39 @@ namespace Reflex
 				not_available();
 			}
 
+			void go_back () override
+			{
+			}
+
+			void go_forward () override
+			{
+			}
+
+			void stop () override
+			{
+			}
+
+			bool can_go_back () const override
+			{
+				return false;
+			}
+
+			bool can_go_forward () const override
+			{
+				return false;
+			}
+
+			bool loading () const override
+			{
+				return false;
+			}
+
 			Xot::String url () const override
+			{
+				return "";
+			}
+
+			Xot::String title () const override
 			{
 				return "";
 			}

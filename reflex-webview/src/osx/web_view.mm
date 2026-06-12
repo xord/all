@@ -314,10 +314,46 @@ namespace Reflex
 				[host->webView reload];
 			}
 
+			void go_back () override
+			{
+				[host->webView goBack];
+			}
+
+			void go_forward () override
+			{
+				[host->webView goForward];
+			}
+
+			void stop () override
+			{
+				[host->webView stopLoading];
+			}
+
+			bool can_go_back () const override
+			{
+				return [host->webView canGoBack];
+			}
+
+			bool can_go_forward () const override
+			{
+				return [host->webView canGoForward];
+			}
+
+			bool loading () const override
+			{
+				return [host->webView isLoading];
+			}
+
 			Xot::String url () const override
 			{
 				NSURL* u = [host->webView URL];
 				return u ? Xot::String([[u absoluteString] UTF8String]) : Xot::String("");
+			}
+
+			Xot::String title () const override
+			{
+				NSString* t = [host->webView title];
+				return t ? Xot::String([t UTF8String]) : Xot::String("");
 			}
 
 			void set_size (int w, int h, float pixel_density) override

@@ -13,13 +13,27 @@ class TestWebView < Test::Unit::TestCase
 
   def test_responds_to_api()
     wv = web_view
-    %i[load url url= load_html eval_js reload].each do |name|
+    %i[
+      load url url= load_html eval_js reload
+      go_back go_forward stop can_go_back? can_go_forward? loading? title
+    ].each do |name|
       assert_respond_to wv, name
     end
   end
 
   def test_initial_url_is_empty()
     assert_equal '', web_view.url
+  end
+
+  def test_initial_title_is_empty()
+    assert_equal '', web_view.title
+  end
+
+  def test_initial_navigation_state()
+    wv = web_view
+    assert_equal false, wv.can_go_back?
+    assert_equal false, wv.can_go_forward?
+    assert_equal false, wv.loading?
   end
 
   def test_can_set_frame()
