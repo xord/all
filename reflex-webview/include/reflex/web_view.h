@@ -172,6 +172,10 @@ namespace Reflex
 			// if no frame has been captured yet.
 			virtual Rays::Image to_image () const;
 
+			// Called when the page's web content process crashes. The
+			// default reloads the page; override to handle it differently.
+			virtual void on_crash (Event* e);
+
 			virtual void on_message (MessageEvent* e);
 
 			virtual void on_navigate (NavigateEvent* e);

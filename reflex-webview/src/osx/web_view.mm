@@ -162,6 +162,7 @@ namespace
 	std::vector<std::string> openQueue;
 	std::vector<std::string> messageQueue;
 	std::vector<std::pair<long, std::string>> evalResults;
+	BOOL crashed;
 	ReflexWKMessageProxy* messageProxy;
 	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
 }
@@ -343,6 +344,11 @@ static NSString* const REFLEX_BRIDGE_SCRIPT =
 		withError: (NSError*) error
 	{
 		[self queueLoadFail: error];
+	}
+
+	- (void) webViewWebContentProcessDidTerminate: (WKWebView*) wv
+	{
+		crashed = YES;
 	}
 
 	// Synchronous by design: the policy decision needs the handler's
@@ -933,6 +939,13 @@ namespace Reflex
 			void pump_events ()
 			{
 				if (!owner) return;
+
+				if (host->crashed)
+				{
+					host->crashed = NO;
+					Event e;
+					owner->on_crash(&e);
+				}
 
 				if (!host->loadQueue.empty())
 				{

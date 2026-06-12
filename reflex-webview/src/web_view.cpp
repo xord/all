@@ -333,6 +333,13 @@ namespace Reflex
 	}
 
 	void
+	WebView::on_crash (Event* e)
+	{
+		// default: recover by reloading the crashed page.
+		reload();
+	}
+
+	void
 	WebView::on_message (MessageEvent* e)
 	{
 		// default: nothing. overridden in Ruby via RubyWebView.

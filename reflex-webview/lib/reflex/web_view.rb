@@ -58,6 +58,13 @@ module Reflex
     def on_message(e)
     end
 
+    # Called when the page's web content process crashes. The default
+    # reloads the page; override (without calling super) to handle it
+    # differently.
+    def on_crash(e)
+      reload
+    end
+
     # Called before each main-frame navigation. Call e.block to cancel
     # the navigation. Override in a subclass.
     def on_navigate(e)

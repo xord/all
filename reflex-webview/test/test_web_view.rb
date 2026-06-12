@@ -40,9 +40,14 @@ class TestWebView < Test::Unit::TestCase
     wv = web_view
     %i[
       on_load_start on_load on_load_fail on_title_change on_url_change
+      on_crash on_message
     ].each do |name|
       assert_respond_to wv, name
     end
+  end
+
+  def test_responds_to_post_message()
+    assert_respond_to web_view, :post_message
   end
 
   def test_load_event()

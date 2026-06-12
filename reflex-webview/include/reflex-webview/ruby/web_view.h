@@ -51,6 +51,15 @@ namespace Reflex
 
 		public:
 
+			virtual void on_crash (Event* e)
+			{
+				RUCY_SYM(on_crash);
+				if (this->is_overridable())
+					this->value.call(on_crash, Rucy::value(e));
+				else
+					Super::on_crash(e);
+			}
+
 			virtual void on_message (WebView::MessageEvent* e)
 			{
 				RUCY_SYM(on_message);
