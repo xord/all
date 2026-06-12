@@ -491,6 +491,22 @@ namespace Reflex
 
 				unsigned short code = (unsigned short) e->code();
 
+				// When the page has no editable focus, WebKit re-dispatches
+				// unhandled keyDowns through [NSApp sendEvent:]; they land
+				// back in the (key) Reflex window and would loop through
+				// this forwarding forever. A non-repeat keyDown for a code
+				// already down can only be such a re-dispatch -- drop it.
+				if (code < 128)
+				{
+					if (e->action() == KeyEvent::DOWN)
+					{
+						if (key_down_sent_[code] && e->repeat() == 0) return;
+						key_down_sent_[code] = true;
+					}
+					else
+						key_down_sent_[code] = false;
+				}
+
 				if (is_modifier_key(code))
 				{
 					NSEvent* ev = [NSEvent
@@ -559,6 +575,7 @@ namespace Reflex
 			WKCaptureMethod method;
 			bool            probed;
 			bool            dirty;
+			bool            key_down_sent_[128] = {false};
 
 			void owner_size (int* w, int* h)
 			{
