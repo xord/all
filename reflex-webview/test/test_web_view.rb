@@ -94,6 +94,35 @@ class TestWebView < Test::Unit::TestCase
     assert_nil web_view.to_image
   end
 
+  def test_responds_to_property_api()
+    wv = web_view
+    %i[
+      progress user_agent user_agent= zoom zoom= inspectable? inspectable=
+    ].each {|name| assert_respond_to wv, name}
+  end
+
+  def test_reload_is_public_and_takes_optional_force()
+    wv = web_view
+    assert_respond_to wv, :reload
+    # reload! is the private raw binding
+    assert_equal false, wv.respond_to?(:reload!)
+    assert wv.respond_to?(:reload!, true)
+  end
+
+  def test_initial_property_values()
+    wv = web_view
+    assert_equal 0.0, wv.progress
+    assert_equal 1.0, wv.zoom
+    assert_equal false, wv.inspectable?
+    assert_nil wv.user_agent
+  end
+
+  def test_zoom_is_settable()
+    wv = web_view
+    wv.zoom = 1.5
+    assert_in_delta 1.5, wv.zoom, 0.001
+  end
+
   def test_can_set_frame()
     wv = web_view
     wv.frame = [1, 2, 30, 40]

@@ -38,6 +38,8 @@ namespace Reflex
 
 		virtual void reload () = 0;
 
+		virtual void reload (bool ignore_cache) = 0;
+
 		virtual void go_back () = 0;
 
 		virtual void go_forward () = 0;
@@ -50,9 +52,23 @@ namespace Reflex
 
 		virtual bool loading () const = 0;
 
+		virtual float progress () const = 0;
+
 		virtual Xot::String url () const = 0;
 
 		virtual Xot::String title () const = 0;
+
+		virtual void set_user_agent (const char* user_agent) = 0;
+
+		virtual Xot::String user_agent () const = 0;
+
+		virtual void set_zoom (float zoom) = 0;
+
+		virtual float zoom () const = 0;
+
+		virtual void set_inspectable (bool inspectable) = 0;
+
+		virtual bool inspectable () const = 0;
 
 		virtual void set_size (int width, int height, float pixel_density) = 0;
 

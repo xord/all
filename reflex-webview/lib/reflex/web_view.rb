@@ -24,6 +24,13 @@ module Reflex
       url
     end
 
+    # Reloads the current page. Pass true to bypass the cache and
+    # revalidate every resource.
+    def reload(ignore_cache = false)
+      reload! ignore_cache
+      self
+    end
+
     alias eval_js! eval_js
 
     # Runs JavaScript in the page. With a block, the result is

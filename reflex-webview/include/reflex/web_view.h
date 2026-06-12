@@ -126,6 +126,10 @@ namespace Reflex
 
 			virtual void reload ();
 
+			// When ignore_cache is true, bypasses the cache and revalidates
+			// every resource (reloadFromOrigin).
+			virtual void reload (bool ignore_cache);
+
 			virtual void go_back ();
 
 			virtual void go_forward ();
@@ -138,9 +142,26 @@ namespace Reflex
 
 			virtual bool loading () const;
 
+			// Estimated load progress in [0, 1].
+			virtual float progress () const;
+
 			virtual Xot::String url () const;
 
 			virtual Xot::String title () const;
+
+			virtual void set_user_agent (const char* user_agent);
+
+			virtual Xot::String user_agent () const;
+
+			// Page zoom factor (1.0 = 100%).
+			virtual void set_zoom (float zoom);
+
+			virtual float zoom () const;
+
+			// Allows attaching Safari's Web Inspector (macOS 13.3+).
+			virtual void set_inspectable (bool inspectable);
+
+			virtual bool inspectable () const;
 
 			// A copy of the latest rendered page image, or an empty image
 			// if no frame has been captured yet.

@@ -206,6 +206,13 @@ namespace Reflex
 	}
 
 	void
+	WebView::reload (bool ignore_cache)
+	{
+		assert(self->backend);
+		self->backend->reload(ignore_cache);
+	}
+
+	void
 	WebView::go_back ()
 	{
 		assert(self->backend);
@@ -247,6 +254,13 @@ namespace Reflex
 		return self->backend->loading();
 	}
 
+	float
+	WebView::progress () const
+	{
+		assert(self->backend);
+		return self->backend->progress();
+	}
+
 	Xot::String
 	WebView::url () const
 	{
@@ -259,6 +273,48 @@ namespace Reflex
 	{
 		assert(self->backend);
 		return self->backend->title();
+	}
+
+	void
+	WebView::set_user_agent (const char* user_agent)
+	{
+		assert(self->backend);
+		self->backend->set_user_agent(user_agent);
+	}
+
+	Xot::String
+	WebView::user_agent () const
+	{
+		assert(self->backend);
+		return self->backend->user_agent();
+	}
+
+	void
+	WebView::set_zoom (float zoom)
+	{
+		assert(self->backend);
+		self->backend->set_zoom(zoom);
+	}
+
+	float
+	WebView::zoom () const
+	{
+		assert(self->backend);
+		return self->backend->zoom();
+	}
+
+	void
+	WebView::set_inspectable (bool inspectable)
+	{
+		assert(self->backend);
+		self->backend->set_inspectable(inspectable);
+	}
+
+	bool
+	WebView::inspectable () const
+	{
+		assert(self->backend);
+		return self->backend->inspectable();
 	}
 
 	Rays::Image
@@ -419,6 +475,11 @@ namespace Reflex
 				not_available();
 			}
 
+			void reload (bool ignore_cache) override
+			{
+				not_available();
+			}
+
 			void go_back () override
 			{
 			}
@@ -446,6 +507,11 @@ namespace Reflex
 				return false;
 			}
 
+			float progress () const override
+			{
+				return 0;
+			}
+
 			Xot::String url () const override
 			{
 				return "";
@@ -454,6 +520,33 @@ namespace Reflex
 			Xot::String title () const override
 			{
 				return "";
+			}
+
+			void set_user_agent (const char* user_agent) override
+			{
+			}
+
+			Xot::String user_agent () const override
+			{
+				return "";
+			}
+
+			void set_zoom (float zoom) override
+			{
+			}
+
+			float zoom () const override
+			{
+				return 1;
+			}
+
+			void set_inspectable (bool inspectable) override
+			{
+			}
+
+			bool inspectable () const override
+			{
+				return false;
 			}
 
 			void set_size (int width, int height, float pixel_density) override

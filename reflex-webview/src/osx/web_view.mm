@@ -571,6 +571,12 @@ namespace Reflex
 				[host->webView reload];
 			}
 
+			void reload (bool ignore_cache) override
+			{
+				if (ignore_cache) [host->webView reloadFromOrigin];
+				else              [host->webView reload];
+			}
+
 			void go_back () override
 			{
 				[host->webView goBack];
@@ -601,6 +607,11 @@ namespace Reflex
 				return [host->webView isLoading];
 			}
 
+			float progress () const override
+			{
+				return (float) [host->webView estimatedProgress];
+			}
+
 			Xot::String url () const override
 			{
 				NSURL* u = [host->webView URL];
@@ -611,6 +622,41 @@ namespace Reflex
 			{
 				NSString* t = [host->webView title];
 				return t ? Xot::String([t UTF8String]) : Xot::String("");
+			}
+
+			void set_user_agent (const char* user_agent) override
+			{
+				host->webView.customUserAgent = user_agent ?
+					[NSString stringWithUTF8String: user_agent] : nil;
+			}
+
+			Xot::String user_agent () const override
+			{
+				NSString* ua = host->webView.customUserAgent;
+				return ua ? Xot::String([ua UTF8String]) : Xot::String("");
+			}
+
+			void set_zoom (float zoom) override
+			{
+				host->webView.pageZoom = zoom;
+			}
+
+			float zoom () const override
+			{
+				return (float) host->webView.pageZoom;
+			}
+
+			void set_inspectable (bool inspectable) override
+			{
+				if ([host->webView respondsToSelector: @selector(setInspectable:)])
+					host->webView.inspectable = inspectable;
+			}
+
+			bool inspectable () const override
+			{
+				if ([host->webView respondsToSelector: @selector(isInspectable)])
+					return host->webView.inspectable;
+				return false;
 			}
 
 			void set_size (int w, int h, float pixel_density) override
