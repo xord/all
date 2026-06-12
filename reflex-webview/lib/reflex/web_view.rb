@@ -65,6 +65,11 @@ module Reflex
       reload
     end
 
+    # Called for each page console.* call (e.level / e.message).
+    # Override in a subclass.
+    def on_console(e)
+    end
+
     # Called before each main-frame navigation. Call e.block to cancel
     # the navigation. Override in a subclass.
     def on_navigate(e)

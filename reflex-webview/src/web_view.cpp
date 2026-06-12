@@ -152,6 +152,53 @@ namespace Reflex
 	}
 
 
+	struct WebView::ConsoleEvent::Data
+	{
+
+		Xot::String level, message;
+
+		Data (const char* level = NULL, const char* message = NULL)
+		:	level(level ? level : ""), message(message ? message : "")
+		{
+		}
+
+	};// WebView::ConsoleEvent::Data
+
+
+	WebView::ConsoleEvent::ConsoleEvent ()
+	:	self(new Data())
+	{
+	}
+
+	WebView::ConsoleEvent::ConsoleEvent (const char* level, const char* message)
+	:	self(new Data(level, message))
+	{
+	}
+
+	WebView::ConsoleEvent::ConsoleEvent (const ConsoleEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	WebView::ConsoleEvent
+	WebView::ConsoleEvent::dup () const
+	{
+		return ConsoleEvent(this);
+	}
+
+	const char*
+	WebView::ConsoleEvent::level () const
+	{
+		return self->level.c_str();
+	}
+
+	const char*
+	WebView::ConsoleEvent::message () const
+	{
+		return self->message.c_str();
+	}
+
+
 	struct WebView::Data
 	{
 
@@ -337,6 +384,12 @@ namespace Reflex
 	{
 		// default: recover by reloading the crashed page.
 		reload();
+	}
+
+	void
+	WebView::on_console (ConsoleEvent* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
 	}
 
 	void

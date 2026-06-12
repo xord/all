@@ -40,7 +40,7 @@ class TestWebView < Test::Unit::TestCase
     wv = web_view
     %i[
       on_load_start on_load on_load_fail on_title_change on_url_change
-      on_crash on_message
+      on_crash on_message on_console
     ].each do |name|
       assert_respond_to wv, name
     end
@@ -48,6 +48,13 @@ class TestWebView < Test::Unit::TestCase
 
   def test_responds_to_post_message()
     assert_respond_to web_view, :post_message
+  end
+
+  def test_console_event()
+    e = Reflex::WebView::ConsoleEvent.new 'warn', 'hello world'
+    assert_kind_of Reflex::Event, e
+    assert_equal 'warn',        e.level
+    assert_equal 'hello world', e.message
   end
 
   def test_load_event()

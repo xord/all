@@ -106,6 +106,32 @@ namespace Reflex
 
 			};// MessageEvent
 
+			// A console.log/info/warn/error/debug call forwarded from the
+			// page. level() is the method name; message() is the joined
+			// stringified arguments.
+			class ConsoleEvent : public Event
+			{
+
+				public:
+
+					ConsoleEvent ();
+
+					ConsoleEvent (const char* level, const char* message);
+
+					ConsoleEvent (const ConsoleEvent* src);
+
+					ConsoleEvent dup () const;
+
+					const char* level () const;
+
+					const char* message () const;
+
+					struct Data;
+
+					Xot::PSharedImpl<Data> self;
+
+			};// ConsoleEvent
+
 			// Receives the result of eval() as a JSON array holding the
 			// single result value, or NULL if the result could not be
 			// serialized (or the script failed).
@@ -175,6 +201,9 @@ namespace Reflex
 			// Called when the page's web content process crashes. The
 			// default reloads the page; override to handle it differently.
 			virtual void on_crash (Event* e);
+
+			// Called for each page console.* call.
+			virtual void on_console (ConsoleEvent* e);
 
 			virtual void on_message (MessageEvent* e);
 

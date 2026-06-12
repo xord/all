@@ -25,6 +25,8 @@ RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::NavigateEvent
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::MessageEvent)
 
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::ConsoleEvent)
+
 
 namespace Reflex
 {
@@ -42,6 +44,9 @@ namespace Reflex
 	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_message_event_class ();
 	// class Reflex::WebView::MessageEvent
 
+	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_console_event_class ();
+	// class Reflex::WebView::ConsoleEvent
+
 
 	template <typename T>
 	class RubyWebView : public RubyView<T>
@@ -58,6 +63,15 @@ namespace Reflex
 					this->value.call(on_crash, Rucy::value(e));
 				else
 					Super::on_crash(e);
+			}
+
+			virtual void on_console (WebView::ConsoleEvent* e)
+			{
+				RUCY_SYM(on_console);
+				if (this->is_overridable())
+					this->value.call(on_console, Rucy::value(e));
+				else
+					Super::on_console(e);
 			}
 
 			virtual void on_message (WebView::MessageEvent* e)
@@ -164,6 +178,12 @@ namespace Rucy
 	get_ruby_class<Reflex::WebView::MessageEvent> ()
 	{
 		return Reflex::web_view_message_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::WebView::ConsoleEvent> ()
+	{
+		return Reflex::web_view_console_event_class();
 	}
 
 

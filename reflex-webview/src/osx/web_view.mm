@@ -161,12 +161,14 @@ namespace
 	std::vector<LoadItem> loadQueue;
 	std::vector<std::string> openQueue;
 	std::vector<std::string> messageQueue;
+	std::vector<std::pair<std::string, std::string>> consoleQueue;
 	std::vector<std::pair<long, std::string>> evalResults;
 	BOOL crashed;
 	ReflexWKMessageProxy* messageProxy;
 	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
 }
 - (void) didReceiveMessage: (NSString*) json;
+- (void) didReceiveInternal: (NSString*) json;
 - (instancetype) initWithWidth: (int) w height: (int) h;
 - (void) setSizeWidth: (int) w height: (int) h;
 - (void) requestSnapshot;
@@ -181,7 +183,12 @@ namespace
 	{
 		if (!host) return;
 		if (![message.body isKindOfClass: [NSString class]]) return;
-		[host didReceiveMessage: (NSString*) message.body];
+
+		NSString* body = (NSString*) message.body;
+		if ([message.name isEqualToString: @"reflexInternal"])
+			[host didReceiveInternal: body];
+		else
+			[host didReceiveMessage: body];
 	}
 
 @end
@@ -198,6 +205,31 @@ static NSString* const REFLEX_BRIDGE_SCRIPT =
 	@"  },"
 	@"  onmessage: null"
 	@"};";
+
+
+// Injected at document start. Wraps console.* to forward each call to
+// the host over the reflexInternal channel, then calls through to the
+// original so the page's own logging is unaffected.
+static NSString* const REFLEX_CONSOLE_SCRIPT =
+	@"(function(){"
+	@"  var post = function(level, args){"
+	@"    try {"
+	@"      var parts = [];"
+	@"      for (var i = 0; i < args.length; i++) {"
+	@"        var a = args[i];"
+	@"        try { parts.push(typeof a === 'object' ? JSON.stringify(a) : String(a)); }"
+	@"        catch (e) { parts.push(String(a)); }"
+	@"      }"
+	@"      window.webkit.messageHandlers.reflexInternal.postMessage("
+	@"        JSON.stringify({kind:'console', level:level, message:parts.join(' ')}));"
+	@"    } catch (e) {}"
+	@"  };"
+	@"  ['log','info','warn','error','debug'].forEach(function(level){"
+	@"    var orig = console[level];"
+	@"    console[level] = function(){ post(level, arguments);"
+	@"      if (orig) orig.apply(console, arguments); };"
+	@"  });"
+	@"})();";
 
 
 @implementation ReflexWKHost
@@ -237,6 +269,14 @@ static NSString* const REFLEX_BRIDGE_SCRIPT =
 		[[conf userContentController] addUserScript: bridge];
 		[[conf userContentController]
 			addScriptMessageHandler: messageProxy name: @"reflex"];
+
+		WKUserScript* console = [[[WKUserScript alloc]
+			initWithSource: REFLEX_CONSOLE_SCRIPT
+			 injectionTime: WKUserScriptInjectionTimeAtDocumentStart
+			forMainFrameOnly: NO] autorelease];
+		[[conf userContentController] addUserScript: console];
+		[[conf userContentController]
+			addScriptMessageHandler: messageProxy name: @"reflexInternal"];
 
 		webView = [[WKWebView alloc] initWithFrame: rect configuration: conf];
 		[webView setNavigationDelegate: self];
@@ -280,8 +320,9 @@ static NSString* const REFLEX_BRIDGE_SCRIPT =
 		[[NSNotificationCenter defaultCenter] removeObserver: self];
 		if (pendingSnapshot) CGImageRelease(pendingSnapshot);
 		messageProxy->host = nil;
-		[[[webView configuration] userContentController]
-			removeScriptMessageHandlerForName: @"reflex"];
+		WKUserContentController* ucc = [[webView configuration] userContentController];
+		[ucc removeScriptMessageHandlerForName: @"reflex"];
+		[ucc removeScriptMessageHandlerForName: @"reflexInternal"];
 		[messageProxy release];
 		[webView setNavigationDelegate: nil];
 		[webView setUIDelegate: nil];
@@ -293,6 +334,22 @@ static NSString* const REFLEX_BRIDGE_SCRIPT =
 	- (void) didReceiveMessage: (NSString*) json
 	{
 		messageQueue.emplace_back([json UTF8String]);
+	}
+
+	- (void) didReceiveInternal: (NSString*) json
+	{
+		NSData* data = [json dataUsingEncoding: NSUTF8StringEncoding];
+		NSDictionary* d = [NSJSONSerialization
+			JSONObjectWithData: data options: 0 error: NULL];
+		if (![d isKindOfClass: [NSDictionary class]]) return;
+
+		NSString* kind = d[@"kind"];
+		if ([kind isEqualToString: @"console"])
+		{
+			NSString* level = d[@"level"]   ?: @"log";
+			NSString* msg   = d[@"message"] ?: @"";
+			consoleQueue.emplace_back([level UTF8String], [msg UTF8String]);
+		}
 	}
 
 	- (void) setSizeWidth: (int) w height: (int) h
@@ -977,6 +1034,17 @@ namespace Reflex
 						WebView::EvalCallback callback = it->second;
 						eval_callbacks_.erase(it);
 						callback(json.empty() ? NULL : json.c_str());
+					}
+				}
+
+				if (!host->consoleQueue.empty())
+				{
+					std::vector<std::pair<std::string, std::string>> queue;
+					queue.swap(host->consoleQueue);
+					for (const auto& [level, message] : queue)
+					{
+						WebView::ConsoleEvent e(level.c_str(), message.c_str());
+						owner->on_console(&e);
 					}
 				}
 
