@@ -84,6 +84,12 @@ class TestWebView < Test::Unit::TestCase
     assert_respond_to web_view, :on_message
   end
 
+  def test_eval_js_accepts_a_block()
+    assert_nothing_raised do
+      web_view.eval_js('1 + 2') {|result|}
+    end
+  end
+
   def test_can_set_frame()
     wv = web_view
     wv.frame = [1, 2, 30, 40]

@@ -7,13 +7,11 @@
 #include <xot/string.h>
 #include <rays/image.h>
 #include <reflex/event.h>
+#include <reflex/web_view.h>
 
 
 namespace Reflex
 {
-
-
-	class WebView;
 
 
 	/*
@@ -34,6 +32,9 @@ namespace Reflex
 		virtual void load_html (const char* html) = 0;
 
 		virtual void eval (const char* script) = 0;
+
+		virtual void eval (
+			const char* script, WebView::EvalCallback callback) = 0;
 
 		virtual void reload () = 0;
 

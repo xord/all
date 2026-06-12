@@ -4,6 +4,7 @@
 #define __REFLEX_WEB_VIEW_H__
 
 
+#include <functional>
 #include <xot/pimpl.h>
 #include <xot/string.h>
 #include <reflex/view.h>
@@ -104,6 +105,12 @@ namespace Reflex
 
 			};// MessageEvent
 
+			// Receives the result of eval() as a JSON array holding the
+			// single result value, or NULL if the result could not be
+			// serialized (or the script failed).
+			typedef std::function<void (const char* result_json)>
+				EvalCallback;
+
 			WebView (const char* name = NULL);
 
 			virtual ~WebView ();
@@ -113,6 +120,8 @@ namespace Reflex
 			virtual void load_html (const char* html);
 
 			virtual void eval (const char* script);
+
+			virtual void eval (const char* script, EvalCallback callback);
 
 			virtual void reload ();
 

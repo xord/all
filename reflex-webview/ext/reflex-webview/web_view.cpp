@@ -37,11 +37,30 @@ RUCY_DEF1(load_html, html)
 }
 RUCY_END
 
+// Keeps pending eval blocks alive against GC until their result
+// arrives.
+static Rucy::GlobalValue eval_blocks;
+
 static
 RUCY_DEF1(eval_js, script)
 {
 	CHECK;
-	THIS->eval(script.c_str());
+
+	if (rb_block_given_p())
+	{
+		Value block = rb_block_proc();
+		eval_blocks.call("push", block);
+
+		THIS->eval(script.c_str(), [block](const char* result_json)
+		{
+			Value b = block;
+			eval_blocks.call("delete", b);
+			b.call("call", result_json ? value(result_json) : nil());
+		});
+	}
+	else
+		THIS->eval(script.c_str());
+
 	return self;
 }
 RUCY_END
@@ -129,6 +148,8 @@ void
 Init_reflex_web_view ()
 {
 	Module mReflex = define_module("Reflex");
+
+	eval_blocks = Value(rb_ary_new());
 
 	cWebView = mReflex.define_class("WebView", Reflex::view_class());
 	cWebView.define_alloc_func(alloc);

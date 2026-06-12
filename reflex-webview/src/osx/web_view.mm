@@ -3,6 +3,7 @@
 
 
 #include <string.h>
+#include <map>
 #include <string>
 #include <vector>
 #import <Cocoa/Cocoa.h>
@@ -160,6 +161,7 @@ namespace
 	std::vector<LoadItem> loadQueue;
 	std::vector<std::string> openQueue;
 	std::vector<std::string> messageQueue;
+	std::vector<std::pair<long, std::string>> evalResults;
 	ReflexWKMessageProxy* messageProxy;
 	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
 }
@@ -529,6 +531,41 @@ namespace Reflex
 				[host->webView evaluateJavaScript: s completionHandler: nil];
 			}
 
+			void eval (
+				const char* script, WebView::EvalCallback callback) override
+			{
+				if (!callback) return eval(script);
+
+				long eid = ++last_eval_id_;
+				eval_callbacks_[eid] = callback;
+
+				// the result lands in the host queue and the callback runs
+				// on the next update(), inside the normal event cycle. an
+				// empty string marks failure (script error or a value JSON
+				// cannot express).
+				ReflexWKHost* h = host;
+				NSString* s = script ? [NSString stringWithUTF8String: script] : @"";
+				[host->webView evaluateJavaScript: s
+					completionHandler: ^(id result, NSError* error)
+				{
+					std::string json;
+					if (!error)
+					{
+						// NSJSONSerialization rejects top-level scalars;
+						// wrap the value in an array.
+						NSArray* wrapped = @[result ? result : [NSNull null]];
+						if ([NSJSONSerialization isValidJSONObject: wrapped])
+						{
+							NSData* data = [NSJSONSerialization
+								dataWithJSONObject: wrapped options: 0 error: NULL];
+							if (data)
+								json.assign((const char*) data.bytes, data.length);
+						}
+					}
+					h->evalResults.emplace_back(eid, json);
+				}];
+			}
+
 			void reload () override
 			{
 				[host->webView reload];
@@ -829,6 +866,8 @@ namespace Reflex
 			bool            dirty;
 			bool            key_down_sent_[128] = {false};
 			Xot::String     last_title_, last_url_;
+			long            last_eval_id_ = 0;
+			std::map<long, WebView::EvalCallback> eval_callbacks_;
 
 			// Drains queued page-load notifications and polls title/URL
 			// for changes; handlers run here, inside the update cycle.
@@ -851,6 +890,21 @@ namespace Reflex
 							case LoadItem::FINISH: owner->on_load(&e);       break;
 							case LoadItem::FAIL:   owner->on_load_fail(&e);  break;
 						}
+					}
+				}
+
+				if (!host->evalResults.empty())
+				{
+					std::vector<std::pair<long, std::string>> results;
+					results.swap(host->evalResults);
+					for (const auto& [eid, json] : results)
+					{
+						auto it = eval_callbacks_.find(eid);
+						if (it == eval_callbacks_.end()) continue;
+
+						WebView::EvalCallback callback = it->second;
+						eval_callbacks_.erase(it);
+						callback(json.empty() ? NULL : json.c_str());
 					}
 				}
 

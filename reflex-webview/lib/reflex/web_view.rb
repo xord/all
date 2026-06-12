@@ -24,6 +24,20 @@ module Reflex
       url
     end
 
+    alias eval_js! eval_js
+
+    # Runs JavaScript in the page. With a block, the result is
+    # delivered to it asynchronously (nil if the script failed or the
+    # result is not expressible as JSON).
+    def eval_js(script, &block)
+      if block
+        eval_js!(script) {|json| block.call(json && JSON.parse(json).first)}
+      else
+        eval_js! script
+      end
+      self
+    end
+
     # Called when page JavaScript posts a message via
     # __REFLEX__.postMessage(data). Override in a subclass.
     def on_message(e)

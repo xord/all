@@ -192,6 +192,13 @@ namespace Reflex
 	}
 
 	void
+	WebView::eval (const char* script, EvalCallback callback)
+	{
+		assert(self->backend);
+		self->backend->eval(script, callback);
+	}
+
+	void
 	WebView::reload ()
 	{
 		assert(self->backend);
@@ -389,6 +396,12 @@ namespace Reflex
 			}
 
 			void eval (const char* script) override
+			{
+				not_available();
+			}
+
+			void eval (
+				const char* script, WebView::EvalCallback callback) override
 			{
 				not_available();
 			}
