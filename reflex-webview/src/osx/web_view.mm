@@ -8,6 +8,7 @@
 #include <vector>
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
+#import <objc/runtime.h>
 #include <reflex/web_view.h>
 #include <reflex/pointer.h>
 #include "wk_capture.h"
@@ -148,6 +149,33 @@ namespace
 @end
 
 
+// Per-download bookkeeping: the id shared with Ruby, the pending
+// destination completion handler (called once on_download has run), and
+// the last reported byte count for progress throttling.
+@interface ReflexDownload : NSObject
+{
+	@public
+	long       ident;
+	NSString*  url;
+	NSString*  filename;
+	long long  lastCompleted;
+	WKDownload* download;
+	void (^destHandler)(NSURL*);
+}
+@end
+
+@implementation ReflexDownload
+	- (void) dealloc
+	{
+		[url release];
+		[filename release];
+		[download release];
+		[destHandler release];
+		[super dealloc];
+	}
+@end
+
+
 @class ReflexWKHost;
 
 // WKUserContentController retains its script message handlers, which
@@ -164,7 +192,7 @@ namespace
 // Hosts the WKWebView in an invisible, off-desktop-but-ordered-in window
 // and owns the bits that must outlive an async snapshot completion. All
 // access is on the main thread.
-@interface ReflexWKHost : NSObject <WKNavigationDelegate, WKUIDelegate>
+@interface ReflexWKHost : NSObject <WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate>
 {
 	@public
 	ReflexWKHostWindow* window;
@@ -179,11 +207,16 @@ namespace
 	std::vector<std::pair<long, bool>> findResults;
 	std::string favicon, hoveredUrl;
 	BOOL crashed;
+	std::vector<Reflex::WebView::DownloadInfo> downloadQueue;
+	NSMutableDictionary<NSNumber*, ReflexDownload*>* downloads;
+	long nextDownloadId;
 	ReflexWKMessageProxy* messageProxy;
 	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
 }
 - (void) didReceiveMessage: (NSString*) json;
 - (void) didReceiveInternal: (NSString*) json;
+- (void) registerDownload: (WKDownload*) download;
+- (void) queueDownload: (ReflexDownload*) rd kind: (int) kind error: (NSString*) err;
 - (instancetype) initWithWidth: (int) w height: (int) h;
 - (void) setSizeWidth: (int) w height: (int) h;
 - (void) requestSnapshot;
@@ -287,6 +320,8 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		self = [super init];
 		if (!self) return nil;
 
+		downloads = [[NSMutableDictionary alloc] init];
+
 		NSRect rect = NSMakeRect(0, 0, w, h);
 		window = [[ReflexWKHostWindow alloc]
 			initWithContentRect: rect
@@ -373,6 +408,7 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 	- (void) dealloc
 	{
 		[[NSNotificationCenter defaultCenter] removeObserver: self];
+		[downloads release];
 		if (pendingSnapshot) CGImageRelease(pendingSnapshot);
 		messageProxy->host = nil;
 		WKUserContentController* ucc = [[webView configuration] userContentController];
@@ -480,6 +516,12 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		decidePolicyForNavigationAction: (WKNavigationAction*) action
 		decisionHandler: (void (^)(WKNavigationActionPolicy)) decisionHandler
 	{
+		if (action.shouldPerformDownload)
+		{
+			decisionHandler(WKNavigationActionPolicyDownload);
+			return;
+		}
+
 		BOOL allow = YES;
 		if (owner && action.targetFrame && action.targetFrame.isMainFrame)
 		{
@@ -490,6 +532,89 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		}
 		decisionHandler(
 			allow ? WKNavigationActionPolicyAllow : WKNavigationActionPolicyCancel);
+	}
+
+	// Responses the web view cannot display become downloads.
+	- (void) webView: (WKWebView*) wv
+		decidePolicyForNavigationResponse: (WKNavigationResponse*) response
+		decisionHandler: (void (^)(WKNavigationResponsePolicy)) decisionHandler
+	{
+		decisionHandler(response.canShowMIMEType ?
+			WKNavigationResponsePolicyAllow : WKNavigationResponsePolicyDownload);
+	}
+
+	- (void) webView: (WKWebView*) wv
+		navigationAction: (WKNavigationAction*) action
+		didBecomeDownload: (WKDownload*) download
+	{
+		[self registerDownload: download];
+	}
+
+	- (void) webView: (WKWebView*) wv
+		navigationResponse: (WKNavigationResponse*) response
+		didBecomeDownload: (WKDownload*) download
+	{
+		[self registerDownload: download];
+	}
+
+	- (void) registerDownload: (WKDownload*) download
+	{
+		ReflexDownload* rd = [[[ReflexDownload alloc] init] autorelease];
+		rd->ident    = ++nextDownloadId;
+		rd->download = [download retain];
+		download.delegate = self;
+		objc_setAssociatedObject(
+			download, "reflex_rd", rd, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+		downloads[@(rd->ident)] = rd;
+	}
+
+	- (void) queueDownload: (ReflexDownload*) rd kind: (int) kind
+		error: (NSString*) err
+	{
+		Reflex::WebView::DownloadInfo info;
+		info.id                 = rd->ident;
+		info.kind               = kind;
+		info.url                = rd->url ? [rd->url UTF8String] : "";
+		info.suggested_filename = rd->filename ? [rd->filename UTF8String] : "";
+		info.error              = err ? [err UTF8String] : "";
+		info.total_bytes        = (long) rd->download.progress.totalUnitCount;
+		info.received_bytes     = (long) rd->download.progress.completedUnitCount;
+		downloadQueue.push_back(info);
+	}
+
+	// --- WKDownloadDelegate ---
+
+	- (void) download: (WKDownload*) download
+		decideDestinationUsingResponse: (NSURLResponse*) response
+		suggestedFilename: (NSString*) suggestedFilename
+		completionHandler: (void (^)(NSURL*)) completionHandler
+	{
+		ReflexDownload* rd =
+			objc_getAssociatedObject(download, "reflex_rd");
+		if (!rd) { completionHandler(nil); return; }
+
+		rd->url         = [response.URL.absoluteString copy];
+		rd->filename    = [suggestedFilename copy];
+		rd->destHandler = [completionHandler copy];
+
+		// on_download runs on the next pump; commit_download then calls
+		// destHandler with the chosen path.
+		[self queueDownload: rd kind: 0 error: nil];
+	}
+
+	- (void) downloadDidFinish: (WKDownload*) download
+	{
+		ReflexDownload* rd = objc_getAssociatedObject(download, "reflex_rd");
+		if (rd) [self queueDownload: rd kind: 2 error: nil];
+	}
+
+	- (void) download: (WKDownload*) download
+		didFailWithError: (NSError*) error
+		resumeData: (NSData*) resumeData
+	{
+		ReflexDownload* rd = objc_getAssociatedObject(download, "reflex_rd");
+		if (rd) [self queueDownload: rd kind: 3
+			error: error.localizedDescription];
 	}
 
 	// JavaScript dialogs would otherwise try to present inside the
@@ -698,6 +823,37 @@ namespace Reflex
 					if (wants_result)
 						h->findResults.emplace_back(fid, (bool) result.matchFound);
 				}];
+			}
+
+			void download (const char* url) override
+			{
+				NSString* s = url ? [NSString stringWithUTF8String: url] : @"";
+				NSURL* u = [NSURL URLWithString: s];
+				if (!u) return;
+
+				ReflexWKHost* h = host;
+				[host->webView startDownloadUsingRequest: [NSURLRequest requestWithURL: u]
+					completionHandler: ^(WKDownload* download)
+				{
+					[h registerDownload: download];
+				}];
+			}
+
+			void commit_download (long id, const char* path) override
+			{
+				ReflexDownload* rd = host->downloads[@(id)];
+				if (!rd || !rd->destHandler) return;
+
+				NSString* p = path ? [NSString stringWithUTF8String: path] : @"";
+				rd->destHandler([NSURL fileURLWithPath: p]);
+				[rd->destHandler release];
+				rd->destHandler = nil;
+			}
+
+			void cancel_download (long id) override
+			{
+				ReflexDownload* rd = host->downloads[@(id)];
+				if (rd) [rd->download cancel: nil];
 			}
 
 			void post_message (const char* data_json) override
@@ -1227,6 +1383,30 @@ namespace Reflex
 					{
 						WebView::NavigateEvent e(url.c_str());
 						owner->on_open(&e);
+					}
+				}
+
+				// Poll active downloads for progress, then drain the queue.
+				for (NSNumber* key in [host->downloads allKeys])
+				{
+					ReflexDownload* rd = host->downloads[key];
+					if (rd->destHandler) continue;  // destination not chosen yet
+					long long c = rd->download.progress.completedUnitCount;
+					if (c != rd->lastCompleted)
+					{
+						rd->lastCompleted = c;
+						[host queueDownload: rd kind: 1 error: nil];
+					}
+				}
+				if (!host->downloadQueue.empty())
+				{
+					std::vector<WebView::DownloadInfo> q;
+					q.swap(host->downloadQueue);
+					for (const auto& info : q)
+					{
+						owner->on_download_event(info);
+						if (info.kind == 2 || info.kind == 3)
+							[host->downloads removeObjectForKey: @(info.id)];
 					}
 				}
 

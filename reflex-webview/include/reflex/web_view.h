@@ -143,6 +143,17 @@ namespace Reflex
 			// Receives whether find() located a match.
 			typedef std::function<void (bool found)> FindCallback;
 
+			// A download progress notification carried from the backend to
+			// the Ruby orchestration layer. kind: 0=start 1=progress
+			// 2=finish 3=fail.
+			struct DownloadInfo
+			{
+				long id;
+				int  kind;
+				Xot::String url, suggested_filename, error;
+				long total_bytes, received_bytes;
+			};
+
 			WebView (const char* name = NULL);
 
 			virtual ~WebView ();
@@ -164,6 +175,16 @@ namespace Reflex
 			// the next match. callback (if any) receives whether a match
 			// was found.
 			virtual void find (const char* text, FindCallback callback);
+
+			// Starts downloading url (e.g. for a 'save link as' action).
+			virtual void download (const char* url);
+
+			// Backend hooks used by the Ruby download orchestration:
+			// commit_download supplies the chosen destination once
+			// on_download has run; cancel_download aborts it.
+			virtual void commit_download (long id, const char* path);
+
+			virtual void cancel_download (long id);
 
 			virtual void reload ();
 
@@ -239,6 +260,10 @@ namespace Reflex
 
 			// Called for each page console.* call.
 			virtual void on_console (ConsoleEvent* e);
+
+			// Internal: delivers a download notification to the Ruby
+			// orchestration layer (which fans it out to on_download etc.).
+			virtual void on_download_event (const DownloadInfo& info);
 
 			virtual void on_message (MessageEvent* e);
 

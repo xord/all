@@ -442,6 +442,33 @@ namespace Reflex
 	}
 
 	void
+	WebView::download (const char* url)
+	{
+		assert(self->backend);
+		self->backend->download(url);
+	}
+
+	void
+	WebView::commit_download (long id, const char* path)
+	{
+		assert(self->backend);
+		self->backend->commit_download(id, path);
+	}
+
+	void
+	WebView::cancel_download (long id)
+	{
+		assert(self->backend);
+		self->backend->cancel_download(id);
+	}
+
+	void
+	WebView::on_download_event (const DownloadInfo& info)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
+	}
+
+	void
 	WebView::on_message (MessageEvent* e)
 	{
 		// default: nothing. overridden in Ruby via RubyWebView.
@@ -613,6 +640,19 @@ namespace Reflex
 				const char* text, WebView::FindCallback callback) override
 			{
 				not_available();
+			}
+
+			void download (const char* url) override
+			{
+				not_available();
+			}
+
+			void commit_download (long id, const char* path) override
+			{
+			}
+
+			void cancel_download (long id) override
+			{
 			}
 
 			void reload () override

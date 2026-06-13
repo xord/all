@@ -79,6 +79,33 @@ class TestWebView < Test::Unit::TestCase
     assert_respond_to web_view, :find
   end
 
+  def test_download_api()
+    wv = web_view
+    assert_respond_to wv, :download
+    %i[on_download on_download_progress on_download_finish on_download_fail]
+      .each {|name| assert_respond_to wv, name}
+  end
+
+  def test_download_object()
+    d = Reflex::WebView::Download.new nil, 1, 'https://x/f.zip', 'f.zip', 1000
+    assert_equal 'https://x/f.zip', d.url
+    assert_equal 'f.zip', d.suggested_filename
+    assert_equal 1000,    d.total_bytes
+    assert_equal 0,       d.received_bytes
+    assert_equal :downloading, d.state
+    assert_in_delta 0.0,  d.fraction, 0.001
+    d.update__ 500, 1000, :downloading, nil
+    assert_in_delta 0.5,  d.fraction, 0.001
+    d.path = '/tmp/out.zip'
+    assert_equal '/tmp/out.zip', d.path
+  end
+
+  def test_download_event_wraps_download()
+    d = Reflex::WebView::Download.new nil, 1, 'u', 'f', 0
+    e = Reflex::WebView::DownloadEvent.new d
+    assert_same d, e.download
+  end
+
   def test_console_event()
     e = Reflex::WebView::ConsoleEvent.new 'warn', 'hello world'
     assert_kind_of Reflex::Event, e

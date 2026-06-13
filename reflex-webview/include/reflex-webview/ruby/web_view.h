@@ -74,6 +74,24 @@ namespace Reflex
 					Super::on_console(e);
 			}
 
+			virtual void on_download_event (const WebView::DownloadInfo& info)
+			{
+				RUCY_SYM(handle_download_event);
+				if (!this->is_overridable())
+				{
+					Super::on_download_event(info);
+					return;
+				}
+				this->value.call(handle_download_event,
+					Rucy::value(info.id),
+					Rucy::value(info.kind),
+					Rucy::value(info.url.c_str()),
+					Rucy::value(info.suggested_filename.c_str()),
+					Rucy::value(info.error.c_str()),
+					Rucy::value((long) info.total_bytes),
+					Rucy::value((long) info.received_bytes));
+			}
+
 			virtual void on_message (WebView::MessageEvent* e)
 			{
 				RUCY_SYM(on_message);

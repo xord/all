@@ -28,6 +28,57 @@ module Reflex
 
     end# HistoryItem
 
+    # A file download in progress. In on_download, set #path to choose
+    # where it is saved (defaults to the current directory); #cancel
+    # aborts it. Progress and completion arrive via on_download_progress,
+    # on_download_finish, and on_download_fail.
+    class Download
+
+      attr_reader :url, :suggested_filename, :state, :error
+      attr_reader :total_bytes, :received_bytes
+      attr_accessor :path
+
+      def initialize(web_view, id, url, suggested_filename, total_bytes)
+        @web_view           = web_view
+        @id                 = id
+        @url                = url
+        @suggested_filename = suggested_filename
+        @total_bytes        = total_bytes
+        @received_bytes     = 0
+        @state              = :downloading
+        @path               = nil
+      end
+
+      # Fraction completed in 0.0..1.0 (0 if the total is unknown).
+      def fraction()
+        @total_bytes.to_i > 0 ? @received_bytes.to_f / @total_bytes : 0.0
+      end
+
+      # Cancels the download.
+      def cancel()
+        @web_view.__send__ :cancel_download!, @id
+      end
+
+      def update__(received, total, state, error)
+        @received_bytes = received
+        @total_bytes    = total if total.to_i > 0
+        @state          = state
+        @error          = error
+      end
+
+    end# Download
+
+    # Wraps a Download for the on_download* handlers (e.download).
+    class DownloadEvent
+
+      attr_reader :download
+
+      def initialize(download)
+        @download = download
+      end
+
+    end# DownloadEvent
+
     class MessageEvent
 
       # The message posted from page JavaScript, parsed from JSON.
@@ -108,6 +159,65 @@ module Reflex
     # Called for each page console.* call (e.level / e.message).
     # Override in a subclass.
     def on_console(e)
+    end
+
+    # Called when a download starts. Set e.download.path to choose the
+    # destination (defaults to the current directory); call
+    # e.download.cancel to abort. Override in a subclass.
+    def on_download(e)
+    end
+
+    # Called as a download progresses (e.download.fraction etc.).
+    def on_download_progress(e)
+    end
+
+    # Called when a download completes (e.download.path is the file).
+    def on_download_finish(e)
+    end
+
+    # Called when a download fails or is cancelled (e.download.error).
+    def on_download_fail(e)
+    end
+
+    # Internal: receives raw download notifications from the backend and
+    # fans them out to the on_download* handlers, keeping one Download
+    # object per download.
+    def handle_download_event(id, kind, url, filename, error, total, received)
+      @downloads ||= {}
+      case kind
+      when 0   # start
+        d = Download.new self, id, url, filename, total
+        @downloads[id] = d
+        on_download DownloadEvent.new(d)
+        path = d.path || unique_download_path__(filename)
+        commit_download! id, path.to_s
+      when 1   # progress
+        d = @downloads[id] or return
+        d.update__ received, total, :downloading, nil
+        on_download_progress DownloadEvent.new(d)
+      when 2   # finish
+        d = @downloads.delete(id) or return
+        d.update__ received, total, :finished, nil
+        on_download_finish DownloadEvent.new(d)
+      when 3   # fail
+        d = @downloads.delete(id) or return
+        d.update__ received, total, :failed, error
+        on_download_fail DownloadEvent.new(d)
+      end
+    end
+
+    # Default destination: the current directory, with the suggested
+    # name made unique against existing files.
+    def unique_download_path__(filename)
+      filename = 'download' if filename.nil? || filename.empty?
+      base = File.join Dir.pwd, filename
+      return base unless File.exist?(base)
+
+      ext  = File.extname filename
+      stem = File.basename filename, ext
+      i    = 1
+      i += 1 while File.exist?(File.join(Dir.pwd, "#{stem} (#{i})#{ext}"))
+      File.join Dir.pwd, "#{stem} (#{i})#{ext}"
     end
 
     # Called when the page favicon URL changes (see #favicon).

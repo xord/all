@@ -41,6 +41,12 @@ namespace Reflex
 		virtual void find (
 			const char* text, WebView::FindCallback callback) = 0;
 
+		virtual void download (const char* url) = 0;
+
+		virtual void commit_download (long id, const char* path) = 0;
+
+		virtual void cancel_download (long id) = 0;
+
 		virtual void reload () = 0;
 
 		virtual void reload (bool ignore_cache) = 0;

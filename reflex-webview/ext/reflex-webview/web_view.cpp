@@ -176,6 +176,33 @@ RUCY_DEF1(go_to, offset)
 RUCY_END
 
 static
+RUCY_DEF1(download, url)
+{
+	CHECK;
+	THIS->download(url.c_str());
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF2(commit_download, id, path)
+{
+	CHECK;
+	THIS->commit_download(to<long>(id), path.c_str());
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(cancel_download, id)
+{
+	CHECK;
+	THIS->cancel_download(to<long>(id));
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF0(stop)
 {
 	CHECK;
@@ -336,6 +363,9 @@ Init_reflex_web_view ()
 	cWebView.define_private_method("forward_list!", forward_list_raw);
 	cWebView.define_private_method("current_item!", current_item_raw);
 	cWebView.define_method(     "go_to",     go_to);
+	cWebView.define_method(     "download",  download);
+	cWebView.define_private_method("commit_download!", commit_download);
+	cWebView.define_private_method("cancel_download!", cancel_download);
 	cWebView.define_method(     "stop",       stop);
 	cWebView.define_method(     "can_go_back?",    can_go_back);
 	cWebView.define_method(     "can_go_forward?", can_go_forward);
