@@ -217,6 +217,21 @@ class TestWebView < Test::Unit::TestCase
     assert_equal 'test-profile', ds.name
   end
 
+  def test_data_store_cookies_api()
+    ds = Reflex::WebView::DataStore.new
+    assert_respond_to ds, :cookies
+    assert_respond_to ds, :cookies=
+    # a fresh ephemeral store has no cookies yet
+    c = ds.cookies
+    assert(c.nil? || c.is_a?(String))
+    # restoring nil / empty / a round-tripped value is a no-op, not an error
+    assert_nothing_raised do
+      ds.cookies = nil
+      ds.cookies = ''
+      ds.cookies = c if c
+    end
+  end
+
   def test_data_store_clear_is_a_noop_smoke()
     assert_nothing_raised do
       Reflex::WebView::DataStore.new.clear

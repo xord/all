@@ -1834,6 +1834,88 @@ namespace Reflex
 			completionHandler: ^{}];
 	}
 
+	Xot::String
+	WebView::DataStore::cookies () const
+	{
+		WKWebsiteDataStore* s = (WKWebsiteDataStore*) self->native;
+		if (!s) return "";
+
+		if (@available(macOS 10.13, *))
+		{
+			__block NSArray<NSHTTPCookie*>* all = nil;
+			__block bool done = false;
+			[[s httpCookieStore] getAllCookies: ^(NSArray<NSHTTPCookie*>* cookies)
+			{
+				all  = [cookies retain];
+				done = true;
+			}];
+
+			// getAllCookies: delivers its result on the main run loop; pump
+			// it (with a safety timeout) until the result arrives so this
+			// reads synchronously, like session_state().
+			NSDate* deadline = [NSDate dateWithTimeIntervalSinceNow: 2.0];
+			while (!done && [deadline timeIntervalSinceNow] > 0)
+			{
+				[[NSRunLoop currentRunLoop]
+					   runMode: NSDefaultRunLoopMode
+					beforeDate: [NSDate dateWithTimeIntervalSinceNow: 0.01]];
+			}
+			if (!all) return "";
+
+			NSMutableArray* props = [NSMutableArray array];
+			for (NSHTTPCookie* c in all)
+				if (c.properties) [props addObject: c.properties];
+			[all release];
+			if (props.count == 0) return "";
+
+			NSError* err = nil;
+			NSData* data = [NSKeyedArchiver
+				archivedDataWithRootObject: props
+				     requiringSecureCoding: NO
+				                     error: &err];
+			if (!data || err) return "";
+
+			NSString* b64 = [data base64EncodedStringWithOptions: 0];
+			return b64 ? [b64 UTF8String] : "";
+		}
+		return "";
+	}
+
+	void
+	WebView::DataStore::set_cookies (const char* cookies)
+	{
+		if (!cookies || !*cookies) return;
+
+		WKWebsiteDataStore* s = (WKWebsiteDataStore*) self->native;
+		if (!s) return;
+
+		if (@available(macOS 10.13, *))
+		{
+			NSData* data = [[[NSData alloc]
+				initWithBase64EncodedString: [NSString stringWithUTF8String: cookies]
+				                    options: 0] autorelease];
+			if (!data) return;
+
+			NSError* err = nil;
+			NSKeyedUnarchiver* u = [[[NSKeyedUnarchiver alloc]
+				initForReadingFromData: data error: &err] autorelease];
+			if (!u || err) return;
+			u.requiresSecureCoding = NO;
+			id obj = [u decodeTopLevelObjectForKey: NSKeyedArchiveRootObjectKey
+				                            error: &err];
+			[u finishDecoding];
+			if (!obj || err || ![obj isKindOfClass: [NSArray class]]) return;
+
+			WKHTTPCookieStore* store = [s httpCookieStore];
+			for (id p in (NSArray*) obj)
+			{
+				if (![p isKindOfClass: [NSDictionary class]]) continue;
+				NSHTTPCookie* c = [NSHTTPCookie cookieWithProperties: (NSDictionary*) p];
+				if (c) [store setCookie: c completionHandler: nil];
+			}
+		}
+	}
+
 	const void*
 	WebView::DataStore::native () const
 	{

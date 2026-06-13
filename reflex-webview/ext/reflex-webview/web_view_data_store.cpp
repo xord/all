@@ -79,6 +79,24 @@ RUCY_DEF0(clear)
 }
 RUCY_END
 
+static
+RUCY_DEF0(get_cookies)
+{
+	CHECK;
+	Xot::String c = THIS->cookies();
+	return c.empty() ? nil() : value(c.c_str());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_cookies, cookies)
+{
+	CHECK;
+	THIS->set_cookies(cookies ? cookies.c_str() : NULL);
+	return cookies;
+}
+RUCY_END
+
 
 static Class cDataStore;
 
@@ -96,6 +114,8 @@ Init_reflex_web_view_data_store ()
 	cDataStore.define_method("persistent?", is_persistent);
 	cDataStore.define_method("name",        get_name);
 	cDataStore.define_method("clear",       clear);
+	cDataStore.define_method("cookies",     get_cookies);
+	cDataStore.define_method("cookies=",    set_cookies);
 }
 
 

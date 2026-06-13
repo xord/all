@@ -194,6 +194,16 @@ namespace Reflex
 					// caches), asynchronously.
 					void clear ();
 
+					// All cookies in the store as an opaque, base64-encoded
+					// string, or empty if there are none. Persist it and pass
+					// it to set_cookies to restore them (e.g. alongside a
+					// WebView's session_state when hibernating a tab).
+					Xot::String cookies () const;
+
+					// Restores cookies previously returned by cookies(),
+					// merging them into the store. Empty input is a no-op.
+					void set_cookies (const char* cookies);
+
 					// Backend-internal: the native data store handle, or NULL.
 					const void* native () const;
 

@@ -115,6 +115,10 @@ tab2 = Reflex::WebView.new(tab1.data_store)
   from the default and from other names and persisted across runs (macOS
   14+).
 - `store.persistent?`, `store.name`, `store.clear` (wipe all its data).
+- `store.cookies` — all cookies as an opaque base64 string (or `nil`);
+  `store.cookies = str` restores them (merging) into any store. Handy for
+  persisting an ephemeral session, or alongside a view's `session_state`
+  when hibernating a tab.
 - `web.data_store` — the store a view is using (pass it to another
   `WebView.new` to share).
 
@@ -127,7 +131,9 @@ tab2 = Reflex::WebView.new(tab1.data_store)
 This is the primitive for a tab browser that suspends idle tabs: dump
 `session_state`, destroy the WebView to free its renderer process, and
 recreate + restore on demand. Cookies and local storage live in the
-shared website data store and persist independently.
+view's data store (see *Data stores* above) and persist independently;
+dump `data_store.cookies` too if you need to carry them across an
+ephemeral store.
 
 ### Find
 - `find(text)` — find text in the page.
