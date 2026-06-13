@@ -259,6 +259,15 @@ namespace Reflex
 
 			virtual bool video_capture () const;
 
+			// The page session (back/forward history, scroll position, and
+			// form field values) as an opaque, base64-encoded string, or an
+			// empty string if there is nothing to save yet. Persist it and
+			// pass it back to set_session_state to restore a tab (the page
+			// reloads, then its form values and scroll are reapplied).
+			virtual Xot::String session_state () const;
+
+			virtual void set_session_state (const char* state);
+
 			// A copy of the latest rendered page image, or an empty image
 			// if no frame has been captured yet.
 			virtual Rays::Image to_image () const;

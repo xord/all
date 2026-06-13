@@ -101,6 +101,13 @@ namespace Reflex
 
 		virtual bool video_capture () const = 0;
 
+		// Serializes the page session (back/forward history, scroll, and
+		// form field values) to an opaque, base64-encoded string suitable
+		// for persisting and restoring a tab. Empty if unavailable.
+		virtual Xot::String session_state () const = 0;
+
+		virtual void set_session_state (const char* state) = 0;
+
 		virtual void set_size (int width, int height, float pixel_density) = 0;
 
 		// Advances the backend by one frame. Returns true if a new frame

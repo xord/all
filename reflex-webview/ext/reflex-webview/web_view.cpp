@@ -347,6 +347,24 @@ RUCY_DEF0(get_video_capture)
 RUCY_END
 
 static
+RUCY_DEF0(get_session_state)
+{
+	CHECK;
+	Xot::String s = THIS->session_state();
+	return s.empty() ? nil() : value(s.c_str());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_session_state, state)
+{
+	CHECK;
+	THIS->set_session_state(state ? state.c_str() : NULL);
+	return state;
+}
+RUCY_END
+
+static
 RUCY_DEF0(to_image)
 {
 	CHECK;
@@ -400,6 +418,8 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "inspectable=",     set_inspectable);
 	cWebView.define_method(     "video_capture?",   get_video_capture);
 	cWebView.define_method(     "video_capture=",   set_video_capture);
+	cWebView.define_method(     "session_state",    get_session_state);
+	cWebView.define_method(     "session_state=",   set_session_state);
 	cWebView.define_method(     "to_image",  to_image);
 }
 

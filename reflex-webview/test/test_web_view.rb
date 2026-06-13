@@ -179,6 +179,22 @@ class TestWebView < Test::Unit::TestCase
     assert_equal false, wv.video_capture?
   end
 
+  def test_session_state_api()
+    wv = web_view
+    assert_respond_to wv, :session_state
+    assert_respond_to wv, :session_state=
+    # the macOS backend serializes an (initially empty) session as a
+    # base64 string; either a String or nil is acceptable here.
+    state = wv.session_state
+    assert(state.nil? || state.is_a?(String))
+    # restoring nil / empty / a round-tripped value is a no-op, not an error
+    assert_nothing_raised do
+      wv.session_state = nil
+      wv.session_state = ''
+      wv.session_state = state if state
+    end
+  end
+
   def test_reload_is_public_and_takes_optional_force()
     wv = web_view
     assert_respond_to wv, :reload

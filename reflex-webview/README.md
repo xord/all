@@ -93,6 +93,17 @@ view, and `focus` directs keyboard input to the page. Hover (`:hover`,
 - `on_download_progress`, `on_download_finish`, `on_download_fail`;
   `Download#fraction`, `Download#cancel`.
 
+### Session state (tab hibernation)
+- `session_state` — the page session (back/forward history, scroll
+  position and form field values) as an opaque base64 string, or `nil`.
+- `session_state = str` — restore it into a (possibly fresh) WebView; the
+  page reloads, then its history, scroll and form values are reapplied.
+
+This is the primitive for a tab browser that suspends idle tabs: dump
+`session_state`, destroy the WebView to free its renderer process, and
+recreate + restore on demand. Cookies and local storage live in the
+shared website data store and persist independently.
+
 ### Find
 - `find(text)` — find text in the page.
 

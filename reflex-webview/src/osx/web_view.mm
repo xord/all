@@ -1131,6 +1131,48 @@ namespace Reflex
 				return host->videoCapture;
 			}
 
+			Xot::String session_state () const override
+			{
+				if (@available(macOS 12.0, *))
+				{
+					id state = host->webView.interactionState;
+					if (!state) return "";
+
+					NSError* err = nil;
+					NSData* data = [NSKeyedArchiver
+						archivedDataWithRootObject: state
+						     requiringSecureCoding: NO
+						                     error: &err];
+					if (!data || err) return "";
+
+					NSString* b64 = [data base64EncodedStringWithOptions: 0];
+					return b64 ? [b64 UTF8String] : "";
+				}
+				return "";
+			}
+
+			void set_session_state (const char* state) override
+			{
+				if (!state || !*state) return;
+				if (@available(macOS 12.0, *))
+				{
+					NSData* data = [[[NSData alloc]
+						initWithBase64EncodedString: [NSString stringWithUTF8String: state]
+						                    options: 0] autorelease];
+					if (!data) return;
+
+					NSError* err = nil;
+					NSKeyedUnarchiver* u = [[[NSKeyedUnarchiver alloc]
+						initForReadingFromData: data error: &err] autorelease];
+					if (!u || err) return;
+					u.requiresSecureCoding = NO;
+					id obj = [u decodeTopLevelObjectForKey: NSKeyedArchiveRootObjectKey
+						                            error: &err];
+					[u finishDecoding];
+					if (obj && !err) host->webView.interactionState = obj;
+				}
+			}
+
 			void set_size (int w, int h, float pixel_density) override
 			{
 				if (w <= 0 || h <= 0) return;

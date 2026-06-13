@@ -434,6 +434,20 @@ namespace Reflex
 		return self->backend->video_capture();
 	}
 
+	Xot::String
+	WebView::session_state () const
+	{
+		assert(self->backend);
+		return self->backend->session_state();
+	}
+
+	void
+	WebView::set_session_state (const char* state)
+	{
+		assert(self->backend);
+		self->backend->set_session_state(state);
+	}
+
 	Rays::Image
 	WebView::to_image () const
 	{
@@ -784,6 +798,15 @@ namespace Reflex
 			bool video_capture () const override
 			{
 				return false;
+			}
+
+			Xot::String session_state () const override
+			{
+				return "";
+			}
+
+			void set_session_state (const char* state) override
+			{
 			}
 
 			void set_size (int width, int height, float pixel_density) override
