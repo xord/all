@@ -643,7 +643,15 @@ namespace Reflex
 			void load (const char* url) override
 			{
 				NSString* s = url ? [NSString stringWithUTF8String: url] : @"";
-				NSURL* u = [NSURL URLWithString: s];
+
+				// A bare absolute path is taken as a local file. (We avoid
+				// -loadFileURL:allowingReadAccessTo: -- it grants
+				// directory read access by routing through an AppleEvent
+				// that aborts an unbundled process; loadRequest of the
+				// file URL renders the page without that, though sibling
+				// resources are not granted access.)
+				NSURL* u = [s hasPrefix: @"/"] ?
+					[NSURL fileURLWithPath: s] : [NSURL URLWithString: s];
 				if (u) [host->webView loadRequest: [NSURLRequest requestWithURL: u]];
 			}
 
