@@ -377,7 +377,7 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 			[webView _setWindowOcclusionDetectionEnabled: NO];
 
 		// off the desktop, but ordered-in so the page keeps animating.
-		[window setFrameOrigin: NSMakePoint(-10000, -10000)];
+		[self moveOffscreen];
 		[window orderBack: nil];
 
 		// An ordered-in window keeps the app alive after the user closes
@@ -388,7 +388,30 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 			       name: NSWindowWillCloseNotification
 			     object: nil];
 
+		// A fixed off-screen point can land on a newly attached display
+		// (e.g. one placed left/above the main screen); recompute the
+		// off-screen origin whenever the screen layout changes.
+		[[NSNotificationCenter defaultCenter]
+			addObserver: self
+			   selector: @selector(moveOffscreen)
+			       name: NSApplicationDidChangeScreenParametersNotification
+			     object: nil];
+
 		return self;
+	}
+
+	// Places the window completely below the union of all screen frames,
+	// so it stays off every display regardless of monitor arrangement.
+	- (void) moveOffscreen
+	{
+		NSArray<NSScreen*>* screens = [NSScreen screens];
+		if (screens.count == 0) return;
+
+		NSRect u = screens.firstObject.frame;
+		for (NSScreen* s in screens) u = NSUnionRect(u, s.frame);
+
+		[window setFrameOrigin: NSMakePoint(
+			u.origin.x, u.origin.y - window.frame.size.height - 10000)];
 	}
 
 	- (void) otherWindowWillClose: (NSNotification*) notification
@@ -456,7 +479,7 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 	- (void) setSizeWidth: (int) w height: (int) h
 	{
 		[window setContentSize: NSMakeSize(w, h)];
-		[window setFrameOrigin: NSMakePoint(-10000, -10000)];
+		[self moveOffscreen];
 		[webView setFrame: NSMakeRect(0, 0, w, h)];
 	}
 
