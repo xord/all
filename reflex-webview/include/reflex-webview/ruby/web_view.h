@@ -146,6 +146,15 @@ namespace Reflex
 					Super::on_url_change(e);
 			}
 
+			virtual void on_history_change (Event* e)
+			{
+				RUCY_SYM(on_history_change);
+				if (this->is_overridable())
+					this->value.call(on_history_change, Rucy::value(e));
+				else
+					Super::on_history_change(e);
+			}
+
 			virtual void on_favicon_change (Event* e)
 			{
 				RUCY_SYM(on_favicon_change);

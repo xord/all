@@ -5,6 +5,8 @@
 
 
 #include <functional>
+#include <utility>
+#include <vector>
 #include <xot/pimpl.h>
 #include <xot/string.h>
 #include <rays/image.h>
@@ -173,6 +175,25 @@ namespace Reflex
 
 			virtual void go_forward ();
 
+			// A back/forward history entry: its url and title.
+			typedef std::pair<Xot::String, Xot::String> HistoryEntry;
+
+			// The back/forward list (oldest first for back, nearest first
+			// for forward), reflecting JS History API changes live.
+			virtual std::vector<HistoryEntry> back_list () const;
+
+			virtual std::vector<HistoryEntry> forward_list () const;
+
+			// Fills url/title with the current history entry; returns
+			// false if there is none.
+			virtual bool current_item (
+				Xot::String* url, Xot::String* title) const;
+
+			// Navigates to the history entry at offset from the current
+			// one (negative = back, positive = forward). No-op if out of
+			// range.
+			virtual void go_to (int offset);
+
 			virtual void stop ();
 
 			virtual bool can_go_back () const;
@@ -234,6 +255,10 @@ namespace Reflex
 			virtual void on_title_change (Event* e);
 
 			virtual void on_url_change (Event* e);
+
+			// Called when the back/forward list changes, including via
+			// the page's JS History API (pushState/replaceState/go).
+			virtual void on_history_change (Event* e);
 
 			virtual void on_favicon_change (Event* e);
 

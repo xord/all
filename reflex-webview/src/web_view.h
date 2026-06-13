@@ -49,6 +49,15 @@ namespace Reflex
 
 		virtual void go_forward () = 0;
 
+		virtual std::vector<WebView::HistoryEntry> back_list () const = 0;
+
+		virtual std::vector<WebView::HistoryEntry> forward_list () const = 0;
+
+		virtual bool current_item (
+			Xot::String* url, Xot::String* title) const = 0;
+
+		virtual void go_to (int offset) = 0;
+
 		virtual void stop () = 0;
 
 		virtual bool can_go_back () const = 0;

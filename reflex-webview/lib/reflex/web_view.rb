@@ -8,6 +8,26 @@ module Reflex
 
   class WebView
 
+    # One entry in the back/forward history. Navigable via #go.
+    class HistoryItem
+
+      attr_reader :url, :title
+
+      def initialize(web_view, offset, url, title)
+        @web_view, @offset, @url, @title = web_view, offset, url, title
+      end
+
+      # Offset from the current entry (negative = back, positive
+      # = forward, 0 = current).
+      attr_reader :offset
+
+      # Navigates the WebView to this history entry.
+      def go()
+        @web_view.go_to @offset
+      end
+
+    end# HistoryItem
+
     class MessageEvent
 
       # The message posted from page JavaScript, parsed from JSON.
@@ -37,6 +57,26 @@ module Reflex
     def post_message(data)
       post_message! JSON.generate(data)
       self
+    end
+
+    # The back history as HistoryItem objects, oldest first.
+    def back_list()
+      raw = back_list!
+      n   = raw.size
+      raw.each_with_index.map {|(url, title), i|
+        HistoryItem.new self, i - n, url, title}
+    end
+
+    # The forward history as HistoryItem objects, nearest first.
+    def forward_list()
+      forward_list!.each_with_index.map {|(url, title), i|
+        HistoryItem.new self, i + 1, url, title}
+    end
+
+    # The current history entry as a HistoryItem, or nil.
+    def current_item()
+      url, title = current_item!
+      url && HistoryItem.new(self, 0, url, title)
     end
 
     alias eval_js! eval_js
@@ -110,6 +150,11 @@ module Reflex
 
     # Called when the page URL changes. Override in a subclass.
     def on_url_change(e)
+    end
+
+    # Called when the back/forward list changes, including via the
+    # page's JS History API. Override in a subclass.
+    def on_history_change(e)
     end
 
   end# WebView

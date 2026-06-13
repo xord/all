@@ -287,6 +287,34 @@ namespace Reflex
 		self->backend->go_forward();
 	}
 
+	std::vector<WebView::HistoryEntry>
+	WebView::back_list () const
+	{
+		assert(self->backend);
+		return self->backend->back_list();
+	}
+
+	std::vector<WebView::HistoryEntry>
+	WebView::forward_list () const
+	{
+		assert(self->backend);
+		return self->backend->forward_list();
+	}
+
+	bool
+	WebView::current_item (Xot::String* url, Xot::String* title) const
+	{
+		assert(self->backend);
+		return self->backend->current_item(url, title);
+	}
+
+	void
+	WebView::go_to (int offset)
+	{
+		assert(self->backend);
+		self->backend->go_to(offset);
+	}
+
 	void
 	WebView::stop ()
 	{
@@ -464,6 +492,12 @@ namespace Reflex
 	}
 
 	void
+	WebView::on_history_change (Event* e)
+	{
+		// default: nothing. overridden in Ruby via RubyWebView.
+	}
+
+	void
 	WebView::on_favicon_change (Event* e)
 	{
 		// default: nothing. overridden in Ruby via RubyWebView.
@@ -596,6 +630,25 @@ namespace Reflex
 			}
 
 			void go_forward () override
+			{
+			}
+
+			std::vector<WebView::HistoryEntry> back_list () const override
+			{
+				return {};
+			}
+
+			std::vector<WebView::HistoryEntry> forward_list () const override
+			{
+				return {};
+			}
+
+			bool current_item (Xot::String* url, Xot::String* title) const override
+			{
+				return false;
+			}
+
+			void go_to (int offset) override
 			{
 			}
 

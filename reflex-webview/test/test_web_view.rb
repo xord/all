@@ -41,9 +41,28 @@ class TestWebView < Test::Unit::TestCase
     %i[
       on_load_start on_load on_load_fail on_title_change on_url_change
       on_crash on_message on_console on_favicon_change on_hover
+      on_history_change
     ].each do |name|
       assert_respond_to wv, name
     end
+  end
+
+  def test_history_list_api()
+    wv = web_view
+    assert_respond_to wv, :back_list
+    assert_respond_to wv, :forward_list
+    assert_respond_to wv, :current_item
+    assert_respond_to wv, :go_to
+    assert_equal [], wv.back_list
+    assert_equal [], wv.forward_list
+    assert_nil wv.current_item
+  end
+
+  def test_history_item()
+    item = Reflex::WebView::HistoryItem.new nil, -1, 'https://example.com', 'Example'
+    assert_equal 'https://example.com', item.url
+    assert_equal 'Example', item.title
+    assert_equal(-1, item.offset)
   end
 
   def test_favicon_and_hovered_url_initially_nil()

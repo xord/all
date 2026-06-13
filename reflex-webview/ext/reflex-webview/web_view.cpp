@@ -129,6 +129,52 @@ RUCY_DEF0(go_forward)
 }
 RUCY_END
 
+static Value
+history_to_value (const std::vector<Reflex::WebView::HistoryEntry>& list)
+{
+	std::vector<Value> items;
+	items.reserve(list.size());
+	for (const auto& e : list)
+		items.push_back(array(value(e.first.c_str()), value(e.second.c_str())));
+	return items.empty() ?
+		array((const Value*) NULL, 0) : array(&items[0], items.size());
+}
+
+static
+RUCY_DEF0(back_list_raw)
+{
+	CHECK;
+	return history_to_value(THIS->back_list());
+}
+RUCY_END
+
+static
+RUCY_DEF0(forward_list_raw)
+{
+	CHECK;
+	return history_to_value(THIS->forward_list());
+}
+RUCY_END
+
+static
+RUCY_DEF0(current_item_raw)
+{
+	CHECK;
+	Xot::String url, title;
+	if (!THIS->current_item(&url, &title)) return nil();
+	return array(value(url.c_str()), value(title.c_str()));
+}
+RUCY_END
+
+static
+RUCY_DEF1(go_to, offset)
+{
+	CHECK;
+	THIS->go_to(to<int>(offset));
+	return self;
+}
+RUCY_END
+
 static
 RUCY_DEF0(stop)
 {
@@ -286,6 +332,10 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "find",      find);
 	cWebView.define_method(     "go_back",    go_back);
 	cWebView.define_method(     "go_forward", go_forward);
+	cWebView.define_private_method("back_list!",    back_list_raw);
+	cWebView.define_private_method("forward_list!", forward_list_raw);
+	cWebView.define_private_method("current_item!", current_item_raw);
+	cWebView.define_method(     "go_to",     go_to);
 	cWebView.define_method(     "stop",       stop);
 	cWebView.define_method(     "can_go_back?",    can_go_back);
 	cWebView.define_method(     "can_go_forward?", can_go_forward);

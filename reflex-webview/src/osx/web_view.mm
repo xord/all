@@ -769,6 +769,33 @@ namespace Reflex
 				[host->webView goForward];
 			}
 
+			std::vector<WebView::HistoryEntry> back_list () const override
+			{
+				return entries(host->webView.backForwardList.backList);
+			}
+
+			std::vector<WebView::HistoryEntry> forward_list () const override
+			{
+				return entries(host->webView.backForwardList.forwardList);
+			}
+
+			bool current_item (Xot::String* url, Xot::String* title) const override
+			{
+				WKBackForwardListItem* it =
+					host->webView.backForwardList.currentItem;
+				if (!it) return false;
+				if (url)   *url   = [[it.URL absoluteString] UTF8String];
+				if (title) *title = it.title ? [it.title UTF8String] : "";
+				return true;
+			}
+
+			void go_to (int offset) override
+			{
+				WKBackForwardListItem* it =
+					[host->webView.backForwardList itemAtIndex: offset];
+				if (it) [host->webView goToBackForwardListItem: it];
+			}
+
 			void stop () override
 			{
 				[host->webView stopLoading];
@@ -1104,6 +1131,7 @@ namespace Reflex
 			bool            dirty;
 			bool            key_down_sent_[128] = {false};
 			Xot::String     last_title_, last_url_, last_favicon_, last_hover_;
+			Xot::String     last_history_;
 			long            last_eval_id_ = 0;
 			std::map<long, WebView::EvalCallback> eval_callbacks_;
 			std::map<long, WebView::FindCallback> find_callbacks_;
@@ -1218,6 +1246,14 @@ namespace Reflex
 					owner->on_url_change(&e);
 				}
 
+				Xot::String hist = history_fingerprint();
+				if (hist != last_history_)
+				{
+					last_history_ = hist;
+					Event e;
+					owner->on_history_change(&e);
+				}
+
 				Xot::String fav = favicon();
 				if (fav != last_favicon_)
 				{
@@ -1240,6 +1276,32 @@ namespace Reflex
 				const Bounds& f = owner->frame();
 				*w = (int) f.w > 0 ? (int) f.w : 1;
 				*h = (int) f.h > 0 ? (int) f.h : 1;
+			}
+
+			static std::vector<WebView::HistoryEntry>
+			entries (NSArray<WKBackForwardListItem*>* items)
+			{
+				std::vector<WebView::HistoryEntry> out;
+				out.reserve(items.count);
+				for (WKBackForwardListItem* it in items)
+				{
+					out.emplace_back(
+						[[it.URL absoluteString] UTF8String],
+						it.title ? [it.title UTF8String] : "");
+				}
+				return out;
+			}
+
+			// A cheap fingerprint of the back/forward list, to detect
+			// changes (including JS History API edits) without diffing.
+			Xot::String history_fingerprint () const
+			{
+				WKBackForwardList* l = host->webView.backForwardList;
+				NSString* cur = l.currentItem.URL.absoluteString ?: @"";
+				NSString* s = [NSString stringWithFormat: @"%lu/%lu/%@",
+					(unsigned long) l.backList.count,
+					(unsigned long) l.forwardList.count, cur];
+				return [s UTF8String];
 			}
 
 			// Returns whether the page pixels actually changed. Grabbing
