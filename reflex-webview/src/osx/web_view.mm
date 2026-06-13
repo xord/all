@@ -92,6 +92,28 @@ namespace
 		return [arr substringWithRange: NSMakeRange(1, arr.length - 2)];
 	}
 
+	// WKWebView does not handle hover (mouseMoved:) itself; a private
+	// WKMouseTrackingObserver owns the tracking areas and forwards moves to
+	// the page only after hit-testing event.locationInWindow. Sending
+	// mouseMoved: to the WKWebView directly is therefore dropped. Route it
+	// to the tracking-area owner instead (it hit-tests the event location,
+	// not the real cursor, so an off-desktop window still works).
+	void
+	dispatch_moved (WKWebView* wv, NSEvent* e)
+	{
+		for (NSTrackingArea* ta in wv.trackingAreas)
+		{
+			id owner = ta.owner;
+			if (owner && owner != wv &&
+			    [owner respondsToSelector: @selector(mouseMoved:)])
+			{
+				[owner mouseMoved: e];
+				return;
+			}
+		}
+		[wv mouseMoved: e];  // fallback if the observer layout changes
+	}
+
 	void
 	dispatch_mouse (WKWebView* wv, NSEvent* e)
 	{
@@ -106,7 +128,7 @@ namespace
 			case NSEventTypeOtherMouseDown:    [wv otherMouseDown:   e]; break;
 			case NSEventTypeOtherMouseUp:      [wv otherMouseUp:     e]; break;
 			case NSEventTypeOtherMouseDragged: [wv otherMouseDragged:e]; break;
-			case NSEventTypeMouseMoved:        [wv mouseMoved:       e]; break;
+			case NSEventTypeMouseMoved:        dispatch_moved(wv,    e); break;
 			default: break;
 		}
 	}
