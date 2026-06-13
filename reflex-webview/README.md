@@ -24,10 +24,115 @@ Thanks for your support! 🙌
 renders web content off-screen and draws it into the Reflex scene every
 frame, forwarding pointer, wheel, and keyboard events to the page.
 
+Because the page is captured as a `Rays::Image` and drawn by Reflex
+itself, web content can be freely composited with Reflex's own 2D/GL
+drawing — transformed, used as a texture, mixed with shapes — which a
+plain embedded webview cannot do. The trade-off is the off-screen capture
+model and the workarounds it needs (see *Known limitations*).
+
 The rendering backend depends on the platform:
 
 - **macOS** — `WKWebView` rendered off-screen and captured into a texture.
-- **Windows / Linux** — Chromium Embedded Framework (CEF).
+- **Windows / Linux** — Chromium Embedded Framework (CEF). *(planned)*
+
+## Quick start
+
+```ruby
+require 'reflex'
+require 'reflex-webview'
+
+Reflex.start do
+  Reflex::Window.new do
+    add web = Reflex::WebView.new {set name: :web, frame: [0, 0, 800, 600]}
+    web.url = 'https://www.example.com/'
+    web.focus
+  end.show
+end
+```
+
+A fuller example — an address bar with back / forward / reload buttons —
+lives in [`examples/simple_browser.rb`](./examples/simple_browser.rb).
+
+## Features
+
+### Navigation & state
+- `url=` / `url`, `load(url)`, `load_html(html)`
+- `reload(ignore_cache = false)`, `stop`
+- `go_back`, `go_forward`, `go_to(offset)`
+- `can_go_back?`, `can_go_forward?`, `loading?`, `progress`, `title`
+- Back/forward history list: `back_list`, `forward_list`, `current_item`
+  (each a `HistoryItem` with `#go`); kept in sync with the JS History API.
+
+### Input
+Pointer, wheel and keyboard events are forwarded to the page
+automatically — pointer and wheel reach it while the cursor is over the
+view, and `focus` directs keyboard input to the page. Hover (`:hover`,
+`mouseenter`/`mouseover`) works as well.
+
+### JavaScript bridge
+- `eval_js(script) {|result| ... }` — evaluate JS, optional result callback.
+- `post_message(data)` — send JSON-serializable data to the page; it
+  arrives at `window.__REFLEX__.onmessage`.
+- The page calls `window.__REFLEX__.postMessage(data)` to send data back;
+  handle it with `on_message(e)` (`e.data` is the parsed value).
+
+### Properties
+- `user_agent` / `user_agent=`
+- `zoom` / `zoom=` (1.0 = 100%)
+- `inspectable?` / `inspectable=` — attach Safari's Web Inspector (macOS 13.3+)
+- `favicon`, `hovered_url`
+- `video_capture?` / `video_capture=` — see *Hardware video* below
+- `to_image` — a copy of the latest captured page image (`Rays::Image`),
+  handy for headless screenshotting.
+
+### Downloads
+- `download(url)` — start a download programmatically.
+- `on_download(e)` — `e.download` is a `Download`; set `e.download.path =`
+  to choose the destination (defaults to a unique name in the current
+  directory).
+- `on_download_progress`, `on_download_finish`, `on_download_fail`;
+  `Download#fraction`, `Download#cancel`.
+
+### Find
+- `find(text)` — find text in the page.
+
+### Events (override on a subclass)
+- Load: `on_load_start`, `on_load` (`LoadEvent`), `on_load_fail`
+- `on_title_change`, `on_url_change`, `on_history_change`
+- `on_navigate(e)` — `e.block` to cancel a navigation
+- `on_open` — `window.open` / `target=_blank` (opens in-place by default)
+- `on_crash` — renderer crash (auto-reloads)
+- `on_console` (`ConsoleEvent`), `on_favicon_change`, `on_hover`
+- JS dialogs (`alert`/`confirm`/`prompt`) show a native `NSAlert`.
+
+### Hardware video (MSE/EME, e.g. YouTube)
+
+Hardware-composited video only paints into the off-screen capture while
+the host window is scanned out by the window server, which does not happen
+for the fully off-screen default. Set `video_capture = true` to enable it:
+
+```ruby
+web = Reflex::WebView.new {set video_capture: true}
+# or: web.video_capture = true
+```
+
+The macOS backend then keeps a single, rounded-away (invisible) pixel of
+the host window on screen so the video keeps compositing. Off by default.
+
+## Known limitations
+
+- **Platform** — only the macOS (`WKWebView`) backend exists today;
+  Windows / Linux (CEF) is planned.
+- **`file://`** — bare absolute paths load as local files, but full
+  `file://` access to sibling resources is limited on the macOS backend.
+- **Hardware video** — blank unless `video_capture` is enabled (above).
+- **Scrollbars** — macOS overlay scrollbars are not painted into the
+  static capture, so there is no persistent scrollbar.
+- **`load_html`** — such pages are not added to the history, and reloading
+  one navigates to `about:blank`.
+- **Dialogs** — `alert`/`confirm`/`prompt` are app-modal (like a browser).
+- **IME** — text input via an input method is not supported.
+- **No `to_pdf`** and **no network interception** on the macOS backend.
 
 ## License
 
