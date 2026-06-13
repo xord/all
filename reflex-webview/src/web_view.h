@@ -94,6 +94,13 @@ namespace Reflex
 
 		virtual bool inspectable () const = 0;
 
+		// When enabled, the off-screen host is kept barely on-screen so
+		// hardware video layers (MSE/EME, e.g. YouTube) keep compositing
+		// into the capture, at the cost of a hidden 1px window sliver.
+		virtual void set_video_capture (bool enabled) = 0;
+
+		virtual bool video_capture () const = 0;
+
 		virtual void set_size (int width, int height, float pixel_density) = 0;
 
 		// Advances the backend by one frame. Returns true if a new frame

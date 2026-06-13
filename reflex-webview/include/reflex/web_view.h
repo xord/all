@@ -250,6 +250,15 @@ namespace Reflex
 
 			virtual bool inspectable () const;
 
+			// Keeps the page's hardware video layers (MSE/EME, e.g. YouTube)
+			// compositing into the capture. The macOS backend does this by
+			// holding a hidden 1px corner of the off-screen host window on
+			// the display; without it such video shows up blank. Off by
+			// default. No effect on backends that capture video anyway.
+			virtual void set_video_capture (bool enabled);
+
+			virtual bool video_capture () const;
+
 			// A copy of the latest rendered page image, or an empty image
 			// if no frame has been captured yet.
 			virtual Rays::Image to_image () const;

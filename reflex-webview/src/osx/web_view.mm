@@ -136,6 +136,10 @@ namespace
 }// namespace
 
 
+// Corner radius for the host window's rounded mask (see initWithWidth).
+static const CGFloat CORNER_RADIUS = 20;
+
+
 // SPI: keep the page rendering (visibilityState == "visible") even though
 // the host window is positioned off the desktop.
 @interface WKWebView (ReflexSPI)
@@ -233,6 +237,7 @@ namespace
 	NSMutableDictionary<NSNumber*, ReflexDownload*>* downloads;
 	long nextDownloadId;
 	ReflexWKMessageProxy* messageProxy;
+	BOOL       videoCapture;  // keep a hidden 1px on-screen for video
 	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
 }
 - (void) didReceiveMessage: (NSString*) json;
@@ -395,6 +400,24 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		[webView setUIDelegate: self];
 		[[window contentView] addSubview: webView];
 
+		// In video-capture mode the host keeps a 1px corner on-screen; round
+		// the window corners so that sliver lands in a transparent region
+		// and stays invisible. The mask only affects on-screen compositing,
+		// not the rectangular backing store the capture reads, so the page
+		// image is still captured square. The window never takes input
+		// (events are synthesized straight to the WKWebView), so it ignores
+		// the mouse to avoid swallowing clicks at that corner pixel.
+		[window setOpaque: NO];
+		[window setBackgroundColor: [NSColor clearColor]];
+		[window setIgnoresMouseEvents: YES];
+		NSView* cv = [window contentView];
+		[cv setWantsLayer: YES];
+		cv.layer.cornerRadius  = CORNER_RADIUS;
+		cv.layer.masksToBounds = YES;
+		[webView setWantsLayer: YES];
+		webView.layer.cornerRadius  = CORNER_RADIUS;
+		webView.layer.masksToBounds = YES;
+
 		if ([webView respondsToSelector: @selector(_setWindowOcclusionDetectionEnabled:)])
 			[webView _setWindowOcclusionDetectionEnabled: NO];
 
@@ -422,10 +445,26 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		return self;
 	}
 
-	// Places the window completely below the union of all screen frames,
-	// so it stays off every display regardless of monitor arrangement.
+	// Positions the off-desktop host window. In video-capture mode it keeps
+	// a single (rounded-away, hence invisible) pixel of the window on the
+	// main screen's bottom-right corner so hardware video layers keep
+	// compositing into the capture; otherwise it parks the whole window
+	// below the union of all screens, off every display.
 	- (void) moveOffscreen
 	{
+		if (videoCapture)
+		{
+			// Anchor the window's top-left to the main screen's bottom-right
+			// pixel: the on-screen overlap is 1x1 and stays pinned there as
+			// the window resizes (the x origin is fixed to the screen edge).
+			NSRect  scr = [NSScreen mainScreen].frame;
+			CGFloat h   = window.frame.size.height;
+			[window setFrameOrigin: NSMakePoint(
+				scr.origin.x + scr.size.width - 1, scr.origin.y + 1 - h)];
+			[window orderFront: nil];
+			return;
+		}
+
 		NSArray<NSScreen*>* screens = [NSScreen screens];
 		if (screens.count == 0) return;
 
@@ -434,6 +473,7 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 
 		[window setFrameOrigin: NSMakePoint(
 			u.origin.x, u.origin.y - window.frame.size.height - 10000)];
+		[window orderBack: nil];
 	}
 
 	- (void) otherWindowWillClose: (NSNotification*) notification
@@ -1077,6 +1117,18 @@ namespace Reflex
 				if ([host->webView respondsToSelector: @selector(isInspectable)])
 					return host->webView.inspectable;
 				return false;
+			}
+
+			void set_video_capture (bool enabled) override
+			{
+				if (host->videoCapture == enabled) return;
+				host->videoCapture = enabled;
+				[host moveOffscreen];
+			}
+
+			bool video_capture () const override
+			{
+				return host->videoCapture;
 			}
 
 			void set_size (int w, int h, float pixel_density) override

@@ -420,6 +420,20 @@ namespace Reflex
 		return self->backend->inspectable();
 	}
 
+	void
+	WebView::set_video_capture (bool enabled)
+	{
+		assert(self->backend);
+		self->backend->set_video_capture(enabled);
+	}
+
+	bool
+	WebView::video_capture () const
+	{
+		assert(self->backend);
+		return self->backend->video_capture();
+	}
+
 	Rays::Image
 	WebView::to_image () const
 	{
@@ -759,6 +773,15 @@ namespace Reflex
 			}
 
 			bool inspectable () const override
+			{
+				return false;
+			}
+
+			void set_video_capture (bool enabled) override
+			{
+			}
+
+			bool video_capture () const override
 			{
 				return false;
 			}

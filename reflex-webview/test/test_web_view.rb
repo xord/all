@@ -166,7 +166,17 @@ class TestWebView < Test::Unit::TestCase
     wv = web_view
     %i[
       progress user_agent user_agent= zoom zoom= inspectable? inspectable=
+      video_capture? video_capture=
     ].each {|name| assert_respond_to wv, name}
+  end
+
+  def test_video_capture_defaults_off_and_is_settable()
+    wv = web_view
+    assert_equal false, wv.video_capture?
+    wv.video_capture = true
+    assert_equal true,  wv.video_capture?
+    wv.video_capture = false
+    assert_equal false, wv.video_capture?
   end
 
   def test_reload_is_public_and_takes_optional_force()

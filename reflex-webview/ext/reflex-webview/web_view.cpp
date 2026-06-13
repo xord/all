@@ -330,6 +330,23 @@ RUCY_DEF0(get_inspectable)
 RUCY_END
 
 static
+RUCY_DEF1(set_video_capture, b)
+{
+	CHECK;
+	THIS->set_video_capture(b);
+	return b;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_video_capture)
+{
+	CHECK;
+	return value(THIS->video_capture());
+}
+RUCY_END
+
+static
 RUCY_DEF0(to_image)
 {
 	CHECK;
@@ -381,6 +398,8 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "zoom=",       set_zoom);
 	cWebView.define_method(     "inspectable?",     get_inspectable);
 	cWebView.define_method(     "inspectable=",     set_inspectable);
+	cWebView.define_method(     "video_capture?",   get_video_capture);
+	cWebView.define_method(     "video_capture=",   set_video_capture);
 	cWebView.define_method(     "to_image",  to_image);
 }
 
