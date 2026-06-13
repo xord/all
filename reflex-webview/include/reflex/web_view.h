@@ -154,9 +154,63 @@ namespace Reflex
 				long total_bytes, received_bytes;
 			};
 
+			// A website data store -- the cookies, local storage, and
+			// caches a WebView reads and writes. Pass one to WebView.new
+			// to isolate browsing data (e.g. an incognito tab or a named
+			// profile) or to share it between views. The store a view
+			// uses is fixed when the view is created.
+			class DataStore
+			{
+
+				public:
+
+					// An ephemeral (incognito) store: nothing is written to
+					// disk and the data is discarded when the store goes
+					// away. A fresh, independent store on each call.
+					static DataStore create_ephemeral ();
+
+					// The shared default persistent store -- the same one
+					// used when no data store is specified.
+					static DataStore create_default ();
+
+					// A named persistent profile, kept separate from the
+					// default and from other names and persisted across
+					// runs under name. The same name yields the same store.
+					// Requires macOS 14+.
+					static DataStore create_named (const char* name);
+
+					DataStore ();
+
+					~DataStore ();
+
+					// True for the default and named stores, false for an
+					// ephemeral one.
+					bool persistent () const;
+
+					// The profile name of a named store, or empty otherwise.
+					Xot::String name () const;
+
+					// Removes everything in the store (cookies, storage,
+					// caches), asynchronously.
+					void clear ();
+
+					// Backend-internal: the native data store handle, or NULL.
+					const void* native () const;
+
+					struct Data;
+
+					Xot::PSharedImpl<Data> self;
+
+			};// DataStore
+
 			WebView (const char* name = NULL);
 
 			virtual ~WebView ();
+
+			// Internal: creates the backing native web view bound to the
+			// given data store. Called once by WebView#initialize, before
+			// the view is navigated or shown.
+			virtual void create_web_view (const DataStore& data_store);
 
 			virtual void load (const char* url);
 

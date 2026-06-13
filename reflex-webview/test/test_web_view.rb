@@ -195,6 +195,67 @@ class TestWebView < Test::Unit::TestCase
     end
   end
 
+  def test_data_store_default_is_persistent_and_unnamed()
+    ds = Reflex::WebView::DataStore.default
+    assert_kind_of Reflex::WebView::DataStore, ds
+    assert_equal true, ds.persistent?
+    assert_nil ds.name
+  end
+
+  def test_data_store_new_is_ephemeral()
+    ds = Reflex::WebView::DataStore.new
+    assert_equal false, ds.persistent?
+    assert_nil ds.name
+    # each .new is a fresh, independent ephemeral store
+    refute_same ds, Reflex::WebView::DataStore.new
+  end
+
+  def test_data_store_load_named()
+    omit 'named data stores need macOS 14+' unless macos_14_or_later?
+    ds = Reflex::WebView::DataStore.load 'test-profile'
+    assert_equal true,           ds.persistent?
+    assert_equal 'test-profile', ds.name
+  end
+
+  def test_data_store_clear_is_a_noop_smoke()
+    assert_nothing_raised do
+      Reflex::WebView::DataStore.new.clear
+      Reflex::WebView::DataStore.default.clear
+    end
+  end
+
+  def test_web_view_uses_default_data_store_by_default()
+    wv = web_view
+    assert_kind_of Reflex::WebView::DataStore, wv.data_store
+    assert_equal true, wv.data_store.persistent?
+  end
+
+  def test_web_view_accepts_a_data_store_positionally()
+    ds = Reflex::WebView::DataStore.new
+    wv = Reflex::WebView.new ds
+    assert_same ds, wv.data_store
+    assert_equal false, wv.data_store.persistent?
+  end
+
+  def test_web_view_shares_a_data_store_between_views()
+    a = Reflex::WebView.new Reflex::WebView::DataStore.new
+    b = Reflex::WebView.new a.data_store
+    assert_same a.data_store, b.data_store
+  end
+
+  def test_web_view_accepts_data_store_and_options_together()
+    ds = Reflex::WebView::DataStore.new
+    wv = Reflex::WebView.new ds, name: :web
+    assert_same ds, wv.data_store
+    assert_equal 'web', wv.name.to_s
+  end
+
+  def macos_14_or_later?()
+    require 'rbconfig'
+    ver = `sw_vers -productVersion 2>/dev/null`.to_i
+    ver >= 14
+  end
+
   def test_reload_is_public_and_takes_optional_force()
     wv = web_view
     assert_respond_to wv, :reload

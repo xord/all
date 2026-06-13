@@ -218,6 +218,13 @@ namespace Reflex
 	}
 
 	void
+	WebView::create_web_view (const DataStore& data_store)
+	{
+		assert(self->backend);
+		self->backend->create_web_view(data_store.native());
+	}
+
+	void
 	WebView::load (const char* url)
 	{
 		assert(self->backend);
@@ -637,6 +644,10 @@ namespace Reflex
 		// caller gets a clear signal instead of a blank view.
 		struct StubBackend : public WebViewBackend
 		{
+
+			void create_web_view (const void* native_data_store) override
+			{
+			}
 
 			void load (const char* url) override
 			{

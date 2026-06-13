@@ -20,6 +20,17 @@ RUCY_DEF_ALLOC(alloc, klass)
 }
 RUCY_END
 
+// Creates the backing native web view bound to data_store. Called once
+// by WebView#initialize, before the view is used.
+static
+RUCY_DEF1(create_web_view, data_store)
+{
+	CHECK;
+	THIS->create_web_view(to<Reflex::WebView::DataStore&>(data_store));
+	return self;
+}
+RUCY_END
+
 static
 RUCY_DEF1(load, url)
 {
@@ -386,6 +397,7 @@ Init_reflex_web_view ()
 
 	cWebView = mReflex.define_class("WebView", Reflex::view_class());
 	cWebView.define_alloc_func(alloc);
+	cWebView.define_private_method("create_web_view!", create_web_view);
 	cWebView.define_method(     "load",      load);
 	cWebView.define_method(     "load_html", load_html);
 	cWebView.define_method(     "eval_js",   eval_js);

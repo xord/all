@@ -27,6 +27,11 @@ namespace Reflex
 
 		virtual ~WebViewBackend () {}
 
+		// Creates the native web view bound to the given data store
+		// (native handle from WebView::DataStore, or NULL for the
+		// platform default). Called once before any other operation.
+		virtual void create_web_view (const void* native_data_store) = 0;
+
 		virtual void load (const char* url) = 0;
 
 		virtual void load_html (const char* html) = 0;

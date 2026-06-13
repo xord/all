@@ -89,6 +89,25 @@ module Reflex
 
     end# MessageEvent
 
+    # Creates a WebView. +data_store+ is the website data store (cookies,
+    # local storage, caches) the view reads and writes; it defaults to the
+    # shared DataStore.default. Pass DataStore.new for an ephemeral
+    # (incognito) view, DataStore.load('name') for a named profile, or
+    # another view's #data_store to share its data. The store is fixed for
+    # the life of the view. Remaining options and the block configure the
+    # view as for any Reflex::View (e.g. name:, frame:).
+    def initialize(data_store = DataStore.default, **options, &block)
+      @data_store = data_store
+      create_web_view! data_store
+      super(options.empty? ? nil : options, &block)
+    end
+
+    # The website data store backing this view (see #initialize). Pass it
+    # to WebView.new(other.data_store) to share browsing data.
+    def data_store()
+      @data_store ||= DataStore.default
+    end
+
     # Navigates to +url+. Equivalent to #load.
     def url=(url)
       load url.to_s

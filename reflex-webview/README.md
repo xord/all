@@ -93,6 +93,31 @@ view, and `focus` directs keyboard input to the page. Hover (`:hover`,
 - `on_download_progress`, `on_download_finish`, `on_download_fail`;
   `Download#fraction`, `Download#cancel`.
 
+### Data stores (cookies, incognito, profiles)
+
+A `DataStore` is the cookies, local storage, and caches a WebView reads
+and writes. Pass one to `WebView.new` to isolate or share browsing data;
+the store is fixed for the life of the view.
+
+```ruby
+Reflex::WebView.new                                 # shared default store
+Reflex::WebView.new(Reflex::WebView::DataStore.new) # incognito (ephemeral)
+Reflex::WebView.new(Reflex::WebView::DataStore.load('work'))  # named profile
+
+# share one store between views (e.g. tabs in the same profile)
+tab2 = Reflex::WebView.new(tab1.data_store)
+```
+
+- `DataStore.default` — the shared, persistent default store.
+- `DataStore.new` — a fresh ephemeral (incognito) store; nothing is
+  written to disk and the data is gone once the store is released.
+- `DataStore.load('name')` — a named persistent profile, kept separate
+  from the default and from other names and persisted across runs (macOS
+  14+).
+- `store.persistent?`, `store.name`, `store.clear` (wipe all its data).
+- `web.data_store` — the store a view is using (pass it to another
+  `WebView.new` to share).
+
 ### Session state (tab hibernation)
 - `session_state` — the page session (back/forward history, scroll
   position and form field values) as an opaque base64 string, or `nil`.
@@ -141,6 +166,8 @@ the host window on screen so the video keeps compositing. Off by default.
   static capture, so there is no persistent scrollbar.
 - **`load_html`** — such pages are not added to the history, and reloading
   one navigates to `about:blank`.
+- **Named profiles** — `DataStore.load('name')` requires macOS 14+;
+  `DataStore.new` (incognito) and `DataStore.default` work everywhere.
 - **Dialogs** — `alert`/`confirm`/`prompt` are app-modal (like a browser).
 - **IME** — text input via an input method is not supported.
 - **No `to_pdf`** and **no network interception** on the macOS backend.

@@ -9,8 +9,10 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 #import <objc/runtime.h>
+#import <CommonCrypto/CommonDigest.h>
 #include <reflex/web_view.h>
 #include <reflex/pointer.h>
+#include <reflex/exception.h>
 #include "wk_capture.h"
 
 
@@ -245,6 +247,7 @@ static const CGFloat CORNER_RADIUS = 20;
 - (void) registerDownload: (WKDownload*) download;
 - (void) queueDownload: (ReflexDownload*) rd kind: (int) kind error: (NSString*) err;
 - (instancetype) initWithWidth: (int) w height: (int) h;
+- (void) createWebViewWithDataStore: (WKWebsiteDataStore*) store;
 - (void) setSizeWidth: (int) w height: (int) h;
 - (void) requestSnapshot;
 - (CGImageRef) takePendingSnapshot;  // returns +1, caller releases
@@ -368,7 +371,60 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 			NSWindowCollectionBehaviorIgnoresCycle |
 			NSWindowCollectionBehaviorStationary];
 
+		// In video-capture mode the host keeps a 1px corner on-screen; round
+		// the window corners so that sliver lands in a transparent region
+		// and stays invisible. The mask only affects on-screen compositing,
+		// not the rectangular backing store the capture reads, so the page
+		// image is still captured square. The window never takes input
+		// (events are synthesized straight to the WKWebView), so it ignores
+		// the mouse to avoid swallowing clicks at that corner pixel.
+		[window setOpaque: NO];
+		[window setBackgroundColor: [NSColor clearColor]];
+		[window setIgnoresMouseEvents: YES];
+		NSView* cv = [window contentView];
+		[cv setWantsLayer: YES];
+		cv.layer.cornerRadius  = CORNER_RADIUS;
+		cv.layer.masksToBounds = YES;
+
+		// The WKWebView itself is created later, in createWebViewWithDataStore:,
+		// so its website data store can be chosen at WebView construction time.
+
+		// off the desktop, but ordered-in so the page keeps animating.
+		[self moveOffscreen];
+		[window orderBack: nil];
+
+		// An ordered-in window keeps the app alive after the user closes
+		// the last real window; watch for that and bow out.
+		[[NSNotificationCenter defaultCenter]
+			addObserver: self
+			   selector: @selector(otherWindowWillClose:)
+			       name: NSWindowWillCloseNotification
+			     object: nil];
+
+		// A fixed off-screen point can land on a newly attached display
+		// (e.g. one placed left/above the main screen); recompute the
+		// off-screen origin whenever the screen layout changes.
+		[[NSNotificationCenter defaultCenter]
+			addObserver: self
+			   selector: @selector(moveOffscreen)
+			       name: NSApplicationDidChangeScreenParametersNotification
+			     object: nil];
+
+		return self;
+	}
+
+	// Creates the WKWebView and wires up its configuration, user scripts,
+	// and delegates. Deferred out of init so the website data store (which
+	// is fixed at configuration time) can be chosen per WebView. store may
+	// be nil to use the default data store. Idempotent.
+	- (void) createWebViewWithDataStore: (WKWebsiteDataStore*) store
+	{
+		if (webView) return;
+
+		NSRect rect = [[window contentView] bounds];
+
 		WKWebViewConfiguration* conf = [[[WKWebViewConfiguration alloc] init] autorelease];
+		if (store) [conf setWebsiteDataStore: store];
 
 		messageProxy = [[ReflexWKMessageProxy alloc] init];
 		messageProxy->host = self;
@@ -400,49 +456,14 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		[webView setUIDelegate: self];
 		[[window contentView] addSubview: webView];
 
-		// In video-capture mode the host keeps a 1px corner on-screen; round
-		// the window corners so that sliver lands in a transparent region
-		// and stays invisible. The mask only affects on-screen compositing,
-		// not the rectangular backing store the capture reads, so the page
-		// image is still captured square. The window never takes input
-		// (events are synthesized straight to the WKWebView), so it ignores
-		// the mouse to avoid swallowing clicks at that corner pixel.
-		[window setOpaque: NO];
-		[window setBackgroundColor: [NSColor clearColor]];
-		[window setIgnoresMouseEvents: YES];
-		NSView* cv = [window contentView];
-		[cv setWantsLayer: YES];
-		cv.layer.cornerRadius  = CORNER_RADIUS;
-		cv.layer.masksToBounds = YES;
+		// Match the window's rounded mask (see CORNER_RADIUS); affects only
+		// on-screen compositing, not the rectangular capture backing store.
 		[webView setWantsLayer: YES];
 		webView.layer.cornerRadius  = CORNER_RADIUS;
 		webView.layer.masksToBounds = YES;
 
 		if ([webView respondsToSelector: @selector(_setWindowOcclusionDetectionEnabled:)])
 			[webView _setWindowOcclusionDetectionEnabled: NO];
-
-		// off the desktop, but ordered-in so the page keeps animating.
-		[self moveOffscreen];
-		[window orderBack: nil];
-
-		// An ordered-in window keeps the app alive after the user closes
-		// the last real window; watch for that and bow out.
-		[[NSNotificationCenter defaultCenter]
-			addObserver: self
-			   selector: @selector(otherWindowWillClose:)
-			       name: NSWindowWillCloseNotification
-			     object: nil];
-
-		// A fixed off-screen point can land on a newly attached display
-		// (e.g. one placed left/above the main screen); recompute the
-		// off-screen origin whenever the screen layout changes.
-		[[NSNotificationCenter defaultCenter]
-			addObserver: self
-			   selector: @selector(moveOffscreen)
-			       name: NSApplicationDidChangeScreenParametersNotification
-			     object: nil];
-
-		return self;
 	}
 
 	// Positions the off-desktop host window. In video-capture mode it keeps
@@ -495,14 +516,17 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		[[NSNotificationCenter defaultCenter] removeObserver: self];
 		[downloads release];
 		if (pendingSnapshot) CGImageRelease(pendingSnapshot);
-		messageProxy->host = nil;
-		WKUserContentController* ucc = [[webView configuration] userContentController];
-		[ucc removeScriptMessageHandlerForName: @"reflex"];
-		[ucc removeScriptMessageHandlerForName: @"reflexInternal"];
+		if (messageProxy) messageProxy->host = nil;
+		if (webView)
+		{
+			WKUserContentController* ucc = [[webView configuration] userContentController];
+			[ucc removeScriptMessageHandlerForName: @"reflex"];
+			[ucc removeScriptMessageHandlerForName: @"reflexInternal"];
+			[webView setNavigationDelegate: nil];
+			[webView setUIDelegate: nil];
+			[webView release];
+		}
 		[messageProxy release];
-		[webView setNavigationDelegate: nil];
-		[webView setUIDelegate: nil];
-		[webView release];
 		[window release];
 		[super dealloc];
 	}
@@ -848,6 +872,12 @@ namespace Reflex
 			{
 				host->owner = NULL;
 				[host release];
+			}
+
+			void create_web_view (const void* native_data_store) override
+			{
+				[host createWebViewWithDataStore:
+					(WKWebsiteDataStore*) native_data_store];
 			}
 
 			void load (const char* url) override
@@ -1674,6 +1704,140 @@ namespace Reflex
 	WebViewBackend_create (WebView* owner)
 	{
 		return new WKBackend(owner);
+	}
+
+
+	// ---- WebView::DataStore (WKWebsiteDataStore wrapper) ----
+
+	struct WebView::DataStore::Data
+	{
+
+		id native;          // WKWebsiteDataStore* (retained), or nil
+
+		Xot::String name;
+
+		bool persistent;
+
+		Data (id native = nil, const char* name = NULL, bool persistent = false)
+		:	native([native retain]),
+			name(name ? name : ""), persistent(persistent)
+		{
+		}
+
+		~Data ()
+		{
+			[native release];
+		}
+
+	};// WebView::DataStore::Data
+
+
+	// Derives a stable, valid v4-shaped UUID from a profile name, so the
+	// same name always maps to the same on-disk data store identifier.
+	static NSUUID*
+	data_store_uuid_for_name (const char* name)
+	{
+		NSData* d = [[NSString stringWithUTF8String: name ? name : ""]
+			dataUsingEncoding: NSUTF8StringEncoding];
+		unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+		CC_SHA256(d.bytes, (CC_LONG) d.length, digest);
+
+		uuid_t u;
+		memcpy(u, digest, sizeof(u));
+		u[6] = (u[6] & 0x0F) | 0x40;  // version 4
+		u[8] = (u[8] & 0x3F) | 0x80;  // RFC 4122 variant
+
+		return [[[NSUUID alloc] initWithUUIDBytes: u] autorelease];
+	}
+
+	WebView::DataStore::DataStore ()
+	:	self(new Data())
+	{
+	}
+
+	WebView::DataStore::~DataStore ()
+	{
+	}
+
+	WebView::DataStore
+	WebView::DataStore::create_ephemeral ()
+	{
+		DataStore ds;
+		ds.self->native     = [[WKWebsiteDataStore nonPersistentDataStore] retain];
+		ds.self->persistent = false;
+		return ds;
+	}
+
+	WebView::DataStore
+	WebView::DataStore::create_default ()
+	{
+		// One shared wrapper around the process-wide default store.
+		static DataStore shared;
+		if (!shared.self->native)
+		{
+			shared.self->native     = [[WKWebsiteDataStore defaultDataStore] retain];
+			shared.self->persistent = true;
+		}
+		return shared;
+	}
+
+	WebView::DataStore
+	WebView::DataStore::create_named (const char* name)
+	{
+		if (@available(macOS 14.0, *))
+		{
+			// Same name -> same wrapper, so views built from it share a
+			// single live store instance, not just the same files.
+			static std::map<std::string, DataStore> cache;
+			std::string key = name ? name : "";
+
+			auto it = cache.find(key);
+			if (it != cache.end()) return it->second;
+
+			WKWebsiteDataStore* s = [WKWebsiteDataStore
+				dataStoreForIdentifier: data_store_uuid_for_name(name)];
+
+			DataStore ds;
+			ds.self->native     = [s retain];
+			ds.self->name       = key.c_str();
+			ds.self->persistent = true;
+			cache[key] = ds;
+			return ds;
+		}
+		else
+		{
+			reflex_error(__FILE__, __LINE__,
+				"Named data stores require macOS 14 or later.");
+			return DataStore();  // unreachable
+		}
+	}
+
+	bool
+	WebView::DataStore::persistent () const
+	{
+		return self->persistent;
+	}
+
+	Xot::String
+	WebView::DataStore::name () const
+	{
+		return self->name;
+	}
+
+	void
+	WebView::DataStore::clear ()
+	{
+		WKWebsiteDataStore* s = (WKWebsiteDataStore*) self->native;
+		if (!s) return;
+		[s removeDataOfTypes: [WKWebsiteDataStore allWebsiteDataTypes]
+			   modifiedSince: [NSDate dateWithTimeIntervalSince1970: 0]
+			completionHandler: ^{}];
+	}
+
+	const void*
+	WebView::DataStore::native () const
+	{
+		return self->native;
 	}
 
 

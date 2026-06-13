@@ -27,6 +27,8 @@ RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::MessageEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::ConsoleEvent)
 
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_WEBVIEW_EXPORT, Reflex::WebView::DataStore)
+
 
 namespace Reflex
 {
@@ -34,6 +36,9 @@ namespace Reflex
 
 	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_class ();
 	// class Reflex::WebView
+
+	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_data_store_class ();
+	// class Reflex::WebView::DataStore
 
 	REFLEX_WEBVIEW_EXPORT Rucy::Class web_view_load_event_class ();
 	// class Reflex::WebView::LoadEvent
@@ -229,6 +234,12 @@ namespace Rucy
 	get_ruby_class<Reflex::WebView::ConsoleEvent> ()
 	{
 		return Reflex::web_view_console_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::WebView::DataStore> ()
+	{
+		return Reflex::web_view_data_store_class();
 	}
 
 
