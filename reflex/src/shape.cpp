@@ -819,7 +819,7 @@ namespace Reflex
 			coord l   = to_b2coord(frame.x,           ppm);
 			coord t   = to_b2coord(frame.y,           ppm);
 			coord r   = to_b2coord(frame.x + frame.w, ppm);
-			coord b   = to_b2coord(frame.x + frame.h, ppm);
+			coord b   = to_b2coord(frame.y + frame.h, ppm);
 			b2Vec2 b2points[] = {{l, t}, {l, b}, {r, b}, {r, t}};
 
 			b2PolygonShape b2shape;
@@ -845,7 +845,7 @@ namespace Reflex
 
 			float ppm                = owner->meter2pixel();
 			const Polyline& polyline = polygon[0];
-			assert(polyline[0].size() <= 8);
+			assert(polyline.size() <= 8);
 
 			b2Vec2 b2points[8];
 			for (size_t i = 0; i < polyline.size(); ++i)

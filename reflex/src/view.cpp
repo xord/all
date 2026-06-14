@@ -318,6 +318,7 @@ namespace Reflex
 			clear_walls(view);
 
 			View* wall = new View(WALL_NAME);
+			wall->set_shape(NULL);
 			wall->add_shape(new WallShape(WallShape::ALL));
 			wall->set_static();
 
