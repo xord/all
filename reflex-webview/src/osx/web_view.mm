@@ -361,7 +361,7 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 // find() returns {count, index} (index is 1-based, 0 if none).
 static NSString* const REFLEX_FIND_SCRIPT =
 	@"window.__REFLEX__ = window.__REFLEX__ || {};"
-	@"window.__REFLEX__.find = (function () {"
+	@"window.__REFLEX__.search = (function () {"
 	@"  var MARK = 'reflex-find-mark', CUR = 'reflex-find-current';"
 	@"  var st = { q: null, cs: false, nodes: [], i: -1 };"
 	@"  function style () {"
@@ -424,7 +424,7 @@ static NSString* const REFLEX_FIND_SCRIPT =
 	@"    return select(i);"
 	@"  }"
 	@"  return {"
-	@"    run: function (q, cs, forward, wrap) {"
+	@"    find: function (q, cs, forward, wrap) {"
 	@"      style(); build(q, cs);"
 	@"      if (st.nodes.length === 0) return { count: 0, index: 0 };"
 	@"      return select(forward ? 0 : st.nodes.length - 1);"
