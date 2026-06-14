@@ -5,11 +5,13 @@
 #include <string.h>
 #include <map>
 #include <string>
+#include <tuple>
 #include <vector>
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
+#import <Security/Security.h>
 #include <reflex/web_view.h>
 #include <reflex/pointer.h>
 #include <reflex/exception.h>
@@ -245,6 +247,16 @@ static const NSUInteger REFLEX_AUDIO_MUTED = 1 << 0;
 	std::vector<Reflex::WebView::DownloadInfo> downloadQueue;
 	NSMutableDictionary<NSNumber*, ReflexDownload*>* downloads;
 	long nextDownloadId;
+	// Pending auth/permission challenges, keyed by a generated id. Each
+	// holds the completion handler (and, for auth, the challenge) until the
+	// Ruby layer responds. Drained as authQueue/certQueue/permQueue.
+	NSMutableDictionary<NSNumber*, id>* authHandlers;       // block copies
+	NSMutableDictionary<NSNumber*, NSURLAuthenticationChallenge*>* authChallenges;
+	NSMutableDictionary<NSNumber*, id>* permHandlers;       // block copies
+	long nextChallengeId;
+	std::vector<std::tuple<long, std::string, int, std::string, std::string>> authQueue;
+	std::vector<std::tuple<long, std::string, std::string>> certQueue;
+	std::vector<std::tuple<long, std::string, std::string>> permQueue;
 	ReflexWKMessageProxy* messageProxy;
 	BOOL       videoCapture;  // keep a hidden 1px on-screen for video
 	Reflex::WebView* owner;  // assigned; cleared by ~WKBackend
@@ -379,7 +391,10 @@ reflex_navigation_type (WKNavigationType type)
 		self = [super init];
 		if (!self) return nil;
 
-		downloads = [[NSMutableDictionary alloc] init];
+		downloads      = [[NSMutableDictionary alloc] init];
+		authHandlers   = [[NSMutableDictionary alloc] init];
+		authChallenges = [[NSMutableDictionary alloc] init];
+		permHandlers   = [[NSMutableDictionary alloc] init];
 
 		NSRect rect = NSMakeRect(0, 0, w, h);
 		window = [[ReflexWKHostWindow alloc]
@@ -544,6 +559,9 @@ reflex_navigation_type (WKNavigationType type)
 	{
 		[[NSNotificationCenter defaultCenter] removeObserver: self];
 		[downloads release];
+		[authHandlers release];
+		[authChallenges release];
+		[permHandlers release];
 		if (pendingSnapshot) CGImageRelease(pendingSnapshot);
 		if (messageProxy) messageProxy->host = nil;
 		if (webView)
@@ -686,6 +704,73 @@ reflex_navigation_type (WKNavigationType type)
 	{
 		decisionHandler(response.canShowMIMEType ?
 			WKNavigationResponsePolicyAllow : WKNavigationResponsePolicyDownload);
+	}
+
+	// HTTP auth and TLS server-trust challenges. Valid certificates pass
+	// through; credential challenges and invalid certificates are queued
+	// for the Ruby layer (on_authenticate / on_certificate_error) and the
+	// completion handler is held until it responds (respond_auth/certificate).
+	- (void) webView: (WKWebView*) wv
+		didReceiveAuthenticationChallenge: (NSURLAuthenticationChallenge*) challenge
+		completionHandler: (void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential*)) completionHandler
+	{
+		NSString* method = challenge.protectionSpace.authenticationMethod;
+
+		if ([method isEqualToString: NSURLAuthenticationMethodServerTrust])
+		{
+			SecTrustRef trust = challenge.protectionSpace.serverTrust;
+			BOOL ok = NO;
+			if (trust)
+			{
+				if (@available(macOS 10.14, *))
+				{
+					CFErrorRef err = NULL;
+					ok = SecTrustEvaluateWithError(trust, &err);
+					if (err) CFRelease(err);
+				}
+				else ok = YES;  // let default handling decide on old systems
+			}
+			if (ok)
+			{
+				completionHandler(
+					NSURLSessionAuthChallengePerformDefaultHandling, nil);
+				return;
+			}
+
+			long cid = ++nextChallengeId;
+			id copied = [completionHandler copy];
+			authHandlers[@(cid)]   = copied;
+			[copied release];
+			authChallenges[@(cid)] = challenge;
+			const char* host = challenge.protectionSpace.host.UTF8String;
+			certQueue.emplace_back(
+				cid, host ? host : "", "the certificate is not trusted");
+			return;
+		}
+
+		if ([method isEqualToString: NSURLAuthenticationMethodHTTPBasic] ||
+		    [method isEqualToString: NSURLAuthenticationMethodHTTPDigest] ||
+		    [method isEqualToString: NSURLAuthenticationMethodNTLM])
+		{
+			long cid = ++nextChallengeId;
+			id copied = [completionHandler copy];
+			authHandlers[@(cid)]   = copied;
+			[copied release];
+			authChallenges[@(cid)] = challenge;
+
+			NSURLProtectionSpace* ps = challenge.protectionSpace;
+			const char* host  = ps.host.UTF8String;
+			const char* realm = ps.realm.UTF8String;
+			const char* m =
+				[method isEqualToString: NSURLAuthenticationMethodHTTPBasic]  ? "basic" :
+				[method isEqualToString: NSURLAuthenticationMethodHTTPDigest] ? "digest" :
+				"ntlm";
+			authQueue.emplace_back(
+				cid, host ? host : "", (int) ps.port, realm ? realm : "", m);
+			return;
+		}
+
+		completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
 	}
 
 	- (void) webView: (WKWebView*) wv
@@ -837,6 +922,34 @@ reflex_navigation_type (WKNavigationType type)
 		return nil;
 	}
 
+	// Camera / microphone access requests (macOS 12+). Queued for the Ruby
+	// layer (on_permission); the decision handler is held until it responds
+	// (respond_permission).
+	- (void) webView: (WKWebView*) wv
+		requestMediaCapturePermissionForOrigin: (WKSecurityOrigin*) origin
+		initiatedByFrame: (WKFrameInfo*) frame
+		type: (WKMediaCaptureType) type
+		decisionHandler: (void (^)(WKPermissionDecision)) decisionHandler
+		API_AVAILABLE(macos(12.0))
+	{
+		long cid = ++nextChallengeId;
+		id copied = [decisionHandler copy];
+		permHandlers[@(cid)] = copied;
+		[copied release];
+
+		NSString* o = origin.port != 0
+			? [NSString stringWithFormat: @"%@://%@:%d",
+				origin.protocol, origin.host, (int) origin.port]
+			: [NSString stringWithFormat: @"%@://%@",
+				origin.protocol, origin.host];
+		const char* type_s =
+			type == WKMediaCaptureTypeCamera     ? "camera" :
+			type == WKMediaCaptureTypeMicrophone ? "microphone" :
+			"camera_and_microphone";
+		const char* os = o.UTF8String;
+		permQueue.emplace_back(cid, os ? os : "", type_s);
+	}
+
 	// SPI (WKUIDelegatePrivate): intercept the context menu WebKit is
 	// about to open. Its own popup would appear inside the off-desktop
 	// host window where nobody can see it, so suppress that and pop the
@@ -885,6 +998,142 @@ reflex_navigation_type (WKNavigationType type)
 	}
 
 @end
+
+
+// ---- Server certificate extraction (see WKBackend::certificate) ----
+
+static Xot::String
+reflex_hex (const unsigned char* bytes, size_t n)
+{
+	static const char* H = "0123456789abcdef";
+	std::string s;
+	s.reserve(n * 2);
+	for (size_t i = 0; i < n; ++i)
+	{
+		s += H[bytes[i] >> 4];
+		s += H[bytes[i] & 0xF];
+	}
+	return s.c_str();
+}
+
+// The common-name string inside an X.509 name section (issuer/subject),
+// as returned by SecCertificateCopyValues.
+static NSString*
+reflex_cert_cn (NSDictionary* values, CFStringRef nameOID)
+{
+	NSDictionary* entry = values[(id) nameOID];
+	id arr = entry[(id) kSecPropertyKeyValue];
+	if (![arr isKindOfClass: [NSArray class]]) return nil;
+	for (id obj in (NSArray*) arr)
+	{
+		if (![obj isKindOfClass: [NSDictionary class]]) continue;
+		NSDictionary* comp = obj;
+		if ([comp[(id) kSecPropertyKeyLabel]
+			isEqualToString: (NSString*) kSecOIDCommonName])
+		{
+			id val = comp[(id) kSecPropertyKeyValue];
+			if ([val isKindOfClass: [NSString class]]) return val;
+		}
+	}
+	return nil;
+}
+
+// A validity date (CFAbsoluteTime) from SecCertificateCopyValues, as Unix
+// epoch seconds.
+static double
+reflex_cert_date (NSDictionary* values, CFStringRef oid)
+{
+	NSDictionary* entry = values[(id) oid];
+	id v = entry[(id) kSecPropertyKeyValue];
+	if ([v isKindOfClass: [NSNumber class]])
+		return [v doubleValue] + kCFAbsoluteTimeIntervalSince1970;
+	return 0;
+}
+
+static bool
+reflex_extract_certificate (
+	SecTrustRef trust,
+	Xot::String* subject, Xot::String* issuer,
+	double* not_before, double* not_after,
+	Xot::String* serial, Xot::String* fingerprint)
+{
+	if (!trust) return false;
+
+	SecCertificateRef leaf = NULL;
+	CFArrayRef chain = NULL;
+	if (@available(macOS 12.0, *))
+	{
+		chain = SecTrustCopyCertificateChain(trust);
+		if (chain && CFArrayGetCount(chain) > 0)
+			leaf = (SecCertificateRef) CFArrayGetValueAtIndex(chain, 0);
+	}
+	else
+		leaf = SecTrustGetCertificateAtIndex(trust, 0);
+
+	if (!leaf)
+	{
+		if (chain) CFRelease(chain);
+		return false;
+	}
+
+	if (subject)
+	{
+		CFStringRef s = SecCertificateCopySubjectSummary(leaf);
+		if (s) { *subject = [(NSString*) s UTF8String]; CFRelease(s); }
+	}
+
+	const void* keys[] = {
+		kSecOIDX509V1IssuerName,
+		kSecOIDX509V1ValidityNotBefore,
+		kSecOIDX509V1ValidityNotAfter};
+	CFArrayRef keyArr = CFArrayCreate(NULL, keys, 3, &kCFTypeArrayCallBacks);
+	CFErrorRef err = NULL;
+	CFDictionaryRef values = SecCertificateCopyValues(leaf, keyArr, &err);
+	CFRelease(keyArr);
+	if (err) CFRelease(err);
+	if (values)
+	{
+		NSDictionary* v = (NSDictionary*) values;
+		if (issuer)
+		{
+			NSString* cn = reflex_cert_cn(v, kSecOIDX509V1IssuerName);
+			if (cn) *issuer = cn.UTF8String;
+		}
+		if (not_before) *not_before = reflex_cert_date(v, kSecOIDX509V1ValidityNotBefore);
+		if (not_after)  *not_after  = reflex_cert_date(v, kSecOIDX509V1ValidityNotAfter);
+		CFRelease(values);
+	}
+
+	if (serial)
+	{
+		if (@available(macOS 10.13, *))
+		{
+			CFErrorRef e2 = NULL;
+			CFDataRef sd = SecCertificateCopySerialNumberData(leaf, &e2);
+			if (e2) CFRelease(e2);
+			if (sd)
+			{
+				*serial = reflex_hex(CFDataGetBytePtr(sd), CFDataGetLength(sd));
+				CFRelease(sd);
+			}
+		}
+	}
+
+	if (fingerprint)
+	{
+		CFDataRef der = SecCertificateCopyData(leaf);
+		if (der)
+		{
+			unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+			CC_SHA256(CFDataGetBytePtr(der), (CC_LONG) CFDataGetLength(der), digest);
+			*fingerprint = reflex_hex(digest, CC_SHA256_DIGEST_LENGTH);
+			CFRelease(der);
+		}
+	}
+
+	if (chain) CFRelease(chain);
+	return true;
+}
 
 
 namespace Reflex
@@ -1248,6 +1497,87 @@ namespace Reflex
 				if ([host->webView respondsToSelector: @selector(isInspectable)])
 					return host->webView.inspectable;
 				return false;
+			}
+
+			bool secure () const override
+			{
+				return host->webView.hasOnlySecureContent;
+			}
+
+			bool certificate (
+				Xot::String* subject, Xot::String* issuer,
+				double* not_before, double* not_after,
+				Xot::String* serial, Xot::String* fingerprint) const override
+			{
+				if (@available(macOS 11.0, *))
+				{
+					return reflex_extract_certificate(
+						host->webView.serverTrust,
+						subject, issuer, not_before, not_after,
+						serial, fingerprint);
+				}
+				return false;
+			}
+
+			void respond_auth (
+				long id, bool ok,
+				const char* user, const char* password) override
+			{
+				NSNumber* key = @(id);
+				void (^h)(NSURLSessionAuthChallengeDisposition, NSURLCredential*) =
+					host->authHandlers[key];
+				if (!h) return;
+
+				if (ok)
+				{
+					NSURLCredential* cred = [NSURLCredential
+						credentialWithUser: user ? [NSString stringWithUTF8String: user] : @""
+						          password: password ? [NSString stringWithUTF8String: password] : @""
+						       persistence: NSURLCredentialPersistenceForSession];
+					h(NSURLSessionAuthChallengeUseCredential, cred);
+				}
+				else
+					h(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+
+				[host->authHandlers   removeObjectForKey: key];
+				[host->authChallenges removeObjectForKey: key];
+			}
+
+			void respond_certificate (long id, bool proceed) override
+			{
+				NSNumber* key = @(id);
+				void (^h)(NSURLSessionAuthChallengeDisposition, NSURLCredential*) =
+					host->authHandlers[key];
+				if (!h) return;
+
+				if (proceed)
+				{
+					NSURLAuthenticationChallenge* ch = host->authChallenges[key];
+					SecTrustRef trust = ch.protectionSpace.serverTrust;
+					NSURLCredential* cred =
+						trust ? [NSURLCredential credentialForTrust: trust] : nil;
+					if (cred)
+						h(NSURLSessionAuthChallengeUseCredential, cred);
+					else
+						h(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+				}
+				else
+					h(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+
+				[host->authHandlers   removeObjectForKey: key];
+				[host->authChallenges removeObjectForKey: key];
+			}
+
+			void respond_permission (long id, bool grant) override
+			{
+				if (@available(macOS 12.0, *))
+				{
+					NSNumber* key = @(id);
+					void (^h)(WKPermissionDecision) = host->permHandlers[key];
+					if (!h) return;
+					h(grant ? WKPermissionDecisionGrant : WKPermissionDecisionDeny);
+					[host->permHandlers removeObjectForKey: key];
+				}
 			}
 
 			void set_video_capture (bool enabled) override
@@ -1669,6 +1999,36 @@ namespace Reflex
 							entry.first.c_str(), entry.second.c_str());
 						owner->on_open(&e);
 					}
+				}
+
+				if (!host->authQueue.empty())
+				{
+					decltype(host->authQueue) queue;
+					queue.swap(host->authQueue);
+					for (const auto& t : queue)
+						owner->on_auth_event(
+							std::get<0>(t), std::get<1>(t).c_str(), std::get<2>(t),
+							std::get<3>(t).c_str(), std::get<4>(t).c_str());
+				}
+
+				if (!host->certQueue.empty())
+				{
+					decltype(host->certQueue) queue;
+					queue.swap(host->certQueue);
+					for (const auto& t : queue)
+						owner->on_certificate_error_event(
+							std::get<0>(t), std::get<1>(t).c_str(),
+							std::get<2>(t).c_str());
+				}
+
+				if (!host->permQueue.empty())
+				{
+					decltype(host->permQueue) queue;
+					queue.swap(host->permQueue);
+					for (const auto& t : queue)
+						owner->on_permission_event(
+							std::get<0>(t), std::get<1>(t).c_str(),
+							std::get<2>(t).c_str());
 				}
 
 				// Poll active downloads for progress, then drain the queue.

@@ -114,6 +114,20 @@ namespace Reflex
 
 		virtual bool inspectable () const = 0;
 
+		virtual bool secure () const = 0;
+
+		virtual bool certificate (
+			Xot::String* subject, Xot::String* issuer,
+			double* not_before, double* not_after,
+			Xot::String* serial, Xot::String* fingerprint) const = 0;
+
+		virtual void respond_auth (
+			long id, bool ok, const char* user, const char* password) = 0;
+
+		virtual void respond_certificate (long id, bool proceed) = 0;
+
+		virtual void respond_permission (long id, bool grant) = 0;
+
 		// When enabled, the off-screen host is kept barely on-screen so
 		// hardware video layers (MSE/EME, e.g. YouTube) keep compositing
 		// into the capture, at the cost of a hidden 1px window sliver.

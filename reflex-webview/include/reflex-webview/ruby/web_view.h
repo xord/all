@@ -97,6 +97,47 @@ namespace Reflex
 					Rucy::value((long) info.received_bytes));
 			}
 
+			virtual void on_auth_event (
+				long id, const char* host, int port,
+				const char* realm, const char* method)
+			{
+				RUCY_SYM(handle_auth_event);
+				if (!this->is_overridable())
+				{
+					Super::on_auth_event(id, host, port, realm, method);
+					return;
+				}
+				this->value.call(handle_auth_event,
+					Rucy::value(id), Rucy::value(host), Rucy::value(port),
+					Rucy::value(realm), Rucy::value(method));
+			}
+
+			virtual void on_certificate_error_event (
+				long id, const char* host, const char* error)
+			{
+				RUCY_SYM(handle_certificate_error_event);
+				if (!this->is_overridable())
+				{
+					Super::on_certificate_error_event(id, host, error);
+					return;
+				}
+				this->value.call(handle_certificate_error_event,
+					Rucy::value(id), Rucy::value(host), Rucy::value(error));
+			}
+
+			virtual void on_permission_event (
+				long id, const char* origin, const char* type)
+			{
+				RUCY_SYM(handle_permission_event);
+				if (!this->is_overridable())
+				{
+					Super::on_permission_event(id, origin, type);
+					return;
+				}
+				this->value.call(handle_permission_event,
+					Rucy::value(id), Rucy::value(origin), Rucy::value(type));
+			}
+
 			virtual void on_message (WebView::MessageEvent* e)
 			{
 				RUCY_SYM(on_message);

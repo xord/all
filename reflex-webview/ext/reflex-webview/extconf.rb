@@ -14,7 +14,7 @@ require 'reflex-webview/extension'
 Xot::ExtConf.new Xot, Rucy, Rays, Reflex, ReflexWebview do
   setup do
     headers    << 'ruby.h'
-    frameworks << 'Cocoa' << 'WebKit'                       if osx?
+    frameworks << 'Cocoa' << 'WebKit' << 'Security'         if osx?
     $LDFLAGS   << ' -Wl,--out-implib=libreflex-webview.dll.a' if mingw? || cygwin?
   end
 

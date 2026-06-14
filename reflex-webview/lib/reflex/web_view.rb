@@ -79,6 +79,93 @@ module Reflex
 
     end# DownloadEvent
 
+    # The server certificate of the current page (see WebView#certificate).
+    class Certificate
+
+      # The common names of the certificate's subject and issuer.
+      attr_reader :subject, :issuer
+
+      # The validity period as Time objects (or nil if unavailable).
+      attr_reader :not_before, :not_after
+
+      # The serial number and SHA-256 fingerprint, as hex strings.
+      attr_reader :serial, :fingerprint
+
+      def initialize(subject, issuer, not_before, not_after, serial, fingerprint)
+        @subject     = subject
+        @issuer      = issuer
+        @not_before  = not_before.to_f > 0 ? Time.at(not_before) : nil
+        @not_after   = not_after.to_f  > 0 ? Time.at(not_after)  : nil
+        @serial      = serial
+        @fingerprint = fingerprint
+      end
+
+    end# Certificate
+
+    # An HTTP authentication challenge for on_authenticate. Call #use to
+    # proceed with credentials, or #cancel to abort.
+    class AuthEvent
+
+      attr_reader :host, :port, :realm, :method
+
+      def initialize(web_view, id, host, port, realm, method)
+        @web_view, @id = web_view, id
+        @host, @port, @realm, @method = host, port, realm, method.to_sym
+      end
+
+      # Proceeds with the given username and password.
+      def use(user, password)
+        @web_view.__send__ :respond_auth!, @id, true, user.to_s, password.to_s
+      end
+
+      # Cancels the challenge (the load fails).
+      def cancel()
+        @web_view.__send__ :respond_auth!, @id, false, nil, nil
+      end
+
+    end# AuthEvent
+
+    # An invalid-certificate notice for on_certificate_error. Call
+    # #proceed to continue anyway, or #cancel to block the load.
+    class CertificateErrorEvent
+
+      attr_reader :host, :error
+
+      def initialize(web_view, id, host, error)
+        @web_view, @id, @host, @error = web_view, id, host, error
+      end
+
+      # Continues the load despite the invalid certificate.
+      def proceed()
+        @web_view.__send__ :respond_certificate!, @id, true
+      end
+
+      # Blocks the load.
+      def cancel()
+        @web_view.__send__ :respond_certificate!, @id, false
+      end
+
+    end# CertificateErrorEvent
+
+    # A permission request for on_permission. Call #grant or #deny.
+    class PermissionEvent
+
+      attr_reader :origin, :type
+
+      def initialize(web_view, id, origin, type)
+        @web_view, @id, @origin, @type = web_view, id, origin, type.to_sym
+      end
+
+      def grant()
+        @web_view.__send__ :respond_permission!, @id, true
+      end
+
+      def deny()
+        @web_view.__send__ :respond_permission!, @id, false
+      end
+
+    end# PermissionEvent
+
     class MessageEvent
 
       # The message posted from page JavaScript, parsed from JSON.
@@ -227,6 +314,47 @@ module Reflex
     # Called for each page console.* call (e.level / e.message).
     # Override in a subclass.
     def on_console(e)
+    end
+
+    # The server certificate of the current page as a Certificate, or nil
+    # for a non-HTTPS page. See also #secure?.
+    def certificate()
+      a = certificate!
+      a && Certificate.new(*a)
+    end
+
+    # Called for an HTTP authentication challenge. The default cancels;
+    # override (without super) and call e.use(user, password) or e.cancel.
+    def on_authenticate(e)
+      e.cancel
+    end
+
+    # Called when a page's certificate is invalid. The default blocks the
+    # load; override (without super) and call e.proceed or e.cancel.
+    def on_certificate_error(e)
+      e.cancel
+    end
+
+    # Called when a page requests a permission (e.type is :camera,
+    # :microphone, or :camera_and_microphone). The default denies;
+    # override (without super) and call e.grant or e.deny.
+    def on_permission(e)
+      e.deny
+    end
+
+    # Internal: fans an auth challenge out to on_authenticate.
+    def handle_auth_event(id, host, port, realm, method)
+      on_authenticate AuthEvent.new(self, id, host, port, realm, method)
+    end
+
+    # Internal: fans a certificate error out to on_certificate_error.
+    def handle_certificate_error_event(id, host, error)
+      on_certificate_error CertificateErrorEvent.new(self, id, host, error)
+    end
+
+    # Internal: fans a permission request out to on_permission.
+    def handle_permission_event(id, origin, type)
+      on_permission PermissionEvent.new(self, id, origin, type)
     end
 
     # Called when a download starts. Set e.download.path to choose the

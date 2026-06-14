@@ -477,6 +477,70 @@ namespace Reflex
 		return self->backend->inspectable();
 	}
 
+	bool
+	WebView::secure () const
+	{
+		assert(self->backend);
+		return self->backend->secure();
+	}
+
+	bool
+	WebView::certificate (
+		Xot::String* subject, Xot::String* issuer,
+		double* not_before, double* not_after,
+		Xot::String* serial, Xot::String* fingerprint) const
+	{
+		assert(self->backend);
+		return self->backend->certificate(
+			subject, issuer, not_before, not_after, serial, fingerprint);
+	}
+
+	void
+	WebView::respond_auth (
+		long id, bool ok, const char* user, const char* password)
+	{
+		assert(self->backend);
+		self->backend->respond_auth(id, ok, user, password);
+	}
+
+	void
+	WebView::respond_certificate (long id, bool proceed)
+	{
+		assert(self->backend);
+		self->backend->respond_certificate(id, proceed);
+	}
+
+	void
+	WebView::respond_permission (long id, bool grant)
+	{
+		assert(self->backend);
+		self->backend->respond_permission(id, grant);
+	}
+
+	void
+	WebView::on_auth_event (
+		long id, const char* host, int port,
+		const char* realm, const char* method)
+	{
+		// default: cancel. overridden in Ruby via RubyWebView.
+		respond_auth(id, false, NULL, NULL);
+	}
+
+	void
+	WebView::on_certificate_error_event (
+		long id, const char* host, const char* error)
+	{
+		// default: block. overridden in Ruby via RubyWebView.
+		respond_certificate(id, false);
+	}
+
+	void
+	WebView::on_permission_event (long id, const char* origin, const char* type)
+	{
+		// default: deny. overridden in Ruby via RubyWebView.
+		respond_permission(id, false);
+	}
+
 	void
 	WebView::set_video_capture (bool enabled)
 	{
@@ -882,6 +946,33 @@ namespace Reflex
 			bool inspectable () const override
 			{
 				return false;
+			}
+
+			bool secure () const override
+			{
+				return false;
+			}
+
+			bool certificate (
+				Xot::String* subject, Xot::String* issuer,
+				double* not_before, double* not_after,
+				Xot::String* serial, Xot::String* fingerprint) const override
+			{
+				return false;
+			}
+
+			void respond_auth (
+				long id, bool ok,
+				const char* user, const char* password) override
+			{
+			}
+
+			void respond_certificate (long id, bool proceed) override
+			{
+			}
+
+			void respond_permission (long id, bool grant) override
+			{
 			}
 
 			void set_video_capture (bool enabled) override

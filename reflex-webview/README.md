@@ -144,6 +144,13 @@ ephemeral store.
 - `find_next {|found| }` / `find_previous {|found| }` — repeat the last
   search in either direction.
 
+### Security
+- `secure?` — whether the current page loaded entirely over a valid,
+  secure connection (the "lock icon" state).
+- `certificate` — the server `Certificate` (or `nil`): `#subject`,
+  `#issuer`, `#not_before` / `#not_after` (Time), `#serial`,
+  `#fingerprint` (SHA-256 hex).
+
 ### Scroll & audio
 - `scroll_position` — the page's current `[x, y]` scroll offset.
 - `scroll_to(x, y)` — scroll the page.
@@ -159,6 +166,14 @@ ephemeral store.
 - `on_open` — `window.open` / `target=_blank` (opens in-place by default)
 - `on_crash` — renderer crash (auto-reloads)
 - `on_console` (`ConsoleEvent`), `on_favicon_change`, `on_hover`
+- `on_authenticate(e)` — HTTP auth; `e.use(user, password)` or
+  `e.cancel` (default cancels). `e.host`, `e.port`, `e.realm`,
+  `e.method` (`:basic`/`:digest`/`:ntlm`).
+- `on_certificate_error(e)` — invalid certificate; `e.proceed` or
+  `e.cancel` (default blocks). `e.host`, `e.error`.
+- `on_permission(e)` — camera/microphone request; `e.grant` or `e.deny`
+  (default denies). `e.origin`, `e.type` (`:camera`/`:microphone`/
+  `:camera_and_microphone`).
 - JS dialogs (`alert`/`confirm`/`prompt`) show a native `NSAlert`.
 
 ### Hardware video (MSE/EME, e.g. YouTube)

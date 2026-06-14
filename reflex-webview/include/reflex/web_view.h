@@ -345,6 +345,20 @@ namespace Reflex
 
 			virtual bool inspectable () const;
 
+			// Whether the current page was loaded entirely over a valid,
+			// secure connection (the "lock icon" state).
+			virtual bool secure () const;
+
+			// Fills the server certificate of the current page: subject and
+			// issuer common names, validity start/end as Unix epoch seconds,
+			// serial number and SHA-256 fingerprint (both hex). Returns
+			// false (leaving the outputs untouched) if there is no
+			// certificate, e.g. for a non-HTTPS page.
+			virtual bool certificate (
+				Xot::String* subject, Xot::String* issuer,
+				double* not_before, double* not_after,
+				Xot::String* serial, Xot::String* fingerprint) const;
+
 			// Keeps the page's hardware video layers (MSE/EME, e.g. YouTube)
 			// compositing into the capture. The macOS backend does this by
 			// holding a hidden 1px corner of the off-screen host window on
@@ -380,6 +394,34 @@ namespace Reflex
 			// Internal: delivers a download notification to the Ruby
 			// orchestration layer (which fans it out to on_download etc.).
 			virtual void on_download_event (const DownloadInfo& info);
+
+			// Internal: deliver an HTTP authentication challenge to the Ruby
+			// layer (which fans it out to on_authenticate). The default
+			// cancels. Respond with respond_auth.
+			virtual void on_auth_event (
+				long id, const char* host, int port,
+				const char* realm, const char* method);
+
+			// Internal: deliver an invalid-certificate notice to the Ruby
+			// layer (on_certificate_error). The default blocks. Respond with
+			// respond_certificate.
+			virtual void on_certificate_error_event (
+				long id, const char* host, const char* error);
+
+			// Internal: deliver a permission request to the Ruby layer
+			// (on_permission). The default denies. Respond with
+			// respond_permission.
+			virtual void on_permission_event (
+				long id, const char* origin, const char* type);
+
+			// Resolves a pending challenge/request raised by the events
+			// above. ok/proceed/grant continue; otherwise cancel/deny.
+			virtual void respond_auth (
+				long id, bool ok, const char* user, const char* password);
+
+			virtual void respond_certificate (long id, bool proceed);
+
+			virtual void respond_permission (long id, bool grant);
 
 			virtual void on_message (MessageEvent* e);
 

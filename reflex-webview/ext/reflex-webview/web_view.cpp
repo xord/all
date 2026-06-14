@@ -405,6 +405,62 @@ RUCY_DEF0(get_inspectable)
 RUCY_END
 
 static
+RUCY_DEF0(get_secure)
+{
+	CHECK;
+	return value(THIS->secure());
+}
+RUCY_END
+
+static
+RUCY_DEF0(certificate_raw)
+{
+	CHECK;
+	Xot::String subject, issuer, serial, fingerprint;
+	double not_before = 0, not_after = 0;
+	if (!THIS->certificate(
+		&subject, &issuer, &not_before, &not_after, &serial, &fingerprint))
+		return nil();
+
+	Value a[] = {
+		value(subject.c_str()), value(issuer.c_str()),
+		value(not_before),      value(not_after),
+		value(serial.c_str()),  value(fingerprint.c_str())};
+	return array(a, 6);
+}
+RUCY_END
+
+static
+RUCY_DEF4(respond_auth, id, ok, user, password)
+{
+	CHECK;
+	THIS->respond_auth(
+		to<long>(id), to<bool>(ok),
+		user     ? user.c_str()     : NULL,
+		password ? password.c_str() : NULL);
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF2(respond_certificate, id, proceed)
+{
+	CHECK;
+	THIS->respond_certificate(to<long>(id), to<bool>(proceed));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF2(respond_permission, id, grant)
+{
+	CHECK;
+	THIS->respond_permission(to<long>(id), to<bool>(grant));
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_video_capture, b)
 {
 	CHECK;
@@ -497,6 +553,11 @@ Init_reflex_web_view ()
 	cWebView.define_private_method("mute!",        set_muted);
 	cWebView.define_method(     "inspectable?",     get_inspectable);
 	cWebView.define_method(     "inspectable=",     set_inspectable);
+	cWebView.define_method(     "secure?",          get_secure);
+	cWebView.define_private_method("certificate!",  certificate_raw);
+	cWebView.define_private_method("respond_auth!",        respond_auth);
+	cWebView.define_private_method("respond_certificate!", respond_certificate);
+	cWebView.define_private_method("respond_permission!",  respond_permission);
 	cWebView.define_method(     "video_capture?",   get_video_capture);
 	cWebView.define_method(     "video_capture=",   set_video_capture);
 	cWebView.define_method(     "session_state",    get_session_state);

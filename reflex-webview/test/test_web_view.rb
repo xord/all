@@ -328,6 +328,57 @@ class TestWebView < Test::Unit::TestCase
     end
   end
 
+  def test_secure_and_certificate_api()
+    wv = web_view
+    assert_respond_to wv, :secure?
+    assert_respond_to wv, :certificate
+    assert_equal false, wv.secure?     # nothing loaded yet
+    assert_nil wv.certificate
+  end
+
+  def test_auth_permission_handlers()
+    wv = web_view
+    %i[on_authenticate on_certificate_error on_permission].each do |m|
+      assert_respond_to wv, m
+    end
+    %i[respond_auth! respond_certificate! respond_permission!].each do |m|
+      assert wv.respond_to?(m, true)
+    end
+  end
+
+  def test_auth_event()
+    e = Reflex::WebView::AuthEvent.new nil, 1, 'example.com', 443, 'realm', 'basic'
+    assert_equal 'example.com', e.host
+    assert_equal 443,           e.port
+    assert_equal 'realm',       e.realm
+    assert_equal :basic,        e.method
+  end
+
+  def test_certificate_error_event()
+    e = Reflex::WebView::CertificateErrorEvent.new nil, 1, 'example.com', 'bad'
+    assert_equal 'example.com', e.host
+    assert_equal 'bad',         e.error
+  end
+
+  def test_permission_event()
+    e = Reflex::WebView::PermissionEvent.new nil, 1, 'https://x', 'camera'
+    assert_equal 'https://x', e.origin
+    assert_equal :camera,     e.type
+  end
+
+  def test_certificate_object()
+    t0 = 1_700_000_000
+    t1 = 1_800_000_000
+    c = Reflex::WebView::Certificate.new(
+      'sub', 'iss', t0, t1, 'ab12', 'ff00')
+    assert_equal 'sub',  c.subject
+    assert_equal 'iss',  c.issuer
+    assert_equal Time.at(t0), c.not_before
+    assert_equal Time.at(t1), c.not_after
+    assert_equal 'ab12', c.serial
+    assert_equal 'ff00', c.fingerprint
+  end
+
   def test_reload_is_public_and_takes_optional_force()
     wv = web_view
     assert_respond_to wv, :reload
