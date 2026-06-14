@@ -332,6 +332,9 @@ namespace Reflex
 			// reloads, then its form values and scroll are reapplied).
 			virtual Xot::String session_state () const;
 
+			// Restores a value previously returned by session_state(). There
+			// is no "clear" semantics: a NULL/empty or otherwise invalid
+			// value raises rather than silently doing nothing.
 			virtual void set_session_state (const char* state);
 
 			// A copy of the latest rendered page image, or an empty image

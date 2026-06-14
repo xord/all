@@ -1183,24 +1183,38 @@ namespace Reflex
 
 			void set_session_state (const char* state) override
 			{
-				if (!state || !*state) return;
+				// Restore is meaningful only for a value produced by
+				// session_state(); reject nil/empty/garbage loudly rather
+				// than silently doing nothing (there is no "clear" here).
+				if (!state || !*state)
+					argument_error(__FILE__, __LINE__,
+						"session_state cannot be nil or empty");
+
 				if (@available(macOS 12.0, *))
 				{
 					NSData* data = [[[NSData alloc]
 						initWithBase64EncodedString: [NSString stringWithUTF8String: state]
 						                    options: 0] autorelease];
-					if (!data) return;
-
 					NSError* err = nil;
-					NSKeyedUnarchiver* u = [[[NSKeyedUnarchiver alloc]
-						initForReadingFromData: data error: &err] autorelease];
-					if (!u || err) return;
-					u.requiresSecureCoding = NO;
-					id obj = [u decodeTopLevelObjectForKey: NSKeyedArchiveRootObjectKey
-						                            error: &err];
-					[u finishDecoding];
-					if (obj && !err) host->webView.interactionState = obj;
+					NSKeyedUnarchiver* u = data ? [[[NSKeyedUnarchiver alloc]
+						initForReadingFromData: data error: &err] autorelease] : nil;
+					id obj = nil;
+					if (u && !err)
+					{
+						u.requiresSecureCoding = NO;
+						obj = [u decodeTopLevelObjectForKey: NSKeyedArchiveRootObjectKey
+							                          error: &err];
+						[u finishDecoding];
+					}
+					if (!obj || err)
+						argument_error(__FILE__, __LINE__,
+							"session_state is not a valid value");
+
+					host->webView.interactionState = obj;
 				}
+				else
+					reflex_error(__FILE__, __LINE__,
+						"session_state requires macOS 12 or later.");
 			}
 
 			void set_size (int w, int h, float pixel_density) override

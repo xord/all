@@ -187,12 +187,12 @@ class TestWebView < Test::Unit::TestCase
     # base64 string; either a String or nil is acceptable here.
     state = wv.session_state
     assert(state.nil? || state.is_a?(String))
-    # restoring nil / empty / a round-tripped value is a no-op, not an error
-    assert_nothing_raised do
-      wv.session_state = nil
-      wv.session_state = ''
-      wv.session_state = state if state
-    end
+    # nil / empty / garbage are rejected loudly (there is no "clear")
+    assert_raise(ArgumentError) {wv.session_state = nil}
+    assert_raise(ArgumentError) {wv.session_state = ''}
+    assert_raise(ArgumentError) {wv.session_state = 'not valid @@@'}
+    # a round-tripped value restores without error
+    assert_nothing_raised {wv.session_state = state} if state
   end
 
   def test_data_store_default_is_persistent_and_unnamed()
