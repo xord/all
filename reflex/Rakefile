@@ -22,7 +22,7 @@ use_external_library 'https://github.com/erincatto/box2d',
   tag:     'v3.1.1',
   incdirs: %w[include src],
   srcdirs: 'src',
-  defs:    'B2_MAX_WORLDS=256'
+  defs:    ['B2_MAX_WORLDS=256', *('BOX2D_DISABLE_SIMD' if wasm?)]
 
 use_external_library 'https://github.com/thestk/rtmidi',
   tag:     '6.0.0',
