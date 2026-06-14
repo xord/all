@@ -360,7 +360,8 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 // wrapped in <mark> (the current one tinted differently) and scrolled to.
 // find() returns {count, index} (index is 1-based, 0 if none).
 static NSString* const REFLEX_FIND_SCRIPT =
-	@"window.__REFLEX_FIND__ = (function () {"
+	@"window.__REFLEX__ = window.__REFLEX__ || {};"
+	@"window.__REFLEX__.find = (function () {"
 	@"  var MARK = 'reflex-find-mark', CUR = 'reflex-find-current';"
 	@"  var st = { q: null, cs: false, nodes: [], i: -1 };"
 	@"  function style () {"
@@ -423,7 +424,7 @@ static NSString* const REFLEX_FIND_SCRIPT =
 	@"    return select(i);"
 	@"  }"
 	@"  return {"
-	@"    find: function (q, cs, forward, wrap) {"
+	@"    run: function (q, cs, forward, wrap) {"
 	@"      style(); build(q, cs);"
 	@"      if (st.nodes.length === 0) return { count: 0, index: 0 };"
 	@"      return select(forward ? 0 : st.nodes.length - 1);"

@@ -251,7 +251,7 @@ module Reflex
     # #clear_find.
     def find(text, forward: true, case_sensitive: false, wrap: true, &block)
       @find_state = [case_sensitive, wrap]
-      find__ "find(#{text.to_json}, #{!!case_sensitive}, #{!!forward}, #{!!wrap})", &block
+      find__ "run(#{text.to_json}, #{!!case_sensitive}, #{!!forward}, #{!!wrap})", &block
       self
     end
 
@@ -273,14 +273,14 @@ module Reflex
     # Removes the find highlights.
     def clear_find()
       @find_state = nil
-      eval_js! 'window.__REFLEX_FIND__ && window.__REFLEX_FIND__.clear()'
+      eval_js! 'window.__REFLEX__ && __REFLEX__.find && __REFLEX__.find.clear()'
       self
     end
 
-    # Runs a __REFLEX_FIND__ call and delivers its {count, index} to the
+    # Runs a __REFLEX__.find call and delivers its {count, index} to the
     # block as a FindResult.
     private def find__(call, &block)
-      js = "window.__REFLEX_FIND__ ? window.__REFLEX_FIND__.#{call} : {count: 0, index: 0}"
+      js = "window.__REFLEX__ && __REFLEX__.find ? __REFLEX__.find.#{call} : {count: 0, index: 0}"
       eval_js(js) do |r|
         r ||= {}
         result = FindResult.new r['count'].to_i, r['index'].to_i
