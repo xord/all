@@ -56,7 +56,7 @@ lives in [`examples/simple_browser.rb`](./examples/simple_browser.rb).
 ## Features
 
 ### Navigation & state
-- `url=` / `url`, `load(url)`, `load_html(html)`
+- `url=` / `url`, `load(url, headers: {...})`, `load_html(html)`
 - `reload(ignore_cache = false)`, `stop`
 - `go_back`, `go_forward`, `go_to(offset)`
 - `can_go_back?`, `can_go_forward?`, `loading?`, `progress`, `title`
@@ -138,12 +138,24 @@ dump `data_store.cookies` too if you need to carry them across an
 ephemeral store.
 
 ### Find
-- `find(text)` — find text in the page.
+- `find(text, forward: true, case_sensitive: false, wrap: true) {|found| }`
+  — search the page; the block (optional) receives whether a match was
+  found.
+- `find_next {|found| }` / `find_previous {|found| }` — repeat the last
+  search in either direction.
+
+### Scroll & audio
+- `scroll_position` — the page's current `[x, y]` scroll offset.
+- `scroll_to(x, y)` — scroll the page.
+- `playing_audio?` — whether the page is currently playing audio.
+- `muted?` / `mute(state = true)` — query / toggle the page's audio mute.
 
 ### Events (override on a subclass)
 - Load: `on_load_start`, `on_load` (`LoadEvent`), `on_load_fail`
 - `on_title_change`, `on_url_change`, `on_history_change`
-- `on_navigate(e)` — `e.block` to cancel a navigation
+- `on_navigate(e)` — `e.block` to cancel a navigation; `e.type` is the
+  kind (`:link`, `:form`, `:back_forward`, `:reload`, `:form_resubmit`,
+  `:other`)
 - `on_open` — `window.open` / `target=_blank` (opens in-place by default)
 - `on_crash` — renderer crash (auto-reloads)
 - `on_console` (`ConsoleEvent`), `on_favicon_change`, `on_hover`
@@ -178,6 +190,8 @@ the host window on screen so the video keeps compositing. Off by default.
   `DataStore.new` (incognito) and `DataStore.default` work everywhere.
 - **Dialogs** — `alert`/`confirm`/`prompt` are app-modal (like a browser).
 - **IME** — text input via an input method is not supported.
+- **Audio** — `playing_audio?` / `mute` rely on private WebKit API
+  (guarded), so they may stop working on a future macOS.
 - **No `to_pdf`** and **no network interception** on the macOS backend.
 
 ## License

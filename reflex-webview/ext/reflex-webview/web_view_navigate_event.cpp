@@ -47,6 +47,14 @@ RUCY_DEF0(get_url)
 }
 RUCY_END
 
+static
+RUCY_DEF0(get_type)
+{
+	CHECK;
+	return value(THIS->type());
+}
+RUCY_END
+
 
 static Class cNavigateEvent;
 
@@ -60,6 +68,7 @@ Init_reflex_web_view_navigate_event ()
 	cNavigateEvent.define_private_method("initialize",      initialize);
 	cNavigateEvent.define_private_method("initialize_copy", initialize_copy);
 	cNavigateEvent.define_method("url", get_url);
+	cNavigateEvent.define_private_method("raw_type", get_type);
 }
 
 

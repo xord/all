@@ -73,10 +73,10 @@ namespace Reflex
 	struct WebView::NavigateEvent::Data
 	{
 
-		Xot::String url;
+		Xot::String url, type;
 
-		Data (const char* url = NULL)
-		:	url(url ? url : "")
+		Data (const char* url = NULL, const char* type = NULL)
+		:	url(url ? url : ""), type(type ? type : "other")
 		{
 		}
 
@@ -88,8 +88,8 @@ namespace Reflex
 	{
 	}
 
-	WebView::NavigateEvent::NavigateEvent (const char* url)
-	:	self(new Data(url))
+	WebView::NavigateEvent::NavigateEvent (const char* url, const char* type)
+	:	self(new Data(url, type))
 	{
 	}
 
@@ -108,6 +108,12 @@ namespace Reflex
 	WebView::NavigateEvent::url () const
 	{
 		return self->url.c_str();
+	}
+
+	const char*
+	WebView::NavigateEvent::type () const
+	{
+		return self->type.c_str();
 	}
 
 
@@ -232,6 +238,13 @@ namespace Reflex
 	}
 
 	void
+	WebView::load (const char* url, const std::vector<HeaderEntry>& headers)
+	{
+		assert(self->backend);
+		self->backend->load(url, headers);
+	}
+
+	void
 	WebView::load_html (const char* html)
 	{
 		assert(self->backend);
@@ -260,10 +273,12 @@ namespace Reflex
 	}
 
 	void
-	WebView::find (const char* text, FindCallback callback)
+	WebView::find (
+		const char* text, bool forward, bool case_sensitive, bool wrap,
+		FindCallback callback)
 	{
 		assert(self->backend);
-		self->backend->find(text, callback);
+		self->backend->find(text, forward, case_sensitive, wrap, callback);
 	}
 
 	void
@@ -411,6 +426,41 @@ namespace Reflex
 	{
 		assert(self->backend);
 		return self->backend->zoom();
+	}
+
+	void
+	WebView::scroll_position (double* x, double* y) const
+	{
+		assert(self->backend);
+		self->backend->scroll_position(x, y);
+	}
+
+	void
+	WebView::scroll_to (double x, double y)
+	{
+		assert(self->backend);
+		self->backend->scroll_to(x, y);
+	}
+
+	bool
+	WebView::playing_audio () const
+	{
+		assert(self->backend);
+		return self->backend->playing_audio();
+	}
+
+	bool
+	WebView::muted () const
+	{
+		assert(self->backend);
+		return self->backend->muted();
+	}
+
+	void
+	WebView::set_muted (bool muted)
+	{
+		assert(self->backend);
+		self->backend->set_muted(muted);
 	}
 
 	void
@@ -654,6 +704,13 @@ namespace Reflex
 				not_available();
 			}
 
+			void load (
+				const char* url,
+				const std::vector<WebView::HeaderEntry>& headers) override
+			{
+				not_available();
+			}
+
 			void load_html (const char* html) override
 			{
 				not_available();
@@ -676,7 +733,8 @@ namespace Reflex
 			}
 
 			void find (
-				const char* text, WebView::FindCallback callback) override
+				const char* text, bool forward, bool case_sensitive,
+				bool wrap, WebView::FindCallback callback) override
 			{
 				not_available();
 			}
@@ -791,6 +849,30 @@ namespace Reflex
 			float zoom () const override
 			{
 				return 1;
+			}
+
+			void scroll_position (double* x, double* y) const override
+			{
+				if (x) *x = 0;
+				if (y) *y = 0;
+			}
+
+			void scroll_to (double x, double y) override
+			{
+			}
+
+			bool playing_audio () const override
+			{
+				return false;
+			}
+
+			bool muted () const override
+			{
+				return false;
+			}
+
+			void set_muted (bool muted) override
+			{
 			}
 
 			void set_inspectable (bool inspectable) override

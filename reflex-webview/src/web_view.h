@@ -34,6 +34,10 @@ namespace Reflex
 
 		virtual void load (const char* url) = 0;
 
+		virtual void load (
+			const char* url,
+			const std::vector<WebView::HeaderEntry>& headers) = 0;
+
 		virtual void load_html (const char* html) = 0;
 
 		virtual void eval (const char* script) = 0;
@@ -44,7 +48,8 @@ namespace Reflex
 		virtual void post_message (const char* data_json) = 0;
 
 		virtual void find (
-			const char* text, WebView::FindCallback callback) = 0;
+			const char* text, bool forward, bool case_sensitive,
+			bool wrap, WebView::FindCallback callback) = 0;
 
 		virtual void download (const char* url) = 0;
 
@@ -94,6 +99,16 @@ namespace Reflex
 		virtual void set_zoom (float zoom) = 0;
 
 		virtual float zoom () const = 0;
+
+		virtual void scroll_position (double* x, double* y) const = 0;
+
+		virtual void scroll_to (double x, double y) = 0;
+
+		virtual bool playing_audio () const = 0;
+
+		virtual bool muted () const = 0;
+
+		virtual void set_muted (bool muted) = 0;
 
 		virtual void set_inspectable (bool inspectable) = 0;
 

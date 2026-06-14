@@ -271,6 +271,63 @@ class TestWebView < Test::Unit::TestCase
     ver >= 14
   end
 
+  def test_find_api()
+    wv = web_view
+    %i[find find_next find_previous].each {|m| assert_respond_to wv, m}
+    # find! is the private raw binding
+    assert_equal false, wv.respond_to?(:find!)
+    assert wv.respond_to?(:find!, true)
+    assert_nothing_raised do
+      wv.find 'x'
+      wv.find 'x', forward: false, case_sensitive: true, wrap: false
+      wv.find_next
+      wv.find_previous
+      wv.find('y') {|found|}
+    end
+  end
+
+  def test_find_next_without_prior_find_is_a_noop()
+    assert_nothing_raised {web_view.find_next}
+  end
+
+  def test_load_accepts_headers()
+    wv = web_view
+    # load! is the private raw binding (url, headers-or-nil)
+    assert wv.respond_to?(:load!, true)
+    assert_nothing_raised do
+      wv.load 'https://example.com'
+      wv.load 'https://example.com', headers: {'X-Foo' => 'bar', 'X-Baz' => 1}
+    end
+  end
+
+  def test_navigate_event_type()
+    e = Reflex::WebView::NavigateEvent.new 'https://example.com'
+    assert_equal :other, e.type
+  end
+
+  def test_scroll_api()
+    wv = web_view
+    assert_respond_to wv, :scroll_position
+    assert_respond_to wv, :scroll_to
+    pos = wv.scroll_position
+    assert_kind_of Array, pos
+    assert_equal 2, pos.size
+    assert_equal [0.0, 0.0], pos
+    assert_nothing_raised {wv.scroll_to 0, 100}
+  end
+
+  def test_audio_api()
+    wv = web_view
+    assert_respond_to wv, :playing_audio?
+    assert_respond_to wv, :muted?
+    assert_respond_to wv, :mute
+    assert_equal false, wv.playing_audio?
+    assert_nothing_raised do
+      wv.mute
+      wv.mute false
+    end
+  end
+
   def test_reload_is_public_and_takes_optional_force()
     wv = web_view
     assert_respond_to wv, :reload

@@ -70,13 +70,17 @@ namespace Reflex
 
 					NavigateEvent ();
 
-					NavigateEvent (const char* url);
+					NavigateEvent (const char* url, const char* type = "other");
 
 					NavigateEvent (const NavigateEvent* src);
 
 					NavigateEvent dup () const;
 
 					const char* url () const;
+
+					// The kind of navigation: "link", "form", "back_forward",
+					// "reload", "form_resubmit", or "other".
+					const char* type () const;
 
 					struct Data;
 
@@ -226,6 +230,13 @@ namespace Reflex
 
 			virtual void load (const char* url);
 
+			// A single HTTP request header (name, value).
+			typedef std::pair<Xot::String, Xot::String> HeaderEntry;
+
+			// Loads url with the given extra HTTP request headers.
+			virtual void load (
+				const char* url, const std::vector<HeaderEntry>& headers);
+
 			virtual void load_html (const char* html);
 
 			virtual void eval (const char* script);
@@ -237,10 +248,13 @@ namespace Reflex
 			// payload. No-op if the page set no onmessage handler.
 			virtual void post_message (const char* data_json);
 
-			// Searches the page for text, highlighting and scrolling to
-			// the next match. callback (if any) receives whether a match
-			// was found.
-			virtual void find (const char* text, FindCallback callback);
+			// Searches the page for text, highlighting and scrolling to a
+			// match. forward chooses the search direction, case_sensitive
+			// the matching, and wrap whether to wrap past the end. callback
+			// (if any) receives whether a match was found.
+			virtual void find (
+				const char* text, bool forward, bool case_sensitive,
+				bool wrap, FindCallback callback);
 
 			// Starts downloading url (e.g. for a 'save link as' action).
 			virtual void download (const char* url);
@@ -310,6 +324,21 @@ namespace Reflex
 			virtual void set_zoom (float zoom);
 
 			virtual float zoom () const;
+
+			// The page's current scroll offset, as last reported by the
+			// page (cached; updated as the page scrolls).
+			virtual void scroll_position (double* x, double* y) const;
+
+			// Scrolls the page to the given offset.
+			virtual void scroll_to (double x, double y);
+
+			// Whether the page is currently playing audio.
+			virtual bool playing_audio () const;
+
+			// Whether the page's audio is muted.
+			virtual bool muted () const;
+
+			virtual void set_muted (bool muted);
 
 			// Allows attaching Safari's Web Inspector (macOS 13.3+).
 			virtual void set_inspectable (bool inspectable);

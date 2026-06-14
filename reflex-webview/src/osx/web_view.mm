@@ -146,7 +146,13 @@ static const CGFloat CORNER_RADIUS = 20;
 // the host window is positioned off the desktop.
 @interface WKWebView (ReflexSPI)
 - (void) _setWindowOcclusionDetectionEnabled: (BOOL) enabled;
+- (BOOL) _isPlayingAudio;
+- (void) _setPageMuted: (NSUInteger) mutedState;
+- (NSUInteger) _mediaMutedState;
 @end
+
+// _WKMediaMutedState bit for audio (see WebKit's _WKMediaMutedState).
+static const NSUInteger REFLEX_AUDIO_MUTED = 1 << 0;
 
 
 // WebKit only draws the caret and active selection while its window is
@@ -228,12 +234,13 @@ static const CGFloat CORNER_RADIUS = 20;
 	BOOL       snapshotPending;
 	CGImageRef pendingSnapshot;
 	std::vector<LoadItem> loadQueue;
-	std::vector<std::string> openQueue;
+	std::vector<std::pair<std::string, std::string>> openQueue; // (url, type)
 	std::vector<std::string> messageQueue;
 	std::vector<std::pair<std::string, std::string>> consoleQueue;
 	std::vector<std::pair<long, std::string>> evalResults;
 	std::vector<std::pair<long, bool>> findResults;
 	std::string favicon, hoveredUrl;
+	double     scrollX, scrollY;
 	BOOL crashed;
 	std::vector<Reflex::WebView::DownloadInfo> downloadQueue;
 	NSMutableDictionary<NSNumber*, ReflexDownload*>* downloads;
@@ -340,7 +347,29 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 	@"  };"
 	@"  document.addEventListener('mouseover', hover, true);"
 	@"  document.addEventListener('mouseleave', function(){ report(''); }, true);"
+	@"  var sx = null, sy = null, sched = false;"
+	@"  var reportScroll = function(){ sched = false;"
+	@"    var x = window.scrollX, y = window.scrollY;"
+	@"    if (x !== sx || y !== sy) { sx = x; sy = y; send({kind:'scroll', x:x, y:y}); } };"
+	@"  window.addEventListener('scroll', function(){"
+	@"    if (!sched) { sched = true; setTimeout(reportScroll, 16); } }, true);"
+	@"  reportScroll();"
 	@"})();";
+
+
+static const char*
+reflex_navigation_type (WKNavigationType type)
+{
+	switch (type)
+	{
+		case WKNavigationTypeLinkActivated:   return "link";
+		case WKNavigationTypeFormSubmitted:   return "form";
+		case WKNavigationTypeBackForward:     return "back_forward";
+		case WKNavigationTypeReload:          return "reload";
+		case WKNavigationTypeFormResubmitted: return "form_resubmit";
+		default:                              return "other";
+	}
+}
 
 
 @implementation ReflexWKHost
@@ -560,6 +589,11 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 			NSString* u = d[@"url"] ?: @"";
 			hoveredUrl = [u UTF8String];
 		}
+		else if ([kind isEqualToString: @"scroll"])
+		{
+			scrollX = [d[@"x"] doubleValue];
+			scrollY = [d[@"y"] doubleValue];
+		}
 	}
 
 	- (void) setSizeWidth: (int) w height: (int) h
@@ -635,7 +669,9 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		if (owner && action.targetFrame && action.targetFrame.isMainFrame)
 		{
 			NSString* u = [[[action request] URL] absoluteString];
-			Reflex::WebView::NavigateEvent e(u ? [u UTF8String] : "");
+			Reflex::WebView::NavigateEvent e(
+				u ? [u UTF8String] : "",
+				reflex_navigation_type(action.navigationType));
 			owner->on_navigate(&e);
 			allow = !e.is_blocked();
 		}
@@ -795,7 +831,9 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 		windowFeatures: (WKWindowFeatures*) features
 	{
 		NSString* u = [[[action request] URL] absoluteString];
-		if (u) openQueue.emplace_back([u UTF8String]);
+		if (u)
+			openQueue.emplace_back(
+				[u UTF8String], reflex_navigation_type(action.navigationType));
 		return nil;
 	}
 
@@ -895,6 +933,25 @@ namespace Reflex
 				if (u) [host->webView loadRequest: [NSURLRequest requestWithURL: u]];
 			}
 
+			void load (
+				const char* url,
+				const std::vector<WebView::HeaderEntry>& headers) override
+			{
+				NSString* s = url ? [NSString stringWithUTF8String: url] : @"";
+				NSURL* u = [s hasPrefix: @"/"] ?
+					[NSURL fileURLWithPath: s] : [NSURL URLWithString: s];
+				if (!u) return;
+
+				NSMutableURLRequest* req =
+					[NSMutableURLRequest requestWithURL: u];
+				for (const auto& h : headers)
+				{
+					[req setValue: [NSString stringWithUTF8String: h.second.c_str()]
+						forHTTPHeaderField: [NSString stringWithUTF8String: h.first.c_str()]];
+				}
+				[host->webView loadRequest: req];
+			}
+
 			void load_html (const char* html) override
 			{
 				NSString* s = html ? [NSString stringWithUTF8String: html] : @"";
@@ -908,7 +965,8 @@ namespace Reflex
 			}
 
 			void find (
-				const char* text, WebView::FindCallback callback) override
+				const char* text, bool forward, bool case_sensitive,
+				bool wrap, WebView::FindCallback callback) override
 			{
 				NSString* s = text ? [NSString stringWithUTF8String: text] : @"";
 
@@ -918,8 +976,10 @@ namespace Reflex
 					// Pre-macOS 13: best-effort highlight via window.find,
 					// no result available.
 					NSString* js = [NSString stringWithFormat:
-						@"window.find(%@)",
-						escape_js_string(s)];
+						@"window.find(%@, %@, %@)",
+						escape_js_string(s),
+						case_sensitive ? @"true" : @"false",
+						forward ? @"false" : @"true"];
 					[host->webView evaluateJavaScript: js completionHandler: nil];
 					if (callback) callback(false);
 					return;
@@ -932,6 +992,9 @@ namespace Reflex
 
 				WKFindConfiguration* conf =
 					[[[WKFindConfiguration alloc] init] autorelease];
+				conf.backwards     = !forward;
+				conf.caseSensitive = case_sensitive;
+				conf.wraps         = wrap;
 				[host->webView findString: s withConfiguration: conf
 					completionHandler: ^(WKFindResult* result)
 				{
@@ -1134,6 +1197,44 @@ namespace Reflex
 			float zoom () const override
 			{
 				return (float) host->webView.pageZoom;
+			}
+
+			void scroll_position (double* x, double* y) const override
+			{
+				if (x) *x = host->scrollX;
+				if (y) *y = host->scrollY;
+			}
+
+			void scroll_to (double x, double y) override
+			{
+				NSString* js = [NSString stringWithFormat:
+					@"window.scrollTo(%f, %f)", x, y];
+				[host->webView evaluateJavaScript: js completionHandler: nil];
+			}
+
+			bool playing_audio () const override
+			{
+				return [host->webView respondsToSelector: @selector(_isPlayingAudio)]
+					? [host->webView _isPlayingAudio] : false;
+			}
+
+			bool muted () const override
+			{
+				return [host->webView respondsToSelector: @selector(_mediaMutedState)]
+					? ([host->webView _mediaMutedState] & REFLEX_AUDIO_MUTED) != 0
+					: false;
+			}
+
+			void set_muted (bool muted) override
+			{
+				if (![host->webView respondsToSelector: @selector(_setPageMuted:)])
+					return;
+				NSUInteger state =
+					[host->webView respondsToSelector: @selector(_mediaMutedState)]
+						? [host->webView _mediaMutedState] : 0;
+				if (muted) state |=  REFLEX_AUDIO_MUTED;
+				else       state &= ~REFLEX_AUDIO_MUTED;
+				[host->webView _setPageMuted: state];
 			}
 
 			void set_inspectable (bool inspectable) override
@@ -1560,11 +1661,12 @@ namespace Reflex
 
 				if (!host->openQueue.empty())
 				{
-					std::vector<std::string> queue;
+					std::vector<std::pair<std::string, std::string>> queue;
 					queue.swap(host->openQueue);
-					for (const auto& url : queue)
+					for (const auto& entry : queue)
 					{
-						WebView::NavigateEvent e(url.c_str());
+						WebView::NavigateEvent e(
+							entry.first.c_str(), entry.second.c_str());
 						owner->on_open(&e);
 					}
 				}

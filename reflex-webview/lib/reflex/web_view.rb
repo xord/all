@@ -89,6 +89,16 @@ module Reflex
 
     end# MessageEvent
 
+    class NavigateEvent
+
+      # The kind of navigation as a Symbol: :link, :form, :back_forward,
+      # :reload, :form_resubmit, or :other.
+      def type()
+        raw_type.to_sym
+      end
+
+    end# NavigateEvent
+
     # Creates a WebView. +data_store+ is the website data store (cookies,
     # local storage, caches) the view reads and writes; it defaults to the
     # shared DataStore.default. Pass DataStore.new for an ephemeral
@@ -108,10 +118,49 @@ module Reflex
       @data_store ||= DataStore.default
     end
 
+    # Navigates to +url+. With +headers+ (a Hash), sends them as extra
+    # HTTP request headers.
+    def load(url, headers: nil)
+      load! url.to_s, headers&.map {|k, v| [k.to_s, v.to_s]}
+      self
+    end
+
     # Navigates to +url+. Equivalent to #load.
     def url=(url)
       load url.to_s
       url
+    end
+
+    # Searches the page for +text+ and scrolls to a match. +forward+
+    # picks the direction, +case_sensitive+ the matching, +wrap+ whether
+    # to wrap past the end. With a block, it receives whether a match was
+    # found. See also #find_next / #find_previous.
+    def find(text, forward: true, case_sensitive: false, wrap: true, &block)
+      @last_find = [text, case_sensitive, wrap]
+      find! text, forward, case_sensitive, wrap, &block
+      self
+    end
+
+    # Repeats the last #find forwards. No-op if #find was never called.
+    def find_next(&block)
+      return self unless @last_find
+      text, cs, wrap = @last_find
+      find! text, true, cs, wrap, &block
+      self
+    end
+
+    # Repeats the last #find backwards. No-op if #find was never called.
+    def find_previous(&block)
+      return self unless @last_find
+      text, cs, wrap = @last_find
+      find! text, false, cs, wrap, &block
+      self
+    end
+
+    # Mutes (or, with false, unmutes) the page's audio. See #muted?.
+    def mute(state = true)
+      mute! state
+      self
     end
 
     # Reloads the current page. Pass true to bypass the cache and

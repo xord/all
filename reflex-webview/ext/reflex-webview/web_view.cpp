@@ -31,11 +31,27 @@ RUCY_DEF1(create_web_view, data_store)
 }
 RUCY_END
 
+// headers is nil (no extra headers) or an array of [name, value] string
+// pairs.
 static
-RUCY_DEF1(load, url)
+RUCY_DEF2(load, url, headers)
 {
 	CHECK;
-	THIS->load(url.c_str());
+
+	if (headers && headers.is_array())
+	{
+		std::vector<Reflex::WebView::HeaderEntry> hs;
+		int n = headers.size();
+		for (int i = 0; i < n; ++i)
+		{
+			Value pair = headers[i];
+			hs.emplace_back(pair[0].c_str(), pair[1].c_str());
+		}
+		THIS->load(url.c_str(), hs);
+	}
+	else
+		THIS->load(url.c_str());
+
 	return self;
 }
 RUCY_END
@@ -99,16 +115,20 @@ RUCY_END
 static Rucy::GlobalValue find_blocks;
 
 static
-RUCY_DEF1(find, text)
+RUCY_DEF4(find, text, forward, case_sensitive, wrap)
 {
 	CHECK;
+
+	bool fwd = to<bool>(forward);
+	bool cs  = to<bool>(case_sensitive);
+	bool wr  = to<bool>(wrap);
 
 	if (rb_block_given_p())
 	{
 		Value block = rb_block_proc();
 		find_blocks.call("push", block);
 
-		THIS->find(text.c_str(), [block](bool found)
+		THIS->find(text.c_str(), fwd, cs, wr, [block](bool found)
 		{
 			Value b = block;
 			find_blocks.call("delete", b);
@@ -116,7 +136,7 @@ RUCY_DEF1(find, text)
 		});
 	}
 	else
-		THIS->find(text.c_str(), Reflex::WebView::FindCallback());
+		THIS->find(text.c_str(), fwd, cs, wr, Reflex::WebView::FindCallback());
 
 	return self;
 }
@@ -324,6 +344,50 @@ RUCY_DEF0(get_zoom)
 RUCY_END
 
 static
+RUCY_DEF0(get_scroll_position)
+{
+	CHECK;
+	double x = 0, y = 0;
+	THIS->scroll_position(&x, &y);
+	return array(value(x), value(y));
+}
+RUCY_END
+
+static
+RUCY_DEF2(scroll_to, x, y)
+{
+	CHECK;
+	THIS->scroll_to(to<double>(x), to<double>(y));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_playing_audio)
+{
+	CHECK;
+	return value(THIS->playing_audio());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_muted)
+{
+	CHECK;
+	return value(THIS->muted());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_muted, b)
+{
+	CHECK;
+	THIS->set_muted(to<bool>(b));
+	return b;
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_inspectable, b)
 {
 	CHECK;
@@ -398,12 +462,12 @@ Init_reflex_web_view ()
 	cWebView = mReflex.define_class("WebView", Reflex::view_class());
 	cWebView.define_alloc_func(alloc);
 	cWebView.define_private_method("create_web_view!", create_web_view);
-	cWebView.define_method(     "load",      load);
+	cWebView.define_private_method("load!",     load);
 	cWebView.define_method(     "load_html", load_html);
 	cWebView.define_method(     "eval_js",   eval_js);
 	cWebView.define_private_method("reload!", reload_bang);
 	cWebView.define_private_method("post_message!", post_message_raw);
-	cWebView.define_method(     "find",      find);
+	cWebView.define_private_method("find!",   find);
 	cWebView.define_method(     "go_back",    go_back);
 	cWebView.define_method(     "go_forward", go_forward);
 	cWebView.define_private_method("back_list!",    back_list_raw);
@@ -426,6 +490,11 @@ Init_reflex_web_view ()
 	cWebView.define_method(     "user_agent=", set_user_agent);
 	cWebView.define_method(     "zoom",        get_zoom);
 	cWebView.define_method(     "zoom=",       set_zoom);
+	cWebView.define_method(     "scroll_position", get_scroll_position);
+	cWebView.define_method(     "scroll_to",       scroll_to);
+	cWebView.define_method(     "playing_audio?",  get_playing_audio);
+	cWebView.define_method(     "muted?",          get_muted);
+	cWebView.define_private_method("mute!",        set_muted);
 	cWebView.define_method(     "inspectable?",     get_inspectable);
 	cWebView.define_method(     "inspectable=",     set_inspectable);
 	cWebView.define_method(     "video_capture?",   get_video_capture);
