@@ -220,11 +220,14 @@ module Reflex
 
     # Searches the page for +text+ and scrolls to a match. +forward+
     # picks the direction, +case_sensitive+ the matching, +wrap+ whether
-    # to wrap past the end. With a block, it receives whether a match was
-    # found. See also #find_next / #find_previous.
+    # to wrap past the end. The block (optional) is called with the
+    # keyword +found:+ telling whether a match was located. (found: is a
+    # keyword so a richer result object can be added as a positional
+    # argument later without breaking callers.) See #find_next /
+    # #find_previous.
     def find(text, forward: true, case_sensitive: false, wrap: true, &block)
       @last_find = [text, case_sensitive, wrap]
-      find! text, forward, case_sensitive, wrap, &block
+      find__ text, forward, case_sensitive, wrap, &block
       self
     end
 
@@ -232,7 +235,7 @@ module Reflex
     def find_next(&block)
       return self unless @last_find
       text, cs, wrap = @last_find
-      find! text, true, cs, wrap, &block
+      find__ text, true, cs, wrap, &block
       self
     end
 
@@ -240,8 +243,18 @@ module Reflex
     def find_previous(&block)
       return self unless @last_find
       text, cs, wrap = @last_find
-      find! text, false, cs, wrap, &block
+      find__ text, false, cs, wrap, &block
       self
+    end
+
+    # Calls find!, adapting the raw positional bool from the backend into
+    # the public +found:+ keyword.
+    private def find__(text, forward, case_sensitive, wrap, &block)
+      if block
+        find!(text, forward, case_sensitive, wrap) {|found| block.call found: found}
+      else
+        find! text, forward, case_sensitive, wrap
+      end
     end
 
     # Mutes (or, with false, unmutes) the page's audio. See #muted?.

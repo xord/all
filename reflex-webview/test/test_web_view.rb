@@ -282,7 +282,7 @@ class TestWebView < Test::Unit::TestCase
       wv.find 'x', forward: false, case_sensitive: true, wrap: false
       wv.find_next
       wv.find_previous
-      wv.find('y') {|found|}
+      wv.find('y') {|found:|}
     end
   end
 

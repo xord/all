@@ -138,10 +138,10 @@ dump `data_store.cookies` too if you need to carry them across an
 ephemeral store.
 
 ### Find
-- `find(text, forward: true, case_sensitive: false, wrap: true) {|found| }`
-  — search the page; the block (optional) receives whether a match was
-  found.
-- `find_next {|found| }` / `find_previous {|found| }` — repeat the last
+- `find(text, forward: true, case_sensitive: false, wrap: true) {|found:| }`
+  — search the page; the block (optional) is called with the keyword
+  `found:` telling whether a match was located.
+- `find_next {|found:| }` / `find_previous {|found:| }` — repeat the last
   search in either direction.
 
 ### Security
