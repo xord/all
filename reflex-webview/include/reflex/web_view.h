@@ -201,7 +201,9 @@ namespace Reflex
 					Xot::String cookies () const;
 
 					// Restores cookies previously returned by cookies(),
-					// merging them into the store. Empty input is a no-op.
+					// merging them into the store. A NULL or empty string
+					// instead clears all cookies (leaving local storage and
+					// caches intact; use clear() to wipe everything).
 					void set_cookies (const char* cookies);
 
 					// Backend-internal: the native data store handle, or NULL.

@@ -1884,13 +1884,21 @@ namespace Reflex
 	void
 	WebView::DataStore::set_cookies (const char* cookies)
 	{
-		if (!cookies || !*cookies) return;
-
 		WKWebsiteDataStore* s = (WKWebsiteDataStore*) self->native;
 		if (!s) return;
 
 		if (@available(macOS 10.13, *))
 		{
+			// nil/empty clears all cookies, without touching local storage
+			// or caches (use clear() to wipe everything).
+			if (!cookies || !*cookies)
+			{
+				[s removeDataOfTypes: [NSSet setWithObject: WKWebsiteDataTypeCookies]
+					   modifiedSince: [NSDate dateWithTimeIntervalSince1970: 0]
+					completionHandler: ^{}];
+				return;
+			}
+
 			NSData* data = [[[NSData alloc]
 				initWithBase64EncodedString: [NSString stringWithUTF8String: cookies]
 				                    options: 0] autorelease];

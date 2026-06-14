@@ -118,7 +118,9 @@ tab2 = Reflex::WebView.new(tab1.data_store)
 - `store.cookies` — all cookies as an opaque base64 string (or `nil`);
   `store.cookies = str` restores them (merging) into any store. Handy for
   persisting an ephemeral session, or alongside a view's `session_state`
-  when hibernating a tab.
+  when hibernating a tab. `store.cookies = nil` clears all cookies
+  (leaving local storage and caches; use `store.clear` to wipe
+  everything).
 - `web.data_store` — the store a view is using (pass it to another
   `WebView.new` to share).
 
