@@ -273,15 +273,6 @@ namespace Reflex
 	}
 
 	void
-	WebView::find (
-		const char* text, bool forward, bool case_sensitive, bool wrap,
-		FindCallback callback)
-	{
-		assert(self->backend);
-		self->backend->find(text, forward, case_sensitive, wrap, callback);
-	}
-
-	void
 	WebView::reload ()
 	{
 		assert(self->backend);
@@ -792,13 +783,6 @@ namespace Reflex
 			}
 
 			void post_message (const char* data_json) override
-			{
-				not_available();
-			}
-
-			void find (
-				const char* text, bool forward, bool case_sensitive,
-				bool wrap, WebView::FindCallback callback) override
 			{
 				not_available();
 			}

@@ -47,10 +47,6 @@ namespace Reflex
 
 		virtual void post_message (const char* data_json) = 0;
 
-		virtual void find (
-			const char* text, bool forward, bool case_sensitive,
-			bool wrap, WebView::FindCallback callback) = 0;
-
 		virtual void download (const char* url) = 0;
 
 		virtual void commit_download (long id, const char* path) = 0;

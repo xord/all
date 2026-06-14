@@ -138,11 +138,19 @@ dump `data_store.cookies` too if you need to carry them across an
 ephemeral store.
 
 ### Find
-- `find(text, forward: true, case_sensitive: false, wrap: true) {|found:| }`
-  — search the page; the block (optional) is called with the keyword
-  `found:` telling whether a match was located.
-- `find_next {|found:| }` / `find_previous {|found:| }` — repeat the last
-  search in either direction.
+Find-in-page highlights every match (the current one tinted differently)
+by wrapping it in `<mark>`, so the highlight is part of the page and shows
+up in the capture.
+
+- `find(text, forward: true, case_sensitive: false, wrap: true) {|result, found:| }`
+  — search the page; the block (optional) gets a `FindResult`
+  (`#count`, `#index` 1-based / 0 if none, `#found?`).
+- `find_next {|result, found:| }` / `find_previous {|result, found:| }` —
+  move to the next / previous match.
+- `clear_find` — remove the highlights.
+
+Matches are found in the page's plain text only (cross-origin iframes and
+shadow DOM are not searched).
 
 ### Security
 - `secure?` — whether the current page loaded entirely over a valid,

@@ -144,9 +144,6 @@ namespace Reflex
 			typedef std::function<void (const char* result_json)>
 				EvalCallback;
 
-			// Receives whether find() located a match.
-			typedef std::function<void (bool found)> FindCallback;
-
 			// A download progress notification carried from the backend to
 			// the Ruby orchestration layer. kind: 0=start 1=progress
 			// 2=finish 3=fail.
@@ -247,14 +244,6 @@ namespace Reflex
 			// __REFLEX__.onmessage(data); data_json is the JSON-encoded
 			// payload. No-op if the page set no onmessage handler.
 			virtual void post_message (const char* data_json);
-
-			// Searches the page for text, highlighting and scrolling to a
-			// match. forward chooses the search direction, case_sensitive
-			// the matching, and wrap whether to wrap past the end. callback
-			// (if any) receives whether a match was found.
-			virtual void find (
-				const char* text, bool forward, bool case_sensitive,
-				bool wrap, FindCallback callback);
 
 			// Starts downloading url (e.g. for a 'save link as' action).
 			virtual void download (const char* url);

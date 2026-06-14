@@ -83,19 +83,6 @@ namespace
 		}
 	}
 
-	// Encodes a string as a JS string literal (incl. surrounding quotes)
-	// by JSON-serializing it, so it can be spliced into a script safely.
-	NSString*
-	escape_js_string (NSString* s)
-	{
-		NSData* data = [NSJSONSerialization
-			dataWithJSONObject: @[s ? s : @""] options: 0 error: NULL];
-		NSString* arr = [[[NSString alloc]
-			initWithData: data encoding: NSUTF8StringEncoding] autorelease];
-		// arr is ["..."]; strip the brackets to get the quoted string.
-		return [arr substringWithRange: NSMakeRange(1, arr.length - 2)];
-	}
-
 	// WKWebView does not handle hover (mouseMoved:) itself; a private
 	// WKMouseTrackingObserver owns the tracking areas and forwards moves to
 	// the page only after hit-testing event.locationInWindow. Sending
@@ -240,7 +227,6 @@ static const NSUInteger REFLEX_AUDIO_MUTED = 1 << 0;
 	std::vector<std::string> messageQueue;
 	std::vector<std::pair<std::string, std::string>> consoleQueue;
 	std::vector<std::pair<long, std::string>> evalResults;
-	std::vector<std::pair<long, bool>> findResults;
 	std::string favicon, hoveredUrl;
 	double     scrollX, scrollY;
 	BOOL crashed;
@@ -369,6 +355,86 @@ static NSString* const REFLEX_PAGE_SCRIPT =
 	@"})();";
 
 
+// Injected at document start. Implements find-in-page in the DOM so the
+// highlight is part of the page (and therefore captured): matches are
+// wrapped in <mark> (the current one tinted differently) and scrolled to.
+// find() returns {count, index} (index is 1-based, 0 if none).
+static NSString* const REFLEX_FIND_SCRIPT =
+	@"window.__REFLEX_FIND__ = (function () {"
+	@"  var MARK = 'reflex-find-mark', CUR = 'reflex-find-current';"
+	@"  var st = { q: null, cs: false, nodes: [], i: -1 };"
+	@"  function style () {"
+	@"    if (document.getElementById('reflex-find-style')) return;"
+	@"    var s = document.createElement('style'); s.id = 'reflex-find-style';"
+	@"    s.textContent = 'mark.' + MARK + '{background:#ffe14d;color:inherit;padding:0;}'"
+	@"      + 'mark.' + CUR + '{background:#ff8c1a;color:#000;}';"
+	@"    (document.head || document.documentElement).appendChild(s);"
+	@"  }"
+	@"  function clear () {"
+	@"    var ms = document.querySelectorAll('mark.' + MARK);"
+	@"    for (var i = 0; i < ms.length; i++) {"
+	@"      var m = ms[i], p = m.parentNode; if (!p) continue;"
+	@"      p.replaceChild(document.createTextNode(m.textContent), m); p.normalize();"
+	@"    }"
+	@"    st = { q: null, cs: false, nodes: [], i: -1 };"
+	@"  }"
+	@"  function build (q, cs) {"
+	@"    clear(); if (!q || !document.body) return;"
+	@"    st.q = q; st.cs = cs;"
+	@"    var needle = cs ? q : q.toLowerCase();"
+	@"    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {"
+	@"      acceptNode: function (n) {"
+	@"        if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;"
+	@"        var p = n.parentNode; if (!p) return NodeFilter.FILTER_REJECT;"
+	@"        var t = p.nodeName;"
+	@"        if (t === 'SCRIPT' || t === 'STYLE' || t === 'NOSCRIPT') return NodeFilter.FILTER_REJECT;"
+	@"        var h = cs ? n.nodeValue : n.nodeValue.toLowerCase();"
+	@"        return h.indexOf(needle) >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;"
+	@"      }"
+	@"    });"
+	@"    var targets = [], n; while (n = w.nextNode()) targets.push(n);"
+	@"    for (var k = 0; k < targets.length; k++) {"
+	@"      var node = targets[k], text = node.nodeValue;"
+	@"      var hay = cs ? text : text.toLowerCase();"
+	@"      var frag = document.createDocumentFragment(), pos = 0, idx;"
+	@"      while ((idx = hay.indexOf(needle, pos)) >= 0) {"
+	@"        if (idx > pos) frag.appendChild(document.createTextNode(text.slice(pos, idx)));"
+	@"        var m = document.createElement('mark'); m.className = MARK;"
+	@"        m.textContent = text.slice(idx, idx + q.length);"
+	@"        frag.appendChild(m); st.nodes.push(m); pos = idx + q.length;"
+	@"      }"
+	@"      if (pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));"
+	@"      node.parentNode.replaceChild(frag, node);"
+	@"    }"
+	@"  }"
+	@"  function select (i) {"
+	@"    if (st.nodes.length === 0) return { count: 0, index: 0 };"
+	@"    for (var k = 0; k < st.nodes.length; k++) st.nodes[k].classList.remove(CUR);"
+	@"    if (i < 0) i = 0; if (i >= st.nodes.length) i = st.nodes.length - 1;"
+	@"    st.i = i; var c = st.nodes[i]; c.classList.add(CUR);"
+	@"    if (c.scrollIntoView) c.scrollIntoView({ block: 'center', inline: 'nearest' });"
+	@"    return { count: st.nodes.length, index: i + 1 };"
+	@"  }"
+	@"  function step (d, wrap) {"
+	@"    if (st.nodes.length === 0) return { count: 0, index: 0 };"
+	@"    var i = st.i + d;"
+	@"    if (i < 0) i = wrap ? st.nodes.length - 1 : 0;"
+	@"    if (i >= st.nodes.length) i = wrap ? 0 : st.nodes.length - 1;"
+	@"    return select(i);"
+	@"  }"
+	@"  return {"
+	@"    find: function (q, cs, forward, wrap) {"
+	@"      style(); build(q, cs);"
+	@"      if (st.nodes.length === 0) return { count: 0, index: 0 };"
+	@"      return select(forward ? 0 : st.nodes.length - 1);"
+	@"    },"
+	@"    next:  function (wrap) { return step(1, wrap); },"
+	@"    prev:  function (wrap) { return step(-1, wrap); },"
+	@"    clear: function () { clear(); return { count: 0, index: 0 }; }"
+	@"  };"
+	@"})();";
+
+
 static const char*
 reflex_navigation_type (WKNavigationType type)
 {
@@ -491,6 +557,12 @@ reflex_navigation_type (WKNavigationType type)
 			 injectionTime: WKUserScriptInjectionTimeAtDocumentEnd
 			forMainFrameOnly: YES] autorelease];
 		[[conf userContentController] addUserScript: page];
+
+		WKUserScript* find = [[[WKUserScript alloc]
+			initWithSource: REFLEX_FIND_SCRIPT
+			 injectionTime: WKUserScriptInjectionTimeAtDocumentStart
+			forMainFrameOnly: YES] autorelease];
+		[[conf userContentController] addUserScript: find];
 
 		[[conf userContentController]
 			addScriptMessageHandler: messageProxy name: @"reflexInternal"];
@@ -1213,45 +1285,6 @@ namespace Reflex
 				[host->webView evaluateJavaScript: s completionHandler: nil];
 			}
 
-			void find (
-				const char* text, bool forward, bool case_sensitive,
-				bool wrap, WebView::FindCallback callback) override
-			{
-				NSString* s = text ? [NSString stringWithUTF8String: text] : @"";
-
-				if (![host->webView respondsToSelector:
-					@selector(findString:withConfiguration:completionHandler:)])
-				{
-					// Pre-macOS 13: best-effort highlight via window.find,
-					// no result available.
-					NSString* js = [NSString stringWithFormat:
-						@"window.find(%@, %@, %@)",
-						escape_js_string(s),
-						case_sensitive ? @"true" : @"false",
-						forward ? @"false" : @"true"];
-					[host->webView evaluateJavaScript: js completionHandler: nil];
-					if (callback) callback(false);
-					return;
-				}
-
-				long fid = ++last_eval_id_;
-				ReflexWKHost* h = host;
-				bool wants_result = (bool) callback;
-				if (wants_result) find_callbacks_[fid] = callback;
-
-				WKFindConfiguration* conf =
-					[[[WKFindConfiguration alloc] init] autorelease];
-				conf.backwards     = !forward;
-				conf.caseSensitive = case_sensitive;
-				conf.wraps         = wrap;
-				[host->webView findString: s withConfiguration: conf
-					completionHandler: ^(WKFindResult* result)
-				{
-					if (wants_result)
-						h->findResults.emplace_back(fid, (bool) result.matchFound);
-				}];
-			}
-
 			void download (const char* url) override
 			{
 				NSString* s = url ? [NSString stringWithUTF8String: url] : @"";
@@ -1904,7 +1937,6 @@ namespace Reflex
 			Xot::String     last_history_;
 			long            last_eval_id_ = 0;
 			std::map<long, WebView::EvalCallback> eval_callbacks_;
-			std::map<long, WebView::FindCallback> find_callbacks_;
 
 			// Drains queued page-load notifications and polls title/URL
 			// for changes; handlers run here, inside the update cycle.
@@ -1960,21 +1992,6 @@ namespace Reflex
 					{
 						WebView::ConsoleEvent e(level.c_str(), message.c_str());
 						owner->on_console(&e);
-					}
-				}
-
-				if (!host->findResults.empty())
-				{
-					std::vector<std::pair<long, bool>> results;
-					results.swap(host->findResults);
-					for (const auto& [fid, found] : results)
-					{
-						auto it = find_callbacks_.find(fid);
-						if (it == find_callbacks_.end()) continue;
-
-						WebView::FindCallback callback = it->second;
-						find_callbacks_.erase(it);
-						callback(found);
 					}
 				}
 

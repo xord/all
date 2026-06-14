@@ -273,21 +273,27 @@ class TestWebView < Test::Unit::TestCase
 
   def test_find_api()
     wv = web_view
-    %i[find find_next find_previous].each {|m| assert_respond_to wv, m}
-    # find! is the private raw binding
-    assert_equal false, wv.respond_to?(:find!)
-    assert wv.respond_to?(:find!, true)
+    %i[find find_next find_previous clear_find].each {|m| assert_respond_to wv, m}
     assert_nothing_raised do
       wv.find 'x'
       wv.find 'x', forward: false, case_sensitive: true, wrap: false
       wv.find_next
       wv.find_previous
-      wv.find('y') {|found:|}
+      wv.find('y') {|result, found:|}
+      wv.clear_find
     end
   end
 
   def test_find_next_without_prior_find_is_a_noop()
     assert_nothing_raised {web_view.find_next}
+  end
+
+  def test_find_result()
+    r = Reflex::WebView::FindResult.new 3, 2
+    assert_equal 3, r.count
+    assert_equal 2, r.index
+    assert_equal true, r.found?
+    assert_equal false, Reflex::WebView::FindResult.new(0, 0).found?
   end
 
   def test_load_accepts_headers()

@@ -28,6 +28,24 @@ module Reflex
 
     end# HistoryItem
 
+    # The outcome of a #find / #find_next / #find_previous call.
+    class FindResult
+
+      # The total number of matches on the page.
+      attr_reader :count
+
+      # The 1-based position of the current match, or 0 if there are none.
+      attr_reader :index
+
+      def initialize(count, index)
+        @count, @index = count, index
+      end
+
+      # Whether any match was found.
+      def found?() = @count > 0
+
+    end# FindResult
+
     # A file download in progress. In on_download, set #path to choose
     # where it is saved (defaults to the current directory); #cancel
     # aborts it. Progress and completion arrive via on_download_progress,
@@ -218,42 +236,55 @@ module Reflex
       url
     end
 
-    # Searches the page for +text+ and scrolls to a match. +forward+
-    # picks the direction, +case_sensitive+ the matching, +wrap+ whether
-    # to wrap past the end. The block (optional) is called with the
-    # keyword +found:+ telling whether a match was located. (found: is a
-    # keyword so a richer result object can be added as a positional
-    # argument later without breaking callers.) See #find_next /
-    # #find_previous.
+    # Searches the page for +text+, highlighting every match (the current
+    # one tinted differently) and scrolling to it. +forward+ picks which
+    # match becomes current first, +case_sensitive+ the matching, +wrap+
+    # whether #find_next / #find_previous wrap past the ends.
+    #
+    # The block (optional) is called with a FindResult positionally and
+    # the keyword +found:+: {|result, found:| ...} (found: is also a
+    # keyword for back-compatibility). result.count is the total number of
+    # matches and result.index the current one (1-based, 0 if none).
+    #
+    # Matches are found in the page's plain text (cross-origin iframes and
+    # shadow DOM are not searched). See #find_next / #find_previous /
+    # #clear_find.
     def find(text, forward: true, case_sensitive: false, wrap: true, &block)
-      @last_find = [text, case_sensitive, wrap]
-      find__ text, forward, case_sensitive, wrap, &block
+      @find_state = [case_sensitive, wrap]
+      find__ "find(#{text.to_json}, #{!!case_sensitive}, #{!!forward}, #{!!wrap})", &block
       self
     end
 
-    # Repeats the last #find forwards. No-op if #find was never called.
+    # Moves to the next match (highlighting it). No-op if #find was never
+    # called. The block receives the FindResult as for #find.
     def find_next(&block)
-      return self unless @last_find
-      text, cs, wrap = @last_find
-      find__ text, true, cs, wrap, &block
+      return self unless @find_state
+      find__ "next(#{!!@find_state[1]})", &block
       self
     end
 
-    # Repeats the last #find backwards. No-op if #find was never called.
+    # Moves to the previous match. No-op if #find was never called.
     def find_previous(&block)
-      return self unless @last_find
-      text, cs, wrap = @last_find
-      find__ text, false, cs, wrap, &block
+      return self unless @find_state
+      find__ "prev(#{!!@find_state[1]})", &block
       self
     end
 
-    # Calls find!, adapting the raw positional bool from the backend into
-    # the public +found:+ keyword.
-    private def find__(text, forward, case_sensitive, wrap, &block)
-      if block
-        find!(text, forward, case_sensitive, wrap) {|found| block.call found: found}
-      else
-        find! text, forward, case_sensitive, wrap
+    # Removes the find highlights.
+    def clear_find()
+      @find_state = nil
+      eval_js! 'window.__REFLEX_FIND__ && window.__REFLEX_FIND__.clear()'
+      self
+    end
+
+    # Runs a __REFLEX_FIND__ call and delivers its {count, index} to the
+    # block as a FindResult.
+    private def find__(call, &block)
+      js = "window.__REFLEX_FIND__ ? window.__REFLEX_FIND__.#{call} : {count: 0, index: 0}"
+      eval_js(js) do |r|
+        r ||= {}
+        result = FindResult.new r['count'].to_i, r['index'].to_i
+        block.call result, found: result.found? if block
       end
     end
 
