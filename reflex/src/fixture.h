@@ -24,15 +24,21 @@ namespace Reflex
 
 		public:
 
-			Fixture (Body* body, const b2Circle&  circle,  void* userdata = NULL);
+			static constexpr float DEFAULT_DENSITY     = 1;
 
-			Fixture (Body* body, const b2Polygon& polygon, void* userdata = NULL);
+			static constexpr float DEFAULT_FRICTION    = 0.6f;// Box2D 3.x defaults
 
-			Fixture (Body* body, const b2Segment& segment, void* userdata = NULL);
+			static constexpr float DEFAULT_RESTITUTION = 0;
+
+			Fixture (Body* body, const b2Circle& circle, void* data = NULL);
+
+			Fixture (Body* body, const b2Polygon& polygon, void* data = NULL);
+
+			Fixture (Body* body, const b2Segment& segment, void* data = NULL);
 
 			Fixture (
 				Body* body, const b2Vec2* points, size_t size, bool loop,
-				void* userdata = NULL);
+				void* data = NULL);
 
 			~Fixture ();
 
@@ -60,21 +66,29 @@ namespace Reflex
 
 		private:
 
-			Body* body;
+			typedef std::vector<b2Vec2>    b2Vec2List;
 
-			void* userdata;
+			typedef std::vector<b2ShapeId> b2ShapeIdList;
 
-			b2ChainId b2chain;
+			Body* body         = NULL;
 
-			std::vector<b2ShapeId> b2shapes;
+			void* data         = NULL;
 
-			// keep chain points to recreate fixtures on is_sensor change
-			// because Box2D chains do not support sensors
-			std::vector<b2Vec2> chain_points;
+			float density_     = DEFAULT_DENSITY;
 
-			bool chain_loop   = false;
+			float friction_    = DEFAULT_FRICTION;
 
-			float density_    = 0;
+			float restitution_ = DEFAULT_RESTITUTION;
+
+			bool sensor_       = false;
+
+			b2ShapeIdList b2shapes;
+
+			b2ChainId b2chain      = b2_nullChainId;
+
+			bool        chain_loop = false;
+
+			b2Vec2List  chain_points;
 
 			std::unique_ptr<Fixture> pnext;
 

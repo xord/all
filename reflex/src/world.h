@@ -102,13 +102,13 @@ namespace Reflex
 	}
 
 
+	b2WorldId World_get_id (const World* world);
+
+	bool World_is_stepping (const World* world);
+
+	void World_end_contacts_for (World* world, b2ShapeId b2shape);
+
 	World* World_get_temporary ();
-
-	b2WorldId World_get_b2id (const World* world);
-
-	// deliver contact-end events for active pairs that contain 'shape_id'
-	// before Box2D forgets the pair on shape destruction
-	void World_end_contacts_for (World* world, b2ShapeId shape_id);
 
 
 }// Reflex

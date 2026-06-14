@@ -80,13 +80,17 @@ namespace Reflex
 	};// Body
 
 
+	b2BodyId Body_get_id (const Body* body);
+
+	      World* Body_get_world (Body* body);
+
+	const World* Body_get_world (const Body* body);
+
 	void Body_copy_attributes (Body* to, const Body& from);
 
 	Body* Body_create_temporary ();
 
 	bool Body_is_temporary (const Body& body);
-
-	b2BodyId Body_get_b2id (const Body* body);
 
 
 }// Reflex

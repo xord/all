@@ -15,36 +15,41 @@ namespace Reflex
 	struct Body::Data
 	{
 
-		b2BodyId b2body;
+		b2BodyId b2body = b2_nullBodyId;
 
-		float ppm;
+		float ppm       = 0;
 
-		Data ()
-		:	b2body(b2_nullBodyId), ppm(0)
+		~Data ()
 		{
+			if (b2Body_IsValid(b2body))
+				b2DestroyBody(b2body);
 		}
 
 		bool is_valid () const
 		{
-			return b2Body_IsValid(b2body) && ppm > 0;
+			return B2_IS_NON_NULL(b2body) && ppm > 0;
 		}
 
 	};// Body::Data
 
 
-	static void
-	validate (const Body* body)
+	static inline void
+	validate (const Body* body, bool check_stepping = false)
 	{
-		assert(body);
-
 		if (!body->self->is_valid())
 			invalid_state_error(__FILE__, __LINE__);
+
+		if (check_stepping && World_is_stepping(Body_get_world(body)))
+			physics_error(__FILE__, __LINE__);
 	}
 
 
 	Body::Body (World* world, const Point& position, float angle)
 	{
 		assert(world);
+
+		if (World_is_stepping(world))
+			physics_error(__FILE__, __LINE__);
 
 		float ppm = world->meter2pixel();
 		assert(ppm > 0);
@@ -53,7 +58,7 @@ namespace Reflex
 		def.position  = to_b2vec2(position, ppm);
 		def.rotation  = b2MakeRot(Xot::deg2rad(angle));
 
-		b2BodyId b2body = b2CreateBody(World_get_b2id(world), &def);
+		b2BodyId b2body = b2CreateBody(World_get_id(world), &def);
 		if (!b2Body_IsValid(b2body))
 			physics_error(__FILE__, __LINE__);
 
@@ -63,8 +68,7 @@ namespace Reflex
 
 	Body::~Body ()
 	{
-		if (b2Body_IsValid(self->b2body))
-			b2DestroyBody(self->b2body);
+		assert(!World_is_stepping(Body_get_world(this)));
 	}
 
 	void
@@ -78,8 +82,7 @@ namespace Reflex
 	{
 		validate(this);
 
-		b2Body_ApplyForceToCenter(
-			self->b2body, to_b2vec2(force, self->ppm), true);
+		b2Body_ApplyForceToCenter(self->b2body, to_b2vec2(force, self->ppm), true);
 	}
 
 	void
@@ -130,11 +133,10 @@ namespace Reflex
 	void
 	Body::set_transform (coord x, coord y, float degree)
 	{
-		validate(this);
+		validate(this, true);
 
 		b2Body_SetTransform(
-			self->b2body,
-			to_b2vec2(x, y, self->ppm), b2MakeRot(Xot::deg2rad(degree)));
+			self->b2body, to_b2vec2(x, y, self->ppm), b2MakeRot(Xot::deg2rad(degree)));
 	}
 
 	void
@@ -173,7 +175,7 @@ namespace Reflex
 		if (dynamic == is_body_dynamic(this))
 			return;
 
-		validate(this);
+		validate(this, true);
 
 		b2Body_SetType(self->b2body, dynamic ? b2_dynamicBody : b2_staticBody);
 	}
@@ -206,8 +208,7 @@ namespace Reflex
 
 		make_body_kinematic(this);
 
-		b2Body_SetLinearVelocity(
-			self->b2body, to_b2vec2(velocity, self->ppm));
+		b2Body_SetLinearVelocity(self->b2body, to_b2vec2(velocity, self->ppm));
 	}
 
 	Point
@@ -270,13 +271,34 @@ namespace Reflex
 	}
 
 
+	b2BodyId
+	Body_get_id (const Body* body)
+	{
+		return body ? body->self->b2body : b2_nullBodyId;
+	}
+
+	World*
+	Body_get_world (Body* body)
+	{
+		b2BodyId b2body = Body_get_id(body);
+		if (B2_IS_NULL(b2body)) return NULL;
+
+		return (World*) b2World_GetUserData(b2Body_GetWorld(b2body));
+	}
+
+	const World*
+	Body_get_world (const Body* body)
+	{
+		return Body_get_world(const_cast<Body*>(body));
+	}
+
 	void
 	Body_copy_attributes (Body* to, const Body& from)
 	{
 		if (!to) return;
 
-		b2BodyId b2to   = Body_get_b2id(to);
-		b2BodyId b2from = Body_get_b2id(&from);
+		b2BodyId b2to   = Body_get_id(to);
+		b2BodyId b2from = Body_get_id(&from);
 		assert(b2Body_IsValid(b2to) && b2Body_IsValid(b2from));
 
 		b2Body_SetType(           b2to, b2Body_GetType(b2from));
@@ -289,26 +311,25 @@ namespace Reflex
 		float ppm_from = from.self->ppm;
 		if (ppm_to == ppm_from)
 		{
-			b2Body_SetTransform(
-				b2to,
-				b2Body_GetPosition(b2from), b2Body_GetRotation(b2from));
+			b2Body_SetTransform(     b2to, b2Body_GetPosition(      b2from),
+			                               b2Body_GetRotation(      b2from));
 			b2Body_SetLinearVelocity(b2to, b2Body_GetLinearVelocity(b2from));
-			b2Body_SetLinearDamping( b2to, b2Body_GetLinearDamping(b2from));
+			b2Body_SetLinearDamping( b2to, b2Body_GetLinearDamping( b2from));
 		}
 		else
 		{
 			float scale = ppm_from / ppm_to;
-			auto pos    = b2Body_GetPosition(b2from);
+			auto pos    = b2Body_GetPosition(      b2from);
 			auto vel    = b2Body_GetLinearVelocity(b2from);
-			auto damp   = b2Body_GetLinearDamping(b2from);
+			auto damp   = b2Body_GetLinearDamping( b2from);
 			pos.x *= scale;
 			pos.y *= scale;
 			vel.x *= scale;
 			vel.y *= scale;
 			damp  *= scale;
-			b2Body_SetTransform(b2to, pos, b2Body_GetRotation(b2from));
+			b2Body_SetTransform(     b2to, pos, b2Body_GetRotation(b2from));
 			b2Body_SetLinearVelocity(b2to, vel);
-			b2Body_SetLinearDamping(b2to, damp);
+			b2Body_SetLinearDamping( b2to, damp);
 		}
 	}
 
@@ -321,18 +342,12 @@ namespace Reflex
 	bool
 	Body_is_temporary (const Body& body)
 	{
-		b2BodyId b2body = Body_get_b2id(&body);
-		if (!b2Body_IsValid(b2body)) return false;
+		b2BodyId b2body = Body_get_id(&body);
+		if (B2_IS_NULL(b2body)) return false;
 
-		b2WorldId world     = b2Body_GetWorld(b2body);
-		b2WorldId tmp_world = World_get_b2id(World_get_temporary());
-		return b2StoreWorldId(world) == b2StoreWorldId(tmp_world);
-	}
-
-	b2BodyId
-	Body_get_b2id (const Body* body)
-	{
-		return body ? body->self->b2body : b2_nullBodyId;
+		b2WorldId world = b2Body_GetWorld(b2body);
+		b2WorldId tmp   = World_get_id(World_get_temporary());
+		return b2StoreWorldId(world) == b2StoreWorldId(tmp);
 	}
 
 

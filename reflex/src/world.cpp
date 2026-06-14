@@ -3,9 +3,9 @@
 
 #include <assert.h>
 #include <memory>
+#include <vector>
 #include <map>
 #include <utility>
-#include <vector>
 #include <box2d/box2d.h>
 #include "reflex/event.h"
 #include "reflex/exception.h"
@@ -21,11 +21,6 @@ namespace Reflex
 
 	static constexpr double DELTA_TIME = 1. / 60.;
 
-	// Box2D 2.x allowed bodies to translate up to 2 meters per time step.
-	// Box2D 3.x clamps speed in m/s instead with a much lower default,
-	// so match the old limit here.
-	static constexpr float MAX_LINEAR_SPEED = 2 * 60;
-
 
 	class DebugDraw
 	{
@@ -33,7 +28,7 @@ namespace Reflex
 		public:
 
 			DebugDraw (float ppm)
-			:	ppm(ppm), painter(NULL)
+			:	ppm(ppm)
 			{
 				b2draw                     = b2DefaultDebugDraw();
 				b2draw.DrawPolygonFcn      = DrawPolygon;
@@ -74,7 +69,7 @@ namespace Reflex
 
 			float ppm;
 
-			Painter* painter;
+			Painter* painter = NULL;
 
 			static void set_fill (DebugDraw* draw, b2HexColor color)
 			{
@@ -204,25 +199,27 @@ namespace Reflex
 	};// DebugDraw
 
 
-	typedef std::pair<uint64_t, uint64_t> ShapePairKey;
+	typedef std::pair<uint64_t, uint64_t>     ShapePairKey;
 
-	typedef std::pair<Shape*, Shape*> ShapePair;
+	typedef std::pair<Shape*, Shape*>         ShapePair;
+
+	typedef std::map<ShapePairKey, ShapePair> ShapePairMap;
 
 	static ShapePairKey
-	make_pair_key (b2ShapeId id1, b2ShapeId id2)
+	make_pair_key (b2ShapeId b2shape1, b2ShapeId b2shape2)
 	{
-		uint64_t key1 = b2StoreShapeId(id1);
-		uint64_t key2 = b2StoreShapeId(id2);
+		uint64_t key1 = b2StoreShapeId(b2shape1);
+		uint64_t key2 = b2StoreShapeId(b2shape2);
 		return key1 < key2
 			?	std::make_pair(key1, key2)
 			:	std::make_pair(key2, key1);
 	}
 
 	static Shape*
-	get_shape (b2ShapeId id)
+	get_shape (b2ShapeId b2shape)
 	{
-		if (!b2Shape_IsValid(id)) return NULL;
-		return (Shape*) b2Shape_GetUserData(id);
+		if (B2_IS_NULL(b2shape)) return NULL;
+		return (Shape*) b2Shape_GetUserData(b2shape);
 	}
 
 	static bool
@@ -244,14 +241,13 @@ namespace Reflex
 	}
 
 	static bool
-	custom_filter_callback (b2ShapeId id1, b2ShapeId id2, void* context)
+	custom_filter_callback (b2ShapeId b2shape1, b2ShapeId b2shape2, void* context)
 	{
-		return should_collide(get_shape(id1), get_shape(id2));
+		return should_collide(get_shape(b2shape1), get_shape(b2shape2));
 	}
 
 	static void
-	call_contact_events (
-		Shape* s1, Shape* s2, ContactEvent::Action action)
+	call_contact_events (Shape* s1, Shape* s2, ContactEvent::Action action)
 	{
 		if (!s1 || !s2)
 			return;
@@ -270,25 +266,24 @@ namespace Reflex
 	struct World::Data
 	{
 
-		b2WorldId b2world;
+		b2WorldId b2world = b2_nullWorldId;
 
-		float ppm, time_scale;
+		float ppm         = 0;
+
+		float time_scale  = 1;
+
+		bool stepping     = false;
 
 		std::unique_ptr<DebugDraw> debug_draw;
 
-		// pairs currently touching, tracked to deliver contact-end events
-		// for shapes that Box2D has already forgotten on destruction
-		std::map<ShapePairKey, ShapePair> active_pairs;
+		// tracked to deliver contact-end events for shapes that Box2D has already
+		// forgotten on destruction
+		ShapePairMap touching_pairs;
 
-		Data ()
-		:	b2world(b2_nullWorldId), ppm(0), time_scale(1)
+		void begin_contact (b2ShapeId b2shape1, b2ShapeId b2shape2, bool is_sensor_event)
 		{
-		}
-
-		void begin_contact (b2ShapeId id1, b2ShapeId id2, bool is_sensor_event)
-		{
-			Shape* s1 = get_shape(id1);
-			Shape* s2 = get_shape(id2);
+			Shape* s1 = get_shape(b2shape1);
+			Shape* s2 = get_shape(b2shape2);
 			if (!s1 || !s2)
 				return;
 
@@ -297,8 +292,8 @@ namespace Reflex
 			if (is_sensor_event && !should_collide(s1, s2))
 				return;
 
-			ShapePairKey key = make_pair_key(id1, id2);
-			if (!active_pairs.emplace(key, ShapePair(s1, s2)).second)
+			ShapePairKey key = make_pair_key(b2shape1, b2shape2);
+			if (!touching_pairs.emplace(key, ShapePair(s1, s2)).second)
 				return;// already touching
 
 			call_contact_events(s1, s2, ContactEvent::BEGIN);
@@ -306,12 +301,12 @@ namespace Reflex
 
 		void end_contact (b2ShapeId id1, b2ShapeId id2)
 		{
-			auto it = active_pairs.find(make_pair_key(id1, id2));
-			if (it == active_pairs.end())
+			auto it = touching_pairs.find(make_pair_key(id1, id2));
+			if (it == touching_pairs.end())
 				return;
 
 			ShapePair pair = it->second;
-			active_pairs.erase(it);
+			touching_pairs.erase(it);
 
 			call_contact_events(pair.first, pair.second, ContactEvent::END);
 		}
@@ -352,22 +347,20 @@ namespace Reflex
 
 		self->ppm = pixels_per_meter;
 
-		b2WorldDef def         = b2DefaultWorldDef();
-		def.gravity            = b2Vec2{0, 0};
-		def.maximumLinearSpeed = MAX_LINEAR_SPEED;
-		def.userData           = this;
+		b2WorldDef def = b2DefaultWorldDef();
+		def.gravity    = b2Vec2{0, 0};
+		def.userData   = this;
 
 		self->b2world = b2CreateWorld(&def);
 		if (!b2World_IsValid(self->b2world))
 			physics_error(__FILE__, __LINE__);
 
-		b2World_SetCustomFilterCallback(
-			self->b2world, custom_filter_callback, this);
+		b2World_SetCustomFilterCallback(self->b2world, custom_filter_callback, this);
 	}
 
 	World::~World ()
 	{
-		self->active_pairs.clear();
+		self->touching_pairs.clear();
 
 		b2DestroyWorld(self->b2world);
 		self->b2world = b2_nullWorldId;
@@ -384,7 +377,10 @@ namespace Reflex
 
 		for (int i = 0; i < count; ++i)
 		{
+			self->stepping = true;
 			b2World_Step(self->b2world, dt, 4);
+			self->stepping = false;
+
 			self->handle_contact_events();
 		}
 	}
@@ -398,12 +394,12 @@ namespace Reflex
 	void
 	World::set_gravity (const Point& gravity)
 	{
-		b2Vec2 b2gravity = to_b2vec2(gravity, self->ppm);
-		b2Vec2 current   = b2World_GetGravity(self->b2world);
-		if (b2gravity.x == current.x && b2gravity.y == current.y)
+		b2Vec2 b2vec   = to_b2vec2(gravity, self->ppm);
+		b2Vec2 current = b2World_GetGravity(self->b2world);
+		if (b2vec.x == current.x && b2vec.y == current.y)
 			return;
 
-		b2World_SetGravity(self->b2world, b2gravity);
+		b2World_SetGravity(self->b2world, b2vec);
 	}
 
 	Point
@@ -430,10 +426,7 @@ namespace Reflex
 		if (state == debug()) return;
 
 		if (state)
-		{
-			assert(!self->debug_draw);
 			self->debug_draw.reset(new DebugDraw(self->ppm));
-		}
 		else
 			self->debug_draw.reset();
 	}
@@ -461,28 +454,27 @@ namespace Reflex
 	}
 
 
-	World*
-	World_get_temporary ()
-	{
-		static World world;
-		return &world;
-	}
-
 	b2WorldId
-	World_get_b2id (const World* world)
+	World_get_id (const World* world)
 	{
 		return world ? world->self->b2world : b2_nullWorldId;
 	}
 
+	bool
+	World_is_stepping (const World* world)
+	{
+		return world ? world->self->stepping : false;
+	}
+
 	void
-	World_end_contacts_for (World* world, b2ShapeId shape_id)
+	World_end_contacts_for (World* world, b2ShapeId b2shape)
 	{
 		if (!world) return;
 
-		uint64_t key = b2StoreShapeId(shape_id);
+		uint64_t key = b2StoreShapeId(b2shape);
 
 		std::vector<ShapePair> ended;
-		auto& pairs = world->self->active_pairs;
+		auto& pairs = world->self->touching_pairs;
 		for (auto it = pairs.begin(); it != pairs.end();)
 		{
 			if (it->first.first == key || it->first.second == key)
@@ -496,6 +488,13 @@ namespace Reflex
 
 		for (auto& pair : ended)
 			call_contact_events(pair.first, pair.second, ContactEvent::END);
+	}
+
+	World*
+	World_get_temporary ()
+	{
+		static World world;
+		return &world;
 	}
 
 

@@ -117,7 +117,7 @@ namespace Reflex
 				append(new Fixture(get_body(), b2polygon, shape));
 			}
 
-			void add_chain (const b2Vec2* points, size_t size, bool loop)
+			void add (const b2Vec2* points, size_t size, bool loop)
 			{
 				append(new Fixture(get_body(), points, size, loop, shape));
 			}
@@ -220,7 +220,7 @@ namespace Reflex
 		for (const auto& point : polyline)
 			buffer->emplace_back(to_b2vec2(point, ppm));
 
-		builder->add_chain(buffer->data(), buffer->size(), polyline.loop());
+		builder->add(buffer->data(), buffer->size(), polyline.loop());
 	}
 
 	static Fixture*
@@ -831,8 +831,7 @@ namespace Reflex
 			return builder.fixtures();
 		}
 
-		Fixture* create_rect_fixture_without_division (
-			Shape* shape, const Bounds& frame)
+		Fixture* create_rect_fixture_without_division (Shape* shape, const Bounds& frame)
 		{
 			assert(shape);
 
