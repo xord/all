@@ -514,6 +514,8 @@ Init_reflex_window ()
 
 	cWindow.define_const("ORIENTATION_PORTRAIT",  Reflex::Window::FLAG_PORTRAIT);
 	cWindow.define_const("ORIENTATION_LANDSCAPE", Reflex::Window::FLAG_LANDSCAPE);
+
+	define_wrapper_equality_methods<Reflex::Window>(cWindow);
 }
 
 

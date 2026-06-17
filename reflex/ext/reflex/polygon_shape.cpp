@@ -51,6 +51,8 @@ Init_reflex_polygon_shape ()
 	cPolygonShape.define_alloc_func(alloc);
 	cPolygonShape.define_method("polygon=", set_polygon);
 	cPolygonShape.define_method("polygon",  get_polygon);
+
+	define_wrapper_equality_methods<Reflex::PolygonShape>(cPolygonShape);
 }
 
 

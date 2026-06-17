@@ -108,6 +108,8 @@ Init_reflex_ellipse_shape ()
 	cEllipseShape.define_method("hole_size",  get_hole_size);
 	cEllipseShape.define_method("nsegment=", set_nsegment);
 	cEllipseShape.define_method("nsegment",  get_nsegment);
+
+	define_wrapper_equality_methods<Reflex::EllipseShape>(cEllipseShape);
 }
 
 

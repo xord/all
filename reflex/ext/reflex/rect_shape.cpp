@@ -158,6 +158,8 @@ Init_reflex_rect_shape ()
 	cRectShape.define_method("round_right_bottom",  get_round_right_bottom);
 	cRectShape.define_method("nsegment=", set_nsegment);
 	cRectShape.define_method("nsegment",  get_nsegment);
+
+	define_wrapper_equality_methods<Reflex::RectShape>(cRectShape);
 }
 
 

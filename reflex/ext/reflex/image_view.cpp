@@ -52,6 +52,8 @@ Init_reflex_image_view ()
 	cImageView.define_alloc_func(alloc);
 	cImageView.define_private_method("set_image", set_image);
 	cImageView.define_method(            "image", get_image);
+
+	define_wrapper_equality_methods<Reflex::ImageView>(cImageView);
 }
 
 

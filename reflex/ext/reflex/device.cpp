@@ -42,12 +42,13 @@ void
 Init_reflex_device ()
 {
 	Module mReflex = define_module("Reflex");
+	mReflex.define_singleton_method("vibrate", s_vibrate);
 
 	cDevice = mReflex.define_class("Device", Reflex::device_class());
 	cDevice.define_alloc_func(alloc);
 	cDevice.define_method("name", name);
 
-	mReflex.define_singleton_method("vibrate", s_vibrate);
+	define_wrapper_equality_methods<Reflex::Device>(cDevice);
 }
 
 

@@ -184,6 +184,7 @@ Init_reflex_shape ()
 	cShape.define_private_method("call_contact_begin!", on_contact_begin);
 	cShape.define_private_method("call_contact_end!",   on_contact_end);
 
+	define_wrapper_equality_methods<Reflex::Shape>(cShape);
 	define_selector_methods<Reflex::Shape>(cShape);
 }
 

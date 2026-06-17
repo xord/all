@@ -1393,6 +1393,7 @@ Init_reflex_view ()
 	cView.define_const("CAPTURE_MIDI",    Reflex::View::CAPTURE_MIDI);
 	cView.define_const("CAPTURE_ALL",     Reflex::View::CAPTURE_ALL);
 
+	define_wrapper_equality_methods<Reflex::View>(cView);
 	define_selector_methods<Reflex::View>(cView);
 }
 

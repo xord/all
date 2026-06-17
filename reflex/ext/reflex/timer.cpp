@@ -99,6 +99,7 @@ Init_reflex_timer ()
 	cTimer.define_method("count",     get_count);
 	cTimer.define_method("finished?", is_finished);
 
+	define_wrapper_equality_methods<Reflex::Timer>(cTimer);
 	define_selector_methods<Reflex::Timer>(cTimer);
 }
 

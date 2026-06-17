@@ -69,6 +69,8 @@ Init_reflex_filter ()
 	cFilter.define_method("apply", apply);
 	cFilter.define_method("shader=", set_shader);
 	cFilter.define_method("shader",  get_shader);
+
+	define_wrapper_equality_methods<Reflex::Filter>(cFilter);
 }
 
 

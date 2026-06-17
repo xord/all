@@ -159,6 +159,8 @@ Init_reflex_application ()
 	cApplication.define_method("on_preference", on_preference);
 	cApplication.define_method("on_about",      on_about);
 	cApplication.define_singleton_method("instance", instance);
+
+	define_wrapper_equality_methods<Reflex::Application>(cApplication);
 }
 
 

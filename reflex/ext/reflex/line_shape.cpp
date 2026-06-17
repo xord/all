@@ -87,6 +87,8 @@ Init_reflex_line_shape ()
 	cLineShape.define_method("add_points", add_points);
 	cLineShape.define_method("loop=", set_loop);
 	cLineShape.define_method("loop",  get_loop);
+
+	define_wrapper_equality_methods<Reflex::LineShape>(cLineShape);
 }
 
 
