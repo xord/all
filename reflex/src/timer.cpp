@@ -16,20 +16,17 @@ namespace Reflex
 	struct Timer::Data
 	{
 
-		View* owner;
+		Xot::WeakRef<View> owner;
 
-		int id, count;
+		int id           = ID_INVALID;
 
-		float interval;
+		int count        = 1;
 
-		double next_time;
+		float interval   = -1;
+
+		double next_time = -1;
 
 		SelectorPtr pselector;
-
-		Data ()
-		:	owner(NULL), id(ID_INVALID), count(1), interval(-1), next_time(-1)
-		{
-		}
 
 		Selector& selector ()
 		{
@@ -66,6 +63,7 @@ namespace Reflex
 	void
 	Timer::fire ()
 	{
+		if (!self->owner) return;
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
@@ -82,7 +80,7 @@ namespace Reflex
 	View*
 	Timer::owner () const
 	{
-		return self->owner;
+		return self->owner.get();
 	}
 
 	int
