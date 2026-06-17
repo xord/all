@@ -488,6 +488,36 @@ namespace Rucy
 	}
 
 
+	template <typename T>
+	static
+	RUCY_DEF1(wrapper_equal, other)
+	{
+		RUCY_CHECK_OBJ(T, self);
+		if (!other.is_a(get_ruby_class<T>()))
+			return value(false);
+		return value(get_type_ptr<T>(self) == get_type_ptr<T>(other));
+	}
+	RUCY_DEF_END
+
+	template <typename T>
+	static
+	RUCY_DEF0(wrapper_hash)
+	{
+		RUCY_CHECK_OBJ(T, self);
+		return value((unsigned long long) get_type_ptr<T>(self));
+	}
+	RUCY_DEF_END
+
+	template <typename T>
+	inline void
+	define_wrapper_equality_methods (Class klass)
+	{
+		klass.define_method("==",   wrapper_equal<T>);
+		klass.define_method("eql?", wrapper_equal<T>);
+		klass.define_method("hash", wrapper_hash<T>);
+	}
+
+
 }// Rucy
 
 
