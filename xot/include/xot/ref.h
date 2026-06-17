@@ -28,6 +28,28 @@ namespace Xot
 	class EmptyClass {};
 
 
+	struct WeakRefCount : public NonCopyable
+	{
+
+		bool alive    = true;
+
+		int ref_count = 1;
+
+		void retain ()
+		{
+			++ref_count;
+		}
+
+		void release ()
+		{
+			assert(ref_count > 0);
+
+			if (--ref_count == 0) delete this;
+		}
+
+	};// WeakRefCount
+
+
 	template <typename SuperClass = EmptyClass>
 	class RefCountable : public SuperClass, public NonCopyable
 	{
@@ -61,6 +83,12 @@ namespace Xot
 				if (del) delete this;
 			}
 
+			WeakRefCount* get_weak_ref_count ()
+			{
+				if (!wref_count) wref_count = new WeakRefCount();
+				return wref_count;
+			}
+
 			virtual void* rucy_wrapper_value () const
 			{
 				return NULL;
@@ -86,11 +114,19 @@ namespace Xot
 
 			virtual ~RefCountable ()
 			{
+				if (wref_count)
+				{
+					wref_count->alive = false;
+					wref_count->release();
+					wref_count = NULL;
+				}
 			}
 
 		private:
 
 			mutable int refc_count = 0;
+
+			WeakRefCount* wref_count = NULL;
 
 			int refc_update_count (bool increment) const
 			{
@@ -302,6 +338,115 @@ namespace Xot
 			ConstPointer ptr;
 
 	};// Ref
+
+
+	template <typename T>
+	class WeakRef
+	{
+
+		typedef WeakRef<T> This;
+
+		typedef       T       Value;
+
+		typedef const T  ConstValue;
+
+		typedef       T&      Reference;
+
+		typedef const T& ConstReference;
+
+		typedef       T*      Pointer;
+
+		typedef const T* ConstPointer;
+
+		public:
+
+			WeakRef (Pointer ptr = NULL)
+			{
+				reset(ptr);
+			}
+
+			WeakRef (const This& obj)
+			{
+				reset(obj.ptr, obj.wref_count);
+			}
+
+			This& operator = (Pointer ptr)
+			{
+				reset(ptr);
+				return *this;
+			}
+
+			This& operator = (const This& obj)
+			{
+				if (&obj != this) reset(obj.ptr, obj.wref_count);
+				return *this;
+			}
+
+			~WeakRef ()
+			{
+				if (wref_count) wref_count->release();
+			}
+
+			void reset (Pointer ptr = NULL)
+			{
+				reset(ptr, ptr ? ptr->get_weak_ref_count() : NULL);
+			}
+
+			     Pointer get ()       {return wref_count && wref_count->alive ? ptr : NULL;}
+
+			ConstPointer get () const {return wref_count && wref_count->alive ? ptr : NULL;}
+
+			     Pointer operator -> ()       {return get();}
+
+			ConstPointer operator -> () const {return get();}
+
+			     Reference operator * ()       {return *get();}
+
+			ConstReference operator * () const {return *get();}
+
+			operator      Pointer ()       {return get();}
+
+			operator ConstPointer () const {return get();}
+
+			bool operator == (Pointer ptr) const {return get() == ptr;}
+
+			bool operator != (Pointer ptr) const {return !operator==(ptr);}
+
+			bool operator == (ConstPointer ptr) const {return get() == ptr;}
+
+			bool operator != (ConstPointer ptr) const {return !operator==(ptr);}
+
+			bool operator == (const This& obj) const {return get() == obj.get();}
+
+			bool operator != (const This& obj) const {return !operator==(obj);}
+
+			template <typename X>
+			bool operator == (const WeakRef<X>& obj) const {return get() == obj.get();}
+
+			template <typename X>
+			bool operator != (const WeakRef<X>& obj) const {return !operator==(obj);}
+
+			bool operator <  (const This& obj) const {return get() < obj.get();}
+
+			operator bool () const {return get();}
+
+			bool operator ! () const {return !operator bool();}
+
+		private:
+
+			void reset (Pointer ptr, WeakRefCount* count)
+			{
+				if (count)           count->retain();
+				if (wref_count) wref_count->release();
+				this->ptr        = ptr;
+				this->wref_count = count;
+			}
+
+			Pointer ptr = NULL;
+
+			WeakRefCount* wref_count = NULL;
+
+	};// WeakRef
 
 
 }// Xot
