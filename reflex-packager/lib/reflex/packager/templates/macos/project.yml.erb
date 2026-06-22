@@ -1,0 +1,40 @@
+name: <%= target %>
+
+options:
+  deploymentTarget:
+    macOS: "<%= config.macos.deployment_target %>"
+
+settings:
+  base:
+    PRODUCT_BUNDLE_IDENTIFIER: <%= config.bundle_id %>
+    MARKETING_VERSION: "<%= config.version %>"
+    ARCHS: <%= config.macos.archs.join ' ' %>
+    ONLY_ACTIVE_ARCH: NO
+    CODE_SIGN_IDENTITY: <%= config.macos.codesign_identity.inspect %>
+<%- if config.macos.codesign_team_id -%>
+    DEVELOPMENT_TEAM: <%= config.macos.codesign_team_id %>
+<%- end -%>
+
+targets:
+  <%= target %>:
+    type: application
+    platform: macOS
+    sources:
+      - path: src
+      - path: app
+        type: folder
+        buildPhase: resources
+<%- if config.icon -%>
+      - path: AppIcon.icns
+        buildPhase: resources
+<%- end -%>
+    info:
+      path: src/Info.plist
+      properties:
+        CFBundleName: <%= config.name.inspect %>
+        CFBundleDisplayName: <%= config.name.inspect %>
+        CFBundleShortVersionString: "<%= config.version %>"
+        NSHighResolutionCapable: true
+<%- if config.icon -%>
+        CFBundleIconFile: AppIcon
+<%- end -%>
