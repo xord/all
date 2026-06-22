@@ -9,7 +9,7 @@ class TestPackagerCLI < Test::Unit::TestCase
   RP  = Reflex::Packager
   CLI = RP::CLI
 
-  def capture (&block)
+  def capture(&block)
     old              = [$stdout, $stderr]
     out, err         = StringIO.new, StringIO.new
     $stdout, $stderr = out, err
@@ -19,7 +19,7 @@ class TestPackagerCLI < Test::Unit::TestCase
     $stdout, $stderr = old
   end
 
-  def tmpdir (&block)
+  def tmpdir(&block)
     Dir.mktmpdir {|dir| Dir.chdir(dir) {block.call dir}}
   end
 

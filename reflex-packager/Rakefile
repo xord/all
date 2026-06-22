@@ -5,6 +5,7 @@
   .each {|s| $:.unshift s if !$:.include?(s) && File.directory?(s)}
 
 require 'rake/testtask'
+require 'rucy/rake'
 
 require 'xot/extension'
 require 'rucy/extension'

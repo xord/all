@@ -100,20 +100,20 @@ class TestPackagerConfig < Test::Unit::TestCase
   end
 
   def test_name()
-    assert_equal 'packager', config()         .name
-    assert_equal '1',        config(name: 1)  .name
-    assert_equal 'packager', config(name: nil).name
+    assert_equal 'test', config()         .name
+    assert_equal '1',    config(name: 1)  .name
+    assert_equal 'test', config(name: nil).name
   end
 
   def test_bundle_id()
-    assert_equal 'org.xord.reflex.packager', config()                  .bundle_id
-    assert_equal 'a.b',                      config(bundle_id: 'a.b')  .bundle_id
-    assert_equal 'org.xord.reflex.name-1',   config( name:    'Name-1').bundle_id
-    assert_equal 'org.xord.reflex.name-2',   config('name' => 'Name-2').bundle_id
-    assert_raise(RP::Error)                 {config bundle_id: ''}
-    assert_raise(RP::Error)                 {config bundle_id: 'a'}
-    assert_raise(RP::Error)                 {config bundle_id: 'a.'}
-    assert_raise(RP::Error)                 {config name: 'アプリ'}
+    assert_equal 'org.xord.reflex.test',   config()                  .bundle_id
+    assert_equal 'a.b',                    config(bundle_id: 'a.b')  .bundle_id
+    assert_equal 'org.xord.reflex.name-1', config( name:    'Name-1').bundle_id
+    assert_equal 'org.xord.reflex.name-2', config('name' => 'Name-2').bundle_id
+    assert_raise(RP::Error)               {config bundle_id: ''}
+    assert_raise(RP::Error)               {config bundle_id: 'a'}
+    assert_raise(RP::Error)               {config bundle_id: 'a.'}
+    assert_raise(RP::Error)               {config name: 'アプリ'}
   end
 
   def test_version()

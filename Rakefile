@@ -11,7 +11,7 @@ include Xot::Rake
 
 
 EXTS  = %i[xot rucy beeps rays rays-video reflex]
-GEMS  = EXTS + %i[processing rubysketch reight]
+GEMS  = EXTS + %i[reflex-packager processing rubysketch reight]
 REPOS = %i[cruby] + GEMS
 TASKS = %i[
   packages bundle vendor
