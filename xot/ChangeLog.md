@@ -1,6 +1,12 @@
 # xot ChangeLog
 
 
+## [v0.3.15] - 2026-06-23
+
+- Add WeakRef for weak references to RefCountable
+- Compile vendored C sources with the C compiler
+
+
 ## [v0.3.14] - 2026-06-12
 
 - Link static archive explicitly in export_all_symbols on ucrt32

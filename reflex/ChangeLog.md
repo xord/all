@@ -1,6 +1,17 @@
 # reflex ChangeLog
 
 
+## [v0.5.0] - 2026-06-23
+
+- Upgrade Box2D from 2.4.1 to 3.1.1
+- Add Reflex.podspec and pod.rake for CocoaPods distribution
+- Define ==/eql?/hash on RefCountable wrapper classes
+- Build the menu in applicationWillFinishLaunching
+
+- Fix Timer owner use-after-free with WeakRef
+- Fix rect fixture bottom edge and wall shape setup
+
+
 ## [v0.4.2] - 2026-06-12
 
 - Share single offscreen GL context across windows

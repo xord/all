@@ -1,6 +1,11 @@
 # rucy ChangeLog
 
 
+## [v0.3.15] - 2026-06-23
+
+- Add define_wrapper_equality_methods for wrapper identity
+
+
 ## [v0.3.14] - 2026-06-12
 
 - Use modern TypedData API
