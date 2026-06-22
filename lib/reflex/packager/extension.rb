@@ -1,0 +1,32 @@
+module Reflex
+
+
+  module Packager
+
+
+    # @private
+    module Extension
+
+      module_function
+
+      def name(downcase = false)
+        super().split('::')[..-2].join.then {|s|
+          downcase ? s.gsub(/([a-z])([A-Z])/) {"#{$1}-#{$2}"}.downcase : s
+        }
+      end
+
+      def version()
+        File.read(root_dir 'VERSION')[/[\d\.]+/]
+      end
+
+      def root_dir(path = '')
+        File.expand_path "../../../#{path}", __dir__
+      end
+
+    end# Extension
+
+
+  end# Packager
+
+
+end# Reflex
