@@ -33,7 +33,7 @@ Pod::Spec.new do |s|
   ]
 
   s.prepare_command    = 'rake -f pod.rake setup'
-  s.preserve_paths     = exts + %w[src]
+  s.preserve_paths     = exts + %w[include src ext vendor]
   s.requires_arc       = false
   s.osx.compiler_flags = "-DOSX"
   s.ios.compiler_flags = "-DIOS"
