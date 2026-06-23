@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.5.1] - 2026-06-23
+
+- Replace monorepo-based pod.rake with per-repo clone approach
+
+
 ## [v0.5.0] - 2026-06-23
 
 - Upgrade Box2D from 2.4.1 to 3.1.1
