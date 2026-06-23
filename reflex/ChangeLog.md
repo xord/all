@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.5.3] - 2026-06-23
+
+- Run vendor and erb for reflex itself in pod.rake setup
+
+
 ## [v0.5.2] - 2026-06-23
 
 - Add include, ext, vendor to podspec preserve_paths
