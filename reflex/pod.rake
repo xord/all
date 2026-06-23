@@ -1,9 +1,13 @@
 # -*- mode: ruby -*-
 #
 # Pins the dependencies to this checkout's commit by cloning the monorepo
-# (xord/all) and checking out the commit named by HEAD's [[UUID]] trailer.
+# (xord/all) and checking out the commit that matches the [[UUID]] trailer
+# of the version-tagged commit in the source repo.
+
+require 'tmpdir'
 
 
+SRC_REPO = 'https://github.com/xord/reflex.git'
 ALL_REPO = 'https://github.com/xord/all.git'
 ALL_DIR  = 'all'
 
@@ -12,9 +16,13 @@ DEPS = File.readlines('Rakefile', chomp: true)
   .compact
 
 
-def head_uuid()
-  `git log -1 --format=%B`[/^\[\[([0-9a-fA-F-]+)\]\]$/, 1] ||
-    raise('pod.rake: HEAD has no [[UUID]] trailer; cannot pin dependencies')
+def version_uuid()
+  version = File.read('VERSION')[/[\d\.]+/]
+  Dir.mktmpdir do |dir|
+    sh %( git clone --no-tags --depth 1 --branch v#{version} #{SRC_REPO} #{dir} )
+    `git -C #{dir} log -1 --format=%B`[/^\[\[([0-9a-fA-F-]+)\]\]$/, 1] ||
+      raise("pod.rake: v#{version} has no [[UUID]] trailer")
+  end
 end
 
 def checkout_monorepo(uuid)
@@ -33,7 +41,7 @@ task :clobber do
 end
 
 task :setup do
-  checkout_monorepo head_uuid
+  checkout_monorepo version_uuid
 
   Dir.chdir ALL_DIR do
     sh %( VENDOR_NOCOMPILE=1 rake #{DEPS.join ' '} vendor erb )
