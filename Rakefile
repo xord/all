@@ -104,7 +104,7 @@ namespace :changelog do
     all_changes = targets_.map {[_1, get_changes.call(_1)]}.to_h
     all_changes.each do |target, changes|
       gems = all_deps[target].select {|gem| not all_changes[gem].empty?}
-      changes << "- Update dependencies: #{gems.join ', '}" unless gems.empty?
+      changes << "- Update dependencies" unless gems.empty?
     end
     all_changes.reject {|_, changes| changes.empty?}
   end
@@ -120,12 +120,12 @@ namespace :changelog do
     get_all_changes.call.each do |target, changes|
       ver     = File.readlines("#{target}/VERSION", chomp: true)
         .first
-        .sub(/.$/, '_')
+        .sub(/(\d+)$/) {$1.to_i + 1}
       date    = Time.now.strftime '%Y-%m-%d'
-      changes = changes.join.gsub /^ {4}/, '- '
+      changes = changes.join.gsub(/^ {4}/, '- ').chomp
 
       filter_file "#{target}/ChangeLog.md" do |body|
-        body.sub "##", "## [v#{ver}] - #{date}\n\n#{changes}\n\n##"
+        body.sub "##", "## [v#{ver}] - #{date}\n\n#{changes}\n\n\n##"
       end
     end
   end
