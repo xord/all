@@ -15,7 +15,9 @@ task :clobber do
   sh %( rm -rf #{repos.keys.join ' '} )
 end
 
-task :setup
+task :setup do
+  sh %( VENDOR_NOCOMPILE=1 rake vendor erb )
+end
 
 repos.each do |repo, ver|
   rakefile = "#{repo}/Rakefile"
