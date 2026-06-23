@@ -1,6 +1,11 @@
 # reflex ChangeLog
 
 
+## [v0.5.2] - 2026-06-23
+
+- Add include, ext, vendor to podspec preserve_paths
+
+
 ## [v0.5.1] - 2026-06-23
 
 - Replace monorepo-based pod.rake with per-repo clone approach
