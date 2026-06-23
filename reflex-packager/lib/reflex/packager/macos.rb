@@ -155,7 +155,7 @@ module Reflex
                 "run: cd #{path} && rake download_or_build os=macos"
             end
           else # the umbrella pod (Reflex / RubySketch / ...)
-            unless File.directory? File.join(path, 'all')
+            unless File.directory? File.join(path, 'xot')
               raise Error,
                 "'#{path}' is not set up for CocoaPods, " +
                 "run: cd #{path} && rake -f pod.rake setup"

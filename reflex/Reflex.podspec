@@ -14,25 +14,26 @@ Pod::Spec.new do |s|
   s.osx.deployment_target = "10.10"
   s.ios.deployment_target = "12.0"
 
-  all  = "${PODS_ROOT}/#{s.name}/all"
-  deps = File.read(File.expand_path 'Rakefile', __dir__)
+  root = "${PODS_ROOT}/#{s.name}"
+  exts = File.read(File.expand_path 'Rakefile', __dir__)
     .lines(chomp: true)
     .map {_1[%r|require\s*['"](\w+)/extension['"]|, 1]}
-    .compact
+    .compact - [s.name.downcase]
 
-  incdirs = deps.map {"#{all}/#{_1}/include"}.concat %W[
-    #{all}/rays/vendor/glm
-    #{all}/rays/vendor/clipper/cpp
-    #{all}/rays/vendor/earcut.hpp/include/mapbox
-    #{all}/rays/vendor/splines-lib
-    #{all}/reflex/vendor/box2d/include
-    #{all}/reflex/vendor/box2d/src
-    #{all}/reflex/vendor/rtmidi/rtmidi
+  incdirs = exts.map {"#{root}/#{_1}/include"}.concat %W[
+    #{root}/include
+    #{root}/rays/vendor/glm
+    #{root}/rays/vendor/clipper/cpp
+    #{root}/rays/vendor/earcut.hpp/include/mapbox
+    #{root}/rays/vendor/splines-lib
+    #{root}/vendor/box2d/include
+    #{root}/vendor/box2d/src
+    #{root}/vendor/rtmidi/rtmidi
     ${PODS_ROOT}/CRuby/CRuby/include
   ]
 
   s.prepare_command    = 'rake -f pod.rake setup'
-  s.preserve_paths     = deps.product(%w[include src ext vendor]).map {"all/#{_1}/#{_2}"}
+  s.preserve_paths     = exts + %w[src]
   s.requires_arc       = false
   s.osx.compiler_flags = "-DOSX"
   s.ios.compiler_flags = "-DIOS"
@@ -43,63 +44,65 @@ Pod::Spec.new do |s|
     "HEADER_SEARCH_PATHS"          => incdirs.join(' ')
   }
 
+  #s.dependency = 'CRuby', git: 'https://github.com/xord/cruby'
+
   s.resource_bundles =
-    deps.each_with_object({}) do |dep, hash|
-      hash[dep.capitalize] = %w[lib VERSION].map {"all/#{dep}/#{_1}"}
+    exts.each_with_object({'Reflex' => %w[lib VERSION]}) do |ext, hash|
+      hash[ext.capitalize] = %W[#{ext}/lib #{ext}/VERSION]
     end
 
   s.subspec "Xot" do |spec|
-    spec.source_files = "all/xot/src/*.cpp"
+    spec.source_files = "xot/src/*.cpp"
   end
 
   s.subspec "Rucy" do |spec|
-    spec.source_files = "all/rucy/src/*.cpp"
+    spec.source_files = "rucy/src/*.cpp"
 
     spec.subspec "Ext" do |ext|
-      ext.source_files = "all/rucy/ext/rucy/*.cpp"
+      ext.source_files = "rucy/ext/rucy/*.cpp"
     end
   end
 
   s.subspec "Rays" do |spec|
-    spec    .source_files = "all/rays/src/*.cpp", "all/rays/src/opengl/*.cpp"
-    spec.osx.source_files = "all/rays/src/**/osx/*.{cpp,mm}"
-    spec.ios.source_files = "all/rays/src/**/ios/*.{cpp,mm}"
+    spec    .source_files = "rays/src/*.cpp", "rays/src/opengl/*.cpp"
+    spec.osx.source_files = "rays/src/**/osx/*.{cpp,mm}"
+    spec.ios.source_files = "rays/src/**/ios/*.{cpp,mm}"
     spec.osx.frameworks   = %w[AppKit OpenGL CoreImage CoreVideo CoreMedia AVFoundation]
-    spec.ios.frameworks   = %w[GLKit MobileCoreServices AVFoundation]
+    spec.ios.frameworks   = %w[GLKit MobileCoreServices AVFoundation]# ImageIO
 
     spec.subspec "Clipper" do |sub|
-      sub.source_files = "all/rays/vendor/clipper/cpp/*.cpp"
+      sub.source_files = "rays/vendor/clipper/cpp/*.cpp"
     end
 
     spec.subspec "SplineLib" do |sub|
-      sub.source_files = "all/rays/vendor/splines-lib/Splines.cpp"
+      sub.source_files = "rays/vendor/splines-lib/Splines.cpp"
     end
 
     spec.subspec "Ext" do |ext|
-      ext.source_files = "all/rays/ext/rays/*.cpp"
+      ext.source_files = "rays/ext/rays/*.cpp"
     end
   end
 
   s.subspec "Reflex" do |spec|
-    spec    .source_files = "all/reflex/src/*.cpp"
-    spec.osx.source_files = "all/reflex/src/osx/*.{cpp,mm}"
-    spec.ios.source_files = "all/reflex/src/ios/*.{cpp,mm}"
+    spec    .source_files = "src/*.cpp"
+    spec.osx.source_files = "src/osx/*.{cpp,mm}"
+    spec.ios.source_files = "src/ios/*.{cpp,mm}"
     spec.osx.frameworks   = %w[Cocoa IOKit GameController]
     spec.ios.frameworks   = %w[CoreMotion GameController]
 
     spec.subspec "Box2D" do |sub|
-      # Box2D 3.x is written in C
-      sub.source_files = "all/reflex/vendor/box2d/src/**/*.c"
+      sub.source_files = "vendor/box2d/src/**/*.c"
     end
 
     spec.subspec "RtMidi" do |sub|
-      sub.source_files       = "all/reflex/vendor/rtmidi/rtmidi/**/*.cpp"
-      sub.osx.compiler_flags = "-D__MACOSX_CORE__"
-      sub.osx.frameworks     = %w[CoreMIDI CoreAudio]
+      sub.source_files   = "vendor/rtmidi/rtmidi/**/*.cpp"
+      sub.compiler_flags = '-D__MACOSX_CORE__'
+      sub.osx.frameworks = %w[CoreAudio CoreMIDI]
+      sub.ios.frameworks = %w[CoreMIDI]
     end
 
     spec.subspec "Ext" do |ext|
-      ext.source_files = "all/reflex/ext/reflex/*.cpp"
+      ext.source_files = "ext/reflex/*.cpp"
     end
   end
 end
