@@ -20,13 +20,21 @@ module Reflex
       # @param [Array<String>] extensions   native exts to register (Init_<name>)
       # @param [Array<String>] config_files config file names, preferred first
       # @param [String]        template     'new' main script template ({{name}})
+      # @param [String, nil]   command      CLI command name (default: pod_key)
       #
-      def initialize(pod:, git:, version:, libraries:, extensions:, config_files:, template:)
-        @pod, @git, @version, @libraries, @extensions, @config_files, @template =
-          pod, git, version, libraries, extensions, config_files, template
+      def initialize(
+        pod:, git:, version:, libraries:, extensions:, config_files:, template:,
+        command: nil)
+
+        @pod, @git, @version, @libraries, @extensions, @config_files, @template, @command =
+         pod,  git,  version,  libraries,  extensions,  config_files,  template,  command
       end
 
       attr_reader :pod, :git, :version, :libraries, :extensions, :config_files, :template
+
+      def command()
+        @command || pod_key
+      end
 
       def pod_key()
         pod.downcase.to_sym

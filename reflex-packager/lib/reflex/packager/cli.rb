@@ -40,7 +40,7 @@ module Reflex
       end
 
       def create(argv)
-        argv, = parse argv, "Usage: #{@profile.pod_key} new NAME"
+        argv, = parse argv, "Usage: #{@profile.command} new NAME"
 
         name = argv.shift
         raise Error, 'project name required' unless name
@@ -55,14 +55,19 @@ module Reflex
           #version: 1.0.0
           #icon: icon.png
         END
+
         puts "Created #{name}/"
-        puts "  cd #{name} && ruby main.rb                 # run the application"
-        puts "  cd #{name} && #{@profile.pod_key} package .   # package as an application"
+        hints = [
+          ["cd #{name} && ruby main.rb",                  "run the application"],
+          ["cd #{name} && #{@profile.command} package .", "package as an application"]
+        ]
+        max = hints.map {|cmd,| cmd.length}.max
+        hints.each {|cmd, desc| puts "  #{cmd.ljust max}  # #{desc}"}
       end
 
       def package(argv)
         profile = @profile # capture for the instance_eval'd parse block below
-        argv, params = parse argv, "Usage: #{profile.pod_key} package [options] [DIR]" do
+        argv, params = parse argv, "Usage: #{profile.command} package [options] [DIR]" do
           on '--platform PLATFORM', 'target platform (default: macos)'
           on '--config PATH',
             "config file path (default: DIR/#{profile.config_files.first})"
@@ -84,7 +89,7 @@ module Reflex
 
       def usage()
         <<~END
-          Usage: #{@profile.pod_key} <command> [options]
+          Usage: #{@profile.command} <command> [options]
 
           Commands:
             new NAME       create a new application project
