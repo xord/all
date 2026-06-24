@@ -66,21 +66,18 @@ module Reflex
       end
 
       def package(argv)
-        profile = @profile # capture for the instance_eval'd parse block below
+        profile      = @profile
         argv, params = parse argv, "Usage: #{profile.command} package [options] [DIR]" do
           on '--platform PLATFORM', 'target platform (default: macos)'
-          on '--config PATH',
-            "config file path (default: DIR/#{profile.config_files.first})"
-          on '--generate-only', 'generate project files but do not build'
-          on '--verbose',       'verbose output'
+          on '--config PATH',       "config file path (default: DIR/#{profile.config_files.first})"
+          on '--generate-only',     'generate project files but do not build'
+          on '--verbose',           'verbose output'
         end
 
         dir      = argv.shift || '.'
         platform = (params[:platform] || 'macos').to_sym
-        klass    = PLATFORMS[platform]
-        raise Error, "unknown platform: '#{platform}'" unless klass
-
-        config = Config.load @profile, dir, params[:config]
+        klass    = PLATFORMS[platform] || raise(Error, "unknown platform: '#{platform}'")
+        config   = Config.load profile, dir, params[:config]
         klass.new(config, verbose: params[:verbose])
           .package generate_only: params[:'generate-only']
       end

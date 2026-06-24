@@ -26,11 +26,18 @@ module Reflex
         pod:, git:, version:, libraries:, extensions:, config_files:, template:,
         command: nil)
 
-        @pod, @git, @version, @libraries, @extensions, @config_files, @template, @command =
-         pod,  git,  version,  libraries,  extensions,  config_files,  template,  command
+        @pod          = pod
+        @git          = git
+        @version      = version
+        @libraries    = libraries
+        @extensions   = extensions
+        @config_files = config_files
+        @template     = template
+        @command      = command
       end
 
-      attr_reader :pod, :git, :version, :libraries, :extensions, :config_files, :template
+      attr_reader :pod, :git, :version, :libraries, :extensions, :config_files,
+        :template
 
       def command()
         @command || pod_key

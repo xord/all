@@ -16,28 +16,18 @@ main (int argc, const char* argv[])
 {
 	@autoreleasepool
 	{
-		NSString* appDir =
-			[NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"app"];
-
-		// the application loads images by paths relative to the script
+		NSString* appDir = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"app"];
 		[NSFileManager.defaultManager changeCurrentDirectoryPath:appDir];
 
 <%- extensions.each do |ext| -%>
 		[CRuby addExtension:@"<%= ext %>" init:^{Init_<%= ext %>();}];
 <%- end -%>
 
-		for (NSString* lib in @[<%= libraries.map {|l| "@\"#{l}\""}.join ', ' %>])
+		for (NSString* lib in @[<%= libraries.map {"@\"#{_1}\""}.join ', ' %>])
 			[CRuby addLibrary:lib bundle:NSBundle.mainBundle];
 
-		NSString* main = [appDir stringByAppendingPathComponent:@"<%= config.main %>"];
-
-		// add the script directory to the load path so that apps split
-		// into multiple files can require each other
 		[CRuby evaluate:[NSString stringWithFormat:@"$LOAD_PATH.unshift '%@'", appDir]];
-
-		// the script calls Reflex.start, which runs [NSApp run] and blocks
-		// here until the application quits
-		[CRuby start:main];
+		[CRuby start:[appDir stringByAppendingPathComponent:@"<%= config.main %>"]];
 	}
 	return 0;
 }
