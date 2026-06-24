@@ -27,7 +27,7 @@ main (int argc, const char* argv[])
 			[CRuby addLibrary:lib bundle:NSBundle.mainBundle];
 
 		[CRuby evaluate:[NSString stringWithFormat:@"$LOAD_PATH.unshift '%@'", appDir]];
-		[CRuby start:[appDir stringByAppendingPathComponent:@"<%= config.main %>"]];
+		[CRuby start:[appDir stringByAppendingPathComponent:@"<%= profile.boot_main || config.main %>"]];
 	}
 	return 0;
 }

@@ -13,18 +13,18 @@ module Reflex
     #
     class Profile
 
-      # @param [String]        pod          umbrella pod name (e.g. 'Reflex')
-      # @param [String]        git          umbrella pod git repository
-      # @param [String]        version      umbrella pod version (for the tag)
-      # @param [Array<String>] libraries    ruby lib bundles to add to load path
-      # @param [Array<String>] extensions   native exts to register (Init_<name>)
-      # @param [Array<String>] config_files config file names, preferred first
-      # @param [String]        template     'new' main script template ({{name}})
-      # @param [String, nil]   command      CLI command name (default: pod_key)
-      # @param [String, nil]   boot         boot script that overrides config main (default: nil)
+      # @param [String]               pod          umbrella pod name (e.g. 'Reflex')
+      # @param [String]               git          umbrella pod git repository
+      # @param [String]               version      umbrella pod version (for the tag)
+      # @param [Array<String>]        libraries    ruby lib bundles to add to load path
+      # @param [Array<String>]        extensions   native exts to register (Init_<name>)
+      # @param [Array<String>]        config_files config file names, preferred first
+      # @param [Hash{String=>String}] templates    'new' scaffold files ({filename => content})
+      # @param [String, nil]          command      CLI command name (default: pod_key)
+      # @param [String, nil]          boot         boot script overrides config main (default: nil)
       #
       def initialize(
-        pod:, git:, version:, libraries:, extensions:, config_files:, template:,
+        pod:, git:, version:, libraries:, extensions:, config_files:, templates:,
         command: nil, boot: nil)
 
         @pod          = pod
@@ -33,19 +33,23 @@ module Reflex
         @libraries    = libraries
         @extensions   = extensions
         @config_files = config_files
-        @template     = template
+        @templates    = templates
         @command      = command
         @boot         = boot
       end
 
       attr_reader :pod, :git, :version, :libraries, :extensions, :config_files,
-        :template, :boot
+        :templates, :boot
 
       def command()
         @command || pod_key
       end
 
       def main()
+        templates.keys.first
+      end
+
+      def boot_main()
         @boot ? '__reflex_main__.rb' : nil
       end
 

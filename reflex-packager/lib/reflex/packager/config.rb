@@ -21,7 +21,7 @@ module Reflex
           name:      name,
           bundle_id: hash[:bundle_id] || default_bundle_id(profile, name),
           version:   '0.1.0',
-          main:      'main.rb',
+          main:      profile.main,
           icon:      nil,
           files:     nil,
           pods: {
@@ -67,12 +67,8 @@ module Reflex
         validate
       end
 
-      attr_reader :profile, :dir, :name, :bundle_id, :version, :icon,
+      attr_reader :profile, :dir, :name, :bundle_id, :version, :main, :icon,
         :files, :macos, :pods
-
-      def main()
-        @profile.main || @main
-      end
 
       # Returns paths to be bundled into the application, relative to the
       # project directory.
@@ -92,8 +88,12 @@ module Reflex
 
       private
 
+      def self.name2id(name)
+        name.downcase.gsub(/[^a-z0-9\-]+/, '')
+      end
+
       def self.default_bundle_id(profile, name)
-        id = name.downcase.gsub(/[^a-z0-9\-]+/, '')
+        id = name2id name
         if id.empty?
           raise Error, "cannot derive a bundle_id from name '#{name}', " +
             "set 'bundle_id' in #{profile.config_files.first}"

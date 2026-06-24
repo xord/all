@@ -47,19 +47,14 @@ module Reflex
         raise Error, "'#{name}' already exists" if File.exist? name
 
         FileUtils.mkdir_p name
-        File.write File.join(name, 'main.rb'),
-          @profile.template.gsub('{{name}}') {name}
-        File.write File.join(name, @profile.config_files.first), <<~END
-          name: #{name}
-          #bundle_id: com.example.#{name.downcase.gsub(/[^a-z0-9]+/, '')}
-          #version: 1.0.0
-          #icon: icon.png
-        END
+        @profile.templates.each do |path, content|
+          File.write File.join(name, path.to_s), gsub_template(content, name)
+        end
 
         puts "Created #{name}/"
         hints = [
-          ["cd #{name} && ruby main.rb",                  "run the application"],
-          ["cd #{name} && #{@profile.command} package .", "package as an application"]
+          ["cd #{name} && ruby #{@profile.templates.keys.first}", "run the application"],
+          ["cd #{name} && #{@profile.command} package .",         "package as an application"]
         ]
         max = hints.map {|cmd,| cmd.length}.max
         hints.each {|cmd, desc| puts "  #{cmd.ljust max}  # #{desc}"}
@@ -105,6 +100,16 @@ module Reflex
         params     = {}
         argv       = opt.parse argv.dup, into: params
         return argv, params
+      end
+
+      def gsub_template(str, name)
+        {
+          name:    name,
+          name_id: Config.name2id(name)
+        }.each do |from, to|
+          str = str.gsub "{{#{from}}}", to
+        end
+        str
       end
 
     end# CLI
