@@ -67,8 +67,12 @@ module Reflex
         validate
       end
 
-      attr_reader :profile, :dir, :name, :bundle_id, :version, :main, :icon,
+      attr_reader :profile, :dir, :name, :bundle_id, :version, :icon,
         :files, :macos, :pods
+
+      def main()
+        @profile.main || @main
+      end
 
       # Returns paths to be bundled into the application, relative to the
       # project directory.

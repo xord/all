@@ -21,10 +21,11 @@ module Reflex
       # @param [Array<String>] config_files config file names, preferred first
       # @param [String]        template     'new' main script template ({{name}})
       # @param [String, nil]   command      CLI command name (default: pod_key)
+      # @param [String, nil]   boot         boot script that overrides config main (default: nil)
       #
       def initialize(
         pod:, git:, version:, libraries:, extensions:, config_files:, template:,
-        command: nil)
+        command: nil, boot: nil)
 
         @pod          = pod
         @git          = git
@@ -34,13 +35,18 @@ module Reflex
         @config_files = config_files
         @template     = template
         @command      = command
+        @boot         = boot
       end
 
       attr_reader :pod, :git, :version, :libraries, :extensions, :config_files,
-        :template
+        :template, :boot
 
       def command()
         @command || pod_key
+      end
+
+      def main()
+        @boot ? '__reflex_main__.rb' : nil
       end
 
       def pod_key()

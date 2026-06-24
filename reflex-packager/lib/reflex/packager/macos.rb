@@ -130,6 +130,8 @@ module Reflex
           FileUtils.mkdir_p File.dirname(dest)
           FileUtils.cp_r File.join(config.dir, file), dest
         end
+        File.write File.join(dir, profile.main), profile.boot if
+          profile.main && profile.boot
       end
 
       def generate_icon()
