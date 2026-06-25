@@ -8,38 +8,11 @@ class Reight::Project
 
   def initialize(project_dir)
     raise 'the project directory is required' unless project_dir
-    r            = Reight
+    raise "'#{project_dir}' is not a directory" if File.file? project_dir
+    FileUtils.mkdir_p File.join(project_dir, 'data')
+
     @project_dir = project_dir
-    settings     = r::Settings.new self
-
-    if File.exist? settings.project_json_path
-      project   = read_json__ settings.project_json_path
-      scripts   = read_json__ settings.scripts_json_path
-      sprites   = read_json__ settings.sprites_json_path
-      maps      = read_json__ settings   .maps_json_path
-      sounds    = read_json__ settings .sounds_json_path
-      @next_id, = project.fetch :next_id
-      @settings = r::Settings .load project.fetch(:settings), self
-      @scripts  = r::AssetList.load r::ScriptAsset, scripts,  self
-      @sprites  = r::AssetList.load r::SpriteAsset, sprites,  self
-      @maps     = r::AssetList.load r::   MapAsset, maps,     self
-      @sounds   = r::AssetList.load r:: SoundAsset, sounds,   self
-    else
-      raise "'#{project_dir}' is not a directory" if File.file? project_dir
-      FileUtils.mkdir_p project_dir
-      @next_id  = 1
-      @settings = settings
-      @scripts  = r::AssetList.new r::ScriptAsset
-      @sprites  = r::AssetList.new r::SpriteAsset, type: :grid
-      @maps     = r::AssetList.new r::   MapAsset, type: :grid
-      @sounds   = r::AssetList.new r:: SoundAsset, type: :grid
-      r::ScriptEditor.new(self).disable_history {_1.add_script 'game.rb'}
-      r::SpriteEditor.new(self).disable_history {_1.add_sprite 0, 0, 16, 16}
-      r::   MapEditor.new(self).disable_history {_1.add_map    0, 0, 32, 32}
-      r:: SoundEditor.new(self).disable_history {_1.add_sound  0, 0, 16, 16}
-    end
-
-    [@settings, @scripts, @sprites, @maps, @sounds].each {_1.set_parent self}
+    load_all__
   end
 
   def save(proj)
@@ -97,11 +70,71 @@ class Reight::Project
 
   alias  new_sound create_sound
 
-  def path_for(name)
-    File.expand_path name, project_dir
+  def path_for(name, dir = nil)
+    File.expand_path File.join(*dir, name), project_dir
+  end
+
+  def data_path_for(name)
+    path_for name, 'data'
   end
 
   private
+
+  def load_all__()
+    load_project__
+
+    load_assets__(
+      :@scripts, @settings.scripts_json_path, :array,
+      Reight::ScriptAsset, Reight::ScriptEditor
+    ) {
+      _1.add_script 'game.rb'
+    }
+
+    load_assets__(
+      :@sprites, @settings.sprites_json_path, :grid,
+      Reight::SpriteAsset, Reight::SpriteEditor
+    ) {
+      _1.add_sprite 0, 0, 16, 16
+    }
+
+    load_assets__(
+      :@maps, @settings.maps_json_path, :grid,
+      Reight::MapAsset, Reight::MapEditor
+    ) {
+      _1.add_map 0, 0, 32, 32
+    }
+
+    load_assets__(
+      :@sounds, @settings.sounds_json_path, :grid,
+      Reight::SoundAsset, Reight::SoundEditor
+    ) {
+      _1.add_sound 0, 0, 16, 16
+    }
+
+    [@settings, @scripts, @sprites, @maps, @sounds].each {_1.set_parent self}
+  end
+
+  def load_project__()
+    settings = Reight::Settings.new self
+    path     = settings.project_json_path
+    if File.exist? path
+      project   = read_json__ path
+      @next_id, = project.fetch :next_id
+      @settings = Reight::Settings.load project.fetch(:settings), self
+    else
+      @next_id  = 1
+      @settings = settings
+    end
+  end
+
+  def load_assets__(ivar, json_path, list_type, asset_class, editor_class, &block)
+    if File.exist? json_path
+      instance_variable_set ivar, Reight::AssetList.load(asset_class, read_json__(json_path), self)
+    else
+      instance_variable_set ivar, Reight::AssetList.new(asset_class, type: list_type)
+      editor_class.new(self).disable_history(&block)
+    end
+  end
 
   def to_json__(hash, readable: true)
     if readable

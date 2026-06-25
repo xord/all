@@ -6,13 +6,13 @@ class Reight::ScriptAsset < Reight::Asset
     Reight::Editable.load Reight::ScriptAsset, state:, project:
   end
 
-  def initialize(*args, name: nil, load: nil)
-    super(*args, name: name, load: load)
+  def initialize(id = 0, name: nil, text: nil, load: nil)
+    super(id, 1, 1, name: name, load: load)
     if load
       project, = load.fetch_values :project
       @text = Reight::Text.new load_script__(project)
     else
-      @text = Reight::Text.new
+      @text = Reight::Text.new text
     end
 
     @text.set_parent self
@@ -28,7 +28,11 @@ class Reight::ScriptAsset < Reight::Asset
   attr_reader :text
 
   def path(project)
-    name  = self.name.to_s
+    self.class.path self.name, project
+  end
+
+  def self.path(name, project)
+    name  = name.to_s
     name += '.rb' unless name.end_with? '.rb'
     project.path_for name
   end
