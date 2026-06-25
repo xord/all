@@ -19,10 +19,12 @@ TEST_PROFILE = Reflex::Packager::Profile.new(
   libraries:    %w[Xot Rucy Rays Reflex],
   extensions:   %w[rays_ext reflex_ext],
   config_files: %w[reflex.yml reflex.yaml],
-  template:     <<~RUBY)
+  templates:    {'main.rb': <<~MAIN, 'reflex.yml': <<~CONFIG})
     require 'reflex'
 
     Reflex.start do
       Reflex::Window.new(title: '{{name}}', frame: [100, 100, 400, 300]).show
     end
-  RUBY
+  MAIN
+    name: myapp
+  CONFIG

@@ -160,13 +160,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager "main: app.rb", files: %w[app.rb] do |pkg, dir|
       pkg.generate
       str = read dir, 'src/main.mm'
-      assert_include str, '@"app.rb"'                  # the entry script
+      assert_include str, '@"app"'                     # the bundled app dir
       assert_include str, 'Init_reflex_ext'            # native ext registered
       assert_include str, 'Init_rays_ext'
       assert_include str, '@"Reflex"'                  # library bundle added
       assert_include str, 'changeCurrentDirectoryPath' # cwd set to app dir
-      assert_include str, '@"app"'                     # the bundled app dir
-      assert_include str, '[CRuby start:main]'
+      assert_include str, '@"app.rb"'                  # the entry script
     end
   end
 

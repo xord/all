@@ -40,8 +40,8 @@ class TestPackagerCLI < Test::Unit::TestCase
   def test_new()
     tmpdir do
       capture {cli.create ['myapp']}
-      assert File.file?('myapp/main.rb')
-      assert File.file?('myapp/reflex.yml')
+      assert_true File.file?('myapp/main.rb')
+      assert_true File.file?('myapp/reflex.yml')
 
       main = File.read('myapp/main.rb')
       assert_include main, "require 'reflex'"
