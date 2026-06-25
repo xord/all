@@ -185,7 +185,7 @@ class Reight::Text
         prev_type  = type
         color      = HIGHLIGHT_COLORS[type] || next
         row1, col1 = index2pos range.begin
-        row2, col2 = index2pos range.end - 1
+        _,    col2 = index2pos range.end - 1
         self[row1].apply (col1..col2), key:, color:
       }
   end

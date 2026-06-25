@@ -6,13 +6,13 @@ class Reight::Project
   include Xot::Inspectable
   include Reight::Editable
 
-  def initialize(project_dir)
+  def initialize(project_dir, defaults: true)
     raise 'the project directory is required' unless project_dir
     raise "'#{project_dir}' is not a directory" if File.file? project_dir
     FileUtils.mkdir_p File.join(project_dir, 'data')
 
     @project_dir = project_dir
-    load_all__
+    load_all__ defaults
   end
 
   def save(proj)
@@ -39,6 +39,7 @@ class Reight::Project
   end
 
   def get_asset(id)
+    raise ArgumentError unless id
     @id2asset_cache     ||= {}
     @id2asset_cache[id] ||= @sprites&.find {_1.id == id} || @maps&.find {_1.id == id}
   end
@@ -80,33 +81,33 @@ class Reight::Project
 
   private
 
-  def load_all__()
+  def load_all__(defaults)
     load_project__
 
     load_assets__(
-      :@scripts, @settings.scripts_json_path, :array,
-      Reight::ScriptAsset, Reight::ScriptEditor
+      Reight::ScriptAsset, Reight::ScriptEditor,
+      :@scripts, @settings.scripts_json_path, :array, defaults
     ) {
       _1.add_script 'game.rb'
     }
 
     load_assets__(
-      :@sprites, @settings.sprites_json_path, :grid,
-      Reight::SpriteAsset, Reight::SpriteEditor
+      Reight::SpriteAsset, Reight::SpriteEditor,
+      :@sprites, @settings.sprites_json_path, :grid, defaults
     ) {
       _1.add_sprite 0, 0, 16, 16
     }
 
     load_assets__(
-      :@maps, @settings.maps_json_path, :grid,
-      Reight::MapAsset, Reight::MapEditor
+      Reight::MapAsset, Reight::MapEditor,
+      :@maps, @settings.maps_json_path, :grid, defaults
     ) {
       _1.add_map 0, 0, 32, 32
     }
 
     load_assets__(
-      :@sounds, @settings.sounds_json_path, :grid,
-      Reight::SoundAsset, Reight::SoundEditor
+      Reight::SoundAsset, Reight::SoundEditor,
+      :@sounds, @settings.sounds_json_path, :grid, defaults
     ) {
       _1.add_sound 0, 0, 16, 16
     }
@@ -127,12 +128,12 @@ class Reight::Project
     end
   end
 
-  def load_assets__(ivar, json_path, list_type, asset_class, editor_class, &block)
+  def load_assets__(asset_class, editor_class, ivar, json_path, list_type, defaults, &block)
     if File.exist? json_path
       instance_variable_set ivar, Reight::AssetList.load(asset_class, read_json__(json_path), self)
     else
       instance_variable_set ivar, Reight::AssetList.new(asset_class, type: list_type)
-      editor_class.new(self).disable_history(&block)
+      editor_class.new(self).disable_history(&block) if defaults
     end
   end
 

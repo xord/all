@@ -210,6 +210,6 @@ class TestEditable < Test::Unit::TestCase
 
   def obj(...)           = Obj.new(...)
 
-  def proj(dir = '/tmp') = R8::Project.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir, defaults: false
 
 end# TestEditable

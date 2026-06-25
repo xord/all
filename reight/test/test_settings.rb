@@ -36,7 +36,7 @@ class TestSettings < Test::Unit::TestCase
   end
 
   def test_project_json_path()
-    assert_equal '/tmp/project.json', settings.project_json_path
+    assert_equal '/tmp/data/project.json', settings.project_json_path
   end
 
   private
@@ -46,6 +46,6 @@ class TestSettings < Test::Unit::TestCase
   def settings(settings = {}, proj = self.proj) =
     Settings.load(settings, proj)
 
-  def proj(dir = '/tmp') = R8::Project.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir, defaults: false
 
 end# TestSettings

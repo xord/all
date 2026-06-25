@@ -195,7 +195,7 @@ class TestMapChunk < Test::Unit::TestCase
 
   def asset(id, w, h = nil, x = 0, y = 0) = R8::SpriteAsset.new(id, w, h || w, x, y)
 
-  def proj(dir = '/tmp')                  = R8::Project.new dir
+  def proj(dir = '/tmp')                  = R8::Project.new dir, defaults: false
 
   def count_all_tiles(chunk)
     chunk.each_tile(include_hidden: true).to_a.size
