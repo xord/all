@@ -24,7 +24,9 @@ class TestProject < Test::Unit::TestCase
         {next_id: 2, settings: {}},
         read_json(pj.settings.project_json_path))
       assert_equal(
-        {class: 'Reight::SpriteAsset', type: 'grid', assets: [{id: 1, w: 8, h: 8}]},
+        {class: 'Reight::SpriteAsset', type: 'grid', assets: [
+          {id: 1, w: 8, h: 8, anims: {class: 'Reight::SpriteAnimation', type: 'grid', assets: []}}
+        ]},
         read_json(pj.settings.sprites_json_path))
     end
   end
