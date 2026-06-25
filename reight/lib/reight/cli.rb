@@ -68,13 +68,13 @@ class Reight::CLI
       version:      Reight::Extension.version,
       libraries:    %w[Xot Rucy Beeps Rays Reflex Processing RubySketch Reight],
       extensions:   %w[beeps_ext rays_ext reflex_ext],
-      config_files: %w[reight.yml reight.yaml r8.yml r8.yaml],
+      config_files: %w[project.yml project.yaml reight.yml reight.yaml r8.yml r8.yaml],
       command:      'r8',
       boot:         <<~BOOT,
         require 'reight/cli'
         Reight::CLI.new.run %w[run .]
       BOOT
-      templates: {'game.rb': <<~GAME, 'reight.yml': <<~CONFIG})
+      templates: {'game.rb': <<~GAME, 'project.yml': <<~CONFIG})
         setup do
           setTitle '{{name}}'
         end

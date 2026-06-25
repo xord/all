@@ -29,8 +29,10 @@ class Reight::ScriptEditor < Reight::ModelController
   alias edit begin_editing
 
   def add_script(name, index = nil)
-    index = scripts.find_index(@script)&.then {_1 + 1} || scripts.size unless index
-    Reight::ScriptAsset.new(@project.get_next_id, 1, 1, name: name).tap do |script|
+    index ||= scripts.find_index(@script)&.then {_1 + 1} || scripts.size
+    path    = Reight::ScriptAsset.path name, @project
+    text    = File.read path if File.file? path
+    Reight::ScriptAsset.new(@project.get_next_id, name: name, text: text).tap do |script|
       scripts.insert index, script
       group_history do
         append_history [:add_script, index, script]
