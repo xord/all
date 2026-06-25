@@ -107,7 +107,7 @@ class Reight::SpriteEditor < Reight::ModelController
         sprites.put sp
         append_history [:add_sprite, sp]
         self.sprite = sp
-        add_anim
+        add_anim 0, 0, sp.w, sp.h
       end
     end
   end
@@ -128,13 +128,13 @@ class Reight::SpriteEditor < Reight::ModelController
     append_history [:set_sprite_name, name, old]
   end
 
-  def add_anim(index = nil)
-    sp    = @sprite || return
-    index = sp.find_index(@anim)&.then {_1 + 1} || sp.size unless index
-    Reight::SpriteAnimation.new(@project.get_next_id, sp.w, sp.h).tap do |anim|
+  def add_anim(x, y, w, h)
+    sp = @sprite || return
+    raise ArgumentError if w != sp.w || h != sp.h
+    Reight::SpriteAnimation.new(@project.get_next_id, w, h, x, y).tap do |anim|
       group_history do
-        @sprite.insert index, anim
-        append_history [:add_anim, index, anim]
+        @sprite.put anim
+        append_history [:add_anim, anim]
         self.anim = anim
         add_anim_image 0
       end
@@ -143,11 +143,11 @@ class Reight::SpriteEditor < Reight::ModelController
 
   def remove_anim()
     return nil unless @anim
-    anim, index = @anim, @sprite.find_index(@anim)
+    anim = @anim
     group_history do
       @sprite.remove anim
-      append_history [:remove_anim, index, anim]
-      self.anim = @sprite[index] || @sprite[-1]
+      append_history [:remove_anim, anim]
+      self.anim = @sprite.first
     end
     anim
   end
@@ -254,8 +254,8 @@ class Reight::SpriteEditor < Reight::ModelController
       case action
       in [   :add_sprite,     sprite]       then sprites.remove sprite
       in [:remove_sprite,     sprite]       then sprites.put    sprite
-      in [   :add_anim,       index, _]     then @sprite.remove_at index
-      in [:remove_anim,       index, anim]  then @sprite.insert    index, anim
+      in [   :add_anim,       anim]         then @sprite.remove anim
+      in [:remove_anim,       anim]         then @sprite.put    anim
       in [   :add_anim_image, index, _]     then @anim  .remove_at index
       in [:remove_anim_image, index, image] then @anim  .insert    index, image
       in [:set_sprite,      _, old]         then self.sprite     = old
@@ -274,8 +274,8 @@ class Reight::SpriteEditor < Reight::ModelController
       case action
       in [   :add_sprite,     sprite]       then sprites.put    sprite
       in [:remove_sprite,     sprite]       then sprites.remove sprite
-      in [   :add_anim,       index, anim]  then @sprite.insert    index, anim
-      in [:remove_anim,       index, _]     then @sprite.remove_at index
+      in [   :add_anim,       anim]         then @sprite.put    anim
+      in [:remove_anim,       anim]         then @sprite.remove anim
       in [   :add_anim_image, index, image] then @anim  .insert    index, image
       in [:remove_anim_image, index, _]     then @anim  .remove_at index
       in [:set_sprite,      new, _]         then self.sprite     = new

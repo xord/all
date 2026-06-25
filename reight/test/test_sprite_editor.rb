@@ -497,7 +497,11 @@ class TestSpriteEditor < Test::Unit::TestCase
     a1 = e.anim
     assert_equal 1, e.sprite.size
 
-    e.add_anim
+    assert_raise(RuntimeError)  {e.add_anim 0, 0, 8, 8}
+    assert_raise(ArgumentError) {e.add_anim 8, 8, 8, 9}
+    assert_equal 1, e.sprite.size
+
+    e.add_anim 8, 8, 8, 8
     a2 = e.anim
     assert_equal 2, e.sprite.size
 
@@ -506,7 +510,7 @@ class TestSpriteEditor < Test::Unit::TestCase
 
   def test_add_anim_history()
     e = editor {_1.add_sprite 0, 0, 8, 8}
-    e.add_anim
+    e.add_anim 8, 0, 8, 8
     a1, a2 = e.sprite[0], e.sprite[1]
 
     assert_equal [true, false], [e.can_undo?, e.can_redo?]
@@ -524,7 +528,7 @@ class TestSpriteEditor < Test::Unit::TestCase
   def test_remove_anim()
     e = editor
     e.add_sprite 0, 0, 8, 8
-    e.add_anim
+    e.add_anim 8, 0, 8, 8
     a1, a2 = e.sprite[0], e.sprite[1]
 
     assert_equal 2,        e.sprite.size
@@ -542,7 +546,7 @@ class TestSpriteEditor < Test::Unit::TestCase
   def test_remove_anim_history()
     e = editor do
       _1.add_sprite 0, 0, 8, 8
-      _1.add_anim
+      _1.add_anim 8, 0, 8, 8
     end
     a1, a2 = e.sprite[0], e.sprite[1]
     e.remove_anim
@@ -867,7 +871,7 @@ class TestSpriteEditor < Test::Unit::TestCase
 
   def sprite(pj, x = 0, y = 0, w = 8, h = 8, anims: nil)
     R8::SpriteAsset.new(pj.get_next_id, w, h, x, y).tap do |sp|
-      (anims || [anim(pj, w, h)]).each {|a| sp.push a}
+      (anims || [anim(pj, w, h)]).each {|a| sp.put a}
     end
   end
 
