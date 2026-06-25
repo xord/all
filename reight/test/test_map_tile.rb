@@ -26,12 +26,12 @@ class TestMapTile < Test::Unit::TestCase
     assert_equal 2, Tile.load([1, 2, 3], pj).x
     assert_equal 3, Tile.load([1, 2, 3], pj).y
 
-    assert_raise(ArgumentError) {Tile.load([9, 2,   3  ], pj)}
-    assert_raise(ArgumentError) {Tile.load([1, nil, 3  ], pj)}
-    assert_raise(ArgumentError) {Tile.load([1, 2,   nil], pj)}
-    assert_raise(ArgumentError) {Tile.load([           ], pj)}
-    assert_raise(ArgumentError) {Tile.load([1          ], pj)}
-    assert_raise(ArgumentError) {Tile.load([1, 2       ], pj)}
+    assert_raise(R8::AssetNotFoundError) {Tile.load([9, 2,   3  ], pj)}
+    assert_raise(ArgumentError)          {Tile.load([1, nil, 3  ], pj)}
+    assert_raise(ArgumentError)          {Tile.load([1, 2,   nil], pj)}
+    assert_raise(ArgumentError)          {Tile.load([           ], pj)}
+    assert_raise(ArgumentError)          {Tile.load([1          ], pj)}
+    assert_raise(ArgumentError)          {Tile.load([1, 2       ], pj)}
   end
 
   def test_width_height()
@@ -59,6 +59,6 @@ class TestMapTile < Test::Unit::TestCase
   def sprite(id, w = 8, h = 8, *a, **k) =
     R8::SpriteAsset.new(id, w, h, *a, **k)
 
-  def proj(dir = '/tmp') = R8::Project.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir, defaults: false
 
 end# TestMapTile

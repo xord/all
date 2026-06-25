@@ -470,7 +470,7 @@ class TestSoundEditor < Test::Unit::TestCase
     end
   end
 
-  def proj(dir = '/tmp') = R8::Project.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir, defaults: false
 
   def sound(pj, x = 0, y = 0, w = 8, h = 8, bpm: 120) =
     R8::SoundAsset.new pj.get_next_id, w, h, x, y, bpm: bpm

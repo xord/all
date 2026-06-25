@@ -6,16 +6,16 @@ class TestSpriteAnimation < Test::Unit::TestCase
   include HasContext
 
   def test_initialize()
-    assert_equal 1,       anim(1, 2, 3, 4)     .id
-    assert_equal 2,       anim(1, 2, 3, 4)     .w
-    assert_equal 3,       anim(1, 2, 3, 4)     .h
-    assert_equal 4,       anim(1, 2, 3, 4)     .fps
-    assert_equal :anim_1, anim(1, 2, 3, 4, nil).name
-    assert_equal :x,      anim(1, 2, 3, 4, :x) .name
-    assert_equal :x,      anim(1, 2, 3, 4, 'x').name
-    assert_equal 0,       anim(1, 2, 3, 4)     .size
-    assert_nil            anim(1, 2, 3, 4)     .image_at 0
-    assert_nil            anim(1, 2, 3, 4)     [0]
+    assert_equal 1,              anim(1, 2, 3, 4)     .id
+    assert_equal 2,              anim(1, 2, 3, 4)     .w
+    assert_equal 3,              anim(1, 2, 3, 4)     .h
+    assert_equal 4,              anim(1, 2, 3, 4)     .fps
+    assert_equal :sprite_anim_1, anim(1, 2, 3, 4, nil).name
+    assert_equal :x,             anim(1, 2, 3, 4, :x) .name
+    assert_equal :x,             anim(1, 2, 3, 4, 'x').name
+    assert_equal 0,              anim(1, 2, 3, 4)     .size
+    assert_nil                   anim(1, 2, 3, 4)     .image_at 0
+    assert_nil                   anim(1, 2, 3, 4)     [0]
 
     assert_raise(ArgumentError) {anim(-1, 2, 3, 4)}
     assert_raise(ArgumentError) {anim( 1, 0, 3, 4)}
@@ -35,7 +35,7 @@ class TestSpriteAnimation < Test::Unit::TestCase
       a      = anim      100,    1,    2,      3,       :x, images: images
       assert_equal ({id: 100, w: 1, h: 2, fps: 3, name: :x}), a.save(pj)
 
-      path = "#{dir}/anim_100.png"
+      path = "#{dir}/data/sprite_anim_100.png"
       img  = context.load_image path
       assert_equal [3, 2],    img.size
       assert_equal [R, G, B], [0, 1, 2].map {|x| rgb img, x}
@@ -57,19 +57,20 @@ class TestSpriteAnimation < Test::Unit::TestCase
           g.fill(*color)
           g.rect i, 0, 1, 2
         end
-        g.save "#{dir}/anim_100.png"
+        FileUtils.mkdir_p "#{dir}/data"
+        g.save "#{dir}/data/sprite_anim_100.png"
       end
 
-      assert_equal 100,       Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).id
-      assert_equal 1,         Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).w
-      assert_equal 2,         Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).h
-      assert_equal 3,         Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).fps
-      assert_equal :anim_100, Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).name
-      assert_equal :anim_100, Anim.load({id: 100, w: 1, h: 2, fps: 3, name: nil}, proj(dir)).name
-      assert_equal :x,        Anim.load({id: 100, w: 1, h: 2, fps: 3, name: :x},  proj(dir)).name
-      assert_equal :x,        Anim.load({id: 100, w: 1, h: 2, fps: 3, name: 'x'}, proj(dir)).name
-      assert_equal [R, G, B], Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).map {rgb _1}
-      assert_equal [],        Anim.load({id: 999, w: 1, h: 2, fps: 3},            proj(dir)).map {rgb _1}
+      assert_equal 100,              Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).id
+      assert_equal 1,                Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).w
+      assert_equal 2,                Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).h
+      assert_equal 3,                Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).fps
+      assert_equal :sprite_anim_100, Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).name
+      assert_equal :sprite_anim_100, Anim.load({id: 100, w: 1, h: 2, fps: 3, name: nil}, proj(dir)).name
+      assert_equal :x,               Anim.load({id: 100, w: 1, h: 2, fps: 3, name: :x},  proj(dir)).name
+      assert_equal :x,               Anim.load({id: 100, w: 1, h: 2, fps: 3, name: 'x'}, proj(dir)).name
+      assert_equal [R, G, B],        Anim.load({id: 100, w: 1, h: 2, fps: 3},            proj(dir)).map {rgb _1}
+      assert_equal [],               Anim.load({id: 999, w: 1, h: 2, fps: 3},            proj(dir)).map {rgb _1}
     end
   end
 
@@ -175,7 +176,7 @@ class TestSpriteAnimation < Test::Unit::TestCase
   def anim(id = 1, w = 2, h = 3, fps = 4, name = 'x', images: []) =
     Anim.new(id, w, h, fps: fps, name: name).tap {_1.push(*images)}
 
-  def proj(dir = '/tmp') = R8::Project.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir, defaults: false
 
   def image(color = nil, w = 2, h = 3, &block)
     context.create_graphics(w, h).tap do |g|
