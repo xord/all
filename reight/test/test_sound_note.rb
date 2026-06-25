@@ -52,6 +52,6 @@ class TestSoundNote < Test::Unit::TestCase
 
   def tone(index = 0)                   = Note::TONES[index]
 
-  def proj(dir = '/tmp')                = R8::Project.new dir
+  def proj(dir = '/tmp')                = R8::Project.new dir, defaults: false
 
 end# TestSoundNote

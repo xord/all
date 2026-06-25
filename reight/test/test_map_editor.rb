@@ -503,7 +503,7 @@ class TestMapEditor < Test::Unit::TestCase
   end
 
   def proj(dir = '/tmp')
-    R8::Project.new(dir).tap do |pj|
+    R8::Project.new(dir, defaults: false).tap do |pj|
       pj.sprites.put sprite(pj, 0, 0)
     end
   end
