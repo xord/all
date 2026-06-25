@@ -175,7 +175,7 @@ class TestMapLayer < Test::Unit::TestCase
 
   def asset(id, size, x = 0, y = 0) = R8::SpriteAsset.new(id, size, size, x, y)
 
-  def proj(dir = '/tmp')            = R8::Project.new dir
+  def proj(dir = '/tmp')            = R8::Project.new dir, defaults: false
 
   def count_all_tiles(layer, layer_size = 90, tile_size: 10)
     range = (-layer_size...layer_size).step(tile_size).to_a

@@ -163,6 +163,6 @@ class TestAssetList < Test::Unit::TestCase
 
   def asset(id, w = 1, h = 2, *a, **kw) = Asset.new(id, w, h, *a, **kw)
 
-  def proj(dir = '/tmp')                = R8::Project.new dir
+  def proj(dir = '/tmp')                = R8::Project.new dir, defaults: false
 
 end# TestAssetList

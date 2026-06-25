@@ -62,9 +62,13 @@ class TestProject < Test::Unit::TestCase
     assert_equal '/tmp/dir/name.txt', proj('/tmp/dir').path_for('name.txt')
   end
 
+  def test_data_path_for()
+    assert_equal '/tmp/dir/data/name.txt', proj('/tmp/dir').data_path_for('name.txt')
+  end
+
   private
 
-  def proj(dir = '/tmp') = R8::Project.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir, defaults: false
 
   def sprite(id, w = 8, h = 8, *a, **k) =
     R8::SpriteAsset.new(id, w, h, *a, **k)

@@ -584,24 +584,24 @@ class TestSpriteEditor < Test::Unit::TestCase
     e.set_anim_name :a
     e.set_anim_name :b
 
-    assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal :b,            e.anim.name
+    assert_equal [true, false],       [e.can_undo?, e.can_redo?]
+    assert_equal :b,                  e.anim.name
 
     e.undo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal :a,            e.anim.name
+    assert_equal [true, true],        [e.can_undo?, e.can_redo?]
+    assert_equal :a,                  e.anim.name
 
     e.undo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_match(/^anim_\d+$/,  e.anim.name)
+    assert_equal [true, true],        [e.can_undo?, e.can_redo?]
+    assert_match(/^sprite_anim_\d+$/, e.anim.name)
 
     e.redo
-    assert_equal [true, true],  [e.can_undo?, e.can_redo?]
-    assert_equal :a,            e.anim.name
+    assert_equal [true, true],        [e.can_undo?, e.can_redo?]
+    assert_equal :a,                  e.anim.name
 
     e.redo
-    assert_equal [true, false], [e.can_undo?, e.can_redo?]
-    assert_equal :b,            e.anim.name
+    assert_equal [true, false],       [e.can_undo?, e.can_redo?]
+    assert_equal :b,                  e.anim.name
   end
 
   def test_add_anim_image()
@@ -863,7 +863,7 @@ class TestSpriteEditor < Test::Unit::TestCase
     end
   end
 
-  def proj(dir = '/tmp') = R8::Project.new dir
+  def proj(dir = '/tmp') = R8::Project.new dir, defaults: false
 
   def sprite(pj, x = 0, y = 0, w = 8, h = 8, anims: nil)
     R8::SpriteAsset.new(pj.get_next_id, w, h, x, y).tap do |sp|

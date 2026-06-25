@@ -146,6 +146,6 @@ class TestAsset < Test::Unit::TestCase
   def asset(id = 0, w = 8, h = 8, x = 0, y = 0, value = 100, name = nil, **k) =
     TestAsset.new(value, id, w, h, x, y, name: name, **k)
 
-  def proj = R8::Project.new '/tmp'
+  def proj = R8::Project.new '/tmp', defaults: false
 
 end# TestAsset
