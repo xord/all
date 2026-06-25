@@ -510,7 +510,7 @@ class TestMapEditor < Test::Unit::TestCase
 
   def sprite(pj, x = 0, y = 0, w = 8, h = 8)
     R8::SpriteAsset.new(pj.get_next_id, w, h, x, y).tap do |sp|
-      sp.push R8::SpriteAnimation.new(pj.get_next_id, w, h).tap {|anim|
+      sp.put R8::SpriteAnimation.new(pj.get_next_id, w, h).tap {|anim|
         anim.push anim.create_image
       }
     end

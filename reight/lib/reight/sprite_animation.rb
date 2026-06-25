@@ -11,8 +11,8 @@ class Reight::SpriteAnimation < Reight::Asset
     Reight::Editable.load Reight::SpriteAnimation, state:, project:
   end
 
-  def initialize(id = 0, width = 0, height = 0, fps: 2, images: [], name: nil, load: nil)
-    super id, width, height, name: name, load: load
+  def initialize(id = 0, width = 0, height = 0, x = 0, y = 0, fps: 2, images: [], name: nil, load: nil)
+    super id, width, height, x, y, name: name, load: load
     if load
       state, project = load.fetch_values :state, :project
       @fps           = state.fetch :fps
@@ -74,6 +74,10 @@ class Reight::SpriteAnimation < Reight::Asset
   def image_at(frame_count)
     return nil if @images.empty?
     self[(frame_count / (60 / fps)).to_i % size]
+  end
+
+  def image()
+    image_at frame_count
   end
 
   def size()
