@@ -85,7 +85,7 @@ class Reight::SpriteAnimation < Reight::Asset
   end
 
   def asset_type()
-    'anim'
+    'sprite_anim'
   end
 
   def create_image()
@@ -113,7 +113,7 @@ class Reight::SpriteAnimation < Reight::Asset
 
   # @private
   def image_path__(project)
-    project.path_for "#{asset_type}_#{id}.png"
+    project.data_path_for "#{asset_type}_#{id}.png"
   end
 
   # @private

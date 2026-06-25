@@ -29,14 +29,14 @@ class Reight::Settings
     end
   end
 
-  def project_json_path = path_for "project.json"
+  def project_json_path = @project.data_path_for "project.json"
 
   setting :scripts_json_name do
     'scripts.json'
   end
 
   setting :scripts_json_path do
-    path_for scripts_json_name
+    @project.data_path_for scripts_json_name
   end
 
   setting :sprites_json_name do
@@ -44,7 +44,7 @@ class Reight::Settings
   end
 
   setting :sprites_json_path do
-    path_for sprites_json_name
+    @project.data_path_for sprites_json_name
   end
 
   setting :asset_table_page_width do
@@ -68,7 +68,7 @@ class Reight::Settings
   end
 
   setting :maps_json_path do
-    path_for maps_json_name
+    @project.data_path_for maps_json_name
   end
 
   setting :sounds_json_name do
@@ -76,7 +76,7 @@ class Reight::Settings
   end
 
   setting :sounds_json_path do
-    path_for sounds_json_name
+    @project.data_path_for sounds_json_name
   end
 
   def palette_colors = Reight::App::PALETTE_COLORS.dup
@@ -84,9 +84,5 @@ class Reight::Settings
   def font_path      = 'https://raw.githubusercontent.com/itouhiro/PixelMplus/master/PixelMplus10-Regular.ttf'
 
   def font_size      = 10
-
-  private
-
-  def path_for(...) = @project.path_for(...)
 
 end# Settings
