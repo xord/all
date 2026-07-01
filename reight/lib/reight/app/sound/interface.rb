@@ -1,7 +1,7 @@
 using Reight
 
 
-class Reight::SoundEditorInterface < Reight::ViewController
+class Reight::SoundEditorInterface < Reight::AppInterface
 
   NOTE_WIDTH  = 10
   NOTE_HEIGHT = 3
@@ -16,7 +16,7 @@ class Reight::SoundEditorInterface < Reight::ViewController
     noise:     12
   }.transform_values {Reight::App::PALETTE_COLORS[_1]}
 
-  def initialize(editor)
+  def initialize(editor, navigator)
     super
 
     e = editor
@@ -76,9 +76,9 @@ class Reight::SoundEditorInterface < Reight::ViewController
   end
 
   def bpm_changed(bpm)
-    @editor.set_sound_bpm bpm
+    editor.set_sound_bpm bpm
   rescue ArgumentError
-    self.bpm.value = @editor.sound.bpm
+    self.bpm.value = editor.sound.bpm
   end
 
   def offset_changed(offset)
@@ -88,12 +88,12 @@ class Reight::SoundEditorInterface < Reight::ViewController
   end
 
   def tone_clicked(tone)
-    @editor.tone = tone
+    editor.tone = tone
     Reight::SoundNote.new(60, tone).play 120
   end
 
   def sprites()
-    [
+    super + [
       sound_table_page_prev,
       sound_table_page,
       sound_table_page_next,
@@ -111,8 +111,8 @@ class Reight::SoundEditorInterface < Reight::ViewController
   end
 
   def sound_table()           = @sound_table           ||= Reight::AssetTable.new(
-    @editor.asset_table_width,      @editor.asset_table_width,
-    @editor.asset_table_page_width, @editor.asset_table_page_height,
+    editor.asset_table_width,      editor.asset_table_width,
+    editor.asset_table_page_width, editor.asset_table_page_height,
     size_for_new_asset: 16)
 
   def sound_table_page()      = @sound_table_page      ||= Reight::Label.new(0, align: CENTER)
@@ -142,16 +142,16 @@ class Reight::SoundEditorInterface < Reight::ViewController
 
   def piano_roll()            = @piano_roll            ||= Reight::SoundEditor::PianoRoll.new
 
-  def volumes()               = @volumes               ||= Reight::SoundEditor::Volumes.new(@editor)
+  def volumes()               = @volumes               ||= Reight::SoundEditor::Volumes.new(editor)
 
-  def tools()                 = @tools                 ||= @editor.tools.map {|tool|
+  def tools()                 = @tools                 ||= editor.tools.map {|tool|
     Reight::Button.new(name: tool.name, icon: r8.icon(tool.icon_index, 2, 8)).tap do |b|
       b.set_help left: tool.help_text
       b.singleton_class.define_method(:tool) {tool}
     end
   }
 
-  def tones()                 = @tones                 ||= @editor.tones.map.with_index {|tone, index|
+  def tones()                 = @tones                 ||= editor.tones.map.with_index {|tone, index|
     name  = tone.to_s.capitalize.gsub('_', '.')
     name += ' Wave' if name !~ /noise/i
     color = TONE_COLORS[tone]
@@ -175,6 +175,8 @@ class Reight::SoundEditorInterface < Reight::ViewController
   }
 
   def update_layout()
+    super
+
     app                       = Reight::App
     space_l, space_m, space_s = app::SPACE, app::SPACE / 2, 1
 
@@ -196,8 +198,8 @@ class Reight::SoundEditorInterface < Reight::ViewController
     prev = sound_table.sprite.tap do |sp|
       sp.x = sound_table_page_prev.sprite.x
       sp.y = sound_table_page_prev.sprite.bottom + space_m
-      sp.w = @editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
-      sp.h = @editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
+      sp.w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
+      sp.h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
     end
     prev = sound_remove.sprite.tap do |sp|
       sp.w = sp.h = app::BUTTON_SIZE
@@ -264,6 +266,8 @@ class Reight::SoundEditorInterface < Reight::ViewController
   end
 
   def key_pressed(pressings)
+    super
+
     case key_code
     when ENTER then play_or_stop.click
     #when :b    then  brush.click

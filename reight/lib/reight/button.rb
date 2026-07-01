@@ -8,9 +8,9 @@ class Reight::Button
   include Reight::Activatable
   include Reight::HasHelp
 
-  def initialize(name: nil, icon: nil, label: nil, &clicked)
+  def initialize(name: nil, icon: nil, label: nil, shadow: 0, &clicked)
     raise if icon && label
-    @name, @icon, @label = name, icon, label
+    @name, @icon, @label, @shadow = name, icon, label, shadow
     super()
 
     self.clicked(&clicked) if clicked
@@ -19,19 +19,25 @@ class Reight::Button
 
   hook :clicked
 
-  attr_accessor :name, :icon, :label
+  attr_accessor :name, :icon, :label, :shadow
 
   def draw(sp)
     no_stroke
+    round = 2
+
+    if @shadow > 0
+      fill 0, 100
+      rect 0, @shadow, sp.w, sp.h, round
+    end
 
     if @label
       fill 210
-      rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
+      rect 0, pressing? ? 1 : 0, sp.w, sp.h, round
     end
 
     if active?
       fill 230
-      rect 0, pressing? ? 1 : 0, sp.w, sp.h, 2
+      rect 0, pressing? ? 1 : 0, sp.w, sp.h, round
     end
 
     if @icon

@@ -1,9 +1,9 @@
 using Reight
 
 
-class Reight::ScriptEditorInterface < Reight::ViewController
+class Reight::ScriptEditorInterface < Reight::AppInterface
 
-  def initialize(editor)
+  def initialize(editor, navigator)
     super
 
     @keymap = Reight::ScriptEditor::KeyMap.new editor, text_editor
@@ -18,12 +18,14 @@ class Reight::ScriptEditorInterface < Reight::ViewController
   end
 
   def sprites()
-    [text_editor].map(&:sprite)
+    super + [text_editor].map(&:sprite)
   end
 
   def text_editor = @text_editor ||= Reight::ScriptEditor::TextEditor.new
 
   def update_layout()
+    super
+
     app = Reight::App
 
     text_editor.sprite.tap do |sp|
@@ -35,6 +37,7 @@ class Reight::ScriptEditorInterface < Reight::ViewController
   end
 
   def key_pressed(pressings)
+    super
     @keymap.key_pressed key, key_code, pressings
   end
 
