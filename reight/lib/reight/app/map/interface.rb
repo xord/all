@@ -1,9 +1,9 @@
 using Reight
 
 
-class Reight::MapEditorInterface < Reight::ViewController
+class Reight::MapEditorInterface < Reight::AppInterface
 
-  def initialize(editor)
+  def initialize(editor, navigator)
     super
 
     e = editor
@@ -59,11 +59,11 @@ class Reight::MapEditorInterface < Reight::ViewController
   end
 
   def get_map_index()
-    @editor.maps&.find_index(@editor.map) || 0
+    editor.maps&.find_index(editor.map) || 0
   end
 
   def sprites()
-    [
+    super + [
       sprite_table_page_prev,
       sprite_table_page,
       sprite_table_page_next,
@@ -81,8 +81,8 @@ class Reight::MapEditorInterface < Reight::ViewController
   end
 
   def sprite_table()           = @sprite_table           ||= Reight::AssetTable.new(
-    @editor.asset_table_width,      @editor.asset_table_width,
-    @editor.asset_table_page_width, @editor.asset_table_page_height)
+    editor.asset_table_width,      editor.asset_table_width,
+    editor.asset_table_page_width, editor.asset_table_page_height)
 
   def sprite_table_page()      = @sprite_table_page      ||= Reight::Label.new(0, align: CENTER)
 
@@ -107,7 +107,7 @@ class Reight::MapEditorInterface < Reight::ViewController
 
   def canvas()                 = @canvas                 ||= Reight::MapEditor::Canvas.new
 
-  def tools()                  = @tools                  ||= @editor.tools.map {|tool|
+  def tools()                  = @tools                  ||= editor.tools.map {|tool|
     Reight::Button.new(name: tool.name, icon: r8.icon(tool.icon_index, 2, 8)).tap do |b|
       b.set_help left: tool.help_text
       b.singleton_class.define_method(:tool) {tool}
@@ -115,6 +115,8 @@ class Reight::MapEditorInterface < Reight::ViewController
   }
 
   def update_layout()
+    super
+
     app                       = Reight::App
     space_l, space_m, space_s = app::SPACE, app::SPACE / 2, 1
 
@@ -136,8 +138,8 @@ class Reight::MapEditorInterface < Reight::ViewController
     prev = sprite_table.sprite.tap do |sp|
       sp.x = sprite_table_page_prev.sprite.x
       sp.y = sprite_table_page_prev.sprite.bottom + space_m
-      sp.w = @editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
-      sp.h = @editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
+      sp.w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
+      sp.h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
     end
     prev = mini_map.sprite.tap do |sp|
       sp.x      = prev.x
@@ -187,9 +189,6 @@ class Reight::MapEditorInterface < Reight::ViewController
       sp.right  = width                - space_l
       sp.bottom = tools.first.sprite.y - space_m
     end
-  end
-
-  def key_pressed(pressings)
   end
 
 =begin
