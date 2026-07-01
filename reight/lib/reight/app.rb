@@ -21,25 +21,23 @@ class Reight::App
     #1e5359   #2d8750 #3eb250 #4fe436 #95f041 #f8ec27 #f3a207 #e26b02
   ]
 
-  def initialize(
-    window, project, icon_index,
-    editor_class = nil, interface_class = nil)
-
+  def initialize(window, project, icon_index, editor_class = nil, interface_class = nil)
     @window, @project = window, project
+    @navigator        = Reight::Navigator.new self
     @icon             = r8.icon icon_index, 0, 8
     @editor           = editor_class&.new project
-    @interface        = interface_class&.new @editor
+    @interface        = (interface_class || Reight::AppInterface).new @editor, navigator
     @active           = false
   end
 
-  attr_reader :window, :project, :icon
+  attr_reader :window, :project, :navigator, :icon
 
   def label()
     @editor.class.name.split('::').last.gsub(/([a-z])([A-Z])/) {"#{$1} #{$2}"}
   end
 
   def flash(...)
-    #navigator.flash(...) if history.enabled?
+    @interface.flash(...)
   end
 
   def active?()
@@ -50,30 +48,24 @@ class Reight::App
     pressing_keys.include? key
   end
 
-  def sprites()
-    navigator.sprites + (@interface ? @interface.sprites : [])
-  end
-
   def activated()
-    add_world world if world
+    @interface.activated
     @setup ||= true.tap {setup}
     @active  = true
   end
 
   def deactivated()
     @active = false
-    remove_world world if world
+    @interface.deactivated
   end
 
   def draw()
     background 200
-    sprite(*@interface.sprites) if @interface
-    navigator.draw
+    @interface.draw
   end
 
   def key_pressed()
-    @interface&.key_pressed pressing_keys
-    navigator.key_pressed
+    @interface.key_pressed pressing_keys
     pressing_keys.add key_code
   end
 
@@ -82,8 +74,7 @@ class Reight::App
   end
 
   def window_resized()
-    @interface&.update_layout
-    navigator.window_resized
+    @interface.update_layout
   end
 
   def setup()          = nil
@@ -119,9 +110,58 @@ class Reight::App
 
   private
 
-  def navigator()
-    @navigator ||= Reight::Navigator.new self
+  def pressing_keys()
+    @pressing_keys ||= Set.new
   end
+
+end# App
+
+
+class Reight::AppInterface < Reight::ViewController
+
+  def initialize(editor, navigator)
+    super(editor)
+    @navigator, @overlays = navigator, []
+  end
+
+  def flash(...)
+    #navigator.flash(...) if history.enabled?
+  end
+
+  def overlay(alpha: 0, &block)
+    on_close = proc {|_, overlay| @overlays.delete overlay}
+    overlay  = Reight::Overlay.new(alpha: alpha, on_close: on_close, &block)
+    @overlays.push overlay
+    overlay.show
+  end
+
+  def sprites()
+    @navigator.sprites
+  end
+
+  def update_layout()
+    @navigator.window_resized
+  end
+
+  def activated()
+    add_world world
+  end
+
+  def deactivated()
+    remove_world @world if @world
+  end
+
+  def draw()
+    sprite(*sprites)
+    @navigator.draw
+    @overlays.each {_1.draw}
+  end
+
+  def key_pressed(pressing_keys)
+    @navigator.key_pressed
+  end
+
+  private
 
   def world()
     @world ||= SpriteWorld.new.tap do |w|
@@ -129,8 +169,4 @@ class Reight::App
     end
   end
 
-  def pressing_keys()
-    @pressing_keys ||= Set.new
-  end
-
-end# App
+end# Interface

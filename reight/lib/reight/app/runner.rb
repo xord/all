@@ -168,7 +168,6 @@ class Reight::Runner < Reight::App
   end
 
   def cleanup()
-    root_context.remove_world @context.spriteWorld__ if @context
     @context = nil
     end_wrapping_user_classes
     clear_all_timers
