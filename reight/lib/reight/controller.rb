@@ -1,3 +1,6 @@
+using Reight
+
+
 class Reight::ModelController
 
   def initialize(project)
@@ -28,15 +31,30 @@ class Reight::ViewController
 
   def initialize(editor)
     @editor = editor
+    @world  = SpriteWorld.new
   end
 
-  attr_reader :editor
+  attr_reader :editor, :world
 
   def bind(name, new, old, &block)
     block.call
     key = [self.class, name]
     old&.remove_modified_observer key
     new&.add_modified_observer key, &block
+  end
+
+  def layout(&block)
+    Reight::Layout.apply(width, height, delegate: self, &block).tap do |widgets|
+      widgets.map(&:sprite).each {world.add_sprite _1 unless _1.getWorld__}
+    end
+  end
+
+  def update_layout()
+    layout {}
+  end
+
+  def draw()
+    sprite world
   end
 
 end# ViewController
