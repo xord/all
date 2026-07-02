@@ -17,22 +17,11 @@ class Reight::ScriptEditorInterface < Reight::AppInterface
     end
   end
 
-  def sprites()
-    super + [text_editor].map(&:sprite)
-  end
-
   def text_editor = @text_editor ||= Reight::ScriptEditor::TextEditor.new
 
   def update_layout()
-    super
-
-    app = Reight::App
-
-    text_editor.sprite.tap do |sp|
-      sp.x      = 0
-      sp.y      = app::NAVIGATOR_HEIGHT
-      sp.right  = width
-      sp.bottom = height
+    layout do
+      put text_editor
     end
   end
 

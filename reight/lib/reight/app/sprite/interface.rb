@@ -97,28 +97,6 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
     canvas.image = image
   end
 
-  def sprites()
-    super + [
-      sprite_table_page_prev,
-      sprite_table_page,
-      sprite_table_page_next,
-      sprite_remove,
-      sprite_size,
-      sprite_table,
-      anim_table_page_prev,
-      anim_table_page,
-      anim_table_page_next,
-      anim_table,
-      sprite_name,
-      anim_name,
-      anim_image_remove,
-      anim_images,
-      canvas,
-      *tools,
-      *colors
-    ].map(&:sprite)
-  end
-
   def sprite_table()           = @sprite_table           ||= Reight::AssetTable.new(
     editor.asset_table_width,      editor.asset_table_width,
     editor.asset_table_page_width, editor.asset_table_page_height)
@@ -166,102 +144,64 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
     editor.colors.map {Reight::SpriteEditor::Color.new _1}
 
   def update_layout()
-    super
+    app     = Reight::App
+    button  = app::BUTTON_SIZE
+    table_w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
+    table_h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
 
-    app  = Reight::App
-    prev = sprite_table_page_prev.sprite.tap do |sp|
-      sp.x        = space_l
-      sp.y        = app::NAVIGATOR_HEIGHT + space_l
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = sprite_table_page.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = sprite_table_page_next.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = sprite_table.sprite.tap do |sp|
-      sp.x = sprite_table_page_prev.sprite.x
-      sp.y = sprite_table_page_prev.sprite.bottom + space_m
-      sp.w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
-      sp.h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
-    end
-    sprite_size.sprite.tap do |sp|
-      sp.w = sp.h = app::BUTTON_SIZE
-      sp.x        = prev.right - sp.w
-      sp.y        = sprite_table_page_next.sprite.y
-    end
-    prev = sprite_remove.sprite.tap do |sp|
-      sp.w = sp.h = app::BUTTON_SIZE
-      sp.x        = sprite_size.sprite.x - space_l - sp.w
-      sp.y        = sprite_size.sprite.y
-    end
-    prev = anim_table_page_prev.sprite.tap do |sp|
-      sp.x        = space_l
-      sp.y        = sprite_table.sprite.bottom + space_l
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = anim_table_page.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = anim_table_page_next.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = anim_table.sprite.tap do |sp|
-      sp.x      = sprite_table.sprite.x
-      sp.y      = prev.bottom + space_m
-      sp.w      = sprite_table.sprite.w
-      sp.bottom = height - space_l
-    end
-    prev = anim_image_remove.sprite.tap do |sp|
-      sp.w = sp.h = app::BUTTON_SIZE
-      sp.x        = width - space_l - sp.w
-      sp.y        = sprite_table_page_prev.sprite.y
-    end
-    prev = sprite_name.sprite.tap do |sp|
-      sp.x = sprite_table.sprite.right + space_l
-      sp.y = prev.y
-      sp.w = 100
-      sp.h = app::BUTTON_SIZE
-    end
-    prev = anim_name.sprite.tap do |sp|
-      sp.x     = prev.right + space_m
-      sp.y     = prev.y
-      sp.right = anim_image_remove.sprite.x - space_m
-      sp.h     = app::BUTTON_SIZE
-    end
-    prev = anim_images.sprite.tap do |sp|
-      sp.x     = sprite_name.sprite.x
-      sp.y     = sprite_name.sprite.bottom + space_m
-      sp.right = width - space_l
-      sp.h     = 32 + Reight::SpriteEditor::AnimImageList::PADDING * 2
-    end
-    prev = canvas.sprite.tap do |sp|
-      x, y = prev.x, prev.bottom + space_l
-      w, h = width - x - space_l, height - y - space_l
-      sp.w = sp.h = h
-      sp.x = x + ((w - sp.w) / 2).to_i
-      sp.y = y
-    end
-    tools.map(&:sprite).each.with_index do |sp, index|
-      sp.w = sp.h = app::BUTTON_SIZE
-      csp, all_h  = canvas.sprite, (sp.h + space_s) * tools.size
-      sp.x        = csp.x - space_l - sp.w
-      sp.y        = csp.y + ((csp.h - all_h) / 2).to_i + (sp.h + space_s) * index
-    end
-    colors.map(&:sprite).each.with_index do |sp, index|
-      sp.w = (app::BUTTON_SIZE * 0.8).floor
-      sp.h = app::BUTTON_SIZE
-      sp.x = canvas.sprite.right + space_l                             + sp.w * (index / 8)
-      sp.y = canvas.sprite.y + ((canvas.sprite.h - sp.h * 8) / 2).to_i + sp.h * (index % 8)
+    layout do
+      row h: :fill, pad: app::SPACE, gap: app::SPACE do
+        column w: table_w do
+          row h: button, gap: 1 do
+            put sprite_table_page_prev, w: button
+            put sprite_table_page,      w: button
+            put sprite_table_page_next, w: button
+            spacer
+            put sprite_remove, w: button
+            space app::SPACE - 2
+            put sprite_size,   w: button
+          end
+          space app::SPACE / 2
+          put sprite_table, h: table_h
+          space app::SPACE
+          row h: button, gap: 1 do
+            put anim_table_page_prev, w: button
+            put anim_table_page,      w: button
+            put anim_table_page_next, w: button
+          end
+          space app::SPACE / 2
+          put anim_table
+        end
+        column w: :fill do
+          row h: button, gap: app::SPACE / 2 do
+            put sprite_name, w: 100
+            put anim_name
+            put anim_image_remove, w: button
+          end
+          space app::SPACE / 2
+          put anim_images, h: 32 + Reight::SpriteEditor::AnimImageList::PADDING * 2
+          space app::SPACE
+          row h: :fill do
+            spacer
+            column gap: 1 do
+              spacer
+              tools.each {put _1, w: button, h: button}
+              spacer
+            end
+            space app::SPACE
+            put canvas, aspect: 1
+            space app::SPACE
+            column do
+              spacer
+              grid rows: 8 do
+                colors.each {put _1, w: (button * 0.8).floor, h: button}
+              end
+              spacer
+            end
+            spacer
+          end
+        end
+      end
     end
   end
 

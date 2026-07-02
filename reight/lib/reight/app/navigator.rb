@@ -18,16 +18,8 @@ class Reight::Navigator
   def visible? = @visible
 
   def sprites()
-    [*app_buttons, *history_buttons, *edit_buttons, message]
+    [background, *app_buttons, *history_buttons, *edit_buttons, message]
       .map &:sprite
-  end
-
-  def draw()
-    return unless visible?
-    fill 220
-    no_stroke
-    rect 0, 0, width, Reight::App::NAVIGATOR_HEIGHT
-    sprite(*sprites)
   end
 
   def key_pressed()
@@ -35,42 +27,23 @@ class Reight::Navigator
     app_buttons[index]&.click if index
   end
 
-  def window_resized()
-    [app_buttons, history_buttons, edit_buttons]
-      .flatten.map(&:sprite).each do |sp|
-        sp.w = sp.h = Reight::App::NAVIGATOR_HEIGHT
-        sp.y = 0
+  def layout_block()
+    nh, sp  = Reight::App::NAVIGATOR_HEIGHT, Reight::App::SPACE
+    groups  = [app_buttons, history_buttons, edit_buttons].reject(&:empty?)
+    bg, msg = background, message
+    proc do
+      stack h: nh do
+        put bg
+        row gap: 1 do
+          groups.each.with_index do |buttons, index|
+            space index == 0 ? sp : sp - 1
+            buttons.each {put _1, w: nh}
+          end
+          space sp * 2 - 2
+          put msg
+          space sp - 1
+        end
       end
-
-    space = Reight::App::SPACE
-    x     = space
-
-    app_buttons.map {_1.sprite}.each do |sp|
-      sp.x = x + 1
-      x    = sp.right
-    end.tap do
-      x += space unless _1.empty?
-    end
-
-    history_buttons.map {_1.sprite}.each do |sp|
-      sp.x = x + 1
-      x    = sp.right
-    end.tap do
-      x += space unless _1.empty?
-    end
-
-    edit_buttons.map {_1.sprite}.each do |sp|
-      sp.x = x + 1
-      x    = sp.right
-    end.tap do
-      x += space unless _1.empty?
-    end
-
-    message.sprite.tap do |sp|
-      sp.x     = x + space
-      sp.y     = 0
-      sp.h     = Reight::App::NAVIGATOR_HEIGHT
-      sp.right = width - space
     end
   end
 
@@ -125,7 +98,24 @@ class Reight::Navigator
     @message ||= Message.new
   end
 
+  def background()
+    @background ||= Background.new
+  end
+
 end# Navigator
+
+
+class Reight::Navigator::Background
+
+  include Reight::Widget
+
+  def draw(sp)
+    fill 220
+    no_stroke
+    rect 0, 0, sp.w, sp.h
+  end
+
+end# Background
 
 
 class Reight::Navigator::Message
