@@ -92,24 +92,6 @@ class Reight::SoundEditorInterface < Reight::AppInterface
     Reight::SoundNote.new(60, tone).play 120
   end
 
-  def sprites()
-    super + [
-      sound_table_page_prev,
-      sound_table_page,
-      sound_table_page_next,
-      sound_table,
-      sound_remove,
-      sound_name,
-      sound_bpm,
-      play_or_stop,
-      *tools,
-      *tones,
-      mini_map,
-      piano_roll,
-      volumes
-    ].map(&:sprite)
-  end
-
   def sound_table()           = @sound_table           ||= Reight::AssetTable.new(
     editor.asset_table_width,      editor.asset_table_width,
     editor.asset_table_page_width, editor.asset_table_page_height,
@@ -175,94 +157,47 @@ class Reight::SoundEditorInterface < Reight::AppInterface
   }
 
   def update_layout()
-    super
+    app     = Reight::App
+    button  = app::BUTTON_SIZE
+    table_w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
+    table_h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
 
-    app                       = Reight::App
-    space_l, space_m, space_s = app::SPACE, app::SPACE / 2, 1
-
-    prev = sound_table_page_prev.sprite.tap do |sp|
-      sp.x        = space_l
-      sp.y        = app::NAVIGATOR_HEIGHT + space_l
-      sp.w = sp.h = app::BUTTON_SIZE
+    layout do
+      row h: :fill, pad: app::SPACE, gap: app::SPACE do
+        column w: table_w do
+          row h: button, gap: 1 do
+            put sound_table_page_prev, w: button
+            put sound_table_page,      w: button
+            put sound_table_page_next, w: button
+            spacer
+            put sound_remove, w: button
+          end
+          space app::SPACE / 2
+          put sound_table, h: table_h
+          space app::SPACE
+          put sound_name, h: button
+          space app::SPACE / 2
+          put sound_bpm,  h: button
+        end
+        column w: :fill do
+          row h: button do
+            put play_or_stop, w: 32
+          end
+          space app::SPACE / 2
+          put mini_map, h: 10
+          space app::SPACE / 2
+          put piano_roll
+          space app::SPACE / 2
+          put volumes, h: 16
+          space app::SPACE / 2
+          row h: button, gap: 1 do
+            tools.each {put _1, w: button}
+            space app::SPACE - 2
+            tones.each {put _1, w: button}
+          end
+        end
+      end
     end
-    prev = sound_table_page.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = sound_table_page_next.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = sound_table.sprite.tap do |sp|
-      sp.x = sound_table_page_prev.sprite.x
-      sp.y = sound_table_page_prev.sprite.bottom + space_m
-      sp.w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
-      sp.h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
-    end
-    prev = sound_remove.sprite.tap do |sp|
-      sp.w = sp.h = app::BUTTON_SIZE
-      sp.x        = prev.right - sp.w
-      sp.y        = sound_table_page_next.sprite.y
-    end
-    prev = sound_name.sprite.tap do |sp|
-      sp.x = sound_table.sprite.x
-      sp.y = sound_table.sprite.bottom + space_l
-      sp.w = sound_table.sprite.w
-      sp.h = app::BUTTON_SIZE
-    end
-    prev = sound_bpm.sprite.tap do |sp|
-      sp.x = prev.x
-      sp.y = prev.bottom + space_m
-      sp.w = prev.w
-      sp.h = prev.h
-    end
-    prev = play_or_stop.sprite.tap do |sp|
-      sp.x       = sound_table.sprite.right + space_l
-      sp.y       = sound_table_page_prev.sprite.y
-      sp.w, sp.h = 32, app::BUTTON_SIZE
-    end
-    prev = mini_map.sprite.tap do |sp|
-      sp.x     = prev.x
-      sp.y     = prev.bottom + space_m
-      sp.right = width - space_l
-      sp.h     = 10
-    end
-    tools.map(&:sprite).each.with_index do |sp, index|
-      sp.w = sp.h = app::BUTTON_SIZE
-      sp.x        = play_or_stop.sprite.x + (sp.w + space_s) * index
-      sp.y        = height - space_l - sp.h
-    end
-    tones.map(&:sprite).each.with_index do |sp, index|
-      sp.w = sp.h = app::BUTTON_SIZE
-      sp.x        = tools.last.sprite.right + space_l + (sp.w + space_s) * index
-      sp.y        = tools.last.sprite.y
-    end
-    prev = volumes.sprite.tap do |sp|
-      sp.w = mini_map.sprite.w
-      sp.h = 16
-      sp.x = tools.first.sprite.x
-      sp.y = tools.first.sprite.y - space_m - sp.h
-    end
-    prev = piano_roll.sprite.tap do |sp|
-      sp.x      = mini_map.sprite.x
-      sp.y      = mini_map.sprite.bottom + space_m
-      sp.w      = mini_map.sprite.w
-      sp.bottom = volumes.sprite.y - space_m
-    end
-=begin
-    edits.map(&:sprite).each.with_index do |sp, i|
-      sp.w, sp.h = 32, BUTTON_SIZE
-      sp.x       = bpm.sprite.right + SPACE + (sp.w + 1) * i
-      sp.y       = bpm.sprite.y
-    end
-    controls.map(&:sprite).each.with_index do |sp, i|
-      sp.w, sp.h = 32, BUTTON_SIZE
-      sp.x       = SPACE + (sp.w + 1) * i
-      sp.y       = height - (SPACE + sp.h)
-    end
-=end
   end
 
   def key_pressed(pressings)

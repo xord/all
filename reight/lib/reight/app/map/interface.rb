@@ -62,24 +62,6 @@ class Reight::MapEditorInterface < Reight::AppInterface
     editor.maps&.find_index(editor.map) || 0
   end
 
-  def sprites()
-    super + [
-      sprite_table_page_prev,
-      sprite_table_page,
-      sprite_table_page_next,
-      sprite_table,
-      mini_map,
-      map_prev,
-      map_index,
-      map_next,
-      map_add,
-      map_remove,
-      map_name,
-      canvas,
-      *tools
-    ].map(&:sprite)
-  end
-
   def sprite_table()           = @sprite_table           ||= Reight::AssetTable.new(
     editor.asset_table_width,      editor.asset_table_width,
     editor.asset_table_page_width, editor.asset_table_page_height)
@@ -115,79 +97,42 @@ class Reight::MapEditorInterface < Reight::AppInterface
   }
 
   def update_layout()
-    super
+    app     = Reight::App
+    button  = app::BUTTON_SIZE
+    table_w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
+    table_h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
 
-    app                       = Reight::App
-    space_l, space_m, space_s = app::SPACE, app::SPACE / 2, 1
-
-    prev = sprite_table_page_prev.sprite.tap do |sp|
-      sp.x        = space_l
-      sp.y        = app::NAVIGATOR_HEIGHT + space_l
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = sprite_table_page.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = sprite_table_page_next.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = sprite_table.sprite.tap do |sp|
-      sp.x = sprite_table_page_prev.sprite.x
-      sp.y = sprite_table_page_prev.sprite.bottom + space_m
-      sp.w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
-      sp.h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
-    end
-    prev = mini_map.sprite.tap do |sp|
-      sp.x      = prev.x
-      sp.y      = prev.bottom + space_l
-      sp.w      = prev.w
-      sp.bottom = height - space_l
-    end
-    prev = map_prev.sprite.tap do |sp|
-      sp.x        = prev.right + space_l
-      sp.y        = sprite_table_page_prev.sprite.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = map_index.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = map_next.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = map_add.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = map_remove.sprite.tap do |sp|
-      sp.x        = prev.right + space_s
-      sp.y        = prev.y
-      sp.w = sp.h = app::BUTTON_SIZE
-    end
-    prev = map_name.sprite.tap do |sp|
-      sp.x     = prev.right + space_m
-      sp.y     = prev.y
-      sp.h     = prev.h
-      sp.right = width - space_l
-    end
-    tools.map(&:sprite).each.with_index do |sp, index|
-      sp.w = sp.h = app::BUTTON_SIZE
-      sp.x        = map_prev.sprite.x + (sp.w + space_s) * index
-      sp.y        = height - space_l - sp.h
-    end
-    prev = canvas.sprite.tap do |sp|
-      sp.x      = map_prev.sprite.x
-      sp.y      = map_prev.sprite.bottom + space_m
-      sp.right  = width                - space_l
-      sp.bottom = tools.first.sprite.y - space_m
+    layout do
+      row h: :fill, pad: app::SPACE, gap: app::SPACE do
+        column w: table_w do
+          row h: button, gap: 1 do
+            put sprite_table_page_prev, w: button
+            put sprite_table_page,      w: button
+            put sprite_table_page_next, w: button
+          end
+          space app::SPACE / 2
+          put sprite_table, h: table_h
+          space app::SPACE
+          put mini_map
+        end
+        column w: :fill do
+          row h: button, gap: 1 do
+            put map_prev,   w: button
+            put map_index,  w: button
+            put map_next,   w: button
+            put map_add,    w: button
+            put map_remove, w: button
+            space 1
+            put map_name
+          end
+          space app::SPACE / 2
+          put canvas
+          space app::SPACE / 2
+          row h: button, gap: 1 do
+            tools.each {put _1, w: button}
+          end
+        end
+      end
     end
   end
 
