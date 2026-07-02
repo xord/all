@@ -37,7 +37,7 @@ class Reight::Runner < Reight::App
     else
       root_context.image @context, 0, 0
     end
-    navigator.draw
+    @interface.draw
   end
 
   def key_pressed()
