@@ -124,8 +124,12 @@ class Reight::AppInterface < Reight::ViewController
     @navigator, @overlays = navigator, []
   end
 
-  def flash(...)
-    #navigator.flash(...) if history.enabled?
+  def layout(&block)
+    nav = @navigator.layout_block
+    super() do
+      instance_exec(&nav)
+      instance_exec(&block)
+    end
   end
 
   def overlay(alpha: 0, &block)
@@ -135,38 +139,26 @@ class Reight::AppInterface < Reight::ViewController
     overlay.show
   end
 
-  def sprites()
-    @navigator.sprites
-  end
-
-  def update_layout()
-    @navigator.window_resized
+  def flash(...)
+    #navigator.flash(...) if history.enabled?
   end
 
   def activated()
+    update_layout
     add_world world
   end
 
   def deactivated()
-    remove_world @world if @world
+    remove_world @world
   end
 
   def draw()
-    sprite(*sprites)
-    @navigator.draw
+    super
     @overlays.each {_1.draw}
   end
 
   def key_pressed(pressing_keys)
     @navigator.key_pressed
-  end
-
-  private
-
-  def world()
-    @world ||= SpriteWorld.new.tap do |w|
-      sprites.each {w.add_sprite _1}
-    end
   end
 
 end# Interface

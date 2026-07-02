@@ -22,6 +22,7 @@ end# Reight
 
 require 'reight/extension'
 require 'reight/helpers'
+require 'reight/layout'
 require 'reight/editable'
 require 'reight/history'
 require 'reight/button'
