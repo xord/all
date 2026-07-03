@@ -6,6 +6,15 @@ module Xot
 
   extend module Util
 
+    def warn(message, uniq: false)
+      if uniq
+        @warnings__ ||= {}
+        return if @warnings__[message]
+        @warnings__[message] = true
+      end
+      Kernel.warn message
+    end
+
     def get_env!(name, defval = nil)
       val = ENV[name.to_s] || Object.const_get(name) rescue defval
       val.dup rescue val
