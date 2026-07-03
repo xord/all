@@ -121,7 +121,9 @@ class Reight::AppInterface < Reight::ViewController
 
   def initialize(editor, navigator)
     super(editor)
-    @navigator, @overlays = navigator, []
+    @navigator                           = navigator
+    @popup_widgets, @popup_ready_widgets = [], []
+    @popup_world                         = RubySketch::SpriteWorld.new
   end
 
   def layout(&block)
@@ -132,11 +134,21 @@ class Reight::AppInterface < Reight::ViewController
     end
   end
 
-  def overlay(alpha: 0, &block)
-    on_close = proc {|_, overlay| @overlays.delete overlay}
-    overlay  = Reight::Overlay.new(alpha: alpha, on_close: on_close, &block)
-    @overlays.push overlay
-    overlay.show
+  def layout_popup(&block)
+    @layout_popup_block = block
+  end
+
+  def popup(*widgets, alpha: 50)
+    close_popup
+    apply_layout_popup
+    @popup_widgets = [backdrop, *widgets.flatten]
+    @popup_widgets.each {_1.sprite.show}
+    animate_value(0.2, from: 0, to: alpha) {backdrop.alpha = _1}
+  end
+
+  def close_popup()
+    @popup_widgets.each {_1.sprite.hide}
+    @popup_widgets.clear
   end
 
   def flash(...)
@@ -145,20 +157,64 @@ class Reight::AppInterface < Reight::ViewController
 
   def activated()
     update_layout
-    add_world world
+    add_world world, @popup_world
   end
 
   def deactivated()
-    remove_world @world
+    remove_world world, @popup_world
   end
 
   def draw()
     super
-    @overlays.each {_1.draw}
+    sprite @popup_world
   end
 
   def key_pressed(pressing_keys)
     @navigator.key_pressed
   end
 
-end# Interface
+  private
+
+  def apply_layout_popup()
+    layout_block = @layout_popup_block || return
+    bd           = backdrop
+    layout_into @popup_world do
+      stack h: :fill do
+        put bd
+        instance_exec(&layout_block)
+      end
+    end.tap do |widgets|
+      (widgets - @popup_ready_widgets).each {_1.sprite.hide}
+      @popup_ready_widgets |= widgets
+    end
+  end
+
+  def backdrop()
+    @backdrop ||= Backdrop.new {close_popup}
+  end
+
+end# AppInterface
+
+
+# @private
+class Reight::AppInterface::Backdrop
+
+  include Reight::Widget
+
+  def initialize(&clicked)
+    @alpha, @clicked = 0, clicked
+  end
+
+  attr_accessor :alpha
+
+  def draw(sp)
+    fill 0, @alpha
+    no_stroke
+    rect 0, 0, sp.w, sp.h
+  end
+
+  def mouse_clicked(x, y, button)
+    @clicked&.call
+  end
+
+end# Backdrop

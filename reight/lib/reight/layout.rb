@@ -18,6 +18,9 @@
 # or :end). aspect: (= w / h) derives one dimension from the other, so
 # only use it where the other dimension is determined.
 #
+# stack layers children on the same box; a child with at: [x, y] is
+# offset from the stack origin instead (for floating widgets).
+#
 # Blocks are instance_exec'd on a Builder; unknown methods fall through
 # to the caller, so widget accessors can be used directly. Beware that
 # methods added to Object by the 'using Reight' refinement win over
@@ -38,11 +41,11 @@ class Reight::Layout
   # @private
   class Node
 
-    def initialize(w: nil, h: nil, align: nil)
-      @w, @h, @align = w, h, align
+    def initialize(w: nil, h: nil, align: nil, at: nil)
+      @w, @h, @align, @at = w, h, align, at
     end
 
-    attr_reader :align
+    attr_reader :align, :at
 
     def spec(dir)   = dir == :h ? @w : @h
 
@@ -216,9 +219,10 @@ class Reight::Layout
 
     def place__(x, y, w, h)
       @children.each do |c|
-        cw = c.spec(:h).is_a?(Numeric) ? c.spec(:h) : w
-        ch = c.spec(:v).is_a?(Numeric) ? c.spec(:v) : h
-        c.place__ x, y, cw, ch
+        cw     = c.spec(:h).is_a?(Numeric) ? c.spec(:h) : w
+        ch     = c.spec(:v).is_a?(Numeric) ? c.spec(:v) : h
+        cx, cy = c.at ? [x + c.at[0], y + c.at[1]] : [x, y]
+        c.place__ cx, cy, cw, ch
       end
     end
 
