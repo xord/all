@@ -26,9 +26,9 @@ module Reight::Context
       args    = args.flatten
       x, y, z =
         case arg = args.first
-        when Vector  then [arg.x,   arg.y,        arg.z]
-        when Numeric then [args[0], args[1] || 0, args[2] || 0]
-        when nil     then [0,       0,            0]
+        when Processing::Vector then [arg.x,   arg.y,        arg.z]
+        when Numeric            then [args[0], args[1] || 0, args[2] || 0]
+        when nil                then [0,       0,            0]
         else raise ArgumentError
         end
       cx, cy, = @canvasFrame__
@@ -143,7 +143,7 @@ module Reight::Context
 
   # @private
   def spriteWorld__()
-    @spriteWorld__ ||= SpriteWorld.new(pixelsPerMeter: 8)
+    @spriteWorld__ ||= RubySketch::SpriteWorld.new(pixelsPerMeter: 8)
   end
 
   # @private
