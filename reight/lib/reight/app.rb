@@ -121,13 +121,13 @@ class Reight::AppInterface < Reight::ViewController
 
   def initialize(editor, navigator)
     super(editor)
-    @navigator                           = navigator
-    @popup_widgets, @popup_ready_widgets = [], []
-    @popup_world                         = RubySketch::SpriteWorld.new
+    @navigator__                             = navigator
+    @popup_widgets__, @popup_ready_widgets__ = [], []
+    @popup_world__                           = RubySketch::SpriteWorld.new
   end
 
   def layout(&block)
-    nav = @navigator.layout_block
+    nav = @navigator__.layout_block
     super() do
       instance_exec(&nav)
       instance_exec(&block)
@@ -135,20 +135,20 @@ class Reight::AppInterface < Reight::ViewController
   end
 
   def layout_popup(&block)
-    @layout_popup_block = block
+    @layout_popup_block__ = block
   end
 
   def popup(*widgets, alpha: 50)
     close_popup
-    apply_layout_popup
-    @popup_widgets = [backdrop, *widgets.flatten]
-    @popup_widgets.each {_1.sprite.show}
-    animate_value(0.2, from: 0, to: alpha) {backdrop.alpha = _1}
+    apply_layout_popup__
+    @popup_widgets__ = [backdrop__, *widgets.flatten]
+    @popup_widgets__.each {_1.sprite.show}
+    animate_value(0.2, from: 0, to: alpha) {backdrop__.alpha = _1}
   end
 
   def close_popup()
-    @popup_widgets.each {_1.sprite.hide}
-    @popup_widgets.clear
+    @popup_widgets__.each {_1.sprite.hide}
+    @popup_widgets__.clear
   end
 
   def flash(...)
@@ -157,40 +157,40 @@ class Reight::AppInterface < Reight::ViewController
 
   def activated()
     update_layout
-    add_world world, @popup_world
+    add_world world, @popup_world__
   end
 
   def deactivated()
-    remove_world world, @popup_world
+    remove_world world, @popup_world__
   end
 
   def draw()
     super
-    sprite @popup_world
+    sprite @popup_world__
   end
 
   def key_pressed(pressing_keys)
-    @navigator.key_pressed
+    @navigator__.key_pressed
   end
 
   private
 
-  def apply_layout_popup()
-    layout_block = @layout_popup_block || return
-    bd           = backdrop
-    layout_into @popup_world do
+  def apply_layout_popup__()
+    layout_block = @layout_popup_block__ || return
+    bd           = backdrop__
+    layout_into @popup_world__ do
       stack h: :fill do
         put bd
         instance_exec(&layout_block)
       end
     end.tap do |widgets|
-      (widgets - @popup_ready_widgets).each {_1.sprite.hide}
-      @popup_ready_widgets |= widgets
+      (widgets - @popup_ready_widgets__).each {_1.sprite.hide}
+      @popup_ready_widgets__ |= widgets
     end
   end
 
-  def backdrop()
-    @backdrop ||= Backdrop.new {close_popup}
+  def backdrop__()
+    @backdrop__ ||= Backdrop.new {close_popup}
   end
 
 end# AppInterface

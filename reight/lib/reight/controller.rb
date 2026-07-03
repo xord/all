@@ -22,7 +22,7 @@ class Reight::ModelController
 
   def append_history(...)     = history__.append(...)
 
-  def history__()             = @history ||= Reight::History.new
+  def history__()             = @history__ ||= Reight::History.new
 
 end# ModelController
 
@@ -30,11 +30,12 @@ end# ModelController
 class Reight::ViewController
 
   def initialize(editor)
-    @editor = editor
-    @world  = RubySketch::SpriteWorld.new
+    @editor__, @world__ = editor, RubySketch::SpriteWorld.new
   end
 
-  attr_reader :editor, :world
+  def editor() = @editor__
+
+  def world()  = @world__
 
   def bind(name, new, old, &block)
     block.call
