@@ -225,6 +225,20 @@ class TestLayout < Test::Unit::TestCase
     assert_equal [95, 0, 5,   20], c.frame
   end
 
+  def test_stack_places_at_children_absolutely()
+    a, b = widget, widget
+    apply do
+      row pad: 10 do
+        stack h: 20 do
+          put a, at: [30, 5], w: 10, h: 10
+          put b, at: [2, 3]
+        end
+      end
+    end
+    assert_equal [40, 15, 10, 10], a.frame # stack origin + at
+    assert_equal [12, 13, 10, 20], b.frame # sizes still default to the stack box
+  end
+
   def test_grid_requires_either_columns_or_rows()
     assert_raise(ArgumentError) {apply {grid {}}}
     assert_raise(ArgumentError) {apply {grid(columns: 2, rows: 2) {}}}
