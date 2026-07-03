@@ -31,7 +31,7 @@ class Reight::ViewController
 
   def initialize(editor)
     @editor = editor
-    @world  = SpriteWorld.new
+    @world  = RubySketch::SpriteWorld.new
   end
 
   attr_reader :editor, :world
@@ -44,9 +44,7 @@ class Reight::ViewController
   end
 
   def layout(&block)
-    Reight::Layout.apply(width, height, delegate: self, &block).tap do |widgets|
-      widgets.map(&:sprite).each {world.add_sprite _1 unless _1.getWorld__}
-    end
+    layout_into world, &block
   end
 
   def update_layout()
@@ -55,6 +53,14 @@ class Reight::ViewController
 
   def draw()
     sprite world
+  end
+
+  private
+
+  def layout_into(world, &block)
+    Reight::Layout.apply(width, height, delegate: self, &block).tap do |widgets|
+      widgets.map(&:sprite).each {world.add_sprite _1 unless _1.getWorld__}
+    end
   end
 
 end# ViewController

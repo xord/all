@@ -47,8 +47,9 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
     canvas.canvas_dragged  {|*a| e.tool&.canvas_dragged(*a)}
     canvas.canvas_clicked  {|*a| e.tool&.canvas_clicked(*a)}
 
-    tools.each  {|button| button.clicked {e.tool  = button.tool}}
-    colors.each {|button| button.clicked {e.color = button.color}}
+    sprite_sizes.each {|button| button.clicked {e.sprite_size = button.label; close_popup}}
+    tools.each        {|button| button.clicked {e.tool        = button.tool}}
+    colors.each       {|button| button.clicked {e.color       = button.color}}
 
     e.disable_history do
       sprite_table.assets = e.sprites
@@ -68,16 +69,10 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
   end
 
   def select_sprite_size()
-    sp = sprite_size.sprite
-    overlay alpha: 50 do |o|
-      SPRITE_SIZES.each.with_index do |size, index|
-        index -= SPRITE_SIZES.index(editor.sprite_size)
-        b      = o.button(sp.x, sp.y, sp.w, sp.h, label: size, shadow: 1) {o.close size}
-        from   = sp.x
-        to     = sp.x + (sp.w + space_m) * index
-        animate_value(0.2, from: from, to: to) {b.sprite.x = _1}
-      end
-      o.on_close {editor.sprite_size = _1 if _1}
+    popup sprite_sizes
+    sprite_sizes.each do |b|
+      x, b.sprite.x = b.sprite.x, sprite_size.sprite.x
+      animate_value(0.2, from: b.sprite.x, to: x) {b.sprite.x = _1}
     end
   end
 
@@ -110,6 +105,9 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
   def sprite_remove()          = @sprite_remove          ||= Reight::Button.new(label: '-')
 
   def sprite_size()            = @sprite_size            ||= Reight::Button.new(label: editor.sprite_size)
+
+  def sprite_sizes()           = @sprite_sizes           ||=
+    SPRITE_SIZES.map {Reight::Button.new(label: _1, shadow: 1)}
 
   def sprite_name()            = @sprite_name            ||= Reight::Label.new(
     editable: true, regexp: /^\w+$/)
@@ -201,6 +199,14 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
             spacer
           end
         end
+      end
+    end
+
+    layout_popup do
+      base = sprite_size.sprite
+      sprite_sizes.each.with_index do |b, index|
+        index -= SPRITE_SIZES.index(editor.sprite_size)
+        put b, at: [base.x + (base.w + space_m) * index, base.y], w: button, h: button
       end
     end
   end
