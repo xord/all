@@ -27,7 +27,6 @@ require 'reight/editable'
 require 'reight/history'
 require 'reight/button'
 require 'reight/label'
-require 'reight/overlay'
 
 require 'reight/reight'
 require 'reight/context'
