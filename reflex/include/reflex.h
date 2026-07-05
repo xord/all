@@ -15,6 +15,8 @@
 #include <reflex/style.h>
 #include <reflex/timer.h>
 #include <reflex/shape.h>
+#include <reflex/pin.h>
+#include <reflex/constraint.h>
 #include <reflex/filter.h>
 
 #include <reflex/application.h>

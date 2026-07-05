@@ -20,6 +20,7 @@
 #include "world.h"
 #include "body.h"
 #include "fixture.h"
+#include "constraint.h"
 
 
 namespace Reflex
@@ -84,35 +85,37 @@ namespace Reflex
 		uint flags         =
 			FLAG_CLIP | FLAG_RESIZE_TO_FIT | REDRAW | UPDATE_LAYOUT | UPDATE_STYLE;
 
-		std::unique_ptr<Point>       ppivot;
+		std::unique_ptr<Point>          ppivot;
 
-		std::unique_ptr<Point>       pscroll;
+		std::unique_ptr<Point>          pscroll;
 
-		SelectorPtr                  pselector;
+		SelectorPtr                     pselector;
 
-		std::unique_ptr<SelectorSet> pselectors_for_update;
+		std::unique_ptr<SelectorSet>    pselectors_for_update;
 
-		std::unique_ptr<Image>       pcache_image;
+		std::unique_ptr<Image>          pcache_image;
 
-		std::unique_ptr<Timers>      ptimers;
+		std::unique_ptr<Timers>         ptimers;
 
-		std::unique_ptr<Style>       pstyle;
+		std::unique_ptr<Style>          pstyle;
 
-		std::unique_ptr<StyleList>   pstyles;
+		std::unique_ptr<StyleList>      pstyles;
 
-		Shape::Ref                   pshape;
+		Shape::Ref                      pshape;
 
-		std::unique_ptr<ShapeList>   pshapes;
+		std::unique_ptr<ShapeList>      pshapes;
 
-		Filter::Ref                  pfilter;
+		Filter::Ref                     pfilter;
 
-		std::unique_ptr<Body>        pbody;
+		std::unique_ptr<Body>           pbody;
 
-		std::unique_ptr<World>       pchild_world;
+		std::unique_ptr<ConstraintList> pconstraints;
 
-		std::unique_ptr<ChildList>   pchildren;
+		std::unique_ptr<World>          pchild_world;
 
-		std::unique_ptr<ChildList>   pchildren_sorted;
+		std::unique_ptr<ChildList>      pchildren;
+
+		std::unique_ptr<ChildList>      pchildren_sorted;
 
 		Point& pivot ()
 		{
@@ -176,6 +179,24 @@ namespace Reflex
 			return *pshapes;
 		}
 
+		ConstraintList& constraints ()
+		{
+			if (!pconstraints) pconstraints.reset(new ConstraintList);
+			return *pconstraints;
+		}
+
+		void sever_constraints ()
+		{
+			if (!pconstraints) return;
+
+			ConstraintList list;
+			list.swap(*pconstraints);
+			for (auto& constraint : list)
+				Constraint_sever(constraint.get());
+
+			pconstraints.reset();
+		}
+
 		template <typename FUN>
 		void each_shape (FUN fun)
 		{
@@ -201,6 +222,17 @@ namespace Reflex
 			{
 				Shape_update(shape, force);
 			});
+		}
+
+		void update_constraints ()
+		{
+			if (!pconstraints) return;
+
+			for (auto& constraint : *pconstraints)
+			{
+				Constraint_deactivate(constraint.get());
+				Constraint_activate(constraint.get());
+			}
 		}
 
 		void resize_shapes (FrameEvent* e)
@@ -287,6 +319,7 @@ namespace Reflex
 			}
 
 			update_shapes(true);
+			update_constraints();
 		}
 
 		World* parent_world (bool create = true)
@@ -830,6 +863,57 @@ namespace Reflex
 		if (!view) return NULL;
 
 		return create ? &view->self->body() : view->self->pbody.get();
+	}
+
+	const Body*
+	View_get_body (const View* view)
+	{
+		return View_get_body(const_cast<View*>(view), false);
+	}
+
+	void
+	View_add_constraint (View* view, Constraint* constraint)
+	{
+		if (!view || !constraint)
+			argument_error(__FILE__, __LINE__);
+
+		if (constraint->is_removed())
+			invalid_state_error(__FILE__, __LINE__, "constraint is already removed");
+
+		if (constraint->view(0) != view)
+			argument_error(__FILE__, __LINE__, "the constraint does not belong to this view");
+
+		auto& list = view->self->constraints();
+		if (std::find(list.begin(), list.end(), constraint) != list.end())
+			invalid_state_error(__FILE__, __LINE__, "the constraint is already added");
+
+		// the mismatch is not detectable before activation because
+		// activating is what creates the missing bodies
+		if (
+			!Constraint_activate(constraint) &&
+			Constraint_has_world_mismatch(constraint))
+		{
+			physics_error(__FILE__, __LINE__, "the views belong to different worlds");
+		}
+
+		list.push_back(constraint);
+		View* view1 = constraint->view(1);
+		if (view1) view1->self->constraints().push_back(constraint);
+	}
+
+	void
+	View_remove_constraint (View* view, Constraint* constraint)
+	{
+		if (!view || !constraint)
+			argument_error(__FILE__, __LINE__);
+
+		auto* list = view->self->pconstraints.get();
+		if (!list) return;
+
+		auto it = std::find(list->begin(), list->end(), constraint);
+		if (it != list->end()) list->erase(it);
+
+		if (list->empty()) view->self->pconstraints.reset();
 	}
 
 	bool
@@ -1586,6 +1670,8 @@ namespace Reflex
 
 	View::~View ()
 	{
+		self->sever_constraints();
+
 		clear_children();// to delete child shapes before world.
 	}
 
@@ -2166,6 +2252,42 @@ namespace Reflex
 	{
 		if (!self->pshapes) return empty_shapes.end();
 		return self->pshapes->end();
+	}
+
+	void
+	View::clear_constraints ()
+	{
+		self->sever_constraints();
+	}
+
+	static View::ConstraintList empty_constraints;
+
+	View::constraint_iterator
+	View::constraint_begin ()
+	{
+		if (!self->pconstraints) return empty_constraints.begin();
+		return self->pconstraints->begin();
+	}
+
+	View::const_constraint_iterator
+	View::constraint_begin () const
+	{
+		if (!self->pconstraints) return empty_constraints.begin();
+		return self->pconstraints->begin();
+	}
+
+	View::constraint_iterator
+	View::constraint_end ()
+	{
+		if (!self->pconstraints) return empty_constraints.end();
+		return self->pconstraints->end();
+	}
+
+	View::const_constraint_iterator
+	View::constraint_end () const
+	{
+		if (!self->pconstraints) return empty_constraints.end();
+		return self->pconstraints->end();
 	}
 
 	void

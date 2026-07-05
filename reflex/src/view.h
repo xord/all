@@ -15,6 +15,7 @@ namespace Reflex
 
 
 	class Body;
+	class Constraint;
 
 
 	void View_set_window (View* view, Window* window);
@@ -23,7 +24,13 @@ namespace Reflex
 
 	const Style& View_get_style (const View* view);
 
-	Body* View_get_body (View* view, bool create = true);
+	      Body* View_get_body (      View* view, bool create = true);
+
+	const Body* View_get_body (const View* view);
+
+	void View_add_constraint    (View* view, Constraint* constraint);
+
+	void View_remove_constraint (View* view, Constraint* constraint);
 
 	bool View_is_active (const View& view);
 

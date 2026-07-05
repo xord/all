@@ -19,6 +19,7 @@ namespace Reflex
 
 	class View;
 	class Body;
+	class Constraint;
 
 
 	class World : public Xot::NonCopyable
@@ -104,9 +105,15 @@ namespace Reflex
 
 	b2WorldId World_get_id (const World* world);
 
-	bool World_is_stepping (const World* world);
+	void World_add_constraint    (World* world, Constraint* constraint);
+
+	void World_remove_constraint (World* world, Constraint* constraint);
 
 	void World_end_contacts_for (World* world, b2ShapeId b2shape);
+
+	bool World_is_stepping (const World* world);
+
+	const Body* World_get_ground (World* world);
 
 	World* World_get_temporary ();
 

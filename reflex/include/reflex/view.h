@@ -15,6 +15,7 @@
 #include <reflex/selector.h>
 #include <reflex/style.h>
 #include <reflex/shape.h>
+#include <reflex/constraint.h>
 #include <reflex/event.h>
 
 
@@ -38,23 +39,29 @@ namespace Reflex
 
 			typedef Xot::Ref<This> Ref;
 
-			typedef std::vector<Ref>        ChildList;
+			typedef std::vector<Ref>             ChildList;
 
-			typedef std::vector<Style>      StyleList;
+			typedef std::vector<Style>           StyleList;
 
-			typedef std::vector<Shape::Ref> ShapeList;
+			typedef std::vector<Shape::Ref>      ShapeList;
 
-			typedef ChildList::      iterator       child_iterator;
+			typedef std::vector<Constraint::Ref> ConstraintList;
 
-			typedef ChildList::const_iterator const_child_iterator;
+			typedef ChildList::           iterator            child_iterator;
 
-			typedef StyleList::      iterator       style_iterator;
+			typedef ChildList::     const_iterator      const_child_iterator;
 
-			typedef StyleList::const_iterator const_style_iterator;
+			typedef StyleList::           iterator            style_iterator;
 
-			typedef ShapeList::      iterator       shape_iterator;
+			typedef StyleList::     const_iterator      const_style_iterator;
 
-			typedef ShapeList::const_iterator const_shape_iterator;
+			typedef ShapeList::           iterator            shape_iterator;
+
+			typedef ShapeList::     const_iterator      const_shape_iterator;
+
+			typedef ConstraintList::      iterator       constraint_iterator;
+
+			typedef ConstraintList::const_iterator const_constraint_iterator;
 
 			enum Flag
 			{
@@ -186,6 +193,16 @@ namespace Reflex
 			virtual       shape_iterator shape_end ();
 
 			virtual const_shape_iterator shape_end () const;
+
+			virtual void                clear_constraints ();
+
+			virtual       constraint_iterator constraint_begin ();
+
+			virtual const_constraint_iterator constraint_begin () const;
+
+			virtual       constraint_iterator constraint_end ();
+
+			virtual const_constraint_iterator constraint_end () const;
 
 			virtual void      set_filter (Filter* filter);
 

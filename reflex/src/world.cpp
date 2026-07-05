@@ -2,6 +2,7 @@
 
 
 #include <assert.h>
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include <map>
@@ -9,8 +10,9 @@
 #include <box2d/box2d.h>
 #include "reflex/event.h"
 #include "reflex/exception.h"
-#include "shape.h"
 #include "view.h"
+#include "shape.h"
+#include "constraint.h"
 #include "body.h"
 #include "fixture.h"
 
@@ -274,11 +276,23 @@ namespace Reflex
 
 		bool stepping     = false;
 
-		std::unique_ptr<DebugDraw> debug_draw;
-
 		// tracked to deliver contact-end events for shapes that Box2D has already
 		// forgotten on destruction
 		ShapePairMap touching_pairs;
+
+		std::vector<Xot::WeakRef<Constraint>> constraints;
+
+		// fixture-less static body for constraints that anchor to the world
+		// (e.g. chasing a target point) without affecting any collision
+		std::unique_ptr<Body>      pground;
+
+		std::unique_ptr<DebugDraw> pdebug_draw;
+
+		Body* ground (World* world)
+		{
+			if (!pground) pground.reset(new Body(world));
+			return pground.get();
+		}
 
 		void begin_contact (b2ShapeId b2shape1, b2ShapeId b2shape2, bool is_sensor_event)
 		{
@@ -338,6 +352,25 @@ namespace Reflex
 			}
 		}
 
+		void update_constraints ()
+		{
+			for (auto& constraint : constraints)
+			{
+				if (constraint)
+					Constraint_on_world_update(constraint);
+			}
+		}
+
+		void clear_constraints ()
+		{
+			for (auto& constraint : constraints)
+			{
+				if (constraint)
+					Constraint_on_world_destroyed(constraint);
+			}
+			constraints.clear();
+		}
+
 	};// World::Data
 
 
@@ -361,6 +394,8 @@ namespace Reflex
 	World::~World ()
 	{
 		self->touching_pairs.clear();
+		self->clear_constraints();
+		self->pground.reset();
 
 		b2DestroyWorld(self->b2world);
 		self->b2world = b2_nullWorldId;
@@ -377,6 +412,8 @@ namespace Reflex
 
 		for (int i = 0; i < count; ++i)
 		{
+			self->update_constraints();
+
 			self->stepping = true;
 			b2World_Step(self->b2world, dt, 4);
 			self->stepping = false;
@@ -426,15 +463,15 @@ namespace Reflex
 		if (state == debug()) return;
 
 		if (state)
-			self->debug_draw.reset(new DebugDraw(self->ppm));
+			self->pdebug_draw.reset(new DebugDraw(self->ppm));
 		else
-			self->debug_draw.reset();
+			self->pdebug_draw.reset();
 	}
 
 	bool
 	World::debug () const
 	{
-		return !!self->debug_draw;
+		return !!self->pdebug_draw;
 	}
 
 	void
@@ -446,11 +483,11 @@ namespace Reflex
 	void
 	World::on_draw (Painter* painter)
 	{
-		if (!self->debug_draw) return;
+		if (!self->pdebug_draw) return;
 
-		self->debug_draw->begin(painter);
-		b2World_Draw(self->b2world, self->debug_draw->b2ptr());
-		self->debug_draw->end();
+		self->pdebug_draw->begin(painter);
+		b2World_Draw(self->b2world, self->pdebug_draw->b2ptr());
+		self->pdebug_draw->end();
 	}
 
 
@@ -460,10 +497,24 @@ namespace Reflex
 		return world ? world->self->b2world : b2_nullWorldId;
 	}
 
-	bool
-	World_is_stepping (const World* world)
+	void
+	World_add_constraint (World* world, Constraint* constraint)
 	{
-		return world ? world->self->stepping : false;
+		if (!world || !constraint)
+			argument_error(__FILE__, __LINE__);
+
+		world->self->constraints.emplace_back(constraint);
+	}
+
+	void
+	World_remove_constraint (World* world, Constraint* constraint)
+	{
+		if (!world || !constraint)
+			argument_error(__FILE__, __LINE__);
+
+		std::erase_if(
+			world->self->constraints,
+			[=](auto& c) {return !c || c == constraint;});
 	}
 
 	void
@@ -488,6 +539,18 @@ namespace Reflex
 
 		for (auto& pair : ended)
 			call_contact_events(pair.first, pair.second, ContactEvent::END);
+	}
+
+	bool
+	World_is_stepping (const World* world)
+	{
+		return world ? world->self->stepping : false;
+	}
+
+	const Body*
+	World_get_ground (World* world)
+	{
+		return world ? world->self->ground(world) : NULL;
 	}
 
 	World*
