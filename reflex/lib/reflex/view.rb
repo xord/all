@@ -99,6 +99,30 @@ module Reflex
       to_enum :each_shape
     end
 
+    def pin(*args)
+      Pin.new self, *args
+    end
+
+    def snap(*args, **options, &block)
+      pin.snap(*args, **options, &block)
+    end
+
+    def link(*args, **options, &block)
+      pin.link(*args, **options, &block)
+    end
+
+    def rail(*args, **options, &block)
+      pin.rail(*args, **options, &block)
+    end
+
+    def chase(*args, **options, &block)
+      pin.chase(*args, **options, &block)
+    end
+
+    def constraints()
+      to_enum :each_constraint
+    end
+
     def capturing?(*args)
       args, cap = args.flatten, capture
       if args.empty?

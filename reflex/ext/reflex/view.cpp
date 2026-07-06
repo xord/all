@@ -10,6 +10,7 @@
 #include "reflex/ruby/timer.h"
 #include "reflex/ruby/style.h"
 #include "reflex/ruby/shape.h"
+#include "reflex/ruby/constraint.h"
 #include "reflex/ruby/filter.h"
 #include "reflex/ruby/window.h"
 #include "defs.h"
@@ -365,6 +366,27 @@ RUCY_DEF0(each_shape)
 	Value ret;
 	Reflex::View::shape_iterator end = THIS->shape_end();
 	for (Reflex::View::shape_iterator it = THIS->shape_begin(); it != end; ++it)
+		ret = rb_yield(value(it->get()));
+	return ret;
+}
+RUCY_END
+
+static
+RUCY_DEF0(clear_constraints)
+{
+	CHECK;
+	THIS->clear_constraints();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(each_constraint)
+{
+	CHECK;
+
+	Value ret;
+	for (auto it = THIS->constraint_begin(), end = THIS->constraint_end(); it != end; ++it)
 		ret = rb_yield(value(it->get()));
 	return ret;
 }
@@ -1286,6 +1308,9 @@ Init_reflex_view ()
 	cView.define_method( "clear_shapes", clear_shapes);
 	cView.define_method(  "find_shapes",  find_shapes);
 	cView.define_method(  "each_shape",   each_shape);
+
+	cView.define_method("clear_constraints", clear_constraints);
+	cView.define_method( "each_constraint",   each_constraint);
 
 	cView.define_method("filter=", set_filter);
 	cView.define_method("filter",  get_filter);

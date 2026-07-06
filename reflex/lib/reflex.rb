@@ -31,6 +31,13 @@ require 'reflex/line_shape'
 require 'reflex/rect_shape'
 require 'reflex/ellipse_shape'
 
+require 'reflex/pin'
+require 'reflex/constraint'
+require 'reflex/snap_constraint'
+require 'reflex/link_constraint'
+require 'reflex/rail_constraint'
+require 'reflex/chase_constraint'
+
 require 'reflex/update_event'
 require 'reflex/draw_event'
 require 'reflex/frame_event'

@@ -35,6 +35,13 @@ void Init_reflex_line_shape ();
 void Init_reflex_rect_shape ();
 void Init_reflex_ellipse_shape ();
 
+void Init_reflex_pin ();
+void Init_reflex_constraint ();
+void Init_reflex_snap_constraint ();
+void Init_reflex_link_constraint ();
+void Init_reflex_rail_constraint ();
+void Init_reflex_chase_constraint ();
+
 void Init_reflex_application ();
 void Init_reflex_screen ();
 void Init_reflex_window ();
@@ -86,6 +93,13 @@ Init_reflex_ext ()
 	Init_reflex_line_shape();
 	Init_reflex_rect_shape();
 	Init_reflex_ellipse_shape();
+
+	Init_reflex_pin();
+	Init_reflex_constraint();
+	Init_reflex_snap_constraint();
+	Init_reflex_link_constraint();
+	Init_reflex_rail_constraint();
+	Init_reflex_chase_constraint();
 
 	Init_reflex_application();
 	Init_reflex_screen();
