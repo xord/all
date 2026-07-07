@@ -23,6 +23,8 @@
 #include <reflex/screen.h>
 
 #include <reflex/device.h>
+#include <reflex/midi.h>
+#include <reflex/gamepad.h>
 
 #include <reflex/image_view.h>
 
