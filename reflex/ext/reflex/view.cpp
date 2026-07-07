@@ -904,13 +904,11 @@ RUCY_DEF1(create_world, pixels_per_meter)
 RUCY_END
 
 static
-RUCY_DEFN(update_world)
+RUCY_DEF0(update_world)
 {
 	CHECK;
-	check_arg_count(__FILE__, __LINE__, "View#update_world", argc, 0, 1);
 
-	float duration = argc >= 1 ? to<float>(argv[0]) : 0;
-	THIS->update_world(duration);
+	THIS->update_world();
 	return self;
 }
 RUCY_END

@@ -933,14 +933,14 @@ namespace Reflex
 	}
 
 	static void
-	update_child_world (View* view, float dt)
+	update_child_world (View* view)
 	{
 		View::Data* self = view->self.get();
 
 		World* child_world = self->pchild_world.get();
 		if (!child_world) return;
 
-		child_world->on_update(dt);
+		child_world->on_update();
 
 		View::ChildList* children = self->children();
 		if (children)
@@ -1087,7 +1087,7 @@ namespace Reflex
 		}
 
 		update_view_shapes(view);
-		update_child_world(view, event.dt());
+		update_child_world(view);
 
 		UpdateEvent e = event.dup();
 		view->on_update(&e);
@@ -2626,10 +2626,9 @@ namespace Reflex
 	}
 
 	void
-	View::update_world (float duration)
+	View::update_world ()
 	{
-		World* w = self->pchild_world.get();
-		if (w) w->update(duration);
+		update_child_world(this);
 	}
 
 	float

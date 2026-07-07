@@ -313,7 +313,7 @@ namespace Reflex
 			//
 			virtual void create_world (float pixels_per_meter);
 
-			virtual void update_world (float duration = 0);
+			virtual void update_world ();
 
 			virtual float meter2pixel (float meter = 1, bool create_world = true);
 

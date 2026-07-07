@@ -438,7 +438,7 @@ namespace Reflex
 	}
 
 	void
-	World::on_update (float dt)
+	World::on_update ()
 	{
 		update(DELTA_TIME);
 	}
