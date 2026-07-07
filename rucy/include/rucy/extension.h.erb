@@ -234,6 +234,10 @@
 	catch (const std::exception& e) \
 	{ \
 		Xot::String text = e.what(), type = typeid(e).name(); \
+		if (type == typeid(Rucy::RubyException).name()) \
+		{ \
+			RUCY_GOTO_RAISE(((const Rucy::RubyException&) e).value()); \
+		} \
 		if (!type.empty()) \
 		{ \
 			if (!text.empty()) text += " "; \
