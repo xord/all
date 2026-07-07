@@ -144,6 +144,17 @@ class TestView < Test::Unit::TestCase
     assert_not_includes v.find_styles(selector name: :N), s
   end
 
+  def test_find_styles()
+    v, s = view, style(tag: :T1)
+    s.add_tag :T2
+    v.add_style s
+
+    assert_includes v.find_styles(selector tag:   :T1),       s
+    assert_includes v.find_styles(selector tags: [:T1, :T2]), s
+    assert_empty    v.find_styles(selector tags: [:T1, :X])
+    assert_empty    v.find_styles(selector tag:   :X)
+  end
+
   def test_shape()
     s = shape
     assert_equal 0, s.density
@@ -214,6 +225,17 @@ class TestView < Test::Unit::TestCase
     assert_equal 1,     v.shapes.to_a.size
     v.clear_shapes
     assert_equal 0,     v.shapes.to_a.size
+  end
+
+  def test_find_shapes()
+    v, s = view, shape(tag: :T1)
+    s.add_tag :T2
+    v.add_shape s
+
+    assert_includes v.find_shapes(selector tag:   :T1),       s
+    assert_includes v.find_shapes(selector tags: [:T1, :T2]), s
+    assert_empty    v.find_shapes(selector tags: [:T1, :X])
+    assert_empty    v.find_shapes(selector tag:   :X)
   end
 
   def test_name()

@@ -869,7 +869,7 @@ namespace Reflex
 		{
 			for (auto& style : *pstyles)
 			{
-				if (selector.contains(style.selector()))
+				if (style.selector().contains(selector))
 					result->push_back(style);
 			}
 		}
@@ -2131,7 +2131,7 @@ namespace Reflex
 		{
 			for (auto& shape : *pshapes)
 			{
-				if (selector.contains(shape->selector()))
+				if (shape->selector().contains(selector))
 					result.push_back(shape);
 			}
 		}
