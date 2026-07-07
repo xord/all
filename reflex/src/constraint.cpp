@@ -5,6 +5,7 @@
 #include "reflex/pin.h"
 #include "reflex/exception.h"
 #include "view.h"
+#include "selector.h"
 #include "body.h"
 #include "world.h"
 
@@ -68,6 +69,8 @@ namespace Reflex
 		b2Vec2 anchor1     = {0, 0};
 
 		float ref_angle    = 0;
+
+		SelectorPtr pselector;
 
 		virtual ~Data ()
 		{
@@ -448,6 +451,12 @@ namespace Reflex
 	Constraint::operator ! () const
 	{
 		return !operator bool();
+	}
+
+	SelectorPtr*
+	Constraint::get_selector_ptr ()
+	{
+		return &self->pselector;
 	}
 
 

@@ -84,6 +84,32 @@ class TestConstraint < Test::Unit::TestCase
     assert_true  v1.snap(v2, collide: true) .collide?
   end
 
+  def test_selector()
+    v1, v2, = setup_views
+
+    c = v1.link v2, name: :name1, tag: [:tag1, :tag2]
+    assert_equal 'name1',          c.name
+    assert_equal ['tag1', 'tag2'], c.tags.to_a
+    assert_true                    c.tag?(:tag1)
+    assert_true                    c.tag?('tag1')
+    assert_true                    c.tag?(:tag2)
+    assert_false                   c.tag?(:tag3)
+
+    c.name = :name2
+    assert_equal 'name2', c.name
+
+    assert_false                           c.tag?(:tag9)
+    c.add_tag                                     :tag9
+    assert_true                            c.tag?(:tag9)
+    assert_equal ['tag1', 'tag2', 'tag9'], c.tags.to_a
+    c.remove_tag                                  :tag9
+    assert_false                           c.tag?(:tag9)
+    assert_equal ['tag1', 'tag2'],         c.tags.to_a
+
+    c.clear_tags
+    assert_equal [], c.tags.to_a
+  end
+
   def test_block()
     v1, v2, = setup_views
 

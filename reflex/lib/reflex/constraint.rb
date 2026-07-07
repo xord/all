@@ -1,6 +1,7 @@
 require 'xot/setter'
 require 'xot/universal_accessor'
 require 'reflex/ext'
+require 'reflex/helper'
 
 
 module Reflex
@@ -9,6 +10,7 @@ module Reflex
   class Constraint
 
     include Xot::Setter
+    include HasTags
 
     def pins()
       [get_pin(0), get_pin(1)]
@@ -18,7 +20,8 @@ module Reflex
       pins.map(&:view)
     end
 
-    universal_accessor :spring, :damping, collide: {reader: :collide?}
+    universal_accessor :name, :selector,
+      :spring, :damping, collide: {reader: :collide?}
 
   end# Constraint
 

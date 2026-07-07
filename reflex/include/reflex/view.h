@@ -196,6 +196,8 @@ namespace Reflex
 
 			virtual void                clear_constraints ();
 
+			virtual ConstraintList       find_constraints (const Selector& selector) const;
+
 			virtual       constraint_iterator constraint_begin ();
 
 			virtual const_constraint_iterator constraint_begin () const;

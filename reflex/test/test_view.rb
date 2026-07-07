@@ -145,10 +145,11 @@ class TestView < Test::Unit::TestCase
   end
 
   def test_find_styles()
-    v, s = view, style(tag: :T1)
+    v, s = view, style(name: :N1, tag: :T1)
     s.add_tag :T2
     v.add_style s
 
+    assert_includes v.find_styles(:N1),                       s
     assert_includes v.find_styles(selector tag:   :T1),       s
     assert_includes v.find_styles(selector tags: [:T1, :T2]), s
     assert_empty    v.find_styles(selector tags: [:T1, :X])
@@ -228,14 +229,34 @@ class TestView < Test::Unit::TestCase
   end
 
   def test_find_shapes()
-    v, s = view, shape(tag: :T1)
+    v, s = view, shape(name: :N1, tag: :T1)
     s.add_tag :T2
     v.add_shape s
 
+    assert_includes v.find_shapes(:N1),                       s
     assert_includes v.find_shapes(selector tag:   :T1),       s
     assert_includes v.find_shapes(selector tags: [:T1, :T2]), s
     assert_empty    v.find_shapes(selector tags: [:T1, :X])
     assert_empty    v.find_shapes(selector tag:   :X)
+  end
+
+  def test_find_constraints()
+    win = window
+    v1 = view frame: [100, 100, 50, 50], shape: shape(density: 1), dynamic: true
+    v2 = view frame: [200, 100, 50, 50], shape: shape(density: 1), static:  true
+    win.add v1
+    win.add v2
+
+    c = v1.link v2, name: :N1, tag: :T1
+    c.add_tag :T2
+
+    [v1, v2].each do |v|
+      assert_includes v.find_constraints(:N1),                       c
+      assert_includes v.find_constraints(selector tag:   :T1),       c
+      assert_includes v.find_constraints(selector tags: [:T1, :T2]), c
+      assert_empty    v.find_constraints(selector tags: [:T2, :X])
+      assert_empty    v.find_constraints(selector tags: [:X])
+    end
   end
 
   def test_name()

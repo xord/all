@@ -381,6 +381,19 @@ RUCY_DEF0(clear_constraints)
 RUCY_END
 
 static
+RUCY_DEFN(find_constraints)
+{
+	CHECK;
+	check_arg_count(__FILE__, __LINE__, "View#find_constraints", argc, 1);
+
+	auto constraints =
+		THIS->find_constraints(to<Reflex::Selector>(argv[0])) |
+		std::views::transform([](auto& ref) {return value(ref.get());});
+	return array(constraints.begin(), constraints.end());
+}
+RUCY_END
+
+static
 RUCY_DEF0(each_constraint)
 {
 	CHECK;
@@ -1310,6 +1323,7 @@ Init_reflex_view ()
 	cView.define_method(  "each_shape",   each_shape);
 
 	cView.define_method("clear_constraints", clear_constraints);
+	cView.define_method( "find_constraints",  find_constraints);
 	cView.define_method( "each_constraint",   each_constraint);
 
 	cView.define_method("filter=", set_filter);

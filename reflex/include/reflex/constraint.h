@@ -8,6 +8,7 @@
 #include <xot/pimpl.h>
 #include <rays/point.h>
 #include <reflex/defs.h>
+#include <reflex/selector.h>
 
 
 namespace Reflex
@@ -18,7 +19,7 @@ namespace Reflex
 	class Pin;
 
 
-	class Constraint : public Xot::RefCountable<>
+	class Constraint : public Xot::RefCountable<>, public HasSelector
 	{
 
 		typedef Constraint This;
@@ -62,6 +63,8 @@ namespace Reflex
 		protected:
 
 			Constraint (Data* data);
+
+			virtual SelectorPtr* get_selector_ptr () override;
 
 	};// Constraint
 

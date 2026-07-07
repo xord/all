@@ -2260,6 +2260,22 @@ namespace Reflex
 		self->sever_constraints();
 	}
 
+	View::ConstraintList
+	View::find_constraints (const Selector& selector) const
+	{
+		ConstraintList result;
+		ConstraintList* pconstraints = self->pconstraints.get();
+		if (pconstraints)
+		{
+			for (auto& constraint : *pconstraints)
+			{
+				if (constraint->selector().contains(selector))
+					result.push_back(constraint);
+			}
+		}
+		return result;
+	}
+
 	static View::ConstraintList empty_constraints;
 
 	View::constraint_iterator

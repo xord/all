@@ -6,6 +6,7 @@
 #include "reflex/ruby/view.h"
 #include "reflex/ruby/pin.h"
 #include "defs.h"
+#include "selector.h"
 
 
 RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Constraint)
@@ -126,6 +127,7 @@ Init_reflex_constraint ()
 	cConstraint.define_method("removed?", is_removed);
 	cConstraint.define_method("active?",  is_active);
 
+	define_selector_methods<Reflex::Constraint>(cConstraint);
 	define_wrapper_equality_methods<Reflex::Constraint>(cConstraint);
 }
 
