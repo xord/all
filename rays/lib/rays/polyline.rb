@@ -12,7 +12,7 @@ module Rays
     def initialize(
       *points, loop: false, fill: nil, colors: nil, texcoords: nil, hole: false)
 
-      setup points, loop, (fill != nil ? fill : loop), colors, texcoords, hole
+      initialize! points, loop, (fill != nil ? fill : loop), colors, texcoords, hole
     end
 
     def with(**kwargs)

@@ -2,6 +2,7 @@
 
 
 #include <vector>
+#include "rays/exception.h"
 #include "rays/ruby/point.h"
 #include "rays/ruby/bounds.h"
 #include "rays/ruby/color.h"
@@ -23,6 +24,13 @@ static
 RUCY_DEF_ALLOC(alloc, klass)
 {
 	return new_type<Rays::Painter>(klass);
+}
+RUCY_END
+
+static
+RUCY_DEF1(initialize_copy, obj)
+{
+	Rays::rays_error(__FILE__, __LINE__, "can not duplicate Painter");
 }
 RUCY_END
 
@@ -865,6 +873,7 @@ Init_rays_painter ()
 
 	cPainter = mRays.define_class("Painter");
 	cPainter.define_alloc_func(alloc);
+	cPainter.define_private_method("initialize_copy", initialize_copy);
 
 	cPainter.define_method("canvas", canvas);
 	cPainter.define_method("bounds", bounds);

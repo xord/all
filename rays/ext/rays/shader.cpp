@@ -2,6 +2,7 @@
 
 
 #include <assert.h>
+#include "rays/exception.h"
 #include "rays/ruby/image.h"
 #include "defs.h"
 
@@ -17,6 +18,13 @@ static
 RUCY_DEF_ALLOC(alloc, klass)
 {
 	return new_type<Rays::Shader>(klass);
+}
+RUCY_END
+
+static
+RUCY_DEF1(initialize_copy, obj)
+{
+	Rays::rays_error(__FILE__, __LINE__, "can not duplicate Shader");
 }
 RUCY_END
 
@@ -82,7 +90,7 @@ make_env (const Value& names, const Value& ignore_no_uniform_location_error)
 }
 
 static
-RUCY_DEF4(setup,
+RUCY_DEF4(initialize,
 	fragment_shader_source, vertex_shader_source,
 	builtin_variable_names, ignore_no_uniform_location_error)
 {
@@ -185,7 +193,8 @@ Init_rays_shader ()
 
 	cShader = mRays.define_class("Shader");
 	cShader.define_alloc_func(alloc);
-	cShader.define_private_method("setup", setup);
+	cShader.define_private_method("initialize!",     initialize);
+	cShader.define_private_method("initialize_copy", initialize_copy);
 	cShader.define_private_method("set_uniform", set_uniform);
 	cShader.define_method(  "vertex_shader_source",   get_vertex_shader_source);
 	cShader.define_method("fragment_shader_source", get_fragment_shader_source);

@@ -25,7 +25,7 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF6(setup, points, loop, fill, colors, texcoords, hole)
+RUCY_DEF6(initialize, points, loop, fill, colors, texcoords, hole)
 {
 	CHECK;
 
@@ -34,6 +34,14 @@ RUCY_DEF6(setup, points, loop, fill, colors, texcoords, hole)
 		params.ppoints(), params.size(), loop, fill,
 		params.pcolors(), params.ptexcoords(),
 		hole);
+}
+RUCY_END
+
+static
+RUCY_DEF1(initialize_copy, obj)
+{
+	CHECK;
+	*THIS = to<Rays::Polyline&>(obj);
 }
 RUCY_END
 
@@ -202,7 +210,8 @@ Init_rays_polyline ()
 
 	cPolyline = mRays.define_class("Polyline");
 	cPolyline.define_alloc_func(alloc);
-	cPolyline.define_private_method("setup", setup);
+	cPolyline.define_private_method("initialize!",     initialize);
+	cPolyline.define_private_method("initialize_copy", initialize_copy);
 	cPolyline.define_method("expand", expand);
 	cPolyline.define_method("bounds", bounds);
 	cPolyline.define_method("loop?", is_loop);

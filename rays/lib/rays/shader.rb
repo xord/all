@@ -14,7 +14,7 @@ module Rays
       ignore_no_uniform_location_error: false,
       **uniforms, &block)
 
-      setup(
+      initialize!(
         fragment_shader_source, vertex_shader_source,
         builtin_variable_names&.values_at(
           :attribute_position,

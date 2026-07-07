@@ -1,6 +1,7 @@
 #include "rays/ruby/camera.h"
 
 
+#include "rays/exception.h"
 #include "rays/ruby/image.h"
 #include "defs.h"
 
@@ -20,7 +21,7 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF5(setup, device_name, min_width, min_height, resize, crop)
+RUCY_DEF5(initialize, device_name, min_width, min_height, resize, crop)
 {
 	RUCY_CHECK_OBJ(Rays::Camera, self);
 
@@ -29,6 +30,13 @@ RUCY_DEF5(setup, device_name, min_width, min_height, resize, crop)
 		to<int>(min_width), to<int>(min_height),
 		to<bool>(resize), to<bool>(crop));
 	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(initialize_copy, obj)
+{
+	Rays::rays_error(__FILE__, __LINE__, "can not duplicate Camera");
 }
 RUCY_END
 
@@ -155,7 +163,8 @@ Init_rays_camera ()
 
 	cCamera = mRays.define_class("Camera");
 	cCamera.define_alloc_func(alloc);
-	cCamera.define_private_method("setup", setup);
+	cCamera.define_private_method("initialize!",     initialize);
+	cCamera.define_private_method("initialize_copy", initialize_copy);
 	cCamera.define_method("start", start);
 	cCamera.define_method("stop",  stop);
 	cCamera.define_method("active?", is_active);

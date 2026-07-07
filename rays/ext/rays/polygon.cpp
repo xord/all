@@ -23,7 +23,7 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF4(setup, args, loop, colors, texcoords)
+RUCY_DEF4(initialize, args, loop, colors, texcoords)
 {
 	CHECK;
 
@@ -36,6 +36,14 @@ RUCY_DEF4(setup, args, loop, colors, texcoords)
 			params.ppoints(), params.size(), loop,
 			params.pcolors(), params.ptexcoords());
 	}
+}
+RUCY_END
+
+static
+RUCY_DEF1(initialize_copy, obj)
+{
+	CHECK;
+	*THIS = to<Rays::Polygon&>(obj);
 }
 RUCY_END
 
@@ -371,7 +379,8 @@ Init_rays_polygon ()
 
 	cPolygon = mRays.define_class("Polygon");
 	cPolygon.define_alloc_func(alloc);
-	cPolygon.define_private_method("setup", setup);
+	cPolygon.define_private_method("initialize!",     initialize);
+	cPolygon.define_private_method("initialize_copy", initialize_copy);
 	cPolygon.define_method("expand", expand);
 	cPolygon.define_method("bounds", bounds);
 	cPolygon.define_method("size",   size);

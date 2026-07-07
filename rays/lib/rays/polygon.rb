@@ -11,7 +11,7 @@ module Rays
     include Comparable
 
     def initialize(*args, loop: true, colors: nil, texcoords: nil)
-      setup args, loop, colors, texcoords
+      initialize! args, loop, colors, texcoords
     end
 
     def transform(&block)
