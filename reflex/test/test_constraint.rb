@@ -155,8 +155,13 @@ class TestConstraint < Test::Unit::TestCase
   end
 
   def test_constrain_to_itself_error()
-    v, = setup_views
-    assert_raise(ArgumentError) {v.snap v}
+    setup_views.tap do |v,|
+      assert_raise(ArgumentError) {v.snap  v}
+    end
+    setup_views.tap do |v,|
+      assert_raise(ArgumentError) {v.chase v}
+      assert_equal [], v.constraints.to_a # rejected self-constraint leaves no orphan
+    end
   end
 
   def test_world_mismatch_error()
