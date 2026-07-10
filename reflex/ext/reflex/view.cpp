@@ -219,7 +219,7 @@ RUCY_DEF0(each_child)
 
 	Value ret;
 	for (auto it = THIS->child_begin(), end = THIS->child_end(); it != end; ++it)
-		ret = rb_yield(value(it->get()));
+		ret = yield(value(it->get()));
 	return ret;
 }
 RUCY_END
@@ -280,7 +280,7 @@ RUCY_DEF0(each_style)
 	Value ret;
 	Reflex::View::style_iterator end = THIS->style_end();
 	for (Reflex::View::style_iterator it = THIS->style_begin(); it != end; ++it)
-		ret = rb_yield(value(*it));
+		ret = yield(value(*it));
 	return ret;
 }
 RUCY_END
@@ -366,7 +366,7 @@ RUCY_DEF0(each_shape)
 	Value ret;
 	Reflex::View::shape_iterator end = THIS->shape_end();
 	for (Reflex::View::shape_iterator it = THIS->shape_begin(); it != end; ++it)
-		ret = rb_yield(value(it->get()));
+		ret = yield(value(it->get()));
 	return ret;
 }
 RUCY_END
@@ -400,7 +400,7 @@ RUCY_DEF0(each_constraint)
 
 	Value ret;
 	for (auto it = THIS->constraint_begin(), end = THIS->constraint_end(); it != end; ++it)
-		ret = rb_yield(value(it->get()));
+		ret = yield(value(it->get()));
 	return ret;
 }
 RUCY_END

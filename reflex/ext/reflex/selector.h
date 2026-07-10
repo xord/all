@@ -83,7 +83,7 @@ RUCY_DEF0(each_tag)
 	Rucy::Value ret;
 	Reflex::Selector::const_iterator end = this_->tag_end();
 	for (Reflex::Selector::const_iterator it = this_->tag_begin(); it != end; ++it)
-		ret = rb_yield(Rucy::value(*it));
+		ret = Rucy::yield(Rucy::value(*it));
 	return ret;
 }
 RUCY_END

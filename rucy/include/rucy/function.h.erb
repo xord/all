@@ -52,6 +52,20 @@ namespace Rucy
 
 %	end
 
+%	NTIMES.each do |n|
+	inline Value yield (<%= params(n, ", ") {|i| "Value v#{i}"} %>)
+	{
+%		if n == 0
+		RubyValue* argv = NULL;
+%		else
+		RubyValue argv[] = {<%= params(n, ", ") {|i| "v#{i}"} %>};
+%		end
+		return protect(rb_yield_values2, <%= n %>, (const RubyValue*) argv);
+	}
+
+%	end
+
+
 }// Rucy
 
 

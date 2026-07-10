@@ -113,7 +113,7 @@ RUCY_DEF0(each)
 
 	Value ret = Qnil;
 	for (const auto& polyline : *THIS)
-		ret = rb_yield(value(polyline));
+		ret = yield(value(polyline));
 	return ret;
 }
 RUCY_END

@@ -92,7 +92,7 @@ RUCY_DEF0(each)
 
 	Value ret;
 	for (size_t i = 0, size = THIS->size(); i < size; ++i)
-		ret = rb_yield(value((*THIS)[i]));
+		ret = yield(value((*THIS)[i]));
 	return ret;
 }
 RUCY_END

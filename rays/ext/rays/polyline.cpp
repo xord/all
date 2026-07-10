@@ -159,7 +159,7 @@ RUCY_DEF0(each_point)
 
 	Value ret = Qnil;
 	for (const auto& point : *THIS)
-		ret = rb_yield(value(point));
+		ret = yield(value(point));
 	return ret;
 }
 RUCY_END
@@ -176,7 +176,7 @@ RUCY_DEF0(each_color)
 	{
 		size_t size = THIS->size();
 		for (size_t i = 0; i < size; ++i)
-			ret = rb_yield(value(colors[i]));
+			ret = yield(value(colors[i]));
 	}
 	return ret;
 }
@@ -194,7 +194,7 @@ RUCY_DEF0(each_texcoord)
 	{
 		size_t size = THIS->size();
 		for (size_t i = 0; i < size; ++i)
-			ret = rb_yield(value(*(Rays::Point*) &texcoords[i]));
+			ret = yield(value(*(Rays::Point*) &texcoords[i]));
 	}
 	return ret;
 }

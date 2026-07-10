@@ -64,7 +64,7 @@ RUCY_DEF0(each_window)
 
 	Value ret;
 	for (auto it = THIS->window_begin(), end = THIS->window_end(); it != end; ++it)
-		ret = rb_yield(value(it->get()));
+		ret = yield(value(it->get()));
 	return ret;
 }
 RUCY_END

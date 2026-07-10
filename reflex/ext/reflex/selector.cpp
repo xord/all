@@ -86,7 +86,7 @@ RUCY_DEF0(each_tag)
 	Value ret;
 	Reflex::Selector::const_iterator end = C_THIS->end();
 	for (Reflex::Selector::const_iterator it = C_THIS->begin(); it != end; ++it)
-		ret = rb_yield(value(*it));
+		ret = yield(value(*it));
 	return ret;
 }
 RUCY_END

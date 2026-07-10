@@ -149,7 +149,7 @@ RUCY_DEF0(each)
 	CHECK;
 	Value ret;
 	for (auto it = THIS->begin(), end = THIS->end(); it != end; ++it)
-		ret = rb_yield(value(*it));
+		ret = yield(value(*it));
 	return ret;
 }
 RUCY_END
