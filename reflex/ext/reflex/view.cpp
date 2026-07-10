@@ -217,9 +217,11 @@ RUCY_DEF0(each_child)
 {
 	CHECK;
 
+	Reflex::View::ChildList children(THIS->child_begin(), THIS->child_end());
+
 	Value ret;
-	for (auto it = THIS->child_begin(), end = THIS->child_end(); it != end; ++it)
-		ret = yield(value(it->get()));
+	for (auto& child : children)
+		ret = yield(value(child.get()));
 	return ret;
 }
 RUCY_END
@@ -277,10 +279,11 @@ RUCY_DEF0(each_style)
 {
 	CHECK;
 
+	Reflex::View::StyleList styles(THIS->style_begin(), THIS->style_end());
+
 	Value ret;
-	Reflex::View::style_iterator end = THIS->style_end();
-	for (Reflex::View::style_iterator it = THIS->style_begin(); it != end; ++it)
-		ret = yield(value(*it));
+	for (auto& style : styles)
+		ret = yield(value(style));
 	return ret;
 }
 RUCY_END
@@ -363,10 +366,11 @@ RUCY_DEF0(each_shape)
 {
 	CHECK;
 
+	Reflex::View::ShapeList shapes(THIS->shape_begin(), THIS->shape_end());
+
 	Value ret;
-	Reflex::View::shape_iterator end = THIS->shape_end();
-	for (Reflex::View::shape_iterator it = THIS->shape_begin(); it != end; ++it)
-		ret = yield(value(it->get()));
+	for (auto& shape : shapes)
+		ret = yield(value(shape.get()));
 	return ret;
 }
 RUCY_END
@@ -398,9 +402,12 @@ RUCY_DEF0(each_constraint)
 {
 	CHECK;
 
+	Reflex::View::ConstraintList constraints(
+		THIS->constraint_begin(), THIS->constraint_end());
+
 	Value ret;
-	for (auto it = THIS->constraint_begin(), end = THIS->constraint_end(); it != end; ++it)
-		ret = yield(value(it->get()));
+	for (auto& constraint : constraints)
+		ret = yield(value(constraint.get()));
 	return ret;
 }
 RUCY_END
