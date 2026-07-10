@@ -81,12 +81,22 @@ module Reflex
       find_children(*args).first
     end
 
+    def each_child(&block)
+      return enum_for :each_child unless block
+      each_child!(&block)
+    end
+
     def children()
-      to_enum :each_child
+      each_child.to_a
+    end
+
+    def each_style(&block)
+      return enum_for :each_style unless block
+      each_style!(&block)
     end
 
     def styles()
-      to_enum :each_style
+      each_style.to_a
     end
 
     def style(*args, &block)
@@ -95,8 +105,13 @@ module Reflex
       s
     end
 
+    def each_shape(&block)
+      return enum_for :each_shape unless block
+      each_shape!(&block)
+    end
+
     def shapes()
-      to_enum :each_shape
+      each_shape.to_a
     end
 
     def pin(*args)
@@ -119,8 +134,13 @@ module Reflex
       pin.chase(*args, **options, &block)
     end
 
+    def each_constraint(&block)
+      return enum_for :each_constraint unless block
+      each_constraint!(&block)
+    end
+
     def constraints()
-      to_enum :each_constraint
+      each_constraint.to_a
     end
 
     def capturing?(*args)
