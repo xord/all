@@ -60,7 +60,7 @@ module Reflex
     end
 
     def timeout(seconds = 0, count: 1, &block)
-      timer = start_timer seconds, count
+      timer = start_timer! seconds, count
       timer.block = block if block
       timer
     end

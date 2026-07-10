@@ -103,7 +103,7 @@ static
 RUCY_DEFN(start_timer)
 {
 	CHECK;
-	check_arg_count(__FILE__, __LINE__, "View#start_timer", argc, 1, 2);
+	check_arg_count(__FILE__, __LINE__, "View#start_timer!", argc, 1, 2);
 
 	Reflex::Timer* timer = THIS->start_timer(
 		to<float>(argv[0]),
@@ -1292,7 +1292,7 @@ Init_reflex_view ()
 	cView.define_method("focus",  focus);
 	cView.define_method("blur",   blur);
 	cView.define_method("focus?", has_focus);
-	cView.define_private_method("start_timer", start_timer);
+	cView.define_private_method("start_timer!", start_timer);
 	cView.define_method("update_layout", update_layout);
 
 	cView.define_method("from_parent", from_parent);
