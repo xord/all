@@ -24,6 +24,10 @@ namespace Reflex
 {
 
 
+	template <typename T>
+	class RubyConstraint : public Rucy::ClassWrapper<T> {};
+
+
 	REFLEX_EXPORT Rucy::Class constraint_class ();
 	// class Reflex::Constraint
 

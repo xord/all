@@ -559,6 +559,23 @@ namespace Reflex
 	}
 
 
+	static SnapConstraint_CreateFun snap_constraint_create_fun = NULL;
+
+	void
+	SnapConstraint_set_create_fun (SnapConstraint_CreateFun fun)
+	{
+		snap_constraint_create_fun = fun;
+	}
+
+	SnapConstraint*
+	SnapConstraint_create ()
+	{
+		return snap_constraint_create_fun
+			?	snap_constraint_create_fun()
+			:	new SnapConstraint();
+	}
+
+
 	SnapConstraint::SnapConstraint ()
 	:	Super(new SnapConstraintData)
 	{
@@ -764,6 +781,23 @@ namespace Reflex
 	get_data (const LinkConstraint& constraint)
 	{
 		return get_data(const_cast<LinkConstraint&>(constraint));
+	}
+
+
+	static LinkConstraint_CreateFun link_constraint_create_fun = NULL;
+
+	void
+	LinkConstraint_set_create_fun (LinkConstraint_CreateFun fun)
+	{
+		link_constraint_create_fun = fun;
+	}
+
+	LinkConstraint*
+	LinkConstraint_create ()
+	{
+		return link_constraint_create_fun
+			?	link_constraint_create_fun()
+			:	new LinkConstraint();
 	}
 
 
@@ -1039,6 +1073,23 @@ namespace Reflex
 	}
 
 
+	static RailConstraint_CreateFun rail_constraint_create_fun = NULL;
+
+	void
+	RailConstraint_set_create_fun (RailConstraint_CreateFun fun)
+	{
+		rail_constraint_create_fun = fun;
+	}
+
+	RailConstraint*
+	RailConstraint_create ()
+	{
+		return rail_constraint_create_fun
+			?	rail_constraint_create_fun()
+			:	new RailConstraint();
+	}
+
+
 	RailConstraint::RailConstraint ()
 	:	Super(new RailConstraintData)
 	{
@@ -1271,6 +1322,23 @@ namespace Reflex
 	get_data (const ChaseConstraint& constraint)
 	{
 		return get_data(const_cast<ChaseConstraint&>(constraint));
+	}
+
+
+	static ChaseConstraint_CreateFun chase_constraint_create_fun = NULL;
+
+	void
+	ChaseConstraint_set_create_fun (ChaseConstraint_CreateFun fun)
+	{
+		chase_constraint_create_fun = fun;
+	}
+
+	ChaseConstraint*
+	ChaseConstraint_create ()
+	{
+		return chase_constraint_create_fun
+			?	chase_constraint_create_fun()
+			:	new ChaseConstraint();
 	}
 
 

@@ -2,9 +2,11 @@
 
 
 #include "reflex/ruby/view.h"
+#include "reflex/ruby/constraint.h"
 #include "reflex/ruby/timer.h"
 #include "reflex/ruby/midi.h"
 #include "../../src/window.h"
+#include "../../src/constraint.h"
 #include "../../src/timer.h"
 #include "../../src/midi.h"
 #include "defs.h"
@@ -14,6 +16,30 @@ static Reflex::View*
 create_root_view ()
 {
 	return new Reflex::RubyView<Reflex::View>();
+}
+
+static Reflex::SnapConstraint*
+create_snap_constraint ()
+{
+	return new Reflex::RubyConstraint<Reflex::SnapConstraint>();
+}
+
+static Reflex::LinkConstraint*
+create_link_constraint ()
+{
+	return new Reflex::RubyConstraint<Reflex::LinkConstraint>();
+}
+
+static Reflex::RailConstraint*
+create_rail_constraint ()
+{
+	return new Reflex::RubyConstraint<Reflex::RailConstraint>();
+}
+
+static Reflex::ChaseConstraint*
+create_chase_constraint ()
+{
+	return new Reflex::RubyConstraint<Reflex::ChaseConstraint>();
 }
 
 static Reflex::Timer*
@@ -35,9 +61,13 @@ static
 RUCY_DEF0(init)
 {
 	Reflex::init();
-	Reflex::Window_set_create_root_view_fun(create_root_view);
-	Reflex::Timer_set_create_fun(create_timer);
-	Reflex::MIDI_set_create_fun(create_midi);
+	Reflex::         Window_set_create_root_view_fun(create_root_view);
+	Reflex:: SnapConstraint_set_create_fun(create_snap_constraint);
+	Reflex:: LinkConstraint_set_create_fun(create_link_constraint);
+	Reflex:: RailConstraint_set_create_fun(create_rail_constraint);
+	Reflex::ChaseConstraint_set_create_fun(create_chase_constraint);
+	Reflex::          Timer_set_create_fun(create_timer);
+	Reflex::           MIDI_set_create_fun(create_midi);
 
 	return self;
 }
@@ -46,9 +76,13 @@ RUCY_END
 static
 RUCY_DEF0(fin)
 {
-	Reflex::Window_set_create_root_view_fun(NULL);
-	Reflex::Timer_set_create_fun(NULL);
-	Reflex::MIDI_set_create_fun(NULL);
+	Reflex::         Window_set_create_root_view_fun(NULL);
+	Reflex:: SnapConstraint_set_create_fun(NULL);
+	Reflex:: LinkConstraint_set_create_fun(NULL);
+	Reflex:: RailConstraint_set_create_fun(NULL);
+	Reflex::ChaseConstraint_set_create_fun(NULL);
+	Reflex::          Timer_set_create_fun(NULL);
+	Reflex::           MIDI_set_create_fun(NULL);
 	Reflex::fin();
 
 	return self;

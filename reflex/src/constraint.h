@@ -33,6 +33,31 @@ namespace Reflex
 	bool Constraint_has_world_mismatch (const Constraint* constraint);
 
 
+	typedef SnapConstraint*  (*SnapConstraint_CreateFun) ();
+
+	typedef LinkConstraint*  (*LinkConstraint_CreateFun) ();
+
+	typedef RailConstraint*  (*RailConstraint_CreateFun) ();
+
+	typedef ChaseConstraint* (*ChaseConstraint_CreateFun) ();
+
+	void SnapConstraint_set_create_fun  (SnapConstraint_CreateFun fun);
+
+	void LinkConstraint_set_create_fun  (LinkConstraint_CreateFun fun);
+
+	void RailConstraint_set_create_fun  (RailConstraint_CreateFun fun);
+
+	void ChaseConstraint_set_create_fun (ChaseConstraint_CreateFun fun);
+
+	SnapConstraint*  SnapConstraint_create ();
+
+	LinkConstraint*  LinkConstraint_create ();
+
+	RailConstraint*  RailConstraint_create ();
+
+	ChaseConstraint* ChaseConstraint_create ();
+
+
 }// Reflex
 
 

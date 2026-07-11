@@ -102,6 +102,8 @@ namespace Reflex
 
 			friend class Pin;
 
+			friend SnapConstraint* SnapConstraint_create ();
+
 	};// SnapConstraint
 
 
@@ -147,6 +149,8 @@ namespace Reflex
 			LinkConstraint ();
 
 			friend class Pin;
+
+			friend LinkConstraint* LinkConstraint_create ();
 
 	};// LinkConstraint
 
@@ -194,6 +198,8 @@ namespace Reflex
 
 			friend class Pin;
 
+			friend RailConstraint* RailConstraint_create ();
+
 	};// RailConstraint
 
 
@@ -223,6 +229,8 @@ namespace Reflex
 			ChaseConstraint ();
 
 			friend class Pin;
+
+			friend ChaseConstraint* ChaseConstraint_create ();
 
 	};// ChaseConstraint
 

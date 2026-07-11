@@ -70,7 +70,7 @@ namespace Reflex
 	Pin::snap (Pin target)
 	{
 		return setup_constraint(
-			Xot::Ref<SnapConstraint>(new SnapConstraint()).get(),
+			Xot::Ref<SnapConstraint>(SnapConstraint_create()).get(),
 			view(), position(), target.view(), target.position());
 	}
 
@@ -78,7 +78,7 @@ namespace Reflex
 	Pin::link (Pin target)
 	{
 		return setup_constraint(
-			Xot::Ref<LinkConstraint>(new LinkConstraint()).get(),
+			Xot::Ref<LinkConstraint>(LinkConstraint_create()).get(),
 			view(), position(), target.view(), target.position());
 	}
 
@@ -86,7 +86,7 @@ namespace Reflex
 	Pin::rail (Pin target)
 	{
 		return setup_constraint(
-			Xot::Ref<RailConstraint>(new RailConstraint()).get(),
+			Xot::Ref<RailConstraint>(RailConstraint_create()).get(),
 			view(), position(), target.view(), target.position());
 	}
 
@@ -97,7 +97,7 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__, "can not chase itself");
 
 		ChaseConstraint* chase = setup_constraint(
-			Xot::Ref<ChaseConstraint>(new ChaseConstraint()).get(),
+			Xot::Ref<ChaseConstraint>(ChaseConstraint_create()).get(),
 			view(), position(), NULL, NULL);
 		chase->set_target(target);
 		return chase;

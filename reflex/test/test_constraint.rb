@@ -3,19 +3,21 @@ require_relative 'helper'
 
 class TestConstraint < Test::Unit::TestCase
 
+  R = Reflex
+
   def window()
-    Reflex::Window.new
+    R::Window.new
   end
 
   def view(x = 0, y = 0, w = 50, h = 50, **options, &block)
-    Reflex::View.new(
+    R::View.new(
       frame: [x, y, w, h],
-      shape: Reflex::RectShape.new(density: 1),
+      shape: R::RectShape.new(density: 1),
       **options, &block)
   end
 
   def point(...)
-    Reflex::Point.new(...)
+    R::Point.new(...)
   end
 
   def setup_views(win = window)
@@ -128,6 +130,7 @@ class TestConstraint < Test::Unit::TestCase
     c2 = v1.snap v2
     assert_equal [c1, c2], v1.constraints.to_a
     assert_equal [c1, c2], v2.constraints.to_a
+    assert_equal [R::LinkConstraint, R::SnapConstraint], v1.constraints.map(&:class)
   end
 
   def test_remove()
@@ -175,7 +178,7 @@ class TestConstraint < Test::Unit::TestCase
     child1.meter2pixel # create parent1 world
     child2.meter2pixel # create parent2 world
 
-    assert_raise(Reflex::PhysicsError) {child1.snap child2}
+    assert_raise(R::PhysicsError) {child1.snap child2}
     assert_equal [], child1.constraints.to_a # rejected pins leave no trace
     assert_equal [], child2.constraints.to_a
   end
