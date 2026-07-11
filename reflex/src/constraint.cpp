@@ -170,12 +170,6 @@ namespace Reflex
 		Constraint_activate(constraint);
 	}
 
-	b2JointId
-	Constraint_get_id (const Constraint* constraint)
-	{
-		return constraint ? constraint->self->b2joint : b2_nullJointId;
-	}
-
 	void
 	Constraint_set_pins (
 		Constraint* constraint,

@@ -4,7 +4,6 @@
 #define __REFLEX_SRC_CONSTRAINT_H__
 
 
-#include <box2d/id.h>
 #include "reflex/constraint.h"
 
 
@@ -15,8 +14,6 @@ namespace Reflex
 	class View;
 	class World;
 
-
-	b2JointId Constraint_get_id (const Constraint* constraint);
 
 	void Constraint_set_pins (
 		Constraint* constraint,
