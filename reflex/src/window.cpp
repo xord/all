@@ -582,6 +582,8 @@ namespace Reflex
 				case Pointer::UP:     window->on_pointer_up(event);     break;
 				case Pointer::MOVE:   window->on_pointer_move(event);   break;
 				case Pointer::CANCEL: window->on_pointer_cancel(event); break;
+				case Pointer::ENTER:  window->on_pointer_enter(event);  break;
+				case Pointer::LEAVE:  window->on_pointer_leave(event);  break;
 				default: break;
 			}
 		}
@@ -1005,6 +1007,16 @@ namespace Reflex
 
 	void
 	Window::on_pointer_cancel (PointerEvent* e)
+	{
+	}
+
+	void
+	Window::on_pointer_enter (PointerEvent* e)
+	{
+	}
+
+	void
+	Window::on_pointer_leave (PointerEvent* e)
 	{
 	}
 

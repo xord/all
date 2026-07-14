@@ -57,6 +57,10 @@ namespace Reflex
 
 				CANCEL,
 
+				ENTER,
+
+				LEAVE,
+
 				STAY
 
 			};// Action

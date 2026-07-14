@@ -15,7 +15,7 @@ module Reflex
       :id,
       :types, :mouse?, :touch?, :pen?,
       :mouse_left?, :left?, :mouse_right?, :right?, :mouse_middle?, :middle?,
-      :action, :down?, :up?, :move?, :cancel?, :stay?,
+      :action, :down?, :up?, :move?, :cancel?, :enter?, :leave?, :stay?,
       :position, :pos, :x, :y, :modifiers, :click_count, :drag?,
       :time, :prev, :down
 

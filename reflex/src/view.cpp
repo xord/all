@@ -1507,6 +1507,8 @@ namespace Reflex
 			case Pointer::UP:     view->on_pointer_up(event);     break;
 			case Pointer::MOVE:   view->on_pointer_move(event);   break;
 			case Pointer::CANCEL: view->on_pointer_cancel(event); break;
+			case Pointer::ENTER:  view->on_pointer_enter(event);  break;
+			case Pointer::LEAVE:  view->on_pointer_leave(event);  break;
 			default: break;
 		}
 	}
@@ -2960,6 +2962,16 @@ namespace Reflex
 
 	void
 	View::on_pointer_cancel (PointerEvent* e)
+	{
+	}
+
+	void
+	View::on_pointer_enter (PointerEvent* e)
+	{
+	}
+
+	void
+	View::on_pointer_leave (PointerEvent* e)
 	{
 	}
 
