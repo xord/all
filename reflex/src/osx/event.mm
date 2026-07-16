@@ -137,10 +137,31 @@ namespace Reflex
 				return Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_MIDDLE;
 
 			case NSMouseMoved:
+			case NSMouseEntered:
+			case NSMouseExited:
 				return Reflex::Pointer::MOUSE | get_current_pointer_type();
 
 			default:
 				return Reflex::Pointer::TYPE_NONE;
+		}
+	}
+
+	static uint
+	get_click_count (NSEvent* e, Pointer::Action action, bool dragging)
+	{
+		switch (action)
+		{
+			case Pointer::DOWN:
+			case Pointer::UP:
+				return (uint) e.clickCount;
+
+			case Pointer::MOVE:
+				return dragging ? (uint) e.clickCount : 0;
+
+			default:
+				// asking clickCount raises NSInternalInconsistencyException for
+				// tracking (enter/exit) events.
+				return 0;
 		}
 	}
 
@@ -154,7 +175,7 @@ namespace Reflex
 			action,
 			get_pointer_position(event, view),
 			get_modifiers(event),
-			action == Pointer::MOVE && !dragging ? 0 : (uint) event.clickCount,
+			get_click_count(event, action, dragging),
 			dragging,
 			time()));
 	}

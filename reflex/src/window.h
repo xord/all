@@ -33,6 +33,10 @@ namespace Reflex
 
 		typedef std::map<View::Ref, CaptureTargetIDList> CaptureMap;
 
+		typedef std::vector<Xot::WeakRef<View>>          WeakViewList;
+
+		typedef std::map<Pointer::ID, WeakViewList>      HoveredViewMap;
+
 		enum Flag
 		{
 
@@ -52,8 +56,6 @@ namespace Reflex
 
 		double prev_time_update, prev_time_draw, prev_fps = 0;
 
-		CaptureMap captures;
-
 		int next_pointer_id = 1;
 
 		Pointer prev_mouse_pointer;
@@ -61,6 +63,10 @@ namespace Reflex
 		PointerList prev_pointers;
 
 		uint flags;
+
+		CaptureMap captures;
+
+		HoveredViewMap hovered_views;
 
 		Data ();
 

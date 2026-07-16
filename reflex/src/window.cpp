@@ -14,13 +14,13 @@ namespace Reflex
 {
 
 
-	using ViewList              = std::vector<View::Ref>;
-
 	using PointerMap            = std::map<Pointer::ID, Pointer>;
 
 	using ExtractedPointerIDSet = std::set<Pointer::ID>;
 
 	using CaptureTargetIDList   = Window::Data::CaptureTargetIDList;
+
+	using WeakViewList          = Window::Data::WeakViewList;
 
 
 	void
@@ -288,6 +288,14 @@ namespace Reflex
 		cleanup_captures(window);
 	}
 
+	static bool
+	need_next_pointer_id (const Pointer& pointer, const Pointer& prev_pointer)
+	{
+		return
+			     pointer.action() == Pointer::DOWN ||
+			prev_pointer.action() == Pointer::UP;
+	}
+
 	static Pointer::ID
 	get_next_pointer_id (Window* window)
 	{
@@ -304,14 +312,13 @@ namespace Reflex
 
 		Window::Data* self = window->self.get();
 
-		auto action        = pointer->action();
 		auto& prev_pointer = self->prev_mouse_pointer;
 
 		auto id    = prev_pointer ? prev_pointer.id() : get_next_pointer_id(window);
 		auto* down = prev_pointer.down();
 		if (
 			Pointer_mask_flag(prev_pointer, MOUSE_BUTTONS) == 0 &&
-			(action == Pointer::DOWN || prev_pointer.action() == Pointer::UP))
+			need_next_pointer_id(*pointer, prev_pointer))
 		{
 			id   = get_next_pointer_id(window);
 			down = NULL;
@@ -322,6 +329,7 @@ namespace Reflex
 		Pointer_set_prev(pointer, &prev_pointer);
 		Pointer_set_down(pointer, down);
 
+		auto action = pointer->action();
 		if (action == Pointer::DOWN)
 			Pointer_add_flag(pointer, pointer->types() & MOUSE_BUTTONS);
 
@@ -351,6 +359,21 @@ namespace Reflex
 			});
 	}
 
+	static bool
+	is_last_pointer_event (const Pointer& pointer)
+	{
+		auto action = pointer.action();
+		if (action == Pointer::UP || action == Pointer::CANCEL)
+		{
+			// a mouse cursor and a floatable pen (Apple Pencil) survive their
+			// up/cancel; a finger or non-floatable pen ends here.
+			return
+				!(pointer.types() & Pointer::MOUSE) &&
+				!Pointer_is_floatable(pointer);
+		}
+		return action == Pointer::LEAVE;
+	}
+
 	static void
 	setup_pointer (Window* window, Pointer* pointer)
 	{
@@ -362,16 +385,21 @@ namespace Reflex
 
 		if (prev_pointer)
 		{
-			Pointer_set_id(pointer, prev_pointer->id());
+			if (need_next_pointer_id(*pointer, *prev_pointer))
+				Pointer_set_id(pointer, get_next_pointer_id(window));
+			else
+			{
+				Pointer_set_id(pointer, prev_pointer->id());
+				Pointer_set_down(pointer, prev_pointer->down());
+			}
+			Pointer_set_floatable(pointer, Pointer_is_floatable(*prev_pointer));
 			Pointer_set_prev(pointer, prev_pointer);
-			Pointer_set_down(pointer, prev_pointer->down());
 			prev_pointers.erase(it);
 		}
 		else
 			Pointer_set_id(pointer, get_next_pointer_id(window));
 
-		auto action = pointer->action();
-		if (action != Pointer::UP && action != Pointer::CANCEL)
+		if (!is_last_pointer_event(*pointer))
 		{
 			prev_pointers.emplace_back(*pointer);
 			Pointer_set_prev(&prev_pointers.back(), NULL);
@@ -460,7 +488,7 @@ namespace Reflex
 			extract_targeted_pointers(&event, extracteds, targets, pointers);
 			if (event.empty()) continue;
 
-			PointerEvent_update_for_capturing_view(&event, view);
+			PointerEvent_to_view_coord(&event, view);
 			View_call_pointer_event(const_cast<View*>(view.get()), &event);
 
 			if (event.is_blocked()) *blocked = true;
@@ -502,7 +530,7 @@ namespace Reflex
 			if (!view->window()) continue;
 
 			PointerEvent e = event.dup();
-			PointerEvent_update_for_capturing_view(&e, view);
+			PointerEvent_to_view_coord(&e, view);
 			View_call_pointer_event(const_cast<View*>(view.get()), &e);
 
 			if (e.is_blocked()) *blocked = true;
@@ -561,6 +589,137 @@ namespace Reflex
 		if (blocked) event->block();
 	}
 
+	static void
+	get_current_hovered_views (
+		ViewList* result, Window* window, const Pointer& pointer)
+	{
+		if (pointer.is_drag())
+		{
+			// while dragging, only the capturing view(s) take part in enter/leave,
+			// tested against their own frame; views merely passed over are ignored.
+			for (auto& [view, targets] : window->self->captures)
+			{
+				if (!view->window()) continue;
+				if (std::find(targets.begin(), targets.end(), pointer.id()) == targets.end())
+					continue;
+
+				Point pos = view->from_window(pointer.position());
+				if (Bounds(view->frame().size()).is_include(pos))
+					result->emplace_back(view);
+			}
+		}
+		else
+			View_get_hovered_views(result, window->root(), pointer.position());
+	}
+
+	static WeakViewList*
+	get_prev_hovered_views (Window* window, const Pointer& pointer)
+	{
+		// a mouse pointer gets a fresh id on every click, so follow the prev()
+		// chain to keep tracking the same physical pointer across id changes.
+		auto& map = window->self->hovered_views;
+
+		auto it = map.find(pointer.id());
+		if (
+			it == map.end() &&
+			pointer.prev() && pointer.prev()->id() != pointer.id())
+		{
+			auto prev_it = map.find(pointer.prev()->id());
+			if (prev_it != map.end())
+			{
+				it = map.emplace(pointer.id(), std::move(prev_it->second)).first;
+				map.erase(prev_it);
+			}
+		}
+
+		return it != map.end() ? &it->second : NULL;
+	}
+
+	static void
+	call_pointer_boundary_event (
+		View* view, const Pointer& pointer, Pointer::Action action)
+	{
+		if (!view->window()) return;
+
+		Pointer p = pointer;
+		Pointer_set_action(&p, action);
+
+		PointerEvent event(&p, 1);
+		PointerEvent_to_view_coord(&event, view);
+		View_call_pointer_event(view, &event);
+	}
+
+	static void
+	call_pointer_boundary_events (
+		Window* window, const Pointer& pointer, ViewList* news)
+	{
+		ViewList olds;
+		if (auto* weak_views = get_prev_hovered_views(window, pointer))
+		{
+			for (auto& view : *weak_views)
+				if (view) olds.emplace_back(view.get());
+
+			for (auto it = olds.rbegin(); it != olds.rend(); ++it)
+			{
+				if (std::find(news->begin(), news->end(), it->get()) != news->end())
+					continue;
+				call_pointer_boundary_event(it->get(), pointer, Pointer::LEAVE);
+			}
+		}
+
+		for (auto& view : *news)
+		{
+			if (std::find(olds.begin(), olds.end(), view.get()) != olds.end())
+				continue;
+			call_pointer_boundary_event(view.get(), pointer, Pointer::ENTER);
+		}
+
+		auto& map = window->self->hovered_views;
+		if (news->empty())
+			map.erase(pointer.id());
+		else
+			map[pointer.id()] = WeakViewList(news->begin(), news->end());
+	}
+
+	static void
+	call_pointer_enter_events (Window* window, const auto& pointers)
+	{
+		for (const auto& pointer : pointers)
+		{
+			auto a = pointer.action();
+			if (a == Pointer::DOWN || a == Pointer::MOVE || a == Pointer::ENTER)
+			{
+				ViewList views;
+				get_current_hovered_views(&views, window, pointer);
+				call_pointer_boundary_events(window, pointer, &views);
+			}
+		}
+	}
+
+	static void
+	call_pointer_leave_events (Window* window, const auto& pointers)
+	{
+		for (const auto& pointer : pointers)
+		{
+			auto a = pointer.action();
+			if (a == Pointer::UP || a == Pointer::CANCEL || a == Pointer::LEAVE)
+			{
+				// a pointer that survives this event keeps hovering whatever is under
+				// it; a pointer that ends here hovers nothing and leaves every view.
+				ViewList views;
+				if (!is_last_pointer_event(pointer))
+					get_current_hovered_views(&views, window, pointer);
+				call_pointer_boundary_events(window, pointer, &views);
+			}
+		}
+	}
+
+	static bool
+	is_boundary_action (Pointer::Action action)
+	{
+		return action == Pointer::ENTER || action == Pointer::LEAVE;
+	}
+
 	void
 	Window_call_pointer_event (Window* window, PointerEvent* event)
 	{
@@ -570,6 +729,10 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 
 		setup_pointer_event(window, event);
+
+		bool boundary = !event->empty() && is_boundary_action((*event)[0].action());
+		std::vector<Pointer> pointers;
+		PointerEvent_each_pointer(event, [&](const auto& p) {pointers.emplace_back(p);});
 
 		if (!event->empty())
 			window->on_pointer(event);
@@ -588,14 +751,19 @@ namespace Reflex
 			}
 		}
 
-		if (!event->empty() && !event->is_blocked())
-			call_captured_pointer_events(window, event);
-
-		if (!event->empty() && !event->is_blocked())
+		call_pointer_enter_events(window, pointers);
+		if (!boundary)
 		{
-			PointerEvent_update_for_child_view(event, window->root());
-			View_call_pointer_event(window->root(), event);
+			if (!event->empty() && !event->is_blocked())
+				call_captured_pointer_events(window, event);
+
+			if (!event->empty() && !event->is_blocked())
+			{
+				PointerEvent_update_for_child_view(event, window->root());
+				View_call_pointer_event(window->root(), event);
+			}
 		}
+		call_pointer_leave_events(window, pointers);
 
 		cleanup_captures(window);
 	}
@@ -787,6 +955,8 @@ namespace Reflex
 		Event e;
 		on_close(&e);
 		if (!force && e.is_blocked()) return;
+
+		self->hovered_views.clear();
 
 		View_set_window(self->root.get(), NULL);
 

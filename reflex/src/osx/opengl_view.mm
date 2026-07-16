@@ -15,6 +15,7 @@
 
 	{
 		bool setup_context_done;
+		NSTrackingArea* tracking_area;
 	}
 
 	- (id) initWithFrame: (NSRect) frame
@@ -30,6 +31,7 @@
 		if (!self) return nil;
 
 		setup_context_done = false;
+		tracking_area      = nil;
 
 		return self;
 	}
@@ -98,6 +100,39 @@
 		[[self window] setBackgroundColor: [NSColor clearColor]];
 		[[self window] setOpaque: NO];
 #endif
+	}
+
+	- (void) updateTrackingAreas
+	{
+		[super updateTrackingAreas];
+
+		if (tracking_area)
+		{
+			[self removeTrackingArea: tracking_area];
+			[tracking_area release];
+		}
+
+		// to track pointer enter/leave event of the window bounds
+		tracking_area = [[NSTrackingArea alloc]
+			initWithRect: NSZeroRect
+			options:
+				NSTrackingMouseEnteredAndExited |
+				NSTrackingActiveAlways |
+				NSTrackingInVisibleRect
+			owner: self
+			userInfo: nil];
+		[self addTrackingArea: tracking_area];
+	}
+
+	- (void) dealloc
+	{
+		if (tracking_area)
+		{
+			[self removeTrackingArea: tracking_area];
+			[tracking_area release];
+			tracking_area = nil;
+		}
+		[super dealloc];
 	}
 
 	- (void) insertText: (id) str
@@ -209,6 +244,22 @@
 		if (!win) return;
 
 		[win mouseMoved: event];
+	}
+
+	- (void) mouseEntered: (NSEvent*) event
+	{
+		NativeWindow* win = (NativeWindow*) [self window];
+		if (!win) return;
+
+		[win mouseEntered: event];
+	}
+
+	- (void) mouseExited: (NSEvent*) event
+	{
+		NativeWindow* win = (NativeWindow*) [self window];
+		if (!win) return;
+
+		[win mouseExited: event];
 	}
 
 @end// OpenGLView

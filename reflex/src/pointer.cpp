@@ -29,9 +29,11 @@ namespace Reflex
 
 			DRAG          = Xot::bit(0, TYPE_LAST),
 
-			HAS_SYSTEM_ID = Xot::bit(1, TYPE_LAST),
+			FLOATABLE     = Xot::bit(1, TYPE_LAST),
 
-			HAS_PREV_POS  = Xot::bit(2, TYPE_LAST),
+			HAS_SYSTEM_ID = Xot::bit(2, TYPE_LAST),
+
+			HAS_PREV_POS  = Xot::bit(3, TYPE_LAST),
 
 		};// Flag
 
@@ -82,6 +84,27 @@ namespace Reflex
 	Pointer_set_id (Pointer* it, Pointer::ID id)
 	{
 		it->self->id = id;
+	}
+
+	void
+	Pointer_set_action (Pointer* it, Pointer::Action action)
+	{
+		it->self->action = action;
+	}
+
+	void
+	Pointer_set_floatable (Pointer* it, bool floatable)
+	{
+		if (floatable)
+			Xot::add_flag(&it->self->flags, Pointer::Data::FLOATABLE);
+		else
+			Xot::remove_flag(&it->self->flags, Pointer::Data::FLOATABLE);
+	}
+
+	bool
+	Pointer_is_floatable (const Pointer& it)
+	{
+		return Xot::has_flag(it.self->flags, Pointer::Data::FLOATABLE);
 	}
 
 	void

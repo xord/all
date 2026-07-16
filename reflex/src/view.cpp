@@ -1446,6 +1446,39 @@ namespace Reflex
 		view->self->add_flag(View::Data::UPDATE_SHAPES);
 	}
 
+	static void
+	call_children (View* parent, std::function<bool(View*)> fun, bool sort = true)
+	{
+		auto* children = parent->self->children(false, sort);
+		if (!children) return;
+
+		for (auto it = children->rbegin(), end = children->rend(); it != end; ++it)
+		{
+			if (!fun(it->get()))
+				break;
+		}
+	}
+
+	void
+	View_get_hovered_views (ViewList* result, View* view, const Point& position)
+	{
+		if (!result)
+			argument_error(__FILE__, __LINE__);
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+
+		if (view->hidden() || !view->frame().is_include(position))
+			return;
+
+		result->emplace_back(view);
+
+		Point pos = view->from_parent(position);
+		call_children(view, [&](View* child) {
+			View_get_hovered_views(result, child, pos);
+			return true;
+		});
+	}
+
 	void
 	View_call_key_event (View* view, KeyEvent* event)
 	{
@@ -1465,19 +1498,6 @@ namespace Reflex
 			case KeyEvent::DOWN: view->on_key_down(&e); break;
 			case KeyEvent::UP:   view->on_key_up(&e);   break;
 			default: break;
-		}
-	}
-
-	static void
-	call_children (View* parent, std::function<bool(View*)> fun, bool sort = true)
-	{
-		auto* children = parent->self->children(false, sort);
-		if (!children) return;
-
-		for (auto it = children->rbegin(), end = children->rend(); it != end; ++it)
-		{
-			if (!fun(it->get()))
-				break;
 		}
 	}
 
@@ -1554,6 +1574,10 @@ namespace Reflex
 			invalid_state_error(__FILE__, __LINE__);
 
 		PointerEvent e = event->dup();
+
+		auto action = e[0].action();
+		if (action == Pointer::ENTER || action == Pointer::LEAVE)
+			return call_pointer_events(view, &e);
 
 		if (!e.is_captured())
 			call_pointer_events_for_each_child(view, &e);

@@ -11,6 +11,9 @@ namespace Reflex
 {
 
 
+	typedef std::vector<View::Ref> ViewList;
+
+
 	constexpr const char* VIEW_TAG_ROOT = "ROOT";
 
 
@@ -42,6 +45,8 @@ namespace Reflex
 	void View_update_styles (View* view, const Selector& selector);
 
 	void View_update_shapes (View* view);
+
+	void View_get_hovered_views (ViewList* result, View* view, const Point& position);
 
 	void View_call_key_event            (View* view, KeyEvent* event);
 
