@@ -88,7 +88,7 @@ namespace Reflex
 
 			virtual bool   has_angle () const;
 
-			virtual void   set_motor (float degree_per_second);
+			virtual void   set_motor (float degrees_per_second);
 
 			virtual void clear_motor ();
 
@@ -116,6 +116,16 @@ namespace Reflex
 
 			virtual ~LinkConstraint ();
 
+			virtual void     set_axis (coord x, coord y);
+
+			virtual void     set_axis (const Point& direction);
+
+			virtual void   clear_axis ();
+
+			virtual const Point& axis () const;
+
+			virtual bool     has_axis () const;
+
 			virtual void      set_distance (coord distance);
 
 			virtual void    clear_distance ();
@@ -136,7 +146,7 @@ namespace Reflex
 
 			virtual bool   has_range () const;
 
-			virtual void   set_motor (coord pixel_per_second);
+			virtual void   set_motor (coord pixels_per_second);
 
 			virtual void clear_motor ();
 
@@ -155,24 +165,20 @@ namespace Reflex
 	};// LinkConstraint
 
 
-	class RailConstraint : public Constraint
+	class WheelConstraint : public Constraint
 	{
 
 		typedef Constraint Super;
 
 		public:
 
-			virtual ~RailConstraint ();
+			virtual ~WheelConstraint ();
 
 			virtual void     set_axis (coord x, coord y);
 
 			virtual void     set_axis (const Point& direction);
 
 			virtual const Point& axis () const;
-
-			virtual void set_rotate (bool state);
-
-			virtual bool can_rotate () const;
 
 			virtual void   set_range (coord min, coord max);
 
@@ -184,7 +190,7 @@ namespace Reflex
 
 			virtual bool   has_range () const;
 
-			virtual void   set_motor (float speed);
+			virtual void   set_motor (float degrees_per_second);
 
 			virtual void clear_motor ();
 
@@ -194,13 +200,13 @@ namespace Reflex
 
 		protected:
 
-			RailConstraint ();
+			WheelConstraint ();
 
 			friend class Pin;
 
-			friend RailConstraint* RailConstraint_create ();
+			friend WheelConstraint* WheelConstraint_create ();
 
-	};// RailConstraint
+	};// WheelConstraint
 
 
 	class ChaseConstraint : public Constraint

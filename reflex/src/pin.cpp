@@ -82,11 +82,11 @@ namespace Reflex
 			view(), position(), target.view(), target.position());
 	}
 
-	RailConstraint*
-	Pin::rail (Pin target)
+	WheelConstraint*
+	Pin::wheel (Pin target)
 	{
 		return setup_constraint(
-			Xot::Ref<RailConstraint>(RailConstraint_create()).get(),
+			Xot::Ref<WheelConstraint>(WheelConstraint_create()).get(),
 			view(), position(), target.view(), target.position());
 	}
 

@@ -16,7 +16,7 @@ namespace Reflex
 	class View;
 	class SnapConstraint;
 	class LinkConstraint;
-	class RailConstraint;
+	class WheelConstraint;
 	class ChaseConstraint;
 
 
@@ -41,7 +41,7 @@ namespace Reflex
 
 			LinkConstraint*  link  (Pin target = Pin());
 
-			RailConstraint*  rail  (Pin target = Pin());
+			WheelConstraint* wheel (Pin target = Pin());
 
 			ChaseConstraint* chase (Pin target = Pin());
 

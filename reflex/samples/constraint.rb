@@ -48,8 +48,9 @@ Reflex.start name: "Constraint" do |app|
       shape  Reflex::LineShape.new.tap {|line| line.add_points(*ground.flatten)}
     }
 
-    # car: each wheel rails onto the body with a suspension spring and a
-    # drive motor, so it rolls over the bumpy ground
+    # car: each wheel rides on the body with a wheel joint -- a vertical rail
+    # gives suspension (spring) while the wheel spins freely, driven by a
+    # motor, so it rolls over the bumpy ground
     body   = add Reflex::View.new {
       pos 50, 400; size 70, 16
       background :white
@@ -58,10 +59,10 @@ Reflex.start name: "Constraint" do |app|
     }
     wheels, axles = [], []
     [14, 56].each do |x|
-      wheel = add ball.call(40 + x, 415, 20, :gray)
-      wheels << wheel
-      axles  << wheel.pin(10, 10).rail(body.pin(x, 20),
-        axis: [0, 1], rotate: true, spring: 6, damping: 0.7, motor: 360)
+      tire = add ball.call(40 + x, 415, 20, :gray)
+      wheels << tire
+      axles  << tire.pin(10, 10).wheel(body.pin(x, 20),
+        axis: [0, 1], spring: 6, damping: 0.7, motor: 360)
     end
 
     # reverse the drive each time the car reaches a wall. a wheel or a body
@@ -87,6 +88,17 @@ Reflex.start name: "Constraint" do |app|
       prev = node
     end
 
+    # elevator: a platform rails up and down the world on a vertical axis
+    # (a link with an axis), ping-ponging between the ends of its range
+    elevator = add Reflex::View.new {
+      pos 220, 320; size 60, 10
+      background :brown
+      dynamic    true
+      shape      Reflex::RectShape.new(density: 1)
+    }
+    elevator.gravity_scale = 0# the motor moves it, not the gravity
+    lift = elevator.pin.link axis: [0, 1], range: -60..60, motor: 30
+
     # chaser: follows the pendulum weight with a soft spring
     chaser = add ball.call(100, 400, 25, :blue)
     chaser.gravity_scale = 0
@@ -105,18 +117,29 @@ Reflex.start name: "Constraint" do |app|
           p = c.from_parent e.pos
           p.x.between?(0, c.frame.w) && p.y.between?(0, c.frame.h)
         end
-        # grab the view at the clicked point, not at its center
-        drag = hit.pin(hit.from_parent e.pos).chase e.pos,
-          spring: 5, damping: 0.7 if hit
+        if hit
+          # pause the elevator drive, or the motor overpowers the drag
+          lift.motor = nil if hit == elevator
+          # grab the view at the clicked point, not at its center
+          drag = hit.pin(hit.from_parent e.pos).chase e.pos,
+            spring: 5, damping: 0.7
+        end
       when e.drag?
         drag.target = e.pos if drag
       when e.up?
         drag&.remove
         drag = nil
+        lift.motor ||= 30# resume the elevator drive
       end
     end
 
     after :on_draw do |e|
+      # reverse the elevator at the ends of its range (nil while dragging)
+      if lift.motor
+        lift.motor = -lift.motor.abs if lift.current_distance >=  55
+        lift.motor =  lift.motor.abs if lift.current_distance <= -55
+      end
+
       e.painter.push do
         stroke :gray
         ground.each_cons(2) {|a, b| line a[0], a[1], b[0], b[1]}

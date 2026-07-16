@@ -37,7 +37,7 @@ namespace Reflex
 
 	typedef LinkConstraint*  (*LinkConstraint_CreateFun) ();
 
-	typedef RailConstraint*  (*RailConstraint_CreateFun) ();
+	typedef WheelConstraint* (*WheelConstraint_CreateFun) ();
 
 	typedef ChaseConstraint* (*ChaseConstraint_CreateFun) ();
 
@@ -45,7 +45,7 @@ namespace Reflex
 
 	void LinkConstraint_set_create_fun  (LinkConstraint_CreateFun fun);
 
-	void RailConstraint_set_create_fun  (RailConstraint_CreateFun fun);
+	void WheelConstraint_set_create_fun (WheelConstraint_CreateFun fun);
 
 	void ChaseConstraint_set_create_fun (ChaseConstraint_CreateFun fun);
 
@@ -53,7 +53,7 @@ namespace Reflex
 
 	LinkConstraint*  LinkConstraint_create ();
 
-	RailConstraint*  RailConstraint_create ();
+	WheelConstraint* WheelConstraint_create ();
 
 	ChaseConstraint* ChaseConstraint_create ();
 

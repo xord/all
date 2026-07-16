@@ -35,7 +35,7 @@ require 'reflex/pin'
 require 'reflex/constraint'
 require 'reflex/snap_constraint'
 require 'reflex/link_constraint'
-require 'reflex/rail_constraint'
+require 'reflex/wheel_constraint'
 require 'reflex/chase_constraint'
 
 require 'reflex/update_event'

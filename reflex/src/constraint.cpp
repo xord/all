@@ -645,9 +645,9 @@ namespace Reflex
 	}
 
 	void
-	SnapConstraint::set_motor (float degree_per_second)
+	SnapConstraint::set_motor (float degrees_per_second)
 	{
-		update_motor(this, true, degree_per_second);
+		update_motor(this, true, degrees_per_second);
 	}
 
 	void
@@ -672,6 +672,10 @@ namespace Reflex
 	struct LinkConstraintData : public Constraint::Data
 	{
 
+		bool  has_axis     = false;
+
+		Point axis         = Point(1, 0);
+
 		bool  has_distance = false;
 
 		coord distance     = 0;
@@ -691,27 +695,56 @@ namespace Reflex
 		b2JointId create_joint (
 			b2WorldId world, b2BodyId body0, b2BodyId body1, float ppm) override
 		{
-			resolve_link_anchors(body0, body1, ppm);
-
 			// the declaring side goes to bodyB because the mouse joint
 			// assumes bodyA is static
-			b2DistanceJointDef def = b2DefaultDistanceJointDef();
-			def.bodyIdA            = body1;
-			def.bodyIdB            = body0;
-			def.localAnchorA       = anchor1;
-			def.localAnchorB       = anchor0;
-			def.length             = b2distance;
-			def.enableSpring       = spring > 0;
-			def.hertz              = spring;
-			def.dampingRatio       = damping;
-			def.enableLimit        = has_range;
-			def.minLength          = to_b2coord(range_min, ppm);
-			def.maxLength          = to_b2coord(range_max, ppm);
-			def.enableMotor        = has_motor;
-			def.motorSpeed         = to_b2coord(motor_speed, ppm);
-			def.maxMotorForce      = default_max_force(body0);
-			def.collideConnected   = collide;
-			return b2CreateDistanceJoint(world, &def);
+			if (has_axis)
+			{
+				// an axis turns the link into a rail: the anchors coincide and
+				// the separation is measured along the axis, not radially
+				resolve_anchors(body0, body1, ppm);
+
+				b2PrismaticJointDef def = b2DefaultPrismaticJointDef();
+				def.bodyIdA             = body1;
+				def.bodyIdB             = body0;
+				def.localAnchorA        = anchor1;
+				def.localAnchorB        = anchor0;
+				def.localAxisA          = b2axis();
+				def.referenceAngle      = ref_angle;
+				def.targetTranslation   = has_distance ? to_b2coord(distance, ppm) : 0;
+				def.enableSpring        = spring > 0;
+				def.hertz               = spring;
+				def.dampingRatio        = damping;
+				def.enableLimit         = has_range;
+				def.lowerTranslation    = to_b2coord(range_min, ppm);
+				def.upperTranslation    = to_b2coord(range_max, ppm);
+				def.enableMotor         = has_motor;
+				def.motorSpeed          = to_b2coord(motor_speed, ppm);
+				def.maxMotorForce       = default_max_force(body0);
+				def.collideConnected    = collide;
+				return b2CreatePrismaticJoint(world, &def);
+			}
+			else
+			{
+				resolve_link_anchors(body0, body1, ppm);
+
+				b2DistanceJointDef def = b2DefaultDistanceJointDef();
+				def.bodyIdA            = body1;
+				def.bodyIdB            = body0;
+				def.localAnchorA       = anchor1;
+				def.localAnchorB       = anchor0;
+				def.length             = b2distance;
+				def.enableSpring       = spring > 0;
+				def.hertz              = spring;
+				def.dampingRatio       = damping;
+				def.enableLimit        = has_range;
+				def.minLength          = to_b2coord(range_min, ppm);
+				def.maxLength          = to_b2coord(range_max, ppm);
+				def.enableMotor        = has_motor;
+				def.motorSpeed         = to_b2coord(motor_speed, ppm);
+				def.maxMotorForce      = default_max_force(body0);
+				def.collideConnected   = collide;
+				return b2CreateDistanceJoint(world, &def);
+			}
 		}
 
 		void resolve_link_anchors (b2BodyId body0, b2BodyId body1, float ppm)
@@ -753,19 +786,44 @@ namespace Reflex
 
 		void apply_params (float ppm) override
 		{
-			if (has_distance)
-				b2DistanceJoint_SetLength(          b2joint, to_b2coord(distance, ppm));
-			b2DistanceJoint_EnableSpring(         b2joint, spring > 0);
-			b2DistanceJoint_SetSpringHertz(       b2joint, spring);
-			b2DistanceJoint_SetSpringDampingRatio(b2joint, damping);
-			b2DistanceJoint_EnableLimit(          b2joint, has_range);
-			if (has_range)
+			if (b2Joint_GetType(b2joint) == b2_prismaticJoint)
 			{
-				float min = to_b2coord(range_min, ppm), max = to_b2coord(range_max, ppm);
-				b2DistanceJoint_SetLengthRange(     b2joint, min, max);
+				b2Joint_SetLocalAxisA(b2joint, b2axis());
+				if (has_distance)
+					b2PrismaticJoint_SetTargetTranslation(b2joint, to_b2coord(distance, ppm));
+				b2PrismaticJoint_EnableSpring(         b2joint, spring > 0);
+				b2PrismaticJoint_SetSpringHertz(       b2joint, spring);
+				b2PrismaticJoint_SetSpringDampingRatio(b2joint, damping);
+				b2PrismaticJoint_EnableLimit(          b2joint, has_range);
+				if (has_range)
+				{
+					float min = to_b2coord(range_min, ppm), max = to_b2coord(range_max, ppm);
+					b2PrismaticJoint_SetLimits(          b2joint, min, max);
+				}
+				b2PrismaticJoint_EnableMotor(          b2joint, has_motor);
+				b2PrismaticJoint_SetMotorSpeed(        b2joint, to_b2coord(motor_speed, ppm));
 			}
-			b2DistanceJoint_EnableMotor(          b2joint, has_motor);
-			b2DistanceJoint_SetMotorSpeed(        b2joint, to_b2coord(motor_speed, ppm));
+			else
+			{
+				if (has_distance)
+					b2DistanceJoint_SetLength(          b2joint, to_b2coord(distance, ppm));
+				b2DistanceJoint_EnableSpring(         b2joint, spring > 0);
+				b2DistanceJoint_SetSpringHertz(       b2joint, spring);
+				b2DistanceJoint_SetSpringDampingRatio(b2joint, damping);
+				b2DistanceJoint_EnableLimit(          b2joint, has_range);
+				if (has_range)
+				{
+					float min = to_b2coord(range_min, ppm), max = to_b2coord(range_max, ppm);
+					b2DistanceJoint_SetLengthRange(     b2joint, min, max);
+				}
+				b2DistanceJoint_EnableMotor(          b2joint, has_motor);
+				b2DistanceJoint_SetMotorSpeed(        b2joint, to_b2coord(motor_speed, ppm));
+			}
+		}
+
+		b2Vec2 b2axis () const
+		{
+			return b2Normalize(b2Vec2(axis.x, axis.y));
 		}
 
 	};// LinkConstraintData
@@ -811,10 +869,58 @@ namespace Reflex
 	}
 
 	static void
+	update_axis (LinkConstraint* c, bool has_axis, const Point& axis)
+	{
+		LinkConstraintData& self = get_data(*c);
+
+		bool was_axis = self.has_axis;
+		self.has_axis = has_axis;
+		if (has_axis) self.axis = axis;
+
+		if (self.is_valid() && was_axis != has_axis)
+			reactivate_constraint(c); // distance joint <-> prismatic joint
+		else
+			self.update_params();
+	}
+
+	void
+	LinkConstraint::set_axis (coord x, coord y)
+	{
+		set_axis(Point(x, y));
+	}
+
+	void
+	LinkConstraint::set_axis (const Point& direction)
+	{
+		if (direction.x == 0 && direction.y == 0)
+			argument_error(__FILE__, __LINE__);
+
+		update_axis(this, true, direction);
+	}
+
+	void
+	LinkConstraint::clear_axis ()
+	{
+		update_axis(this, false, Point(0));
+	}
+
+	const Point&
+	LinkConstraint::axis () const
+	{
+		return get_data(*this).axis;
+	}
+
+	bool
+	LinkConstraint::has_axis () const
+	{
+		return get_data(*this).has_axis;
+	}
+
+	static void
 	update_distance (LinkConstraint* c, bool has_distance, coord distance)
 	{
-		if (distance < 0)
-			argument_error(__FILE__, __LINE__);
+		// distance is a radial length (>= 0) for a distance joint, or a signed
+		// target translation along the axis for a rail, so it is not clamped
 
 		LinkConstraintData& self = get_data(*c);
 
@@ -844,7 +950,11 @@ namespace Reflex
 			return self.distance;
 
 		if (self.is_valid() && self.world)
-			return to_coord(b2DistanceJoint_GetLength(self.b2joint), self.ppm());
+			return to_coord(
+				self.has_axis
+					?	b2PrismaticJoint_GetTargetTranslation(self.b2joint)
+					:	b2DistanceJoint_GetLength(self.b2joint),
+				self.ppm());
 
 		return 0;
 	}
@@ -862,13 +972,20 @@ namespace Reflex
 
 		if (!self.is_valid() || !self.world) return 0;
 
-		return to_coord(b2DistanceJoint_GetCurrentLength(self.b2joint), self.ppm());
+		return to_coord(
+			self.has_axis
+				?	b2PrismaticJoint_GetTranslation(self.b2joint)
+				:	b2DistanceJoint_GetCurrentLength(self.b2joint),
+			self.ppm());
 	}
 
 	static void
 	update_range (LinkConstraint* c, bool has_range, coord min, coord max)
 	{
-		if (min > max || min < 0)
+		// range bounds are radial lengths (>= 0) for a distance joint, or signed
+		// translations along the axis for a rail, so only the order is checked
+
+		if (min > max)
 			argument_error(__FILE__, __LINE__);
 
 		LinkConstraintData& self = get_data(*c);
@@ -920,9 +1037,9 @@ namespace Reflex
 	}
 
 	void
-	LinkConstraint::set_motor (coord pixel_per_second)
+	LinkConstraint::set_motor (coord pixels_per_second)
 	{
-		update_motor(this, true, pixel_per_second);
+		update_motor(this, true, pixels_per_second);
 	}
 
 	void
@@ -944,12 +1061,10 @@ namespace Reflex
 	}
 
 
-	struct RailConstraintData : public Constraint::Data
+	struct WheelConstraintData : public Constraint::Data
 	{
 
 		Point axis        = Point(0, 1);
-
-		bool  rotate      = false;
 
 		bool  has_range   = false;
 
@@ -959,7 +1074,7 @@ namespace Reflex
 
 		bool  has_motor   = false;
 
-		float motor_speed = 0;// px/sec (rail) or degree/sec (rotate: true)
+		float motor_speed = 0;// degree/sec
 
 		b2JointId create_joint (
 			b2WorldId world, b2BodyId body0, b2BodyId body1, float ppm) override
@@ -968,81 +1083,39 @@ namespace Reflex
 
 			// the declaring side goes to bodyB because the mouse joint
 			// assumes bodyA is static
-			if (rotate)
-			{
-				b2WheelJointDef def  = b2DefaultWheelJointDef();
-				def.bodyIdA          = body1;
-				def.bodyIdB          = body0;
-				def.localAnchorA     = anchor1;
-				def.localAnchorB     = anchor0;
-				def.localAxisA       = b2axis();
-				def.enableSpring     = spring > 0;
-				def.hertz            = spring;
-				def.dampingRatio     = damping;
-				def.enableLimit      = has_range;
-				def.lowerTranslation = to_b2coord(range_min, ppm);
-				def.upperTranslation = to_b2coord(range_max, ppm);
-				def.enableMotor      = has_motor;
-				def.motorSpeed       = motor_b2speed(ppm);
-				def.maxMotorTorque   = default_max_force(body0);
-				def.collideConnected = collide;
-				return b2CreateWheelJoint(world, &def);
-			}
-			else
-			{
-				b2PrismaticJointDef def = b2DefaultPrismaticJointDef();
-				def.bodyIdA             = body1;
-				def.bodyIdB             = body0;
-				def.localAnchorA        = anchor1;
-				def.localAnchorB        = anchor0;
-				def.localAxisA          = b2axis();
-				def.referenceAngle      = ref_angle;
-				def.enableSpring        = spring > 0;
-				def.hertz               = spring;
-				def.dampingRatio        = damping;
-				def.enableLimit         = has_range;
-				def.lowerTranslation    = to_b2coord(range_min, ppm);
-				def.upperTranslation    = to_b2coord(range_max, ppm);
-				def.enableMotor         = has_motor;
-				def.motorSpeed          = motor_b2speed(ppm);
-				def.maxMotorForce       = default_max_force(body0);
-				def.collideConnected    = collide;
-				return b2CreatePrismaticJoint(world, &def);
-			}
+			b2WheelJointDef def  = b2DefaultWheelJointDef();
+			def.bodyIdA          = body1;
+			def.bodyIdB          = body0;
+			def.localAnchorA     = anchor1;
+			def.localAnchorB     = anchor0;
+			def.localAxisA       = b2axis();
+			def.enableSpring     = spring > 0;
+			def.hertz            = spring;
+			def.dampingRatio     = damping;
+			def.enableLimit      = has_range;
+			def.lowerTranslation = to_b2coord(range_min, ppm);
+			def.upperTranslation = to_b2coord(range_max, ppm);
+			def.enableMotor      = has_motor;
+			def.motorSpeed       = Xot::deg2rad(motor_speed);
+			def.maxMotorTorque   = default_max_force(body0);
+			def.collideConnected = collide;
+			return b2CreateWheelJoint(world, &def);
 		}
 
 		void apply_params (float ppm) override
 		{
 			b2Joint_SetLocalAxisA(b2joint, b2axis());
-
-			if (b2Joint_GetType(b2joint) == b2_wheelJoint)
+			b2WheelJoint_EnableSpring(         b2joint, spring > 0);
+			b2WheelJoint_SetSpringHertz(       b2joint, spring);
+			b2WheelJoint_SetSpringDampingRatio(b2joint, damping);
+			b2WheelJoint_EnableLimit(          b2joint, has_range);
+			if (has_range)
 			{
-				b2WheelJoint_EnableSpring(         b2joint, spring > 0);
-				b2WheelJoint_SetSpringHertz(       b2joint, spring);
-				b2WheelJoint_SetSpringDampingRatio(b2joint, damping);
-				b2WheelJoint_EnableLimit(          b2joint, has_range);
-				if (has_range)
-				{
-					float min = to_b2coord(range_min, ppm), max = to_b2coord(range_max, ppm);
-					b2WheelJoint_SetLimits(          b2joint, min, max);
-				}
-				b2WheelJoint_EnableMotor(          b2joint, has_motor);
-				b2WheelJoint_SetMotorSpeed(        b2joint, motor_b2speed(ppm));
+				float min = to_b2coord(range_min, ppm), max = to_b2coord(range_max, ppm);
+				b2WheelJoint_SetLimits(          b2joint, min, max);
 			}
-			else
-			{
-				b2PrismaticJoint_EnableSpring(         b2joint, spring > 0);
-				b2PrismaticJoint_SetSpringHertz(       b2joint, spring);
-				b2PrismaticJoint_SetSpringDampingRatio(b2joint, damping);
-				b2PrismaticJoint_EnableLimit(          b2joint, has_range);
-				if (has_range)
-				{
-					float min = to_b2coord(range_min, ppm), max = to_b2coord(range_max, ppm);
-					b2PrismaticJoint_SetLimits(          b2joint, min, max);
-				}
-				b2PrismaticJoint_EnableMotor(          b2joint, has_motor);
-				b2PrismaticJoint_SetMotorSpeed(        b2joint, motor_b2speed(ppm));
-			}
+			b2WheelJoint_EnableMotor(          b2joint, has_motor);
+			b2WheelJoint_SetMotorSpeed(        b2joint, Xot::deg2rad(motor_speed));
 		}
 
 		b2Vec2 b2axis () const
@@ -1050,103 +1123,79 @@ namespace Reflex
 			return b2Normalize(b2Vec2(axis.x, axis.y));
 		}
 
-		float motor_b2speed (float ppm) const
-		{
-			return rotate
-				?	Xot::deg2rad(motor_speed)
-				:	to_b2coord(motor_speed, ppm);
-		}
-
-	};// RailConstraintData
+	};// WheelConstraintData
 
 
-	static RailConstraintData&
-	get_data (RailConstraint& constraint)
+	static WheelConstraintData&
+	get_data (WheelConstraint& constraint)
 	{
-		return (RailConstraintData&) *constraint.self;
+		return (WheelConstraintData&) *constraint.self;
 	}
 
-	static const RailConstraintData&
-	get_data (const RailConstraint& constraint)
+	static const WheelConstraintData&
+	get_data (const WheelConstraint& constraint)
 	{
-		return get_data(const_cast<RailConstraint&>(constraint));
+		return get_data(const_cast<WheelConstraint&>(constraint));
 	}
 
 
-	static RailConstraint_CreateFun rail_constraint_create_fun = NULL;
+	static WheelConstraint_CreateFun wheel_constraint_create_fun = NULL;
 
 	void
-	RailConstraint_set_create_fun (RailConstraint_CreateFun fun)
+	WheelConstraint_set_create_fun (WheelConstraint_CreateFun fun)
 	{
-		rail_constraint_create_fun = fun;
+		wheel_constraint_create_fun = fun;
 	}
 
-	RailConstraint*
-	RailConstraint_create ()
+	WheelConstraint*
+	WheelConstraint_create ()
 	{
-		return rail_constraint_create_fun
-			?	rail_constraint_create_fun()
-			:	new RailConstraint();
+		return wheel_constraint_create_fun
+			?	wheel_constraint_create_fun()
+			:	new WheelConstraint();
 	}
 
 
-	RailConstraint::RailConstraint ()
-	:	Super(new RailConstraintData)
+	WheelConstraint::WheelConstraint ()
+	:	Super(new WheelConstraintData)
 	{
 	}
 
-	RailConstraint::~RailConstraint ()
+	WheelConstraint::~WheelConstraint ()
 	{
 	}
 
 	void
-	RailConstraint::set_axis (coord x, coord y)
+	WheelConstraint::set_axis (coord x, coord y)
 	{
 		set_axis(Point(x, y));
 	}
 
 	void
-	RailConstraint::set_axis (const Point& direction)
+	WheelConstraint::set_axis (const Point& direction)
 	{
 		if (direction.x == 0 && direction.y == 0)
 			argument_error(__FILE__, __LINE__);
 
-		RailConstraintData& self = get_data(*this);
+		WheelConstraintData& self = get_data(*this);
 
 		self.axis = direction;
 		self.update_params();
 	}
 
 	const Point&
-	RailConstraint::axis () const
+	WheelConstraint::axis () const
 	{
 		return get_data(*this).axis;
 	}
 
-	void
-	RailConstraint::set_rotate (bool state)
-	{
-		RailConstraintData& self = get_data(*this);
-
-		if (state == self.rotate) return;
-
-		self.rotate = state;
-		if (self.is_valid()) reactivate_constraint(this);
-	}
-
-	bool
-	RailConstraint::can_rotate () const
-	{
-		return get_data(*this).rotate;
-	}
-
 	static void
-	update_range (RailConstraint* c, bool has_range, float min, float max)
+	update_range (WheelConstraint* c, bool has_range, float min, float max)
 	{
 		if (min > max)
 			argument_error(__FILE__, __LINE__);
 
-		RailConstraintData& self = get_data(*c);
+		WheelConstraintData& self = get_data(*c);
 
 		self.has_range = has_range;
 		self.range_min = min;
@@ -1155,39 +1204,39 @@ namespace Reflex
 	}
 
 	void
-	RailConstraint::set_range (coord min, coord max)
+	WheelConstraint::set_range (coord min, coord max)
 	{
 		update_range(this, true, min, max);
 	}
 
 	void
-	RailConstraint::clear_range ()
+	WheelConstraint::clear_range ()
 	{
 		update_range(this, false, 0, 0);
 	}
 
 	coord
-	RailConstraint::range_min () const
+	WheelConstraint::range_min () const
 	{
 		return get_data(*this).range_min;
 	}
 
 	coord
-	RailConstraint::range_max () const
+	WheelConstraint::range_max () const
 	{
 		return get_data(*this).range_max;
 	}
 
 	bool
-	RailConstraint::has_range () const
+	WheelConstraint::has_range () const
 	{
 		return get_data(*this).has_range;
 	}
 
 	static void
-	update_motor (RailConstraint* c, bool has_motor, float speed)
+	update_motor (WheelConstraint* c, bool has_motor, float speed)
 	{
-		RailConstraintData& self = get_data(*c);
+		WheelConstraintData& self = get_data(*c);
 
 		self.has_motor   = has_motor;
 		self.motor_speed = speed;
@@ -1195,25 +1244,25 @@ namespace Reflex
 	}
 
 	void
-	RailConstraint::set_motor (float speed)
+	WheelConstraint::set_motor (float degrees_per_second)
 	{
-		update_motor(this, true, speed);
+		update_motor(this, true, degrees_per_second);
 	}
 
 	void
-	RailConstraint::clear_motor ()
+	WheelConstraint::clear_motor ()
 	{
 		update_motor(this, false, 0);
 	}
 
 	float
-	RailConstraint::motor () const
+	WheelConstraint::motor () const
 	{
 		return get_data(*this).motor_speed;
 	}
 
 	bool
-	RailConstraint::has_motor () const
+	WheelConstraint::has_motor () const
 	{
 		return get_data(*this).has_motor;
 	}

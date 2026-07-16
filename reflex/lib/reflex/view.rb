@@ -126,8 +126,8 @@ module Reflex
       pin.link(*args, **options, &block)
     end
 
-    def rail(*args, **options, &block)
-      pin.rail(*args, **options, &block)
+    def wheel(*args, **options, &block)
+      pin.wheel(*args, **options, &block)
     end
 
     def chase(*args, **options, &block)

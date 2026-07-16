@@ -15,7 +15,7 @@ RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::SnapConstraint)
 
 RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::LinkConstraint)
 
-RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::RailConstraint)
+RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::WheelConstraint)
 
 RUCY_DECLARE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ChaseConstraint)
 
@@ -37,8 +37,8 @@ namespace Reflex
 	REFLEX_EXPORT Rucy::Class link_constraint_class ();
 	// class Reflex::LinkConstraint
 
-	REFLEX_EXPORT Rucy::Class rail_constraint_class ();
-	// class Reflex::RailConstraint
+	REFLEX_EXPORT Rucy::Class wheel_constraint_class ();
+	// class Reflex::WheelConstraint
 
 	REFLEX_EXPORT Rucy::Class chase_constraint_class ();
 	// class Reflex::ChaseConstraint
@@ -70,9 +70,9 @@ namespace Rucy
 	}
 
 	template <> inline Class
-	get_ruby_class<Reflex::RailConstraint> ()
+	get_ruby_class<Reflex::WheelConstraint> ()
 	{
-		return Reflex::rail_constraint_class();
+		return Reflex::wheel_constraint_class();
 	}
 
 	template <> inline Class

@@ -15,8 +15,8 @@ module Reflex
       setup__ link!(*args), options, block
     end
 
-    def rail(*args, **options, &block)
-      setup__ rail!(*args), options, block
+    def wheel(*args, **options, &block)
+      setup__ wheel!(*args), options, block
     end
 
     def chase(*args, **options, &block)

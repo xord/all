@@ -54,10 +54,10 @@ RUCY_DEFN(link)
 RUCY_END
 
 static
-RUCY_DEFN(rail)
+RUCY_DEFN(wheel)
 {
 	CHECK;
-	return value(THIS->rail(to<Reflex::Pin>(argc, argv)));
+	return value(THIS->wheel(to<Reflex::Pin>(argc, argv)));
 }
 RUCY_END
 
@@ -100,7 +100,7 @@ Init_reflex_pin ()
 	cPin.define_private_method("initialize_copy", initialize_copy);
 	cPin.define_private_method("snap!",  snap);
 	cPin.define_private_method("link!",  link);
-	cPin.define_private_method("rail!",  rail);
+	cPin.define_private_method("wheel!", wheel);
 	cPin.define_private_method("chase!", chase);
 	cPin.define_method("view",     get_view);
 	cPin.define_method("position", get_position);

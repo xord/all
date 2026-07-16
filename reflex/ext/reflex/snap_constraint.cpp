@@ -61,14 +61,14 @@ RUCY_DEF0(has_angle)
 RUCY_END
 
 static
-RUCY_DEF1(set_motor, degree_per_second)
+RUCY_DEF1(set_motor, degrees_per_second)
 {
 	CHECK;
 
-	if (degree_per_second.is_nil())
+	if (degrees_per_second.is_nil())
 		THIS->clear_motor();
 	else
-		THIS->set_motor(to<float>(degree_per_second));
+		THIS->set_motor(to<float>(degrees_per_second));
 }
 RUCY_END
 

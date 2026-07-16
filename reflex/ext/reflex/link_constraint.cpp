@@ -1,6 +1,7 @@
 #include "reflex/ruby/constraint.h"
 
 
+#include <rays/ruby/point.h>
 #include "reflex/exception.h"
 #include "defs.h"
 
@@ -17,6 +18,25 @@ RUCY_DEF_ALLOC(alloc, klass)
 {
 	Reflex::reflex_error(
 		__FILE__, __LINE__, "can not instantiate LinkConstraint class");
+}
+RUCY_END
+
+static
+RUCY_DEFN(set_axis)
+{
+	CHECK;
+	if (argc == 1 && argv[0].is_nil())
+		THIS->clear_axis();
+	else
+		THIS->set_axis(to<Rays::Point>(argc, argv));
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_axis)
+{
+	CHECK;
+	return THIS->has_axis() ? value(THIS->axis()) : nil();
 }
 RUCY_END
 
@@ -96,13 +116,13 @@ RUCY_DEF0(has_range)
 RUCY_END
 
 static
-RUCY_DEF1(set_motor, pixel_per_second)
+RUCY_DEF1(set_motor, pixels_per_second)
 {
 	CHECK;
-	if (pixel_per_second.is_nil())
+	if (pixels_per_second.is_nil())
 		THIS->clear_motor();
 	else
-		THIS->set_motor(to<coord>(pixel_per_second));
+		THIS->set_motor(to<coord>(pixels_per_second));
 }
 RUCY_END
 
@@ -124,6 +144,8 @@ Init_reflex_link_constraint ()
 
 	cLinkConstraint = mReflex.define_class("LinkConstraint", Reflex::constraint_class());
 	cLinkConstraint.define_alloc_func(alloc);
+	cLinkConstraint.define_method("axis=", set_axis);
+	cLinkConstraint.define_method("axis",  get_axis);
 	cLinkConstraint.define_method(        "distance=", set_distance);
 	cLinkConstraint.define_method(        "distance",  get_distance);
 	cLinkConstraint.define_method("current_distance", current_distance);

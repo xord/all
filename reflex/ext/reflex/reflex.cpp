@@ -30,10 +30,10 @@ create_link_constraint ()
 	return new Reflex::RubyConstraint<Reflex::LinkConstraint>();
 }
 
-static Reflex::RailConstraint*
-create_rail_constraint ()
+static Reflex::WheelConstraint*
+create_wheel_constraint ()
 {
-	return new Reflex::RubyConstraint<Reflex::RailConstraint>();
+	return new Reflex::RubyConstraint<Reflex::WheelConstraint>();
 }
 
 static Reflex::ChaseConstraint*
@@ -64,7 +64,7 @@ RUCY_DEF0(init)
 	Reflex::         Window_set_create_root_view_fun(create_root_view);
 	Reflex:: SnapConstraint_set_create_fun(create_snap_constraint);
 	Reflex:: LinkConstraint_set_create_fun(create_link_constraint);
-	Reflex:: RailConstraint_set_create_fun(create_rail_constraint);
+	Reflex::WheelConstraint_set_create_fun(create_wheel_constraint);
 	Reflex::ChaseConstraint_set_create_fun(create_chase_constraint);
 	Reflex::          Timer_set_create_fun(create_timer);
 	Reflex::           MIDI_set_create_fun(create_midi);
@@ -79,7 +79,7 @@ RUCY_DEF0(fin)
 	Reflex::         Window_set_create_root_view_fun(NULL);
 	Reflex:: SnapConstraint_set_create_fun(NULL);
 	Reflex:: LinkConstraint_set_create_fun(NULL);
-	Reflex:: RailConstraint_set_create_fun(NULL);
+	Reflex::WheelConstraint_set_create_fun(NULL);
 	Reflex::ChaseConstraint_set_create_fun(NULL);
 	Reflex::          Timer_set_create_fun(NULL);
 	Reflex::           MIDI_set_create_fun(NULL);

@@ -5,7 +5,7 @@ require 'reflex/constraint'
 module Reflex
 
 
-  class RailConstraint < Constraint
+  class WheelConstraint < Constraint
 
     def range=(range)
       case range
@@ -20,9 +20,9 @@ module Reflex
       has_range! ? Range.new(range_min!, range_max!) : nil
     end
 
-    universal_accessor :axis, :range, :motor, rotate: {reader: :rotate?}
+    universal_accessor :axis, :range, :motor
 
-  end# RailConstraint
+  end# WheelConstraint
 
 
 end# Reflex

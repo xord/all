@@ -39,7 +39,7 @@ void Init_reflex_pin ();
 void Init_reflex_constraint ();
 void Init_reflex_snap_constraint ();
 void Init_reflex_link_constraint ();
-void Init_reflex_rail_constraint ();
+void Init_reflex_wheel_constraint ();
 void Init_reflex_chase_constraint ();
 
 void Init_reflex_application ();
@@ -98,7 +98,7 @@ Init_reflex_ext ()
 	Init_reflex_constraint();
 	Init_reflex_snap_constraint();
 	Init_reflex_link_constraint();
-	Init_reflex_rail_constraint();
+	Init_reflex_wheel_constraint();
 	Init_reflex_chase_constraint();
 
 	Init_reflex_application();
