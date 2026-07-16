@@ -1,35 +1,42 @@
-# RubySketch - A game engine based on the Processing API
+<h1 align="center">RubySketch</h1>
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/rubysketch)
-![License](https://img.shields.io/github/license/xord/rubysketch)
-![Build Status](https://github.com/xord/rubysketch/actions/workflows/test.yml/badge.svg)
-![Gem Version](https://badge.fury.io/rb/rubysketch.svg)
+<p align="center">
+  <b>A 2D game engine based on the Processing API — sprites, physics, sound, MML, and easing on top of the sketch loop</b>
+</p>
 
-## ⚠️  Notice
+<p align="center">
+  <a href="https://deepwiki.com/xord/rubysketch"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <img src="https://img.shields.io/github/license/xord/rubysketch" alt="License">
+  <img src="https://github.com/xord/rubysketch/actions/workflows/test.yml/badge.svg" alt="Build Status">
+  <img src="https://badge.fury.io/rb/rubysketch.svg" alt="Gem Version">
+</p>
 
-This repository is a read-only mirror of our monorepo.
-We do not accept pull requests or direct contributions here.
+<p align="center">
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-whats-included">What's Included</a> •
+  <a href="#%EF%B8%8F-development">Development</a> •
+  <a href="#-license">License</a>
+</p>
 
-### 🔄 Where to Contribute?
+---
 
-All development happens in our [xord/all](https://github.com/xord/all) monorepo, which contains all our main libraries.
-If you'd like to contribute, please submit your changes there.
+> [!IMPORTANT]
+> **This repository is a read-only mirror.** All development happens in the
+> [xord/all](https://github.com/xord/all) monorepo — please open issues and
+> pull requests there, not here.
+> See the [Contribution Guidelines](./CONTRIBUTING.md) for details.
 
-For more details, check out our [Contribution Guidelines](./CONTRIBUTING.md).
+## ✨ Features
 
-Thanks for your support! 🙌
+- **The Processing sketch loop, game-flavored** — takes the [Processing for CRuby](https://github.com/xord/processing) loop — `setup` / `draw` / `mousePressed` / ... — and layers a game-oriented vocabulary on top of it
+- **Sprites** — `createSprite` with position, velocity, angle, image, draw block, and per-sprite mouse events
+- **World-based 2D physics** — via Box2D: gravity, dynamic / static bodies, restitution, density, friction, fixture shapes
+- **Sound and MML** — `Sound` sample playback plus an `MML` (Music Macro Language) compiler that turns strings into playable sounds
+- **Animation timers and easing** — `animate`, `setInterval`, `setTimeout`, and a small library of easing curves
+- **MIDI input** — `notePressed` / `noteReleased` / `controlChange` callbacks forwarded from Reflex
 
-## 🚀 About
-
-**RubySketch** is a 2D game engine for Ruby. It takes the [Processing for CRuby](https://github.com/xord/processing) sketch loop — `setup` / `draw` / `mousePressed` / ... — and layers a game-oriented vocabulary on top of it: `Sprite`, world-based 2D physics (via Box2D), `Sound` and `MML` (Music Macro Language) for audio, animation timers (`animate`, `setInterval`, `setTimeout`), and a small library of easing curves.
-
-## 📋 Requirements
-
-- Ruby **3.0.0** or later
-- All the runtime requirements of [Reflex](https://github.com/xord/reflex) (Rays, Rucy, Xot, plus the platform GUI backend — AppKit / UIKit / Win32 / SDL2 — and OpenGL)
-- The dependent gems are installed automatically: `xot`, `rucy`, `beeps`, `rays`, `reflexion`, `processing`
-
-There is no native C/C++ extension in this gem; the heavy lifting is done by the underlying gems' extensions.
+**RubySketch** is a 2D game engine for Ruby, sitting one layer above Processing for CRuby in the `xord/*` stack.
 
 ## 📦 Installation
 
@@ -48,75 +55,15 @@ Or install it directly:
 $ gem install rubysketch
 ```
 
-## 📚 What's Provided
+### Requirements
 
-`require 'rubysketch'` and `using RubySketch` make the whole **Processing API** ([camelCase](https://github.com/xord/processing#-whats-provided)) plus the RubySketch additions available as top-level methods in your file. As with Processing, a window opens and the sketch runs automatically on file exit; you do not need an explicit `start` call.
+- Ruby **3.0.0** or later
+- All the runtime requirements of [Reflex](https://github.com/xord/reflex) (Rays, Rucy, Xot, plus the platform GUI backend — AppKit / UIKit / Win32 / SDL2 — and OpenGL)
+- The dependent gems are installed automatically: `xot`, `rucy`, `beeps`, `rays`, `reflexion`, `processing`
 
-`using RubySketch(snake_case: true)` adds snake_case aliases (`create_sprite`, `set_interval`, ...) alongside the camelCase originals.
+There is no native C/C++ extension in this gem; the heavy lifting is done by the underlying gems' extensions.
 
-### On top of Processing, RubySketch adds:
-
-#### Sprites — `RubySketch::Sprite`
-
-`createSprite` returns a `Sprite` whose position, size, angle, velocity, image, offset, pivot, shape, draw block, and per-sprite mouse events you can drive directly.
-
-| Capability                | API                                                                                |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| Position / size           | `pos`, `x`, `y`, `z`, `left`, `top`, `right`, `bottom`, `center`, `size`, `width`, `height` |
-| Motion                    | `velocity`, `vx`, `vy`, `angle`, `fixAngle`, `pivot`                                |
-| Appearance                | `image`, `offset` (texture offset), draw block                                      |
-| Physics                   | `dynamic = true`, `static = true`, `restitution`, `density`, `friction`, `shape`    |
-| Interaction               | `mousePressed`, `mouseReleased`, `mouseMoved`, `mouseDragged`, `mouseClicked` (per-sprite) |
-| Lifecycle                 | `update { ... }`, `draw { ... }`, `show`, `hide`, `capture = true/false`            |
-
-Sprites can be sorted by `z` and drawn in bulk via the top-level `sprite(*sprites)` call.
-
-#### 2D physics
-
-| API                              | Purpose                                              |
-| -------------------------------- | ---------------------------------------------------- |
-| `gravity(x, y)` / `gravity(vec)` | Set the gravity of the active world                  |
-| `Sprite#shape =`                 | Box2D fixture shape (rect, ellipse, polygon)         |
-
-#### Sound
-
-| API                              | Purpose                                              |
-| -------------------------------- | ---------------------------------------------------- |
-| `loadSound(path)`                | Load a sample (WAV / AIFF / ...) into a `RubySketch::Sound` |
-| `Sound#play(gain:)`              | Play; returns a handle exposing `stop`, `playing?`, `seconds` |
-| `Sound#stop`                     | Stop all instances                                   |
-
-#### Music Macro Language (MML)
-
-A tiny MML compiler (`RubySketch::MML`) that turns a string like `"t120 l4 cdefgab>c"` into a `RubySketch::Sound`.
-
-- `MML.compile(str, streaming = false)` — compile and return a `Sound` you can play later.
-- `MML.play(str)` — shortcut for `compile(str).play`.
-
-#### Animation and timers
-
-| API                                   | Purpose                                                                          |
-| ------------------------------------- | -------------------------------------------------------------------------------- |
-| `setTimeout(seconds) { ... }`         | Run a block once after a delay; returns an id usable with `clearTimer`           |
-| `setInterval(seconds, now:) { ... }`  | Run a block every N seconds                                                      |
-| `clearTimer(id)`                      | Cancel a timer                                                                   |
-| `animate(seconds, easing:) { ... }`   | Drive a block from 0.0 to 1.0 over time, optionally with an easing curve         |
-| `animateValue(seconds, from:, to:, easing:) { ... }` | Same but yields the interpolated value                                 |
-
-Easing names: `linear`, `sineIn` / `sineOut` / `sineInOut`, `quadIn` / ... / `cubicIn` / ..., `expoIn` / `expoOut` / `expoInOut`, `circIn` / ..., `backIn` / `backOut` / `backInOut`, `elasticIn` / `elasticOut` / `elasticInOut`, `bounceIn` / `bounceOut` / `bounceInOut`. See `lib/rubysketch/easings.rb`.
-
-#### MIDI input (forwarded from Reflex)
-
-`notePressed`, `noteReleased`, `controlChange` blocks; `noteNumber`, `noteFrequency`, `noteVelocity`, `controllerIndex`, `controllerValue` accessors during a callback.
-
-#### Miscellaneous
-
-- `vibrate` (mobile)
-- `Vector`, `Image`, `WheelEvent` — re-exported from Processing for convenience
-
-## 💡 Usage
-
-### Hello, RubySketch
+## 🚀 Quick Start
 
 ```ruby
 require 'rubysketch'
@@ -128,6 +75,10 @@ draw do
   text 'hello, rubysketch!', 10, 100
 end
 ```
+
+Save as `hello.rb`, then `ruby hello.rb`. A window opens and the sketch runs automatically.
+
+## 💡 Examples
 
 ### Sprites and per-sprite input
 
@@ -214,6 +165,78 @@ end
 ```
 
 See [`examples/`](./examples) for `hello.rb`, `sprite.rb`, `physics.rb`, and `toon.rb`.
+
+## 📚 What's Included
+
+`require 'rubysketch'` and `using RubySketch` make the whole **Processing API** ([camelCase](https://github.com/xord/processing#-whats-included)) plus the RubySketch additions available as top-level methods in your file. As with Processing, a window opens and the sketch runs automatically on file exit; you do not need an explicit `start` call.
+
+`using RubySketch(snake_case: true)` adds snake_case aliases (`create_sprite`, `set_interval`, ...) alongside the camelCase originals.
+
+### On top of Processing, RubySketch adds:
+
+#### Sprites — `RubySketch::Sprite`
+
+`createSprite` returns a `Sprite` whose position, size, angle, velocity, image, offset, pivot, shape, draw block, and per-sprite mouse events you can drive directly.
+
+| Capability                | API                                                                                |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| Position / size           | `pos`, `x`, `y`, `z`, `left`, `top`, `right`, `bottom`, `center`, `size`, `width`, `height` |
+| Motion                    | `velocity`, `vx`, `vy`, `angle`, `fixAngle`, `pivot`                                |
+| Appearance                | `image`, `offset` (texture offset), draw block                                      |
+| Physics                   | `dynamic = true`, `static = true`, `restitution`, `density`, `friction`, `shape`    |
+| Interaction               | `mousePressed`, `mouseReleased`, `mouseMoved`, `mouseDragged`, `mouseClicked` (per-sprite) |
+| Lifecycle                 | `update { ... }`, `draw { ... }`, `show`, `hide`, `capture = true/false`            |
+
+Sprites can be sorted by `z` and drawn in bulk via the top-level `sprite(*sprites)` call.
+
+#### 2D physics
+
+| API                              | Purpose                                              |
+| -------------------------------- | ---------------------------------------------------- |
+| `gravity(x, y)` / `gravity(vec)` | Set the gravity of the active world                  |
+| `Sprite#shape =`                 | Box2D fixture shape (rect, ellipse, polygon)         |
+
+#### Sound
+
+| API                              | Purpose                                              |
+| -------------------------------- | ---------------------------------------------------- |
+| `loadSound(path)`                | Load a sample (WAV / AIFF / ...) into a `RubySketch::Sound` |
+| `Sound#play(gain:)`              | Play; returns a handle exposing `stop`, `playing?`, `seconds` |
+| `Sound#stop`                     | Stop all instances                                   |
+
+#### Music Macro Language (MML)
+
+A tiny MML compiler (`RubySketch::MML`) that turns a string like `"t120 l4 cdefgab>c"` into a `RubySketch::Sound`.
+
+- `MML.compile(str, streaming = false)` — compile and return a `Sound` you can play later.
+- `MML.play(str)` — shortcut for `compile(str).play`.
+
+#### Animation and timers
+
+| API                                   | Purpose                                                                          |
+| ------------------------------------- | -------------------------------------------------------------------------------- |
+| `setTimeout(seconds) { ... }`         | Run a block once after a delay; returns an id usable with `clearTimer`           |
+| `setInterval(seconds, now:) { ... }`  | Run a block every N seconds                                                      |
+| `clearTimer(id)`                      | Cancel a timer                                                                   |
+| `animate(seconds, easing:) { ... }`   | Drive a block from 0.0 to 1.0 over time, optionally with an easing curve         |
+| `animateValue(seconds, from:, to:, easing:) { ... }` | Same but yields the interpolated value                                 |
+
+Easing names: `linear`, `sineIn` / `sineOut` / `sineInOut`, `quadIn` / ... / `cubicIn` / ..., `expoIn` / `expoOut` / `expoInOut`, `circIn` / ..., `backIn` / `backOut` / `backInOut`, `elasticIn` / `elasticOut` / `elasticInOut`, `bounceIn` / `bounceOut` / `bounceInOut`. See `lib/rubysketch/easings.rb`.
+
+#### MIDI input (forwarded from Reflex)
+
+`notePressed`, `noteReleased`, `controlChange` blocks; `noteNumber`, `noteFrequency`, `noteVelocity`, `controllerIndex`, `controllerValue` accessors during a callback.
+
+#### Miscellaneous
+
+- `vibrate` (mobile)
+- `Vector`, `Image`, `WheelEvent` — re-exported from Processing for convenience
+
+## 🧩 Part of the xord family
+
+RubySketch is the game-engine layer of the `xord/*` stack — built on Processing for CRuby, and the runtime that [Reight](https://github.com/xord/reight) builds on:
+
+[`xot`](https://github.com/xord/xot) → [`rucy`](https://github.com/xord/rucy) → [`beeps`](https://github.com/xord/beeps) / [`rays`](https://github.com/xord/rays) → [`reflex`](https://github.com/xord/reflex) → [`processing`](https://github.com/xord/processing) → `rubysketch` → [`reight`](https://github.com/xord/reight)
 
 ## 🛠️ Development
 

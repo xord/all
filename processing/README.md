@@ -1,39 +1,47 @@
-# Processing for CRuby - A Processing-compatible creative coding framework
+<h1 align="center">Processing for CRuby</h1>
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/processing)
-![License](https://img.shields.io/github/license/xord/processing)
-![Build Status](https://github.com/xord/processing/actions/workflows/test.yml/badge.svg)
-![Gem Version](https://badge.fury.io/rb/processing.svg)
+<p align="center">
+  <b>A Processing-compatible creative coding framework — the Processing API on CRuby, rendered with OpenGL</b>
+</p>
 
-## ⚠️  Notice
+<p align="center">
+  <a href="https://deepwiki.com/xord/processing"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <img src="https://img.shields.io/github/license/xord/processing" alt="License">
+  <img src="https://github.com/xord/processing/actions/workflows/test.yml/badge.svg" alt="Build Status">
+  <img src="https://badge.fury.io/rb/processing.svg" alt="Gem Version">
+</p>
 
-This repository is a read-only mirror of our monorepo.
-We do not accept pull requests or direct contributions here.
+<p align="center">
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-whats-included">What's Included</a> •
+  <a href="#%EF%B8%8F-development">Development</a> •
+  <a href="#-license">License</a>
+</p>
 
-### 🔄 Where to Contribute?
+---
 
-All development happens in our [xord/all](https://github.com/xord/all) monorepo, which contains all our main libraries.
-If you'd like to contribute, please submit your changes there.
+> [!IMPORTANT]
+> **This repository is a read-only mirror.** All development happens in the
+> [xord/all](https://github.com/xord/all) monorepo — please open issues and
+> pull requests there, not here.
+> See the [Contribution Guidelines](./CONTRIBUTING.md) for details.
 
-For more details, check out our [Contribution Guidelines](./CONTRIBUTING.md).
+## ✨ Features
 
-Thanks for your support! 🙌
+- **The Processing API in plain Ruby** — write a `setup do ... end` and a `draw do ... end` at the top of a Ruby file, run it, and a window appears — just like a `.pde` sketch
+- **Pure Ruby, zero boilerplate** — a thin layer that maps Processing's vocabulary onto the underlying engine (windowing, drawing, input, MIDI, camera, physics); the sketch runs automatically when the file exits, no explicit `start` call needed
+- **OpenGL rendering** — all drawing goes through the `xord/*` family's own OpenGL 2D drawing engine ([Rays](https://github.com/xord/rays), via [Reflex](https://github.com/xord/reflex))
+- **camelCase or snake_case** — the standard Processing-compatible style, with optional Ruby-idiomatic aliases
+- **The full sketching toolbox** — shapes, transforms, text, images (from file *or* URL), `PVector` math, off-screen buffers, SVG shapes, GLSL shaders, and live camera capture
 
-## 🚀 About
+**Processing for CRuby** is an independent, OpenGL-based Ruby implementation of the [Processing](https://processing.org/) API, built on top of the `xord/*` stack.
 
-**Processing for CRuby** is an independent, OpenGL-based Ruby implementation of the [Processing](https://processing.org/) API. It is **not** affiliated with the original Processing project, and it is not the JRuby / JOGL-based [`ruby-processing`](https://github.com/jashkenas/ruby-processing) either — this gem runs on CRuby (MRI), and all rendering goes through the `xord/*` family's own OpenGL 2D drawing engine ([Rays](https://github.com/xord/rays), via [Reflex](https://github.com/xord/reflex)).
+> [!NOTE]
+> This gem is **not** affiliated with the original Processing project, and it is not the JRuby / JOGL-based [`ruby-processing`](https://github.com/jashkenas/ruby-processing) either — this gem runs on CRuby (MRI).
 
-Write a `setup do ... end` and a `draw do ... end` at the top of a Ruby file, run it, and a window appears — just like a `.pde` sketch. This gem is the thin, pure-Ruby layer that maps Processing's vocabulary onto the underlying engine (windowing, drawing, input, MIDI, camera, physics).
-
+> [!TIP]
 > Looking for the same API on mobile / with a game-engine flavor? See [RubySketch](https://github.com/xord/rubysketch).
-
-## 📋 Requirements
-
-- Ruby **3.0.0** or later
-- All the runtime requirements of [Reflex](https://github.com/xord/reflex) (which in turn brings Rays, Rucy, Xot, plus the platform GUI backend — AppKit / UIKit / Win32 / SDL2 — and OpenGL)
-- The dependent gems are installed automatically: `rexml`, `xot`, `rucy`, `rays`, `reflexion`
-
-There is no native C/C++ extension in this gem; the heavy lifting is done by the dependencies' extensions.
 
 ## 📦 Installation
 
@@ -52,49 +60,15 @@ Or install it directly:
 $ gem install processing
 ```
 
-## 📚 What's Provided
+### Requirements
 
-`require 'processing'` exposes a `Processing` module that, when activated, makes the Processing API available as top-level methods inside the current file. There are two ways to activate it.
+- Ruby **3.0.0** or later
+- All the runtime requirements of [Reflex](https://github.com/xord/reflex) (which in turn brings Rays, Rucy, Xot, plus the platform GUI backend — AppKit / UIKit / Win32 / SDL2 — and OpenGL)
+- The dependent gems are installed automatically: `rexml`, `xot`, `rucy`, `rays`, `reflexion`
 
-### Two ways to use the gem
+There is no native C/C++ extension in this gem; the heavy lifting is done by the dependencies' extensions.
 
-| Style                          | How                                                                                       |
-| ------------------------------ | ----------------------------------------------------------------------------------------- |
-| **Refinement, camelCase**      | `require 'processing'` + `using Processing` — the standard, Processing-compatible style   |
-| **Refinement, snake_case too** | `require 'processing'` + `using Processing(snake_case: true)` — adds Ruby-idiomatic aliases (`color_mode`, `ellipse_mode`, ...) alongside the camelCase originals |
-
-In both cases, the framework opens a window for you and runs the sketch automatically when the file exits. You do not need an explicit `start` call.
-
-### Core API
-
-| Area              | Examples                                                                                            |
-| ----------------- | --------------------------------------------------------------------------------------------------- |
-| Sketch lifecycle  | `setup`, `draw`, `windowResized`, `windowMoved`                                                     |
-| State             | `size`, `frameRate`, `frameCount`, `width`, `height`, `pixelDensity`, `noLoop` / `loop_` / `redraw` |
-| Color & state     | `background`, `fill`, `stroke`, `noFill`, `noStroke`, `strokeWeight`, `colorMode`, `blendMode`      |
-| Shapes            | `point`, `line`, `rect`, `square`, `triangle`, `quad`, `ellipse`, `circle`, `arc`, `curve`, `bezier`, `beginShape` / `endShape` / `vertex` |
-| Transforms        | `push` / `pop`, `pushMatrix` / `popMatrix`, `translate`, `rotate`, `scale`, `shearX`, `shearY`      |
-| Text              | `text`, `textSize`, `textFont`, `textAlign`, `textWidth`, `loadFont`                                |
-| Images            | `image`, `loadImage` (file path *or* URL), `createImage`, `tint`, `noTint`                          |
-| Vectors & math    | `PVector`, `createVector`, `random`, `noise`, `map`, `lerp`, `dist`, `radians`, `degrees`           |
-| Input             | `mousePressed`, `mouseReleased`, `mouseMoved`, `mouseDragged`, `mouseClicked`, `doubleClicked`, `mouseWheel`, `keyPressed`, `keyReleased`, `keyTyped`, `touchStarted` / `touchEnded` / `touchMoved`, `motion` |
-| Live state        | `mouseX`, `mouseY`, `pmouseX`, `pmouseY`, `key`, `keyCode`, `touches`                               |
-| Off-screen buffer | `createGraphics` → a `Graphics` object that shares the same drawing API                             |
-| Shapes / SVG      | `createShape`, `loadShape` (SVG)                                                                    |
-| Shaders           | `loadShader`, `shader`, `resetShader` — GLSL shaders go straight to the OpenGL pipeline             |
-| Camera            | `createCapture` — live camera capture via `Rays::Camera`                                            |
-
-### Top-level constants
-
-The familiar Processing constants are defined: `RGB`, `HSB`, `RADIANS`, `DEGREES`, `CORNER`, `CORNERS`, `CENTER`, `RADIUS`, `LEFT`, `RIGHT`, `TOP`, `BOTTOM`, `BASELINE`, `BLEND`, `ADD`, `MULTIPLY`, `SCREEN`, ...
-
-### Internal API convention
-
-Methods ending in `__` (e.g. `init__`, `beginDraw__`, `@context__`) are framework internals and are deliberately excluded from the refinement-exposed top-level method set, so they will not collide with names in your sketch.
-
-## 💡 Usage
-
-### Hello, world
+## 🚀 Quick Start
 
 ```ruby
 require 'processing'
@@ -108,6 +82,8 @@ end
 ```
 
 Save as `hello.rb`, then `ruby hello.rb`. A 500 × 500 window opens automatically.
+
+## 💡 Examples
 
 ### `setup` and `draw`
 
@@ -207,6 +183,52 @@ end
 ```
 
 More examples live in [`examples/`](./examples) — `breakout.rb`, `camera.rb`, `clock.rb`, `delay_camera.rb`, `filter.rb`, `image.rb`, `shake.rb`, `shapes.rb`.
+
+## 📚 What's Included
+
+`require 'processing'` exposes a `Processing` module that, when activated, makes the Processing API available as top-level methods inside the current file. There are two ways to activate it.
+
+### Two ways to use the gem
+
+| Style                          | How                                                                                       |
+| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| **Refinement, camelCase**      | `require 'processing'` + `using Processing` — the standard, Processing-compatible style   |
+| **Refinement, snake_case too** | `require 'processing'` + `using Processing(snake_case: true)` — adds Ruby-idiomatic aliases (`color_mode`, `ellipse_mode`, ...) alongside the camelCase originals |
+
+In both cases, the framework opens a window for you and runs the sketch automatically when the file exits. You do not need an explicit `start` call.
+
+### Core API
+
+| Area              | Examples                                                                                            |
+| ----------------- | --------------------------------------------------------------------------------------------------- |
+| Sketch lifecycle  | `setup`, `draw`, `windowResized`, `windowMoved`                                                     |
+| State             | `size`, `frameRate`, `frameCount`, `width`, `height`, `pixelDensity`, `noLoop` / `loop_` / `redraw` |
+| Color & state     | `background`, `fill`, `stroke`, `noFill`, `noStroke`, `strokeWeight`, `colorMode`, `blendMode`      |
+| Shapes            | `point`, `line`, `rect`, `square`, `triangle`, `quad`, `ellipse`, `circle`, `arc`, `curve`, `bezier`, `beginShape` / `endShape` / `vertex` |
+| Transforms        | `push` / `pop`, `pushMatrix` / `popMatrix`, `translate`, `rotate`, `scale`, `shearX`, `shearY`      |
+| Text              | `text`, `textSize`, `textFont`, `textAlign`, `textWidth`, `loadFont`                                |
+| Images            | `image`, `loadImage` (file path *or* URL), `createImage`, `tint`, `noTint`                          |
+| Vectors & math    | `PVector`, `createVector`, `random`, `noise`, `map`, `lerp`, `dist`, `radians`, `degrees`           |
+| Input             | `mousePressed`, `mouseReleased`, `mouseMoved`, `mouseDragged`, `mouseClicked`, `doubleClicked`, `mouseWheel`, `keyPressed`, `keyReleased`, `keyTyped`, `touchStarted` / `touchEnded` / `touchMoved`, `motion` |
+| Live state        | `mouseX`, `mouseY`, `pmouseX`, `pmouseY`, `key`, `keyCode`, `touches`                               |
+| Off-screen buffer | `createGraphics` → a `Graphics` object that shares the same drawing API                             |
+| Shapes / SVG      | `createShape`, `loadShape` (SVG)                                                                    |
+| Shaders           | `loadShader`, `shader`, `resetShader` — GLSL shaders go straight to the OpenGL pipeline             |
+| Camera            | `createCapture` — live camera capture via `Rays::Camera`                                            |
+
+### Top-level constants
+
+The familiar Processing constants are defined: `RGB`, `HSB`, `RADIANS`, `DEGREES`, `CORNER`, `CORNERS`, `CENTER`, `RADIUS`, `LEFT`, `RIGHT`, `TOP`, `BOTTOM`, `BASELINE`, `BLEND`, `ADD`, `MULTIPLY`, `SCREEN`, ...
+
+### Internal API convention
+
+Methods ending in `__` (e.g. `init__`, `beginDraw__`, `@context__`) are framework internals and are deliberately excluded from the refinement-exposed top-level method set, so they will not collide with names in your sketch.
+
+## 🧩 Part of the xord family
+
+Processing for CRuby is the creative-coding layer of the `xord/*` stack — all rendering goes through Rays via Reflex, and RubySketch and Reight build on top of it:
+
+[`xot`](https://github.com/xord/xot) → [`rucy`](https://github.com/xord/rucy) → [`beeps`](https://github.com/xord/beeps) / [`rays`](https://github.com/xord/rays) → [`reflex`](https://github.com/xord/reflex) → `processing` → [`rubysketch`](https://github.com/xord/rubysketch) → [`reight`](https://github.com/xord/reight)
 
 ## 🛠️ Development
 

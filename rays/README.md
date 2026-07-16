@@ -1,31 +1,70 @@
-# Rays - A 2D drawing engine on OpenGL
+<h1 align="center">Rays</h1>
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/rays)
-![License](https://img.shields.io/github/license/xord/rays)
-![Build Status](https://github.com/xord/rays/actions/workflows/test.yml/badge.svg)
-![Gem Version](https://badge.fury.io/rb/rays.svg)
+<p align="center">
+  <b>A hardware-accelerated 2D drawing engine for Ruby, built on OpenGL</b>
+</p>
 
-## ⚠️  Notice
+<p align="center">
+  <a href="https://deepwiki.com/xord/rays"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <img src="https://img.shields.io/github/license/xord/rays" alt="License">
+  <img src="https://github.com/xord/rays/actions/workflows/test.yml/badge.svg" alt="Build Status">
+  <img src="https://badge.fury.io/rb/rays.svg" alt="Gem Version">
+</p>
 
-This repository is a read-only mirror of our monorepo.
-We do not accept pull requests or direct contributions here.
+<p align="center">
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-whats-included">What's Included</a> •
+  <a href="#%EF%B8%8F-development">Development</a> •
+  <a href="#-license">License</a>
+</p>
 
-### 🔄 Where to Contribute?
+---
 
-All development happens in our [xord/all](https://github.com/xord/all) monorepo, which contains all our main libraries.
-If you'd like to contribute, please submit your changes there.
+> [!IMPORTANT]
+> **This repository is a read-only mirror.** All development happens in the
+> [xord/all](https://github.com/xord/all) monorepo — please open issues and
+> pull requests there, not here.
+> See the [Contribution Guidelines](./CONTRIBUTING.md) for details.
 
-For more details, check out our [Contribution Guidelines](./CONTRIBUTING.md).
+## ✨ Features
 
-Thanks for your support! 🙌
+- **Hardware-accelerated 2D drawing** — built on OpenGL, rendering into an off-screen `Image` or a window provided by [Reflex](https://github.com/xord/reflex)
+- **Retained-mode-friendly API** — build `Polygon`, `Polyline`, `Image`, `Shader`, and `Font` objects, then paint them through a `Painter`
+- **Immediate-mode `Painter`** — shapes, text, images, transforms, and push / pop drawing state
+- **Polygon Boolean operations** — combine shapes with `+`, `-`, `&`, `|`, `^`
+- **GLSL shaders** — fragment / vertex shaders with uniform parameters
+- **Live camera capture** — `Rays::Camera` renders camera frames into an `Image`
 
-## 🚀 About
+**Rays** is the rendering layer used by [Reflex](https://github.com/xord/reflex), [Processing](https://github.com/xord/processing), [RubySketch](https://github.com/xord/rubysketch), and [Reight](https://github.com/xord/reight).
 
-**Rays** is a hardware-accelerated 2D drawing engine for Ruby. It is built on OpenGL and exposes a retained-mode-friendly API: build `Polygon`, `Polyline`, `Image`, `Shader`, and `Font` objects, then paint them into an off-screen `Image` (or a window provided by [Reflex](https://github.com/xord/reflex)) through a `Painter`.
+> [!NOTE]
+> Like the rest of the `xord/*` family, Rays is primarily developed for our own use, but it also works as a standalone drawing gem.
 
-It is the rendering layer used by [Reflex](https://github.com/xord/reflex), [Processing](https://github.com/xord/processing), [RubySketch](https://github.com/xord/rubysketch), and [Reight](https://github.com/xord/reight). Like the rest of the `xord/*` family, it is primarily developed for our own use, but it also works as a standalone drawing gem.
+## 📦 Installation
 
-## 📋 Requirements
+Add this line to your Gemfile:
+```ruby
+gem 'rays'
+```
+
+Then install:
+```bash
+$ bundle install
+```
+
+Or install it directly:
+```bash
+$ gem install rays
+```
+
+> [!TIP]
+> `require 'rays'` automatically calls `Rays.init!` and registers `Rays.fin!` at exit. Set `$RAYS_NOAUTOINIT = true` before requiring if you want to manage the lifetime yourself.
+
+> [!NOTE]
+> Rays needs a current OpenGL context. When used through [Reflex](https://github.com/xord/reflex), the window creates and binds a context for you. To use Rays standalone for off-screen rendering, it allocates a hidden context automatically.
+
+### Requirements
 
 - Ruby **3.0.0** or later
 - A C++ compiler with C++20 support
@@ -46,72 +85,9 @@ The following third-party libraries are cloned from GitHub and statically linked
 | [splines-lib](https://github.com/andrewwillmott/splines-lib)  | Curve / spline math                               |
 | [stb](https://github.com/nothings/stb) (Windows / Linux only) | Image file loading                                |
 
-## 📦 Installation
+## 🚀 Quick Start
 
-Add this line to your Gemfile:
-```ruby
-gem 'rays'
-```
-
-Then install:
-```bash
-$ bundle install
-```
-
-Or install it directly:
-```bash
-$ gem install rays
-```
-
-`require 'rays'` automatically calls `Rays.init!` and registers `Rays.fin!` at exit. Set `$RAYS_NOAUTOINIT = true` before requiring if you want to manage the lifetime yourself.
-
-Rays needs a current OpenGL context. When used through [Reflex](https://github.com/xord/reflex), the window creates and binds a context for you. To use Rays standalone for off-screen rendering, it allocates a hidden context automatically.
-
-## 📚 What's Included
-
-### Geometry and color types
-
-| Class                | Purpose                                                          |
-| -------------------- | ---------------------------------------------------------------- |
-| `Rays::Point`        | 2D / 3D point with arithmetic operators                          |
-| `Rays::Bounds`       | Axis-aligned rectangle (position + size)                         |
-| `Rays::Color`        | RGBA color in floating-point components                          |
-| `Rays::ColorSpace`   | Pixel format / color space descriptor (RGBA, ARGB, GRAY, ...)    |
-| `Rays::Matrix`       | 4×4 transformation matrix                                        |
-
-### Drawing primitives
-
-| Class                | Purpose                                                                                      |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| `Rays::Polyline`     | A single open or closed polyline; expandable into a stroked polygon                          |
-| `Rays::Polygon`      | One or more polylines forming a closed shape; supports Boolean ops via `+`, `-`, `&`, `\|`, `^` |
-| `Rays::Image`        | A renderable texture with an associated `Painter` for off-screen drawing                     |
-| `Rays::Bitmap`       | CPU-side pixel buffer that can be uploaded to / downloaded from an `Image`                   |
-| `Rays::Font`         | Text rendering — created from a system font name and a size                                  |
-| `Rays::Shader`       | GLSL fragment / vertex shader with `set_uniform` / `uniform` for parameters                  |
-| `Rays::Camera`       | Live camera capture (per platform) rendered into an `Image`                                  |
-
-### The `Painter`
-
-`Rays::Painter` is the immediate-mode drawing surface. Obtain one through `Image#painter`, then between `painter.paint do |p| ... end` (or `begin_paint` / `end_paint`) issue draw calls:
-
-- **Shapes** — `point`, `line`, `rect`, `ellipse`, `curve`, `bezier`, `triangle`, `quad`, `polygon`
-- **Bitmaps & text** — `image`, `text`
-- **State** — `fill`, `stroke`, `background`, `stroke_width`, `stroke_cap`, `stroke_join`, `blend_mode`, `clip`, `font`, `texture`, `shader`
-- **Transforms** — `translate`, `scale`, `rotate`, `set_matrix`
-- **Push / pop** — `push(:state, :matrix)` / `pop`, or the block form `push(fill: ..., stroke: ...) { ... }`
-
-`stroke_cap`, `stroke_join`, `blend_mode`, `texcoord_mode`, `texcoord_wrap` accept symbols (e.g. `:round`, `:miter`, `:multiply`).
-
-### Top-level helpers
-
-- `Rays.init!` / `Rays.fin!` — explicit lifecycle (called automatically on `require`)
-- `Rays::Image.load(path)` / `Rays::Image#save(path)` — image file I/O
-- `Rays.renderer_info` — debug info about the current OpenGL context
-
-## 💡 Usage
-
-### Draw to an off-screen image and save it
+Draw to an off-screen image and save it:
 
 ```ruby
 require 'rays'
@@ -129,6 +105,10 @@ end
 
 image.save 'out.png'
 ```
+
+Run it with `$ ruby hello.rb` — that's all it takes.
+
+## 💡 Examples
 
 ### Compose a polygon from Boolean operations
 
@@ -183,6 +163,54 @@ image.paint do |p|
   # fill, state, and matrix are restored here
 end
 ```
+
+## 📚 What's Included
+
+### Geometry and color types
+
+| Class                | Purpose                                                          |
+| -------------------- | ---------------------------------------------------------------- |
+| `Rays::Point`        | 2D / 3D point with arithmetic operators                          |
+| `Rays::Bounds`       | Axis-aligned rectangle (position + size)                         |
+| `Rays::Color`        | RGBA color in floating-point components                          |
+| `Rays::ColorSpace`   | Pixel format / color space descriptor (RGBA, ARGB, GRAY, ...)    |
+| `Rays::Matrix`       | 4×4 transformation matrix                                        |
+
+### Drawing primitives
+
+| Class                | Purpose                                                                                      |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| `Rays::Polyline`     | A single open or closed polyline; expandable into a stroked polygon                          |
+| `Rays::Polygon`      | One or more polylines forming a closed shape; supports Boolean ops via `+`, `-`, `&`, `\|`, `^` |
+| `Rays::Image`        | A renderable texture with an associated `Painter` for off-screen drawing                     |
+| `Rays::Bitmap`       | CPU-side pixel buffer that can be uploaded to / downloaded from an `Image`                   |
+| `Rays::Font`         | Text rendering — created from a system font name and a size                                  |
+| `Rays::Shader`       | GLSL fragment / vertex shader with `set_uniform` / `uniform` for parameters                  |
+| `Rays::Camera`       | Live camera capture (per platform) rendered into an `Image`                                  |
+
+### The `Painter`
+
+`Rays::Painter` is the immediate-mode drawing surface. Obtain one through `Image#painter`, then between `painter.paint do |p| ... end` (or `begin_paint` / `end_paint`) issue draw calls:
+
+- **Shapes** — `point`, `line`, `rect`, `ellipse`, `curve`, `bezier`, `triangle`, `quad`, `polygon`
+- **Bitmaps & text** — `image`, `text`
+- **State** — `fill`, `stroke`, `background`, `stroke_width`, `stroke_cap`, `stroke_join`, `blend_mode`, `clip`, `font`, `texture`, `shader`
+- **Transforms** — `translate`, `scale`, `rotate`, `set_matrix`
+- **Push / pop** — `push(:state, :matrix)` / `pop`, or the block form `push(fill: ..., stroke: ...) { ... }`
+
+`stroke_cap`, `stroke_join`, `blend_mode`, `texcoord_mode`, `texcoord_wrap` accept symbols (e.g. `:round`, `:miter`, `:multiply`).
+
+### Top-level helpers
+
+- `Rays.init!` / `Rays.fin!` — explicit lifecycle (called automatically on `require`)
+- `Rays::Image.load(path)` / `Rays::Image#save(path)` — image file I/O
+- `Rays.renderer_info` — debug info about the current OpenGL context
+
+## 🧩 Part of the xord family
+
+Rays is the rendering layer of the `xord/*` stack — built on Xot and Rucy, and drawn on by everything above it:
+
+[`xot`](https://github.com/xord/xot) → [`rucy`](https://github.com/xord/rucy) → `rays` → [`reflex`](https://github.com/xord/reflex) → [`processing`](https://github.com/xord/processing) → [`rubysketch`](https://github.com/xord/rubysketch) → [`reight`](https://github.com/xord/reight)
 
 ## 🛠️ Development
 

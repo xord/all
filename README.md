@@ -1,14 +1,53 @@
-# xord/all
+<h1 align="center">xord/all</h1>
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/all)
-![License](https://img.shields.io/github/license/xord/all)
-![Build Status](https://github.com/xord/all/actions/workflows/test.yml/badge.svg)
+<p align="center">
+  <b>The monorepo behind the <code>xord/*</code> creative-coding stack for Ruby</b>
+</p>
 
-## 🚀 About
+<p align="center">
+  <a href="https://deepwiki.com/xord/all"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <img src="https://img.shields.io/github/license/xord/all" alt="License">
+  <img src="https://github.com/xord/all/actions/workflows/test.yml/badge.svg" alt="Build Status">
+</p>
+
+<p align="center">
+  <a href="#-libraries-in-this-monorepo">Libraries</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#%EF%B8%8F-how-to-develop">Development</a> •
+  <a href="#-contributions">Contributing</a> •
+  <a href="#-license">License</a>
+</p>
+
+---
 
 **xord/all** is the monorepo where every `xord/*` library is developed. Each library lives at the repository root, shares a common build / test pipeline, and is mirrored out to its own standalone repository (and published as a Ruby gem or a CocoaPod) from here.
 
 The libraries form a stack: low-level utilities at the bottom, a 2D drawing engine and a GUI toolkit on top, and creative-coding / game-engine layers on top of those.
+
+```mermaid
+graph BT
+    xot["xot<br><i>C++ / Ruby utilities</i>"]
+    rucy["rucy<br><i>C++ extension helper</i>"]
+    beeps["beeps<br><i>audio synthesis</i>"]
+    rays["rays<br><i>2D drawing on OpenGL</i>"]
+    raysvideo["rays-video<br><i>video encode / decode</i>"]
+    reflex["reflex<br><i>GUI toolkit</i>"]
+    processing["processing<br><i>Processing-compatible API</i>"]
+    rubysketch["rubysketch<br><i>game engine</i>"]
+    reight["reight<br><i>fantasy console</i>"]
+    cruby["cruby<br><i>CRuby for macOS / iOS apps</i>"]
+
+    rucy --> xot
+    beeps --> rucy
+    rays --> rucy
+    raysvideo --> rays
+    raysvideo --> beeps
+    reflex --> rays
+    processing --> reflex
+    rubysketch --> processing
+    rubysketch --> beeps
+    reight --> rubysketch
+```
 
 ## 📚 Libraries in this monorepo
 
@@ -30,6 +69,9 @@ See each subdirectory's `README.md` for installation, requirements, and usage de
 ## 🔄 Mirroring
 
 This repository is the source of truth. Each library is mirrored out to its own standalone repository using `git subtree push`, and that's what the gem / pod build pipelines consume.
+
+> [!IMPORTANT]
+> Please open issues and pull requests against **this** repository, not against the per-library mirrors — the mirrors are read-only.
 
 ## 📦 Installation
 

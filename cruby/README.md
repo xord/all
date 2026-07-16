@@ -1,48 +1,44 @@
-# CRuby - Embed the CRuby (MRI) interpreter in macOS / iOS apps
+<h1 align="center">CRuby</h1>
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/cruby)
-![License](https://img.shields.io/github/license/xord/cruby)
-![Build](https://github.com/xord/cruby/workflows/Build/badge.svg)
+<p align="center">
+  <b>Embed the CRuby (MRI) interpreter in macOS / iOS apps</b>
+</p>
 
-## ⚠️  Notice
+<p align="center">
+  <a href="https://deepwiki.com/xord/cruby"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <img src="https://img.shields.io/github/license/xord/cruby" alt="License">
+  <img src="https://github.com/xord/cruby/workflows/Build/badge.svg" alt="Build">
+</p>
 
-This repository is a read-only mirror of our monorepo.
-We do not accept pull requests or direct contributions here.
+<p align="center">
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-whats-included">What's Included</a> •
+  <a href="#%EF%B8%8F-development">Development</a> •
+  <a href="#-license">License</a>
+</p>
 
-### 🔄 Where to Contribute?
+---
 
-All development happens in our [xord/all](https://github.com/xord/all) monorepo, which contains all our main libraries.
-If you'd like to contribute, please submit your changes there.
+> [!IMPORTANT]
+> **This repository is a read-only mirror.** All development happens in the
+> [xord/all](https://github.com/xord/all) monorepo — please open issues and
+> pull requests there, not here.
+> See the [Contribution Guidelines](./CONTRIBUTING.md) for details.
 
-For more details, check out our [Contribution Guidelines](./CONTRIBUTING.md).
+## ✨ Features
 
-Thanks for your support! 🙌
+- **Full CRuby (MRI) runtime** — embeds the standard interpreter into a macOS or iOS application
+- **Self-contained `xcframework`** — builds Ruby from source (along with OpenSSL and libyaml) into a framework you drop into your Xcode project
+- **Small Objective-C API** — evaluate Ruby code, call methods on Ruby objects, and bridge values between Objective-C and Ruby
+- **Safe error handling** — every method that may raise from Ruby has a paired `rescue:` variant
+- **YJIT support** — turn on YJIT before booting the interpreter
+- **Extensible** — register bundled Ruby libraries and statically-linked C extensions
 
-## 🚀 About
+**CRuby** is the runtime that lets the `xord/*` family — [Reflex](https://github.com/xord/reflex), [Processing](https://github.com/xord/processing), [RubySketch](https://github.com/xord/rubysketch), and [Reight](https://github.com/xord/reight) — ship as native macOS / iOS apps.
 
-**CRuby** is an Objective-C library that embeds the standard **CRuby (MRI)** interpreter into a macOS or iOS application. It builds Ruby from source (along with OpenSSL and libyaml) into an `xcframework` that you drop into your Xcode project, and exposes a small Objective-C API for evaluating Ruby code, calling methods on Ruby objects, and bridging values between Objective-C and Ruby.
-
-It is the runtime that lets the `xord/*` family — [Reflex](https://github.com/xord/reflex), [Processing](https://github.com/xord/processing), [RubySketch](https://github.com/xord/rubysketch), and [Reight](https://github.com/xord/reight) — ship as native macOS / iOS apps.
-
+> [!IMPORTANT]
 > Not a Ruby gem. This module is distributed exclusively via **CocoaPods**.
-
-## 📋 Requirements
-
-- **macOS** 10.7 or later
-- **iOS** 10.0 or later
-- Xcode (recent enough to build the deployment targets above)
-- [CocoaPods](https://cocoapods.org/)
-- Ruby and `rake` (used to build the framework from source)
-
-The build vendors and statically links the following from upstream tarballs:
-
-| Library                                           | Role                                                |
-| ------------------------------------------------- | --------------------------------------------------- |
-| [Ruby](https://www.ruby-lang.org/)                | The interpreter itself                              |
-| [OpenSSL](https://www.openssl.org/)               | TLS / crypto support for stdlib `openssl`           |
-| [libyaml](https://pyyaml.org/wiki/LibYAML)        | YAML support for stdlib `psych`                     |
-
-The exact versions are pinned in [`config.rb`](./config.rb) (`RUBY_URL`, `OSSL_URL`, `YAML_URL`).
 
 ## 📦 Installation
 
@@ -61,7 +57,8 @@ $ CRUBY_OS=ios pod install --verbose
 $ CRUBY_OS=macos pod install --verbose
 ```
 
-The `--verbose` flag is recommended — the framework is built from source the first time and that takes a while.
+> [!TIP]
+> The `--verbose` flag is recommended — the framework is built from source the first time and that takes a while.
 
 The pod's `prepare_command` runs `rake download_or_build`, which by default downloads a prebuilt archive from GitHub Releases when available and falls back to building locally otherwise. To force a local build:
 
@@ -75,7 +72,72 @@ To use a custom prebuilt archive:
 $ rake download_or_build prebuilt=/path/to/archive.tar.gz
 ```
 
-## 📚 What's Provided
+### Requirements
+
+- **macOS** 10.7 or later
+- **iOS** 10.0 or later
+- Xcode (recent enough to build the deployment targets above)
+- [CocoaPods](https://cocoapods.org/)
+- Ruby and `rake` (used to build the framework from source)
+
+The build vendors and statically links the following from upstream tarballs:
+
+| Library                                           | Role                                                |
+| ------------------------------------------------- | --------------------------------------------------- |
+| [Ruby](https://www.ruby-lang.org/)                | The interpreter itself                              |
+| [OpenSSL](https://www.openssl.org/)               | TLS / crypto support for stdlib `openssl`           |
+| [libyaml](https://pyyaml.org/wiki/LibYAML)        | YAML support for stdlib `psych`                     |
+
+The exact versions are pinned in [`config.rb`](./config.rb) (`RUBY_URL`, `OSSL_URL`, `YAML_URL`).
+
+## 🚀 Quick Start
+
+Evaluate a Ruby snippet:
+
+```objc
+#import <CRuby.h>
+
+CRBValue *result = [CRuby evaluate:@"[1, 2, 3].map {|n| n ** 2}"];
+NSLog(@"result: %@", result.inspect);   // result: [1, 4, 9]
+```
+
+## 💡 Examples
+
+### Boot a Ruby entry point and call into it
+
+```objc
+[CRuby start:@"main.rb" rescue:^(CRBValue *e) {
+    NSLog(@"ruby error: %@", e.inspect);
+}];
+
+CRBValue *greeter = [CRuby evaluate:@"Greeter.new"];
+CRBValue *hello   = [greeter call:@"hello"
+                             arg1:[CRBValue valueWithNSString:@"world"]];
+NSLog(@"%@", hello.toString);
+```
+
+### Enable YJIT
+
+```objc
+[CRuby enableYJIT];   // must be called before +start: / +evaluate:
+[CRuby start:@"main.rb"];
+```
+
+### Bundle a stdlib subset or a gem with your app
+
+```objc
+[CRuby addLibrary:@"my_lib" bundle:[NSBundle mainBundle]];
+[CRuby evaluate:@"require 'my_lib/something'"];
+```
+
+### Register a statically-linked C extension
+
+```objc
+extern void Init_my_ext();
+[CRuby addExtension:@"my_ext" init:^{ Init_my_ext(); }];
+```
+
+## 📚 What's Included
 
 The pod exposes two Objective-C classes.
 
@@ -151,50 +213,9 @@ All methods that may raise from Ruby have a paired `rescue:` variant that takes 
 
 Each `call:` overload also has a `rescue:` variant.
 
-## 💡 Usage
+## 🧩 Part of the xord family
 
-### Evaluate a Ruby snippet
-
-```objc
-#import <CRuby.h>
-
-CRBValue *result = [CRuby evaluate:@"[1, 2, 3].map {|n| n ** 2}"];
-NSLog(@"result: %@", result.inspect);   // result: [1, 4, 9]
-```
-
-### Boot a Ruby entry point and call into it
-
-```objc
-[CRuby start:@"main.rb" rescue:^(CRBValue *e) {
-    NSLog(@"ruby error: %@", e.inspect);
-}];
-
-CRBValue *greeter = [CRuby evaluate:@"Greeter.new"];
-CRBValue *hello   = [greeter call:@"hello"
-                             arg1:[CRBValue valueWithNSString:@"world"]];
-NSLog(@"%@", hello.toString);
-```
-
-### Enable YJIT
-
-```objc
-[CRuby enableYJIT];   // must be called before +start: / +evaluate:
-[CRuby start:@"main.rb"];
-```
-
-### Bundle a stdlib subset or a gem with your app
-
-```objc
-[CRuby addLibrary:@"my_lib" bundle:[NSBundle mainBundle]];
-[CRuby evaluate:@"require 'my_lib/something'"];
-```
-
-### Register a statically-linked C extension
-
-```objc
-extern void Init_my_ext();
-[CRuby addExtension:@"my_ext" init:^{ Init_my_ext(); }];
-```
+CRuby is the native runtime underneath the `xord/*` app stack — it is consumed as a CocoaPod by apps built with [Reflex](https://github.com/xord/reflex), [Processing](https://github.com/xord/processing), [RubySketch](https://github.com/xord/rubysketch), and [Reight](https://github.com/xord/reight), and fetched automatically by [reflex-packager](https://github.com/xord/reflex-packager).
 
 ## 🛠️ Development
 

@@ -1,49 +1,48 @@
-# Reflex - A GUI toolkit for Ruby
+<h1 align="center">Reflex</h1>
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/reflex)
-![License](https://img.shields.io/github/license/xord/reflex)
-![Build Status](https://github.com/xord/reflex/actions/workflows/test.yml/badge.svg)
-![Gem Version](https://badge.fury.io/rb/reflexion.svg)
+<p align="center">
+  <b>A cross-platform GUI and creative-coding toolkit for Ruby</b>
+</p>
 
-## ⚠️  Notice
+<p align="center">
+  <a href="https://deepwiki.com/xord/reflex"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <img src="https://img.shields.io/github/license/xord/reflex" alt="License">
+  <img src="https://github.com/xord/reflex/actions/workflows/test.yml/badge.svg" alt="Build Status">
+  <img src="https://badge.fury.io/rb/reflexion.svg" alt="Gem Version">
+</p>
 
-This repository is a read-only mirror of our monorepo.
-We do not accept pull requests or direct contributions here.
+<p align="center">
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-whats-included">What's Included</a> •
+  <a href="#%EF%B8%8F-development">Development</a> •
+  <a href="#-license">License</a>
+</p>
 
-### 🔄 Where to Contribute?
+---
 
-All development happens in our [xord/all](https://github.com/xord/all) monorepo, which contains all our main libraries.
-If you'd like to contribute, please submit your changes there.
+> [!IMPORTANT]
+> **This repository is a read-only mirror.** All development happens in the
+> [xord/all](https://github.com/xord/all) monorepo — please open issues and
+> pull requests there, not here.
+> See the [Contribution Guidelines](./CONTRIBUTING.md) for details.
 
-For more details, check out our [Contribution Guidelines](./CONTRIBUTING.md).
-
-Thanks for your support! 🙌
-
-## 🚀 About
-
-**Reflex** is a cross-platform GUI toolkit for Ruby. It gives you a `Window` with a tree of `View` objects, an event-driven runtime (`Application` / `on_draw`, `on_update`, `on_pointer`, ...), and bindings to a 2D physics engine, MIDI I/O, and live camera capture — all sitting on top of the [Rays](https://github.com/xord/rays) drawing engine.
-
-It is the application layer underneath [Processing](https://github.com/xord/processing), [RubySketch](https://github.com/xord/rubysketch), and [Reight](https://github.com/xord/reight). Like the rest of the `xord/*` family, Reflex is primarily developed for our own use, but it also works as a standalone GUI / creative-coding toolkit.
-
+> [!IMPORTANT]
 > **The gem name is `reflexion`** (not `reflex`) — `gem install reflexion`. The Ruby namespace is `Reflex`.
 
-## 📋 Requirements
+## ✨ Features
 
-- Ruby **3.0.0** or later
-- A C++ compiler with C++20 support
-- [Xot](https://rubygems.org/gems/xot), [Rucy](https://rubygems.org/gems/rucy), and [Rays](https://rubygems.org/gems/rays) (declared as runtime dependencies)
-- Platform GUI backend:
-  - **macOS** — AppKit (bundled with the OS)
-  - **iOS** — UIKit (bundled with the OS)
-  - **Windows** — native Win32
-  - **Linux** — `libsdl2-dev`
+- **Windows and views** — a `Window` with a tree of `View` objects, styled via a lightweight CSS-style mechanism
+- **Event-driven runtime** — `Application` run loop with `on_draw`, `on_update`, `on_pointer`, and many more hooks
+- **2D physics** — Box2D bindings turn any `View` into a physics body (`ContactEvent`, gravity, fixtures)
+- **MIDI I/O** — RtMidi bindings deliver `MidiEvent`, `NoteEvent`, `ControlChangeEvent` to views
+- **Live camera capture** — `CaptureEvent` streams frames from a `Rays::Camera`
+- **Two complementary APIs** — a full OO API and a Processing-style single-file API
 
-The following third-party libraries are cloned from GitHub and statically linked while the native extension is being built:
+**Reflex** sits on top of the [Rays](https://github.com/xord/rays) drawing engine and is the application layer underneath [Processing](https://github.com/xord/processing), [RubySketch](https://github.com/xord/rubysketch), and [Reight](https://github.com/xord/reight).
 
-| Library                                       | Role                                |
-| --------------------------------------------- | ----------------------------------- |
-| [Box2D](https://github.com/erincatto/box2d)   | 2D physics simulation (`View` bodies, `ContactEvent`, gravity, fixtures) |
-| [RtMidi](https://github.com/thestk/rtmidi)    | MIDI I/O — exposes `MidiEvent`, `NoteEvent`, `ControlChangeEvent` to views |
+> [!NOTE]
+> Like the rest of the `xord/*` family, Reflex is primarily developed for our own use, but it also works as a standalone GUI / creative-coding toolkit.
 
 ## 📦 Installation
 
@@ -62,63 +61,30 @@ Or install it directly:
 $ gem install reflexion
 ```
 
-`require 'reflex'` automatically calls `Reflex.init!` (and `Rays.init!`) and registers `Reflex.fin!` at exit. Set `$REFLEX_NOAUTOINIT = true` before requiring if you want to manage the lifetime yourself.
+> [!TIP]
+> `require 'reflex'` automatically calls `Reflex.init!` (and `Rays.init!`) and registers `Reflex.fin!` at exit. Set `$REFLEX_NOAUTOINIT = true` before requiring if you want to manage the lifetime yourself.
 
-## 📚 What's Included
+### Requirements
 
-### Application / Window / View
+- Ruby **3.0.0** or later
+- A C++ compiler with C++20 support
+- [Xot](https://rubygems.org/gems/xot), [Rucy](https://rubygems.org/gems/rucy), and [Rays](https://rubygems.org/gems/rays) (declared as runtime dependencies)
+- Platform GUI backend:
+  - **macOS** — AppKit (bundled with the OS)
+  - **iOS** — UIKit (bundled with the OS)
+  - **Windows** — native Win32
+  - **Linux** — `libsdl2-dev`
 
-| Class                    | Purpose                                                                 |
-| ------------------------ | ----------------------------------------------------------------------- |
-| `Reflex::Application`    | Run loop; created and started by `Reflex.start { ... }`                 |
-| `Reflex::Window`         | OS-level window with title, frame, flags (closable / resizable / fullscreen / portrait / landscape) |
-| `Reflex::View`           | Recursive UI node: position, size, transform, styles, child views, optional clipping / caching |
-| `Reflex::Screen`         | Information about a display monitor                                     |
-| `Reflex::Timer`          | One-shot or interval timer that delivers `TimerEvent`                   |
+The following third-party libraries are cloned from GitHub and statically linked while the native extension is being built:
 
-### Shapes (drawing + physics body)
+| Library                                       | Role                                |
+| --------------------------------------------- | ----------------------------------- |
+| [Box2D](https://github.com/erincatto/box2d)   | 2D physics simulation (`View` bodies, `ContactEvent`, gravity, fixtures) |
+| [RtMidi](https://github.com/thestk/rtmidi)    | MIDI I/O — exposes `MidiEvent`, `NoteEvent`, `ControlChangeEvent` to views |
 
-A view can carry one or more `Shape` objects that act both as its drawn appearance and as its physics fixture. Built-ins:
+## 🚀 Quick Start
 
-- `Reflex::RectShape`
-- `Reflex::EllipseShape`
-- `Reflex::LineShape`
-- `Reflex::PolygonShape` — wraps a `Rays::Polygon`
-
-### Events
-
-Every event class inherits from `Reflex::Event`. Views receive them via `on_<name>` hooks (or `on(:name)` / `before(:name)` / `after(:name)` from `Xot::Hookable`).
-
-| Event class                                          | View hook            | When it fires                                       |
-| ---------------------------------------------------- | -------------------- | --------------------------------------------------- |
-| `UpdateEvent`                                        | `on_update`          | Every frame, before drawing                         |
-| `DrawEvent`                                          | `on_draw`            | Every frame, to render with `e.painter`             |
-| `FrameEvent`                                         | `on_frame_*`         | Frame resize / move                                 |
-| `FocusEvent`                                         | `on_focus`           | Keyboard focus gained / lost                        |
-| `KeyEvent`                                           | `on_key`             | Key down / up / repeat                              |
-| `PointerEvent`                                       | `on_pointer`         | Mouse / touch down / move / up                      |
-| `WheelEvent`                                         | `on_wheel`           | Scroll wheel / trackpad scroll                      |
-| `ScrollEvent`                                        | `on_scroll`          | The view itself scrolled                            |
-| `MidiEvent` / `NoteEvent` / `ControlChangeEvent`     | `on_midi` / `on_note` / `on_control_change` | Incoming MIDI message |
-| `CaptureEvent`                                       | `on_capture`         | New frame from a `Rays::Camera`                     |
-| `TimerEvent`                                         | `on_timer`           | Fired by `start_timer` / `start_interval`           |
-| `ContactEvent`                                       | `on_contact_*`       | Two physics bodies began / ended overlapping        |
-| `DeviceEvent` / `MotionEvent`                        | various              | Device-level signals (accelerometer / gyro / connection) |
-
-### Styling and selectors
-
-`Reflex::Style` and `Reflex::Selector` (with `HasSelector`) provide a lightweight CSS-style mechanism for setting background, padding, layout, etc., on views.
-
-### Two ways to use the gem
-
-The gem ships **two complementary APIs**:
-
-1. **`require 'reflex'`** — the full OO API. Subclass `Reflex::Window`, override `on_draw` / `on_update` / `on_pointer`, build a view hierarchy, etc.
-2. **`require 'reflexion/include'`** — a single-file, Processing-style API that exposes top-level `setup`, `draw`, `update`, `key`, `pointer`, `motion` blocks and auto-starts the application on `at_exit`.
-
-## 💡 Usage
-
-### Hello, Reflex (OO style)
+Hello, Reflex (OO style):
 
 ```ruby
 require 'reflex'
@@ -145,6 +111,10 @@ Reflex.start do
   HelloWindow.new.show
 end
 ```
+
+Run it with `$ ruby hello.rb` — a window appears, that's all it takes.
+
+## 💡 Examples
 
 ### Block / DSL style
 
@@ -224,6 +194,64 @@ end
 ```
 
 See the [`samples/`](./samples) directory for more examples covering shapes, layout, models, MIDI, camera capture, etc.
+
+## 📚 What's Included
+
+### Two ways to use the gem
+
+The gem ships **two complementary APIs**:
+
+1. **`require 'reflex'`** — the full OO API. Subclass `Reflex::Window`, override `on_draw` / `on_update` / `on_pointer`, build a view hierarchy, etc.
+2. **`require 'reflexion/include'`** — a single-file, Processing-style API that exposes top-level `setup`, `draw`, `update`, `key`, `pointer`, `motion` blocks and auto-starts the application on `at_exit`.
+
+### Application / Window / View
+
+| Class                    | Purpose                                                                 |
+| ------------------------ | ----------------------------------------------------------------------- |
+| `Reflex::Application`    | Run loop; created and started by `Reflex.start { ... }`                 |
+| `Reflex::Window`         | OS-level window with title, frame, flags (closable / resizable / fullscreen / portrait / landscape) |
+| `Reflex::View`           | Recursive UI node: position, size, transform, styles, child views, optional clipping / caching |
+| `Reflex::Screen`         | Information about a display monitor                                     |
+| `Reflex::Timer`          | One-shot or interval timer that delivers `TimerEvent`                   |
+
+### Shapes (drawing + physics body)
+
+A view can carry one or more `Shape` objects that act both as its drawn appearance and as its physics fixture. Built-ins:
+
+- `Reflex::RectShape`
+- `Reflex::EllipseShape`
+- `Reflex::LineShape`
+- `Reflex::PolygonShape` — wraps a `Rays::Polygon`
+
+### Events
+
+Every event class inherits from `Reflex::Event`. Views receive them via `on_<name>` hooks (or `on(:name)` / `before(:name)` / `after(:name)` from `Xot::Hookable`).
+
+| Event class                                          | View hook            | When it fires                                       |
+| ---------------------------------------------------- | -------------------- | --------------------------------------------------- |
+| `UpdateEvent`                                        | `on_update`          | Every frame, before drawing                         |
+| `DrawEvent`                                          | `on_draw`            | Every frame, to render with `e.painter`             |
+| `FrameEvent`                                         | `on_frame_*`         | Frame resize / move                                 |
+| `FocusEvent`                                         | `on_focus`           | Keyboard focus gained / lost                        |
+| `KeyEvent`                                           | `on_key`             | Key down / up / repeat                              |
+| `PointerEvent`                                       | `on_pointer`         | Mouse / touch down / move / up                      |
+| `WheelEvent`                                         | `on_wheel`           | Scroll wheel / trackpad scroll                      |
+| `ScrollEvent`                                        | `on_scroll`          | The view itself scrolled                            |
+| `MidiEvent` / `NoteEvent` / `ControlChangeEvent`     | `on_midi` / `on_note` / `on_control_change` | Incoming MIDI message |
+| `CaptureEvent`                                       | `on_capture`         | New frame from a `Rays::Camera`                     |
+| `TimerEvent`                                         | `on_timer`           | Fired by `start_timer` / `start_interval`           |
+| `ContactEvent`                                       | `on_contact_*`       | Two physics bodies began / ended overlapping        |
+| `DeviceEvent` / `MotionEvent`                        | various              | Device-level signals (accelerometer / gyro / connection) |
+
+### Styling and selectors
+
+`Reflex::Style` and `Reflex::Selector` (with `HasSelector`) provide a lightweight CSS-style mechanism for setting background, padding, layout, etc., on views.
+
+## 🧩 Part of the xord family
+
+Reflex is the application layer of the `xord/*` stack — built on the [Rays](https://github.com/xord/rays) drawing engine, and underneath Processing, RubySketch, and Reight:
+
+[`xot`](https://github.com/xord/xot) → [`rucy`](https://github.com/xord/rucy) → [`rays`](https://github.com/xord/rays) → `reflex` → [`processing`](https://github.com/xord/processing) → [`rubysketch`](https://github.com/xord/rubysketch) → [`reight`](https://github.com/xord/reight)
 
 ## 🛠️ Development
 

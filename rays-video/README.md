@@ -1,40 +1,48 @@
-# Rays Video - Video support for Rays
+<h1 align="center">Rays Video</h1>
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xord/rays-video)
-![License](https://img.shields.io/github/license/xord/rays-video)
-![Build Status](https://github.com/xord/rays-video/actions/workflows/test.yml/badge.svg)
-![Gem Version](https://badge.fury.io/rb/rays-video.svg)
+<p align="center">
+  <b>Video reading, writing, and frame-level manipulation for <a href="https://github.com/xord/rays">Rays</a></b>
+</p>
 
-## ⚠️  Notice
+<p align="center">
+  <a href="https://deepwiki.com/xord/rays-video"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <img src="https://img.shields.io/github/license/xord/rays-video" alt="License">
+  <img src="https://github.com/xord/rays-video/actions/workflows/test.yml/badge.svg" alt="Build Status">
+  <img src="https://badge.fury.io/rb/rays-video.svg" alt="Gem Version">
+</p>
 
-This repository is a read-only mirror of our monorepo.
-We do not accept pull requests or direct contributions here.
+<p align="center">
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-whats-included">What's Included</a> •
+  <a href="#%EF%B8%8F-development">Development</a> •
+  <a href="#-license">License</a>
+</p>
 
-### 🔄 Where to Contribute?
+---
 
-All development happens in our [xord/all](https://github.com/xord/all) monorepo, which contains all our main libraries.
-If you'd like to contribute, please submit your changes there.
+> [!IMPORTANT]
+> **This repository is a read-only mirror.** All development happens in the
+> [xord/all](https://github.com/xord/all) monorepo — please open issues and
+> pull requests there, not here.
+> See the [Contribution Guidelines](./CONTRIBUTING.md) for details.
 
-For more details, check out our [Contribution Guidelines](./CONTRIBUTING.md).
+## ✨ Features
 
-Thanks for your support! 🙌
+- **Frames as images** — a `Rays::Video` is, conceptually, an ordered list of `Rays::Image` frames with a frame rate and a pixel density
+- **Build from scratch** — create an empty video and append / insert / remove frames
+- **File I/O** — load a video from disk and save it back out
+- **Playback** — scrub a playback position, play / pause / stop, adjust the time scale
+- **Frame extraction** — grab any frame as a regular `Rays::Image` to draw with
+- **Audio support** — built on [Beeps](https://github.com/xord/beeps); video files keep their audio track and it can be fed into a Beeps processor chain
 
-## 🚀 About
+**Rays Video** is a small extension to [Rays](https://github.com/xord/rays).
 
-**Rays Video** is a small extension to [Rays](https://github.com/xord/rays) that adds video reading, writing, and frame-level manipulation. A `Rays::Video` is, conceptually, an ordered list of `Rays::Image` frames with a frame rate and a pixel density — you can build one from scratch, append / insert / remove frames, scrub a playback position, load a video from disk, save it back out, or grab any frame as a regular `Rays::Image` to draw with.
+> [!NOTE]
+> Like the rest of the `xord/*` family, this gem is primarily developed for our own use, but it works as a standalone video gem.
 
-Audio support is built on [Beeps](https://github.com/xord/beeps) — video files keep their audio track and it can be fed into a Beeps processor chain.
-
-Like the rest of the `xord/*` family, this gem is primarily developed for our own use, but it works as a standalone video gem.
-
+> [!WARNING]
 > **Platform status:** macOS / iOS only at the moment. Windows and Linux backends are not yet implemented.
-
-## 📋 Requirements
-
-- Ruby **3.0.0** or later
-- A C++ compiler with C++20 support
-- [Xot](https://rubygems.org/gems/xot), [Rucy](https://rubygems.org/gems/rucy), [Beeps](https://rubygems.org/gems/beeps), and [Rays](https://rubygems.org/gems/rays) (declared as runtime dependencies)
-- **macOS / iOS** — AVFoundation (bundled with the OS)
 
 ## 📦 Installation
 
@@ -53,34 +61,16 @@ Or install it directly:
 $ gem install rays-video
 ```
 
-## 📚 What's Provided
+### Requirements
 
-### `Rays::Video`
+- Ruby **3.0.0** or later
+- A C++ compiler with C++20 support
+- [Xot](https://rubygems.org/gems/xot), [Rucy](https://rubygems.org/gems/rucy), [Beeps](https://rubygems.org/gems/beeps), and [Rays](https://rubygems.org/gems/rays) (declared as runtime dependencies)
+- **macOS / iOS** — AVFoundation (bundled with the OS)
 
-A finite sequence of `Rays::Image` frames with a fixed `width`, `height`, `fps`, and `pixel_density`.
+## 🚀 Quick Start
 
-| Method                                     | Purpose                                                            |
-| ------------------------------------------ | ------------------------------------------------------------------ |
-| `Video.new(width, height, fps:, pixel_density:)` | Create an empty video (`fps` defaults to 30)                 |
-| `Video.load(path)`                         | Load a video file from disk                                        |
-| `Video.exts`                               | Supported video file extensions on the current platform            |
-| `video.append(*images)`                    | Append one or more frames                                          |
-| `video.insert(index, *images)`             | Insert frames at the given index                                   |
-| `video.remove(index)`                      | Remove the frame at the given index                                |
-| `video.each { \|image\| ... }`             | Iterate frames (also includes `Enumerable`)                        |
-| `video[i]`                                 | Get the frame at index *i* as a `Rays::Image`                      |
-| `video.pos` / `video.pos =`                | Current playback position (index)                                  |
-| `video.play` / `video.pause` / `video.stop`| Playback controls                                                  |
-| `video.time_scale` / `video.time_scale =`  | Speed multiplier for playback                                      |
-| `video.size`, `video.empty?`               | Frame count / emptiness                                            |
-| `video.width`, `video.height`, `video.fps`, `video.pixel_density` | Read-only metadata                          |
-| `video.dup`                                | Deep-ish copy (shares image references)                            |
-| `video.save(path)`                         | Encode the video to a file                                         |
-| `video.to_image` (`Image()` cast)          | Get the frame at the current `pos` as a `Rays::Image`              |
-
-## 💡 Usage
-
-### Build a video from frames and save it
+Build a video from frames and save it:
 
 ```ruby
 require 'rays'
@@ -100,6 +90,10 @@ end
 
 video.save 'out.mp4'
 ```
+
+Run it with `$ ruby hello.rb` — that's all it takes.
+
+## 💡 Examples
 
 ### Load a video and draw a frame
 
@@ -128,6 +122,37 @@ end
 video.pos = video.size / 2     # mid-point
 mid = video.to_image
 ```
+
+## 📚 What's Included
+
+### `Rays::Video`
+
+A finite sequence of `Rays::Image` frames with a fixed `width`, `height`, `fps`, and `pixel_density`.
+
+| Method                                     | Purpose                                                            |
+| ------------------------------------------ | ------------------------------------------------------------------ |
+| `Video.new(width, height, fps:, pixel_density:)` | Create an empty video (`fps` defaults to 30)                 |
+| `Video.load(path)`                         | Load a video file from disk                                        |
+| `Video.exts`                               | Supported video file extensions on the current platform            |
+| `video.append(*images)`                    | Append one or more frames                                          |
+| `video.insert(index, *images)`             | Insert frames at the given index                                   |
+| `video.remove(index)`                      | Remove the frame at the given index                                |
+| `video.each { \|image\| ... }`             | Iterate frames (also includes `Enumerable`)                        |
+| `video[i]`                                 | Get the frame at index *i* as a `Rays::Image`                      |
+| `video.pos` / `video.pos =`                | Current playback position (index)                                  |
+| `video.play` / `video.pause` / `video.stop`| Playback controls                                                  |
+| `video.time_scale` / `video.time_scale =`  | Speed multiplier for playback                                      |
+| `video.size`, `video.empty?`               | Frame count / emptiness                                            |
+| `video.width`, `video.height`, `video.fps`, `video.pixel_density` | Read-only metadata                          |
+| `video.dup`                                | Deep-ish copy (shares image references)                            |
+| `video.save(path)`                         | Encode the video to a file                                         |
+| `video.to_image` (`Image()` cast)          | Get the frame at the current `pos` as a `Rays::Image`              |
+
+## 🧩 Part of the xord family
+
+Rays Video extends [Rays](https://github.com/xord/rays) with video support, and leans on [Beeps](https://github.com/xord/beeps) for audio:
+
+[`xot`](https://github.com/xord/xot) → [`rucy`](https://github.com/xord/rucy) → [`beeps`](https://github.com/xord/beeps) / [`rays`](https://github.com/xord/rays) → `rays-video`
 
 ## 🛠️ Development
 
