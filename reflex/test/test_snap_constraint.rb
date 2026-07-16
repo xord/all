@@ -36,6 +36,8 @@ class TestSnapConstraint < Test::Unit::TestCase
     assert_equal 2..3,   v1.snap(v2, angle: 2..3) .angle
     assert_nil           v1.snap(v2)              .motor
     assert_equal 4,      v1.snap(v2, motor: 4)    .motor
+    assert_nil           v1.snap(v2)              .force
+    assert_equal 6,      v1.snap(v2, force: 6)    .force
     assert_nil           v1.snap(v2)              .spring
     assert_equal 5,      v1.snap(v2, spring: 5)   .spring
     assert_in_delta 0.7, v1.snap(v2)              .damping
@@ -111,6 +113,30 @@ class TestSnapConstraint < Test::Unit::TestCase
 
     c.motor = nil
     assert_nil c.motor
+  end
+
+  def test_force()
+    v1, v2, = setup_views
+
+    c = v1.snap v2, motor: 90, force: 500
+    assert_equal 500, c.force
+
+    c.force = nil
+    assert_nil        c.force
+
+    c.force = 100
+    assert_equal 100, c.force
+
+    assert_raise(ArgumentError) {c.force = -1}
+  end
+
+  def test_force_limits_the_motor()
+    v1, v2, _, root = setup_views
+
+    v1.snap v2, motor: 90, force: 0 # a powerless motor can not spin
+
+    3.times {root.update_world}
+    assert_in_delta 0, v1.angular_velocity
   end
 
 end# TestSnapConstraint

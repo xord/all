@@ -20,7 +20,7 @@ module Reflex
       has_range! ? Range.new(range_min!, range_max!) : nil
     end
 
-    universal_accessor :axis, :range, :motor
+    universal_accessor :axis, :range, :motor, :force
 
   end# WheelConstraint
 

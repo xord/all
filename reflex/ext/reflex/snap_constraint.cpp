@@ -80,6 +80,25 @@ RUCY_DEF0(get_motor)
 }
 RUCY_END
 
+static
+RUCY_DEF1(set_force, max_torque)
+{
+	CHECK;
+	if (max_torque.is_nil())
+		THIS->clear_force();
+	else
+		THIS->set_force(to<float>(max_torque));
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_force)
+{
+	CHECK;
+	return THIS->has_force() ? value(THIS->force()) : nil();
+}
+RUCY_END
+
 
 static Class cSnapConstraint;
 
@@ -97,6 +116,8 @@ Init_reflex_snap_constraint ()
 	cSnapConstraint.define_private_method(  "has_angle!",   has_angle);
 	cSnapConstraint.define_method("motor=", set_motor);
 	cSnapConstraint.define_method("motor",  get_motor);
+	cSnapConstraint.define_method("force=", set_force);
+	cSnapConstraint.define_method("force",  get_force);
 }
 
 

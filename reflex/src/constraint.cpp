@@ -467,6 +467,10 @@ namespace Reflex
 
 		float motor_speed = 0;
 
+		bool  has_force   = false;
+
+		float force       = 0;
+
 		bool use_weld () const
 		{
 			return has_angle && angle_min == angle_max;
@@ -510,7 +514,7 @@ namespace Reflex
 				def.upperAngle         = Xot::deg2rad(angle_max);
 				def.enableMotor        = has_motor;
 				def.motorSpeed         = Xot::deg2rad(motor_speed);
-				def.maxMotorTorque     = default_max_force(body0);
+				def.maxMotorTorque     = has_force ? force : default_max_force(body0);
 				def.collideConnected   = collide;
 				return b2CreateRevoluteJoint(world, &def);
 			}
@@ -540,6 +544,8 @@ namespace Reflex
 				}
 				b2RevoluteJoint_EnableMotor(          b2joint, has_motor);
 				b2RevoluteJoint_SetMotorSpeed(        b2joint, Xot::deg2rad(motor_speed));
+				if (has_force)
+					b2RevoluteJoint_SetMaxMotorTorque(  b2joint, force);
 			}
 		}
 
@@ -668,6 +674,65 @@ namespace Reflex
 		return get_data(*this).has_motor;
 	}
 
+	void
+	SnapConstraint::set_force (float max_torque)
+	{
+		if (max_torque < 0)
+			argument_error(__FILE__, __LINE__);
+
+		SnapConstraintData& self = get_data(*this);
+
+		self.has_force = true;
+		self.force     = max_torque;
+		self.update_params();
+	}
+
+	void
+	SnapConstraint::clear_force ()
+	{
+		SnapConstraintData& self = get_data(*this);
+
+		self.has_force = false;
+		self.force     = 0;
+
+		if (
+			self.is_valid() && self.world &&
+			b2Joint_GetType(self.b2joint) == b2_revoluteJoint)
+		{
+			View* view = self.pins[0].view();
+			Body* body = view ? View_get_body(view, false) : NULL;
+			if (body)
+			{
+				b2RevoluteJoint_SetMaxMotorTorque(
+					self.b2joint, default_max_force(Body_get_id(body)));
+			}
+		}
+	}
+
+	float
+	SnapConstraint::force () const
+	{
+		const SnapConstraintData& self = get_data(*this);
+
+		if (self.has_force)
+			return self.force;
+
+		if (
+			self.is_valid() && self.world &&
+			b2Joint_GetType(self.b2joint) == b2_revoluteJoint)
+		{
+			return b2RevoluteJoint_GetMaxMotorTorque(self.b2joint);
+		}
+
+		return 0;
+	}
+
+	bool
+	SnapConstraint::has_force () const
+	{
+		return get_data(*this).has_force;
+	}
+
 
 	struct LinkConstraintData : public Constraint::Data
 	{
@@ -691,6 +756,10 @@ namespace Reflex
 		bool  has_motor    = false;
 
 		coord motor_speed  = 0;
+
+		bool  has_force    = false;
+
+		float force        = 0;
 
 		b2JointId create_joint (
 			b2WorldId world, b2BodyId body0, b2BodyId body1, float ppm) override
@@ -719,7 +788,7 @@ namespace Reflex
 				def.upperTranslation    = to_b2coord(range_max, ppm);
 				def.enableMotor         = has_motor;
 				def.motorSpeed          = to_b2coord(motor_speed, ppm);
-				def.maxMotorForce       = default_max_force(body0);
+				def.maxMotorForce       = has_force ? force : default_max_force(body0);
 				def.collideConnected    = collide;
 				return b2CreatePrismaticJoint(world, &def);
 			}
@@ -741,7 +810,7 @@ namespace Reflex
 				def.maxLength          = to_b2coord(range_max, ppm);
 				def.enableMotor        = has_motor;
 				def.motorSpeed         = to_b2coord(motor_speed, ppm);
-				def.maxMotorForce      = default_max_force(body0);
+				def.maxMotorForce      = has_force ? force : default_max_force(body0);
 				def.collideConnected   = collide;
 				return b2CreateDistanceJoint(world, &def);
 			}
@@ -802,6 +871,8 @@ namespace Reflex
 				}
 				b2PrismaticJoint_EnableMotor(          b2joint, has_motor);
 				b2PrismaticJoint_SetMotorSpeed(        b2joint, to_b2coord(motor_speed, ppm));
+				if (has_force)
+					b2PrismaticJoint_SetMaxMotorForce(   b2joint, force);
 			}
 			else
 			{
@@ -818,6 +889,8 @@ namespace Reflex
 				}
 				b2DistanceJoint_EnableMotor(          b2joint, has_motor);
 				b2DistanceJoint_SetMotorSpeed(        b2joint, to_b2coord(motor_speed, ppm));
+				if (has_force)
+					b2DistanceJoint_SetMaxMotorForce(   b2joint, force);
 			}
 		}
 
@@ -1060,6 +1133,64 @@ namespace Reflex
 		return get_data(*this).has_motor;
 	}
 
+	void
+	LinkConstraint::set_force (float max_force)
+	{
+		if (max_force < 0)
+			argument_error(__FILE__, __LINE__);
+
+		LinkConstraintData& self = get_data(*this);
+
+		self.has_force = true;
+		self.force     = max_force;
+		self.update_params();
+	}
+
+	void
+	LinkConstraint::clear_force ()
+	{
+		LinkConstraintData& self = get_data(*this);
+
+		self.has_force = false;
+		self.force     = 0;
+
+		if (self.is_valid() && self.world)
+		{
+			View* view = self.pins[0].view();
+			Body* body = view ? View_get_body(view, false) : NULL;
+			if (body)
+			{
+				float force = default_max_force(Body_get_id(body));
+				if (self.has_axis)
+					b2PrismaticJoint_SetMaxMotorForce(self.b2joint, force);
+				else
+					b2DistanceJoint_SetMaxMotorForce( self.b2joint, force);
+			}
+		}
+	}
+
+	float
+	LinkConstraint::force () const
+	{
+		const LinkConstraintData& self = get_data(*this);
+
+		if (self.has_force)
+			return self.force;
+
+		if (self.is_valid() && self.world)
+			return self.has_axis
+				?	b2PrismaticJoint_GetMaxMotorForce(self.b2joint)
+				:	b2DistanceJoint_GetMaxMotorForce( self.b2joint);
+
+		return 0;
+	}
+
+	bool
+	LinkConstraint::has_force () const
+	{
+		return get_data(*this).has_force;
+	}
+
 
 	struct WheelConstraintData : public Constraint::Data
 	{
@@ -1075,6 +1206,10 @@ namespace Reflex
 		bool  has_motor   = false;
 
 		float motor_speed = 0;// degree/sec
+
+		bool  has_force   = false;
+
+		float force       = 0;
 
 		b2JointId create_joint (
 			b2WorldId world, b2BodyId body0, b2BodyId body1, float ppm) override
@@ -1097,7 +1232,7 @@ namespace Reflex
 			def.upperTranslation = to_b2coord(range_max, ppm);
 			def.enableMotor      = has_motor;
 			def.motorSpeed       = Xot::deg2rad(motor_speed);
-			def.maxMotorTorque   = default_max_force(body0);
+			def.maxMotorTorque   = has_force ? force : default_max_force(body0);
 			def.collideConnected = collide;
 			return b2CreateWheelJoint(world, &def);
 		}
@@ -1116,6 +1251,8 @@ namespace Reflex
 			}
 			b2WheelJoint_EnableMotor(          b2joint, has_motor);
 			b2WheelJoint_SetMotorSpeed(        b2joint, Xot::deg2rad(motor_speed));
+			if (has_force)
+				b2WheelJoint_SetMaxMotorTorque(  b2joint, force);
 		}
 
 		b2Vec2 b2axis () const
@@ -1265,6 +1402,59 @@ namespace Reflex
 	WheelConstraint::has_motor () const
 	{
 		return get_data(*this).has_motor;
+	}
+
+	void
+	WheelConstraint::set_force (float max_torque)
+	{
+		if (max_torque < 0)
+			argument_error(__FILE__, __LINE__);
+
+		WheelConstraintData& self = get_data(*this);
+
+		self.has_force = true;
+		self.force     = max_torque;
+		self.update_params();
+	}
+
+	void
+	WheelConstraint::clear_force ()
+	{
+		WheelConstraintData& self = get_data(*this);
+
+		self.has_force = false;
+		self.force     = 0;
+
+		if (self.is_valid() && self.world)
+		{
+			View* view = self.pins[0].view();
+			Body* body = view ? View_get_body(view, false) : NULL;
+			if (body)
+			{
+				b2WheelJoint_SetMaxMotorTorque(
+					self.b2joint, default_max_force(Body_get_id(body)));
+			}
+		}
+	}
+
+	float
+	WheelConstraint::force () const
+	{
+		const WheelConstraintData& self = get_data(*this);
+
+		if (self.has_force)
+			return self.force;
+
+		if (self.is_valid() && self.world)
+			return b2WheelJoint_GetMaxMotorTorque(self.b2joint);
+
+		return 0;
+	}
+
+	bool
+	WheelConstraint::has_force () const
+	{
+		return get_data(*this).has_force;
 	}
 
 
@@ -1456,7 +1646,7 @@ namespace Reflex
 		if (self.has_force)
 			return self.force;
 
-		if (self.is_valid())
+		if (self.is_valid() && self.world)
 			return b2MouseJoint_GetMaxForce(self.b2joint);
 
 		return 0;

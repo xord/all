@@ -20,7 +20,7 @@ module Reflex
       has_angle! ? Range.new(angle_min!, angle_max!) : nil
     end
 
-    universal_accessor :angle, :motor
+    universal_accessor :angle, :motor, :force
 
   end# SnapConstraint
 

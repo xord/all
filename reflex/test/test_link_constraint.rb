@@ -41,6 +41,8 @@ class TestLinkConstraint < Test::Unit::TestCase
     assert_equal 4..5,              v1.link(v2, range: 4..5) .range
     assert_nil                      v1.link(v2)              .motor
     assert_equal 6,                 v1.link(v2, motor: 6)    .motor
+    assert_nil                      v1.link(v2)              .force
+    assert_equal 8,                 v1.link(v2, force: 8)    .force
     assert_nil                      v1.link(v2)              .spring
     assert_equal 7,                 v1.link(v2, spring: 7)   .spring
     assert_in_delta 0.7,            v1.link(v2)              .damping
@@ -107,6 +109,21 @@ class TestLinkConstraint < Test::Unit::TestCase
 
     c.motor = nil
     assert_nil c.motor
+  end
+
+  def test_force()
+    v1, v2, = setup_views
+
+    c = v1.link v2, motor: 10, force: 500
+    assert_equal 500, c.force
+
+    c.force = nil
+    assert_nil        c.force
+
+    c.force = 100
+    assert_equal 100, c.force
+
+    assert_raise(ArgumentError) {c.force = -1}
   end
 
   def test_axis_to_view()

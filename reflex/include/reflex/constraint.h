@@ -96,6 +96,15 @@ namespace Reflex
 
 			virtual bool   has_motor () const;
 
+			virtual void   set_force (float max_torque);
+			// the default is 1000 * mass, and 0 makes the motor powerless
+
+			virtual void clear_force ();
+
+			virtual float      force () const;
+
+			virtual bool   has_force () const;
+
 		protected:
 
 			SnapConstraint ();
@@ -154,6 +163,15 @@ namespace Reflex
 
 			virtual bool   has_motor () const;
 
+			virtual void   set_force (float max_force);
+			// the default is 1000 * mass, and 0 makes it powerless
+
+			virtual void clear_force ();
+
+			virtual float      force () const;
+
+			virtual bool   has_force () const;
+
 		protected:
 
 			LinkConstraint ();
@@ -198,6 +216,15 @@ namespace Reflex
 
 			virtual bool   has_motor () const;
 
+			virtual void   set_force (float max_torque);
+			// the default is 1000 * mass, and 0 makes the motor powerless
+
+			virtual void clear_force ();
+
+			virtual float      force () const;
+
+			virtual bool   has_force () const;
+
 		protected:
 
 			WheelConstraint ();
@@ -223,6 +250,7 @@ namespace Reflex
 			virtual const Pin& target () const;
 
 			virtual void   set_force (float max_force);
+			// the default is 1000 * mass, and 0 makes it powerless
 
 			virtual void clear_force ();
 

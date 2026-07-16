@@ -134,6 +134,25 @@ RUCY_DEF0(get_motor)
 }
 RUCY_END
 
+static
+RUCY_DEF1(set_force, max_force)
+{
+	CHECK;
+	if (max_force.is_nil())
+		THIS->clear_force();
+	else
+		THIS->set_force(to<float>(max_force));
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_force)
+{
+	CHECK;
+	return THIS->has_force() ? value(THIS->force()) : nil();
+}
+RUCY_END
+
 
 static Class cLinkConstraint;
 
@@ -156,6 +175,8 @@ Init_reflex_link_constraint ()
 	cLinkConstraint.define_private_method(  "has_range!",   has_range);
 	cLinkConstraint.define_method("motor=", set_motor);
 	cLinkConstraint.define_method("motor",  get_motor);
+	cLinkConstraint.define_method("force=", set_force);
+	cLinkConstraint.define_method("force",  get_force);
 }
 
 

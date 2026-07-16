@@ -40,13 +40,13 @@ RUCY_DEF0(get_target)
 RUCY_END
 
 static
-RUCY_DEF1(set_force, force)
+RUCY_DEF1(set_force, max_force)
 {
 	CHECK;
-	if (force.is_nil())
+	if (max_force.is_nil())
 		THIS->clear_force();
 	else
-		THIS->set_force(to<float>(force));
+		THIS->set_force(to<float>(max_force));
 }
 RUCY_END
 
