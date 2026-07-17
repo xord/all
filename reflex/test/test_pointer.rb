@@ -15,8 +15,10 @@ class TestPointer < Test::Unit::TestCase
   DOWN        = Reflex::Pointer::DOWN
   UP          = Reflex::Pointer::UP
   MOVE        = Reflex::Pointer::MOVE
-  STAY        = Reflex::Pointer::STAY
   CANCEL      = Reflex::Pointer::CANCEL
+  ENTER       = Reflex::Pointer::ENTER
+  LEAVE       = Reflex::Pointer::LEAVE
+  STAY        = Reflex::Pointer::STAY
 
   T = true
   F = false
@@ -99,28 +101,34 @@ class TestPointer < Test::Unit::TestCase
     def action(a)
       pointer(action: a).tap do |o|
         def o.test()
-          [action, down?, up?, move?, cancel?, stay?]
+          [action, down?, up?, move?, cancel?, enter?, leave?, stay?]
         end
       end
     end
 
     o = action ACTION_NONE
-    assert_equal [:none,   F, F, F, F, F], o.test
+    assert_equal [:none,   F, F, F, F, F, F, F], o.test
 
     o = action DOWN
-    assert_equal [:down,   T, F, F, F, F], o.test
+    assert_equal [:down,   T, F, F, F, F, F, F], o.test
 
     o = action UP
-    assert_equal [:up,     F, T, F, F, F], o.test
+    assert_equal [:up,     F, T, F, F, F, F, F], o.test
 
     o = action MOVE
-    assert_equal [:move,   F, F, T, F, F], o.test
+    assert_equal [:move,   F, F, T, F, F, F, F], o.test
 
     o = action CANCEL
-    assert_equal [:cancel, F, F, F, T, F], o.test
+    assert_equal [:cancel, F, F, F, T, F, F, F], o.test
+
+    o = action ENTER
+    assert_equal [:enter,  F, F, F, F, T, F, F], o.test
+
+    o = action LEAVE
+    assert_equal [:leave,  F, F, F, F, F, T, F], o.test
 
     o = action STAY
-    assert_equal [:stay,   F, F, F, F, T], o.test
+    assert_equal [:stay,   F, F, F, F, F, F, T], o.test
   end
 
   def test_position()

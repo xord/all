@@ -29,6 +29,8 @@ namespace Reflex
 
 			NativePointerEvent (UINT msg, WPARAM wp, LPARAM lp);
 
+			NativePointerEvent (UINT msg, WPARAM wp, LPARAM lp, Pointer::Action action);
+
 			NativePointerEvent (HWND hwnd, const TOUCHINPUT* touches, size_t size);
 
 	};// NativePointerEvent

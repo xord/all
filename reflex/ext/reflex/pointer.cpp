@@ -163,6 +163,8 @@ Init_reflex_pointer ()
 	cPointer.define_const("UP",          Reflex::Pointer::UP);
 	cPointer.define_const("MOVE",        Reflex::Pointer::MOVE);
 	cPointer.define_const("CANCEL",      Reflex::Pointer::CANCEL);
+	cPointer.define_const("ENTER",       Reflex::Pointer::ENTER);
+	cPointer.define_const("LEAVE",       Reflex::Pointer::LEAVE);
 	cPointer.define_const("STAY",        Reflex::Pointer::STAY);
 }
 

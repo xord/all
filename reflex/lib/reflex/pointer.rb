@@ -29,6 +29,8 @@ module Reflex
       up:     UP,
       move:   MOVE,
       cancel: CANCEL,
+      enter:  ENTER,
+      leave:  LEAVE,
       stay:   STAY
     }
 
@@ -74,6 +76,14 @@ module Reflex
 
     def cancel?()
       get_action == CANCEL
+    end
+
+    def enter?()
+      get_action == ENTER
+    end
+
+    def leave?()
+      get_action == LEAVE
     end
 
     def stay?()

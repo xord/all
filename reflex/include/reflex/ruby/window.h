@@ -182,6 +182,24 @@ namespace Reflex
 					Super::on_pointer_cancel(e);
 			}
 
+			virtual void on_pointer_enter (PointerEvent* e)
+			{
+				RUCY_SYM(on_pointer_enter);
+				if (this->is_overridable())
+					this->value.call(on_pointer_enter, Rucy::value(e));
+				else
+					Super::on_pointer_enter(e);
+			}
+
+			virtual void on_pointer_leave (PointerEvent* e)
+			{
+				RUCY_SYM(on_pointer_leave);
+				if (this->is_overridable())
+					this->value.call(on_pointer_leave, Rucy::value(e));
+				else
+					Super::on_pointer_leave(e);
+			}
+
 			virtual void on_wheel (WheelEvent* e)
 			{
 				RUCY_SYM(on_wheel);

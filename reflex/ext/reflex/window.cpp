@@ -406,6 +406,22 @@ RUCY_DEF1(on_pointer_cancel, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_pointer_enter, event)
+{
+	CHECK;
+	CALL(on_pointer_enter(to<Reflex::PointerEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_pointer_leave, event)
+{
+	CHECK;
+	CALL(on_pointer_leave(to<Reflex::PointerEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_wheel, event)
 {
 	CHECK;
@@ -505,6 +521,8 @@ Init_reflex_window ()
 	cWindow.define_method("on_pointer_up",     on_pointer_up);
 	cWindow.define_method("on_pointer_move",   on_pointer_move);
 	cWindow.define_method("on_pointer_cancel", on_pointer_cancel);
+	cWindow.define_method("on_pointer_enter",  on_pointer_enter);
+	cWindow.define_method("on_pointer_leave",  on_pointer_leave);
 	cWindow.define_method("on_wheel",          on_wheel);
 	cWindow.define_method("on_midi",           on_midi);
 	cWindow.define_method("on_note",           on_note);

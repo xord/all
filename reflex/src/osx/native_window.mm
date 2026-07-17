@@ -444,6 +444,24 @@ move_to_main_screen_origin (NativeWindow* window)
 		Window_call_pointer_event(win, &e);
 	}
 
+	- (void) mouseEntered: (NSEvent*) event
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::ENTER);
+		Window_call_pointer_event(win, &e);
+	}
+
+	- (void) mouseExited: (NSEvent*) event
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::LEAVE);
+		Window_call_pointer_event(win, &e);
+	}
+
 	- (void) scrollWheel: (NSEvent*) event
 	{
 		Reflex::Window* win = self.window;

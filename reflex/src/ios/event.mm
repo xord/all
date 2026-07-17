@@ -124,8 +124,11 @@ namespace Reflex
 
 
 	NativePointerEvent::NativePointerEvent (
-		NSSet* touches, UIEvent* event, UIView* view)
+		UIView* view, UIHoverGestureRecognizer* recognizer,
+		NSSet* touches, UIEvent* event)
 	{
+		assert(view && recognizer);
+
 		for (UITouch* touch in touches)
 		{
 			Pointer::Action action = get_action(touch);
@@ -141,7 +144,14 @@ namespace Reflex
 				action == Pointer::MOVE,
 				touch.timestamp);
 
-			if (!(type & Pointer::MOUSE))
+			if ((type & Pointer::PEN))
+			{
+				// keying the pencil's touch on the hover recognizer unifies it with
+				// its hover pointer, so they act as one pointer across the
+				// hover <-> touch transitions.
+				Pointer_set_system_id(&pointer, (Pointer::ID) recognizer);
+			}
+			else if (!(type & Pointer::MOUSE))
 				Pointer_set_system_id(&pointer, (Pointer::ID) touch);
 
 			if (action != Pointer::DOWN)
@@ -156,19 +166,28 @@ namespace Reflex
 	}
 
 	NativePointerEvent::NativePointerEvent (
-		UIHoverGestureRecognizer* recognizer, UIView* view)
+		UIView* view, UIHoverGestureRecognizer* recognizer,
+		Pointer::Action action, bool pen)
 	{
-		assert(recognizer && view);
+		assert(view && recognizer);
+
+		uint type = pen ? Pointer::PEN : Pointer::MOUSE;
 
 		Pointer pointer(
 			0,
-			Pointer::MOUSE,
-			Pointer::MOVE,
+			type,
+			action,
 			to_point([recognizer locationInView: view]),
 			get_modifiers(nil),
 			0,
 			false,
 			Xot::time());
+
+		if (type & Pointer::PEN)
+		{
+			Pointer_set_system_id(&pointer, (Pointer::ID) recognizer);
+			Pointer_set_floatable(&pointer, true);
+		}
 
 		if (pointer)
 			PointerEvent_add_pointer(this, pointer);

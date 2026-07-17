@@ -724,7 +724,7 @@ namespace Reflex
 	}
 
 	void
-	PointerEvent_update_for_capturing_view (PointerEvent* pthis, const View* view)
+	PointerEvent_to_view_coord (PointerEvent* pthis, const View* view)
 	{
 		if (!pthis)
 			argument_error(__FILE__, __LINE__);

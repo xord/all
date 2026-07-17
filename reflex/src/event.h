@@ -42,8 +42,7 @@ namespace Reflex
 	void PointerEvent_update_for_child_view (
 		PointerEvent* pthis, const View* view);
 
-	void PointerEvent_update_for_capturing_view (
-		PointerEvent* pthis, const View* view);
+	void PointerEvent_to_view_coord (PointerEvent* pthis, const View* view);
 
 
 	void WheelEvent_set_position (WheelEvent* pthis, const Point& position);

@@ -383,6 +383,20 @@ namespace Reflex
 					case SDL_WINDOWEVENT_FOCUS_LOST:
 						Window_call_deactivate_event(win);
 						break;
+
+					case SDL_WINDOWEVENT_ENTER:
+					{
+						NativePointerEvent e(self->native, Pointer::ENTER);
+						Window_call_pointer_event(win, &e);
+						break;
+					}
+
+					case SDL_WINDOWEVENT_LEAVE:
+					{
+						NativePointerEvent e(self->native, Pointer::LEAVE);
+						Window_call_pointer_event(win, &e);
+						break;
+					}
 				}
 				break;
 			}
@@ -403,23 +417,21 @@ namespace Reflex
 
 			case SDL_MOUSEBUTTONDOWN:
 			{
-				NativePointerEvent e(
-					event.button, self->native, Pointer::DOWN);
+				NativePointerEvent e(self->native, event.button, Pointer::DOWN);
 				Window_call_pointer_event(win, &e);
 				break;
 			}
 
 			case SDL_MOUSEBUTTONUP:
 			{
-				NativePointerEvent e(
-					event.button, self->native, Pointer::UP);
+				NativePointerEvent e(self->native, event.button, Pointer::UP);
 				Window_call_pointer_event(win, &e);
 				break;
 			}
 
 			case SDL_MOUSEMOTION:
 			{
-				NativePointerEvent e(event.motion, self->native);
+				NativePointerEvent e(self->native, event.motion);
 				Window_call_pointer_event(win, &e);
 				break;
 			}
@@ -433,21 +445,21 @@ namespace Reflex
 
 			case SDL_FINGERDOWN:
 			{
-				NativePointerEvent e(event.tfinger, self->native, Pointer::DOWN);
+				NativePointerEvent e(self->native, event.tfinger, Pointer::DOWN);
 				Window_call_pointer_event(win, &e);
 				break;
 			}
 
 			case SDL_FINGERUP:
 			{
-				NativePointerEvent e(event.tfinger, self->native, Pointer::UP);
+				NativePointerEvent e(self->native, event.tfinger, Pointer::UP);
 				Window_call_pointer_event(win, &e);
 				break;
 			}
 
 			case SDL_FINGERMOTION:
 			{
-				NativePointerEvent e(event.tfinger, self->native, Pointer::MOVE);
+				NativePointerEvent e(self->native, event.tfinger, Pointer::MOVE);
 				Window_call_pointer_event(win, &e);
 				break;
 			}

@@ -133,6 +133,10 @@ namespace Reflex
 
 			virtual void on_pointer_cancel (PointerEvent* e);
 
+			virtual void on_pointer_enter  (PointerEvent* e);
+
+			virtual void on_pointer_leave  (PointerEvent* e);
+
 			virtual void on_wheel (WheelEvent* e);
 
 			virtual void on_midi (MIDIEvent* e);

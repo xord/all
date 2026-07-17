@@ -29,13 +29,11 @@ namespace Reflex
 
 			DRAG          = Xot::bit(0, TYPE_LAST),
 
-			ENTER         = Xot::bit(1, TYPE_LAST),
+			FLOATABLE     = Xot::bit(1, TYPE_LAST),
 
-			EXIT          = Xot::bit(2, TYPE_LAST),
+			HAS_SYSTEM_ID = Xot::bit(2, TYPE_LAST),
 
-			HAS_SYSTEM_ID = Xot::bit(3, TYPE_LAST),
-
-			HAS_PREV_POS  = Xot::bit(4, TYPE_LAST),
+			HAS_PREV_POS  = Xot::bit(3, TYPE_LAST),
 
 		};// Flag
 
@@ -56,21 +54,13 @@ namespace Reflex
 		Data (
 			ID id = -1, uint types = TYPE_NONE, Action action = ACTION_NONE,
 			const Point& position = 0, uint modifiers = 0, uint click_count = 0,
-			bool drag = false, bool enter = false, bool exit = false,
+			bool drag = false,
 			double time = 0)
 		:	id(id), types(types), action(action),
 			position(position), modifiers(modifiers), click_count(click_count),
-			flags(make_flags(drag, enter, exit)),
+			flags(drag ? DRAG : 0),
 			time(time)
 		{
-		}
-
-		uint make_flags (bool drag, bool enter, bool exit)
-		{
-			return
-				(drag  ? DRAG  : 0) |
-				(enter ? ENTER : 0) |
-				(exit  ? EXIT  : 0);
 		}
 
 		bool is_valid () const
@@ -94,6 +84,27 @@ namespace Reflex
 	Pointer_set_id (Pointer* it, Pointer::ID id)
 	{
 		it->self->id = id;
+	}
+
+	void
+	Pointer_set_action (Pointer* it, Pointer::Action action)
+	{
+		it->self->action = action;
+	}
+
+	void
+	Pointer_set_floatable (Pointer* it, bool floatable)
+	{
+		if (floatable)
+			Xot::add_flag(&it->self->flags, Pointer::Data::FLOATABLE);
+		else
+			Xot::remove_flag(&it->self->flags, Pointer::Data::FLOATABLE);
+	}
+
+	bool
+	Pointer_is_floatable (const Pointer& it)
+	{
+		return Xot::has_flag(it.self->flags, Pointer::Data::FLOATABLE);
 	}
 
 	void
@@ -167,7 +178,7 @@ namespace Reflex
 		double time)
 	:	self(new Data(
 			id, types, action,
-			position, modifiers, click_count, drag, false, false,
+			position, modifiers, click_count, drag,
 			time))
 	{
 	}

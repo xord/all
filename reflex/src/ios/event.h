@@ -28,9 +28,13 @@ namespace Reflex
 
 		public:
 
-			NativePointerEvent (NSSet* touches, UIEvent* event, UIView* view);
+			NativePointerEvent (
+				UIView* view, UIHoverGestureRecognizer* recognizer,
+				NSSet* touches, UIEvent* event);
 
-			NativePointerEvent (UIHoverGestureRecognizer* recognizer, UIView* view);
+			NativePointerEvent (
+				UIView* view, UIHoverGestureRecognizer* recognizer,
+				Pointer::Action action, bool pen);
 
 	};// NativePointerEvent
 

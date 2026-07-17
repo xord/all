@@ -94,7 +94,7 @@ namespace Reflex
 	}
 
 	NativePointerEvent::NativePointerEvent (
-		const SDL_MouseButtonEvent& e, SDL_Window* window, Pointer::Action action)
+		SDL_Window* window, const SDL_MouseButtonEvent& e, Pointer::Action action)
 	{
 		PointerEvent_add_pointer(this, Pointer(
 			0,
@@ -108,7 +108,7 @@ namespace Reflex
 	}
 
 	NativePointerEvent::NativePointerEvent (
-		const SDL_MouseMotionEvent& e, SDL_Window* window)
+		SDL_Window* window, const SDL_MouseMotionEvent& e)
 	{
 		PointerEvent_add_pointer(this, Pointer(
 			0,
@@ -122,7 +122,7 @@ namespace Reflex
 	}
 
 	NativePointerEvent::NativePointerEvent (
-		const SDL_TouchFingerEvent& e, SDL_Window* window, Pointer::Action action)
+		SDL_Window* window, const SDL_TouchFingerEvent& e, Pointer::Action action)
 	{
 		uint mods = get_modifiers(SDL_GetModState());
 		double t  = time();
@@ -155,6 +155,23 @@ namespace Reflex
 				true,
 				t));
 		}
+	}
+
+	NativePointerEvent::NativePointerEvent (
+		SDL_Window* window, Pointer::Action action)
+	{
+		int x = 0, y = 0;
+		Uint32 state = SDL_GetMouseState(&x, &y);
+
+		PointerEvent_add_pointer(this, Pointer(
+			0,
+			get_current_pointer_type(state),
+			action,
+			Point(x, y),
+			get_modifiers(SDL_GetModState()),
+			0,
+			false,
+			time()));
 	}
 
 
