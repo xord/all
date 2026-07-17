@@ -151,6 +151,7 @@ ReflexViewController_get_show_fun ()
 		int update_count;
 		int touching_count;
 		int repeating_key_count;
+		bool pen;
 	}
 
 	- (id) init
@@ -163,6 +164,7 @@ ReflexViewController_get_show_fun ()
 		update_count        = 0;
 		touching_count      = 0;
 		repeating_key_count = 0;
+		pen                 = false;
 
 		return self;
 	}
@@ -529,10 +531,12 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(touches, event, self.reflexView);
+		Reflex::NativePointerEvent e(self.reflexView, self.hoverRecognizer, touches, event);
+
+		int count = (int) e.size();
 		Window_call_pointer_event(win, &e);
 
-		touching_count += e.size();
+		touching_count += count;
 	}
 
 	- (void) touchesEnded: (NSSet*) touches withEvent: (UIEvent*) event
@@ -540,12 +544,19 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(touches, event, self.reflexView);
+		Reflex::NativePointerEvent e(self.reflexView, self.hoverRecognizer, touches, event);
+
+		int count = (int) e.size();
 		Window_call_pointer_event(win, &e);
 
-		touching_count -= e.size();
+		touching_count -= count;
 		if (touching_count == 0)
-			win->self->prev_pointers.clear();
+		{
+			win->self->prev_pointers.remove_if([](const Reflex::Pointer& p)
+			{
+				return !Reflex::Pointer_is_floatable(p);
+			});
+		}
 		else if (touching_count < 0)
 			Reflex::invalid_state_error(__FILE__, __LINE__);
 	}
@@ -560,7 +571,7 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativePointerEvent e(touches, event, self.reflexView);
+		Reflex::NativePointerEvent e(self.reflexView, self.hoverRecognizer, touches, event);
 		Window_call_pointer_event(win, &e);
 	}
 
@@ -570,16 +581,38 @@ ReflexViewController_get_show_fun ()
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		if (touching_count > 0) return;
+		if (recognizer.state == UIGestureRecognizerStateBegan)
+			pen = false;
 
-		if (
-			recognizer.state != UIGestureRecognizerStateBegan &&
-			recognizer.state != UIGestureRecognizerStateChanged)
+		Reflex::Pointer::Action action;
+		switch (recognizer.state)
 		{
-			return;
+			case UIGestureRecognizerStateBegan:
+			case UIGestureRecognizerStateChanged:
+				// suppress hover moves while a touch is active
+				if (touching_count > 0) return;
+				action = recognizer.state == UIGestureRecognizerStateBegan
+					?	Reflex::Pointer::ENTER
+					:	Reflex::Pointer::MOVE;
+				if (@available(iOS 16.1, *))
+				{
+					// zOffset drops to 0 on the Ended state, so latch the pen-ness
+					// here and reuse it until the leave.
+					if (recognizer.zOffset > 0) pen = true;
+				}
+				break;
+
+			case UIGestureRecognizerStateEnded:
+			case UIGestureRecognizerStateCancelled:
+			case UIGestureRecognizerStateFailed:
+				action = Reflex::Pointer::LEAVE;
+				break;
+
+			default:
+				return;
 		}
 
-		Reflex::NativePointerEvent e(recognizer, self.reflexView);
+		Reflex::NativePointerEvent e(self.reflexView, recognizer, action, pen);
 		if (e.size() > 0)
 			Window_call_pointer_event(win, &e);
 	}
