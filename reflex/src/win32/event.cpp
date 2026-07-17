@@ -68,6 +68,7 @@ namespace Reflex
 				break;
 
 			case WM_MOUSEMOVE:
+			case WM_MOUSELEAVE:
 				type |= Reflex::Pointer::MOUSE;
 				break;
 		}
@@ -95,6 +96,9 @@ namespace Reflex
 
 			case WM_MOUSEMOVE:
 				return Reflex::Pointer::MOVE;
+
+			case WM_MOUSELEAVE:
+				return Reflex::Pointer::LEAVE;
 
 			default:
 				return Reflex::Pointer::ACTION_NONE;
@@ -128,11 +132,17 @@ namespace Reflex
 	}
 
 	NativePointerEvent::NativePointerEvent (UINT msg, WPARAM wp, LPARAM lp)
+	:	NativePointerEvent(msg, wp, lp, get_mouse_action(msg))
+	{
+	}
+
+	NativePointerEvent::NativePointerEvent (
+		UINT msg, WPARAM wp, LPARAM lp, Pointer::Action action)
 	{
 		PointerEvent_add_pointer(this, Pointer(
 			0,
 			get_mouse_type(msg, wp),
-			get_mouse_action(msg),
+			action,
 			Point(GET_X_LPARAM(lp), GET_Y_LPARAM(lp)),
 			KeyEvent_get_modifiers(),
 			get_mouse_click_count(msg),

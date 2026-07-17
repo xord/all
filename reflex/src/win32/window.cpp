@@ -36,6 +36,8 @@ namespace Reflex
 
 		bool need_rebind = false;
 
+		bool tracking_mouse = false;
+
 		OpenGLContext context;
 
 		PressingKeyMap pressing_keys;
@@ -305,6 +307,22 @@ namespace Reflex
 	{
 		if (is_from_touch_event()) return;
 
+		WindowData* self = get_data(win);
+
+		if (msg == WM_MOUSEMOVE && !self->tracking_mouse)
+		{
+			TRACKMOUSEEVENT tme = {sizeof(tme), TME_LEAVE, self->hwnd, 0};
+			TrackMouseEvent(&tme);
+			self->tracking_mouse = true;
+
+			// Win32 has no mouse-enter message; the first move after (re)arming
+			// the leave tracking is when the mouse entered the window.
+			NativePointerEvent e(msg, wp, lp, Pointer::ENTER);
+			Window_call_pointer_event(win, &e);
+		}
+		else if (msg == WM_MOUSELEAVE)
+			self->tracking_mouse = false;
+
 		NativePointerEvent e(msg, wp, lp);
 		Window_call_pointer_event(win, &e);
 	}
@@ -440,6 +458,7 @@ namespace Reflex
 			case WM_RBUTTONUP:
 			case WM_MBUTTONUP:
 			case WM_MOUSEMOVE:
+			case WM_MOUSELEAVE:
 			{
 				mouse(win, msg, wp, lp);
 				break;
