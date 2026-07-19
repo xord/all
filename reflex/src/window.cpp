@@ -1012,6 +1012,25 @@ namespace Reflex
 	}
 
 	void
+	Window::set_menu (Menu* menu)
+	{
+		self->menu = menu;
+		Window_set_menu(this, menu);
+	}
+
+	Menu*
+	Window::menu ()
+	{
+		return self->menu.get();
+	}
+
+	const Menu*
+	Window::menu () const
+	{
+		return const_cast<Window*>(this)->menu();
+	}
+
+	void
 	Window::set_flag (uint flags)
 	{
 		Window_set_flags(this, flags);

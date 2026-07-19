@@ -22,6 +22,7 @@
 #include <reflex/application.h>
 #include <reflex/window.h>
 #include <reflex/view.h>
+#include <reflex/menu.h>
 #include <reflex/screen.h>
 
 #include <reflex/device.h>

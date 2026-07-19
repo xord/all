@@ -12,6 +12,7 @@
 #include <rays/painter.h>
 #include "reflex/window.h"
 #include "reflex/view.h"
+#include "reflex/menu.h"
 #include "application.h"
 #include "pointer.h"
 
@@ -51,6 +52,8 @@ namespace Reflex
 		Painter painter;
 
 		View::Ref root, focus;
+
+		Menu::Ref menu;
 
 		Point prev_position, prev_size;
 
@@ -116,6 +119,8 @@ namespace Reflex
 		Window* window, coord x, coord y, coord width, coord height);
 
 	Bounds Window_get_frame (const Window& window);
+
+	void Window_set_menu (Window* window, Menu* menu);
 
 	Screen Window_get_screen (const Window& window);
 

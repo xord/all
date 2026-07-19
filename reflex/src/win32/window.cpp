@@ -732,6 +732,12 @@ namespace Reflex
 		return Bounds(x, y, w, h);
 	}
 
+	void
+	Window_set_menu (Window* window, Menu* menu)
+	{
+		not_implemented_error(__FILE__, __LINE__);
+	}
+
 	Screen
 	Window_get_screen (const Window& window)
 	{

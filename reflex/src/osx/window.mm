@@ -4,6 +4,7 @@
 
 #import <Cocoa/Cocoa.h>
 #include "reflex/exception.h"
+#include "menu.h"
 #include "screen.h"
 #import "native_window.h"
 
@@ -141,6 +142,16 @@ namespace Reflex
 		f.origin.y = primary_screen_height() - (f.origin.y + f.size.height);
 
 		return Bounds(f.origin.x, f.origin.y, f.size.width, f.size.height);
+	}
+
+	void
+	Window_set_menu (Window* window, Menu* menu)
+	{
+		NativeWindow* native = get_native(window);
+		if (!native) return;
+
+		if ([native isMainWindow])
+			Menu_apply_to_main_menu(window->menu());
 	}
 
 	Screen
