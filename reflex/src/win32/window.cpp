@@ -15,6 +15,7 @@
 #include "gamepad.h"
 #include "screen.h"
 #include "opengl.h"
+#include "menu.h"
 
 
 namespace Reflex
@@ -408,6 +409,24 @@ namespace Reflex
 				return 0;
 			}
 
+			case WM_MENUCOMMAND:
+			{
+				Menu_call_command_event((HMENU) lp, (uint) wp);
+				return 0;
+			}
+
+			case WM_INITMENUPOPUP:
+			{
+				Menu_call_open_event((HMENU) wp);
+				break;
+			}
+
+			case WM_UNINITMENUPOPUP:
+			{
+				Menu_call_close_event((HMENU) wp);
+				break;
+			}
+
 			case WM_PAINT:
 			{
 				self->context.make_current();
@@ -732,10 +751,22 @@ namespace Reflex
 		return Bounds(x, y, w, h);
 	}
 
+	HWND
+	Window_get_hwnd (const Window* window)
+	{
+		if (!window) return NULL;
+
+		return get_data(window)->hwnd;
+	}
+
 	void
 	Window_set_menu (Window* window, Menu* menu)
 	{
-		not_implemented_error(__FILE__, __LINE__);
+		HWND hwnd = get_data(window)->hwnd;
+		if (!hwnd) return;
+
+		SetMenu(hwnd, menu ? Menu_get_hmenu(menu) : NULL);
+		DrawMenuBar(hwnd);
 	}
 
 	Screen
