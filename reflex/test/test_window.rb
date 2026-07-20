@@ -73,6 +73,16 @@ class TestWindow < Test::Unit::TestCase
     w.frame = [bounds(1, 2, 3, 4, 5, 6)]; assert_equal [1, 2, 0, minw[4], 5, 0], w.frame.to_a(3)
   end
 
+  def test_menu()
+    w = win
+    m = Reflex::Menu.new
+    assert_nil      w.menu
+    w.menu = m
+    assert_equal m, w.menu
+    w.menu = nil
+    assert_nil      w.menu
+  end
+
   def test_closable?()
     w = win
     assert_true  w.closable?
