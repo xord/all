@@ -129,7 +129,7 @@ namespace Reflex
 
 			virtual Point   to_screen (const Point& point) const;
 
-			virtual void             add_child (View* child);
+			virtual void             add_child (View* child, int index = -1);
 
 			virtual void          remove_child (View* child);
 
@@ -178,7 +178,7 @@ namespace Reflex
 
 			virtual const Shape*         shape () const;
 
-			virtual void             add_shape (Shape* shape);
+			virtual void             add_shape (Shape* shape, int index = -1);
 
 			virtual void          remove_shape (Shape* shape);
 

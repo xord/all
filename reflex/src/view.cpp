@@ -927,7 +927,7 @@ namespace Reflex
 		View::ChildList* result, const View* view, const Selector& selector,
 		bool recursive)
 	{
-		View::ChildList* children = view->self->children();
+		auto* children = view->self->children();
 		if (!children) return;
 
 		for (auto& child : *children)
@@ -1943,7 +1943,7 @@ namespace Reflex
 	}
 
 	void
-	View::add_child (View* child)
+	View::add_child (View* child, int index)
 	{
 		if (!child)
 			argument_error(__FILE__, __LINE__);
@@ -1957,7 +1957,11 @@ namespace Reflex
 		else if (found != belong)
 			invalid_state_error(__FILE__, __LINE__);
 
-		self->children(true)->push_back(child);
+		auto* children = self->children(true);
+		if (index < 0 || (int) children->size() < index)
+			children->push_back(child);
+		else
+			children->insert(children->begin() + (size_t) index, child);
 
 		View* prev_parent = child->parent();
 		set_parent(child, this);
@@ -2201,12 +2205,17 @@ namespace Reflex
 	}
 
 	void
-	View::add_shape (Shape* shape)
+	View::add_shape (Shape* shape, int index)
 	{
 		if (!shape) return;
 
 		Shape_set_owner(shape, this);
-		self->shapes().push_back(shape);
+
+		auto& shapes = self->shapes();
+		if (index < 0 || (int) shapes.size() < index)
+			shapes.push_back(shape);
+		else
+			shapes.insert(shapes.begin() + (size_t) index, shape);
 	}
 
 	void

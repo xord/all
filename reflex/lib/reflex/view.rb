@@ -73,6 +73,10 @@ module Reflex
       timeout seconds, &block
     end
 
+    def add_child(child, index: nil)
+      add_child! child, index
+    end
+
     def remove_self()
       parent.remove self if parent
     end
@@ -108,6 +112,10 @@ module Reflex
     def each_shape(&block)
       return enum_for :each_shape unless block
       each_shape!(&block)
+    end
+
+    def add_shape(shape, index: nil)
+      add_shape! shape, index
     end
 
     def shapes()

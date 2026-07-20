@@ -85,12 +85,36 @@ class TestView < Test::Unit::TestCase
   end
 
   def test_add_child()
+    view.tap do |v|
+      v.add view(name: :a)
+      v.add view(name: :b)
+      v.add view(name: :c), index: 1
+      assert_equal %w[a c b], v.children.map(&:name)
+    end
+
+    view.tap do |v|
+      v.add view(name: :a)
+      v.add view(name: :b), index: 0
+      v.add view(name: :c), index: v.children.to_a.size
+      assert_equal %w[b a c], v.children.map(&:name)
+    end
+
+    view.tap do |v|
+      v.add view(name: :a)
+      v.add view(name: :b), index: 99
+      v.add view(name: :c), index: -1
+      v.add view(name: :d), index: nil
+      assert_equal %w[a b c d], v.children.map(&:name)
+    end
+
+    view.tap do |v|
+      assert_nothing_raised       {v.add_child view}
+      assert_raise(ArgumentError) {v.add_child v}
+    end
+
     assert_raise(ArgumentError) {view.add_child}
-    assert_raise(TypeError) {view.add_child nil}
-    assert_raise(TypeError) {view.add_child 1}
-    v = view
-    assert_raise(ArgumentError) {v.add_child v}
-    assert_nothing_raised {v.add_child view}
+    assert_raise(TypeError)     {view.add_child nil}
+    assert_raise(TypeError)     {view.add_child 1}
   end
 
   def test_remove_child()
@@ -206,26 +230,49 @@ class TestView < Test::Unit::TestCase
   end
 
   def test_add_remove_shape()
-    s = shape name: :S
-    s.density =  1
-    assert_equal 1, s.density
+    view.tap do |v|
+      s = shape name: :S
+      s.density =  1
+      assert_equal 1, s.density
 
-    v = view
-    assert_equal 0,     v.shapes.to_a.size
+      assert_equal 0,     v.shapes.to_a.size
 
-    v.add_shape s
-    assert_equal 1,     v.shapes.to_a.size
-    assert_includes     v.find_shapes(selector name: :S), s
-    assert_equal 1,     v.find_shapes(selector name: :S).first.density
+      v.add_shape s
+      assert_equal 1,     v.shapes.to_a.size
+      assert_includes     v.find_shapes(selector name: :S), s
+      assert_equal 1,     v.find_shapes(selector name: :S).first.density
 
-    v.remove_shape s
-    assert_equal 0,     v.shapes.to_a.size
-    assert_not_includes v.find_shapes(selector name: :S), s
+      v.remove_shape s
+      assert_equal 0,     v.shapes.to_a.size
+      assert_not_includes v.find_shapes(selector name: :S), s
 
-    v.add_shape s
-    assert_equal 1,     v.shapes.to_a.size
-    v.clear_shapes
-    assert_equal 0,     v.shapes.to_a.size
+      v.add_shape s
+      assert_equal 1,     v.shapes.to_a.size
+      v.clear_shapes
+      assert_equal 0,     v.shapes.to_a.size
+    end
+
+    view.tap do |v|
+      v.add_shape shape(name: :a)
+      v.add_shape shape(name: :b)
+      v.add_shape shape(name: :c), index: 1
+      assert_equal %w[a c b], v.shapes.map(&:name)
+    end
+
+    view.tap do |v|
+      v.add_shape shape(name: :a)
+      v.add_shape shape(name: :b), index: 0
+      v.add_shape shape(name: :c), index: v.shapes.to_a.size
+      assert_equal %w[b a c], v.shapes.map(&:name)
+    end
+
+    view.tap do |v|
+      v.add_shape shape(name: :a)
+      v.add_shape shape(name: :b), index: 99
+      v.add_shape shape(name: :c), index: -1
+      v.add_shape shape(name: :d), index: nil
+      assert_equal %w[a b c d], v.shapes.map(&:name)
+    end
   end
 
   def test_find_shapes()

@@ -171,10 +171,10 @@ RUCY_DEF1(to_screen, point)
 RUCY_END
 
 static
-RUCY_DEF1(add_child, child)
+RUCY_DEF2(add_child, child, index)
 {
 	CHECK;
-	THIS->add_child(to<Reflex::View*>(child));
+	THIS->add_child(to<Reflex::View*>(child), index.is_nil() ? -1 : to<int>(index));
 	return child;
 }
 RUCY_END
@@ -322,10 +322,10 @@ RUCY_DEF0(get_shape)
 RUCY_END
 
 static
-RUCY_DEF1(add_shape, shape)
+RUCY_DEF2(add_shape, shape, index)
 {
 	CHECK;
-	THIS->add_shape(to_shape(shape));
+	THIS->add_shape(to_shape(shape), index.is_nil() ? -1 : to<int>(index));
 	return shape;
 }
 RUCY_END
@@ -1325,7 +1325,7 @@ Init_reflex_view ()
 	cView.define_method("from_screen", from_screen);
 	cView.define_method(  "to_screen",   to_screen);
 
-	cView.define_method(         "add_child",      add_child);
+	cView.define_method(         "add_child!",     add_child);
 	cView.define_method(      "remove_child",   remove_child);
 	cView.define_method(       "clear_children", clear_children);
 	cView.define_method(        "find_children",  find_children);
@@ -1339,7 +1339,7 @@ Init_reflex_view ()
 
 	cView.define_method(             "shape=",   set_shape);
 	cView.define_method(             "shape",    get_shape);
-	cView.define_method(         "add_shape",    add_shape);
+	cView.define_method(         "add_shape!",   add_shape);
 	cView.define_method(      "remove_shape", remove_shape);
 	cView.define_method(       "clear_shapes", clear_shapes);
 	cView.define_method(        "find_shapes",  find_shapes);
