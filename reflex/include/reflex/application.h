@@ -16,6 +16,9 @@ namespace Reflex
 {
 
 
+	class Menu;
+
+
 	class Application : public Xot::RefCountable<>
 	{
 
@@ -40,6 +43,12 @@ namespace Reflex
 			virtual void    set_name (const char* name);
 
 			virtual const char* name () const;
+
+			virtual void    set_menu (Menu* menu);
+
+			virtual       Menu* menu ();
+
+			virtual const Menu* menu () const;
 
 			virtual       window_iterator window_begin ();
 

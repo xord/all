@@ -16,6 +16,11 @@ namespace Reflex
 		return new Application::Data();
 	}
 
+	void
+	Application_set_menu (Application* app, Menu* menu)
+	{
+	}
+
 
 	static double
 	get_time ()

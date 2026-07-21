@@ -33,6 +33,11 @@ namespace Reflex
 		return Application_get_data(const_cast<Application*>(app));
 	}
 
+	void
+	Application_set_menu (Application* app, Menu* menu)
+	{
+	}
+
 
 	ApplicationData::ApplicationData ()
 	:	delegate(nil)

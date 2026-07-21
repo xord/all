@@ -101,6 +101,25 @@ namespace Reflex
 		return self->name.c_str();
 	}
 
+	void
+	Application::set_menu (Menu* menu)
+	{
+		self->menu = menu;
+		Application_set_menu(this, menu);
+	}
+
+	Menu*
+	Application::menu ()
+	{
+		return self->menu.get();
+	}
+
+	const Menu*
+	Application::menu () const
+	{
+		return const_cast<Application*>(this)->menu();
+	}
+
 	Application::window_iterator
 	Application::window_begin ()
 	{

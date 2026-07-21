@@ -41,6 +41,11 @@ namespace Reflex
 		return new ApplicationData();
 	}
 
+	void
+	Application_set_menu (Application* app, Menu* menu)
+	{
+	}
+
 
 	static bool
 	dispatch_window_event (const SDL_Event& event)
