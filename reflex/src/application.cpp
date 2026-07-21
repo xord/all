@@ -32,8 +32,8 @@ namespace Reflex
 	static void
 	close_all_windows (Application* app)
 	{
-		for (auto it = app->window_begin(), end = app->window_end(); it != end; ++it)
-			(*it)->close(true);
+		for (auto& window : Application::WindowList(app->window_begin(), app->window_end()))
+			window->close(true);
 	}
 
 	void

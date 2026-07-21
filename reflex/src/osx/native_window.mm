@@ -267,8 +267,7 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		if (win->menu())
-			Menu_apply_to_main_menu(win->menu());
+		Menu_apply_to_main_menu(win->menu());
 	}
 
 	- (void) windowWillMove: (NSNotification*) notification

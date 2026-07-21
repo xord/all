@@ -150,8 +150,8 @@ namespace Reflex
 		NativeWindow* native = get_native(window);
 		if (!native) return;
 
-		if ([native isMainWindow])
-			Menu_apply_to_main_menu(window->menu());
+		if (native.isMainWindow)
+			Menu_apply_to_main_menu(menu);
 	}
 
 	Screen

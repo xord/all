@@ -13,6 +13,11 @@
 #import "native_window.h"
 
 
+@interface ReflexMenuTarget : NSObject <NSMenuDelegate>
+	- (void) handleMenuItem: (NSMenuItem*) sender;
+@end
+
+
 static NSValue*
 menu2value (Reflex::Menu* menu)
 {
@@ -58,72 +63,16 @@ get_owner (NSMenu* nsmenu)
 	return value2menu(objc_getAssociatedObject(nsmenu, associated_object_key()));
 }
 
-
-@interface ReflexMenuTarget : NSObject <NSMenuDelegate>
-	- (void) handleMenuItem: (NSMenuItem*) sender;
-@end
-
-
-@implementation ReflexMenuTarget
-
-	- (void) handleMenuItem: (NSMenuItem*) nsitem
-	{
-		Reflex::Menu* menu = get_owner(nsitem);
-		if (!menu) return;
-
-		Reflex::Event e;
-		menu->on_click(&e);
-	}
-
-	- (void) menuWillOpen: (NSMenu*) nsmenu
-	{
-		Reflex::Menu* menu = get_owner(nsmenu);
-		if (!menu) return;
-
-		Reflex::Event e;
-		menu->on_open_child(&e);
-
-		for (NSMenuItem* nsitem in nsmenu.itemArray)
-		{
-			Reflex::Menu* child = get_owner(nsitem);
-			if (!child) continue;
-
-			Reflex::Event ce;
-			child->on_show(&ce);
-		}
-	}
-
-	- (void) menuDidClose: (NSMenu*) nsmenu
-	{
-		Reflex::Menu* menu = get_owner(nsmenu);
-		if (!menu) return;
-
-		for (NSMenuItem* nsitem in nsmenu.itemArray)
-		{
-			Reflex::Menu* child = get_owner(nsitem);
-			if (!child) continue;
-
-			Reflex::Event ce;
-			child->on_hide(&ce);
-		}
-
-		Reflex::Event e;
-		menu->on_close_child(&e);
-	}
-
-@end// ReflexMenuTarget
+static ReflexMenuTarget*
+menu_target ()
+{
+	static ReflexMenuTarget* target = [[ReflexMenuTarget alloc] init];
+	return target;
+}
 
 
 namespace Reflex
 {
-
-
-	static ReflexMenuTarget*
-	shared_menu_target ()
-	{
-		static ReflexMenuTarget* target = [[ReflexMenuTarget alloc] init];
-		return target;
-	}
 
 
 	struct MenuData : public Menu::Data
@@ -132,6 +81,8 @@ namespace Reflex
 		NSMenuItem* nsitem = nil;
 
 		NSMenu* nssubmenu  = nil;
+
+		SEL native_action  = NULL;
 
 		MenuData ()
 		{
@@ -152,7 +103,7 @@ namespace Reflex
 				nssubmenu = [[NSMenu alloc] initWithTitle: @""];
 				set_owner(nssubmenu, menu);
 				[nssubmenu setAutoenablesItems: NO];
-				[nssubmenu setDelegate: shared_menu_target()];
+				[nssubmenu setDelegate: menu_target()];
 				[nsitem setSubmenu: nssubmenu];
 			}
 			return nssubmenu;
@@ -168,6 +119,22 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 
 		return (MenuData&) *menu->self;
+	}
+
+	static void
+	Menu_validate_items (NSMenu* nsmenu)
+	{
+		for (NSMenuItem* nsitem in nsmenu.itemArray)
+		{
+			Menu* menu = get_owner(nsitem);
+			if (!menu) continue;
+
+			MenuData& self = get_data(menu);
+			if (!self.native_action) continue;
+
+			[nsitem setEnabled:
+				menu->is_enabled() && [NSApp targetForAction: self.native_action] != nil];
+		}
 	}
 
 	Menu::Data*
@@ -192,7 +159,7 @@ namespace Reflex
 	{
 		auto& self   = get_data(menu);
 		bool old_sep = self.nsitem && self.nsitem.isSeparatorItem;
-		bool is_sep  = menu->is_separator();
+		bool  is_sep = menu->is_separator();
 
 		if (!self.nsitem || is_sep != old_sep)
 		{
@@ -219,7 +186,8 @@ namespace Reflex
 		if (is_sep) return;
 
 		set_owner(self.nsitem, menu);
-		[self.nsitem setTarget: shared_menu_target()];
+		[self.nsitem setTarget: self.native_action ? nil : menu_target()];
+		[self.nsitem setAction: self.native_action ? self.native_action : @selector(handleMenuItem:)];
 		[self.nsitem setTitle: [NSString stringWithUTF8String: menu->label()]];
 		[self.nsitem setEnabled: menu->is_enabled() ? YES : NO];
 		[self.nsitem setState: menu->is_checked() ? NSControlStateValueOn : NSControlStateValueOff];
@@ -285,9 +253,27 @@ namespace Reflex
 			[p.nssubmenu removeItem: c.nsitem];
 	}
 
+	NSMenu*
+	Menu_get_nssubmenu (Menu* menu)
+	{
+		return get_data(menu).get_nssubmenu(menu);
+	}
+
+	void
+	Menu_set_native_action (Menu* menu, SEL action)
+	{
+		MenuData& self = get_data(menu);
+
+		self.native_action = action;
+		Menu_update(menu);
+	}
+
 	void
 	Menu_apply_to_main_menu (Menu* menu)
 	{
+		if (!menu && app())
+			menu = app()->menu();
+
 		if (!menu) return;
 
 		[NSApp setMainMenu: get_data(menu).get_nssubmenu(menu)];
@@ -295,3 +281,86 @@ namespace Reflex
 
 
 }// Reflex
+
+
+@implementation ReflexMenuTarget
+
+	- (void) handleMenuItem: (NSMenuItem*) nsitem
+	{
+		Reflex::Menu* menu = get_owner(nsitem);
+		if (!menu) return;
+
+		Reflex::Event e;
+		menu->on_click(&e);
+	}
+
+	- (void) menuWillOpen: (NSMenu*) nsmenu
+	{
+		Reflex::Menu_validate_items(nsmenu);
+
+		Reflex::Menu* menu = get_owner(nsmenu);
+		if (!menu) return;
+
+		Reflex::Event e;
+		menu->on_open_child(&e);
+
+		for (NSMenuItem* nsitem in nsmenu.itemArray)
+		{
+			Reflex::Menu* child = get_owner(nsitem);
+			if (!child) continue;
+
+			Reflex::Event ce;
+			child->on_show(&ce);
+		}
+	}
+
+	- (void) menuDidClose: (NSMenu*) nsmenu
+	{
+		Reflex::Menu* menu = get_owner(nsmenu);
+		if (!menu) return;
+
+		for (NSMenuItem* nsitem in nsmenu.itemArray)
+		{
+			Reflex::Menu* child = get_owner(nsitem);
+			if (!child) continue;
+
+			Reflex::Event ce;
+			child->on_hide(&ce);
+		}
+
+		Reflex::Event e;
+		menu->on_close_child(&e);
+	}
+
+	- (BOOL) menuHasKeyEquivalent: (NSMenu*) nsmenu
+		forEvent: (NSEvent*) event
+		target: (id*) target
+		action: (SEL*) action
+	{
+		// answer key equivalent matching ourselves: AppKit's own scanning of
+		// delegate-backed menus caches stale results across setMainMenu calls,
+		// leaving every shortcut dead until the menu bar is clicked once
+		static const NSEventModifierFlags MODIFIER_MASK =
+			NSEventModifierFlagCommand |
+			NSEventModifierFlagShift   |
+			NSEventModifierFlagOption  |
+			NSEventModifierFlagControl;
+
+		NSEventModifierFlags mods = event.modifierFlags & MODIFIER_MASK;
+		NSString* chars           = event.charactersIgnoringModifiers;
+
+		for (NSMenuItem* nsitem in nsmenu.itemArray)
+		{
+			if (nsitem.hasSubmenu || !nsitem.enabled)           continue;
+			if (nsitem.keyEquivalent.length == 0)               continue;
+			if (nsitem.keyEquivalentModifierMask != mods)       continue;
+			if (![nsitem.keyEquivalent isEqualToString: chars]) continue;
+
+			*target = nsitem.target;
+			*action = nsitem.action;
+			return YES;
+		}
+		return NO;
+	}
+
+@end// ReflexMenuTarget
