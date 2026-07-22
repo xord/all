@@ -71,6 +71,10 @@ namespace Reflex
 
 			virtual uint        shortcut_modifiers () const;
 
+			virtual void     set_image (const Image& image);
+
+			virtual const Image& image () const;
+
 			virtual bool is_separator () const;
 
 			virtual       Menu* parent ();

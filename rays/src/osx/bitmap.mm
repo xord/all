@@ -282,6 +282,17 @@ namespace Rays
 		return bmp;
 	}
 
+	NSImage*
+	Bitmap_get_nsimage (const Bitmap& bmp)
+	{
+		if (!bmp) return NULL;
+
+		std::shared_ptr<CGImage> cgimage(bmp.self->get_image(), CGImageRelease);
+		return [[[NSImage alloc]
+			initWithCGImage: cgimage.get() size: NSZeroSize]
+			autorelease];
+	}
+
 
 	Bitmap::Bitmap ()
 	{

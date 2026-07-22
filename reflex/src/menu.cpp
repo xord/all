@@ -217,6 +217,19 @@ namespace Reflex
 		return self->modifiers;
 	}
 
+	void
+	Menu::set_image (const Image& image)
+	{
+		self->image = image;
+		Menu_update(this);
+	}
+
+	const Image&
+	Menu::image () const
+	{
+		return self->image;
+	}
+
 	bool
 	Menu::is_separator () const
 	{

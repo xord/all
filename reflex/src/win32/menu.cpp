@@ -7,6 +7,12 @@
 #include "window.h"
 
 
+namespace Rays
+{
+	HBITMAP Bitmap_get_hbitmap (const Bitmap& bmp);
+}
+
+
 namespace Reflex
 {
 
@@ -57,12 +63,29 @@ namespace Reflex
 
 		bool menubar   = false;
 
+		Image image;
+
+		std::shared_ptr<HBITMAP__> hbitmap;
+
 		virtual ~MenuData ()
 		{
 			destroy_hmenu(hsubmenu);
 		}
 
 		HMENU get_hsubmenu (Menu* menu, bool menubar = false);
+
+		HBITMAP get_hbitmap (const Image& image)
+		{
+			if (image != this->image)
+			{
+				this->image = image;
+				if (image)
+					hbitmap.reset(Rays::Bitmap_get_hbitmap(image.bitmap()), DeleteObject);
+				else
+					hbitmap.reset();
+			}
+			return hbitmap.get();
+		}
 
 	};// MenuData
 
@@ -153,12 +176,12 @@ namespace Reflex
 		if (!self.hparent) return;
 
 		MENUITEMINFO mii = {sizeof(mii)};
-		mii.fMask        = MIIM_ID | MIIM_DATA | MIIM_FTYPE | MIIM_STATE;
+		mii.fMask        =
+			MIIM_ID | MIIM_DATA | MIIM_FTYPE | MIIM_STATE | MIIM_BITMAP | MIIM_SUBMENU;
 		mii.wID          = self.id;
 		mii.dwItemData   = (ULONG_PTR) menu;
 
 		String label;
-
 		if (menu->is_separator())
 			mii.fType = MFT_SEPARATOR;
 		else
@@ -171,12 +194,8 @@ namespace Reflex
 			mii.fState     =
 				(menu->is_enabled() ? MFS_ENABLED : MFS_GRAYED) |
 				(menu->is_checked() ? MFS_CHECKED : MFS_UNCHECKED);
-
-			if (self.hsubmenu)
-			{
-				mii.fMask   |= MIIM_SUBMENU;
-				mii.hSubMenu = self.hsubmenu;
-			}
+			mii.hbmpItem   = self.get_hbitmap(menu->image());
+			mii.hSubMenu   = menu->empty() ? NULL : self.hsubmenu;
 		}
 
 		SetMenuItemInfo(self.hparent, self.id, FALSE, &mii);

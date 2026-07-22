@@ -5,6 +5,7 @@
 
 
 #include <memory>
+#include <rays/image.h>
 #include "reflex/menu.h"
 #include "selector.h"
 
@@ -19,6 +20,8 @@ namespace Reflex
 		Xot::WeakRef<Menu> parent;
 
 		String label, key;
+
+		Image image;
 
 		uint modifiers = MOD_NONE;
 

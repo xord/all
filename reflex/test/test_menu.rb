@@ -143,6 +143,17 @@ class TestMenu < Test::Unit::TestCase
     assert_equal %i[command shift].sort, m.shortcut_modifiers.sort
   end
 
+  def test_image()
+    m, img  = menu, Reflex::Image.new(8, 8)
+    assert_nil        m.image
+    m.image = img
+    assert_equal img, m.image
+    m.image = nil
+    assert_nil        m.image
+
+    assert_raise(TypeError) {m.image = 1}
+  end
+
   def test_separator()
     assert_false menu(:File).separator?
     assert_true  menu('-').separator?

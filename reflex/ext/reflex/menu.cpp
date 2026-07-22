@@ -2,6 +2,7 @@
 
 
 #include <ranges>
+#include <rays/ruby/image.h>
 #include "reflex/exception.h"
 #include "reflex/ruby/selector.h"
 #include "reflex/ruby/view.h"
@@ -98,6 +99,24 @@ RUCY_DEF0(get_label)
 {
 	CHECK;
 	return value(THIS->label());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_image, image)
+{
+	CHECK;
+	THIS->set_image(image ? to<Rays::Image&>(image) : Rays::Image());
+	return image;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_image)
+{
+	CHECK;
+	const Rays::Image& image = THIS->image();
+	return image ? value(image) : nil();
 }
 RUCY_END
 
@@ -269,8 +288,10 @@ Init_reflex_menu ()
 	cMenu.define_method("remove_child",   remove_child);
 	cMenu.define_method( "clear_children", clear_children);
 	cMenu.define_method(  "find_children",  find_children);
-	cMenu.define_method("label=",  set_label);
-	cMenu.define_method("label",   get_label);
+	cMenu.define_method("label=", set_label);
+	cMenu.define_method("label",  get_label);
+	cMenu.define_method("image=", set_image);
+	cMenu.define_method("image",  get_image);
 	cMenu.define_method("enable!",     enable);
 	cMenu.define_method("enabled?", is_enabled);
 	cMenu.define_method("check!",      check);

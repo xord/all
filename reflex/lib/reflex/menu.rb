@@ -1,4 +1,6 @@
 require 'forwardable'
+require 'xot/setter'
+require 'xot/universal_accessor'
 require 'xot/hookable'
 require 'xot/block_util'
 require 'reflex/ext'
@@ -10,11 +12,13 @@ module Reflex
   class Menu
 
     include Enumerable
+    include Xot::Setter
     include Xot::Hookable
 
-    def initialize(label = nil, &block)
+    def initialize(label = nil, **options, &block)
       super()
       self.label = label if label
+      set **options unless options.empty?
       Xot::BlockUtil.instance_eval_or_block_call self, &block if block
     end
 
@@ -54,6 +58,8 @@ module Reflex
       flag :command, MOD_COMMAND
       flag :option,  MOD_OPTION
     end
+
+    universal_accessor :label, :image, :shortcut_key, :shortcut_modifiers
 
     def each(&block)
       return enum_for :each unless block

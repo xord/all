@@ -13,6 +13,12 @@
 #import "native_window.h"
 
 
+namespace Rays
+{
+	NSImage* Bitmap_get_nsimage (const Bitmap& bmp);
+}
+
+
 @interface ReflexMenuTarget : NSObject <NSMenuDelegate>
 	- (void) handleMenuItem: (NSMenuItem*) sender;
 @end
@@ -193,8 +199,8 @@ namespace Reflex
 		[self.nsitem setState: menu->is_checked() ? NSControlStateValueOn : NSControlStateValueOff];
 		[self.nsitem setKeyEquivalent: [NSString stringWithUTF8String: menu->shortcut_key()]];
 		[self.nsitem setKeyEquivalentModifierMask: modifiers2mask(menu->shortcut_modifiers())];
-
-		if (self.nssubmenu) [self.nsitem setSubmenu: self.nssubmenu];
+		[self.nsitem setImage: menu->image() ? Rays::Bitmap_get_nsimage(menu->image().bitmap()) : nil];
+		[self.nsitem setSubmenu: menu->empty() ? nil : self.nssubmenu];
 	}
 
 	void
