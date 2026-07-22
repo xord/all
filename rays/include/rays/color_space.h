@@ -14,7 +14,7 @@ namespace Rays
 	enum ColorSpaceType
 	{
 
-		COLORSPACE_UNKNOWN = 0,
+		COLORSPACE_NONE = 0,
 
 		 GRAY_8,  GRAY_16,  GRAY_24,  GRAY_32,  GRAY_float,
 
@@ -40,7 +40,11 @@ namespace Rays
 
 		BGRA  = BGRA_8888, BGRX = BGRX_8888, ABGR = ABGR_8888, XBGR = XBGR_8888,
 
-		DEFAULT_COLOR_SPACE = RGBA
+#ifdef WIN32
+		DEFAULT_COLORSPACE = BGRA,
+#else
+		DEFAULT_COLORSPACE = RGBA,
+#endif
 
 	};// ColorSpaceType
 

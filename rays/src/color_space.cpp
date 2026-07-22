@@ -26,7 +26,7 @@ namespace Rays
 
 
 	ColorSpace::ColorSpace ()
-	:	type_(COLORSPACE_UNKNOWN), premult(false)
+	:	type_(COLORSPACE_NONE), premult(false)
 	{
 	}
 
@@ -46,7 +46,7 @@ namespace Rays
 	{
 		static const int BPPS[] =
 		{
-			0,                 // UNKNOWN
+			0,                 // NONE
 			8, 16, 24, 32, 32, // GRAY
 			8, 16, 24, 32, 32, // ALPHA
 			8, 8, 8, 8, 8,     // RGB(A),
@@ -54,7 +54,7 @@ namespace Rays
 			32, 32, 32,        // RGB(A) float
 			32, 32, 32,        // BGR(A) float
 		};
-		if (type_ < 0 || COLORSPACE_MAX <= type_) return BPPS[COLORSPACE_UNKNOWN];
+		if (type_ < 0 || COLORSPACE_MAX <= type_) return BPPS[COLORSPACE_NONE];
 		return BPPS[type_];
 	}
 
@@ -69,7 +69,7 @@ namespace Rays
 	{
 		static const int BPPS[] =
 		{
-			0,                     // UNKNOWN
+			0,                     // NONE
 			8,  16,  24,  32,  32, // GRAY
 			8,  16,  24,  32,  32, // ALPHA
 			24, 32,  32,  32,  32, // RGB(A)
@@ -77,7 +77,7 @@ namespace Rays
 			96, 128, 128,          // RGB(A) float
 			96, 128, 128,          // BGR(A) float
 		};
-		if (type_ < 0 || COLORSPACE_MAX <= type_) return BPPS[COLORSPACE_UNKNOWN];
+		if (type_ < 0 || COLORSPACE_MAX <= type_) return BPPS[COLORSPACE_NONE];
 		return BPPS[type_];
 	}
 

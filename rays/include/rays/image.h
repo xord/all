@@ -26,7 +26,7 @@ namespace Rays
 			Image ();
 
 			Image (
-				int width, int height, const ColorSpace& cs = DEFAULT_COLOR_SPACE,
+				int width, int height, const ColorSpace& cs = DEFAULT_COLORSPACE,
 				float pixel_density = 1, bool smooth = false);
 
 			Image (

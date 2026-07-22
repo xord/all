@@ -29,7 +29,7 @@ RUCY_DEFN(initialize)
 
 	*THIS = Rays::Bitmap(
 		to<int>(argv[0]), to<int>(argv[1]),
-		argc >= 3 ? to<Rays::ColorSpace>(argv[2]) : Rays::RGBA);
+		argc >= 3 ? to<Rays::ColorSpace>(argv[2]) : Rays::DEFAULT_COLORSPACE);
 
 	return self;
 }

@@ -13,7 +13,7 @@ namespace Rays
 
 
 	void ColorSpace_get_gl_format_and_type (
-		GLenum* format, GLenum* type, const ColorSpace& cs);
+		GLenum* internalformat, GLenum* format, GLenum* type, const ColorSpace& cs);
 
 
 }// Rays
