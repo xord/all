@@ -26,7 +26,7 @@ namespace Rays
 			Texture ();
 
 			Texture (
-				int width, int height, const ColorSpace& cs = RGBA,
+				int width, int height, const ColorSpace& cs = DEFAULT_COLORSPACE,
 				bool smooth = false);
 
 			Texture (const Bitmap& bitmap, bool smooth = false);

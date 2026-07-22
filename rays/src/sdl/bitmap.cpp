@@ -9,6 +9,8 @@
 #include <SDL.h>
 #include <xot/util.h>
 #include "rays/exception.h"
+#include "rays/image.h"
+#include "rays/painter.h"
 #include "../font.h"
 #include "../texture.h"
 
@@ -142,8 +144,8 @@ namespace Rays
 		return strrchr(path, '.');
 	}
 
-	void
-	Bitmap_save (const Bitmap& bmp, const char* path)
+	static void
+	save_bitmap (const Bitmap& bitmap, const char* path)
 	{
 		const char* extension = get_ext(path);
 		if (!extension)
@@ -152,14 +154,14 @@ namespace Rays
 				__FILE__, __LINE__, "invalid image file extension: '%s'", path);
 		}
 
-		const auto& cs = bmp.color_space();
-		int w          = bmp.width();
-		int h          = bmp.height();
+		const auto& cs = bitmap.color_space();
+		int w          = bitmap.width();
+		int h          = bitmap.height();
 		int pitch      = w * cs.Bpp();
 
 		std::unique_ptr<uchar[]> pixels(new uchar[h * pitch]);
 		for (int y = 0; y < h; ++y)
-			memcpy(pixels.get() + pitch * y, bmp.at<uchar>(0, y), pitch);
+			memcpy(pixels.get() + pitch * y, bitmap.at<uchar>(0, y), pitch);
 
 		String ext = extension;
 		ext.downcase();
@@ -178,6 +180,23 @@ namespace Rays
 
 		if (!ret)
 			rays_error(__FILE__, __LINE__, "failed to save: '%s'", path);
+	}
+
+	void
+	Bitmap_save (const Bitmap& bitmap, const char* path)
+	{
+		Bitmap bmp    = bitmap;
+		ColorSpace cs = bmp.color_space();
+		if (!cs.is_rgb() || (cs.has_alpha() && !cs.is_alpha_last()))
+		{
+			Image img(bmp.width(), bmp.height(), cs.has_alpha() ? RGBA : RGB);
+			Painter p = img.painter();
+			p.begin();
+			p.image(Image(bmp));
+			p.end();
+			bmp = img.bitmap();
+		}
+		save_bitmap(bmp, path);
 	}
 
 	Bitmap

@@ -23,7 +23,7 @@ namespace Rays
 			&bmp, tex.width(), tex.height(), tex.color_space(), NULL, false);
 
 		GLenum format, type;
-		ColorSpace_get_gl_format_and_type(&format, &type, tex.color_space());
+		ColorSpace_get_gl_format_and_type(NULL, &format, &type, tex.color_space());
 
 		FrameBuffer fb(tex);
 		FrameBufferBinder binder(fb.id());

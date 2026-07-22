@@ -42,7 +42,7 @@ RUCY_DEF3(initialize, args, pixel_density, smooth)
 	{
 		int width  = to<int>(args[0]);
 		int height = to<int>(args[1]);
-		auto cs    = (argc >= 3) ? to<Rays::ColorSpace>(args[2]) : Rays::RGBA;
+		auto cs    = (argc >= 3) ? to<Rays::ColorSpace>(args[2]) : Rays::DEFAULT_COLORSPACE;
 		*THIS = Rays::Image(width, height, cs, pd, smooth);
 	}
 

@@ -10,13 +10,22 @@ namespace Rays
 
 	void
 	ColorSpace_get_gl_format_and_type (
-		GLenum* format, GLenum* type, const ColorSpace& cs)
+		GLenum* internalformat, GLenum* format, GLenum* type, const ColorSpace& cs)
 	{
-		if (!format && !type)
+		if (!internalformat && !format && !type)
 			argument_error(__FILE__, __LINE__);
 
 		if (!cs)
 			invalid_state_error(__FILE__, __LINE__);
+
+		if (internalformat)
+		{
+			if (cs.is_rgb() || cs.is_bgr()) *internalformat = cs.has_alpha() ? GL_RGBA  : GL_RGB;
+			else if (cs.is_gray())          *internalformat = GL_LUMINANCE;
+			else if (cs.is_alpha())         *internalformat = GL_ALPHA;
+			else
+				rays_error(__FILE__, __LINE__, "invalid color space.");
+		}
 
 		if (format)
 		{

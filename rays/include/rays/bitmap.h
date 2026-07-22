@@ -24,7 +24,7 @@ namespace Rays
 			Bitmap ();
 
 			Bitmap (
-				int width, int height, const ColorSpace& cs = RGBA,
+				int width, int height, const ColorSpace& cs = DEFAULT_COLORSPACE,
 				const void* pixels = NULL);
 
 			~Bitmap ();

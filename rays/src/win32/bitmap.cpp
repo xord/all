@@ -7,6 +7,8 @@
 #include <stb_image_write.h>
 
 #include "rays/exception.h"
+#include "rays/image.h"
+#include "rays/painter.h"
 #include "../font.h"
 #include "../texture.h"
 #include "gdi.h"
@@ -147,42 +149,59 @@ namespace Rays
 		return strrchr(path, '.');
 	}
 
-	void
-	Bitmap_save (const Bitmap& bmp, const char* path)
+	static void
+	save_bitmap (const Bitmap& bitmap, const char* path)
 	{
-		const char* ext = get_ext(path);
-		if (!ext)
+		const char* extension = get_ext(path);
+		if (!extension)
 		{
 			argument_error(
 				__FILE__, __LINE__, "invalid image file extension: '%s'", path);
 		}
 
-		const auto& cs = bmp.color_space();
-		size_t w       = bmp.width();
-		size_t h       = bmp.height();
+		const auto& cs = bitmap.color_space();
+		size_t w       = bitmap.width();
+		size_t h       = bitmap.height();
 		size_t pitch   = w * cs.Bpp();
 
 		std::unique_ptr<uchar[]> pixels(new uchar[h * pitch]);
 		for (size_t y = 0; y < h; ++y)
-			memcpy(pixels.get() + pitch * y, bmp.at<uchar>(0, y), pitch);
+			memcpy(pixels.get() + pitch * y, bitmap.at<uchar>(0, y), pitch);
+
+		String ext = extension;
+		ext.downcase();
 
 		int ret = 0;
-		if (stricmp(ext, ".bmp") == 0)
+		if      (ext == ".bmp")
 			ret = stbi_write_bmp(path, w, h, cs.Bpp(), pixels.get());
-		else
-		if (stricmp(ext, ".png") == 0)
+		else if (ext == ".png")
 			ret = stbi_write_png(path, w, h, cs.Bpp(), pixels.get(), 0);
-		else
-		if (stricmp(ext, ".jpg") == 0 || stricmp(ext, ".jpeg") == 0)
+		else if (ext == ".jpg" || ext == ".jpeg")
 			ret = stbi_write_jpg(path, w, h, cs.Bpp(), pixels.get(), 90);
-		else
-		if (stricmp(ext, ".tga") == 0)
+		else if (ext == ".tga")
 			ret = stbi_write_tga(path, w, h, cs.Bpp(), pixels.get());
 		else
 			argument_error(__FILE__, __LINE__, "unknown image file type");
 
 		if (!ret)
 			rays_error(__FILE__, __LINE__, "failed to save: '%s'", path);
+	}
+
+	void
+	Bitmap_save (const Bitmap& bitmap, const char* path)
+	{
+		Bitmap bmp    = bitmap;
+		ColorSpace cs = bmp.color_space();
+		if (!cs.is_rgb() || (cs.has_alpha() && !cs.is_alpha_last()))
+		{
+			Image img(bmp.width(), bmp.height(), cs.has_alpha() ? RGBA : RGB);
+			Painter p = img.painter();
+			p.begin();
+			p.image(Image(bmp));
+			p.end();
+			bmp = img.bitmap();
+		}
+		save_bitmap(bmp, path);
 	}
 
 	Bitmap

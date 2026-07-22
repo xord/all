@@ -194,14 +194,14 @@ namespace Rays
 		glTexParameteri(
 			GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smooth ? GL_LINEAR : GL_NEAREST);
 
-		GLenum format, type;
-		ColorSpace_get_gl_format_and_type(&format, &type, cs);
+		GLenum internalformat, format, type;
+		ColorSpace_get_gl_format_and_type(&internalformat, &format, &type, cs);
 
 		if (npot)
 		{
 			// create non-power-of-two texture
 			glTexImage2D(
-				GL_TEXTURE_2D, 0, format, width, height, 0, format, type,
+				GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, type,
 				bitmap ? bitmap->pixels() : NULL);
 			npot = OpenGL_has_error();
 		}
@@ -274,7 +274,7 @@ namespace Rays
 			argument_error(__FILE__, __LINE__, "the height of bitmap does not match");
 
 		GLenum format, type;
-		ColorSpace_get_gl_format_and_type(&format, &type, bitmap.color_space());
+		ColorSpace_get_gl_format_and_type(NULL, &format, &type, bitmap.color_space());
 
 		glBindTexture(GL_TEXTURE_2D, self->id);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, format, type, bitmap.pixels());
