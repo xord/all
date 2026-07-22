@@ -44,7 +44,7 @@ namespace Rays
 			if (memdc) memdc = Win32::MemoryDC();
 
 			width = height = pitch = 0;
-			color_space = COLORSPACE_UNKNOWN;
+			color_space = COLORSPACE_NONE;
 			pixels      = NULL;
 			modified    = false;
 		}
@@ -257,8 +257,8 @@ namespace Rays
 	{
 		if (!*this)
 		{
-			static const ColorSpace UNKNOWN = COLORSPACE_UNKNOWN;
-			return UNKNOWN;
+			static const ColorSpace NONE = COLORSPACE_NONE;
+			return NONE;
 		}
 		return self->color_space;
 	}

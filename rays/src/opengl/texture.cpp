@@ -42,7 +42,7 @@ namespace Rays
 			height      =
 			width_pow2  =
 			height_pow2 = 0;
-			color_space = COLORSPACE_UNKNOWN;
+			color_space = COLORSPACE_NONE;
 			smooth      = false;
 			modified    = false;
 		}

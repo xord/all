@@ -14,7 +14,7 @@ namespace Rays
 	enum ColorSpaceType
 	{
 
-		COLORSPACE_UNKNOWN = 0,
+		COLORSPACE_NONE = 0,
 
 		 GRAY_8,  GRAY_16,  GRAY_24,  GRAY_32,  GRAY_float,
 

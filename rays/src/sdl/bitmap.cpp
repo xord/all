@@ -41,7 +41,7 @@ namespace Rays
 			if (surface) SDL_FreeSurface(surface);
 
 			surface     = NULL;
-			color_space = COLORSPACE_UNKNOWN;
+			color_space = COLORSPACE_NONE;
 			modified    = false;
 		}
 
@@ -252,8 +252,8 @@ namespace Rays
 	{
 		if (!*this)
 		{
-			static const ColorSpace UNKNOWN = COLORSPACE_UNKNOWN;
-			return UNKNOWN;
+			static const ColorSpace NONE = COLORSPACE_NONE;
+			return NONE;
 		}
 		return self->color_space;
 	}

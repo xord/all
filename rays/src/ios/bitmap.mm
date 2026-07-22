@@ -120,7 +120,7 @@ namespace Rays
 			if (pixels) delete [] (uchar*) pixels;
 
 			width = height = 0;
-			color_space = COLORSPACE_UNKNOWN;
+			color_space = COLORSPACE_NONE;
 			pixels      = NULL;
 			context     = NULL;
 			modified    = false;
@@ -323,8 +323,8 @@ namespace Rays
 	{
 		if (!*this)
 		{
-			static const ColorSpace UNKNOWN = COLORSPACE_UNKNOWN;
-			return UNKNOWN;
+			static const ColorSpace NONE = COLORSPACE_NONE;
+			return NONE;
 		}
 		return self->color_space;
 	}
