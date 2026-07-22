@@ -39,9 +39,9 @@ module Rays
       get_bitmap true
     end
 
-    def self.load(path)
+    def self.load(path, pixel_density: 1, smooth: false)
       raise Errno::ENOENT, "no such file: '#{path}'" unless File.exist? path
-      load! path
+      load! path, pixel_density, smooth
     end
 
   end# Image

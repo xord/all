@@ -78,7 +78,7 @@ namespace Rays
 	};// Image
 
 
-	Image load_image (const char* path);
+	Image load_image (const char* path, float pixel_density = 1, bool smooth = false);
 
 
 }// Rays

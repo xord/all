@@ -145,9 +145,10 @@ RUCY_DEF1(compare, other)
 RUCY_END
 
 static
-RUCY_DEF1(load, path)
+RUCY_DEF3(load, path, pixel_density, smooth)
 {
-	return value(Rays::load_image(path.c_str()));
+	return value(Rays::load_image(
+		path.c_str(), to<float>(pixel_density), to<bool>(smooth)));
 }
 RUCY_END
 

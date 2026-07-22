@@ -178,9 +178,9 @@ namespace Rays
 	}
 
 	Image
-	load_image (const char* path)
+	load_image (const char* path, float pixel_density, bool smooth)
 	{
-		return Image(Bitmap_load(path));
+		return Image(Bitmap_load(path), pixel_density, smooth);
 	}
 
 
