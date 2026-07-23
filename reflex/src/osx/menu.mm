@@ -308,7 +308,7 @@ namespace Reflex
 		if (!menu) return;
 
 		Reflex::Event e;
-		menu->on_open_child(&e);
+		menu->on_open_submenu(&e);
 
 		for (NSMenuItem* nsitem in nsmenu.itemArray)
 		{
@@ -335,7 +335,7 @@ namespace Reflex
 		}
 
 		Reflex::Event e;
-		menu->on_close_child(&e);
+		menu->on_close_submenu(&e);
 	}
 
 	- (BOOL) menuHasKeyEquivalent: (NSMenu*) nsmenu

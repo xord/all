@@ -97,9 +97,9 @@ namespace Reflex
 
 			virtual void on_hide (Event* e);
 
-			virtual void on_open_child  (Event* e);
+			virtual void on_open_submenu  (Event* e);
 
-			virtual void on_close_child (Event* e);
+			virtual void on_close_submenu (Event* e);
 
 			virtual void on_click (Event* e);
 

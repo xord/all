@@ -47,22 +47,22 @@ namespace Reflex
 					Super::on_hide(e);
 			}
 
-			virtual void on_open_child (Event* e)
+			virtual void on_open_submenu (Event* e)
 			{
-				RUCY_SYM(on_open_child);
+				RUCY_SYM(on_open_submenu);
 				if (this->is_overridable())
-					this->value.call(on_open_child, Rucy::value(e));
+					this->value.call(on_open_submenu, Rucy::value(e));
 				else
-					Super::on_open_child(e);
+					Super::on_open_submenu(e);
 			}
 
-			virtual void on_close_child (Event* e)
+			virtual void on_close_submenu (Event* e)
 			{
-				RUCY_SYM(on_close_child);
+				RUCY_SYM(on_close_submenu);
 				if (this->is_overridable())
-					this->value.call(on_close_child, Rucy::value(e));
+					this->value.call(on_close_submenu, Rucy::value(e));
 				else
-					Super::on_close_child(e);
+					Super::on_close_submenu(e);
 			}
 
 			virtual void on_click (Event* e)

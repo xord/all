@@ -250,18 +250,18 @@ RUCY_DEF1(on_hide, event)
 RUCY_END
 
 static
-RUCY_DEF1(on_open_child, event)
+RUCY_DEF1(on_open_submenu, event)
 {
 	CHECK;
-	CALL(on_open_child(to<Reflex::Event*>(event)));
+	CALL(on_open_submenu(to<Reflex::Event*>(event)));
 }
 RUCY_END
 
 static
-RUCY_DEF1(on_close_child, event)
+RUCY_DEF1(on_close_submenu, event)
 {
 	CHECK;
-	CALL(on_close_child(to<Reflex::Event*>(event)));
+	CALL(on_close_submenu(to<Reflex::Event*>(event)));
 }
 RUCY_END
 
@@ -307,8 +307,8 @@ Init_reflex_menu ()
 	cMenu.define_method("each!", each);
 	cMenu.define_method("on_show",        on_show);
 	cMenu.define_method("on_hide",        on_hide);
-	cMenu.define_method("on_open_child",  on_open_child);
-	cMenu.define_method("on_close_child", on_close_child);
+	cMenu.define_method("on_open_submenu",  on_open_submenu);
+	cMenu.define_method("on_close_submenu", on_close_submenu);
 	cMenu.define_method("on_click",       on_click);
 
 	define_wrapper_equality_methods<Reflex::Menu>(cMenu);

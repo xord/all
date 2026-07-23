@@ -194,14 +194,14 @@ class TestMenu < Test::Unit::TestCase
   def test_event_hooks()
     m     = menu
     fired = []
-    %i[click show hide open_child close_child].each {|ev| m.on(ev) {|e| fired << ev}}
+    %i[click show hide open_submenu close_submenu].each {|ev| m.on(ev) {|e| fired << ev}}
     e     = Reflex::UpdateEvent.new 0, 0
     m.on_click e
     m.on_show e
     m.on_hide e
-    m.on_open_child e
-    m.on_close_child e
-    assert_equal %i[click show hide open_child close_child], fired
+    m.on_open_submenu e
+    m.on_close_submenu e
+    assert_equal %i[click show hide open_submenu close_submenu], fired
   end
 
 end# TestMenu

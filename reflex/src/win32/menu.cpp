@@ -292,7 +292,7 @@ namespace Reflex
 		if (!menu) return;
 
 		Event e;
-		menu->on_open_child(&e);
+		menu->on_open_submenu(&e);
 
 		int count = GetMenuItemCount(hmenu);
 		for (int i = 0; i < count; ++i)
@@ -322,7 +322,7 @@ namespace Reflex
 		}
 
 		Event e;
-		menu->on_close_child(&e);
+		menu->on_close_submenu(&e);
 	}
 
 

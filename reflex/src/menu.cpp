@@ -301,12 +301,12 @@ namespace Reflex
 	}
 
 	void
-	Menu::on_open_child (Event* e)
+	Menu::on_open_submenu (Event* e)
 	{
 	}
 
 	void
-	Menu::on_close_child (Event* e)
+	Menu::on_close_submenu (Event* e)
 	{
 	}
 
