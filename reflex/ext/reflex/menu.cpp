@@ -228,7 +228,7 @@ RUCY_DEF0(each)
 
 	Value ret;
 	for (auto& child : children)
-		ret = rb_yield(value(child.get()));
+		ret = yield(value(child.get()));
 	return ret;
 }
 RUCY_END
