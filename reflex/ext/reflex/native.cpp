@@ -4,8 +4,8 @@
 void Init_reflex ();
 void Init_reflex_exception ();
 
-void Init_reflex_pointer ();
 void Init_reflex_selector ();
+void Init_reflex_pointer ();
 void Init_reflex_style ();
 void Init_reflex_style_length ();
 void Init_reflex_timer ();
@@ -43,9 +43,10 @@ void Init_reflex_wheel_constraint ();
 void Init_reflex_chase_constraint ();
 
 void Init_reflex_application ();
-void Init_reflex_screen ();
 void Init_reflex_window ();
 void Init_reflex_view ();
+void Init_reflex_menu ();
+void Init_reflex_screen ();
 
 void Init_reflex_device ();
 void Init_reflex_midi ();
@@ -63,8 +64,8 @@ Init_reflex_ext ()
 	Init_reflex();
 	Init_reflex_exception();
 
-	Init_reflex_pointer();
 	Init_reflex_selector();
+	Init_reflex_pointer();
 	Init_reflex_style();
 	Init_reflex_style_length();
 	Init_reflex_timer();
@@ -102,9 +103,10 @@ Init_reflex_ext ()
 	Init_reflex_chase_constraint();
 
 	Init_reflex_application();
-	Init_reflex_screen();
 	Init_reflex_window();
 	Init_reflex_view();
+	Init_reflex_menu();
+	Init_reflex_screen();
 
 	Init_reflex_device();
 	Init_reflex_midi();

@@ -28,6 +28,11 @@ namespace Reflex
 		return new ApplicationData();
 	}
 
+	void
+	Application_set_menu (Application* app, Menu* menu)
+	{
+	}
+
 	ApplicationData&
 	Application_get_data (Application* app)
 	{

@@ -18,6 +18,7 @@ namespace Reflex
 {
 
 
+	class Menu;
 	class View;
 
 
@@ -74,6 +75,12 @@ namespace Reflex
 			virtual void set_frame (const Bounds& bounds);
 
 			virtual Bounds   frame () const;
+
+			virtual void    set_menu (Menu* menu);
+
+			virtual       Menu* menu ();
+
+			virtual const Menu* menu () const;
 
 			virtual void    set_flag (uint flags);
 

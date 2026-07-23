@@ -10,6 +10,7 @@
 #include "../pointer.h"
 #include "event.h"
 #include "window.h"
+#include "menu.h"
 #import "opengl_view.h"
 
 
@@ -259,6 +260,14 @@ move_to_main_screen_origin (NativeWindow* window)
 		[self stopTimer];
 		[self unbind];
 		[self setDelegate: nil];
+	}
+
+	- (void) windowDidBecomeMain: (NSNotification*) notification
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		Menu_apply_to_main_menu(win->menu());
 	}
 
 	- (void) windowWillMove: (NSNotification*) notification

@@ -54,6 +54,26 @@ namespace Rays
 	};// Bitmap::Data
 
 
+	static HBITMAP
+	create_hbitmap (const Bitmap& bitmap, const Win32::DC& dc, void** pixels)
+	{
+		Bitmap::Data* self = bitmap.self.get();
+
+		BITMAPINFO bmpinfo;
+		memset(&bmpinfo, 0, sizeof(bmpinfo));
+
+		BITMAPINFOHEADER& header = bmpinfo.bmiHeader;
+		header.biSize        = sizeof(BITMAPINFOHEADER);
+		header.biWidth       =  self->width;
+		header.biHeight      = -self->height;
+		header.biPlanes      = 1;
+		header.biBitCount    = self->color_space.bpp();
+		header.biCompression = BI_RGB;
+
+		return CreateDIBSection(
+			dc.handle(), &bmpinfo, DIB_RGB_COLORS, pixels, NULL, 0);
+	}
+
 	void
 	Bitmap_setup (
 		Bitmap* bitmap, int w, int h, const ColorSpace& cs,
@@ -79,21 +99,8 @@ namespace Rays
 		int padding = 4 - self->pitch % 4;
 		if (padding < 4) self->pitch += padding;
 
-		BITMAPINFO bmpinfo;
-		memset(&bmpinfo, 0, sizeof(bmpinfo));
-
-		BITMAPINFOHEADER& header = bmpinfo.bmiHeader;
-		header.biSize        = sizeof(BITMAPINFOHEADER);
-		header.biWidth       = self->width;
-		header.biHeight      = -self->height;
-		header.biPlanes      = 1;
-		header.biBitCount    = self->color_space.bpp();
-		header.biCompression = BI_RGB;
-
 		Win32::DC dc = Win32::screen_dc();
-
-		HBITMAP hbmp = CreateDIBSection(
-			dc.handle(), &bmpinfo, DIB_RGB_COLORS, (void**) &self->pixels, NULL, 0);
+		HBITMAP hbmp = create_hbitmap(*bitmap, dc, (void**) &self->pixels);
 		if (!hbmp)
 			rays_error(__FILE__, __LINE__);
 
@@ -101,11 +108,10 @@ namespace Rays
 		if (!self->memdc)
 			rays_error(__FILE__, __LINE__);
 
-		size_t size = self->pitch * self->height;
 		if (pixels)
-			memcpy(self->pixels, pixels, size);
+			memcpy(self->pixels, pixels, bitmap->size());
 		else if (clear_pixels)
-			memset(self->pixels, 0, size);
+			memset(self->pixels, 0,      bitmap->size());
 	}
 
 	void
@@ -234,6 +240,19 @@ namespace Rays
 			memcpy(bmp.at<uchar>(0, y), pixels + pitch * y, pitch);
 
 		return bmp;
+	}
+
+	HBITMAP
+	Bitmap_get_hbitmap (const Bitmap& bmp)
+	{
+		if (!bmp) return NULL;
+
+		void* pixels = NULL;
+		HBITMAP hbmp = create_hbitmap(bmp, Win32::screen_dc(), &pixels);
+		if (!hbmp) return NULL;
+
+		memcpy(pixels, bmp.pixels(), bmp.size());
+		return hbmp;
 	}
 
 

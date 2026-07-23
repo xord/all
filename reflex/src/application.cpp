@@ -32,8 +32,8 @@ namespace Reflex
 	static void
 	close_all_windows (Application* app)
 	{
-		for (auto it = app->window_begin(), end = app->window_end(); it != end; ++it)
-			(*it)->close(true);
+		for (auto& window : Application::WindowList(app->window_begin(), app->window_end()))
+			window->close(true);
 	}
 
 	void
@@ -99,6 +99,25 @@ namespace Reflex
 	Application::name () const
 	{
 		return self->name.c_str();
+	}
+
+	void
+	Application::set_menu (Menu* menu)
+	{
+		self->menu = menu;
+		Application_set_menu(this, menu);
+	}
+
+	Menu*
+	Application::menu ()
+	{
+		return self->menu.get();
+	}
+
+	const Menu*
+	Application::menu () const
+	{
+		return const_cast<Application*>(this)->menu();
 	}
 
 	Application::window_iterator

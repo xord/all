@@ -3,8 +3,9 @@
 
 #include <rays/ruby/bounds.h>
 #include <rays/ruby/painter.h>
-#include "reflex/ruby/screen.h"
 #include "reflex/ruby/view.h"
+#include "reflex/ruby/menu.h"
+#include "reflex/ruby/screen.h"
 #include "defs.h"
 
 
@@ -115,6 +116,23 @@ RUCY_DEF0(get_frame)
 {
 	CHECK;
 	return value(THIS->frame());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_menu, menu)
+{
+	CHECK;
+	THIS->set_menu(menu ? to<Reflex::Menu*>(menu) : NULL);
+	return menu;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_menu)
+{
+	CHECK;
+	return value(THIS->menu());
 }
 RUCY_END
 
@@ -486,9 +504,11 @@ Init_reflex_window ()
 	cWindow.define_method("from_screen", from_screen);
 	cWindow.define_method(  "to_screen",   to_screen);
 	cWindow.define_method("title=", set_title);
-	cWindow.define_method("title", get_title);
+	cWindow.define_method("title",  get_title);
 	cWindow.define_method("frame=", set_frame);
 	cWindow.define_method("frame",  get_frame);
+	cWindow.define_method("menu=",  set_menu);
+	cWindow.define_method("menu",   get_menu);
 	cWindow.define_method("closable=",    set_closable);
 	cWindow.define_method("closable?",     is_closable);
 	cWindow.define_method("minimizable=", set_minimizable);

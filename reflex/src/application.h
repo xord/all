@@ -5,6 +5,7 @@
 
 
 #include "reflex/application.h"
+#include "reflex/menu.h"
 
 
 namespace Reflex
@@ -16,12 +17,16 @@ namespace Reflex
 
 		String name;
 
+		Menu::Ref menu;
+
 		bool quitting = false;
 
 	};// Application::Data
 
 
 	Application::Data* Application_create_data ();
+
+	void Application_set_menu (Application* app, Menu* menu);
 
 
 	void Application_call_start (Application* app, Event* e);

@@ -5,6 +5,9 @@
 #import <AppKit/NSApplication.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
+#include "menu.h"
+#include "window.h"
+#import "native_window.h"
 #import "app_delegate.h"
 
 
@@ -31,6 +34,19 @@ namespace Reflex
 	Application_get_data (const Application* app)
 	{
 		return Application_get_data(const_cast<Application*>(app));
+	}
+
+	void
+	Application_set_menu (Application* app, Menu* menu)
+	{
+		for (auto it = app->window_begin(), end = app->window_end(); it != end; ++it)
+		{
+			Window* win = it->get();
+			if (win->menu() && Window_get_data(win).native.isMainWindow)
+				return;
+		}
+
+		Menu_apply_to_main_menu(menu);
 	}
 
 

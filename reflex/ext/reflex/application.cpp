@@ -1,6 +1,7 @@
 #include "reflex/ruby/application.h"
 
 
+#include "reflex/ruby/menu.h"
 #include "reflex/ruby/window.h"
 #include "defs.h"
 
@@ -54,6 +55,23 @@ RUCY_DEF0(get_name)
 {
 	CHECK;
 	return value(THIS->name());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_menu, menu)
+{
+	CHECK;
+	THIS->set_menu(menu ? to<Reflex::Menu*>(menu) : NULL);
+	return menu;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_menu)
+{
+	CHECK;
+	return value(THIS->menu());
 }
 RUCY_END
 
@@ -150,6 +168,8 @@ Init_reflex_application ()
 	cApplication.define_method("quit",  quit);
 	cApplication.define_method("name=", set_name);
 	cApplication.define_method("name",  get_name);
+	cApplication.define_method("menu=", set_menu);
+	cApplication.define_method("menu",  get_menu);
 	cApplication.define_method("each_window", each_window);
 	cApplication.define_method("on_start", on_start);
 	cApplication.define_method("on_quit",  on_quit);
