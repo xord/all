@@ -45,6 +45,12 @@ class TestKeyEvent < Test::Unit::TestCase
     assert_nil event(DOWN, nil, 1, 2, 3).chars
   end
 
+  def test_key()
+    assert_equal :a,    event(DOWN, 'a', R::KEY_A,    0, 0).key
+    assert_equal :f1,   event(DOWN, '',  R::KEY_F1,   0, 0).key
+    assert_equal :left, event(DOWN, '',  R::KEY_LEFT, 0, 0).key
+  end
+
   def test_modifiers()
     e = event DOWN, 'a', 1, R::MOD_CONTROL | R::MOD_CAPS, 0
     assert_equal [:control],        e.modifiers

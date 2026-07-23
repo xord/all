@@ -24,6 +24,10 @@ module Reflex
       all ? get_modifiers! : (get_modifiers!.select {SHORTCUT_MODIFIER_SYMBOLS.key? _1})
     end
 
+    def key()
+      Reflex.get_key_symbol! code
+    end
+
     def down?()
       get_action == DOWN
     end
