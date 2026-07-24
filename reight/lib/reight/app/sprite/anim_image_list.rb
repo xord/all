@@ -36,7 +36,7 @@ class Reight::SpriteEditor::AnimImageList
       if image
         blend image, 0, 0, image.w, image.h, x, y, w, h, REPLACE
       else
-        inside = mouse_hovered? &&
+        inside = sp.mouse_over &&
           (x..(x + w)).include?(sp.mouse_x) &&
           (y..(y + h)).include?(sp.mouse_y)
         fill inside ? 220 : 190
