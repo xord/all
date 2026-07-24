@@ -29,10 +29,6 @@ end# Reight
 
 module Reight::Widget
 
-  def mouse_hovered?()
-    @widget_mouse_entered
-  end
-
   def sprite()
     @widget_sprite ||= RubySketch::Sprite.new(physics: false).tap do |sp|
       sp.draw           {draw sp}
@@ -44,6 +40,8 @@ module Reight::Widget
       sp.mouse_moved    {mouse_moved(   *to_widget(sp.mouse_x, sp.mouse_y))}
       sp.mouse_dragged  {mouse_dragged( *to_widget(sp.mouse_x, sp.mouse_y), sp.mouse_button)}
       sp.mouse_clicked  {mouse_clicked( *to_widget(sp.mouse_x, sp.mouse_y), sp.mouse_button)}
+      sp.mouse_over     {mouse_over(    *to_widget(sp.mouse_x, sp.mouse_y))}
+      sp.mouse_out      {mouse_out}
       sp.mouse_wheel    {mouse_wheel(   *_1.delta)}
     end
   end
@@ -60,34 +58,15 @@ module Reight::Widget
   def key_typed(   key, code)      = nil
   def mouse_pressed( x, y, button) = nil
   def mouse_released(x, y, button) = nil
-  def mouse_moved(   x, y)         = mouse_moved_and_start_checking_mouse_leave
-  def mouse_entered( x, y)         = nil
-  def mouse_leaved()               = nil
+  def mouse_moved(   x, y)         = nil
   def mouse_dragged( x, y, button) = nil
   def mouse_clicked( x, y, button) = nil
+  def mouse_over(    x, y)         = nil
+  def mouse_out()                  = nil
   def mouse_wheel(dx, dy)          = nil
 
   def to_widget(x, y)
     [x, y]
-  end
-
-  private
-
-  def mouse_moved_and_start_checking_mouse_leave()
-    sp, c = sprite, Processing.context
-    unless @widget_mouse_entered
-      @widget_mouse_entered = true
-      mouse_entered(*to_widget(sp.mouse_x, sp.mouse_y))
-    end
-    c.set_timeout 1 / 20.0, id: "#{__method__}_#{sp.object_id}" do
-      x, y = c.mouse_x - sp.x, c.mouse_y - sp.y
-      if x < 0 || sp.w <= x || y < 0 || sp.h <= y
-        mouse_leaved
-        @widget_mouse_entered = false
-      else
-        mouse_moved_and_start_checking_mouse_leave
-      end
-    end
   end
 
 end# Widget

@@ -87,7 +87,7 @@ class Reight::AssetTable
     end
 
     bounds = bounds_for_new_asset__ sp.mouse_x, sp.mouse_y
-    if bounds && mouse_hovered? && @assets&.none? {Reight.intersect? _1.x, _1.y, _1.w, _1.h, *bounds}
+    if bounds && sp.mouse_over && @assets&.none? {Reight.intersect? _1.x, _1.y, _1.w, _1.h, *bounds}
       x, y, w, h = bounds
       fill 220
       no_stroke

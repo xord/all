@@ -45,7 +45,7 @@ class Reight::MapEditor::Canvas
       end
     end
 
-    if @sprite && mouse_hovered?
+    if @sprite && sp.mouse_over
       x, y       = sp.mouse_x + ox, sp.mouse_y + oy
       x, y, w, h = Reight::MapEditor.bounds_for_put x, y, @sprite.w, @sprite.h
       no_fill

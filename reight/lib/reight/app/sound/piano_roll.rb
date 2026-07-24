@@ -131,7 +131,7 @@ class Reight::SoundEditor::PianoRoll
   end
 
   def draw_cursor__(sp)
-    return unless mouse_hovered?
+    return unless sp.mouse_over
     notew, noteh, max = I::NOTE_WIDTH, I::NOTE_HEIGHT, Reight::SoundNote::MAX
     ti, ni            = note_pos_at__ @offset_x + sp.mouse_x, @offset_y + sp.mouse_y
     x, y              = ti * notew, (max - ni) * noteh
