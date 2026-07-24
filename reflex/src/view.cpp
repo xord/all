@@ -1278,7 +1278,7 @@ namespace Reflex
 
 	static void
 	draw_view (
-		View* view, DrawEvent* event, const Point& offset, const Bounds& clip)
+		View* view, DrawEvent* event, const Point& offset, const Bounds& clip, float scale)
 	{
 		View::Data* self = view->self.get();
 
@@ -1302,7 +1302,7 @@ namespace Reflex
 			for (auto& child : *children)
 			{
 				if (event->bounds() & child->self->frame)
-					View_draw_tree(child.get(), event, offset, clip);
+					View_draw_tree(child.get(), event, offset, clip, scale);
 			}
 		}
 
@@ -1324,7 +1324,7 @@ namespace Reflex
 		DrawEvent_set_painter(event, &cache_painter);
 
 		cache_painter.begin();
-		draw_view(view, event, 0, event->bounds());
+		draw_view(view, event, 0, event->bounds(), 1);
 		cache_painter.end();
 
 		DrawEvent_set_painter(event, view_painter);
@@ -1368,7 +1368,7 @@ namespace Reflex
 
 	void
 	View_draw_tree (
-		View* view, DrawEvent* event, const Point& offset, const Bounds& clip)
+		View* view, DrawEvent* event, const Point& offset, Bounds clip, float scale)
 	{
 		if (!view)
 			argument_error(__FILE__, __LINE__);
@@ -1384,9 +1384,17 @@ namespace Reflex
 			return;
 
 		Bounds bounds = self->frame;
-		Point pos     = bounds.position();
-		Bounds clip2  = bounds.dup().move_by(offset) & clip;
+		if (clip)
+		{
+			// clipping is applied via glScissor which ignores the painter matrix,
+			// so track the frame in screen space: ancestor zooms are accumulated
+			// in 'scale' and ancestor positions in 'offset'
+			clip &= Bounds(
+				bounds.x * scale + offset.x, bounds.y * scale + offset.y,
+				bounds.w * scale,            bounds.h * scale);
+		}
 
+		Point pos = bounds.position();
 		bounds.set_position(0, 0, bounds.z);
 		if (self->pscroll)
 		{
@@ -1404,6 +1412,10 @@ namespace Reflex
 			if (pivot) p->translate( pivot->x * bounds.w,  pivot->y * bounds.h);
 			p->rotate(self->angle);
 			if (pivot) p->translate(-pivot->x * bounds.w, -pivot->y * bounds.h);
+
+			// a rotated frame can not be represented as a screen-space
+			// scissor rect, so give up clipping from here on down
+			clip.reset(-1);
 		}
 
 		float zoom = self->zoom;
@@ -1416,8 +1428,9 @@ namespace Reflex
 
 		if (!draw_view_with_cache(view, &e, redraw))
 		{
-			pos += offset;
-			draw_view(view, &e, pos, clip2);
+			draw_view(
+				view, &e, Point(pos.x * scale + offset.x, pos.y * scale + offset.y),
+				clip, zoom > 0 ? scale * zoom : scale);
 		}
 
 		p->pop_matrix();
