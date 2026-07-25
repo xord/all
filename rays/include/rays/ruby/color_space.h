@@ -11,6 +11,8 @@
 
 RUCY_DECLARE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::ColorSpace)
 
+RUCY_DECLARE_CONVERT_TO(RAYS_EXPORT, Rays::ColorSpaceType)
+
 
 namespace Rays
 {

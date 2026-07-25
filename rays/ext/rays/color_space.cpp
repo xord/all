@@ -6,6 +6,8 @@
 
 RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::ColorSpace)
 
+RUCY_DEFINE_CONVERT_TO(RAYS_EXPORT, Rays::ColorSpaceType)
+
 #define THIS  to<Rays::ColorSpace*>(self)
 
 #define CHECK RUCY_CHECK_OBJECT(Rays::ColorSpace, self)
@@ -248,13 +250,15 @@ namespace Rucy
 
 
 	template <> RAYS_EXPORT Rays::ColorSpaceType
-	value_to<Rays::ColorSpaceType> (Value value, bool convert)
+	value_to<Rays::ColorSpaceType> (int argc, const Value* argv, bool convert)
 	{
+		assert(argc > 0 && argv);
+
 		if (convert)
 		{
-			if (value.is_s() || value.is_sym())
+			if (argv->is_s() || argv->is_sym())
 			{
-				const char* str = value.c_str();
+				const char* str = argv->c_str();
 				for (size_t i = 0; i < COLOR_SPACES_SIZE; ++i)
 				{
 					if (strcasecmp(str, COLOR_SPACES[i].name) == 0)
@@ -263,7 +267,7 @@ namespace Rucy
 			}
 		}
 
-		uint type = value_to<uint>(value, convert);
+		uint type = value_to<uint>(*argv, convert);
 		if (type >= Rays::COLORSPACE_MAX)
 			argument_error(__FILE__, __LINE__, "invalid color space type -- %d", type);
 
