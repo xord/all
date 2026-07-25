@@ -19,9 +19,11 @@ namespace Reflex
 
 		Xot::WeakRef<Menu> parent;
 
-		String label, key;
+		String label;
 
 		Image image;
+
+		KeyCode key    = KEY_NONE;
 
 		uint modifiers = MOD_NONE;
 

@@ -1,6 +1,8 @@
 #include "reflex/ruby/reflex.h"
 
 
+#include <assert.h>
+#include "reflex/exception.h"
 #include "reflex/ruby/view.h"
 #include "reflex/ruby/constraint.h"
 #include "reflex/ruby/timer.h"
@@ -10,6 +12,9 @@
 #include "../../src/timer.h"
 #include "../../src/midi.h"
 #include "defs.h"
+
+
+RUCY_DEFINE_CONVERT_TO(REFLEX_EXPORT, Reflex::KeyCode)
 
 
 static Reflex::View*
@@ -89,10 +94,10 @@ RUCY_DEF0(fin)
 }
 RUCY_END
 
-static
-RUCY_DEF1(get_key_symbol, key)
+static Rucy::Value
+get_key_symbol (Reflex::KeyCode code)
 {
-	switch (to<int>(key))
+	switch ((int) code)
 	{
 		#define CASE(key)         case Reflex::KEY_##key
 		#define SYMBOL1(name)     SYMBOL2(_##name, #name)
@@ -358,6 +363,12 @@ RUCY_DEF1(get_key_symbol, key)
 		#undef SYMBOL2
 	}
 	return nil();
+}
+
+static
+RUCY_DEF1(get_key_symbol, key)
+{
+	return get_key_symbol((Reflex::KeyCode) to<int>(key));
 }
 RUCY_END
 
@@ -629,6 +640,29 @@ Init_reflex ()
 	}
 	#undef DEFINE_KEY_CONST
 }
+
+
+namespace Rucy
+{
+
+
+	template <> REFLEX_EXPORT Reflex::KeyCode
+	value_to<Reflex::KeyCode> (int argc, const Value* argv, bool convert)
+	{
+		assert(argc > 0 && argv);
+
+		int code = value_to<int>(*argv, convert);
+		if (
+			code != Reflex::KEY_NONE &&
+			get_key_symbol((Reflex::KeyCode) code).is_nil())
+		{
+			argument_error(__FILE__, __LINE__, "invalid key code -- %d", code);
+		}
+
+		return (Reflex::KeyCode) code;
+	}
+
+}// Rucy
 
 
 namespace Reflex

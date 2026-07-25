@@ -55,6 +55,15 @@ module Reflex
 
     bit_flag_accessor :shortcut_modifiers, **SHORTCUT_MODIFIER_SYMBOLS
 
+    def shortcut_key=(key)
+      key = sym2key(key) if key.is_a? Symbol
+      set_shortcut_key! key
+    end
+
+    def shortcut_key()
+      Reflex.get_key_symbol! shortcut_key!
+    end
+
     universal_accessor :label, :image, :shortcut_key, :shortcut_modifiers
 
     def each(&block)
@@ -68,6 +77,13 @@ module Reflex
 
     def inspect()
       "#<Reflex::Menu label:#{label.inspect} size:#{size}>"
+    end
+
+    private
+
+    def sym2key(sym)
+      KEYS.find {sym == Reflex.get_key_symbol!(_1)} ||
+        raise(ArgumentError, "unknown shortcut key: #{sym.inspect}")
     end
 
   end# Menu

@@ -209,9 +209,8 @@ namespace Reflex
 	}
 
 	void
-	Menu::set_shortcut (const char* key, uint modifiers)
+	Menu::set_shortcut (KeyCode key, uint modifiers)
 	{
-		if (!key) key = "";
 		if (key == self->key && modifiers == self->modifiers)
 			return;
 
@@ -220,10 +219,10 @@ namespace Reflex
 		Menu_update(this);
 	}
 
-	const char*
+	KeyCode
 	Menu::shortcut_key () const
 	{
-		return self->key.c_str();
+		return self->key;
 	}
 
 	uint

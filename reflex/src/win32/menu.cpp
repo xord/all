@@ -153,20 +153,38 @@ namespace Reflex
 	}
 
 	static String
+	get_shortcut_key_name (int key)
+	{
+		if (key < 0) return "";
+
+		UINT vsc = MapVirtualKey((UINT) key, MAPVK_VK_TO_VSC_EX);
+		if (vsc == 0) return "";
+
+		LONG lparam = (LONG) ((vsc & 0xff) << 16);
+		if (vsc & 0xff00) lparam |= 1 << 24;// extended key
+
+		char name[64] = {0};
+		if (GetKeyNameTextA(lparam, name, sizeof(name)) <= 0)
+			return "";
+
+		return name;
+	}
+
+	static String
 	make_item_string (const Menu* menu)
 	{
-		String s        = menu->label();
-		const char* key = menu->shortcut_key();
-		if (key && *key)
+		String str = menu->label();
+		String key = get_shortcut_key_name(menu->shortcut_key());
+		if (!key.empty())
 		{
-			s += '\t';
+			str += '\t';
 			uint mods = menu->shortcut_modifiers();
-			if (mods &  MOD_CONTROL)           s += "Ctrl+";
-			if (mods &  MOD_SHIFT)             s += "Shift+";
-			if (mods & (MOD_ALT | MOD_OPTION)) s += "Alt+";
-			s += key;
+			if (mods &  MOD_CONTROL)           str += "Ctrl+";
+			if (mods &  MOD_SHIFT)             str += "Shift+";
+			if (mods & (MOD_ALT | MOD_OPTION)) str += "Alt+";
+			str += key;
 		}
-		return s;
+		return str;
 	}
 
 	void

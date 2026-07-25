@@ -9,6 +9,9 @@
 #include <reflex/reflex.h>
 
 
+RUCY_DECLARE_CONVERT_TO(REFLEX_EXPORT, Reflex::KeyCode)
+
+
 namespace Reflex
 {
 
