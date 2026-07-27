@@ -18,14 +18,14 @@ namespace Reflex
 	{
 		NSUInteger flags = event ? event.modifierFlags : NSEvent.modifierFlags;
 		return
-			(flags & NSAlphaShiftKeyMask) ? MOD_CAPS     : 0 |
-			(flags & NSShiftKeyMask)      ? MOD_SHIFT    : 0 |
-			(flags & NSControlKeyMask)    ? MOD_CONTROL  : 0 |
-			(flags & NSAlternateKeyMask)  ? MOD_OPTION   : 0 |
-			(flags & NSCommandKeyMask)    ? MOD_COMMAND  : 0 |
-			(flags & NSNumericPadKeyMask) ? MOD_NUMPAD   : 0 |
-			(flags & NSHelpKeyMask)       ? MOD_HELP     : 0 |
-			(flags & NSFunctionKeyMask)   ? MOD_FUNCTION : 0;
+			(flags & NSAlphaShiftKeyMask ? MOD_CAPS     : 0) |
+			(flags & NSShiftKeyMask      ? MOD_SHIFT    : 0) |
+			(flags & NSControlKeyMask    ? MOD_CONTROL  : 0) |
+			(flags & NSAlternateKeyMask  ? MOD_OPTION   : 0) |
+			(flags & NSCommandKeyMask    ? MOD_COMMAND  : 0) |
+			(flags & NSNumericPadKeyMask ? MOD_NUMPAD   : 0) |
+			(flags & NSHelpKeyMask       ? MOD_HELP     : 0) |
+			(flags & NSFunctionKeyMask   ? MOD_FUNCTION : 0);
 	}
 
 	static Point

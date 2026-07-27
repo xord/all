@@ -79,12 +79,12 @@ namespace Reflex
 	to_modifiers (NSInteger flags)
 	{
 		return
-			(flags & UIKeyModifierAlphaShift) ? MOD_CAPS    : 0 |
-			(flags & UIKeyModifierShift)      ? MOD_SHIFT   : 0 |
-			(flags & UIKeyModifierControl)    ? MOD_CONTROL : 0 |
-			(flags & UIKeyModifierAlternate)  ? MOD_ALT     : 0 |
-			(flags & UIKeyModifierCommand)    ? MOD_COMMAND : 0 |
-			(flags & UIKeyModifierNumericPad) ? MOD_NUMPAD  : 0;
+			(flags & UIKeyModifierAlphaShift ? MOD_CAPS    : 0) |
+			(flags & UIKeyModifierShift      ? MOD_SHIFT   : 0) |
+			(flags & UIKeyModifierControl    ? MOD_CONTROL : 0) |
+			(flags & UIKeyModifierAlternate  ? MOD_ALT     : 0) |
+			(flags & UIKeyModifierCommand    ? MOD_COMMAND : 0) |
+			(flags & UIKeyModifierNumericPad ? MOD_NUMPAD  : 0);
 	}
 
 	static uint
