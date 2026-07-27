@@ -232,12 +232,12 @@ RUCY_DEF0(get_key)
 		CASE(VOLUME_DOWN): SYMBOL1(volume_down);
 		CASE(MUTE):        SYMBOL1(mute);
 
-		CASE(SLEEP):  SYMBOL1(sleep);
-		CASE(EXEC):   SYMBOL1(exec);
-		CASE(PRINT):  SYMBOL1(print);
-		CASE(APPS):   SYMBOL1(apps);
-		CASE(SELECT): SYMBOL1(select);
-		CASE(CLEAR):  SYMBOL1(clear);
+		CASE(SLEEP):        SYMBOL1(sleep);
+		CASE(EXEC):         SYMBOL1(exec);
+		CASE(PRINT):        SYMBOL1(print);
+		CASE(CONTEXT_MENU): SYMBOL1(context_menu);
+		CASE(SELECT):       SYMBOL1(select);
+		CASE(CLEAR):        SYMBOL1(clear);
 
 		CASE(NAVIGATION_VIEW):   SYMBOL1(navigation_view);
 		CASE(NAVIGATION_MENU):   SYMBOL1(navigation_menu);
