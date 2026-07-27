@@ -2,10 +2,13 @@
 
 
 #include <xot/exception.h>
+#include <reflex/ruby/event.h>
 #include "defs.h"
 
 
 RUCY_DEFINE_VALUE_FROM_TO(REFLEX_TERMINAL_EXPORT, Reflex::Terminal)
+
+RUCY_DEFINE_CONVERT_TO(REFLEX_TERMINAL_EXPORT, Reflex::Terminal::OptionAsAlt)
 
 #define THIS  to<Reflex::Terminal*>(self)
 
@@ -54,12 +57,12 @@ RUCY_DEF1(feed, bytes)
 RUCY_END
 
 static
-RUCY_DEF0(read_output)
+RUCY_DEF0(read_input)
 {
 	CHECK;
-	// a raw byte stream to be written back to the PTY
-	Reflex::String output = THIS->read_output();
-	return value(output.data(), output.size(), rb_ascii8bit_encoding());
+	// a raw byte stream for the child process
+	Reflex::String input = THIS->read_input();
+	return value(input.data(), input.size(), rb_ascii8bit_encoding());
 }
 RUCY_END
 
@@ -93,34 +96,146 @@ RUCY_DEF0(reset)
 RUCY_END
 
 static
-RUCY_DEF0(get_spans)
+RUCY_DEF2(spawn, args, envs)
 {
 	CHECK;
 
-	const Reflex::Terminal::RowList& rows = THIS->spans();
+	Reflex::StringList list;
+	for (size_t i = 0, size = args.size(); i < size; ++i)
+		list.emplace_back(args[i].c_str());
 
-	std::vector<Value> row_values;
-	row_values.reserve(rows.size());
-	for (const auto& row : rows)
+	Reflex::Terminal::EnvMap map;
+	Value names = envs.call("keys");
+	for (size_t i = 0, size = names.size(); i < size; ++i)
 	{
-		std::vector<Value> span_values;
-		span_values.reserve(row.size());
-		for (const auto& span : row)
+		Value name  = names[i];
+		Value value = envs.get(name);
+		if (value)
+			map[name.c_str()] = value.c_str();
+		else
+			map[name.c_str()] = std::nullopt;// nil removes the variable
+	}
+
+	THIS->spawn(list, map);
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_alive)
+{
+	CHECK;
+	return value(THIS->is_alive());
+}
+RUCY_END
+
+static
+RUCY_DEF1(write, bytes)
+{
+	CHECK;
+	if (!bytes.is_s())
+		Rucy::type_error(__FILE__, __LINE__, "bytes must be a String");
+
+	// write() takes a raw byte stream (see feed)
+	RubyValue str = bytes.value();
+	THIS->write(RSTRING_PTR(str), RSTRING_LEN(str));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(key_down, event)
+{
+	CHECK;
+	THIS->key_down(to<Reflex::KeyEvent&>(event));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(key_up, event)
+{
+	CHECK;
+	THIS->key_up(to<Reflex::KeyEvent&>(event));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(pointer, event)
+{
+	CHECK;
+	THIS->pointer(to<Reflex::PointerEvent&>(event));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(wheel, event)
+{
+	CHECK;
+	THIS->wheel(to<Reflex::WheelEvent&>(event));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_mouse_tracking)
+{
+	CHECK;
+	return value(THIS->is_mouse_tracking());
+}
+RUCY_END
+
+static
+RUCY_DEF1(paste, text)
+{
+	CHECK;
+	if (!text.is_s())
+		Rucy::type_error(__FILE__, __LINE__, "text must be a String");
+
+	RubyValue str = text.value();
+	THIS->paste(RSTRING_PTR(str), RSTRING_LEN(str));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(each_span)
+{
+	CHECK;
+
+	const auto& rows = THIS->spans();
+	for (size_t y = 0; y < rows.size(); ++y)
+	{
+		for (const auto& span : rows[y])
 		{
-			Value values[] = {
-				value(span.x),
-				value(span.width),
+			yield(
+				value(span.x), value((int) y), value(span.width),
 				value(span.text.c_str(), span.text.size(), rb_utf8_encoding()),
 				span.fg == Reflex::Terminal::COLOR_NONE ? nil() : value(span.fg),
 				span.bg == Reflex::Terminal::COLOR_NONE ? nil() : value(span.bg),
-				value(span.flags)
-			};
-			span_values.emplace_back(array(values, 6));
+				value(span.flags));
 		}
-		row_values.emplace_back(
-			array(span_values.empty() ? NULL : &span_values[0], span_values.size()));
 	}
-	return array(row_values.empty() ? NULL : &row_values[0], row_values.size());
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_option_as_alt, state)
+{
+	CHECK;
+	THIS->set_option_as_alt(to<Reflex::Terminal::OptionAsAlt>(state));
+	return state;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_option_as_alt)
+{
+	CHECK;
+	return value((int) THIS->option_as_alt());
 }
 RUCY_END
 
@@ -187,6 +302,7 @@ RUCY_DEF0(get_text)
 }
 RUCY_END
 
+
 static Class cTerminal;
 
 void
@@ -199,11 +315,22 @@ Init_reflex_terminal ()
 	cTerminal.define_private_method("initialize!",     initialize);
 	cTerminal.define_private_method("initialize_copy", initialize_copy);
 	cTerminal.define_method("feed",        feed);
-	cTerminal.define_method("read_output", read_output);
+	cTerminal.define_method("read_input",  read_input);
 	cTerminal.define_method("update",      update);
 	cTerminal.define_method("resize!",     resize);
 	cTerminal.define_method("reset",       reset);
-	cTerminal.define_method("spans",   get_spans);
+	cTerminal.define_method("spawn!",      spawn);
+	cTerminal.define_method("alive?",      is_alive);
+	cTerminal.define_method("write",       write);
+	cTerminal.define_method("key_down",    key_down);
+	cTerminal.define_method("key_up",      key_up);
+	cTerminal.define_method("pointer",     pointer);
+	cTerminal.define_method("wheel",       wheel);
+	cTerminal.define_method("mouse_tracking?", is_mouse_tracking);
+	cTerminal.define_method("paste",       paste);
+	cTerminal.define_private_method("each_span!", each_span);
+	cTerminal.define_method("option_as_alt=", set_option_as_alt);
+	cTerminal.define_method("option_as_alt",  get_option_as_alt);
 	cTerminal.define_method("columns", get_columns);
 	cTerminal.define_method("rows",    get_rows);
 	cTerminal.define_method("cursor",  get_cursor);
@@ -226,7 +353,34 @@ Init_reflex_terminal ()
 	cTerminal.define_const("CURSOR_BLOCK",        Reflex::Terminal::CURSOR_BLOCK);
 	cTerminal.define_const("CURSOR_UNDERLINE",    Reflex::Terminal::CURSOR_UNDERLINE);
 	cTerminal.define_const("CURSOR_BLOCK_HOLLOW", Reflex::Terminal::CURSOR_BLOCK_HOLLOW);
+
+	cTerminal.define_const("OPTION_AS_ALT_OFF",   Reflex::Terminal::OPTION_AS_ALT_OFF);
+	cTerminal.define_const("OPTION_AS_ALT_ON",    Reflex::Terminal::OPTION_AS_ALT_ON);
+	cTerminal.define_const("OPTION_AS_ALT_LEFT",  Reflex::Terminal::OPTION_AS_ALT_LEFT);
+	cTerminal.define_const("OPTION_AS_ALT_RIGHT", Reflex::Terminal::OPTION_AS_ALT_RIGHT);
 }
+
+
+namespace Rucy
+{
+
+
+	template <> REFLEX_TERMINAL_EXPORT Reflex::Terminal::OptionAsAlt
+	value_to<Reflex::Terminal::OptionAsAlt> (
+		int argc, const Value* argv, bool convert)
+	{
+		if (argc <= 0 || !argv)
+			argument_error(__FILE__, __LINE__);
+
+		int state = value_to<int>(*argv, convert);
+		if (state < 0 || Reflex::Terminal::OPTION_AS_ALT_MAX <= state)
+			argument_error(__FILE__, __LINE__, "invalid option_as_alt state");
+
+		return (Reflex::Terminal::OptionAsAlt) state;
+	}
+
+
+}// Rucy
 
 
 namespace Reflex

@@ -5,10 +5,13 @@
 
 
 #include <vector>
+#include <map>
+#include <optional>
 #include <xot/pimpl.h>
 #include <xot/string.h>
 #include <xot/util.h>
 #include <reflex/defs.h>
+#include <reflex/event.h>
 
 
 namespace Reflex
@@ -16,10 +19,10 @@ namespace Reflex
 
 
 	// A headless terminal emulator built on libghostty-vt.
-	// Feed bytes read from a PTY into feed(), call update() once per
-	// frame, and draw the screen from spans(). Responses that the terminal
-	// generates for queries (device attributes etc.) are accumulated and
-	// must be written back to the PTY via read_output().
+	// spawn() a child process, call update() once per frame to pump the
+	// PTY, and draw the screen from spans(). Without a child process it
+	// still works as a pure emulator: feed() bytes in and take the bytes
+	// to be sent back (query responses etc.) from read_input().
 	class Terminal
 	{
 
@@ -44,6 +47,10 @@ namespace Reflex
 			typedef std::vector<Span>     SpanList;
 
 			typedef std::vector<SpanList> RowList;
+
+			// environment variables for the child process;
+			// a value of nullopt removes the variable instead
+			typedef std::map<String, std::optional<String>> EnvMap;
 
 			enum CursorStyle
 			{
@@ -107,6 +114,21 @@ namespace Reflex
 
 			enum {COLOR_NONE = -1};
 
+			enum OptionAsAlt
+			{
+
+				OPTION_AS_ALT_OFF = 0,
+
+				OPTION_AS_ALT_ON,
+
+				OPTION_AS_ALT_LEFT,
+
+				OPTION_AS_ALT_RIGHT,
+
+				OPTION_AS_ALT_MAX
+
+			};// OptionAsAlt
+
 			Terminal ();
 
 			Terminal (int columns, int rows, size_t scrollback = 10000);
@@ -115,7 +137,10 @@ namespace Reflex
 
 			void feed (const char* bytes, size_t size);
 
-			String read_output ();
+			// takes the bytes to be sent to the child process (query
+			// responses and encoded input events, in generated order),
+			// accumulated while no child process is attached
+			String read_input ();
 
 			bool update ();
 
@@ -125,6 +150,38 @@ namespace Reflex
 				int screen_width, int screen_height);
 
 			void reset ();
+
+			// starts a child process on a new pseudo terminal;
+			// empty args means [$SHELL] (or [/bin/sh]).
+			// envs overrides the defaults (TERM etc.), so that the
+			// application can name itself with TERM_PROGRAM
+			void spawn (const StringList& args = {}, const EnvMap& envs = {});
+
+			// whether the spawned child process is still running
+			bool is_alive () const;
+
+			// raw input bytes for the child process
+			void write (const char* bytes, size_t size);
+
+			void key_down (const KeyEvent& event);
+
+			void key_up (const KeyEvent& event);
+
+			void pointer (const PointerEvent& event);
+
+			void wheel (const WheelEvent& event);
+
+			// whether the child process requested mouse reporting
+			bool is_mouse_tracking () const;
+
+			// encodes with bracketed paste mode when enabled
+			void paste (const char* text, size_t size);
+
+			// send the char composed with the macOS option key
+			// as an alt (meta) sequence instead (for emacs etc.)
+			void    set_option_as_alt (OptionAsAlt state);
+
+			OptionAsAlt option_as_alt () const;
 
 			const RowList& spans () const;
 

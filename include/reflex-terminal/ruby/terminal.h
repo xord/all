@@ -12,6 +12,8 @@
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_TERMINAL_EXPORT, Reflex::Terminal)
 
+RUCY_DECLARE_CONVERT_TO(REFLEX_TERMINAL_EXPORT, Reflex::Terminal::OptionAsAlt)
+
 
 namespace Reflex
 {
