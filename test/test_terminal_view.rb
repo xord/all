@@ -35,12 +35,4 @@ class TestTerminalView < Test::Unit::TestCase
     assert_include v.font.name, 'Osaka'
   end
 
-  def test_content_bounds_follows_terminal_size()
-    t    = Reflex::Terminal.new 80, 24
-    v    = view terminal: t
-    font = v.font
-    assert_equal [(80 * font.width('M')).ceil, 24 * font.height.ceil],
-      v.content_bounds
-  end
-
 end# TestTerminalView

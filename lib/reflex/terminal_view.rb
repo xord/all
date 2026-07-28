@@ -59,11 +59,6 @@ module Reflex
       @font.size
     end
 
-    def content_bounds()
-      return 0, 0 unless @terminal
-      [(@terminal.columns * @cell_width).ceil, @terminal.rows * @cell_height]
-    end
-
     def on_attach(e)
       unless @terminal
         @terminal = Terminal.new
