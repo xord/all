@@ -1,7 +1,6 @@
 #include "rays/ruby/shader.h"
 
 
-#include <assert.h>
 #include "rays/exception.h"
 #include "rays/ruby/image.h"
 #include "defs.h"
@@ -208,13 +207,14 @@ namespace Rucy
 	template <> RAYS_EXPORT Rays::Shader
 	value_to<Rays::Shader> (int argc, const Value* argv, bool convert)
 	{
-		if (argc == 1 && argv->is_array())
+		if (argc == 1 && argv && argv->is_array())
 		{
 			argc = argv->size();
 			argv = argv->as_array();
 		}
 
-		assert(argc > 0 && argv);
+		if (argc <= 0 || !argv)
+			argument_error(__FILE__, __LINE__);
 
 		if (convert)
 		{

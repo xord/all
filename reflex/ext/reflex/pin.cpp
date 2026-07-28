@@ -114,13 +114,11 @@ namespace Rucy
 	template <> REFLEX_EXPORT Reflex::Pin
 	value_to<Reflex::Pin> (int argc, const Value* argv, bool convert)
 	{
-		if (argc == 1 && argv->is_array())
+		if (argc == 1 && argv && argv->is_array())
 		{
 			argc = argv->size();
 			argv = argv->as_array();
 		}
-
-		assert(argc == 0 || (argc > 0 && argv));
 
 		if (convert)
 		{

@@ -1,7 +1,6 @@
 #include "rays/ruby/polyline.h"
 
 
-#include <assert.h>
 #include <vector>
 #include "rays/ruby/color.h"
 #include "rays/ruby/point.h"
@@ -236,8 +235,6 @@ namespace Rucy
 	template <> RAYS_EXPORT Rays::Polyline
 	value_to<Rays::Polyline> (int argc, const Value* argv, bool convert)
 	{
-		assert(argc == 0 || (argc > 0 && argv));
-
 		if (convert)
 		{
 			if (argc <= 0)

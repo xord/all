@@ -1,7 +1,6 @@
 #include "rays/ruby/rays.h"
 
 
-#include <assert.h>
 #include <vector>
 #include "defs.h"
 
@@ -115,7 +114,8 @@ namespace Rucy
 	template <> RAYS_EXPORT Rays::CapType
 	value_to<Rays::CapType> (int argc, const Value* argv, bool convert)
 	{
-		assert(argc > 0 && argv);
+		if (argc <= 0 || !argv)
+			argument_error(__FILE__, __LINE__);
 
 		if (convert)
 		{
@@ -148,7 +148,8 @@ namespace Rucy
 	template <> RAYS_EXPORT Rays::JoinType
 	value_to<Rays::JoinType> (int argc, const Value* argv, bool convert)
 	{
-		assert(argc > 0 && argv);
+		if (argc <= 0 || !argv)
+			argument_error(__FILE__, __LINE__);
 
 		if (convert)
 		{
@@ -181,7 +182,8 @@ namespace Rucy
 	template <> RAYS_EXPORT Rays::BlendMode
 	value_to<Rays::BlendMode> (int argc, const Value* argv, bool convert)
 	{
-		assert(argc > 0 && argv);
+		if (argc <= 0 || !argv)
+			argument_error(__FILE__, __LINE__);
 
 		if (convert)
 		{
@@ -214,7 +216,8 @@ namespace Rucy
 	template <> RAYS_EXPORT Rays::TexCoordMode
 	value_to<Rays::TexCoordMode> (int argc, const Value* argv, bool convert)
 	{
-		assert(argc > 0 && argv);
+		if (argc <= 0 || !argv)
+			argument_error(__FILE__, __LINE__);
 
 		if (convert)
 		{
@@ -247,7 +250,8 @@ namespace Rucy
 	template <> RAYS_EXPORT Rays::TexCoordWrap
 	value_to<Rays::TexCoordWrap> (int argc, const Value* argv, bool convert)
 	{
-		assert(argc > 0 && argv);
+		if (argc <= 0 || !argv)
+			argument_error(__FILE__, __LINE__);
 
 		if (convert)
 		{

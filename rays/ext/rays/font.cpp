@@ -1,7 +1,6 @@
 #include "rays/ruby/font.h"
 
 
-#include <assert.h>
 #include "defs.h"
 
 
@@ -191,13 +190,11 @@ namespace Rucy
 	template <> RAYS_EXPORT Rays::Font
 	value_to<Rays::Font> (int argc, const Value* argv, bool convert)
 	{
-		if (argc == 1 && argv->is_array())
+		if (argc == 1 && argv && argv->is_array())
 		{
 			argc = argv->size();
 			argv = argv->as_array();
 		}
-
-		assert(argc == 0 || (argc > 0 && argv));
 
 		if (convert)
 		{
