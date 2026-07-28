@@ -130,6 +130,18 @@ namespace Reflex
 		return 0;
 	}
 
+	bool
+	PTY::wait_readable (int timeout_msec) const
+	{
+		if (!is_open()) return false;
+
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
+		struct timeval timeout = {0, timeout_msec * 1000};
+		return select(fd + 1, &fds, NULL, NULL, &timeout) > 0;
+	}
+
 	void
 	PTY::write (const char* bytes, size_t size)
 	{

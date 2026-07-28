@@ -37,6 +37,9 @@ namespace Reflex
 			// nonblocking; returns 0 if nothing is available
 			size_t read (char* buffer, size_t size);
 
+			// waits until read() would return data, up to timeout
+			bool wait_readable (int timeout_msec) const;
+
 			void write (const char* bytes, size_t size);
 
 			void set_size (

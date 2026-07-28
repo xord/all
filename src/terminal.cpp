@@ -669,7 +669,17 @@ namespace Reflex
 			while (total < MAX_BYTES_PER_UPDATE)
 			{
 				size_t size = self->pty.read(buffer, sizeof(buffer));
-				if (size == 0) break;
+				if (size == 0)
+				{
+					// the kernel pty buffer holds only ~1kb, so a screenful
+					// arrives as a burst of small chunks: once one has
+					// started, wait briefly for the rest. Leaving each chunk
+					// to the next frame would spread it over hundreds of
+					// frames, visible as the screen filling in row by row.
+					if (total > 0 && self->pty.wait_readable(1)) continue;
+
+					break;
+				}
 
 				ghostty_terminal_vt_write(self->terminal, (const uint8_t*) buffer, size);
 				total += size;
