@@ -3,6 +3,7 @@ require 'reflex/view'
 require 'reflex/font'
 require 'reflex/color'
 require 'reflex/terminal'
+require 'reflex-terminal/glyph_atlas'
 
 
 module Reflex
@@ -44,6 +45,8 @@ module Reflex
       @font_size   = font.size
       @cell_width  = font.width 'M'
       @cell_height = font.height.ceil
+      @atlas       = ReflexTerminal::GlyphAtlas.new font, @cell_width, @cell_height
+      @atlas.add (0x20..0x7e).map(&:chr)# printable ascii up front
       resize_terminal
       redraw
     end
@@ -77,7 +80,9 @@ module Reflex
     end
 
     def on_update(e)
-      redraw if @terminal&.update
+      return unless @terminal&.update
+      prepare_glyphs
+      redraw
     end
 
     def on_draw(e)
@@ -92,16 +97,21 @@ module Reflex
         p.fill theme_bg
         p.rect e.bounds
 
+        # draw all backgrounds first, then all glyphs: alternating shapes
+        # and images breaks the painter's batch and costs several times more
         t.each_span do |x, y, w, str, sfg, sbg, flags|
-          inverse = (flags & Terminal::INVERSE) != 0
-          cell_bg = inverse ? to_color(sfg, theme_fg) : to_color(sbg, theme_bg)
-          if cell_bg != theme_bg
-            p.fill cell_bg
-            p.rect x * cw, y * ch, w * cw, ch
-          end
+          cell_bg = (flags & Terminal::INVERSE) != 0 ?
+            to_color(sfg, theme_fg) : to_color(sbg, theme_bg)
+          next if cell_bg == theme_bg
 
-          p.fill inverse ? to_color(sbg, theme_bg) : to_color(sfg, theme_fg)
-          p.text str, x * cw, y * ch
+          p.fill cell_bg
+          p.rect x * cw, y * ch, w * cw, ch
+        end
+
+        t.each_span do |x, y, w, str, sfg, sbg, flags|
+          p.fill (flags & Terminal::INVERSE) != 0 ?
+            to_color(sbg, theme_bg) : to_color(sfg, theme_fg)
+          draw_span p, str, x, y
         end
 
         draw_cursor p, t
@@ -152,6 +162,40 @@ module Reflex
           redraw
         end
         redraw
+      end
+
+      # Rasterizes the glyphs the next draw will need, before drawing
+      # starts: doing it inside on_draw switches the rendering context
+      # mid-frame, which is slow enough to show the screen filling in.
+      #
+      def prepare_glyphs()
+        missing = nil
+        @terminal.each_span do |x, y, w, str, sfg, sbg, flags|
+          str.each_char {|char| (missing ||= []) << char unless @atlas.include? char}
+        end
+        @atlas.add missing if missing
+      end
+
+      # Draws a span cell by cell, copying each glyph from the atlas:
+      # Painter#text has a large fixed cost per call, which a screenful of
+      # spans multiplies (see GlyphAtlas).
+      #
+      def draw_span(painter, str, x, y)
+        cw, ch = @cell_width, @cell_height
+        image  = @atlas.image
+        y     *= ch
+
+        str.each_char do |char|
+          glyph = @atlas[char]
+          if glyph
+            gx, gy, gw, cells = glyph
+            painter.image image, gx, gy, gw, ch, x * cw, y, gw, ch
+            x += cells
+          else
+            painter.text char, x * cw, y# atlas full: fall back
+            x += 1
+          end
+        end
       end
 
       def draw_cursor(painter, terminal)
