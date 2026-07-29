@@ -67,7 +67,7 @@ namespace Reflex
 
 		struct winsize size = to_winsize(columns, rows, cell_width, cell_height);
 
-		int master = -1;
+		int master  = -1;
 		pid_t child = forkpty(&master, NULL, NULL, &size);
 		if (child < 0)
 			Xot::system_error(__FILE__, __LINE__, "forkpty() failed");

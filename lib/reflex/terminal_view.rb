@@ -157,88 +157,88 @@ module Reflex
 
     private
 
-      # Shows the cursor and starts the blink over. Typing while the
-      # cursor happens to be off would otherwise hide where the input
-      # is going, so every keystroke restarts the phase.
-      #
-      def restart_cursor_blink()
-        @blink = true
-        @blinker&.stop
-        @blinker = interval CURSOR_BLINK_INTERVAL do
-          @blink = !@blink
-          redraw
-        end
+    # Shows the cursor and starts the blink over. Typing while the
+    # cursor happens to be off would otherwise hide where the input
+    # is going, so every keystroke restarts the phase.
+    #
+    def restart_cursor_blink()
+      @blink = true
+      @blinker&.stop
+      @blinker = interval CURSOR_BLINK_INTERVAL do
+        @blink = !@blink
         redraw
       end
+      redraw
+    end
 
-      # Rasterizes the glyphs the next draw will need, before drawing
-      # starts: doing it inside on_draw switches the rendering context
-      # mid-frame, which is slow enough to show the screen filling in.
-      #
-      def prepare_glyphs()
-        missing = nil
-        @terminal.each_span do |x, y, w, str, sfg, sbg, flags|
-          str.each_char {|char| (missing ||= []) << char unless @atlas.include? char}
-        end
-        @atlas.add missing if missing
+    # Rasterizes the glyphs the next draw will need, before drawing
+    # starts: doing it inside on_draw switches the rendering context
+    # mid-frame, which is slow enough to show the screen filling in.
+    #
+    def prepare_glyphs()
+      missing = nil
+      @terminal.each_span do |x, y, w, str, sfg, sbg, flags|
+        str.each_char {|char| (missing ||= []) << char unless @atlas.include? char}
       end
+      @atlas.add missing if missing
+    end
 
-      # Draws a span cell by cell, copying each glyph from the atlas:
-      # Painter#text has a large fixed cost per call, which a screenful of
-      # spans multiplies (see GlyphAtlas).
-      #
-      def draw_span(painter, str, x, y)
-        cw, ch = @cell_width, @cell_height
-        image  = @atlas.image
-        y     *= ch
+    # Draws a span cell by cell, copying each glyph from the atlas:
+    # Painter#text has a large fixed cost per call, which a screenful of
+    # spans multiplies (see GlyphAtlas).
+    #
+    def draw_span(painter, str, x, y)
+      cw, ch = @cell_width, @cell_height
+      image  = @atlas.image
+      y     *= ch
 
-        str.each_char do |char|
-          glyph = @atlas[char]
-          if glyph
-            gx, gy, gw, cells = glyph
-            painter.image image, gx, gy, gw, ch, x * cw, y, gw, ch
-            x += cells
-          else
-            painter.text char, x * cw, y# atlas full: fall back
-            x += 1
-          end
-        end
-      end
-
-      def draw_cursor(painter, terminal)
-        x, y, style, visible = terminal.cursor
-        return unless visible && @blink && focus?
-
-        cw, ch = @cell_width, @cell_height
-        color  = to_color terminal.colors[2], to_color(terminal.colors[0], 1)
-
-        painter.push fill: color do |p|
-          case style
-          when Terminal::CURSOR_BAR       then p.rect x * cw, y * ch, 2, ch
-          when Terminal::CURSOR_UNDERLINE then p.rect x * cw, (y + 1) * ch - 2, cw, 2
-          else# block: translucent so the character shows through
-            p.fill color.dup.tap {|c| c.alpha = 0.5}
-            p.rect x * cw, y * ch, cw, ch
-          end
+      str.each_char do |char|
+        glyph = @atlas[char]
+        if glyph
+          gx, gy, gw, cells = glyph
+          painter.image image, gx, gy, gw, ch, x * cw, y, gw, ch
+          x += cells
+        else
+          painter.text char, x * cw, y# atlas full: fall back
+          x += 1
         end
       end
+    end
 
-      def resize_terminal()
-        return unless @terminal && width > 0 && height > 0
-        @terminal.resize(
-          (width  / @cell_width) .floor.clamp(1..),
-          (height / @cell_height).floor.clamp(1..),
-           cell_width: @cell_width.round, cell_height: @cell_height,
-          screen_width: width.to_i,      screen_height: height.to_i)
-      end
+    def draw_cursor(painter, terminal)
+      x, y, style, visible = terminal.cursor
+      return unless visible && @blink && focus?
 
-      def to_color(rgb, fallback)
-        return fallback unless rgb
-        Color.new(
-          ((rgb >> 16) & 0xff) / 255.0,
-          ((rgb >> 8)  & 0xff) / 255.0,
-          ( rgb        & 0xff) / 255.0)
+      cw, ch = @cell_width, @cell_height
+      color  = to_color terminal.colors[2], to_color(terminal.colors[0], 1)
+
+      painter.push fill: color do |p|
+        case style
+        when Terminal::CURSOR_BAR       then p.rect x * cw, y * ch, 2, ch
+        when Terminal::CURSOR_UNDERLINE then p.rect x * cw, (y + 1) * ch - 2, cw, 2
+        else# block: translucent so the character shows through
+          p.fill color.dup.tap {|c| c.alpha = 0.5}
+          p.rect x * cw, y * ch, cw, ch
+        end
       end
+    end
+
+    def resize_terminal()
+      return unless @terminal && width > 0 && height > 0
+      @terminal.resize(
+        (width  / @cell_width) .floor.clamp(1..),
+        (height / @cell_height).floor.clamp(1..),
+          cell_width: @cell_width.round, cell_height: @cell_height,
+        screen_width: width.to_i,      screen_height: height.to_i)
+    end
+
+    def to_color(rgb, fallback)
+      return fallback unless rgb
+      Color.new(
+        ((rgb >> 16) & 0xff) / 255.0,
+        ((rgb >> 8)  & 0xff) / 255.0,
+        ( rgb        & 0xff) / 255.0)
+    end
 
   end# TerminalView
 

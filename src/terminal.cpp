@@ -82,11 +82,12 @@ namespace Reflex
 	};// Terminal::Data
 
 
-	// sends bytes to the child process, or accumulates them for
-	// read_pending_input() while no child process is attached
 	static void
 	write_input (Terminal::Data* self, const char* bytes, size_t size)
 	{
+		// sends bytes to the child process, or accumulates them for
+		// read_pending_input() while no child process is attached
+
 		if (size == 0) return;
 
 		if (self->pty)
@@ -114,7 +115,6 @@ namespace Reflex
 		if (ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_TITLE, &str) != GHOSTTY_SUCCESS)
 			return;
 
-		// the returned string is borrowed, so copy it now
 		self->title.assign((const char*) str.ptr, str.len);
 	}
 
@@ -141,17 +141,17 @@ namespace Reflex
 		return (color.r << 16) | (color.g << 8) | color.b;
 	}
 
-	// Reflex::KeyCode constants resolve to the platform native keycodes at
-	// compile time (NATIVE_VK), so comparing KeyEvent#code against KEY_*
-	// keeps this table platform-independent.
-	// Some KEY_* values alias each other on some platforms (e.g.
-	// KEY_SHIFT == KEY_LSHIFT on macOS), so use an if-chain instead of a
-	// switch to avoid duplicate case errors; aliases map to the same
-	// GhosttyKey anyway.
 	static GhosttyKey
 	to_ghostty_key (int code)
 	{
-		// a negative keycode means the key is unavailable on this platform
+		// Reflex::KeyCode constants resolve to the platform native keycodes at
+		// compile time (NATIVE_VK), so comparing KeyEvent#code against KEY_*
+		// keeps this table platform-independent.
+		// Some KEY_* values alias each other on some platforms (e.g.
+		// KEY_SHIFT == KEY_LSHIFT on macOS), so use an if-chain instead of a
+		// switch to avoid duplicate case errors; aliases map to the same
+		// GhosttyKey anyway.
+
 		if (code < 0) return GHOSTTY_KEY_UNIDENTIFIED;
 
 		#define KEY(key, ghostty_key) \
@@ -271,11 +271,12 @@ namespace Reflex
 		return mods;
 	}
 
-	// US-layout approximation, used only by the kitty keyboard protocol's
-	// alternate key reporting
 	static uint32_t
 	to_unshifted_codepoint (GhosttyKey key)
 	{
+		// US-layout approximation, used only by the kitty keyboard protocol's
+		// alternate key reporting
+
 		if (GHOSTTY_KEY_A       <= key && key <= GHOSTTY_KEY_Z)
 			return 'a' + (key - GHOSTTY_KEY_A);
 		if (GHOSTTY_KEY_DIGIT_0 <= key && key <= GHOSTTY_KEY_DIGIT_9)
@@ -314,11 +315,12 @@ namespace Reflex
 		return true;
 	}
 
-	// What to send when the encoder produced nothing at all, which happens
-	// for a few ctrl combinations that have no legacy encoding.
 	static char
 	to_c0 (GhosttyKey key, GhosttyMods mods, const char* chars)
 	{
+		// What to send when the encoder produced nothing at all, which happens
+		// for a few ctrl combinations that have no legacy encoding.
+
 		// the platform resolves some of these itself using the real
 		// keyboard layout (macOS turns ctrl+- into 0x1f), which beats
 		// guessing from the key, so prefer it whenever it did
@@ -359,8 +361,7 @@ namespace Reflex
 		bool use_utf8 =
 			is_printable(chars) &&
 			!(mods & GHOSTTY_MODS_SUPER) &&
-			!((mods & GHOSTTY_MODS_ALT) &&
-			  self->option_as_alt != GHOSTTY_OPTION_AS_ALT_FALSE);
+			!((mods & GHOSTTY_MODS_ALT) && self->option_as_alt != GHOSTTY_OPTION_AS_ALT_FALSE);
 
 		GhosttyMods consumed = 0;
 		if (use_utf8 && (mods & GHOSTTY_MODS_SHIFT))
@@ -376,7 +377,7 @@ namespace Reflex
 		ghostty_key_event_set_unshifted_codepoint(e, to_unshifted_codepoint(key));
 
 		char buffer[256];
-		size_t size    = 0;
+		size_t size          = 0;
 		GhosttyResult result =
 			ghostty_key_encoder_encode(self->key_encoder, e, buffer, sizeof(buffer), &size);
 		if (result == GHOSTTY_SUCCESS && size == 0 && action == GHOSTTY_KEY_ACTION_PRESS)
@@ -389,8 +390,7 @@ namespace Reflex
 		else if (result == GHOSTTY_OUT_OF_SPACE)
 		{
 			std::string big(size, '\0');
-			result = ghostty_key_encoder_encode(
-				self->key_encoder, e, &big[0], big.size(), &size);
+			result = ghostty_key_encoder_encode(self->key_encoder, e, &big[0], big.size(), &size);
 			if (result == GHOSTTY_SUCCESS)
 				write_input(self, big.data(), size);
 		}
@@ -401,21 +401,18 @@ namespace Reflex
 		Terminal::Data* self, GhosttyMouseAction action, int button,
 		GhosttyMods mods, float x, float y)
 	{
-		ghostty_mouse_encoder_setopt_from_terminal(
-			self->mouse_encoder, self->terminal);
+		ghostty_mouse_encoder_setopt_from_terminal(self->mouse_encoder, self->terminal);
 
 		GhosttyMouseEncoderSize size = init_sized<GhosttyMouseEncoderSize>();
-		size.screen_width  = self->screen_width > 0
+		size.screen_width  = self->screen_width  > 0
 			? self->screen_width  : self->columns * self->cell_width;
 		size.screen_height = self->screen_height > 0
 			? self->screen_height : self->rows    * self->cell_height;
 		size.cell_width    = self->cell_width;
 		size.cell_height   = self->cell_height;
+		ghostty_mouse_encoder_setopt(self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_SIZE, &size);
 		ghostty_mouse_encoder_setopt(
-			self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_SIZE, &size);
-		ghostty_mouse_encoder_setopt(
-			self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED,
-			&self->any_button_pressed);
+			self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED, &self->any_button_pressed);
 
 		GhosttyMouseEvent e = self->mouse_event;
 		ghostty_mouse_event_set_action(e, action);
@@ -429,9 +426,9 @@ namespace Reflex
 		ghostty_mouse_event_set_position(e, position);
 
 		char buffer[64];
-		size_t written = 0;
-		GhosttyResult result = ghostty_mouse_encoder_encode(
-			self->mouse_encoder, e, buffer, sizeof(buffer), &written);
+		size_t written       = 0;
+		GhosttyResult result =
+			ghostty_mouse_encoder_encode(self->mouse_encoder, e, buffer, sizeof(buffer), &written);
 		// written == 0 is normal while mouse tracking is off
 		if (result == GHOSTTY_SUCCESS && written > 0)
 			write_input(self, buffer, written);
@@ -443,8 +440,7 @@ namespace Reflex
 		self->spans.clear();
 
 		GhosttyResult result = ghostty_render_state_get(
-			self->render_state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
-			&self->row_iterator);
+			self->render_state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &self->row_iterator);
 		if (result != GHOSTTY_SUCCESS) return;
 
 		std::string utf8;
@@ -454,8 +450,7 @@ namespace Reflex
 			Terminal::SpanList& row = self->spans.back();
 
 			result = ghostty_render_state_row_get(
-				self->row_iterator, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
-				&self->row_cells);
+				self->row_iterator, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS, &self->row_cells);
 			if (result != GHOSTTY_SUCCESS) continue;
 
 			Terminal::Span* span = NULL;
@@ -477,38 +472,28 @@ namespace Reflex
 
 				uint32_t nchars = 0;
 				ghostty_render_state_row_cells_get(
-					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
-					&nchars);
+					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN, &nchars);
 
 				int fg = Terminal::COLOR_NONE, bg = Terminal::COLOR_NONE;
 				GhosttyColorRgb color;
-				if (ghostty_render_state_row_cells_get(
-					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_FG_COLOR,
-					&color) == GHOSTTY_SUCCESS)
-				{
-					fg = to_rgb(color);
-				}
-				if (ghostty_render_state_row_cells_get(
-					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR,
-					&color) == GHOSTTY_SUCCESS)
-				{
-					bg = to_rgb(color);
-				}
+				result = ghostty_render_state_row_cells_get(
+					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_FG_COLOR, &color);
+				if (result == GHOSTTY_SUCCESS) fg = to_rgb(color);
+				result = ghostty_render_state_row_cells_get(
+					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR, &color);
+				if (result == GHOSTTY_SUCCESS) bg = to_rgb(color);
 
 				uint flags        = 0;
 				bool has_styling  = false;
 				ghostty_render_state_row_cells_get(
-					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_HAS_STYLING,
-					&has_styling);
+					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_HAS_STYLING, &has_styling);
 				if (has_styling)
 				{
 					GhosttyStyle style = init_sized<GhosttyStyle>();
-					if (ghostty_render_state_row_cells_get(
-						self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
-						&style) == GHOSTTY_SUCCESS)
-					{
+					result = ghostty_render_state_row_cells_get(
+						self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE, &style);
+					if (result == GHOSTTY_SUCCESS)
 						flags = to_flags(style);
-					}
 				}
 
 				bool empty = nchars == 0;
@@ -523,21 +508,19 @@ namespace Reflex
 				{
 					char stack_buf[64];
 					GhosttyBuffer buf = {(uint8_t*) stack_buf, sizeof(stack_buf), 0};
-					GhosttyResult res = ghostty_render_state_row_cells_get(
-						self->row_cells,
-						GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_UTF8, &buf);
-					if (res == GHOSTTY_OUT_OF_SPACE)
+					result = ghostty_render_state_row_cells_get(
+						self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_UTF8, &buf);
+					if (result == GHOSTTY_OUT_OF_SPACE)
 					{
 						utf8.resize(buf.len);
 						buf.ptr = (uint8_t*) &utf8[0];
 						buf.cap = utf8.size();
-						res     = ghostty_render_state_row_cells_get(
-							self->row_cells,
-							GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_UTF8, &buf);
+						result  = ghostty_render_state_row_cells_get(
+							self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_UTF8, &buf);
 					}
-					else if (res == GHOSTTY_SUCCESS)
+					else if (result == GHOSTTY_SUCCESS)
 						utf8.assign(stack_buf, buf.len);
-					if (res != GHOSTTY_SUCCESS) utf8.clear();
+					if (result != GHOSTTY_SUCCESS) utf8.clear();
 				}
 				if (utf8.empty()) utf8 = " ";
 
@@ -576,38 +559,35 @@ namespace Reflex
 
 	Terminal::Terminal (int columns, int rows, size_t scrollback_bytes)
 	{
-		if (columns <= 0 || columns > UINT16_MAX || rows <= 0 || rows > UINT16_MAX)
+		if (
+			columns <= 0 || UINT16_MAX < columns ||
+			rows    <= 0 || UINT16_MAX < rows)
 		{
-			Xot::argument_error(
+			argument_error(
 				__FILE__, __LINE__, "invalid terminal size: %dx%d", columns, rows);
 		}
 
 		GhosttyTerminalOptions options = {};
-		options.cols           = (uint16_t) columns;
-		options.rows           = (uint16_t) rows;
-		options.max_scrollback = scrollback_bytes;
+		options.cols                   = (uint16_t) columns;
+		options.rows                   = (uint16_t) rows;
+		options.max_scrollback         = scrollback_bytes;
 		if (ghostty_terminal_new(NULL, &self->terminal, options) != GHOSTTY_SUCCESS)
-			Xot::system_error(__FILE__, __LINE__, "failed to create a terminal");
+			system_error(__FILE__, __LINE__, "failed to create a terminal");
 
 		// register the cell pixel size (required right after creation)
 		ghostty_terminal_resize(
-			self->terminal, options.cols, options.rows,
-			self->cell_width, self->cell_height);
+			self->terminal, options.cols, options.rows, self->cell_width, self->cell_height);
 
+		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_USERDATA, self.get());
+		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY, (const void*) write_pty);
 		ghostty_terminal_set(
-			self->terminal, GHOSTTY_TERMINAL_OPT_USERDATA, self.get());
-		ghostty_terminal_set(
-			self->terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY, (const void*) write_pty);
-		ghostty_terminal_set(
-			self->terminal, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
-			(const void*) title_changed);
-
+			self->terminal, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED, (const void*) title_changed);
 		if (
 			ghostty_render_state_new(NULL, &self->render_state)              != GHOSTTY_SUCCESS ||
 			ghostty_render_state_row_iterator_new(NULL, &self->row_iterator) != GHOSTTY_SUCCESS ||
 			ghostty_render_state_row_cells_new(NULL, &self->row_cells)       != GHOSTTY_SUCCESS)
 		{
-			Xot::system_error(__FILE__, __LINE__, "failed to create a render state");
+			system_error(__FILE__, __LINE__, "failed to create a render state");
 		}
 
 		if (
@@ -616,7 +596,7 @@ namespace Reflex
 			ghostty_mouse_encoder_new(NULL, &self->mouse_encoder) != GHOSTTY_SUCCESS ||
 			ghostty_mouse_event_new(NULL, &self->mouse_event)     != GHOSTTY_SUCCESS)
 		{
-			Xot::system_error(__FILE__, __LINE__, "failed to create input encoders");
+			system_error(__FILE__, __LINE__, "failed to create input encoders");
 		}
 
 		self->columns = columns;
@@ -633,7 +613,7 @@ namespace Reflex
 	Terminal::update ()
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		if (self->pty)
 		{
@@ -662,30 +642,25 @@ namespace Reflex
 			}
 		}
 
-		GhosttyResult r = ghostty_render_state_update(
-			self->render_state, self->terminal);
-		if (r != GHOSTTY_SUCCESS)
-			Xot::system_error(__FILE__, __LINE__, "failed to update a render state");
+		GhosttyResult result = ghostty_render_state_update(self->render_state, self->terminal);
+		if (result != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to update a render state");
 
 		uint16_t columns = 0, rows = 0;
-		ghostty_render_state_get(
-			self->render_state, GHOSTTY_RENDER_STATE_DATA_COLS, &columns);
-		ghostty_render_state_get(
-			self->render_state, GHOSTTY_RENDER_STATE_DATA_ROWS, &rows);
+		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_COLS, &columns);
+		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_ROWS, &rows);
 		if (columns > 0) self->columns = columns;
 		if (rows    > 0) self->rows    = rows;
 
 		GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
-		ghostty_render_state_get(
-			self->render_state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &dirty);
+		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &dirty);
 		if (dirty == GHOSTTY_RENDER_STATE_DIRTY_FALSE && !self->spans.empty())
 			return false;
 
 		rebuild_spans(self.get());
 
 		GhosttyRenderStateDirty clean = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
-		ghostty_render_state_set(
-			self->render_state, GHOSTTY_RENDER_STATE_OPTION_DIRTY, &clean);
+		ghostty_render_state_set(self->render_state, GHOSTTY_RENDER_STATE_OPTION_DIRTY, &clean);
 
 		return true;
 	}
@@ -694,7 +669,7 @@ namespace Reflex
 	Terminal::reset ()
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		ghostty_terminal_reset(self->terminal);
 	}
@@ -706,29 +681,27 @@ namespace Reflex
 		int screen_width, int screen_height)
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
-		if (columns <= 0 || columns > UINT16_MAX || rows <= 0 || rows > UINT16_MAX)
+			invalid_state_error(__FILE__, __LINE__);
+		if (
+			columns <= 0 || UINT16_MAX < columns ||
+			rows    <= 0 || UINT16_MAX < rows)
 		{
-			Xot::argument_error(
-				__FILE__, __LINE__, "invalid terminal size: %dx%d", columns, rows);
+			argument_error(__FILE__, __LINE__, "invalid terminal size: %dx%d", columns, rows);
 		}
 		if (cell_width <= 0 || cell_height <= 0)
-		{
-			Xot::argument_error(
-				__FILE__, __LINE__, "invalid cell size: %dx%d", cell_width, cell_height);
-		}
+			argument_error(__FILE__, __LINE__, "invalid cell size: %dx%d", cell_width, cell_height);
 
 		self->cell_width    = cell_width;
 		self->cell_height   = cell_height;
 		self->screen_width  = screen_width;
 		self->screen_height = screen_height;
 
-		GhosttyResult r = ghostty_terminal_resize(
+		GhosttyResult result = ghostty_terminal_resize(
 			self->terminal,
 			(uint16_t) columns, (uint16_t) rows,
 			(uint32_t) cell_width, (uint32_t) cell_height);
-		if (r != GHOSTTY_SUCCESS)
-			Xot::system_error(__FILE__, __LINE__, "failed to resize a terminal");
+		if (result != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to resize a terminal");
 
 		self->columns = columns;
 		self->rows    = rows;
@@ -741,9 +714,9 @@ namespace Reflex
 	Terminal::feed (const char* bytes, size_t size)
 	{
 		if (!bytes)
-			Xot::argument_error(__FILE__, __LINE__, "bytes is NULL");
+			argument_error(__FILE__, __LINE__, "bytes is NULL");
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		ghostty_terminal_vt_write(self->terminal, (const uint8_t*) bytes, size);
 	}
@@ -752,7 +725,7 @@ namespace Reflex
 	Terminal::read_pending_input ()
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		String input;
 		input.swap(self->pending_input);// takes the bytes and leaves it empty
@@ -763,7 +736,7 @@ namespace Reflex
 	Terminal::spawn (const StringList& args, const EnvMap& envs)
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		StringList list  = args;
 		bool login_shell = list.empty();
@@ -783,9 +756,9 @@ namespace Reflex
 	Terminal::write (const char* bytes, size_t size)
 	{
 		if (!bytes)
-			Xot::argument_error(__FILE__, __LINE__, "bytes is NULL");
+			argument_error(__FILE__, __LINE__, "bytes is NULL");
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		write_input(self.get(), bytes, size);
 	}
@@ -794,7 +767,7 @@ namespace Reflex
 	Terminal::write_key (const KeyEvent& event)
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		GhosttyKeyAction action;
 		if (event.action() == KeyEvent::DOWN)
@@ -811,7 +784,7 @@ namespace Reflex
 	Terminal::write_pointer (const PointerEvent& event)
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 		if (event.empty()) return;
 
 		const Pointer& pointer = event[0];
@@ -855,19 +828,18 @@ namespace Reflex
 	Terminal::write_wheel (const WheelEvent& event)
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		int dy = (int) event.dposition().y;
 		if (dy == 0) return;
 
-		int button = dy > 0
-			? GHOSTTY_MOUSE_BUTTON_FIVE : GHOSTTY_MOUSE_BUTTON_FOUR;
+		int button       = dy > 0 ? GHOSTTY_MOUSE_BUTTON_FIVE : GHOSTTY_MOUSE_BUTTON_FOUR;
 		GhosttyMods mods = to_ghostty_mods(event.modifiers());
 		float x          = event.position().x;
 		float y          = event.position().y;
 
 		enum {MAX_STEPS = 8};
-		int steps = dy > 0 ? dy : -dy;
+		int steps                    = dy > 0 ? dy : -dy;
 		if (steps > MAX_STEPS) steps = MAX_STEPS;
 
 		for (int i = 0; i < steps; ++i)
@@ -881,13 +853,12 @@ namespace Reflex
 	Terminal::paste (const char* text, size_t size)
 	{
 		if (!text)
-			Xot::argument_error(__FILE__, __LINE__, "text is NULL");
+			argument_error(__FILE__, __LINE__, "text is NULL");
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		bool bracketed = false;
-		ghostty_terminal_mode_get(
-			self->terminal, GHOSTTY_MODE_BRACKETED_PASTE, &bracketed);
+		ghostty_terminal_mode_get(self->terminal, GHOSTTY_MODE_BRACKETED_PASTE, &bracketed);
 
 		// ghostty sanitizes the text in place
 		String input(text, size);
@@ -919,8 +890,7 @@ namespace Reflex
 		if (!*this) return false;
 
 		bool tracking = false;
-		ghostty_terminal_get(
-			self->terminal, GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING, &tracking);
+		ghostty_terminal_get(self->terminal, GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING, &tracking);
 		return tracking;
 	}
 
@@ -928,8 +898,7 @@ namespace Reflex
 	get_scrollbar (const Terminal::Data* self)
 	{
 		GhosttyTerminalScrollbar bar = {};
-		ghostty_terminal_get(
-			self->terminal, GHOSTTY_TERMINAL_DATA_SCROLLBAR, &bar);
+		ghostty_terminal_get(self->terminal, GHOSTTY_TERMINAL_DATA_SCROLLBAR, &bar);
 		return bar;
 	}
 
@@ -944,15 +913,15 @@ namespace Reflex
 	Terminal::scroll_to (int row)
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 
 		GhosttyTerminalScrollViewport behavior = {};
 		if (row >= 0)
 			behavior.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
 		else
 		{
-			uint64_t bottom = bottom_offset(get_scrollbar(self.get()));
-			uint64_t back   = (uint64_t) -(int64_t) row;
+			uint64_t bottom    = bottom_offset(get_scrollbar(self.get()));
+			uint64_t back      = (uint64_t) -(int64_t) row;
 			behavior.tag       = GHOSTTY_SCROLL_VIEWPORT_ROW;
 			behavior.value.row = back < bottom ? bottom - back : 0;
 		}
@@ -963,12 +932,12 @@ namespace Reflex
 	Terminal::scroll_by (int rows)
 	{
 		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+			invalid_state_error(__FILE__, __LINE__);
 		if (rows == 0) return;
 
 		GhosttyTerminalScrollViewport behavior = {};
-		behavior.tag         = GHOSTTY_SCROLL_VIEWPORT_DELTA;
-		behavior.value.delta = rows;
+		behavior.tag                           = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+		behavior.value.delta                   = rows;
 		ghostty_terminal_scroll_viewport(self->terminal, behavior);
 	}
 
@@ -978,7 +947,7 @@ namespace Reflex
 		if (!*this) return 0;
 
 		GhosttyTerminalScrollbar bar = get_scrollbar(self.get());
-		uint64_t bottom = bottom_offset(bar);
+		uint64_t bottom              = bottom_offset(bar);
 		return bar.offset < bottom ? -(int) (bottom - bar.offset) : 0;
 	}
 
@@ -1020,8 +989,7 @@ namespace Reflex
 
 		bool has_value = false;
 		ghostty_render_state_get(
-			self->render_state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE,
-			&has_value);
+			self->render_state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE, &has_value);
 
 		bool visible = false;
 		ghostty_render_state_get(
@@ -1031,15 +999,12 @@ namespace Reflex
 		if (!has_value) return cursor;
 
 		uint16_t x = 0, y = 0;
-		ghostty_render_state_get(
-			self->render_state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X, &x);
-		ghostty_render_state_get(
-			self->render_state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y, &y);
+		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X, &x);
+		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y, &y);
 		cursor.x = x;
 		cursor.y = y;
 
-		GhosttyRenderStateCursorVisualStyle style =
-			GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK;
+		GhosttyRenderStateCursorVisualStyle style = GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK;
 		ghostty_render_state_get(
 			self->render_state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE, &style);
 		cursor.style = (CursorStyle) style;
@@ -1084,8 +1049,8 @@ namespace Reflex
 			for (const Span& span : spans)
 			{
 				if (span.x > width) line.append(span.x - width, ' ');
-				line  += span.text;
-				width  = span.x + span.width;
+				line += span.text;
+				width = span.x + span.width;
 			}
 
 			size_t end = line.find_last_not_of(' ');

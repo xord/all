@@ -27,8 +27,7 @@ RUCY_DEF3(initialize, columns, rows, scrollback)
 {
 	RUCY_CHECK_OBJ(Reflex::Terminal, self);
 
-	*THIS = Reflex::Terminal(
-		to<int>(columns), to<int>(rows), to<size_t>(scrollback));
+	*THIS = Reflex::Terminal(to<int>(columns), to<int>(rows), to<size_t>(scrollback));
 	return self;
 }
 RUCY_END

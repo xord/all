@@ -146,7 +146,7 @@ namespace Reflex
 
 			void resize (
 				int columns, int rows,
-				int cell_width, int cell_height,
+				int   cell_width, int   cell_height,
 				int screen_width, int screen_height);
 
 			// interprets bytes coming from the child process,
