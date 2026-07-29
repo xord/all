@@ -1,7 +1,7 @@
 // -*- c++ -*-
 #pragma once
-#ifndef __REFLEX_TERMINAL_SRC_PTY_H__
-#define __REFLEX_TERMINAL_SRC_PTY_H__
+#ifndef __REFLEX_TERMINAL_SRC_TERMINAL_H__
+#define __REFLEX_TERMINAL_SRC_TERMINAL_H__
 
 
 #include <stddef.h>

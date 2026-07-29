@@ -19,6 +19,7 @@ Xot::ExtConf.new Xot, Rucy, Rays, Reflex, ReflexTerminal do
     inc_dirs   << "#{vendor}/zig-out/include"
     lib_dirs   << "#{vendor}/zig-out/lib"
     local_libs << 'ghostty-vt'
+    local_libs << 'util' if linux?
   end
 
   create_makefile 'reflex_terminal_ext'

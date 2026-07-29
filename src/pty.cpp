@@ -1,4 +1,7 @@
-#include "../pty.h"
+#if defined(OSX) || defined(LINUX)
+
+
+#include "terminal.h"
 
 
 #include <errno.h>
@@ -6,7 +9,11 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <util.h>
+#ifdef OSX
+	#include <util.h>
+#else
+	#include <pty.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <vector>
@@ -224,3 +231,6 @@ namespace Reflex
 
 
 }// Reflex
+
+
+#endif// OSX || LINUX

@@ -1,4 +1,4 @@
-#include "reflex/terminal.h"
+#include "terminal.h"
 
 
 #include <stdlib.h>
@@ -6,7 +6,6 @@
 #include <string>
 #include <ghostty/vt.h>
 #include <reflex/exception.h>
-#include "pty.h"
 
 
 namespace Reflex
