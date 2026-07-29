@@ -66,7 +66,7 @@ namespace Rays
 			CFRelease);
 
 		CFAttributedStringPtr attrstr(
-			CFAttributedStringCreate(NULL, Xot::cfstring(str).get(), attr.get()),
+			CFAttributedStringCreate(NULL, Xot::String(str).to_cfstr().get(), attr.get()),
 			CFRelease);
 
 		return CTLinePtr(
@@ -130,7 +130,7 @@ namespace Rays
 	RawFont::RawFont (const char* name, coord size)
 	{
 		self->font = name
-			?	CTFontCreateWithName(Xot::cfstring(name).get(), size, NULL)
+			?	CTFontCreateWithName(Xot::String(name).to_cfstr().get(), size, NULL)
 			:	CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, size, NULL);
 	}
 
@@ -140,7 +140,7 @@ namespace Rays
 		if (path)
 			*this = RawFont_load(path, size);
 		else
-			self->font = CTFontCreateWithName(Xot::cfstring(obj.name()).get(), size, NULL);
+			self->font = CTFontCreateWithName(obj.name().to_cfstr().get(), size, NULL);
 	}
 
 	RawFont::~RawFont ()

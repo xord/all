@@ -26,12 +26,21 @@
 
 
 #if defined(OSX) || defined(IOS)
-	struct __CFString;
+
+struct __CFString;
+
 #endif
 
 
 namespace Xot
 {
+
+
+#if defined(OSX) || defined(IOS)
+
+	typedef std::shared_ptr<const __CFString> CFStringPtr;
+
+#endif
 
 
 	class String : public std::string
@@ -66,6 +75,18 @@ namespace Xot
 
 			friend String operator + (const char*   lhs, const String& rhs);
 
+#if defined(OSX) || defined(IOS)
+
+			CFStringPtr to_cfstr () const;
+
+#elif defined(WIN32)
+
+			String (const wchar_t* str, size_t size);
+
+			std::wstring to_wstr () const;
+
+#endif
+
 	};// String
 
 
@@ -79,15 +100,6 @@ namespace Xot
 	void split(StringList* result, const char* string, char separator = '\n');
 
 	template <typename T> String to_s (const T& val);
-
-
-#if defined(OSX) || defined(IOS)
-
-	typedef std::shared_ptr<const __CFString> CFStringPtr;
-
-	CFStringPtr cfstring (const char* str);
-
-#endif
 
 
 }// Xot

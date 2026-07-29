@@ -1,13 +1,16 @@
 #include "xot/string.h"
 
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <algorithm>
 #include "xot/exception.h"
 
 #if defined(OSX) || defined(IOS)
-#import <CoreFoundation/CoreFoundation.h>
+	#import <CoreFoundation/CoreFoundation.h>
+#elif defined(WIN32)
+	#include "xot/windows.h"
 #endif
 
 
@@ -92,6 +95,57 @@ namespace Xot
 		t += rhs;
 		return t;
 	}
+
+#if defined(OSX) || defined(IOS)
+
+	static void
+	release_cfstring (CFTypeRef ref)
+	{
+		if (ref) CFRelease(ref);
+	}
+
+	CFStringPtr
+	String::to_cfstr () const
+	{
+		return CFStringPtr(
+			CFStringCreateWithCString(kCFAllocatorDefault, c_str(), kCFStringEncodingUTF8),
+			release_cfstring);
+	}
+
+#elif defined(WIN32)
+
+	String::String (const wchar_t* str, size_t size)
+	{
+		if (size > INT_MAX)
+			argument_error(__FILE__, __LINE__);
+		if (!str || size == 0) return;
+
+		int len = WideCharToMultiByte(CP_UTF8, 0, str, (int) size, NULL, 0, NULL, NULL);
+		if (len <= 0) system_error(__FILE__, __LINE__);
+
+		resize((size_t) len);
+		WideCharToMultiByte(CP_UTF8, 0, str, (int) size, &(*this)[0], len, NULL, NULL);
+	}
+
+	std::wstring
+	String::to_wstr () const
+	{
+		if (empty()) return std::wstring();
+
+		size_t size = this->size();
+		if (size > INT_MAX)
+			invalid_state_error(__FILE__, __LINE__);
+
+		int len = MultiByteToWideChar(CP_UTF8, 0, data(), (int) size, NULL, 0);
+		if (len <= 0) system_error(__FILE__, __LINE__);
+
+		std::wstring result;
+		result.resize((size_t) len);
+		MultiByteToWideChar(CP_UTF8, 0, data(), (int) size, &result[0], len);
+		return result;
+	}
+
+#endif
 
 
 	String
@@ -202,21 +256,6 @@ namespace Xot
 	to_s<CFStringPtr> (const CFStringPtr& val)
 	{
 		return to_s((CFStringRef) val.get());
-	}
-
-
-	static void
-	release_cfstring (CFTypeRef ref)
-	{
-		if (ref) CFRelease(ref);
-	}
-
-	CFStringPtr
-	cfstring (const char* str)
-	{
-		CFStringRef ref = CFStringCreateWithCString(
-			kCFAllocatorDefault, str, kCFStringEncodingUTF8);
-		return CFStringPtr(ref, release_cfstring);
 	}
 
 #endif
