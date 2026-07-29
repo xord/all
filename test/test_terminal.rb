@@ -307,6 +307,16 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[200~hello\e[201~", t.read_input
   end
 
+  def test_paste_sanitizes_without_touching_the_argument()
+    t = terminal
+    # newlines would run each line as its own command, and an escape
+    # sequence could drive the terminal, so both are defused
+    str = "a\nb\e[31m"
+    t.paste str
+    assert_equal "a\rb [31m", t.read_input
+    assert_equal "a\nb\e[31m", str
+  end
+
   def test_reset()
     t = terminal 80, 4
     t.feed "\e[31mred"

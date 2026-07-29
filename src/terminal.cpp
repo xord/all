@@ -911,15 +911,19 @@ namespace Reflex
 		ghostty_terminal_mode_get(
 			self->terminal, GHOSTTY_MODE_BRACKETED_PASTE, &bracketed);
 
+		// ghostty sanitizes the text in place
+		String input(text, size);
+
 		std::string buffer(size + 16, '\0');
 		size_t written       = 0;
 		GhosttyResult result = ghostty_paste_encode(
-			(char*) text, size, bracketed, &buffer[0], buffer.size(), &written);
+			&input[0], size, bracketed, &buffer[0], buffer.size(), &written);
 		if (result == GHOSTTY_OUT_OF_SPACE)
 		{
 			buffer.resize(written);
+			input.assign(text, size);
 			result = ghostty_paste_encode(
-				(char*) text, size, bracketed, &buffer[0], buffer.size(), &written);
+				&input[0], size, bracketed, &buffer[0], buffer.size(), &written);
 		}
 		if (result == GHOSTTY_SUCCESS)
 			write_input(self.get(), buffer.data(), written);
