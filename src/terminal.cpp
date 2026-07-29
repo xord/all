@@ -861,7 +861,7 @@ namespace Reflex
 		if (dy == 0) return;
 
 		int button = dy > 0
-			? GHOSTTY_MOUSE_BUTTON_FOUR : GHOSTTY_MOUSE_BUTTON_FIVE;
+			? GHOSTTY_MOUSE_BUTTON_FIVE : GHOSTTY_MOUSE_BUTTON_FOUR;
 		GhosttyMods mods = to_ghostty_mods(event.modifiers());
 		float x          = event.position().x;
 		float y          = event.position().y;

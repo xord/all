@@ -323,6 +323,19 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[<0;2;2M", t.read_pending_input# cell (2, 2), left press
   end
 
+  def test_wheel_encoding()
+    t = terminal 40, 10
+    t.resize 40, 10, cell_width: 8, cell_height: 16
+    t.feed "\e[?1000h\e[?1006h"
+
+    # reflex counts a wheel delta downwards, so button 4 is a negative one
+    t.write_wheel Reflex::WheelEvent.new(0, 0, 0, 0, -1, 0, 0)
+    assert_equal "\e[<64;1;1M\e[<64;1;1m", t.read_pending_input
+
+    t.write_wheel Reflex::WheelEvent.new(0, 0, 0, 0, 1, 0, 0)
+    assert_equal "\e[<65;1;1M\e[<65;1;1m", t.read_pending_input
+  end
+
   def test_scrollback()
     t = terminal 20, 3, scrollback_bytes: 64 * 1024
     30.times {|i| t.feed "line#{i}\r\n"}

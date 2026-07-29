@@ -146,7 +146,7 @@ module Reflex
         rows = (e.dy / @cell_height).round
         return if rows == 0
 
-        t.scroll_by(-rows)
+        t.scroll_by rows
         redraw
       end
     end
