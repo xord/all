@@ -45,6 +45,8 @@ namespace Xot
 
 			String (const char* str);
 
+			String (const char* str, size_t size);
+
 			String (const std::string& str);
 
 			template <typename ITERATOR>

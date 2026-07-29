@@ -24,6 +24,11 @@ namespace Xot
 	{
 	}
 
+	String::String (const char* str, size_t size)
+	:	Super(str, size)
+	{
+	}
+
 	String::String (const std::string& str)
 	:	Super(str)
 	{
