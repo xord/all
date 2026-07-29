@@ -41,36 +41,19 @@ RUCY_DEF1(initialize_copy, obj)
 RUCY_END
 
 static
-RUCY_DEF1(feed, bytes)
-{
-	CHECK;
-	if (!bytes.is_s())
-		Rucy::type_error(__FILE__, __LINE__, "bytes must be a String");
-
-	// feed() takes a raw byte stream, so avoid to<const char*>/c_str()
-	// (StringValueCStr rejects NUL bytes) and Value#size (character
-	// count, not the byte length)
-	RubyValue str = bytes.value();
-	THIS->feed(RSTRING_PTR(str), RSTRING_LEN(str));
-	return self;
-}
-RUCY_END
-
-static
-RUCY_DEF0(read_input)
-{
-	CHECK;
-	// a raw byte stream for the child process
-	Reflex::String input = THIS->read_input();
-	return value(input.data(), input.size(), rb_ascii8bit_encoding());
-}
-RUCY_END
-
-static
 RUCY_DEF0(update)
 {
 	CHECK;
 	return value(THIS->update());
+}
+RUCY_END
+
+static
+RUCY_DEF0(reset)
+{
+	CHECK;
+	THIS->reset();
+	return self;
 }
 RUCY_END
 
@@ -87,11 +70,28 @@ RUCY_DEF6(resize, columns, rows, cell_width, cell_height, screen_width, screen_h
 RUCY_END
 
 static
-RUCY_DEF0(reset)
+RUCY_DEF1(feed, bytes)
 {
 	CHECK;
-	THIS->reset();
+	if (!bytes.is_s())
+		Rucy::type_error(__FILE__, __LINE__, "bytes must be a String");
+
+	// feed() takes a raw byte stream, so avoid to<const char*>/c_str()
+	// (StringValueCStr rejects NUL bytes) and Value#size (character
+	// count, not the byte length)
+	RubyValue str = bytes.value();
+	THIS->feed(RSTRING_PTR(str), RSTRING_LEN(str));
 	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(read_pending_input)
+{
+	CHECK;
+	// a raw byte stream for the child process
+	Reflex::String input = THIS->read_pending_input();
+	return value(input.data(), input.size(), rb_ascii8bit_encoding());
 }
 RUCY_END
 
@@ -122,14 +122,6 @@ RUCY_DEF2(spawn, args, envs)
 RUCY_END
 
 static
-RUCY_DEF0(is_alive)
-{
-	CHECK;
-	return value(THIS->is_alive());
-}
-RUCY_END
-
-static
 RUCY_DEF1(write, bytes)
 {
 	CHECK;
@@ -144,46 +136,29 @@ RUCY_DEF1(write, bytes)
 RUCY_END
 
 static
-RUCY_DEF1(key_down, event)
+RUCY_DEF1(write_key, event)
 {
 	CHECK;
-	THIS->key_down(to<Reflex::KeyEvent&>(event));
+	THIS->write_key(to<Reflex::KeyEvent&>(event));
 	return self;
 }
 RUCY_END
 
 static
-RUCY_DEF1(key_up, event)
+RUCY_DEF1(write_pointer, event)
 {
 	CHECK;
-	THIS->key_up(to<Reflex::KeyEvent&>(event));
+	THIS->write_pointer(to<Reflex::PointerEvent&>(event));
 	return self;
 }
 RUCY_END
 
 static
-RUCY_DEF1(pointer, event)
+RUCY_DEF1(write_wheel, event)
 {
 	CHECK;
-	THIS->pointer(to<Reflex::PointerEvent&>(event));
+	THIS->write_wheel(to<Reflex::WheelEvent&>(event));
 	return self;
-}
-RUCY_END
-
-static
-RUCY_DEF1(wheel, event)
-{
-	CHECK;
-	THIS->wheel(to<Reflex::WheelEvent&>(event));
-	return self;
-}
-RUCY_END
-
-static
-RUCY_DEF0(is_mouse_tracking)
-{
-	CHECK;
-	return value(THIS->is_mouse_tracking());
 }
 RUCY_END
 
@@ -197,6 +172,22 @@ RUCY_DEF1(paste, text)
 	RubyValue str = text.value();
 	THIS->paste(RSTRING_PTR(str), RSTRING_LEN(str));
 	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_alive)
+{
+	CHECK;
+	return value(THIS->is_alive());
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_mouse_tracking)
+{
+	CHECK;
+	return value(THIS->is_mouse_tracking());
 }
 RUCY_END
 
@@ -343,20 +334,19 @@ Init_reflex_terminal ()
 	cTerminal.define_alloc_func(alloc);
 	cTerminal.define_private_method("initialize!",     initialize);
 	cTerminal.define_private_method("initialize_copy", initialize_copy);
-	cTerminal.define_method("feed",        feed);
-	cTerminal.define_method("read_input",  read_input);
-	cTerminal.define_method("update",      update);
-	cTerminal.define_method("resize!",     resize);
-	cTerminal.define_method("reset",       reset);
-	cTerminal.define_method("spawn!",      spawn);
-	cTerminal.define_method("alive?",      is_alive);
-	cTerminal.define_method("write",       write);
-	cTerminal.define_method("key_down",    key_down);
-	cTerminal.define_method("key_up",      key_up);
-	cTerminal.define_method("pointer",     pointer);
-	cTerminal.define_method("wheel",       wheel);
+	cTerminal.define_method("update",             update);
+	cTerminal.define_method("reset",              reset);
+	cTerminal.define_method("resize!",            resize);
+	cTerminal.define_method("feed",               feed);
+	cTerminal.define_method("read_pending_input", read_pending_input);
+	cTerminal.define_method("spawn!",             spawn);
+	cTerminal.define_method("write",         write);
+	cTerminal.define_method("write_key",     write_key);
+	cTerminal.define_method("write_pointer", write_pointer);
+	cTerminal.define_method("write_wheel",   write_wheel);
+	cTerminal.define_method("paste",         paste);
+	cTerminal.define_method("alive?",          is_alive);
 	cTerminal.define_method("mouse_tracking?", is_mouse_tracking);
-	cTerminal.define_method("paste",       paste);
 	cTerminal.define_method("scroll_to",  scroll_to);
 	cTerminal.define_method("scroll_by",  scroll_by);
 	cTerminal.define_method("scroll", get_scroll);

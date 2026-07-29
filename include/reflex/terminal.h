@@ -22,7 +22,7 @@ namespace Reflex
 	// spawn() a child process, call update() once per frame to pump the
 	// PTY, and draw the screen from spans(). Without a child process it
 	// still works as a pure emulator: feed() bytes in and take the bytes
-	// to be sent back (query responses etc.) from read_input().
+	// to be sent back (query responses etc.) from read_pending_input().
 	class Terminal
 	{
 
@@ -140,21 +140,23 @@ namespace Reflex
 
 			~Terminal ();
 
-			void feed (const char* bytes, size_t size);
-
-			// takes the bytes to be sent to the child process (query
-			// responses and encoded input events, in generated order),
-			// accumulated while no child process is attached
-			String read_input ();
-
 			bool update ();
+
+			void reset ();
 
 			void resize (
 				int columns, int rows,
 				int cell_width, int cell_height,
 				int screen_width, int screen_height);
 
-			void reset ();
+			// interprets bytes coming from the child process,
+			// updating the screen
+			void feed (const char* bytes, size_t size);
+
+			// takes the bytes to be sent to the child process (query
+			// responses and encoded input events, in generated order),
+			// accumulated while no child process is attached
+			String read_pending_input ();
 
 			// starts a child process on a new pseudo terminal;
 			// empty args means [$SHELL] (or [/bin/sh]).
@@ -162,25 +164,24 @@ namespace Reflex
 			// application can name itself with TERM_PROGRAM
 			void spawn (const StringList& args = {}, const EnvMap& envs = {});
 
-			// whether the spawned child process is still running
-			bool is_alive () const;
-
 			// raw input bytes for the child process
 			void write (const char* bytes, size_t size);
 
-			void key_down (const KeyEvent& event);
+			// press or release, taken from the event
+			void write_key (const KeyEvent& event);
 
-			void key_up (const KeyEvent& event);
+			void write_pointer (const PointerEvent& event);
 
-			void pointer (const PointerEvent& event);
-
-			void wheel (const WheelEvent& event);
-
-			// whether the child process requested mouse reporting
-			bool is_mouse_tracking () const;
+			void write_wheel (const WheelEvent& event);
 
 			// encodes with bracketed paste mode when enabled
 			void paste (const char* text, size_t size);
+
+			// whether the spawned child process is still running
+			bool is_alive () const;
+
+			// whether the child process requested mouse reporting
+			bool is_mouse_tracking () const;
 
 			// moves the viewport through the scrollback: 0 follows the
 			// latest output and negative rows go back into the history

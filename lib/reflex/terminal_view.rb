@@ -116,32 +116,32 @@ module Reflex
     def on_key_down(e)
       t = @terminal || return
       t.scroll_to 0 if t.scroll != 0
-      t.key_down e
+      t.write_key e
       restart_cursor_blink
     end
 
     def on_key_up(e)
-      @terminal&.key_up e
+      @terminal&.write_key e
     end
 
     def on_pointer_down(e)
       focus
-      @terminal&.pointer e
+      @terminal&.write_pointer e
     end
 
     def on_pointer_up(e)
-      @terminal&.pointer e
+      @terminal&.write_pointer e
     end
 
     def on_pointer_move(e)
-      @terminal&.pointer e
+      @terminal&.write_pointer e
     end
 
     def on_wheel(e)
       t = @terminal || return
 
       if t.mouse_tracking?
-        t.wheel e
+        t.write_wheel e
       else
         rows = (e.dy / @cell_height).round
         return if rows == 0

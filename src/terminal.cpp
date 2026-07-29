@@ -83,7 +83,7 @@ namespace Reflex
 
 
 	// sends bytes to the child process, or accumulates them for
-	// read_input() while no child process is attached
+	// read_pending_input() while no child process is attached
 	static void
 	write_input (Terminal::Data* self, const char* bytes, size_t size)
 	{
@@ -629,28 +629,6 @@ namespace Reflex
 	{
 	}
 
-	void
-	Terminal::feed (const char* bytes, size_t size)
-	{
-		if (!bytes)
-			Xot::argument_error(__FILE__, __LINE__, "bytes is NULL");
-		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
-
-		ghostty_terminal_vt_write(self->terminal, (const uint8_t*) bytes, size);
-	}
-
-	String
-	Terminal::read_input ()
-	{
-		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
-
-		String input;
-		input.swap(self->pending_input);// takes the bytes and leaves it empty
-		return input;
-	}
-
 	bool
 	Terminal::update ()
 	{
@@ -713,6 +691,15 @@ namespace Reflex
 	}
 
 	void
+	Terminal::reset ()
+	{
+		if (!*this)
+			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+
+		ghostty_terminal_reset(self->terminal);
+	}
+
+	void
 	Terminal::resize (
 		int columns, int rows,
 		int cell_width, int cell_height,
@@ -751,12 +738,25 @@ namespace Reflex
 	}
 
 	void
-	Terminal::reset ()
+	Terminal::feed (const char* bytes, size_t size)
+	{
+		if (!bytes)
+			Xot::argument_error(__FILE__, __LINE__, "bytes is NULL");
+		if (!*this)
+			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+
+		ghostty_terminal_vt_write(self->terminal, (const uint8_t*) bytes, size);
+	}
+
+	String
+	Terminal::read_pending_input ()
 	{
 		if (!*this)
 			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
 
-		ghostty_terminal_reset(self->terminal);
+		String input;
+		input.swap(self->pending_input);// takes the bytes and leaves it empty
+		return input;
 	}
 
 	void
@@ -779,12 +779,6 @@ namespace Reflex
 			login_shell);
 	}
 
-	bool
-	Terminal::is_alive () const
-	{
-		return self && self->pty.is_child_alive();
-	}
-
 	void
 	Terminal::write (const char* bytes, size_t size)
 	{
@@ -797,27 +791,24 @@ namespace Reflex
 	}
 
 	void
-	Terminal::key_down (const KeyEvent& event)
+	Terminal::write_key (const KeyEvent& event)
 	{
 		if (!*this)
 			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
 
-		encode_key(
-			self.get(), event,
-			event.repeat() >= 1 ? GHOSTTY_KEY_ACTION_REPEAT : GHOSTTY_KEY_ACTION_PRESS);
+		GhosttyKeyAction action;
+		if (event.action() == KeyEvent::DOWN)
+			action = event.repeat() >= 1 ? GHOSTTY_KEY_ACTION_REPEAT : GHOSTTY_KEY_ACTION_PRESS;
+		else if (event.action() == KeyEvent::UP)
+			action = GHOSTTY_KEY_ACTION_RELEASE;
+		else
+			return;
+
+		encode_key(self.get(), event, action);
 	}
 
 	void
-	Terminal::key_up (const KeyEvent& event)
-	{
-		if (!*this)
-			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
-
-		encode_key(self.get(), event, GHOSTTY_KEY_ACTION_RELEASE);
-	}
-
-	void
-	Terminal::pointer (const PointerEvent& event)
+	Terminal::write_pointer (const PointerEvent& event)
 	{
 		if (!*this)
 			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
@@ -861,7 +852,7 @@ namespace Reflex
 	}
 
 	void
-	Terminal::wheel (const WheelEvent& event)
+	Terminal::write_wheel (const WheelEvent& event)
 	{
 		if (!*this)
 			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
@@ -884,17 +875,6 @@ namespace Reflex
 			encode_mouse(self.get(), GHOSTTY_MOUSE_ACTION_PRESS,   button, mods, x, y);
 			encode_mouse(self.get(), GHOSTTY_MOUSE_ACTION_RELEASE, button, mods, x, y);
 		}
-	}
-
-	bool
-	Terminal::is_mouse_tracking () const
-	{
-		if (!*this) return false;
-
-		bool tracking = false;
-		ghostty_terminal_get(
-			self->terminal, GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING, &tracking);
-		return tracking;
 	}
 
 	void
@@ -925,6 +905,23 @@ namespace Reflex
 		}
 		if (result == GHOSTTY_SUCCESS)
 			write_input(self.get(), buffer.data(), written);
+	}
+
+	bool
+	Terminal::is_alive () const
+	{
+		return self && self->pty.is_child_alive();
+	}
+
+	bool
+	Terminal::is_mouse_tracking () const
+	{
+		if (!*this) return false;
+
+		bool tracking = false;
+		ghostty_terminal_get(
+			self->terminal, GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING, &tracking);
+		return tracking;
 	}
 
 	static GhosttyTerminalScrollbar

@@ -90,8 +90,8 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal Encoding::UTF_8, t.lines.first.encoding
 
     t.feed "\e[c"
-    assert_equal Encoding::ASCII_8BIT, t.read_input.encoding
-      # read_input is a raw byte stream for the PTY
+    assert_equal Encoding::ASCII_8BIT, t.read_pending_input.encoding
+      # read_pending_input is a raw byte stream for the PTY
   end
 
   def test_cursor()
@@ -114,8 +114,8 @@ class TestTerminal < Test::Unit::TestCase
   def test_device_attributes_response()
     t = terminal
     t.feed "\e[c"
-    assert_match(/\e\[\?\d+/, t.read_input)
-    assert_equal '', t.read_input
+    assert_match(/\e\[\?\d+/, t.read_pending_input)
+    assert_equal '', t.read_pending_input
   end
 
   def test_lines_and_reflow()
@@ -141,26 +141,32 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'hello', t.title
   end
 
-  # KeyEvent action: 1 = down / modifiers: reflex/defs.h の MOD_* ビット
-  ALT, CTRL, SHIFT, OPTION = 0x1, 0x2, 0x4, 0x10
+  ALT    = Reflex::MOD_ALT
+  CTRL   = Reflex::MOD_CONTROL
+  SHIFT  = Reflex::MOD_SHIFT
+  OPTION = Reflex::MOD_OPTION
 
   def key_down(chars, code, modifiers = 0)
-    Reflex::KeyEvent.new 1, chars, code, modifiers, 0
+    Reflex::KeyEvent.new Reflex::KeyEvent::DOWN, chars, code, modifiers, 0
+  end
+
+  def key_up(chars, code, modifiers = 0)
+    Reflex::KeyEvent.new Reflex::KeyEvent::UP, chars, code, modifiers, 0
   end
 
   def test_key_encoding()
     t = terminal
-    t.key_down key_down("\r", 0x24)# enter
-    assert_equal "\r", t.read_input
+    t.write_key key_down("\r", 0x24)# enter
+    assert_equal "\r", t.read_pending_input
 
-    t.key_down key_down('', 0x7E)# up arrow
-    assert_equal "\e[A", t.read_input
+    t.write_key key_down('', 0x7E)# up arrow
+    assert_equal "\e[A", t.read_pending_input
 
-    t.key_down key_down("\x03", 0x08, CTRL)# ctrl+c
-    assert_equal "\x03", t.read_input
+    t.write_key key_down("\x03", 0x08, CTRL)# ctrl+c
+    assert_equal "\x03", t.read_pending_input
 
-    t.key_down key_down('A', 0x00, SHIFT)# shift+a
-    assert_equal 'A', t.read_input
+    t.write_key key_down('A', 0x00, SHIFT)# shift+a
+    assert_equal 'A', t.read_pending_input
   end
 
   def test_ctrl_keys_that_collide_with_dedicated_keys()
@@ -168,40 +174,55 @@ class TestTerminal < Test::Unit::TestCase
     # ghostty leaves these to the kitty protocol (fixterms), so they would
     # otherwise send nothing at all while an app has not asked for it
     {0x22 => "\t", 0x2e => "\r", 0x21 => "\e"}.each do |code, expected|
-      t.key_down key_down('', code, CTRL)
-      assert_equal expected, t.read_input
+      t.write_key key_down('', code, CTRL)
+      assert_equal expected, t.read_pending_input
     end
 
     t.feed "\e[>1u"# the app asks for the kitty keyboard protocol
-    t.key_down key_down('', 0x22, CTRL)
-    assert_equal "\e[105;5u", t.read_input# ctrl+i stays distinct from tab
+    t.write_key key_down('', 0x22, CTRL)
+    assert_equal "\e[105;5u", t.read_pending_input# ctrl+i stays distinct from tab
   end
 
   def test_ctrl_key_resolved_by_the_platform()
     t = terminal
     # macOS hands over the control character itself for ctrl+-, which the
     # encoder has no legacy encoding for (C-_ is undo in emacs)
-    t.key_down key_down("\x1f", 0x1b, CTRL)
-    assert_equal "\x1f", t.read_input
+    t.write_key key_down("\x1f", 0x1b, CTRL)
+    assert_equal "\x1f", t.read_pending_input
   end
 
-  def test_read_input_is_a_byte_stream()
+  def test_key_release_is_taken_from_the_event()
     t = terminal
-    t.key_down key_down("\r", 0x24)
-    assert_equal Encoding::ASCII_8BIT, t.read_input.encoding
-    assert_equal '', t.read_input
+    t.write_key key_down("\r", 0x24)
+    assert_equal "\r", t.read_pending_input
+    t.write_key key_up("\r", 0x24)
+    assert_equal '', t.read_pending_input# a release says nothing in legacy mode
+
+    # every key as an escape code, releases included
+    t.feed "\e[>10u"
+    t.write_key key_down("\r", 0x24)
+    assert_equal "\e[13u", t.read_pending_input
+    t.write_key key_up("\r", 0x24)
+    assert_equal "\e[13;1:3u", t.read_pending_input
+  end
+
+  def test_read_pending_input_is_a_byte_stream()
+    t = terminal
+    t.write_key key_down("\r", 0x24)
+    assert_equal Encoding::ASCII_8BIT, t.read_pending_input.encoding
+    assert_equal '', t.read_pending_input
   end
 
   def test_option_as_alt()
     t = terminal
     assert_equal :on, t.option_as_alt
 
-    t.key_down key_down('∫', 0x0B, OPTION)# option+b
-    assert_equal "\eb", t.read_input
+    t.write_key key_down('∫', 0x0B, OPTION)# option+b
+    assert_equal "\eb", t.read_pending_input
 
     t.option_as_alt = :off
-    t.key_down key_down('∫', 0x0B, OPTION)
-    assert_equal '∫'.b, t.read_input
+    t.write_key key_down('∫', 0x0B, OPTION)
+    assert_equal '∫'.b, t.read_pending_input
 
     assert_raise(ArgumentError) {t.option_as_alt = :invalid}
   end
@@ -287,18 +308,19 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal 40, 10
     t.resize 40, 10, cell_width: 8, cell_height: 16
 
-    types = 0x1 | 0x2# MOUSE | MOUSE_LEFT
+    types = Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_LEFT
     down  = Reflex::PointerEvent.new(
-      Reflex::Pointer.new(0, types, 1, [12, 20], 0, 1, false, 0))
+      Reflex::Pointer.new(
+        0, types, Reflex::Pointer::DOWN, [12, 20], 0, 1, false, 0))
 
     assert_false t.mouse_tracking?
-    t.pointer down
-    assert_equal '', t.read_input# tracking off: nothing is sent
+    t.write_pointer down
+    assert_equal '', t.read_pending_input# tracking off: nothing is sent
 
     t.feed "\e[?1000h\e[?1006h"# normal tracking + SGR format
     assert_true t.mouse_tracking?
-    t.pointer down
-    assert_equal "\e[<0;2;2M", t.read_input# cell (2, 2), left press
+    t.write_pointer down
+    assert_equal "\e[<0;2;2M", t.read_pending_input# cell (2, 2), left press
   end
 
   def test_scrollback()
@@ -344,11 +366,11 @@ class TestTerminal < Test::Unit::TestCase
   def test_paste()
     t = terminal
     t.paste 'hello'
-    assert_equal 'hello', t.read_input
+    assert_equal 'hello', t.read_pending_input
 
     t.feed "\e[?2004h"# bracketed paste mode
     t.paste 'hello'
-    assert_equal "\e[200~hello\e[201~", t.read_input
+    assert_equal "\e[200~hello\e[201~", t.read_pending_input
   end
 
   def test_paste_sanitizes_without_touching_the_argument()
@@ -357,7 +379,7 @@ class TestTerminal < Test::Unit::TestCase
     # sequence could drive the terminal, so both are defused
     str = "a\nb\e[31m"
     t.paste str
-    assert_equal "a\rb [31m", t.read_input
+    assert_equal "a\rb [31m", t.read_pending_input
     assert_equal "a\nb\e[31m", str
   end
 
