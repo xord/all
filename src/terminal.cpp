@@ -576,7 +576,7 @@ namespace Reflex
 	{
 	}
 
-	Terminal::Terminal (int columns, int rows, size_t scrollback)
+	Terminal::Terminal (int columns, int rows, size_t scrollback_bytes)
 	{
 		if (columns <= 0 || columns > UINT16_MAX || rows <= 0 || rows > UINT16_MAX)
 		{
@@ -587,7 +587,7 @@ namespace Reflex
 		GhosttyTerminalOptions options = {};
 		options.cols           = (uint16_t) columns;
 		options.rows           = (uint16_t) rows;
-		options.max_scrollback = scrollback;
+		options.max_scrollback = scrollback_bytes;
 		if (ghostty_terminal_new(NULL, &self->terminal, options) != GHOSTTY_SUCCESS)
 			Xot::system_error(__FILE__, __LINE__, "failed to create a terminal");
 

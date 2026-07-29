@@ -8,8 +8,13 @@ module Reflex
 
   class Terminal
 
-    def initialize(columns = 80, rows = 24, scrollback: 10_000)
-      initialize! columns, rows, scrollback
+    def initialize(
+      columns = 80, rows = 24,
+      # a memory budget rather than a line count: how many lines fit
+      # depends on how wide the terminal is. 0 keeps no scrollback
+      scrollback_bytes: 8 * 1024 * 1024)
+
+      initialize! columns, rows, scrollback_bytes
     end
 
     def resize(

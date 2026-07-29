@@ -131,7 +131,12 @@ namespace Reflex
 
 			Terminal ();
 
-			Terminal (int columns, int rows, size_t scrollback = 10000);
+			Terminal (
+				int columns, int rows,
+				// a memory budget rather than a line count: how many lines
+				// fit depends on how wide the terminal is. 0 keeps no
+				// scrollback at all
+				size_t scrollback_bytes = 8 * 1024 * 1024);
 
 			~Terminal ();
 
