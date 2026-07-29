@@ -60,8 +60,6 @@ namespace Reflex
 
 		String title;
 
-		String text_cache;
-
 		RowList spans;
 
 		~Data ()
@@ -1076,30 +1074,27 @@ namespace Reflex
 		return self->title.c_str();
 	}
 
-	const char*
-	Terminal::text () const
+	StringList
+	Terminal::lines () const
 	{
-		// visible screen contents built from the latest update()
-		String result;
-		for (size_t y = 0; y < self->spans.size(); ++y)
-		{
-			if (y > 0) result += '\n';
+		StringList result;
+		result.reserve(self->spans.size());
 
-			std::string line;
-			int line_width = 0;
-			for (const Span& span : self->spans[y])
+		for (const SpanList& spans : self->spans)
+		{
+			String line;
+			int width = 0;
+			for (const Span& span : spans)
 			{
-				if (span.x > line_width) line.append(span.x - line_width, ' ');
-				line       += span.text;
-				line_width  = span.x + span.width;
+				if (span.x > width) line.append(span.x - width, ' ');
+				line  += span.text;
+				width  = span.x + span.width;
 			}
 
 			size_t end = line.find_last_not_of(' ');
-			result += end == std::string::npos ? "" : line.substr(0, end + 1);
+			result.push_back(end == String::npos ? String() : line.substr(0, end + 1));
 		}
-
-		self->text_cache = result;
-		return self->text_cache.c_str();
+		return result;
 	}
 
 	Terminal::operator bool () const

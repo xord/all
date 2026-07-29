@@ -87,7 +87,7 @@ class TestTerminal < Test::Unit::TestCase
 
     assert_equal Encoding::UTF_8, t.each_span.first[3].encoding
     assert_equal 'タイトル',       t.title
-    assert_equal Encoding::UTF_8, t.text.encoding
+    assert_equal Encoding::UTF_8, t.lines.first.encoding
 
     t.feed "\e[c"
     assert_equal Encoding::ASCII_8BIT, t.read_input.encoding
@@ -118,15 +118,15 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal '', t.read_input
   end
 
-  def test_text_and_reflow()
+  def test_lines_and_reflow()
     t = terminal 10, 4
     t.feed "aaaaabbbbbccccc"
     t.update
-    assert_equal ['aaaaabbbbb', 'ccccc'], t.text.lines(chomp: true)[0, 2]
+    assert_equal ['aaaaabbbbb', 'ccccc'], t.lines[0, 2]
 
     t.resize 20, 4
     t.update
-    assert_equal 'aaaaabbbbbccccc', t.text.lines(chomp: true).first
+    assert_equal 'aaaaabbbbbccccc', t.lines.first
   end
 
   def test_resize_with_invalid_size()
@@ -215,8 +215,8 @@ class TestTerminal < Test::Unit::TestCase
     assert_raise(Rucy::NativeError) {t.spawn '/bin/cat'}
 
     t.write "hello\r"
-    wait_for(t) {t.text.include? 'hello'}
-    assert_include t.text, 'hello'
+    wait_for(t) {text(t).include? 'hello'}
+    assert_include text(t), 'hello'
 
     t.write "\x04"# EOF stops cat
     wait_for(t) {not t.alive?}
@@ -226,15 +226,15 @@ class TestTerminal < Test::Unit::TestCase
   def test_spawn_with_args()
     t = terminal 40, 6
     t.spawn '/bin/sh', '-c', 'printf spawned'
-    wait_for(t) {t.text.include? 'spawned'}
-    assert_include t.text, 'spawned'
+    wait_for(t) {text(t).include? 'spawned'}
+    assert_include text(t), 'spawned'
   end
 
   def test_spawn_sets_default_env()
     t = terminal 60, 6
     t.spawn '/bin/sh', '-c', 'printf "[$TERM|$TERM_PROGRAM]"'
-    wait_for(t) {t.text.include? ']'}
-    assert_include t.text, '[xterm-256color|reflex-terminal]'
+    wait_for(t) {text(t).include? ']'}
+    assert_include text(t), '[xterm-256color|reflex-terminal]'
   end
 
   def test_spawn_with_env_overrides_defaults()
@@ -242,8 +242,8 @@ class TestTerminal < Test::Unit::TestCase
     t.spawn(
       {'TERM_PROGRAM' => 'my-app', MY_APP: 'yes'},
       '/bin/sh', '-c', 'printf "[$TERM_PROGRAM|$MY_APP]"')
-    wait_for(t) {t.text.include? ']'}
-    assert_include t.text, '[my-app|yes]'
+    wait_for(t) {text(t).include? ']'}
+    assert_include text(t), '[my-app|yes]'
   end
 
   def test_spawn_with_nil_env_removes_variable()
@@ -252,8 +252,8 @@ class TestTerminal < Test::Unit::TestCase
     t.spawn(
       {'TERM_PROGRAM' => nil, 'EMPTY' => ''},
       '/bin/sh', '-c', 'printf "[${TERM_PROGRAM+set}|${EMPTY+set}]"')
-    wait_for(t) {t.text.include? ']'}
-    assert_include t.text, '[|set]'
+    wait_for(t) {text(t).include? ']'}
+    assert_include text(t), '[|set]'
   end
 
   def test_spawn_with_env_only()
@@ -266,8 +266,12 @@ class TestTerminal < Test::Unit::TestCase
   def test_spawn_with_single_string_runs_via_shell()
     t = terminal 40, 6
     t.spawn 'printf "hello world" | tr a-z A-Z'
-    wait_for(t) {t.text.include? 'HELLO WORLD'}
-    assert_include t.text, 'HELLO WORLD'
+    wait_for(t) {text(t).include? 'HELLO WORLD'}
+    assert_include text(t), 'HELLO WORLD'
+  end
+
+  def text(t)
+    t.lines.join "\n"
   end
 
   def wait_for(t, timeout = 5)
@@ -313,11 +317,11 @@ class TestTerminal < Test::Unit::TestCase
     # viewport starts at line28 and two rows back is line26
     t.scroll_to(-2)
     t.update
-    assert_equal 'line26', t.text.lines.first.chomp
+    assert_equal 'line26', t.lines.first
 
     t.scroll_to(-10000)# further back than the history goes
     t.update
-    assert_equal 'line0', t.text.lines.first.chomp
+    assert_equal 'line0', t.lines.first
     top = t.scroll
     assert_operator top, :<, 0
 

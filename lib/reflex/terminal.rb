@@ -54,6 +54,24 @@ module Reflex
       each_span!(&block)
     end
 
+    # Yields each line of the visible screen.
+    #
+    # @yield [line] a row of the screen, without its trailing spaces and
+    #   without a newline of its own
+    #
+    # @return [Enumerator] when no block is given
+    #
+    def each_line(&block)
+      return enum_for :each_line unless block
+      each_line!(&block)
+    end
+
+    # @return [Array<String>] the visible screen, one string per row
+    #
+    def lines()
+      each_line.to_a
+    end
+
     const_symbol_accessor :option_as_alt, **{
       off:   OPTION_AS_ALT_OFF,
       on:    OPTION_AS_ALT_ON,

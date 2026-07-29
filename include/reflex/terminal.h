@@ -208,7 +208,7 @@ namespace Reflex
 
 			const char* title () const;
 
-			const char* text () const;
+			StringList lines () const;
 
 			operator bool () const;
 
