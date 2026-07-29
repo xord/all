@@ -5,7 +5,7 @@
 #include <string.h>
 #include <string>
 #include <ghostty/vt.h>
-#include <xot/exception.h>
+#include <reflex/exception.h>
 #include "pty.h"
 
 
@@ -1092,6 +1092,83 @@ namespace Reflex
 			result.push_back(end == String::npos ? String() : line.substr(0, end + 1));
 		}
 		return result;
+	}
+
+	int
+	Terminal::history_rows () const
+	{
+		if (!*this) return 0;
+
+		return (int) bottom_offset(get_scrollbar(self.get()));
+	}
+
+	StringList
+	Terminal::get_history_lines (int offset, int size) const
+	{
+		if (offset < 0)
+			argument_error(__FILE__, __LINE__, "offset is negative");
+		if (size < 0)
+			argument_error(__FILE__, __LINE__, "size is negative");
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		StringList lines;
+		if (size == 0) return lines;
+
+		int rows = history_rows();
+		if (offset >= rows)
+			return lines;
+
+		if (size > rows - offset)
+			size = rows - offset;
+
+		GhosttyResult result;
+		GhosttyPoint point = {};
+		point.tag          = GHOSTTY_POINT_TAG_HISTORY;
+
+		GhosttySelection selection = init_sized<GhosttySelection>();
+		point.value.coordinate.x   = 0;
+		point.value.coordinate.y   = (uint32_t) offset;
+		result = ghostty_terminal_grid_ref(self->terminal, point, &selection.start);
+		if (result != GHOSTTY_SUCCESS)
+			return lines;
+
+		point.value.coordinate.x = (uint16_t) (self->columns - 1);
+		point.value.coordinate.y = (uint32_t) (offset + size - 1);
+		result = ghostty_terminal_grid_ref(self->terminal, point, &selection.end);
+		if (result != GHOSTTY_SUCCESS)
+			return lines;
+
+		GhosttyFormatter formatter = NULL;
+		auto options               = init_sized<GhosttyFormatterTerminalOptions>();
+		options.emit               = GHOSTTY_FORMATTER_FORMAT_PLAIN;
+		options.trim               = true;
+		options.selection          = &selection;
+		result = ghostty_formatter_terminal_new(NULL, &formatter, self->terminal, options);
+		if (result != GHOSTTY_SUCCESS)
+			return lines;
+
+		uint8_t* buffer = NULL;
+		size_t length   = 0;
+		result = ghostty_formatter_format_alloc(formatter, NULL, &buffer, &length);
+		if (result == GHOSTTY_SUCCESS)
+		{
+			const char* text = (const char*) buffer;
+			size_t start     = 0;
+			while (start <= length)
+			{
+				const char* end = (const char*) memchr(text + start, '\n', length - start);
+				size_t stop     = end ? (size_t) (end - text) : length;
+				lines.emplace_back(text + start, stop - start);
+				if (!end) break;
+
+				start = stop + 1;
+			}
+			ghostty_free(NULL, buffer, length);
+		}
+		ghostty_formatter_free(formatter);
+
+		return lines;
 	}
 
 	Terminal::operator bool () const

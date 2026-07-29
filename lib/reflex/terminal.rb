@@ -8,6 +8,8 @@ module Reflex
 
   class Terminal
 
+    HISTORY_CHUNK_SIZE = 500
+
     def initialize(
       columns = 80, rows = 24,
       # a memory budget rather than a line count: how many lines fit
@@ -70,6 +72,23 @@ module Reflex
     #
     def lines()
       each_line.to_a
+    end
+
+    # Yields each line of the scrollback, oldest first.
+    #
+    # The history is walked in chunks rather than handed over at once,
+    # since it can hold far more than fits in memory.
+    #
+    # @yield [line] a line of the history, without its trailing spaces
+    #
+    # @return [Enumerator] when no block is given
+    #
+    def each_history_line(&block)
+      return enum_for :each_history_line unless block
+      (0...history_rows).step HISTORY_CHUNK_SIZE do |row|
+        get_history_lines!(row, HISTORY_CHUNK_SIZE).each(&block)
+      end
+      self
     end
 
     const_symbol_accessor :option_as_alt, **{

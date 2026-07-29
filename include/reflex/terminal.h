@@ -211,6 +211,10 @@ namespace Reflex
 
 			StringList lines () const;
 
+			int            history_rows () const;
+
+			StringList get_history_lines (int offset, int size) const;
+
 			operator bool () const;
 
 			bool operator ! () const;

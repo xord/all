@@ -251,6 +251,26 @@ RUCY_DEF0(each_line)
 RUCY_END
 
 static
+RUCY_DEF0(get_history_rows)
+{
+	CHECK;
+	return value(THIS->history_rows());
+}
+RUCY_END
+
+static
+RUCY_DEF2(get_history_lines, offset, size)
+{
+	CHECK;
+
+	Value result = array(NULL, 0);// a std::vector<Value> would be invisible to the gc
+	for (const auto& line : THIS->get_history_lines(to<int>(offset), to<int>(size)))
+		result.push(value(line.c_str(), line.size(), rb_utf8_encoding()));
+	return result;
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_option_as_alt, state)
 {
 	CHECK;
@@ -359,6 +379,8 @@ Init_reflex_terminal ()
 	cTerminal.define_method("cursor",  get_cursor);
 	cTerminal.define_method("colors",  get_colors);
 	cTerminal.define_method("title",   get_title);
+	cTerminal.define_method(            "history_rows",   get_history_rows);
+	cTerminal.define_private_method("get_history_lines!", get_history_lines);
 
 	cTerminal.define_const("BOLD",            Reflex::Terminal::BOLD);
 	cTerminal.define_const("ITALIC",          Reflex::Terminal::ITALIC);

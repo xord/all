@@ -376,6 +376,42 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 0, t.scroll
   end
 
+  def test_history()
+    t = terminal 20, 3, scrollback_bytes: 64 * 1024
+    30.times {|i| t.feed "line#{i}\r\n"}
+    t.update
+
+    # the 3 rows still on screen are line28, line29 and the empty
+    # line the cursor sits on
+    assert_equal 28, t.history_rows
+
+    lines = t.each_history_line.to_a
+    assert_equal 28, lines.size
+    assert_equal %w[line0 line1 line2], lines[0, 3]
+    assert_equal 'line27', lines.last
+  end
+
+  def test_history_longer_than_a_chunk()
+    rows = T::HISTORY_CHUNK_SIZE * 2 + 1
+    t    = terminal 20, 3, scrollback_bytes: 4 * 1024 * 1024
+    rows.times {|i| t.feed "line#{i}\r\n"}
+    t.update
+
+    lines = t.each_history_line.to_a
+    assert_equal t.history_rows, lines.size
+    assert_equal 'line0', lines.first
+    assert_equal "line#{rows - 3}", lines.last# the last 2 rows are still on screen
+  end
+
+  def test_history_without_scrollback()
+    t = terminal 20, 3, scrollback_bytes: 0
+    30.times {|i| t.feed "line#{i}\r\n"}
+    t.update
+
+    assert_equal 0,  t.history_rows
+    assert_equal [], t.each_history_line.to_a
+  end
+
   def test_paste()
     t = terminal
     t.paste 'hello'
