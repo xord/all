@@ -201,6 +201,32 @@ RUCY_DEF1(paste, text)
 RUCY_END
 
 static
+RUCY_DEF1(scroll_to, row)
+{
+	CHECK;
+	THIS->scroll_to(to<int>(row));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(scroll_by, rows)
+{
+	CHECK;
+	THIS->scroll_by(to<int>(rows));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_scroll)
+{
+	CHECK;
+	return value(THIS->scroll());
+}
+RUCY_END
+
+static
 RUCY_DEF0(each_span)
 {
 	CHECK;
@@ -328,6 +354,9 @@ Init_reflex_terminal ()
 	cTerminal.define_method("wheel",       wheel);
 	cTerminal.define_method("mouse_tracking?", is_mouse_tracking);
 	cTerminal.define_method("paste",       paste);
+	cTerminal.define_method("scroll_to",  scroll_to);
+	cTerminal.define_method("scroll_by",  scroll_by);
+	cTerminal.define_method("scroll", get_scroll);
 	cTerminal.define_private_method("each_span!", each_span);
 	cTerminal.define_method("option_as_alt=", set_option_as_alt);
 	cTerminal.define_method("option_as_alt",  get_option_as_alt);

@@ -182,6 +182,14 @@ namespace Reflex
 			// encodes with bracketed paste mode when enabled
 			void paste (const char* text, size_t size);
 
+			// moves the viewport through the scrollback: 0 follows the
+			// latest output and negative rows go back into the history
+			void scroll_to (int row);
+
+			void scroll_by (int rows);
+
+			int  scroll () const;
+
 			// send the char composed with the macOS option key
 			// as an alt (meta) sequence instead (for emacs etc.)
 			void    set_option_as_alt (OptionAsAlt state);

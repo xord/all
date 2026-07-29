@@ -929,6 +929,64 @@ namespace Reflex
 			write_input(self.get(), buffer.data(), written);
 	}
 
+	static GhosttyTerminalScrollbar
+	get_scrollbar (const Terminal::Data* self)
+	{
+		GhosttyTerminalScrollbar bar = {};
+		ghostty_terminal_get(
+			self->terminal, GHOSTTY_TERMINAL_DATA_SCROLLBAR, &bar);
+		return bar;
+	}
+
+	// the viewport offset ghostty reports while the viewport is at the bottom
+	static uint64_t
+	bottom_offset (const GhosttyTerminalScrollbar& bar)
+	{
+		return bar.total > bar.len ? bar.total - bar.len : 0;
+	}
+
+	void
+	Terminal::scroll_to (int row)
+	{
+		if (!*this)
+			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+
+		GhosttyTerminalScrollViewport behavior = {};
+		if (row >= 0)
+			behavior.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
+		else
+		{
+			uint64_t bottom = bottom_offset(get_scrollbar(self.get()));
+			uint64_t back   = (uint64_t) -(int64_t) row;
+			behavior.tag       = GHOSTTY_SCROLL_VIEWPORT_ROW;
+			behavior.value.row = back < bottom ? bottom - back : 0;
+		}
+		ghostty_terminal_scroll_viewport(self->terminal, behavior);
+	}
+
+	void
+	Terminal::scroll_by (int rows)
+	{
+		if (!*this)
+			Xot::invalid_state_error(__FILE__, __LINE__, "invalid terminal");
+		if (rows == 0) return;
+
+		GhosttyTerminalScrollViewport behavior = {};
+		behavior.tag         = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+		behavior.value.delta = rows;
+		ghostty_terminal_scroll_viewport(self->terminal, behavior);
+	}
+
+	int
+	Terminal::scroll () const
+	{
+		if (!*this) return 0;
+
+		GhosttyTerminalScrollbar bar = get_scrollbar(self.get());
+		uint64_t bottom = bottom_offset(bar);
+		return bar.offset < bottom ? -(int) (bottom - bar.offset) : 0;
+	}
+
 	void
 	Terminal::set_option_as_alt (OptionAsAlt state)
 	{

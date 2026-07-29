@@ -297,6 +297,46 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[<0;2;2M", t.read_input# cell (2, 2), left press
   end
 
+  def test_scrollback()
+    t = terminal 20, 3, scrollback_bytes: 64 * 1024
+    30.times {|i| t.feed "line#{i}\r\n"}
+    t.update
+    assert_equal 0, t.scroll
+
+    t.scroll_by(-10)
+    assert_equal(-10, t.scroll)
+
+    t.scroll_by 4
+    assert_equal(-6, t.scroll)
+
+    # the last row is the empty line the cursor sits on, so the
+    # viewport starts at line28 and two rows back is line26
+    t.scroll_to(-2)
+    t.update
+    assert_equal 'line26', t.text.lines.first.chomp
+
+    t.scroll_to(-10000)# further back than the history goes
+    t.update
+    assert_equal 'line0', t.text.lines.first.chomp
+    top = t.scroll
+    assert_operator top, :<, 0
+
+    t.scroll_by(-1)# already at the top, so it stays
+    assert_equal top, t.scroll
+
+    t.scroll_to 0
+    assert_equal 0, t.scroll
+  end
+
+  def test_scrollback_disabled()
+    t = terminal 20, 3, scrollback_bytes: 0
+    30.times {|i| t.feed "line#{i}\r\n"}
+    t.update
+
+    t.scroll_by(-10)
+    assert_equal 0, t.scroll
+  end
+
   def test_paste()
     t = terminal
     t.paste 'hello'

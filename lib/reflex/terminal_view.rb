@@ -81,7 +81,7 @@ module Reflex
     end
 
     def on_draw(e)
-      t = @terminal or return
+      t = @terminal || return
 
       fg, bg   = t.colors
       theme_fg = to_color fg, 1
@@ -114,7 +114,9 @@ module Reflex
     end
 
     def on_key_down(e)
-      @terminal&.key_down e
+      t = @terminal || return
+      t.scroll_to 0 if t.scroll != 0
+      t.key_down e
       restart_cursor_blink
     end
 
@@ -136,7 +138,17 @@ module Reflex
     end
 
     def on_wheel(e)
-      @terminal&.wheel e
+      t = @terminal || return
+
+      if t.mouse_tracking?
+        t.wheel e
+      else
+        rows = (e.dy / @cell_height).round
+        return if rows == 0
+
+        t.scroll_by(-rows)
+        redraw
+      end
     end
 
     def on_resize(e)
