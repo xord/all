@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.version     = ext.version
   s.license     = 'MIT'
   s.summary     = 'A terminal emulator view for Reflex.'
-  s.description = 'Provides Reflex::Terminal, a headless terminal emulator model built on libghostty-vt, and Reflex::TerminalView, a View that renders it in the Reflex GUI framework.'
+  s.description = 'Provides Reflex::Terminal, a headless terminal emulator model built on libghostty-vt, and Reflex::TerminalView, a View that renders it in the Reflex GUI toolkit.'
   s.authors     = %w[xordog]
   s.email       = 'xordog@gmail.com'
   s.homepage    = "https://github.com/xord/reflex-terminal"

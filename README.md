@@ -1,9 +1,9 @@
 # Reflex Terminal - A terminal emulator for Reflex
 
-**Status: Work in progress. Nothing is usable yet.**
+**Status: Usable, but the API is not stable yet.**
 
 reflex-terminal provides a terminal emulator for the
-[Reflex](https://github.com/xord/reflex) GUI framework:
+[Reflex](https://github.com/xord/reflex) GUI toolkit:
 
 - `Reflex::Terminal` — a headless terminal emulator model. It spawns a shell
   on a PTY and maintains the screen state (cells, colors, scrollback, reflow
@@ -12,6 +12,44 @@ reflex-terminal provides a terminal emulator for the
   [Ghostty](https://github.com/ghostty-org/ghostty).
 - `Reflex::TerminalView` — a `Reflex::View` that renders a `Terminal` and
   feeds keyboard / mouse input into it.
+
+Full-screen programs work: emacs and mouse-driven terminal multiplexers run
+in it, with colors, CJK text, reflow on resize and scrollback.
+
+## Usage
+
+```ruby
+require 'reflex-terminal'
+
+win = Reflex::Window.new {
+  title 'Terminal'
+  frame 100, 100, 720, 450
+}
+win.add Reflex::TerminalView.new
+win.show
+
+Reflex.start
+```
+
+See `examples/terminal.rb`.
+
+### Without a child process
+
+A `Terminal` does not have to run a shell. Feed it bytes and it renders
+whatever speaks terminal escape sequences — a build log, a recorded
+session — with its colors and cursor motion applied:
+
+```ruby
+t = Reflex::Terminal.new 120, 40
+t.feed File.binread('build.log')
+t.update
+puts t.lines
+```
+
+Driving an interactive program over your own transport takes one more call:
+`#read_pending_input` hands back the bytes the terminal wants to send
+upstream, which are the query responses it generates on its own plus any
+encoded key and mouse events.
 
 ## Requirements
 
@@ -27,6 +65,15 @@ $ rake packages   # installs zig via Homebrew
 $ rake ext        # clones + builds libghostty-vt (first time only), then the extension
 $ rake test
 ```
+
+## Limitations
+
+- macOS only.
+- No input method support, so Japanese and other composed text cannot be
+  typed. Reflex hands key events straight to the view without going through
+  the platform's input context, which is where composition would start.
+- No image protocols (Kitty graphics, Sixel).
+- No selection or copy UI. `#lines` and `#each_history_line` return the text.
 
 ## Updating the vendored libghostty-vt
 
