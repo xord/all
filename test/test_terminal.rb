@@ -156,16 +156,16 @@ class TestTerminal < Test::Unit::TestCase
 
   def test_key_encoding()
     t = terminal
-    t.write_key key_down("\r", 0x24)# enter
+    t.write_key key_down("\r", Reflex::KEY_ENTER)
     assert_equal "\r", t.read_pending_input
 
-    t.write_key key_down('', 0x7E)# up arrow
+    t.write_key key_down('', Reflex::KEY_UP)
     assert_equal "\e[A", t.read_pending_input
 
-    t.write_key key_down("\x03", 0x08, CTRL)# ctrl+c
+    t.write_key key_down("\x03", Reflex::KEY_C, CTRL)
     assert_equal "\x03", t.read_pending_input
 
-    t.write_key key_down('A', 0x00, SHIFT)# shift+a
+    t.write_key key_down('A', Reflex::KEY_A, SHIFT)
     assert_equal 'A', t.read_pending_input
   end
 
@@ -173,13 +173,17 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal
     # ghostty leaves these to the kitty protocol (fixterms), so they would
     # otherwise send nothing at all while an app has not asked for it
-    {0x22 => "\t", 0x2e => "\r", 0x21 => "\e"}.each do |code, expected|
+    {
+      Reflex::KEY_I        => "\t",
+      Reflex::KEY_M        => "\r",
+      Reflex::KEY_LBRACKET => "\e"
+    }.each do |code, expected|
       t.write_key key_down('', code, CTRL)
       assert_equal expected, t.read_pending_input
     end
 
     t.feed "\e[>1u"# the app asks for the kitty keyboard protocol
-    t.write_key key_down('', 0x22, CTRL)
+    t.write_key key_down('', Reflex::KEY_I, CTRL)
     assert_equal "\e[105;5u", t.read_pending_input# ctrl+i stays distinct from tab
   end
 
@@ -187,28 +191,28 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal
     # macOS hands over the control character itself for ctrl+-, which the
     # encoder has no legacy encoding for (C-_ is undo in emacs)
-    t.write_key key_down("\x1f", 0x1b, CTRL)
+    t.write_key key_down("\x1f", Reflex::KEY_MINUS, CTRL)
     assert_equal "\x1f", t.read_pending_input
   end
 
   def test_key_release_is_taken_from_the_event()
     t = terminal
-    t.write_key key_down("\r", 0x24)
+    t.write_key key_down("\r", Reflex::KEY_ENTER)
     assert_equal "\r", t.read_pending_input
-    t.write_key key_up("\r", 0x24)
+    t.write_key key_up("\r", Reflex::KEY_ENTER)
     assert_equal '', t.read_pending_input# a release says nothing in legacy mode
 
     # every key as an escape code, releases included
     t.feed "\e[>10u"
-    t.write_key key_down("\r", 0x24)
+    t.write_key key_down("\r", Reflex::KEY_ENTER)
     assert_equal "\e[13u", t.read_pending_input
-    t.write_key key_up("\r", 0x24)
+    t.write_key key_up("\r", Reflex::KEY_ENTER)
     assert_equal "\e[13;1:3u", t.read_pending_input
   end
 
   def test_read_pending_input_is_a_byte_stream()
     t = terminal
-    t.write_key key_down("\r", 0x24)
+    t.write_key key_down("\r", Reflex::KEY_ENTER)
     assert_equal Encoding::ASCII_8BIT, t.read_pending_input.encoding
     assert_equal '', t.read_pending_input
   end
@@ -217,15 +221,18 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal
     assert_equal :on, t.option_as_alt
 
-    t.write_key key_down('∫', 0x0B, OPTION)# option+b
+    t.write_key key_down('∫', Reflex::KEY_B, OPTION)
     assert_equal "\eb", t.read_pending_input
-
-    t.option_as_alt = :off
-    t.write_key key_down('∫', 0x0B, OPTION)
-    assert_equal '∫'.b, t.read_pending_input
 
     assert_raise(ArgumentError) {t.option_as_alt = :invalid}
   end
+
+  def test_option_as_alt_off()
+    t = terminal
+    t.option_as_alt = :off
+    t.write_key key_down('∫', Reflex::KEY_B, OPTION)
+    assert_equal '∫'.b, t.read_pending_input
+  end if osx?# ghostty applies this setting on macos only
 
   def test_spawn()
     t = terminal 40, 6

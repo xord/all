@@ -35,4 +35,4 @@ class TestTerminalView < Test::Unit::TestCase
     assert_include v.font.name, 'Osaka'
   end
 
-end# TestTerminalView
+end unless linux?# rays has no font lookup by name there
