@@ -1,5 +1,4 @@
 require 'xot/const_symbol_accessor'
-require 'reflex/ext'
 require 'reflex-terminal/ext'
 
 
