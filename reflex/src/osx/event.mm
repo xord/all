@@ -52,8 +52,17 @@ namespace Reflex
 		return [chars UTF8String];
 	}
 
+	static int
+	get_key_code (NSEvent* e)
+	{
+		// fn+return on a laptop keyboard reports a code of its own, which
+		// has no kVK_* name; it is the same key as the enter on the keypad
+		// of an external keyboard
+		return e.keyCode == 0x34 ? kVK_ANSI_KeypadEnter : e.keyCode;
+	}
+
 	NativeKeyEvent::NativeKeyEvent (NSEvent* e, Action action, int repeat)
-	:	KeyEvent(action, get_chars(e), [e keyCode], get_modifiers(e), repeat)
+	:	KeyEvent(action, get_chars(e), get_key_code(e), get_modifiers(e), repeat)
 	{
 	}
 
