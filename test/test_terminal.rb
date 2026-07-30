@@ -4,10 +4,45 @@ require_relative 'helper'
 
 class TestTerminal < Test::Unit::TestCase
 
-  T = Reflex::Terminal
+  R = Reflex
+  T = R::Terminal
+
+  CTRL   = R::MOD_CONTROL
+  SHIFT  = R::MOD_SHIFT
+  OPTION = R::MOD_OPTION
+
+  # a console ends the input on ctrl+z, where a tty ends it on ctrl+d
+  EOF_KEY = win32? ? "\x1a\r" : "\x04"
+
+  def text(t)
+    t.lines.join "\n"
+  end
+
+  def ruby(script)
+    # a child that exists everywhere, unlike /bin/sh. Its argument also puts
+    # the quoting a windows command line needs through its paces
+    [RbConfig.ruby, '-e', script]
+  end
 
   def terminal(*args, **kwargs)
     T.new(*args, **kwargs)
+  end
+
+  def key_down(chars, code, modifiers = 0)
+    R::KeyEvent.new R::KeyEvent::DOWN, chars, code, modifiers, 0
+  end
+
+  def key_up(chars, code, modifiers = 0)
+    R::KeyEvent.new R::KeyEvent::UP, chars, code, modifiers, 0
+  end
+
+  def wait_for(t, timeout = 5)
+    deadline = Time.now + timeout
+    until yield
+      break if Time.now > deadline
+      t.update
+      sleep 0.01
+    end
   end
 
   def test_initialize()
@@ -65,9 +100,9 @@ class TestTerminal < Test::Unit::TestCase
     t.update
 
     flags = t.each_span.map {|x, y, w, str, fg, bg, flags| flags}
-    assert_equal T::BOLD,    flags[0] & T::BOLD
+    assert_equal T::BOLD,    flags[0]  & T::BOLD
     assert_equal 1,          (flags[2] & T::UNDERLINE_MASK) >> T::UNDERLINE_SHIFT
-    assert_equal T::INVERSE, flags[4] & T::INVERSE
+    assert_equal T::INVERSE, flags[4]  & T::INVERSE
   end
 
   def test_wide_chars()
@@ -141,31 +176,18 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'hello', t.title
   end
 
-  ALT    = Reflex::MOD_ALT
-  CTRL   = Reflex::MOD_CONTROL
-  SHIFT  = Reflex::MOD_SHIFT
-  OPTION = Reflex::MOD_OPTION
-
-  def key_down(chars, code, modifiers = 0)
-    Reflex::KeyEvent.new Reflex::KeyEvent::DOWN, chars, code, modifiers, 0
-  end
-
-  def key_up(chars, code, modifiers = 0)
-    Reflex::KeyEvent.new Reflex::KeyEvent::UP, chars, code, modifiers, 0
-  end
-
   def test_key_encoding()
     t = terminal
-    t.write_key key_down("\r", Reflex::KEY_ENTER)
+    t.write_key key_down("\r", R::KEY_ENTER)
     assert_equal "\r", t.read_pending_input
 
-    t.write_key key_down('', Reflex::KEY_UP)
+    t.write_key key_down('', R::KEY_UP)
     assert_equal "\e[A", t.read_pending_input
 
-    t.write_key key_down("\x03", Reflex::KEY_C, CTRL)
+    t.write_key key_down("\x03", R::KEY_C, CTRL)
     assert_equal "\x03", t.read_pending_input
 
-    t.write_key key_down('A', Reflex::KEY_A, SHIFT)
+    t.write_key key_down('A', R::KEY_A, SHIFT)
     assert_equal 'A', t.read_pending_input
   end
 
@@ -174,16 +196,16 @@ class TestTerminal < Test::Unit::TestCase
     # ghostty leaves these to the kitty protocol (fixterms), so they would
     # otherwise send nothing at all while an app has not asked for it
     {
-      Reflex::KEY_I        => "\t",
-      Reflex::KEY_M        => "\r",
-      Reflex::KEY_LBRACKET => "\e"
+      R::KEY_I        => "\t",
+      R::KEY_M        => "\r",
+      R::KEY_LBRACKET => "\e"
     }.each do |code, expected|
       t.write_key key_down('', code, CTRL)
       assert_equal expected, t.read_pending_input
     end
 
     t.feed "\e[>1u"# the app asks for the kitty keyboard protocol
-    t.write_key key_down('', Reflex::KEY_I, CTRL)
+    t.write_key key_down('', R::KEY_I, CTRL)
     assert_equal "\e[105;5u", t.read_pending_input# ctrl+i stays distinct from tab
   end
 
@@ -191,28 +213,28 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal
     # macOS hands over the control character itself for ctrl+-, which the
     # encoder has no legacy encoding for (C-_ is undo in emacs)
-    t.write_key key_down("\x1f", Reflex::KEY_MINUS, CTRL)
+    t.write_key key_down("\x1f", R::KEY_MINUS, CTRL)
     assert_equal "\x1f", t.read_pending_input
   end
 
   def test_key_release_is_taken_from_the_event()
     t = terminal
-    t.write_key key_down("\r", Reflex::KEY_ENTER)
+    t.write_key key_down("\r", R::KEY_ENTER)
     assert_equal "\r", t.read_pending_input
-    t.write_key key_up("\r", Reflex::KEY_ENTER)
+    t.write_key key_up("\r", R::KEY_ENTER)
     assert_equal '', t.read_pending_input# a release says nothing in legacy mode
 
     # every key as an escape code, releases included
     t.feed "\e[>10u"
-    t.write_key key_down("\r", Reflex::KEY_ENTER)
+    t.write_key key_down("\r", R::KEY_ENTER)
     assert_equal "\e[13u", t.read_pending_input
-    t.write_key key_up("\r", Reflex::KEY_ENTER)
+    t.write_key key_up("\r", R::KEY_ENTER)
     assert_equal "\e[13;1:3u", t.read_pending_input
   end
 
   def test_read_pending_input_is_a_byte_stream()
     t = terminal
-    t.write_key key_down("\r", Reflex::KEY_ENTER)
+    t.write_key key_down("\r", R::KEY_ENTER)
     assert_equal Encoding::ASCII_8BIT, t.read_pending_input.encoding
     assert_equal '', t.read_pending_input
   end
@@ -221,7 +243,7 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal
     assert_equal :on, t.option_as_alt
 
-    t.write_key key_down('∫', Reflex::KEY_B, OPTION)
+    t.write_key key_down('∫', R::KEY_B, OPTION)
     assert_equal "\eb", t.read_pending_input
 
     assert_raise(ArgumentError) {t.option_as_alt = :invalid}
@@ -230,7 +252,7 @@ class TestTerminal < Test::Unit::TestCase
   def test_option_as_alt_off()
     t = terminal
     t.option_as_alt = :off
-    t.write_key key_down('∫', Reflex::KEY_B, OPTION)
+    t.write_key key_down('∫', R::KEY_B, OPTION)
     assert_equal '∫'.b, t.read_pending_input
   end if osx?# ghostty applies this setting on macos only
 
@@ -238,29 +260,29 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal 40, 6
     assert_false t.alive?
 
-    t.spawn '/bin/cat'
+    t.spawn(*ruby('$stdout.sync = true; $stdin.each_line {|s| print s}'))
     assert_true t.alive?
-    assert_raise(Rucy::NativeError) {t.spawn '/bin/cat'}
+    assert_raise(Rucy::NativeError) {t.spawn(*ruby('sleep'))}
 
     t.write "hello\r"
     wait_for(t) {text(t).include? 'hello'}
     assert_include text(t), 'hello'
 
-    t.write "\x04"# EOF stops cat
+    t.write EOF_KEY
     wait_for(t) {not t.alive?}
     assert_false t.alive?
   end
 
   def test_spawn_with_args()
     t = terminal 40, 6
-    t.spawn '/bin/sh', '-c', 'printf spawned'
+    t.spawn(*ruby('print "spawned"'))
     wait_for(t) {text(t).include? 'spawned'}
     assert_include text(t), 'spawned'
   end
 
   def test_spawn_sets_default_env()
     t = terminal 60, 6
-    t.spawn '/bin/sh', '-c', 'printf "[$TERM|$TERM_PROGRAM]"'
+    t.spawn(*ruby('print "[#{ENV["TERM"]}|#{ENV["TERM_PROGRAM"]}]"'))
     wait_for(t) {text(t).include? ']'}
     assert_include text(t), '[xterm-256color|reflex-terminal]'
   end
@@ -269,19 +291,19 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal 60, 6
     t.spawn(
       {'TERM_PROGRAM' => 'my-app', MY_APP: 'yes'},
-      '/bin/sh', '-c', 'printf "[$TERM_PROGRAM|$MY_APP]"')
+      *ruby('print "[#{ENV["TERM_PROGRAM"]}|#{ENV["MY_APP"]}]"'))
     wait_for(t) {text(t).include? ']'}
     assert_include text(t), '[my-app|yes]'
   end
 
   def test_spawn_with_nil_env_removes_variable()
     t = terminal 60, 6
-    # ${VAR+set} tells an unset variable from one set to an empty string
+    # ENV#key? tells an unset variable from one set to an empty string
     t.spawn(
       {'TERM_PROGRAM' => nil, 'EMPTY' => ''},
-      '/bin/sh', '-c', 'printf "[${TERM_PROGRAM+set}|${EMPTY+set}]"')
+      *ruby('print "[#{ENV.key?("TERM_PROGRAM")}|#{ENV.key?("EMPTY")}]"'))
     wait_for(t) {text(t).include? ']'}
-    assert_include text(t), '[|set]'
+    assert_include text(t), '[false|true]'
   end
 
   def test_spawn_with_env_only()
@@ -293,32 +315,24 @@ class TestTerminal < Test::Unit::TestCase
 
   def test_spawn_with_single_string_runs_via_shell()
     t = terminal 40, 6
-    t.spawn 'printf "hello world" | tr a-z A-Z'
-    wait_for(t) {text(t).include? 'HELLO WORLD'}
-    assert_include text(t), 'HELLO WORLD'
-  end
+    # a construct only a shell expands, to show that one was involved
+    command, expected = win32? ?
+      ['echo %TERM_PROGRAM%',               'reflex-terminal'] :
+      ['printf "hello world" | tr a-z A-Z', 'HELLO WORLD']
 
-  def text(t)
-    t.lines.join "\n"
-  end
-
-  def wait_for(t, timeout = 5)
-    deadline = Time.now + timeout
-    until yield
-      break if Time.now > deadline
-      t.update
-      sleep 0.01
-    end
+    t.spawn command
+    wait_for(t) {text(t).include? expected}
+    assert_include text(t), expected
   end
 
   def test_mouse_encoding()
     t = terminal 40, 10
     t.resize 40, 10, cell_width: 8, cell_height: 16
 
-    types = Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_LEFT
-    down  = Reflex::PointerEvent.new(
-      Reflex::Pointer.new(
-        0, types, Reflex::Pointer::DOWN, [12, 20], 0, 1, false, 0))
+    types = R::Pointer::MOUSE | R::Pointer::MOUSE_LEFT
+    down  = R::PointerEvent.new(
+      R::Pointer.new(
+        0, types, R::Pointer::DOWN, [12, 20], 0, 1, false, 0))
 
     assert_false t.mouse_tracking?
     t.write_pointer down
@@ -336,10 +350,10 @@ class TestTerminal < Test::Unit::TestCase
     t.feed "\e[?1000h\e[?1006h"
 
     # reflex counts a wheel delta downwards, so button 4 is a negative one
-    t.write_wheel Reflex::WheelEvent.new(0, 0, 0, 0, -1, 0, 0)
+    t.write_wheel R::WheelEvent.new(0, 0, 0, 0, -1, 0, 0)
     assert_equal "\e[<64;1;1M\e[<64;1;1m", t.read_pending_input
 
-    t.write_wheel Reflex::WheelEvent.new(0, 0, 0, 0, 1, 0, 0)
+    t.write_wheel R::WheelEvent.new(0, 0, 0, 0, 1, 0, 0)
     assert_equal "\e[<65;1;1M\e[<65;1;1m", t.read_pending_input
   end
 

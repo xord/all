@@ -17,11 +17,19 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <vector>
-#include <xot/exception.h>
+#include <reflex/exception.h>
 
 
 namespace Reflex
 {
+
+
+	struct PTY::Data
+	{
+
+		int fd = -1, pid = -1;
+
+	};// PTY::Data
 
 
 	static struct winsize
@@ -52,9 +60,9 @@ namespace Reflex
 		bool login)
 	{
 		if (args.empty() || args[0].empty())
-			Xot::argument_error(__FILE__, __LINE__, "args is empty");
+			argument_error(__FILE__, __LINE__, "args is empty");
 		if (is_open())
-			Xot::invalid_state_error(__FILE__, __LINE__, "already spawned");
+			invalid_state_error(__FILE__, __LINE__, "already spawned");
 
 		String argv0 = args[0];
 		if (login)
@@ -74,31 +82,19 @@ namespace Reflex
 
 		struct winsize size = to_winsize(columns, rows, cell_width, cell_height);
 
+		// built here rather than in the child: allocating between fork()
+		// and exec() is not async-signal-safe
+		Terminal::EnvMap child_envs = Terminal_make_child_envs(envs);
+
 		int master  = -1;
 		pid_t child = forkpty(&master, NULL, NULL, &size);
 		if (child < 0)
-			Xot::system_error(__FILE__, __LINE__, "forkpty() failed");
+			system_error(__FILE__, __LINE__, "forkpty() failed");
 
 		if (child == 0)
 		{
 			// child process: exec the command
-			setenv("TERM",         "xterm-256color",  1);
-			setenv("COLORTERM",    "truecolor",       1);
-			setenv("TERM_PROGRAM", "reflex-terminal", 1);
-			unsetenv("LINES");
-			unsetenv("COLUMNS");
-
-			// drop what would contradict the terminal we just claimed to
-			// be: a version for someone else's TERM_PROGRAM, and terminfo
-			// pointing at another app. Session markers left by a terminal
-			// or multiplexer we happen to run inside are its own business,
-			// so the application removes those it cares about (env => nil)
-			unsetenv("TERM_PROGRAM_VERSION");
-			unsetenv("TERMINFO");
-
-			// applied last so that the application wins over the
-			// defaults above, but never over the cleanup
-			for (const auto& it : envs)
+			for (const auto& it : child_envs)
 			{
 				if (it.second)
 					setenv(it.first.c_str(), it.second->c_str(), 1);
@@ -117,11 +113,11 @@ namespace Reflex
 			::close(master);
 			kill(child, SIGKILL);
 			waitpid(child, NULL, 0);
-			Xot::system_error(__FILE__, __LINE__, "failed to set O_NONBLOCK");
+			system_error(__FILE__, __LINE__, "failed to set O_NONBLOCK");
 		}
 
-		fd  = master;
-		pid = child;
+		self->fd  = master;
+		self->pid = child;
 	}
 
 	size_t
@@ -129,7 +125,7 @@ namespace Reflex
 	{
 		if (!is_open()) return 0;
 
-		ssize_t n = ::read(fd, buffer, size);
+		ssize_t n = ::read(self->fd, buffer, size);
 		if (n > 0) return (size_t) n;
 
 		if (n == 0 || (errno != EAGAIN && errno != EINTR))
@@ -144,9 +140,9 @@ namespace Reflex
 
 		fd_set fds;
 		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
+		FD_SET(self->fd, &fds);
 		struct timeval timeout = {0, timeout_msec * 1000};
-		return select(fd + 1, &fds, NULL, NULL, &timeout) > 0;
+		return select(self->fd + 1, &fds, NULL, NULL, &timeout) > 0;
 	}
 
 	void
@@ -157,7 +153,7 @@ namespace Reflex
 		size_t offset = 0;
 		while (offset < size)
 		{
-			ssize_t n = ::write(fd, bytes + offset, size - offset);
+			ssize_t n = ::write(self->fd, bytes + offset, size - offset);
 			if (n > 0)
 				offset += (size_t) n;
 			else if (errno == EINTR)
@@ -167,9 +163,9 @@ namespace Reflex
 				// the pty buffer is full; wait briefly for the child to drain it
 				fd_set fds;
 				FD_ZERO(&fds);
-				FD_SET(fd, &fds);
+				FD_SET(self->fd, &fds);
 				struct timeval timeout = {0, 100 * 1000};// 100ms
-				if (select(fd + 1, NULL, &fds, NULL, &timeout) <= 0)
+				if (select(self->fd + 1, NULL, &fds, NULL, &timeout) <= 0)
 					break;// give up to avoid blocking the UI thread forever
 			}
 			else
@@ -186,36 +182,36 @@ namespace Reflex
 		if (!is_open()) return;
 
 		struct winsize size = to_winsize(columns, rows, cell_width, cell_height);
-		ioctl(fd, TIOCSWINSZ, &size);// sends SIGWINCH to the child
+		ioctl(self->fd, TIOCSWINSZ, &size);// sends SIGWINCH to the child
 	}
 
 	void
 	PTY::close ()
 	{
-		if (fd >= 0)
+		if (self->fd >= 0)
 		{
-			::close(fd);
-			fd = -1;
+			::close(self->fd);
+			self->fd = -1;
 		}
-		if (pid >= 0)
+		if (self->pid >= 0)
 		{
-			waitpid(pid, NULL, WNOHANG);// reap if already exited
-			pid = -1;
+			waitpid(self->pid, NULL, WNOHANG);// reap if already exited
+			self->pid = -1;
 		}
 	}
 
 	bool
 	PTY::is_open () const
 	{
-		return fd >= 0;
+		return self->fd >= 0;
 	}
 
 	bool
 	PTY::is_child_alive () const
 	{
-		if (pid < 0) return false;
+		if (self->pid < 0) return false;
 
-		return waitpid(pid, NULL, WNOHANG) == 0;
+		return waitpid(self->pid, NULL, WNOHANG) == 0;
 	}
 
 	PTY::operator bool () const

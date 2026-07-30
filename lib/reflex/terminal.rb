@@ -1,3 +1,4 @@
+require 'xot/util'
 require 'xot/const_symbol_accessor'
 require 'reflex-terminal/ext'
 
@@ -38,7 +39,7 @@ module Reflex
     def spawn(*args)
       envs = args.first.is_a?(Hash) ? args.shift : {}
       args = args.compact
-      args = ['/bin/sh', '-c', args.first] if args.size == 1
+      args = shell_command(args.first) if args.size == 1
       spawn! args, envs
     end
 
@@ -96,6 +97,16 @@ module Reflex
       left:  OPTION_AS_ALT_LEFT,
       right: OPTION_AS_ALT_RIGHT
     }
+
+    private
+
+    def shell_command(command)
+      if Xot.win32?
+        [ENV['COMSPEC'] || 'cmd.exe', '/c', command]
+      else
+        ['/bin/sh', '-c', command]
+      end
+    end
 
   end# Terminal
 

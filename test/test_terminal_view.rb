@@ -31,8 +31,8 @@ class TestTerminalView < Test::Unit::TestCase
   end
 
   def test_font_accepts_name_string()
-    v = view font: 'Osaka-Mono'
-    assert_include v.font.name, 'Osaka'
+    name = Reflex::TerminalView::DEFAULT_FONT_NAME
+    assert_include view(font: name).font.name, name
   end
 
 end unless linux?# rays has no font lookup by name there

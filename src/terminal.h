@@ -5,6 +5,7 @@
 
 
 #include <stddef.h>
+#include <xot/pimpl.h>
 #include <xot/noncopyable.h>
 #include <reflex/defs.h>
 #include <reflex/terminal.h>
@@ -55,13 +56,14 @@ namespace Reflex
 
 			bool operator ! () const;
 
-		private:
+			struct Data;
 
-			int fd  = -1;
-
-			int pid = -1;
+			Xot::PImpl<Data> self;
 
 	};// PTY
+
+
+	Terminal::EnvMap Terminal_make_child_envs (const Terminal::EnvMap& envs);
 
 
 }// Reflex

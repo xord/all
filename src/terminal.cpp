@@ -551,6 +551,30 @@ namespace Reflex
 		}
 	}
 
+	Terminal::EnvMap
+	Terminal_make_child_envs (const Terminal::EnvMap& envs)
+	{
+		Terminal::EnvMap map;
+		map["TERM"]         = "xterm-256color";
+		map["COLORTERM"]    = "truecolor";
+		map["TERM_PROGRAM"] = "reflex-terminal";
+		map["LINES"]        = std::nullopt;
+		map["COLUMNS"]      = std::nullopt;
+
+		// drop what would contradict the terminal we just claimed to be: a
+		// version for someone else's TERM_PROGRAM, and terminfo pointing at
+		// another app. Session markers left by a terminal or multiplexer we
+		// happen to run inside are its own business, so the application
+		// removes those it cares about (env => nil)
+		map["TERM_PROGRAM_VERSION"] = std::nullopt;
+		map["TERMINFO"]             = std::nullopt;
+
+		for (const auto& it : envs)
+			map[it.first] = it.second;
+
+		return map;
+	}
+
 
 	Terminal::Terminal ()
 	{
@@ -741,8 +765,13 @@ namespace Reflex
 		bool login_shell = list.empty();
 		if (login_shell)
 		{
+#ifdef WIN32
+			const char* shell = getenv("COMSPEC");
+			list.emplace_back(shell ? shell : "cmd.exe");
+#else
 			const char* shell = getenv("SHELL");
 			list.emplace_back(shell ? shell : "/bin/sh");
+#endif
 		}
 
 		self->pty.spawn(
