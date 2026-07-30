@@ -8,7 +8,7 @@ Each library lives at the repository root.
 
 Ruby gems (published to RubyGems):
 `xot`, `rucy`, `beeps`, `rays`, `rays-video`, `reflex` (gem name: `reflexion`),
-`processing`, `rubysketch`, `reight`
+`reflex-terminal`, `processing`, `rubysketch`, `reight`
 
 Native runtime distributed as a CocoaPod (not a gem):
 `cruby` — embeds CRuby (MRI) into macOS / iOS apps; Objective-C.

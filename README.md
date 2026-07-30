@@ -20,6 +20,7 @@ The libraries form a stack: low-level utilities at the bottom, a 2D drawing engi
 | [`rays`](./rays)             | gem `rays`        | Hardware-accelerated 2D drawing engine on OpenGL                                                  |
 | [`rays-video`](./rays-video) | gem `rays-video`  | Video encoding / decoding with audio support, built on Rays and Beeps                             |
 | [`reflex`](./reflex)         | gem `reflexion`   | Cross-platform GUI toolkit — Window / View / Events on top of Rays                                |
+| [`reflex-terminal`](./reflex-terminal) | gem `reflex-terminal` | Terminal emulator model and view for Reflex, built on libghostty-vt                    |
 | [`processing`](./processing) | gem `processing`  | Processing-compatible creative-coding framework for CRuby                                         |
 | [`rubysketch`](./rubysketch) | gem `rubysketch`  | Processing-style game engine — adds Sprite, physics, Sound, MML, easings                          |
 | [`reight`](./reight)         | gem `reight`      | Fantasy-console-style retro game engine with built-in sprite / map / sound editors                |
@@ -62,9 +63,9 @@ Scope selectors:
 
 | Selector  | Targets                                                          |
 | --------- | ---------------------------------------------------------------- |
-| (default) | All gems (`xot`, `rucy`, `beeps`, `rays`, `rays-video`, `reflex`, `processing`, `rubysketch`, `reight`) |
+| (default) | All gems (`xot`, `rucy`, `beeps`, `rays`, `rays-video`, `reflex`, `reflex-terminal`, `processing`, `rubysketch`, `reight`) |
 | `:all`    | All repositories, including `cruby`                              |
-| `:exts`   | Modules that build a native extension (`xot`, `rucy`, `beeps`, `rays`, `rays-video`, `reflex`) |
+| `:exts`   | Modules that build a native extension (`xot`, `rucy`, `beeps`, `rays`, `rays-video`, `reflex`, `reflex-terminal`) |
 | `:gems`   | Same as default (every published Ruby gem)                       |
 | `xot` / `rays` / … | A specific module                                       |
 
