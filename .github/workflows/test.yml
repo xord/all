@@ -28,6 +28,11 @@ jobs:
       - name: packages
         run: rake verbose packages
 
+      - name: setup zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
       - name: lib
         run: rake verbose lib
 

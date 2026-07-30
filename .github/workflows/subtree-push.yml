@@ -20,8 +20,16 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.PAT }}
 
+      - name: packages
+        run: rake packages
+
+      - name: setup zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
       - name: test
-        run: rake packages test
+        run: rake test
 
       - name: subtree push
         run: rake all subtree:push
