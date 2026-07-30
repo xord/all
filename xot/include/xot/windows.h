@@ -6,7 +6,11 @@
 
 #ifdef WIN32
 	#undef  _WIN32_WINNT
-	#define _WIN32_WINNT _WIN32_WINNT_WIN7
+	#ifdef XOT_WIN32_WINNT
+		#define _WIN32_WINNT XOT_WIN32_WINNT
+	#else
+		#define _WIN32_WINNT _WIN32_WINNT_WIN7
+	#endif
 	#include <windows.h>
 	#include <windowsx.h>
 #endif
