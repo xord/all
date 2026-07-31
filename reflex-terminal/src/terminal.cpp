@@ -761,6 +761,11 @@ namespace Reflex
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
+		// a child that has run its course is in nobody's way, and on windows
+		// nothing else notices it has gone: the pseudo console holds the pipe
+		// open, so read() never sees the end that would close it on posix
+		if (!self->pty.is_child_alive()) self->pty.close();
+
 		StringList list  = args;
 		bool login_shell = list.empty();
 		if (login_shell)
@@ -778,6 +783,15 @@ namespace Reflex
 			list, envs,
 			self->columns, self->rows, self->cell_width, self->cell_height,
 			login_shell);
+	}
+
+	void
+	Terminal::close ()
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		self->pty.close();
 	}
 
 	void

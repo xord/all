@@ -158,11 +158,17 @@ namespace Reflex
 			// accumulated while no child process is attached
 			String read_pending_input ();
 
-			// starts a child process on a new pseudo terminal;
+			// starts a child process on the pseudo terminal;
 			// empty args means [$SHELL] (or [/bin/sh]).
 			// envs overrides the defaults (TERM etc.), so that the
-			// application can name itself with TERM_PROGRAM
+			// application can name itself with TERM_PROGRAM.
+			// a child that has already exited is closed first, so that
+			// a command can simply be run again
 			void spawn (const StringList& args = {}, const EnvMap& envs = {});
+
+			// ends the child process and releases the pseudo terminal.
+			// the screen is left as it is; call reset() to clear it
+			void close ();
 
 			// raw input bytes for the child process
 			void write (const char* bytes, size_t size);

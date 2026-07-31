@@ -121,6 +121,15 @@ RUCY_DEF2(spawn, args, envs)
 RUCY_END
 
 static
+RUCY_DEF0(close)
+{
+	CHECK;
+	THIS->close();
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF1(write, bytes)
 {
 	CHECK;
@@ -359,6 +368,7 @@ Init_reflex_terminal ()
 	cTerminal.define_method("feed",               feed);
 	cTerminal.define_method("read_pending_input", read_pending_input);
 	cTerminal.define_method("spawn!",             spawn);
+	cTerminal.define_method("close",              close);
 	cTerminal.define_method("write",         write);
 	cTerminal.define_method("write_key",     write_key);
 	cTerminal.define_method("write_pointer", write_pointer);

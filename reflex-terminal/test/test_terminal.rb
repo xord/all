@@ -273,6 +273,31 @@ class TestTerminal < Test::Unit::TestCase
     assert_false t.alive?
   end
 
+  def test_spawn_again_once_the_child_is_gone()
+    t = terminal 40, 6
+    2.times do |i|
+      t.reset
+      t.spawn(*ruby("print 'run#{i}'"))
+      wait_for(t) {text(t).include? "run#{i}"}
+      wait_for(t) {not t.alive?}
+      assert_include text(t), "run#{i}"
+    end
+  end
+
+  def test_close_ends_a_running_child()
+    t = terminal 40, 6
+    t.spawn(*ruby('sleep'))
+    wait_for(t) {t.alive?}
+    assert_true t.alive?
+
+    t.close
+    assert_false t.alive?
+
+    t.spawn(*ruby("print 'after close'"))
+    wait_for(t) {text(t).include? 'after close'}
+    assert_include text(t), 'after close'
+  end
+
   def test_spawn_with_args()
     t = terminal 40, 6
     t.spawn(*ruby('print "spawned"'))
