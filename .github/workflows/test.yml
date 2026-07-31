@@ -33,6 +33,9 @@ jobs:
         with:
           version: 0.16.0
 
+      - name: vendor
+        run: rake vendor
+
       - name: lib
         run: rake verbose lib
 
