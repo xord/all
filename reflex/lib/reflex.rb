@@ -60,6 +60,7 @@ require 'reflex/window'
 require 'reflex/view'
 require 'reflex/menu'
 require 'reflex/screen'
+require 'reflex/clipboard'
 
 require 'reflex/button'
 require 'reflex/text_view'
