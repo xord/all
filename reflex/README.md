@@ -74,6 +74,7 @@ $ gem install reflexion
 | `Reflex::Window`         | OS-level window with title, frame, flags (closable / resizable / fullscreen / portrait / landscape) |
 | `Reflex::View`           | Recursive UI node: position, size, transform, styles, child views, optional clipping / caching |
 | `Reflex::Screen`         | Information about a display monitor                                     |
+| `Reflex::Clipboard`      | Read and write the system clipboard                                     |
 | `Reflex::Timer`          | One-shot or interval timer that delivers `TimerEvent`                   |
 
 ### Shapes (drawing + physics body)
