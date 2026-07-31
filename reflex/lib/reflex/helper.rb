@@ -1,4 +1,5 @@
 require 'xot/universal_accessor'
+require 'reflex/ext'
 require 'reflex/point'
 require 'reflex/bounds'
 
@@ -19,6 +20,13 @@ module Reflex
     caps:     MOD_CAPS,
     scroll:   MOD_SCROLL
   }
+
+  SHORTCUT_MODIFIER_SYMBOLS = MODIFIER_SYMBOLS.slice(
+    :shift,
+    :control,
+    :alt,
+    :option,
+    :command)
 
 
   module HasFrame

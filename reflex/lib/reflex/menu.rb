@@ -1,9 +1,11 @@
 require 'forwardable'
 require 'xot/setter'
+require 'xot/bit_flag_accessor'
 require 'xot/universal_accessor'
 require 'xot/hookable'
 require 'xot/block_util'
 require 'reflex/ext'
+require 'reflex/helper'
 
 
 module Reflex
@@ -51,13 +53,7 @@ module Reflex
       self.shortcut_modifiers = mods
     end
 
-    bit_flag_accessor :shortcut_modifiers do
-      flag :shift,   MOD_SHIFT
-      flag :control, MOD_CONTROL
-      flag :alt,     MOD_ALT
-      flag :command, MOD_COMMAND
-      flag :option,  MOD_OPTION
-    end
+    bit_flag_accessor :shortcut_modifiers, **SHORTCUT_MODIFIER_SYMBOLS
 
     universal_accessor :label, :image, :shortcut_key, :shortcut_modifiers
 
