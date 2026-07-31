@@ -189,6 +189,29 @@ namespace Reflex
 			// whether the child process requested mouse reporting
 			bool is_mouse_tracking () const;
 
+			// selects the text between two cells, or the word or the
+			// logical line under one. rows follow scroll(): 0 is the top
+			// of the viewport and negative rows go back into the history,
+			// so a cell the user just clicked can be named as it is seen.
+			// the selection itself follows the text once made, staying on
+			// it as the screen scrolls
+			void     select (int x1, int y1, int x2, int y2);
+
+			// the same, taking the two cells as opposite corners of a
+			// block rather than as the ends of a run of text
+			void     select_rect (int x1, int y1, int x2, int y2);
+
+			void     select_word (int x, int y);
+
+			// the whole line, following it across soft wraps
+			void     select_line (int y);
+
+			void   deselect ();
+
+			bool has_selection () const;
+
+			String   selected_text () const;
+
 			// moves the viewport through the scrollback: 0 follows the
 			// latest output and negative rows go back into the history
 			void scroll_to (int row);

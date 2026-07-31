@@ -382,6 +382,99 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[<65;1;1M\e[<65;1;1m", t.read_pending_input
   end
 
+  def test_select_takes_the_cells_between_two_points()
+    t = terminal 20, 4
+    t.feed "hello world\r\nfoo bar baz\r\n"
+    t.update
+
+    assert_false t.selection?
+    assert_equal '', t.selected_text
+
+    t.select 0, 0, 4, 1
+    assert_true t.selection?
+    assert_equal "hello world\nfoo b", t.selected_text
+  end
+
+  def test_select_takes_the_two_cells_in_any_order()
+    t = terminal 20, 4
+    t.feed "hello world\r\nfoo bar baz\r\n"
+    t.update
+
+    t.select 4, 1, 0, 0# dragging upward names the later cell first
+    assert_equal "hello world\nfoo b", t.selected_text
+  end
+
+  def test_select_ignores_cells_off_the_screen()
+    t = terminal 20, 4
+    t.feed "hello world\r\n"
+    t.update
+
+    # 65536 would name column 0 again if the column were narrowed to the
+    # cell index type without a range check of its own
+    [[-1, 0], [100, 0], [65536, 0], [0, -100]].each do |x, y|
+      t.select x, y, 4, 0
+      assert_false t.selection?, "#{x}, #{y} as the first cell"
+
+      t.select 0, 0, x, y
+      assert_false t.selection?, "#{x}, #{y} as the second cell"
+    end
+  end
+
+  def test_select_rect_takes_a_block_of_columns()
+    t = terminal 20, 4
+    t.feed "hello world\r\nfoo bar baz\r\n"
+    t.update
+
+    t.select_rect 0, 0, 4, 1
+    assert_equal "hello\nfoo b", t.selected_text
+  end
+
+  def test_select_word()
+    t = terminal 40, 4
+    t.feed "hello world\r\n"
+    t.update
+
+    t.select_word 0, 0
+    assert_equal 'hello', t.selected_text
+
+    t.select_word 6, 0# the column decides which word
+    assert_equal 'world', t.selected_text
+  end
+
+  def test_select_line_follows_a_soft_wrap()
+    t = terminal 10, 4
+    t.feed 'aaaaabbbbbccccc'# wraps onto a second row
+    t.update
+    assert_equal ['aaaaabbbbb', 'ccccc'], t.lines[0, 2]
+
+    t.select_line 0
+    assert_equal 'aaaaabbbbbccccc', t.selected_text
+  end
+
+  def test_select_reaches_back_into_the_history()
+    t = terminal 20, 3, scrollback_bytes: 64 * 1024
+    30.times {|i| t.feed "line#{i}\r\n"}
+    t.update
+
+    # the viewport starts at line28, as test_scrollback works out, so two
+    # rows back is a line the history alone still holds
+    t.select_line(-2)
+    assert_equal 'line26', t.selected_text
+  end
+
+  def test_deselect()
+    t = terminal 20, 4
+    t.feed "hello\r\n"
+    t.update
+
+    t.select_word 0, 0
+    assert_true t.selection?
+
+    t.deselect
+    assert_false t.selection?
+    assert_equal '', t.selected_text
+  end
+
   def test_scrollback()
     t = terminal 20, 3, scrollback_bytes: 64 * 1024
     30.times {|i| t.feed "line#{i}\r\n"}

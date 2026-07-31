@@ -944,6 +944,143 @@ namespace Reflex
 		return bar;
 	}
 
+	static bool
+	to_grid_ref (GhosttyGridRef* ref, const Terminal::Data* self, int x, int y)
+	{
+		// rows are counted from the top of the viewport, so a negative one
+		// names a row of the history above it. the screen coordinates run
+		// through both, with the viewport starting at the scrollbar offset
+		int64_t row = (int64_t) get_scrollbar(self).offset + y;
+		if (row < 0 || x < 0 || x > UINT16_MAX) return false;
+
+		GhosttyPoint point       = {};
+		point.tag                = GHOSTTY_POINT_TAG_SCREEN;
+		point.value.coordinate.x = (uint16_t) x;
+		point.value.coordinate.y = (uint32_t) row;
+		return ghostty_terminal_grid_ref(self->terminal, point, ref) == GHOSTTY_SUCCESS;
+	}
+
+	static void
+	set_selection (Terminal::Data* self, const GhosttySelection* selection)
+	{
+		// the terminal copies it and takes to tracking the text it covers,
+		// so the snapshot is ours to drop once this returns
+		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_SELECTION, selection);
+	}
+
+	static void
+	select_between (Terminal::Data* self, int x1, int y1, int x2, int y2, bool rectangle)
+	{
+		GhosttySelection selection = init_sized<GhosttySelection>();
+		selection.rectangle        = rectangle;
+		if (
+			!to_grid_ref(&selection.start, self, x1, y1) ||
+			!to_grid_ref(&selection.end,   self, x2, y2))
+		{
+			return;
+		}
+
+		set_selection(self, &selection);
+	}
+
+	void
+	Terminal::select (int x1, int y1, int x2, int y2)
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		select_between(self.get(), x1, y1, x2, y2, false);
+	}
+
+	void
+	Terminal::select_rect (int x1, int y1, int x2, int y2)
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		select_between(self.get(), x1, y1, x2, y2, true);
+	}
+
+	void
+	Terminal::select_word (int x, int y)
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		auto options = init_sized<GhosttyTerminalSelectWordOptions>();
+		if (!to_grid_ref(&options.ref, self.get(), x, y)) return;
+
+		GhosttySelection selection = init_sized<GhosttySelection>();
+		GhosttyResult result       =
+			ghostty_terminal_select_word(self->terminal, &options, &selection);
+		// no word under the cell leaves the selection as it was, so that a
+		// drag through a gap does not flicker
+		if (result != GHOSTTY_SUCCESS)
+			return;
+
+		set_selection(self.get(), &selection);
+	}
+
+	void
+	Terminal::select_line (int y)
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		auto options = init_sized<GhosttyTerminalSelectLineOptions>();
+		if (!to_grid_ref(&options.ref, self.get(), 0, y)) return;
+
+		GhosttySelection selection = init_sized<GhosttySelection>();
+		GhosttyResult result       =
+			ghostty_terminal_select_line(self->terminal, &options, &selection);
+		if (result != GHOSTTY_SUCCESS)
+			return;
+
+		set_selection(self.get(), &selection);
+	}
+
+	void
+	Terminal::deselect ()
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		set_selection(self.get(), NULL);
+	}
+
+	bool
+	Terminal::has_selection () const
+	{
+		if (!*this) return false;
+
+		GhosttySelection selection = init_sized<GhosttySelection>();
+		GhosttyResult result       =
+			ghostty_terminal_get(self->terminal, GHOSTTY_TERMINAL_DATA_SELECTION, &selection);
+		return result == GHOSTTY_SUCCESS;
+	}
+
+	String
+	Terminal::selected_text () const
+	{
+		if (!*this) return "";
+
+		auto options         = init_sized<GhosttyTerminalSelectionFormatOptions>();
+		options.emit         = GHOSTTY_FORMATTER_FORMAT_PLAIN;
+		options.unwrap       = true;
+		options.trim         = true;
+		options.selection    = NULL;// the terminal's own selection
+		uint8_t* buffer      = NULL;
+		size_t length        = 0;
+		GhosttyResult result =
+			ghostty_terminal_selection_format_alloc(self->terminal, NULL, options, &buffer, &length);
+		if (result != GHOSTTY_SUCCESS)
+			return "";
+
+		String text((const char*) buffer, length);
+		ghostty_free(NULL, buffer, length);
+		return text;
+	}
+
 	// the viewport offset ghostty reports while the viewport is at the bottom
 	static uint64_t
 	bottom_offset (const GhosttyTerminalScrollbar& bar)
