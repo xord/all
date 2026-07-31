@@ -1,6 +1,7 @@
 require 'xot/bit_flag_accessor'
 require 'xot/const_symbol_accessor'
 require 'reflex/ext'
+require 'reflex/helper'
 
 
 module Reflex
@@ -22,6 +23,8 @@ module Reflex
       touch:        TOUCH,
       pen:          PEN
     }
+
+    bit_flag_reader :modifiers, **MODIFIER_SYMBOLS
 
     const_symbol_reader :action, **{
       none:   ACTION_NONE,

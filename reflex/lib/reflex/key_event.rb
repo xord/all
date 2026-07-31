@@ -1,6 +1,7 @@
 require 'xot/bit_flag_accessor'
 require 'xot/const_symbol_accessor'
 require 'reflex/ext'
+require 'reflex/helper'
 
 
 module Reflex
@@ -16,18 +17,7 @@ module Reflex
       up:   UP
     }
 
-    bit_flag_reader :modifiers, **{
-      shift:    MOD_SHIFT,
-      control:  MOD_CONTROL,
-      alt:      MOD_ALT,
-      win:      MOD_WIN,
-      option:   MOD_OPTION,
-      command:  MOD_COMMAND,
-      help:     MOD_HELP,
-      function: MOD_FUNCTION,
-      numpad:   MOD_NUMPAD,
-      caps:     MOD_CAPS,
-    }
+    bit_flag_reader :modifiers, **MODIFIER_SYMBOLS
 
     def down?()
       get_action == DOWN

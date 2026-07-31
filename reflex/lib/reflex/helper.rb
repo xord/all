@@ -6,6 +6,21 @@ require 'reflex/bounds'
 module Reflex
 
 
+  MODIFIER_SYMBOLS = {
+    shift:    MOD_SHIFT,
+    control:  MOD_CONTROL,
+    alt:      MOD_ALT,
+    win:      MOD_WIN,
+    option:   MOD_OPTION,
+    command:  MOD_COMMAND,
+    help:     MOD_HELP,
+    function: MOD_FUNCTION,
+    numpad:   MOD_NUMPAD,
+    caps:     MOD_CAPS,
+    scroll:   MOD_SCROLL
+  }
+
+
   module HasFrame
 
     def move_to(*args)

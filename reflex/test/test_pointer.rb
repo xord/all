@@ -46,7 +46,7 @@ class TestPointer < Test::Unit::TestCase
     assert_equal [2, 3],   p.position.to_a
     assert_equal 2,        p.x
     assert_equal 3,        p.y
-    assert_equal 4,        p.modifiers
+    assert_equal [:shift], p.modifiers
     assert_equal 5,        p.click_count
     assert_equal true,     p.drag?
     assert_equal 6,        p.time

@@ -50,7 +50,7 @@ class TestPointerEvent < Test::Unit::TestCase
     assert_equal [2, 3],   e.pos     .to_a
     assert_equal 2,        e.x
     assert_equal 3,        e.y
-    assert_equal 4,        e.modifiers
+    assert_equal [:shift], e.modifiers
     assert_equal 5,        e.click_count
     assert_equal true,     e.drag?
     assert_equal 6,        e.time
