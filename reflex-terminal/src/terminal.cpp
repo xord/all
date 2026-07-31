@@ -452,6 +452,13 @@ namespace Reflex
 				self->row_iterator, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS, &self->row_cells);
 			if (result != GHOSTTY_SUCCESS) continue;
 
+			// the range once per row, rather than the selected flag once per
+			// cell, as ghostty asks of a renderer that draws in spans
+			auto selection = init_sized<GhosttyRenderStateRowSelection>();
+			result         = ghostty_render_state_row_get(
+				self->row_iterator, GHOSTTY_RENDER_STATE_ROW_DATA_SELECTION, &selection);
+			bool selected  = result == GHOSTTY_SUCCESS;
+
 			Terminal::Span* span = NULL;
 			bool span_is_wide    = false;
 			int x                = -1;
@@ -494,6 +501,13 @@ namespace Reflex
 					if (result == GHOSTTY_SUCCESS)
 						flags = to_flags(style);
 				}
+
+				// a wide cell answers for the spacer that follows it, which
+				// is skipped above: a selection covering only the spacer
+				// still has to show on the character standing there
+				int right = x + (wide == GHOSTTY_CELL_WIDE_WIDE ? 1 : 0);
+				if (selected && selection.start_x <= right && x <= selection.end_x)
+					flags |= Terminal::SELECTED;
 
 				bool empty = nchars == 0;
 				if (empty && bg == Terminal::COLOR_NONE && flags == 0)

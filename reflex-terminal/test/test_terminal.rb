@@ -420,6 +420,22 @@ class TestTerminal < Test::Unit::TestCase
     end
   end
 
+  def test_select_marks_the_spans_it_covers()
+    t = terminal 20, 4
+    t.feed 'あいうえお'
+    t.update
+
+    # the second column holds the spacer of a wide cell, which the spans
+    # leave out: the character standing there still has to be marked
+    t.select 1, 0, 1, 0
+    t.update
+    assert_equal 'あ', t.selected_text
+    assert_equal(
+      [['あ', true], ['いうえお', false]],
+      t.each_span.map {|x, y, w, str, fg, bg, flags|
+        [str, (flags & T::SELECTED) != 0]})
+  end
+
   def test_select_rect_takes_a_block_of_columns()
     t = terminal 20, 4
     t.feed "hello world\r\nfoo bar baz\r\n"

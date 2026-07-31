@@ -468,6 +468,7 @@ Init_reflex_terminal ()
 	cTerminal.define_const("STRIKETHROUGH",   Reflex::Terminal::STRIKETHROUGH);
 	cTerminal.define_const("OVERLINE",        Reflex::Terminal::OVERLINE);
 	cTerminal.define_const("INVERSE",         Reflex::Terminal::INVERSE);
+	cTerminal.define_const("SELECTED",        Reflex::Terminal::SELECTED);
 	cTerminal.define_const("UNDERLINE_SHIFT", Reflex::Terminal::UNDERLINE_SHIFT);
 	cTerminal.define_const("UNDERLINE_MASK",  Reflex::Terminal::UNDERLINE_MASK);
 

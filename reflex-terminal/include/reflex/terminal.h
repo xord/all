@@ -104,7 +104,9 @@ namespace Reflex
 				// which knows the theme's default colors
 				INVERSE         = Xot::bit(7),
 
-				UNDERLINE_SHIFT = 8,
+				SELECTED        = Xot::bit(8),
+
+				UNDERLINE_SHIFT = 9,
 
 				// 3-bit field for the underline style number:
 				// 0: none, 1: single, 2: double, 3: curly, 4: dotted, 5: dashed
