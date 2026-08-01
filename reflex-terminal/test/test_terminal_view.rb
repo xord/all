@@ -52,9 +52,15 @@ class TestTerminalView < Test::Unit::TestCase
     assert_same t, v.terminal
   end
 
-  def test_font_accepts_name_string()
+  def test_font_takes_a_name_with_or_without_a_size()
+    size = Reflex::TerminalView::DEFAULT_FONT_SIZE
     name = Reflex::TerminalView::DEFAULT_FONT_NAME
-    assert_include view(font: name).font.name, name
+
+    assert_include     view(font: name)      .font.name, name
+    assert_equal size, view(font: name)      .font.size
+    assert_equal size, view(font: [name])    .font.size
+    assert_equal size, view(font: [])        .font.size
+    assert_equal 20,   view(font: [name, 20]).font.size
   end
 
   def test_a_selected_cell_draws_inverted()

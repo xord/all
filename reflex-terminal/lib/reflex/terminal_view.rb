@@ -11,13 +11,13 @@ module Reflex
 
   class TerminalView < View
 
-    DEFAULT_FONT_NAME =
+    DEFAULT_FONT_SIZE     = 14
+
+    DEFAULT_FONT_NAME     =
       if    Xot.osx?   then 'Menlo'
       elsif Xot.win32? then 'Consolas'
       else                  'DejaVu Sans Mono'
       end
-
-    DEFAULT_FONT_SIZE = 14
 
     CURSOR_BLINK_INTERVAL = 0.5
 
@@ -40,8 +40,10 @@ module Reflex
     attr_reader :terminal, :font
 
     def font=(font)
-      font         = [font] if font.is_a?(String)
-      font         = Font.new(*font[0, 1], font[1] || @font_size) if font.is_a?(Array)
+      unless font.is_a? Font
+        name, size = [font].flatten
+        font       = Font.new name, size || @font_size
+      end
       @font        = font
       @font_size   = font.size
       @cell_width  = font.width 'M'
