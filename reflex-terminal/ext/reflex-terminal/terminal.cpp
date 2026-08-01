@@ -200,6 +200,68 @@ RUCY_DEF0(is_mouse_tracking)
 RUCY_END
 
 static
+RUCY_DEF4(select, x1, y1, x2, y2)
+{
+	CHECK;
+	THIS->select(to<int>(x1), to<int>(y1), to<int>(x2), to<int>(y2));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF4(select_rect, x1, y1, x2, y2)
+{
+	CHECK;
+	THIS->select_rect(to<int>(x1), to<int>(y1), to<int>(x2), to<int>(y2));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF2(select_word, x, y)
+{
+	CHECK;
+	THIS->select_word(to<int>(x), to<int>(y));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(select_line, y)
+{
+	CHECK;
+	THIS->select_line(to<int>(y));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(deselect)
+{
+	CHECK;
+	THIS->deselect();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(has_selection)
+{
+	CHECK;
+	return value(THIS->has_selection());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_selected_text)
+{
+	CHECK;
+	Reflex::String text = THIS->selected_text();
+	return value(text.c_str(), text.size(), rb_utf8_encoding());
+}
+RUCY_END
+
+static
 RUCY_DEF1(scroll_to, row)
 {
 	CHECK;
@@ -376,6 +438,13 @@ Init_reflex_terminal ()
 	cTerminal.define_method("paste",         paste);
 	cTerminal.define_method("alive?",          is_alive);
 	cTerminal.define_method("mouse_tracking?", is_mouse_tracking);
+	cTerminal.define_method(  "select",            select);
+	cTerminal.define_method(  "select_rect",       select_rect);
+	cTerminal.define_method(  "select_word",       select_word);
+	cTerminal.define_method(  "select_line",       select_line);
+	cTerminal.define_method("deselect",          deselect);
+	cTerminal.define_method(  "selection?",    has_selection);
+	cTerminal.define_method(  "selected_text", get_selected_text);
 	cTerminal.define_method("scroll_to",  scroll_to);
 	cTerminal.define_method("scroll_by",  scroll_by);
 	cTerminal.define_method("scroll", get_scroll);
@@ -399,6 +468,7 @@ Init_reflex_terminal ()
 	cTerminal.define_const("STRIKETHROUGH",   Reflex::Terminal::STRIKETHROUGH);
 	cTerminal.define_const("OVERLINE",        Reflex::Terminal::OVERLINE);
 	cTerminal.define_const("INVERSE",         Reflex::Terminal::INVERSE);
+	cTerminal.define_const("SELECTED",        Reflex::Terminal::SELECTED);
 	cTerminal.define_const("UNDERLINE_SHIFT", Reflex::Terminal::UNDERLINE_SHIFT);
 	cTerminal.define_const("UNDERLINE_MASK",  Reflex::Terminal::UNDERLINE_MASK);
 

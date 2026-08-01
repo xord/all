@@ -104,7 +104,9 @@ namespace Reflex
 				// which knows the theme's default colors
 				INVERSE         = Xot::bit(7),
 
-				UNDERLINE_SHIFT = 8,
+				SELECTED        = Xot::bit(8),
+
+				UNDERLINE_SHIFT = 9,
 
 				// 3-bit field for the underline style number:
 				// 0: none, 1: single, 2: double, 3: curly, 4: dotted, 5: dashed
@@ -188,6 +190,29 @@ namespace Reflex
 
 			// whether the child process requested mouse reporting
 			bool is_mouse_tracking () const;
+
+			// selects the text between two cells, or the word or the
+			// logical line under one. rows follow scroll(): 0 is the top
+			// of the viewport and negative rows go back into the history,
+			// so a cell the user just clicked can be named as it is seen.
+			// the selection itself follows the text once made, staying on
+			// it as the screen scrolls
+			void     select (int x1, int y1, int x2, int y2);
+
+			// the same, taking the two cells as opposite corners of a
+			// block rather than as the ends of a run of text
+			void     select_rect (int x1, int y1, int x2, int y2);
+
+			void     select_word (int x, int y);
+
+			// the whole line, following it across soft wraps
+			void     select_line (int y);
+
+			void   deselect ();
+
+			bool has_selection () const;
+
+			String   selected_text () const;
 
 			// moves the viewport through the scrollback: 0 follows the
 			// latest output and negative rows go back into the history

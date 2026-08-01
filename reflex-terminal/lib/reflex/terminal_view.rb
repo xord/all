@@ -31,9 +31,10 @@ module Reflex
       **kwargs, &block)
 
       super(*args, **kwargs, &block)
-      @terminal, @command, @envs, @blink = terminal, command, envs, true
-      @font_size                         = font_size
-      self.font                          = font || DEFAULT_FONT_NAME
+      @terminal, @command, @envs = terminal, command, envs
+      @cursor_blink              = true
+      @font_size                 = font_size
+      self.font                  = font || DEFAULT_FONT_NAME
     end
 
     attr_reader :terminal, :font
@@ -70,8 +71,8 @@ module Reflex
     end
 
     def on_detach(e)
-      @blinker&.stop
-      @blinker = nil
+      @cursor_blinker&.stop
+      @cursor_blinker = nil
     end
 
     def on_update(e)
@@ -95,8 +96,7 @@ module Reflex
         # draw all backgrounds first, then all glyphs: alternating shapes
         # and images breaks the painter's batch and costs several times more
         t.each_span do |x, y, w, str, sfg, sbg, flags|
-          cell_bg = (flags & Terminal::INVERSE) != 0 ?
-            to_color(sfg, theme_fg) : to_color(sbg, theme_bg)
+          cell_bg = colors_inverted?(flags) ? to_color(sfg, theme_fg) : to_color(sbg, theme_bg)
           next if cell_bg == theme_bg
 
           p.fill cell_bg
@@ -104,8 +104,7 @@ module Reflex
         end
 
         t.each_span do |x, y, w, str, sfg, sbg, flags|
-          p.fill (flags & Terminal::INVERSE) != 0 ?
-            to_color(sbg, theme_bg) : to_color(sfg, theme_fg)
+          p.fill colors_inverted?(flags) ? to_color(sbg, theme_bg) : to_color(sfg, theme_fg)
           draw_span p, str, x, y
         end
 
@@ -115,6 +114,12 @@ module Reflex
 
     def on_key_down(e)
       t = @terminal || return
+
+      # typing changes what a selection covers, so it is dropped. A modifier
+      # arrives here on its own, and one held with command is a shortcut for
+      # the application rather than something typed
+      typed = e.chars && (e.modifiers & %i[command win]).empty?
+      t.deselect    if typed && t.selection?
       t.scroll_to 0 if t.scroll != 0
       t.write_key e
       restart_cursor_blink
@@ -126,15 +131,40 @@ module Reflex
 
     def on_pointer_down(e)
       focus
-      @terminal&.write_pointer e
+      t = @terminal || return
+
+      # the child process gets the mouse once it asks for it, unless shift
+      # says this drag belongs to the user: the way a terminal lets text be
+      # selected inside an application that tracks the mouse itself
+      @selecting = e.left? && (!t.mouse_tracking? || e.modifiers.include?(:shift))
+      return t.write_pointer(e) unless @selecting
+
+      x, y = to_cell e.x, e.y
+      case e.click_count
+      when 1 then t.deselect
+      when 2 then t.select_word x, y
+      else        t.select_line y
+      end
     end
 
     def on_pointer_up(e)
-      @terminal&.write_pointer e
+      t = @terminal || return
+      t.write_pointer e unless @selecting
+      @selecting = false
     end
 
     def on_pointer_move(e)
-      @terminal&.write_pointer e
+      t = @terminal || return
+      return t.write_pointer(e) unless @selecting
+      return unless e.drag? && e.click_count == 1
+
+      down     = e.down || return
+      from, to = to_cell(down.x, down.y), to_cell(e.x, e.y)
+      if from == to
+        t.deselect if t.selection?
+      else
+        t.select(*from, *to)
+      end
     end
 
     def on_wheel(e)
@@ -145,7 +175,6 @@ module Reflex
       else
         rows = (e.dy / @cell_height).round
         return if rows == 0
-
         t.scroll_by rows
         redraw
       end
@@ -157,25 +186,21 @@ module Reflex
 
     private
 
-    # Shows the cursor and starts the blink over. Typing while the
-    # cursor happens to be off would otherwise hide where the input
-    # is going, so every keystroke restarts the phase.
-    #
     def restart_cursor_blink()
-      @blink = true
-      @blinker&.stop
-      @blinker = interval CURSOR_BLINK_INTERVAL do
-        @blink = !@blink
+      @cursor_blink = true
+      @cursor_blinker&.stop
+      @cursor_blinker = interval CURSOR_BLINK_INTERVAL do
+        @cursor_blink = !@cursor_blink
         redraw
       end
       redraw
     end
 
-    # Rasterizes the glyphs the next draw will need, before drawing
-    # starts: doing it inside on_draw switches the rendering context
-    # mid-frame, which is slow enough to show the screen filling in.
-    #
     def prepare_glyphs()
+      # Rasterizing inside on_draw would switch the rendering context in the
+      # middle of a frame, and grow the atlas out from under the image the
+      # draw is copying from, so the glyphs are collected before it starts.
+
       missing = nil
       @terminal.each_span do |x, y, w, str, sfg, sbg, flags|
         str.each_char {|char| (missing ||= []) << char unless @atlas.include? char}
@@ -183,10 +208,10 @@ module Reflex
       @atlas.add missing if missing
     end
 
-    # Draws a span cell by cell, copying each glyph from the atlas:
-    # Painter#text has a large fixed cost per call, which a screenful of
-    # spans multiplies (see GlyphAtlas).
-    #
+    def colors_inverted?(flags)
+      ((flags & Terminal::INVERSE) != 0) ^ ((flags & Terminal::SELECTED) != 0)
+    end
+
     def draw_span(painter, str, x, y)
       cw, ch = @cell_width, @cell_height
       image  = @atlas.image
@@ -207,7 +232,7 @@ module Reflex
 
     def draw_cursor(painter, terminal)
       x, y, style, visible = terminal.cursor
-      return unless visible && @blink && focus?
+      return unless visible && @cursor_blink && focus?
 
       cw, ch = @cell_width, @cell_height
       color  = to_color terminal.colors[2], to_color(terminal.colors[0], 1)
@@ -221,6 +246,13 @@ module Reflex
           p.rect x * cw, y * ch, cw, ch
         end
       end
+    end
+
+    def to_cell(x, y)
+      # Clamped to the screen so that a drag leaving the view keeps selecting
+      # up to the edge, rather than asking for a cell the terminal will refuse.
+      [(x / @cell_width) .floor.clamp(0, @terminal.columns - 1),
+       (y / @cell_height).floor.clamp(0, @terminal.rows    - 1)]
     end
 
     def resize_terminal()
