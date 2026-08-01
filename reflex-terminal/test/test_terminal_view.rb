@@ -29,30 +29,19 @@ class TestTerminalView < Test::Unit::TestCase
     [view(terminal: t), t]
   end
 
-  def test_is_a_view()
-    assert_kind_of Reflex::View, view
-  end
-
-  def test_initial_state()
+  def test_initialize()
     v = view
-    assert_nil v.terminal
-    assert_equal Reflex::TerminalView::DEFAULT_FONT_SIZE, v.font_size
+    assert_kind_of Reflex::View, v
+    assert_nil     v.terminal
+    assert_equal   Reflex::TerminalView::DEFAULT_FONT_SIZE, v.font_size
   end
 
-  def test_default_font_is_monospace()
-    # an unknown name falls back to a proportional font, which would
-    # silently break the cell grid
-    font = view.font
-    assert_equal font.width('i'), font.width('W')
-  end
-
-  def test_attach_existing_terminal()
+  def test_terminal()
     t = Reflex::Terminal.new 80, 24
-    v = view terminal: t
-    assert_same t, v.terminal
+    assert_same t, view(terminal: t).terminal
   end
 
-  def test_font_takes_a_name_with_or_without_a_size()
+  def test_font()
     size = Reflex::TerminalView::DEFAULT_FONT_SIZE
     name = Reflex::TerminalView::DEFAULT_FONT_NAME
 
@@ -61,34 +50,14 @@ class TestTerminalView < Test::Unit::TestCase
     assert_equal size, view(font: [name])    .font.size
     assert_equal size, view(font: [])        .font.size
     assert_equal 20,   view(font: [name, 20]).font.size
+
+    # an unknown name falls back to a proportional font, which would
+    # silently break the cell grid
+    font = view.font
+    assert_equal font.width('i'), font.width('W')
   end
 
-  def test_a_cluster_is_one_glyph()
-    # a flag is two regional indicators the font composes into one glyph,
-    # which stepping per character would rasterize and draw as two
-    t = Reflex::Terminal.new 40, 4
-    t.feed "\u{1F1EF}\u{1F1F5}"
-    t.update
-
-    v = view terminal: t
-    v.send :prepare_glyphs
-
-    atlas = v.instance_variable_get :@atlas
-    assert_true  atlas.include?("\u{1F1EF}\u{1F1F5}")
-    assert_false atlas.include?("\u{1F1EF}")
-  end
-
-  def test_a_selected_cell_draws_inverted()
-    # the renderer shows a selection by inverting the cell's colors, so
-    # selecting inverse text has to invert it back
-    v = view
-    assert_false v.send(:colors_inverted?, 0)
-    assert_true  v.send(:colors_inverted?, Reflex::Terminal::SELECTED)
-    assert_true  v.send(:colors_inverted?, Reflex::Terminal::INVERSE)
-    assert_false v.send(:colors_inverted?, Reflex::Terminal::INVERSE | Reflex::Terminal::SELECTED)
-  end
-
-  def test_typing_drops_the_selection()
+  def test_on_key_down()
     v, t = terminal_view "hello world\r\n"
     v.on_pointer_down press(v, 0, 0, click_count: 2)
 
@@ -104,32 +73,24 @@ class TestTerminalView < Test::Unit::TestCase
     assert_false t.selection?
   end
 
-  def test_double_click_selects_a_word()
+  def test_on_pointer_down()
     v, t = terminal_view "hello world\r\n"
 
     v.on_pointer_down press(v, 0, 0, click_count: 2)
     assert_equal 'hello', t.selected_text
 
-    v.on_pointer_down press(v, 6, 0, click_count: 2)
+    v.on_pointer_down press(v, 6, 0, click_count: 2)# the column decides which word
     assert_equal 'world', t.selected_text
-  end
 
-  def test_triple_click_selects_a_line()
-    v, t = terminal_view "hello world\r\n"
     v.on_pointer_down press(v, 6, 0, click_count: 3)
     assert_equal 'hello world', t.selected_text
-  end
-
-  def test_a_single_click_starts_over()
-    v, t = terminal_view "hello world\r\n"
-    v.on_pointer_down press(v, 0, 0, click_count: 2)
     assert_true t.selection?
 
     v.on_pointer_down press(v, 0, 0)
     assert_false t.selection?
   end
 
-  def test_the_right_button_leaves_the_selection_alone()
+  def test_on_pointer_down_right_button()
     # right-clicking is how an application is asked what to do with what
     # is already picked out, so taking it away first is no use to anyone
     v, t = terminal_view "hello world\r\n"
@@ -140,7 +101,7 @@ class TestTerminalView < Test::Unit::TestCase
     assert_equal 'hello', t.selected_text
   end
 
-  def test_a_tracking_child_gets_the_mouse_unless_shift_is_held()
+  def test_on_pointer_down_while_tracking()
     v, t = terminal_view "hello world\r\n"
     t.feed "\e[?1000h\e[?1006h"# normal tracking + SGR format
     t.read_pending_input
@@ -154,8 +115,33 @@ class TestTerminalView < Test::Unit::TestCase
     assert_equal '', t.read_pending_input# taken by the selection
   end
 
-  def test_a_press_outside_the_screen_names_the_nearest_cell()
-    # a drag leaving the view should keep selecting up to the edge
+  def test_prepare_glyphs()
+    # a flag is two regional indicators the font composes into one glyph,
+    # which stepping per character would rasterize and draw as two
+    t = Reflex::Terminal.new 40, 4
+    t.feed "\u{1F1EF}\u{1F1F5}"
+    t.update
+
+    v = view terminal: t
+    v.send :prepare_glyphs
+
+    atlas = v.instance_variable_get :@atlas
+    assert_true  atlas.include?("\u{1F1EF}\u{1F1F5}")
+    assert_false atlas.include?("\u{1F1EF}")
+  end
+
+  def test_colors_inverted()
+    # the renderer shows a selection by inverting the cell's colors, so
+    # selecting inverse text has to invert it back
+    v = view
+    assert_false v.send(:colors_inverted?, 0)
+    assert_true  v.send(:colors_inverted?, Reflex::Terminal::SELECTED)
+    assert_true  v.send(:colors_inverted?, Reflex::Terminal::INVERSE)
+    assert_false v.send(:colors_inverted?, Reflex::Terminal::INVERSE | Reflex::Terminal::SELECTED)
+  end
+
+  def test_to_cell()
+    # clamped so that a drag leaving the view keeps selecting up to the edge
     v, = terminal_view "hello world\r\n"
     assert_equal [0,  0], v.send(:to_cell, -50,  -50)
     assert_equal [19, 3], v.send(:to_cell, 1e6,  1e6)

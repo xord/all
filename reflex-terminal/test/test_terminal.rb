@@ -58,7 +58,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_raise(ArgumentError) {terminal 'x', 24}
   end
 
-  def test_feed_and_spans()
+  def test_feed()
     t = terminal 80, 4
     t.feed "hi \e[31mred"
     t.update
@@ -79,14 +79,14 @@ class TestTerminal < Test::Unit::TestCase
     assert_raise(TypeError) {terminal.feed 42}
   end
 
-  def test_empty_rows_have_no_spans()
+  def test_each_span()
     t = terminal 80, 4
     t.feed "x"
     t.update
     assert_equal [0], t.each_span.map {|x, y,| y}
   end
 
-  def test_update_returns_damage_state()
+  def test_update()
     t = terminal 80, 4
     t.update# flush initial state
     t.feed "x"
@@ -94,7 +94,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_false t.update
   end
 
-  def test_attributes()
+  def test_each_span_attributes()
     t = terminal 80, 4
     t.feed "\e[1mB\e[0m \e[4mU\e[0m \e[7mR"
     t.update
@@ -146,14 +146,14 @@ class TestTerminal < Test::Unit::TestCase
     assert_kind_of Integer, bg
   end
 
-  def test_device_attributes_response()
+  def test_feed_device_attributes()
     t = terminal
     t.feed "\e[c"
     assert_match(/\e\[\?\d+/, t.read_pending_input)
     assert_equal '', t.read_pending_input
   end
 
-  def test_lines_and_reflow()
+  def test_lines()
     t = terminal 10, 4
     t.feed "aaaaabbbbbccccc"
     t.update
@@ -176,7 +176,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'hello', t.title
   end
 
-  def test_key_encoding()
+  def test_write_key()
     t = terminal
     t.write_key key_down("\r", R::KEY_ENTER)
     assert_equal "\r", t.read_pending_input
@@ -191,7 +191,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'A', t.read_pending_input
   end
 
-  def test_ctrl_keys_that_collide_with_dedicated_keys()
+  def test_write_key_ctrl()
     t = terminal
     # ghostty leaves these to the kitty protocol (fixterms), so they would
     # otherwise send nothing at all while an app has not asked for it
@@ -209,7 +209,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[105;5u", t.read_pending_input# ctrl+i stays distinct from tab
   end
 
-  def test_ctrl_key_resolved_by_the_platform()
+  def test_write_key_ctrl_platform()
     t = terminal
     # macOS hands over the control character itself for ctrl+-, which the
     # encoder has no legacy encoding for (C-_ is undo in emacs)
@@ -217,7 +217,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\x1f", t.read_pending_input
   end
 
-  def test_key_release_is_taken_from_the_event()
+  def test_write_key_release()
     t = terminal
     t.write_key key_down("\r", R::KEY_ENTER)
     assert_equal "\r", t.read_pending_input
@@ -232,7 +232,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[13;1:3u", t.read_pending_input
   end
 
-  def test_read_pending_input_is_a_byte_stream()
+  def test_read_pending_input()
     t = terminal
     t.write_key key_down("\r", R::KEY_ENTER)
     assert_equal Encoding::ASCII_8BIT, t.read_pending_input.encoding
@@ -273,7 +273,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_false t.alive?
   end
 
-  def test_spawn_again_once_the_child_is_gone()
+  def test_spawn_again()
     t = terminal 40, 6
     2.times do |i|
       t.reset
@@ -284,7 +284,7 @@ class TestTerminal < Test::Unit::TestCase
     end
   end
 
-  def test_close_ends_a_running_child()
+  def test_close()
     t = terminal 40, 6
     t.spawn(*ruby('sleep'))
     wait_for(t) {t.alive?}
@@ -338,7 +338,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_true t.alive?
   end
 
-  def test_spawn_with_single_string_runs_via_shell()
+  def test_spawn_with_string()
     t = terminal 40, 6
     # a construct only a shell expands, to show that one was involved
     command, expected = win32? ?
@@ -350,7 +350,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_include text(t), expected
   end
 
-  def test_mouse_encoding()
+  def test_write_pointer()
     t = terminal 40, 10
     t.resize 40, 10, cell_width: 8, cell_height: 16
 
@@ -369,7 +369,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[<0;2;2M", t.read_pending_input# cell (2, 2), left press
   end
 
-  def test_wheel_encoding()
+  def test_write_wheel()
     t = terminal 40, 10
     t.resize 40, 10, cell_width: 8, cell_height: 16
     t.feed "\e[?1000h\e[?1006h"
@@ -382,7 +382,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[<65;1;1M\e[<65;1;1m", t.read_pending_input
   end
 
-  def test_select_takes_the_cells_between_two_points()
+  def test_select()
     t = terminal 20, 4
     t.feed "hello world\r\nfoo bar baz\r\n"
     t.update
@@ -393,18 +393,12 @@ class TestTerminal < Test::Unit::TestCase
     t.select 0, 0, 4, 1
     assert_true t.selection?
     assert_equal "hello world\nfoo b", t.selected_text
-  end
 
-  def test_select_takes_the_two_cells_in_any_order()
-    t = terminal 20, 4
-    t.feed "hello world\r\nfoo bar baz\r\n"
-    t.update
-
-    t.select 4, 1, 0, 0# dragging upward names the later cell first
+    t.select 4, 1, 0, 0# dragging upward gives the later cell first
     assert_equal "hello world\nfoo b", t.selected_text
   end
 
-  def test_select_ignores_cells_off_the_screen()
+  def test_select_off_the_screen()
     t = terminal 20, 4
     t.feed "hello world\r\n"
     t.update
@@ -420,7 +414,7 @@ class TestTerminal < Test::Unit::TestCase
     end
   end
 
-  def test_select_marks_the_spans_it_covers()
+  def test_select_marks_spans()
     t = terminal 20, 4
     t.feed 'あいうえお'
     t.update
@@ -436,7 +430,7 @@ class TestTerminal < Test::Unit::TestCase
         [str, (flags & T::SELECTED) != 0]})
   end
 
-  def test_select_rect_takes_a_block_of_columns()
+  def test_select_rect()
     t = terminal 20, 4
     t.feed "hello world\r\nfoo bar baz\r\n"
     t.update
@@ -457,7 +451,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'world', t.selected_text
   end
 
-  def test_select_line_follows_a_soft_wrap()
+  def test_select_line()
     t = terminal 10, 4
     t.feed 'aaaaabbbbbccccc'# wraps onto a second row
     t.update
@@ -467,7 +461,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'aaaaabbbbbccccc', t.selected_text
   end
 
-  def test_select_reaches_back_into_the_history()
+  def test_select_in_the_history()
     t = terminal 20, 3, scrollback_bytes: 64 * 1024
     30.times {|i| t.feed "line#{i}\r\n"}
     t.update
@@ -577,7 +571,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[200~hello\e[201~", t.read_pending_input
   end
 
-  def test_paste_sanitizes_without_touching_the_argument()
+  def test_paste_sanitize()
     t = terminal
     # newlines would run each line as its own command, and an escape
     # sequence could drive the terminal, so both are defused
