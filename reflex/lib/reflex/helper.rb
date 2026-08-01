@@ -28,6 +28,11 @@ module Reflex
     :option,
     :command)
 
+  LOCK_MODIFIER_SYMBOLS = MODIFIER_SYMBOLS.slice(
+    :numpad,
+    :caps,
+    :scroll)
+
 
   module HasFrame
 

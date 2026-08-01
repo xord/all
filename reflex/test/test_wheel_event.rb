@@ -34,4 +34,10 @@ class TestWheelEvent < Test::Unit::TestCase
     assert_true  e3.blocked?
   end
 
+  def test_modifiers()
+    e = event 0, 0, 0, 0, 0, 0, Reflex::MOD_CONTROL | Reflex::MOD_SCROLL
+    assert_equal [:control, :scroll], e.modifiers
+    assert_equal [:control],          e.modifiers(locks: false)
+  end
+
 end# TestWheelEvent

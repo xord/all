@@ -43,4 +43,10 @@ class TestKeyEvent < Test::Unit::TestCase
     assert_nil event(DOWN, nil, 1, 2, 3).chars
   end
 
+  def test_modifiers()
+    e = event DOWN, 'a', 1, Reflex::MOD_CONTROL | Reflex::MOD_CAPS, 0
+    assert_equal [:control, :caps], e.modifiers
+    assert_equal [:control],        e.modifiers(locks: false)
+  end
+
 end# TestKeyEvent

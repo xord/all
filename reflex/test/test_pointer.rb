@@ -141,6 +141,12 @@ class TestPointer < Test::Unit::TestCase
     assert_equal 2, pointer(position: [1, 2]).y
   end
 
+  def test_modifiers()
+    p = pointer modifiers: Reflex::MOD_SHIFT | Reflex::MOD_NUMPAD
+    assert_equal [:shift, :numpad], p.modifiers
+    assert_equal [:shift],          p.modifiers(locks: false)
+  end
+
   def test_down()
     assert_equal 1, pointer(id: 1, action: DOWN).down.id # DOWN pointer's down() returns itself
     assert_nil      pointer(id: 2, action: UP)  .down

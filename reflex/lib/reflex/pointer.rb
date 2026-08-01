@@ -24,8 +24,6 @@ module Reflex
       pen:          PEN
     }
 
-    bit_flag_reader :modifiers, **MODIFIER_SYMBOLS
-
     const_symbol_reader :action, **{
       none:   ACTION_NONE,
       down:   DOWN,
@@ -36,6 +34,13 @@ module Reflex
       leave:  LEAVE,
       stay:   STAY
     }
+
+    bit_flag_reader :modifiers, **MODIFIER_SYMBOLS
+    private alias_method :get_modifiers!, :modifiers
+
+    def modifiers(locks: true)
+      locks ? get_modifiers! : (get_modifiers! - LOCK_MODIFIER_SYMBOLS.keys)
+    end
 
     def mouse?()
       (get_types & MOUSE) != 0
