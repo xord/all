@@ -2,6 +2,7 @@ require 'xot/util'
 require 'reflex/view'
 require 'reflex/font'
 require 'reflex/color'
+require 'reflex/bell_event'
 require 'reflex/terminal'
 require 'reflex-terminal/glyph_atlas'
 
@@ -33,6 +34,7 @@ module Reflex
       super(*args, **kwargs, &block)
       @terminal, @command, @envs = terminal, command, envs
       @cursor_blink              = true
+      @prev_bells                = terminal&.bells || 0
       @font_size                 = font_size
       self.font                  = font || DEFAULT_FONT_NAME
     end
@@ -78,9 +80,15 @@ module Reflex
     end
 
     def on_update(e)
-      return unless @terminal&.update
-      prepare_glyphs
-      redraw
+      t = @terminal || return
+      if t.update
+        prepare_glyphs
+        redraw
+      end
+      if t.bells > @prev_bells
+        bells, @prev_bells = t.bells - @prev_bells, t.bells
+        on_bell BellEvent.new(bells)
+      end
     end
 
     def on_draw(e)
@@ -184,6 +192,12 @@ module Reflex
 
     def on_resize(e)
       resize_terminal
+    end
+
+    def on_bell(e)
+      # Called with a BellEvent when the terminal received one or more BEL
+      # characters (0x07). What a bell means is left to the application: a
+      # sound, a flash of the window, a badge, or nothing at all.
     end
 
     private

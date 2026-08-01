@@ -176,6 +176,24 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'hello', t.title
   end
 
+  def test_bells()
+    t = terminal
+    assert_equal 0, t.bells
+
+    t.feed "hi\a"
+    assert_equal 1, t.bells
+
+    # the count only grows, so no bell is dropped between the update that
+    # takes it in and the frame that answers it
+    t.update
+    t.feed "\a\a"
+    assert_equal 3, t.bells
+
+    # the BEL ending an OSC string is a terminator, not a bell
+    t.feed "\e]0;hello\a"
+    assert_equal 3, t.bells
+  end
+
   def test_write_key()
     t = terminal
     t.write_key key_down("\r", R::KEY_ENTER)

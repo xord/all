@@ -115,6 +115,42 @@ class TestTerminalView < Test::Unit::TestCase
     assert_equal '', t.read_pending_input# taken by the selection
   end
 
+  def test_on_bell()
+    v, t = terminal_view "hello world\r\n"
+    bells = []
+    v.on(:bell) {|e| bells << e.count}
+
+    v.on_update nil
+    assert_equal [], bells
+
+    # a bell moves nothing on the screen, so it has to be picked up even
+    # when the update leaves nothing to draw
+    t.feed "\a\a"
+    v.on_update nil
+    assert_equal [2], bells
+
+    # answered once: the same bells do not come round again
+    v.on_update nil
+    assert_equal [2], bells
+  end
+
+  def test_on_bell_with_a_rung_terminal()
+    # the bells a terminal rang before the view was attached to it are
+    # not the view's to answer
+    t = Reflex::Terminal.new 20, 4
+    t.feed "\a\a"
+    v = view terminal: t
+
+    bells = []
+    v.on(:bell) {|e| bells << e.count}
+    v.on_update nil
+    assert_equal [], bells
+
+    t.feed "\a"
+    v.on_update nil
+    assert_equal [1], bells
+  end
+
   def test_prepare_glyphs()
     # a flag is two regional indicators the font composes into one glyph,
     # which stepping per character would rasterize and draw as two

@@ -26,10 +26,20 @@ def pasteable?()
 end
 
 
-terminal = Reflex::Terminal.new.spawn
-view     = Reflex::TerminalView.new terminal: terminal, font_size: 24
-shortcut = Xot.osx? ? %i[command] : %i[control shift]
-taken    = []
+terminal    = Reflex::Terminal.new.spawn
+view        = Reflex::TerminalView.new terminal: terminal, font_size: 24
+shortcut    = Xot.osx? ? %i[command] : %i[control shift]
+taken       = []
+flash       = 0
+flash_timer = nil
+
+view.after :on_draw do |e|
+  next if flash <= 0
+  e.painter.fill 1, flash
+  e.painter.rect e.bounds
+  flash *= 0.9
+  flash  = 0 if flash < 0.01
+end
 
 view.before :on_key_down do |e|
   # locks are states the keyboard is left in rather than keys held for
@@ -69,6 +79,16 @@ view.before :on_pointer_up do |e|
   p.on(:click) {|e| paste terminal}
 
   m.popup view, e.x, e.y
+end
+
+view.on :bell do |e|
+  flash = 0.8
+
+  flash_timer&.stop
+  flash_timer = view.interval do
+    view.redraw
+    flash_timer.stop if flash <= 0
+  end
 end
 
 win = Reflex::Window.new do

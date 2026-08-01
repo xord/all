@@ -59,6 +59,8 @@ namespace Reflex
 
 		String title;
 
+		longlong bells = 0;
+
 		RowList spans;
 
 		~Data ()
@@ -102,6 +104,15 @@ namespace Reflex
 		if (!self) return;
 
 		write_input(self, (const char*) data, len);
+	}
+
+	static void
+	bell_rang (GhosttyTerminal terminal, void* userdata)
+	{
+		auto* self = (Terminal::Data*) userdata;
+		if (!self) return;
+
+		self->bells += 1;
 	}
 
 	static void
@@ -617,6 +628,7 @@ namespace Reflex
 
 		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_USERDATA, self.get());
 		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY, (const void*) write_pty);
+		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_BELL,      (const void*) bell_rang);
 		ghostty_terminal_set(
 			self->terminal, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED, (const void*) title_changed);
 		if (
@@ -1227,6 +1239,12 @@ namespace Reflex
 	Terminal::title () const
 	{
 		return self->title.c_str();
+	}
+
+	longlong
+	Terminal::bells () const
+	{
+		return self->bells;
 	}
 
 	StringList

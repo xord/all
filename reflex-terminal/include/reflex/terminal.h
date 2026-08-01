@@ -240,6 +240,12 @@ namespace Reflex
 
 			const char* title () const;
 
+			// how many BEL characters (0x07) have arrived so far. it only
+			// ever grows, so a reader tells the new ones from the ones it
+			// has already answered by remembering the last count it saw,
+			// and neither feed() nor update() can drop one on the way
+			longlong bells () const;
+
 			StringList lines () const;
 
 			int            history_rows () const;
