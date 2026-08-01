@@ -21,21 +21,18 @@ module ReflexTerminal
 
     MAX_HEIGHT = 4096
 
-    def initialize(font, cell_width, cell_height)
-      @font                    = font
-      @cell_width, @row_height = cell_width, cell_height
-      @glyphs                  = {}
-      @x, @y                   = 0, 0
-      @image                   = Reflex::Image.new WIDTH, cell_height * INITIAL_ROWS
+    def initialize(font, row_height)
+      @font, @row_height = font, row_height
+      @glyphs, @x, @y    = {}, 0, 0
+      @image             = Reflex::Image.new WIDTH, row_height * INITIAL_ROWS
     end
 
     attr_reader :image, :font
 
-    # Returns [x, y, pixel_width, cell_count] of the glyph within the
-    # atlas image, or nil when the atlas can no longer grow.
+    # Returns [x, y, pixel_width] of the glyph within the atlas image, or
+    # nil when it holds no such glyph.
     #
     def [](str)
-      add [str] unless @glyphs.key? str
       @glyphs[str]
     end
 
@@ -88,10 +85,7 @@ module ReflexTerminal
 
         x, y = @x, @y
         @x  += width
-
-        # measuring a glyph hits the font engine, so keep the cell count
-        # here instead of asking again for every character drawn
-        [x, y, width, (width / @cell_width).round.clamp(1..)]
+        [x, y, width]
       end
 
       def grow_if_needed()

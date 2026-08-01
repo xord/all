@@ -48,7 +48,7 @@ module Reflex
       @font_size   = font.size
       @cell_width  = font.width 'M'
       @cell_height = font.height.ceil
-      @atlas       = ReflexTerminal::GlyphAtlas.new font, @cell_width, @cell_height
+      @atlas       = ReflexTerminal::GlyphAtlas.new font, @cell_height
       @atlas.add (0x20..0x7e).map(&:chr)# printable ascii up front
       resize_terminal
       redraw
@@ -107,7 +107,7 @@ module Reflex
 
         t.each_span do |x, y, w, str, sfg, sbg, flags|
           p.fill colors_inverted?(flags) ? to_color(sbg, theme_bg) : to_color(sfg, theme_fg)
-          draw_span p, str, x, y
+          draw_span p, str, x, y, w
         end
 
         draw_cursor p, t
@@ -205,7 +205,7 @@ module Reflex
 
       missing = nil
       @terminal.each_span do |x, y, w, str, sfg, sbg, flags|
-        str.each_char {|char| (missing ||= []) << char unless @atlas.include? char}
+        str.each_grapheme_cluster {|g| (missing ||= []) << g unless @atlas.include? g}
       end
       @atlas.add missing if missing
     end
@@ -214,21 +214,28 @@ module Reflex
       ((flags & Terminal::INVERSE) != 0) ^ ((flags & Terminal::SELECTED) != 0)
     end
 
-    def draw_span(painter, str, x, y)
-      cw, ch = @cell_width, @cell_height
-      image  = @atlas.image
-      y     *= ch
+    def draw_span(painter, str, x, y, width)
+      cw, ch   = @cell_width, @cell_height
+      image    = @atlas.image
+      y       *= ch
+      clusters = str.grapheme_clusters
+      return if clusters.empty?
 
-      str.each_char do |char|
-        glyph = @atlas[char]
+      # spans break where narrow meets wide, so every cluster in one covers
+      # the same number of cells. Taking it from the width the terminal
+      # reports keeps the grid on what it says rather than on how the font
+      # happens to measure the glyph
+      cells = width / clusters.size
+
+      clusters.each do |cluster|
+        glyph = @atlas[cluster]
         if glyph
-          gx, gy, gw, cells = glyph
+          gx, gy, gw = glyph
           painter.image image, gx, gy, gw, ch, x * cw, y, gw, ch
-          x += cells
         else
-          painter.text char, x * cw, y# atlas full: fall back
-          x += 1
+          painter.text cluster, x * cw, y# atlas full: fall back
         end
+        x += cells
       end
     end
 

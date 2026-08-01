@@ -63,6 +63,21 @@ class TestTerminalView < Test::Unit::TestCase
     assert_equal 20,   view(font: [name, 20]).font.size
   end
 
+  def test_a_cluster_is_one_glyph()
+    # a flag is two regional indicators the font composes into one glyph,
+    # which stepping per character would rasterize and draw as two
+    t = Reflex::Terminal.new 40, 4
+    t.feed "\u{1F1EF}\u{1F1F5}"
+    t.update
+
+    v = view terminal: t
+    v.send :prepare_glyphs
+
+    atlas = v.instance_variable_get :@atlas
+    assert_true  atlas.include?("\u{1F1EF}\u{1F1F5}")
+    assert_false atlas.include?("\u{1F1EF}")
+  end
+
   def test_a_selected_cell_draws_inverted()
     # the renderer shows a selection by inverting the cell's colors, so
     # selecting inverse text has to invert it back
