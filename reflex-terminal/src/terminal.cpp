@@ -63,6 +63,8 @@ namespace Reflex
 
 		RowList spans;
 
+		std::vector<uint> cell_offsets;
+
 		~Data ()
 		{
 			if (mouse_event)   ghostty_mouse_event_free(mouse_event);
@@ -104,6 +106,19 @@ namespace Reflex
 		if (!self) return;
 
 		write_input(self, (const char*) data, len);
+	}
+
+	static void
+	set_default_modes (GhosttyTerminal terminal)
+	{
+		// ghostty turns this on itself (grapheme-width-method defaults to
+		// unicode), and it is what makes a cell hold a whole grapheme
+		// cluster. without it a flag arrives as two regional indicators in
+		// two cells, and the renderer that composes them into one glyph
+		// and the child that was told they are four columns wide disagree
+		// about where the next character goes.
+		// a reset clears the modes, so this has to be said again after one
+		ghostty_terminal_mode_set(terminal, GHOSTTY_MODE_GRAPHEME_CLUSTER, true);
 	}
 
 	static void
@@ -354,8 +369,7 @@ namespace Reflex
 	}
 
 	static void
-	encode_key (
-		Terminal::Data* self, const KeyEvent& event, GhosttyKeyAction action)
+	encode_key (Terminal::Data* self, const KeyEvent& event, GhosttyKeyAction action)
 	{
 		ghostty_key_encoder_setopt_from_terminal(self->key_encoder, self->terminal);
 		ghostty_key_encoder_setopt(
@@ -448,6 +462,7 @@ namespace Reflex
 	rebuild_spans (Terminal::Data* self)
 	{
 		self->spans.clear();
+		self->cell_offsets.clear();
 
 		GhosttyResult result = ghostty_render_state_get(
 			self->render_state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &self->row_iterator);
@@ -557,17 +572,21 @@ namespace Reflex
 					span_is_wide != is_wide)
 				{
 					row.emplace_back();
-					span         = &row.back();
-					span->x      = x;
-					span->width  = 0;
-					span->fg     = fg;
-					span->bg     = bg;
-					span->flags  = flags;
-					span_is_wide = is_wide;
+					span              = &row.back();
+					span->x           = x;
+					span->width       = 0;
+					span->cell_offset = self->cell_offsets.size();
+					span->cell_size   = 0;
+					span->fg          = fg;
+					span->bg          = bg;
+					span->flags       = flags;
+					span_is_wide      = is_wide;
 				}
 
-				span->text  += utf8;
-				span->width += cell_width;
+				self->cell_offsets.push_back(span->text.size());
+				span->cell_size += 1;
+				span->text      += utf8;
+				span->width     += cell_width;
 			}
 
 			bool clean = false;
@@ -625,6 +644,8 @@ namespace Reflex
 		// register the cell pixel size (required right after creation)
 		ghostty_terminal_resize(
 			self->terminal, options.cols, options.rows, self->cell_width, self->cell_height);
+
+		set_default_modes(self->terminal);
 
 		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_USERDATA, self.get());
 		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY, (const void*) write_pty);
@@ -721,6 +742,7 @@ namespace Reflex
 			invalid_state_error(__FILE__, __LINE__);
 
 		ghostty_terminal_reset(self->terminal);
+		set_default_modes(self->terminal);
 	}
 
 	void
@@ -1168,12 +1190,6 @@ namespace Reflex
 		return (OptionAsAlt) self->option_as_alt;
 	}
 
-	const Terminal::RowList&
-	Terminal::spans () const
-	{
-		return self->spans;
-	}
-
 	int
 	Terminal::columns () const
 	{
@@ -1239,12 +1255,6 @@ namespace Reflex
 	Terminal::title () const
 	{
 		return self->title.c_str();
-	}
-
-	longlong
-	Terminal::bells () const
-	{
-		return self->bells;
 	}
 
 	StringList
@@ -1345,6 +1355,24 @@ namespace Reflex
 		ghostty_formatter_free(formatter);
 
 		return lines;
+	}
+
+	longlong
+	Terminal::bells () const
+	{
+		return self->bells;
+	}
+
+	const Terminal::RowList&
+	Terminal::spans () const
+	{
+		return self->spans;
+	}
+
+	const std::vector<uint>&
+	Terminal::cell_offsets () const
+	{
+		return self->cell_offsets;
 	}
 
 	Terminal::operator bool () const

@@ -288,6 +288,17 @@ RUCY_DEF0(get_scroll)
 RUCY_END
 
 static
+RUCY_DEF0(each_line)
+{
+	CHECK;
+
+	for (const auto& line : THIS->lines())
+		yield(value(line.c_str(), line.size(), rb_utf8_encoding()));
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF0(each_span)
 {
 	CHECK;
@@ -305,17 +316,6 @@ RUCY_DEF0(each_span)
 				value(span.flags));
 		}
 	}
-	return self;
-}
-RUCY_END
-
-static
-RUCY_DEF0(each_line)
-{
-	CHECK;
-
-	for (const auto& line : THIS->lines())
-		yield(value(line.c_str(), line.size(), rb_utf8_encoding()));
 	return self;
 }
 RUCY_END
@@ -393,14 +393,6 @@ RUCY_DEF0(get_title)
 RUCY_END
 
 static
-RUCY_DEF0(get_bells)
-{
-	CHECK;
-	return value(THIS->bells());
-}
-RUCY_END
-
-static
 RUCY_DEF0(get_history_rows)
 {
 	CHECK;
@@ -417,6 +409,14 @@ RUCY_DEF2(get_history_lines, offset, size)
 	for (const auto& line : THIS->get_history_lines(to<int>(offset), to<int>(size)))
 		result.push(value(line.c_str(), line.size(), rb_utf8_encoding()));
 	return result;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_bells)
+{
+	CHECK;
+	return value(THIS->bells());
 }
 RUCY_END
 
@@ -456,8 +456,8 @@ Init_reflex_terminal ()
 	cTerminal.define_method("scroll_to",  scroll_to);
 	cTerminal.define_method("scroll_by",  scroll_by);
 	cTerminal.define_method("scroll", get_scroll);
-	cTerminal.define_private_method("each_span!", each_span);
 	cTerminal.define_private_method("each_line!", each_line);
+	cTerminal.define_private_method("each_span!", each_span);
 	cTerminal.define_method("option_as_alt=", set_option_as_alt);
 	cTerminal.define_method("option_as_alt",  get_option_as_alt);
 	cTerminal.define_method("columns", get_columns);
@@ -465,9 +465,9 @@ Init_reflex_terminal ()
 	cTerminal.define_method("cursor",  get_cursor);
 	cTerminal.define_method("colors",  get_colors);
 	cTerminal.define_method("title",   get_title);
-	cTerminal.define_method("bells",   get_bells);
 	cTerminal.define_method(            "history_rows",   get_history_rows);
 	cTerminal.define_private_method("get_history_lines!", get_history_lines);
+	cTerminal.define_method("bells", get_bells);
 
 	cTerminal.define_const("BOLD",            Reflex::Terminal::BOLD);
 	cTerminal.define_const("ITALIC",          Reflex::Terminal::ITALIC);
