@@ -57,6 +57,27 @@ class TestTerminalView < Test::Unit::TestCase
     assert_equal font.width('i'), font.width('W')
   end
 
+  def glyph_count(view)
+    view.instance_variable_get(:@renderer).glyph_count
+  end
+
+  def test_on_update()
+    # a terminal handed over after it had stopped changing still has to be
+    # baked, or every glyph on it is drawn the slow way for good
+    v, t = terminal_view "hello\r\n"
+    assert_false t.update, 'nothing left for the update to report'
+
+    v.on_update nil
+    assert_operator glyph_count(v), :>, 0
+
+    # the atlas holds glyphs of one size, so a new font throws it away and
+    # the next update has to fill it again
+    v.font_size = 20
+    assert_equal 0, glyph_count(v)
+    v.on_update nil
+    assert_operator glyph_count(v), :>, 0
+  end
+
   def test_on_key_down()
     v, t = terminal_view "hello world\r\n"
     v.on_pointer_down press(v, 0, 0, click_count: 2)
@@ -149,31 +170,6 @@ class TestTerminalView < Test::Unit::TestCase
     t.feed "\a"
     v.on_update nil
     assert_equal [1], bells
-  end
-
-  def test_prepare_glyphs()
-    # a flag is two regional indicators the font composes into one glyph,
-    # which stepping per character would rasterize and draw as two
-    t = Reflex::Terminal.new 40, 4
-    t.feed "\u{1F1EF}\u{1F1F5}"
-    t.update
-
-    v = view terminal: t
-    v.send :prepare_glyphs
-
-    atlas = v.instance_variable_get :@atlas
-    assert_true  atlas.include?("\u{1F1EF}\u{1F1F5}")
-    assert_false atlas.include?("\u{1F1EF}")
-  end
-
-  def test_colors_inverted()
-    # the renderer shows a selection by inverting the cell's colors, so
-    # selecting inverse text has to invert it back
-    v = view
-    assert_false v.send(:colors_inverted?, 0)
-    assert_true  v.send(:colors_inverted?, Reflex::Terminal::SELECTED)
-    assert_true  v.send(:colors_inverted?, Reflex::Terminal::INVERSE)
-    assert_false v.send(:colors_inverted?, Reflex::Terminal::INVERSE | Reflex::Terminal::SELECTED)
   end
 
   def test_to_cell()

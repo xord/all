@@ -40,7 +40,7 @@ namespace ReflexTerminal
 			~Renderer ();
 
 			// throws the atlas away and measures the cell again
-			void set_font (const Font& font);
+			void    set_font (const Font& font);
 
 			const Font& font () const;
 
@@ -51,7 +51,8 @@ namespace ReflexTerminal
 			coord cell_height () const;
 
 			// rasterizes every glyph on the screen the atlas has not seen
-			// before. this paints into an offscreen image, which switches
+			// before, seeding an empty one with printable ascii as it
+			// goes. this paints into an offscreen image, which switches
 			// the rendering context and replaces the image whenever it
 			// grows, so it must not run inside a frame being drawn
 			void bake_glyphs (const Reflex::Terminal& terminal);

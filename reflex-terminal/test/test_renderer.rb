@@ -44,16 +44,26 @@ class TestRenderer < Test::Unit::TestCase
   end
 
   def test_bake_glyphs()
-    r = renderer
+    r     = renderer
+    ascii = (0x20..0x7e).size
     assert_equal 0, r.glyph_count
 
+    # printable ascii comes along on the first bake, so that a screen of
+    # it never sends the renderer back to rasterize one character at a
+    # time. it also leaves something in the atlas no matter what was on
+    # show, which is how a caller tells that it has been baked
     r.bake_glyphs terminal('aab')
-    assert_equal 2, r.glyph_count, 'a glyph is rasterized once'
+    assert_equal ascii, r.glyph_count
+
+    # the seed does not swallow what is not in it, and a cluster on the
+    # screen more than once still stands for one glyph
+    r.bake_glyphs terminal('あああい')
+    assert_equal ascii + 2, r.glyph_count
 
     # a cell holds a whole cluster, so a flag is one glyph the font
     # composes rather than the two regional indicators it is written with
     r.bake_glyphs terminal("\u{1F1EF}\u{1F1F5}")
-    assert_equal 3, r.glyph_count
+    assert_equal ascii + 3, r.glyph_count
   end
 
   def test_draw()
@@ -76,6 +86,19 @@ class TestRenderer < Test::Unit::TestCase
     t.feed "\e]10;#00ff00\a\e]11;#800000\a"
     t.update
     assert_equal [0x80, 0, 0], pixels(r, t).first.first(3).map {|c| (c * 255).round}
+  end
+
+  def test_draw_inverted()
+    # a cell shows a selection by swapping its colors, so selecting text
+    # that is already inverse has to swap it back
+    r = renderer
+    t = terminal "\e[7mhello"
+    r.bake_glyphs t
+    assert_equal [1, 1, 1, 1], pixels(r, t).first
+
+    t.select 0, 0, 4, 0
+    t.update
+    assert_equal [0, 0, 0, 1], pixels(r, t).first
   end
 
   def test_draw_without_a_font()

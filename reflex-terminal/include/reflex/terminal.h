@@ -20,9 +20,10 @@ namespace Reflex
 
 	// A headless terminal emulator built on libghostty-vt.
 	// spawn() a child process, call update() once per frame to pump the
-	// PTY, and draw the screen from spans(). Without a child process it
-	// still works as a pure emulator: feed() bytes in and take the bytes
-	// to be sent back (query responses etc.) from read_pending_input().
+	// PTY, and hand it to a ReflexTerminal::Renderer to draw -- or read
+	// spans() and draw it yourself. Without a child process it still
+	// works as a pure emulator: feed() bytes in and take the bytes to be
+	// sent back (query responses etc.) from read_pending_input().
 	class Terminal
 	{
 

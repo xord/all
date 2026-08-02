@@ -1,9 +1,10 @@
 #include <reflex-terminal/renderer.h>
 
 
-#include <map>
+#include <assert.h>
 #include <math.h>
 #include <vector>
+#include <map>
 #include <rays/image.h>
 #include <reflex/exception.h>
 
@@ -62,12 +63,55 @@ namespace ReflexTerminal
 	};// Renderer::Data
 
 
+	Renderer::Renderer ()
+	{
+	}
+
+	Renderer::Renderer (const Font& font)
+	{
+		set_font(font);
+	}
+
+	Renderer::~Renderer ()
+	{
+	}
+
 	static void
 	reset_atlas (Renderer::Data* self)
 	{
 		self->glyphs.clear();
 		self->x = self->y = 0;
 		self->atlas       = Image(ATLAS_WIDTH, self->cell_height * ATLAS_INITIAL_ROWS);
+	}
+
+	void
+	Renderer::set_font (const Font& font)
+	{
+		if (!font)
+			argument_error(__FILE__, __LINE__);
+
+		self->font        = font;
+		self->cell_width  = font.get_width("M");
+		self->cell_height = ceil(font.get_height());
+		reset_atlas(self.get());
+	}
+
+	const Font&
+	Renderer::font () const
+	{
+		return self->font;
+	}
+
+	coord
+	Renderer::cell_width () const
+	{
+		return self->cell_width;
+	}
+
+	coord
+	Renderer::cell_height () const
+	{
+		return self->cell_height;
 	}
 
 	static bool
@@ -142,6 +186,68 @@ namespace ReflexTerminal
 		self->glyphs.insert(added.begin(), added.end());
 	}
 
+	template <typename FUN>
+	static void
+	add_missing_glyphs (Renderer::Data* self, FUN fun)
+	{
+		assert(self->missing.empty());
+
+		fun();
+		if (self->missing.empty())
+			return;
+
+		add_glyphs(self, self->missing);
+		self->missing.clear();
+	}
+
+	void
+	Renderer::bake_glyphs (const Terminal& terminal)
+	{
+		if (!self->font)
+			invalid_state_error(__FILE__, __LINE__);
+
+		// an empty atlas is seeded with printable ascii, so that a screen
+		// of it is never handed back to be rasterized a character at a
+		// time. it also leaves the atlas holding something no matter what
+		// the screen showed, which is how a caller tells it has been baked
+		if (self->glyphs.empty())
+		{
+			// baked on its own, so that the walk that follows collects
+			// only what the seed does not already cover
+			add_missing_glyphs(self.get(), [&]()
+			{
+				for (char c = 0x20; c <= 0x7e; ++c)
+					self->missing.emplace_back(&c, 1);
+			});
+		}
+
+		add_missing_glyphs(self.get(), [&]()
+		{
+			for (const Terminal::SpanList& row : terminal.spans())
+			{
+				for (const Terminal::Span& span : row)
+				{
+					const uint* offsets = terminal.cell_offsets().data() + span.cell_offset;
+					for (uint i = 0; i < span.cell_size; ++i)
+					{
+						uint begin = offsets[i];
+						uint end   = (i + 1) < span.cell_size ? offsets[i + 1] : (uint) span.text.size();
+
+						String text(span.text.data() + begin, end - begin);
+						if (self->glyphs.find(text) == self->glyphs.end())
+							self->missing.emplace_back(text);
+					}
+				}
+			}
+		});
+	}
+
+	size_t
+	Renderer::glyph_count () const
+	{
+		return self->glyphs.size();
+	}
+
 	static Color
 	to_color (int rgb, const Color& fallback)
 	{
@@ -158,83 +264,6 @@ namespace ReflexTerminal
 	colors_inverted (uint flags)
 	{
 		return ((flags & Terminal::INVERSE) != 0) != ((flags & Terminal::SELECTED) != 0);
-	}
-
-
-	Renderer::Renderer ()
-	{
-	}
-
-	Renderer::Renderer (const Font& font)
-	{
-		set_font(font);
-	}
-
-	Renderer::~Renderer ()
-	{
-	}
-
-	void
-	Renderer::set_font (const Font& font)
-	{
-		if (!font)
-			argument_error(__FILE__, __LINE__);
-
-		self->font        = font;
-		self->cell_width  = font.get_width("M");
-		self->cell_height = ceil(font.get_height());
-		reset_atlas(self.get());
-	}
-
-	const Font&
-	Renderer::font () const
-	{
-		return self->font;
-	}
-
-	coord
-	Renderer::cell_width () const
-	{
-		return self->cell_width;
-	}
-
-	coord
-	Renderer::cell_height () const
-	{
-		return self->cell_height;
-	}
-
-	void
-	Renderer::bake_glyphs (const Terminal& terminal)
-	{
-		if (!self->font)
-			invalid_state_error(__FILE__, __LINE__);
-
-		self->missing.clear();
-		for (const Terminal::SpanList& row : terminal.spans())
-		{
-			for (const Terminal::Span& span : row)
-			{
-				const uint* offsets = terminal.cell_offsets().data() + span.cell_offset;
-				for (uint i = 0; i < span.cell_size; ++i)
-				{
-					uint begin = offsets[i];
-					uint end   = (i + 1) < span.cell_size ? offsets[i + 1] : (uint) span.text.size();
-
-					String text(span.text.data() + begin, end - begin);
-					if (self->glyphs.find(text) == self->glyphs.end())
-						self->missing.emplace_back(text);
-				}
-			}
-		}
-		if (!self->missing.empty())
-			add_glyphs(self.get(), self->missing);
-	}
-
-	size_t
-	Renderer::glyph_count () const
-	{
-		return self->glyphs.size();
 	}
 
 	void
