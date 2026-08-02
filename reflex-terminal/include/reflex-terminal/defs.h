@@ -14,4 +14,23 @@
 #endif
 
 
+namespace ReflexTerminal
+{
+
+
+	using namespace Xot   ::Types;
+
+	using namespace Rays  ::Types;
+
+	using namespace Reflex::Types;
+
+
+	using Rays::String;
+
+	using Rays::StringList;
+
+
+}// ReflexTerminal
+
+
 #endif//EOH

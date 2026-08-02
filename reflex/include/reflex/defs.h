@@ -44,32 +44,41 @@ namespace Reflex
 {
 
 
-	using namespace Xot::Types;
+	namespace Types
+	{
+
+		using Rays::Coord2;
+		using Rays::Coord3;
+		using Rays::Coord4;
+		using Rays::Point;
+		using Rays::Bounds;
+		using Rays::Color;
+		using Rays::Matrix;
+
+		using Rays::ColorSpace;
+		using Rays::Polyline;
+		using Rays::Polygon;
+		using Rays::Bitmap;
+		using Rays::Image;
+		using Rays::Font;
+		using Rays::Shader;
+
+		using Rays::Painter;
+
+
+	}// Types
+
+
+	using namespace Xot   ::Types;
+
+	using namespace Rays  ::Types;
+
+	using namespace Reflex::Types;
+
 
 	using Rays::String;
 
 	using Rays::StringList;
-
-
-	using Rays::coord;
-
-	using Rays::Coord2;
-	using Rays::Coord3;
-	using Rays::Coord4;
-	using Rays::Point;
-	using Rays::Bounds;
-	using Rays::Color;
-	using Rays::Matrix;
-
-	using Rays::ColorSpace;
-	using Rays::Polyline;
-	using Rays::Polygon;
-	using Rays::Bitmap;
-	using Rays::Image;
-	using Rays::Font;
-	using Rays::Shader;
-
-	using Rays::Painter;
 
 
 	enum KeyCode

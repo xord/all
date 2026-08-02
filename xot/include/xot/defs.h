@@ -54,7 +54,7 @@ namespace Xot
 	}// Types
 
 
-	using namespace Types;
+	using namespace Xot::Types;
 
 
 }// Xot

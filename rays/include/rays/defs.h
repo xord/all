@@ -22,14 +22,24 @@ namespace Rays
 {
 
 
-	using namespace Xot::Types;
+	namespace Types
+	{
+
+
+		typedef float coord;
+
+
+	}// Types
+
+
+	using namespace Xot ::Types;
+
+	using namespace Rays::Types;
+
 
 	using Xot::String;
 
 	using Xot::StringList;
-
-
-	typedef float coord;
 
 
 	enum CapType
