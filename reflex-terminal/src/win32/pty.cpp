@@ -245,6 +245,7 @@ namespace Reflex
 			close();// the pipe is gone with the pseudo console that wrote to it
 			return 0;
 		}
+
 		// an exited child is deliberately not taken as the end of the output:
 		// the pseudo console pumps it on a thread of its own, so bytes
 		// written just before the exit may still be on their way. Reading

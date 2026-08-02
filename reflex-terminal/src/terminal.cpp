@@ -12,12 +12,13 @@ namespace Reflex
 {
 
 
-	// GHOSTTY_INIT_SIZED() is a C compound literal, so provide a C++
-	// equivalent for the sized-struct ABI pattern.
 	template <typename T>
 	static T
 	init_sized ()
 	{
+		// GHOSTTY_INIT_SIZED() is a C compound literal, so this is the C++
+		// equivalent for the sized-struct ABI pattern
+
 		T t = {};
 		t.size = sizeof(T);
 		return t;
@@ -147,6 +148,11 @@ namespace Reflex
 	static uint
 	to_flags (const GhosttyStyle& style)
 	{
+		// INVERSE is reported rather than applied: swapping fg/bg is left to
+		// the renderer, which is the one that knows the theme's default colors.
+		// UNDERLINE_MASK is a 3-bit field holding ghostty's style number --
+		// 0: none, 1: single, 2: double, 3: curly, 4: dotted, 5: dashed
+
 		uint flags = 0;
 		if (style.bold)          flags |= Terminal::BOLD;
 		if (style.italic)        flags |= Terminal::ITALIC;
@@ -343,8 +349,8 @@ namespace Reflex
 	static char
 	to_c0 (GhosttyKey key, GhosttyMods mods, const char* chars)
 	{
-		// What to send when the encoder produced nothing at all, which happens
-		// for a few ctrl combinations that have no legacy encoding.
+		// what to send when the encoder produced nothing at all, which happens
+		// for a few ctrl combinations that have no legacy encoding
 
 		// the platform resolves some of these itself using the real
 		// keyboard layout (macOS turns ctrl+- into 0x1f), which beats
@@ -626,6 +632,10 @@ namespace Reflex
 
 	Terminal::Terminal (int columns, int rows, size_t scrollback_bytes)
 	{
+		// scrollback_bytes is a memory budget rather than a line count, since
+		// how many lines fit depends on how wide the terminal is. 0 keeps no
+		// scrollback at all
+
 		if (
 			columns <= 0 || UINT16_MAX < columns ||
 			rows    <= 0 || UINT16_MAX < rows)
@@ -795,6 +805,10 @@ namespace Reflex
 	String
 	Terminal::read_pending_input ()
 	{
+		// the bytes to be sent to the child process -- query responses and
+		// encoded input events, in the order they were generated -- accumulated
+		// while no child process is attached
+
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
@@ -1129,10 +1143,11 @@ namespace Reflex
 		return text;
 	}
 
-	// the viewport offset ghostty reports while the viewport is at the bottom
 	static uint64_t
 	bottom_offset (const GhosttyTerminalScrollbar& bar)
 	{
+		// the viewport offset ghostty reports while the viewport is at the bottom
+
 		return bar.total > bar.len ? bar.total - bar.len : 0;
 	}
 
@@ -1360,6 +1375,11 @@ namespace Reflex
 	longlong
 	Terminal::bells () const
 	{
+		// how many BEL characters (0x07) have arrived so far. it only ever
+		// grows, so a reader tells the new ones from the ones it has already
+		// answered by remembering the last count it saw, and neither feed()
+		// nor update() can drop one on the way
+
 		return self->bells;
 	}
 

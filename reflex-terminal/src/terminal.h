@@ -15,7 +15,6 @@ namespace Reflex
 {
 
 
-	// A pseudo terminal with a child process attached to the slave side.
 	class PTY : public Xot::NonCopyable
 	{
 
@@ -25,20 +24,13 @@ namespace Reflex
 
 			~PTY ();
 
-			// args[0] is the command; each platform marshals args into
-			// its own form (argv array on POSIX, command line on Windows).
-			// envs is applied on top of the defaults set for the child.
-			// login follows the terminal convention of prefixing argv[0]
-			// with '-' so that shells read their login profiles
 			void spawn (
 				const StringList& args, const Terminal::EnvMap& envs,
 				int columns, int rows, int cell_width, int cell_height,
 				bool login = false);
 
-			// nonblocking; returns 0 if nothing is available
 			size_t read (char* buffer, size_t size);
 
-			// waits until read() would return data, up to timeout
 			bool wait_readable (int timeout_msec) const;
 
 			void write (const char* bytes, size_t size);

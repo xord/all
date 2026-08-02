@@ -123,6 +123,10 @@ namespace Reflex
 	size_t
 	PTY::read (char* buffer, size_t size)
 	{
+		// nonblocking: returns 0 when nothing is available, which a caller
+		// cannot tell apart from the child having exited -- is_child_alive()
+		// answers that
+
 		if (!is_open()) return 0;
 
 		ssize_t n = ::read(self->fd, buffer, size);

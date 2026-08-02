@@ -28,10 +28,10 @@ namespace ReflexTerminal
 	};
 
 
-	// A glyph's place in the atlas image. width is its own, so that a
-	// wide character does not run over the slot after it.
 	struct Glyph
 	{
+		// a glyph's place in the atlas image. width is its own, so that a
+		// wide character does not run over the slot after it
 
 		coord x, y, width;
 
@@ -50,6 +50,8 @@ namespace ReflexTerminal
 		// where the next glyph goes
 		coord x = 0, y = 0;
 
+		// Painter::text() flushes the batch and uploads a texture on every
+		// call, so every glyph is rasterized here once and copied from
 		Image atlas;
 
 		// the empty Glyph of a character too wide for the atlas is kept
@@ -153,14 +155,13 @@ namespace ReflexTerminal
 		return glyph;
 	}
 
-	// Rasterizes every unknown glyph in one pass.
-	//
-	// Each paint switches the offscreen rendering context, which costs
-	// far more than the drawing itself, so they are collected first and
-	// drawn together.
 	static void
 	add_glyphs (Renderer::Data* self, const std::vector<String>& texts)
 	{
+		// each paint switches the offscreen rendering context, which costs
+		// far more than the drawing itself, so the unknown glyphs are
+		// collected first and drawn together
+
 		std::map<String, Glyph> added;
 		for (const String& text : texts)
 		{
@@ -203,6 +204,10 @@ namespace ReflexTerminal
 	void
 	Renderer::bake_glyphs (const Terminal& terminal)
 	{
+		// baking paints into the offscreen atlas, which switches the
+		// rendering context and replaces the image whenever it grows, so a
+		// caller must not run bake_glyphs inside a frame being drawn
+
 		if (!self->font)
 			invalid_state_error(__FILE__, __LINE__);
 
@@ -245,6 +250,10 @@ namespace ReflexTerminal
 	size_t
 	Renderer::glyph_count () const
 	{
+		// how many glyphs the atlas has been asked to hold, whether or not it
+		// had the room for them: one too wide to fit is kept as an empty Glyph
+		// and still counted
+
 		return self->glyphs.size();
 	}
 
