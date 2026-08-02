@@ -5,6 +5,7 @@
 
 
 #include <reflex-terminal/ruby/terminal.h>
+#include <reflex-terminal/ruby/renderer.h>
 
 
 #endif//EOH

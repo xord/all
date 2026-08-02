@@ -2,6 +2,7 @@
 
 
 void Init_reflex_terminal ();
+void Init_reflex_terminal_renderer ();
 
 
 extern "C" void
@@ -12,6 +13,7 @@ Init_reflex_terminal_ext ()
 	Rucy::init();
 
 	Init_reflex_terminal();
+	Init_reflex_terminal_renderer();
 
 	RUCY_CATCH
 }

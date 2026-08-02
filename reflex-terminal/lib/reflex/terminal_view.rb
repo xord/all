@@ -4,7 +4,6 @@ require 'reflex/font'
 require 'reflex/color'
 require 'reflex/bell_event'
 require 'reflex/terminal'
-require 'reflex-terminal/glyph_atlas'
 
 
 module Reflex
@@ -33,35 +32,36 @@ module Reflex
 
       super(*args, **kwargs, &block)
       @terminal, @command, @envs = terminal, command, envs
+      @renderer                  = ReflexTerminal::Renderer.new
       @cursor_blink              = true
       @prev_bells                = terminal&.bells || 0
       @font_size                 = font_size
       self.font                  = font || DEFAULT_FONT_NAME
     end
 
-    attr_reader :terminal, :font
+    attr_reader :terminal
 
     def font=(font)
       unless font.is_a? Font
         name, size = [font].flatten
         font       = Font.new name, size || @font_size
       end
-      @font        = font
-      @font_size   = font.size
-      @cell_width  = font.width 'M'
-      @cell_height = font.height.ceil
-      @atlas       = ReflexTerminal::GlyphAtlas.new font, @cell_height
-      @atlas.add (0x20..0x7e).map(&:chr)# printable ascii up front
+      @renderer.font = font
+      @font_size     = font.size
       resize_terminal
       redraw
     end
 
+    def font()
+      @renderer.font
+    end
+
     def font_size=(size)
-      self.font = [@font.name, size]
+      self.font = [font.name, size]
     end
 
     def font_size()
-      @font.size
+      font.size
     end
 
     def on_attach(e)
@@ -81,8 +81,8 @@ module Reflex
 
     def on_update(e)
       t = @terminal || return
-      if t.update
-        prepare_glyphs
+      if t.update || @renderer.glyph_count == 0
+        @renderer.bake_glyphs t
         redraw
       end
       if t.bells > @prev_bells
@@ -94,32 +94,8 @@ module Reflex
     def on_draw(e)
       t = @terminal || return
 
-      fg, bg   = t.colors
-      theme_fg = to_color fg, 1
-      theme_bg = to_color bg, 0
-      cw, ch   = @cell_width, @cell_height
-
-      e.painter.push font: @font do |p|
-        p.fill theme_bg
-        p.rect e.bounds
-
-        # draw all backgrounds first, then all glyphs: alternating shapes
-        # and images breaks the painter's batch and costs several times more
-        t.each_span do |x, y, w, str, sfg, sbg, flags|
-          cell_bg = colors_inverted?(flags) ? to_color(sfg, theme_fg) : to_color(sbg, theme_bg)
-          next if cell_bg == theme_bg
-
-          p.fill cell_bg
-          p.rect x * cw, y * ch, w * cw, ch
-        end
-
-        t.each_span do |x, y, w, str, sfg, sbg, flags|
-          p.fill colors_inverted?(flags) ? to_color(sbg, theme_bg) : to_color(sfg, theme_fg)
-          draw_span p, str, x, y, w
-        end
-
-        draw_cursor p, t
-      end
+      @renderer.draw e.painter, t, e.bounds
+      draw_cursor e.painter, t
     end
 
     def on_key_down(e)
@@ -183,7 +159,7 @@ module Reflex
       if t.mouse_tracking?
         t.write_wheel e
       else
-        rows = (e.dy / @cell_height).round
+        rows = (e.dy / @renderer.cell_height).round
         return if rows == 0
         t.scroll_by rows
         redraw
@@ -212,52 +188,11 @@ module Reflex
       redraw
     end
 
-    def prepare_glyphs()
-      # Rasterizing inside on_draw would switch the rendering context in the
-      # middle of a frame, and grow the atlas out from under the image the
-      # draw is copying from, so the glyphs are collected before it starts.
-
-      missing = nil
-      @terminal.each_span do |x, y, w, str, sfg, sbg, flags|
-        str.each_grapheme_cluster {|g| (missing ||= []) << g unless @atlas.include? g}
-      end
-      @atlas.add missing if missing
-    end
-
-    def colors_inverted?(flags)
-      ((flags & Terminal::INVERSE) != 0) ^ ((flags & Terminal::SELECTED) != 0)
-    end
-
-    def draw_span(painter, str, x, y, width)
-      cw, ch   = @cell_width, @cell_height
-      image    = @atlas.image
-      y       *= ch
-      clusters = str.grapheme_clusters
-      return if clusters.empty?
-
-      # spans break where narrow meets wide, so every cluster in one covers
-      # the same number of cells. Taking it from the width the terminal
-      # reports keeps the grid on what it says rather than on how the font
-      # happens to measure the glyph
-      cells = width / clusters.size
-
-      clusters.each do |cluster|
-        glyph = @atlas[cluster]
-        if glyph
-          gx, gy, gw = glyph
-          painter.image image, gx, gy, gw, ch, x * cw, y, gw, ch
-        else
-          painter.text cluster, x * cw, y# atlas full: fall back
-        end
-        x += cells
-      end
-    end
-
     def draw_cursor(painter, terminal)
       x, y, style, visible = terminal.cursor
       return unless visible && @cursor_blink && focus?
 
-      cw, ch = @cell_width, @cell_height
+      cw, ch = @renderer.cell_width, @renderer.cell_height
       color  = to_color terminal.colors[2], to_color(terminal.colors[0], 1)
 
       painter.push fill: color do |p|
@@ -274,17 +209,19 @@ module Reflex
     def to_cell(x, y)
       # Clamped to the screen so that a drag leaving the view keeps selecting
       # up to the edge, rather than asking for a cell the terminal will refuse.
-      [(x / @cell_width) .floor.clamp(0, @terminal.columns - 1),
-       (y / @cell_height).floor.clamp(0, @terminal.rows    - 1)]
+      cw, ch = @renderer.cell_width, @renderer.cell_height
+      [(x / cw).floor.clamp(0, @terminal.columns - 1),
+       (y / ch).floor.clamp(0, @terminal.rows    - 1)]
     end
 
     def resize_terminal()
       return unless @terminal && width > 0 && height > 0
+      cw, ch = @renderer.cell_width, @renderer.cell_height
       @terminal.resize(
-        (width  / @cell_width) .floor.clamp(1..),
-        (height / @cell_height).floor.clamp(1..),
-          cell_width: @cell_width.round, cell_height: @cell_height,
-        screen_width: width.to_i,      screen_height: height.to_i)
+        (width  / cw).floor.clamp(1..),
+        (height / ch).floor.clamp(1..),
+          cell_width: cw.round,     cell_height: ch,
+        screen_width: width.to_i, screen_height: height.to_i)
     end
 
     def to_color(rgb, fallback)

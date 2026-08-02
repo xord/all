@@ -114,6 +114,23 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal [0, 0, 4, %q[あい]], [x, y, width, text]
   end
 
+  def test_grapheme_clusters()
+    # a cell holds a whole cluster, so a flag is one cell two columns wide
+    # rather than the two regional indicators it is written with, each
+    # taking two of its own
+    t = terminal 20, 4
+    t.feed "\u{1F1EF}\u{1F1F5}"
+    t.update
+    assert_equal [0, 0, 2, "\u{1F1EF}\u{1F1F5}"], t.each_span.first.first(4)
+
+    # a reset clears the modes, so the one that says this has to be set
+    # again behind it
+    t.reset
+    t.feed "\u{1F1EF}\u{1F1F5}"
+    t.update
+    assert_equal [0, 0, 2, "\u{1F1EF}\u{1F1F5}"], t.each_span.first.first(4)
+  end
+
   def test_encodings()
     t = terminal 20, 4
     t.feed "\e]0;タイトル\a"

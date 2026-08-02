@@ -20,9 +20,10 @@ namespace Reflex
 
 	// A headless terminal emulator built on libghostty-vt.
 	// spawn() a child process, call update() once per frame to pump the
-	// PTY, and draw the screen from spans(). Without a child process it
-	// still works as a pure emulator: feed() bytes in and take the bytes
-	// to be sent back (query responses etc.) from read_pending_input().
+	// PTY, and hand it to a ReflexTerminal::Renderer to draw -- or read
+	// spans() and draw it yourself. Without a child process it still
+	// works as a pure emulator: feed() bytes in and take the bytes to be
+	// sent back (query responses etc.) from read_pending_input().
 	class Terminal
 	{
 
@@ -37,6 +38,12 @@ namespace Reflex
 				int x, width;// in cells
 
 				String text;// UTF-8, wide-cell spacers excluded
+
+				// where this span's cells sit in cell_offsets(), which says
+				// where each begins within text. a span breaks where narrow
+				// meets wide, so every cell in one covers the same number
+				// of columns: width / cell_size
+				uint cell_offset, cell_size;
 
 				int fg, bg;// 0xRRGGBB, or COLOR_NONE for the default color
 
@@ -228,8 +235,6 @@ namespace Reflex
 
 			OptionAsAlt option_as_alt () const;
 
-			const RowList& spans () const;
-
 			int columns () const;
 
 			int rows () const;
@@ -240,17 +245,24 @@ namespace Reflex
 
 			const char* title () const;
 
+			StringList lines () const;
+
+			int            history_rows () const;
+
+			StringList get_history_lines (int offset, int size) const;
+
 			// how many BEL characters (0x07) have arrived so far. it only
 			// ever grows, so a reader tells the new ones from the ones it
 			// has already answered by remembering the last count it saw,
 			// and neither feed() nor update() can drop one on the way
 			longlong bells () const;
 
-			StringList lines () const;
+			const RowList& spans () const;
 
-			int            history_rows () const;
-
-			StringList get_history_lines (int offset, int size) const;
+			// where each span's cells begin within its own text, all of
+			// them end to end so that a screenful costs one allocation
+			// rather than one for every span. see Span::cell_offset
+			const std::vector<uint>& cell_offsets () const;
 
 			operator bool () const;
 
