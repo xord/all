@@ -6,5 +6,8 @@
 
 #include <reflex/terminal.h>
 
+#include <reflex-terminal/defs.h>
+#include <reflex-terminal/renderer.h>
+
 
 #endif//EOH

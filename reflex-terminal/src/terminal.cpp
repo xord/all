@@ -468,7 +468,7 @@ namespace Reflex
 			self->render_state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &self->row_iterator);
 		if (result != GHOSTTY_SUCCESS) return;
 
-		std::string utf8;
+		String utf8;
 		while (ghostty_render_state_row_iterator_next(self->row_iterator))
 		{
 			self->spans.emplace_back();
@@ -575,7 +575,7 @@ namespace Reflex
 					span              = &row.back();
 					span->x           = x;
 					span->width       = 0;
-					span->cell_offset = self->cell_offsets.size();
+					span->cell_offset = (uint) self->cell_offsets.size();
 					span->cell_size   = 0;
 					span->fg          = fg;
 					span->bg          = bg;
@@ -583,7 +583,7 @@ namespace Reflex
 					span_is_wide      = is_wide;
 				}
 
-				self->cell_offsets.push_back(span->text.size());
+				self->cell_offsets.push_back((uint) span->text.size());
 				span->cell_size += 1;
 				span->text      += utf8;
 				span->width     += cell_width;
