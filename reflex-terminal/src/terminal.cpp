@@ -625,6 +625,12 @@ namespace Reflex
 		return map;
 	}
 
+	const std::vector<uint>&
+	Terminal_get_cell_offsets (const Terminal& terminal)
+	{
+		return terminal.self->cell_offsets;
+	}
+
 
 	Terminal::Terminal ()
 	{
@@ -1387,12 +1393,6 @@ namespace Reflex
 	Terminal::spans () const
 	{
 		return self->spans;
-	}
-
-	const std::vector<uint>&
-	Terminal::cell_offsets () const
-	{
-		return self->cell_offsets;
 	}
 
 	Terminal::operator bool () const

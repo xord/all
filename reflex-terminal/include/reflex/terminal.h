@@ -202,8 +202,6 @@ namespace Reflex
 
 			const RowList& spans () const;
 
-			const std::vector<uint>& cell_offsets () const;
-
 			operator bool () const;
 
 			bool operator ! () const;

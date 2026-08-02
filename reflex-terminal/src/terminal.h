@@ -57,6 +57,8 @@ namespace Reflex
 
 	Terminal::EnvMap Terminal_make_child_envs (const Terminal::EnvMap& envs);
 
+	const std::vector<uint>& Terminal_get_cell_offsets (const Terminal& terminal);
+
 
 }// Reflex
 

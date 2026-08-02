@@ -7,6 +7,7 @@
 #include <map>
 #include <rays/image.h>
 #include <reflex/exception.h>
+#include "terminal.h"
 
 
 namespace ReflexTerminal
@@ -228,11 +229,12 @@ namespace ReflexTerminal
 
 		add_missing_glyphs(self.get(), [&]()
 		{
+			const uint* cell_offsets = Terminal_get_cell_offsets(terminal).data();
 			for (const Terminal::SpanList& row : terminal.spans())
 			{
 				for (const Terminal::Span& span : row)
 				{
-					const uint* offsets = terminal.cell_offsets().data() + span.cell_offset;
+					const uint* offsets = cell_offsets + span.cell_offset;
 					for (uint i = 0; i < span.cell_size; ++i)
 					{
 						uint begin = offsets[i];
@@ -315,7 +317,8 @@ namespace ReflexTerminal
 			}
 		}
 
-		const Image& atlas = self->atlas;
+		const Image& atlas       = self->atlas;
+		const uint* cell_offsets = Terminal_get_cell_offsets(terminal).data();
 		for (size_t y = 0; y < rows.size(); ++y)
 		{
 			for (const Terminal::Span& span : rows[y])
@@ -330,7 +333,7 @@ namespace ReflexTerminal
 				coord step          = (coord) span.width / span.cell_size * cw;
 				coord left          = span.x * cw;
 				coord top           = y * ch;
-				const uint* offsets = terminal.cell_offsets().data() + span.cell_offset;
+				const uint* offsets = cell_offsets + span.cell_offset;
 
 				for (uint i = 0; i < span.cell_size; ++i, left += step)
 				{
