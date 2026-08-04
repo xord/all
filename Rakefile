@@ -93,7 +93,7 @@ namespace :changelog do
 
   get_depends = -> target do
     File.readlines("#{target}/#{target}.gemspec")
-      .map    {_1[/\.\s*add_dependency\s*'(\w+)'/, 1]&.to_sym}
+      .map    {_1[/\.\s*add_dependency\s*'([\w\-]+)'/, 1]&.to_sym}
       .compact
       .map    {RENAMES[_1] || _1}
       .select {GEMS.include? _1}

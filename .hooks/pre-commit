@@ -38,7 +38,7 @@ end
 begin
   gemspec_paths = ls_files /\.gemspec$/
   versions      = ls_files(%r|/VERSION$|)
-    .map {|path| [path[%r|(\w+)/VERSION$|, 1], get_version(path)]}
+    .map {|path| [path[%r|([\w\-]+)/VERSION$|, 1], get_version(path)]}
     .to_h
     .transform_values {|ver| (ver.split('.') + [0, 0, 0]).first(3).join('.')}
 
