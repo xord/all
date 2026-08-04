@@ -71,12 +71,22 @@ module Reflex
       end
       resize_terminal
       focus
-      restart_cursor_blink
     end
 
     def on_detach(e)
-      @cursor_blinker&.stop
-      @cursor_blinker = nil
+      stop_cursor_blink
+    end
+
+    def on_activate(e)
+      update_cursor_blink
+    end
+
+    def on_deactivate(e)
+      update_cursor_blink
+    end
+
+    def on_focus(e)
+      update_cursor_blink
     end
 
     def on_update(e)
@@ -108,7 +118,7 @@ module Reflex
       t.deselect    if typed && t.selection?
       t.scroll_to 0 if t.scroll != 0
       t.write_key e
-      restart_cursor_blink
+      start_cursor_blink
     end
 
     def on_key_up(e)
@@ -178,9 +188,22 @@ module Reflex
 
     private
 
-    def restart_cursor_blink()
+    def blinking?()
+      window&.active? && focus?
+    end
+
+    def update_cursor_blink()
+      if blinking?
+        start_cursor_blink
+      else
+        stop_cursor_blink
+        redraw
+      end
+    end
+
+    def start_cursor_blink()
       @cursor_blink = true
-      @cursor_blinker&.stop
+      stop_cursor_blink
       @cursor_blinker = interval CURSOR_BLINK_INTERVAL do
         @cursor_blink = !@cursor_blink
         redraw
@@ -188,18 +211,33 @@ module Reflex
       redraw
     end
 
+    def stop_cursor_blink()
+      @cursor_blinker&.stop
+      @cursor_blinker = nil
+    end
+
     def draw_cursor(painter, terminal)
       x, y, style, visible = terminal.cursor
-      return unless visible && @cursor_blink && focus?
+      return unless visible
+
+      # ghostty never reports BLOCK_HOLLOW itself -- there is no DECSCUSR for
+      # it -- so showing one while the terminal is not taking input is the
+      # view's own decision, and it does not blink
+      hollow = !blinking?
+      return unless hollow || @cursor_blink
 
       cw, ch = @renderer.cell_width, @renderer.cell_height
       color  = to_color terminal.colors[2], to_color(terminal.colors[0], 1)
 
-      painter.push fill: color do |p|
-        case style
+      painter.push fill: color, stroke: nil do |p|
+        case hollow ? Terminal::CURSOR_BLOCK_HOLLOW : style
         when Terminal::CURSOR_BAR       then p.rect x * cw, y * ch, 2, ch
         when Terminal::CURSOR_UNDERLINE then p.rect x * cw, (y + 1) * ch - 2, cw, 2
-        else# block: translucent so the character shows through
+        when Terminal::CURSOR_BLOCK_HOLLOW
+          p.fill   nil
+          p.stroke color
+          p.rect x * cw + 0.5, y * ch + 0.5, cw - 1, ch - 1
+        else
           p.fill color.dup.tap {|c| c.alpha = 0.5}
           p.rect x * cw, y * ch, cw, ch
         end
