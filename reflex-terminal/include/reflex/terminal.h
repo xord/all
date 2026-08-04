@@ -26,6 +26,33 @@ namespace Reflex
 			struct Span
 			{
 
+				enum Attribute
+				{
+
+					BOLD            = Xot::bit(0),
+
+					ITALIC          = Xot::bit(1),
+
+					FAINT           = Xot::bit(2),
+
+					BLINK           = Xot::bit(3),
+
+					INVISIBLE       = Xot::bit(4),
+
+					STRIKETHROUGH   = Xot::bit(5),
+
+					OVERLINE        = Xot::bit(6),
+
+					INVERSE         = Xot::bit(7),
+
+					SELECTED        = Xot::bit(8),
+
+					UNDERLINE_SHIFT = 9,
+
+					UNDERLINE_MASK  = Xot::bit(UNDERLINE_SHIFT, 0x7)
+
+				};// Attribute
+
 				int x, width;// in cells
 
 				String text;// UTF-8, wide-cell spacers excluded
@@ -34,7 +61,7 @@ namespace Reflex
 
 				int fg, bg;// 0xRRGGBB, or COLOR_NONE
 
-				uint flags;
+				uint attribs;
 
 			};// Span
 
@@ -76,33 +103,6 @@ namespace Reflex
 			};// Colors
 
 			enum {COLOR_NONE = -1};
-
-			enum Attribute
-			{
-
-				BOLD            = Xot::bit(0),
-
-				ITALIC          = Xot::bit(1),
-
-				FAINT           = Xot::bit(2),
-
-				BLINK           = Xot::bit(3),
-
-				INVISIBLE       = Xot::bit(4),
-
-				STRIKETHROUGH   = Xot::bit(5),
-
-				OVERLINE        = Xot::bit(6),
-
-				INVERSE         = Xot::bit(7),
-
-				SELECTED        = Xot::bit(8),
-
-				UNDERLINE_SHIFT = 9,
-
-				UNDERLINE_MASK  = Xot::bit(UNDERLINE_SHIFT, 0x7)
-
-			};// Attribute
 
 			enum OptionAsAlt
 			{

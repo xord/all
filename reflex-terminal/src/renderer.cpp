@@ -272,9 +272,11 @@ namespace ReflexTerminal
 	}
 
 	static bool
-	colors_inverted (uint flags)
+	colors_inverted (uint attribs)
 	{
-		return ((flags & Terminal::INVERSE) != 0) != ((flags & Terminal::SELECTED) != 0);
+		return
+			((attribs & Terminal::Span::INVERSE)  != 0) !=
+			((attribs & Terminal::Span::SELECTED) != 0);
 	}
 
 	void
@@ -308,7 +310,7 @@ namespace ReflexTerminal
 		{
 			for (const Terminal::Span& span : rows[y])
 			{
-				bool inverted = colors_inverted(span.flags);
+				bool inverted = colors_inverted(span.attribs);
 				Color fill    = inverted ? to_color(span.fg, theme_fg) : to_color(span.bg, theme_bg);
 				if (fill == theme_bg) continue;
 
@@ -325,7 +327,7 @@ namespace ReflexTerminal
 			{
 				if (span.cell_size == 0) continue;
 
-				bool inverted = colors_inverted(span.flags);
+				bool inverted = colors_inverted(span.attribs);
 				painter->set_fill(inverted ? to_color(span.bg, theme_bg) : to_color(span.fg, theme_fg));
 
 				// a span breaks where narrow meets wide, so every cell in

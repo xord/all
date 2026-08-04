@@ -313,7 +313,7 @@ RUCY_DEF0(each_span)
 				value(span.text.c_str(), span.text.size(), rb_utf8_encoding()),
 				span.fg == Reflex::Terminal::COLOR_NONE ? nil() : value(span.fg),
 				span.bg == Reflex::Terminal::COLOR_NONE ? nil() : value(span.bg),
-				value(span.flags));
+				value(span.attribs));
 		}
 	}
 	return self;
@@ -469,17 +469,17 @@ Init_reflex_terminal ()
 	cTerminal.define_private_method("get_history_lines!", get_history_lines);
 	cTerminal.define_method("bells", get_bells);
 
-	cTerminal.define_const("BOLD",            Reflex::Terminal::BOLD);
-	cTerminal.define_const("ITALIC",          Reflex::Terminal::ITALIC);
-	cTerminal.define_const("FAINT",           Reflex::Terminal::FAINT);
-	cTerminal.define_const("BLINK",           Reflex::Terminal::BLINK);
-	cTerminal.define_const("INVISIBLE",       Reflex::Terminal::INVISIBLE);
-	cTerminal.define_const("STRIKETHROUGH",   Reflex::Terminal::STRIKETHROUGH);
-	cTerminal.define_const("OVERLINE",        Reflex::Terminal::OVERLINE);
-	cTerminal.define_const("INVERSE",         Reflex::Terminal::INVERSE);
-	cTerminal.define_const("SELECTED",        Reflex::Terminal::SELECTED);
-	cTerminal.define_const("UNDERLINE_SHIFT", Reflex::Terminal::UNDERLINE_SHIFT);
-	cTerminal.define_const("UNDERLINE_MASK",  Reflex::Terminal::UNDERLINE_MASK);
+	cTerminal.define_const("BOLD",            Reflex::Terminal::Span::BOLD);
+	cTerminal.define_const("ITALIC",          Reflex::Terminal::Span::ITALIC);
+	cTerminal.define_const("FAINT",           Reflex::Terminal::Span::FAINT);
+	cTerminal.define_const("BLINK",           Reflex::Terminal::Span::BLINK);
+	cTerminal.define_const("INVISIBLE",       Reflex::Terminal::Span::INVISIBLE);
+	cTerminal.define_const("STRIKETHROUGH",   Reflex::Terminal::Span::STRIKETHROUGH);
+	cTerminal.define_const("OVERLINE",        Reflex::Terminal::Span::OVERLINE);
+	cTerminal.define_const("INVERSE",         Reflex::Terminal::Span::INVERSE);
+	cTerminal.define_const("SELECTED",        Reflex::Terminal::Span::SELECTED);
+	cTerminal.define_const("UNDERLINE_SHIFT", Reflex::Terminal::Span::UNDERLINE_SHIFT);
+	cTerminal.define_const("UNDERLINE_MASK",  Reflex::Terminal::Span::UNDERLINE_MASK);
 
 	cTerminal.define_const("CURSOR_BAR",          Reflex::Terminal::Cursor::BAR);
 	cTerminal.define_const("CURSOR_BLOCK",        Reflex::Terminal::Cursor::BLOCK);

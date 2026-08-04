@@ -146,24 +146,25 @@ namespace Reflex
 
 
 	static uint
-	to_flags (const GhosttyStyle& style)
+	to_attribs (const GhosttyStyle& style)
 	{
 		// INVERSE is reported rather than applied: swapping fg/bg is left to
 		// the renderer, which is the one that knows the theme's default colors.
 		// UNDERLINE_MASK is a 3-bit field holding ghostty's style number --
 		// 0: none, 1: single, 2: double, 3: curly, 4: dotted, 5: dashed
 
-		uint flags = 0;
-		if (style.bold)          flags |= Terminal::BOLD;
-		if (style.italic)        flags |= Terminal::ITALIC;
-		if (style.faint)         flags |= Terminal::FAINT;
-		if (style.blink)         flags |= Terminal::BLINK;
-		if (style.inverse)       flags |= Terminal::INVERSE;
-		if (style.invisible)     flags |= Terminal::INVISIBLE;
-		if (style.strikethrough) flags |= Terminal::STRIKETHROUGH;
-		if (style.overline)      flags |= Terminal::OVERLINE;
-		flags |= (style.underline << Terminal::UNDERLINE_SHIFT) & Terminal::UNDERLINE_MASK;
-		return flags;
+		uint attribs = 0;
+		if (style.bold)          attribs |= Terminal::Span::BOLD;
+		if (style.italic)        attribs |= Terminal::Span::ITALIC;
+		if (style.faint)         attribs |= Terminal::Span::FAINT;
+		if (style.blink)         attribs |= Terminal::Span::BLINK;
+		if (style.inverse)       attribs |= Terminal::Span::INVERSE;
+		if (style.invisible)     attribs |= Terminal::Span::INVISIBLE;
+		if (style.strikethrough) attribs |= Terminal::Span::STRIKETHROUGH;
+		if (style.overline)      attribs |= Terminal::Span::OVERLINE;
+		attribs |=
+			(style.underline << Terminal::Span::UNDERLINE_SHIFT) & Terminal::Span::UNDERLINE_MASK;
+		return attribs;
 	}
 
 	static int
@@ -521,7 +522,7 @@ namespace Reflex
 					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR, &color);
 				if (result == GHOSTTY_SUCCESS) bg = to_rgb(color);
 
-				uint flags        = 0;
+				uint attribs      = 0;
 				bool has_styling  = false;
 				ghostty_render_state_row_cells_get(
 					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_HAS_STYLING, &has_styling);
@@ -531,7 +532,7 @@ namespace Reflex
 					result = ghostty_render_state_row_cells_get(
 						self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE, &style);
 					if (result == GHOSTTY_SUCCESS)
-						flags = to_flags(style);
+						attribs = to_attribs(style);
 				}
 
 				// a wide cell answers for the spacer that follows it, which
@@ -539,10 +540,10 @@ namespace Reflex
 				// still has to show on the character standing there
 				int right = x + (wide == GHOSTTY_CELL_WIDE_WIDE ? 1 : 0);
 				if (selected && selection.start_x <= right && x <= selection.end_x)
-					flags |= Terminal::SELECTED;
+					attribs |= Terminal::Span::SELECTED;
 
 				bool empty = nchars == 0;
-				if (empty && bg == Terminal::COLOR_NONE && flags == 0)
+				if (empty && bg == Terminal::COLOR_NONE && attribs == 0)
 				{
 					span = NULL;// blank cell without style: leave a gap
 					continue;
@@ -574,7 +575,7 @@ namespace Reflex
 
 				if (
 					!span ||
-					span->fg != fg || span->bg != bg || span->flags != flags ||
+					span->fg != fg || span->bg != bg || span->attribs != attribs ||
 					span_is_wide != is_wide)
 				{
 					row.emplace_back();
@@ -585,7 +586,7 @@ namespace Reflex
 					span->cell_size   = 0;
 					span->fg          = fg;
 					span->bg          = bg;
-					span->flags       = flags;
+					span->attribs     = attribs;
 					span_is_wide      = is_wide;
 				}
 
