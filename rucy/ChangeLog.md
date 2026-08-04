@@ -1,6 +1,12 @@
 # rucy ChangeLog
 
 
+## [v0.4.0] - 2026-08-04
+
+- Add Rucy::yield and route extension block yields through it
+- Catch RubyException thrown across extension bundles
+
+
 ## [v0.3.15] - 2026-06-23
 
 - Add define_wrapper_equality_methods for wrapper identity

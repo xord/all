@@ -1,6 +1,16 @@
 # rays ChangeLog
 
 
+## [v0.4.0] - 2026-08-04
+
+- [BREAKING] Rename COLORSPACE_UNKNOWN to COLORSPACE_NONE
+- [BREAKING] Default to BGRA color space on Windows
+- Add pixel_density and smooth options to Image.load
+- Support dup on value classes, reject it on stateful ones
+
+- Fix crash when an empty array is passed where a Color, Point, Bounds, etc. is expected
+
+
 ## [v0.3.16] - 2026-06-23
 
 - Update dependencies

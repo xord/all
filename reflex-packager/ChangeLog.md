@@ -1,6 +1,13 @@
 # reflex-packager ChangeLog
 
 
+## [v0.2.0] - 2026-08-04
+
+- [BREAKING] Replace Profile#template with a templates Hash
+- Add boot script support to Profile
+- Add command field to Profile for the CLI display name
+
+
 ## [v0.1.5] - 2026-06-23
 
 - Update dependencies

@@ -1,6 +1,14 @@
 # xot ChangeLog
 
 
+## [v0.4.0] - 2026-08-04
+
+- [BREAKING] Rework String conversions to std::wstring and CFString
+- Add a String constructor taking a pointer and a size
+- Add Xot.warn with a uniq option to suppress duplicate warnings
+- Let a source raise _WIN32_WINNT above the Windows 7 baseline
+
+
 ## [v0.3.15] - 2026-06-23
 
 - Add WeakRef for weak references to RefCountable

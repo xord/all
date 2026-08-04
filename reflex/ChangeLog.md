@@ -1,6 +1,31 @@
 # reflex ChangeLog
 
 
+## [v0.6.0] - 2026-08-04
+
+- [BREAKING] Read modifiers as symbols from every event that carries them
+- [BREAKING] Rename KEY_APPS to KEY_CONTEXT_MENU and fix its macOS keycode
+- [BREAKING] Sync view frames on View#update_world, drop its duration argument
+- Add Menu class and Application#menu
+- Add Constraint classes backed by Box2D joints
+- Add Clipboard class
+- Add on_pointer_enter/leave event handlers to View and Window
+- Add on_activate/deactivate event handlers to View
+- Add index argument to View#add_child and #add_shape
+- Add locks: option to modifiers for excluding caps/num/scroll lock
+- Add midi and gamepad to the umbrella header
+- Add menu and constraint samples
+- Give View#each_* an enumerator form and array-returning plural accessors
+- Make View#each_* safe against removals during iteration
+- Fill in the Windows virtual-key codes for punctuation and numpad operators
+- Report fn+return as the keypad enter on macOS
+
+- Fix crash when an empty array is passed where a Pin or Selector is expected
+- Fix get_modifiers reporting only the first modifier held
+- Fix reversed selector match in find_shapes and find_styles
+- Fix view clipping to track ancestor zoom and position in screen space
+
+
 ## [v0.5.3] - 2026-06-23
 
 - Run vendor and erb for reflex itself in pod.rake setup
