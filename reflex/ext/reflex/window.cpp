@@ -86,6 +86,14 @@ RUCY_DEF1(to_screen, point)
 RUCY_END
 
 static
+RUCY_DEF0(is_active)
+{
+	CHECK;
+	return value(THIS->active());
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_title, title)
 {
 	CHECK;
@@ -284,22 +292,6 @@ RUCY_DEF0(get_painter)
 RUCY_END
 
 static
-RUCY_DEF1(on_activate, event)
-{
-	CHECK;
-	CALL(on_activate(to<Reflex::Event*>(event)));
-}
-RUCY_END
-
-static
-RUCY_DEF1(on_deactivate, event)
-{
-	CHECK;
-	CALL(on_deactivate(to<Reflex::Event*>(event)));
-}
-RUCY_END
-
-static
 RUCY_DEF1(on_show, event)
 {
 	CHECK;
@@ -324,6 +316,22 @@ RUCY_DEF1(on_close, event)
 {
 	CHECK;
 	CALL(on_close(to<Reflex::Event*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_activate, event)
+{
+	CHECK;
+	CALL(on_activate(to<Reflex::Event*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_deactivate, event)
+{
+	CHECK;
+	CALL(on_deactivate(to<Reflex::Event*>(event)));
 }
 RUCY_END
 
@@ -503,6 +511,7 @@ Init_reflex_window ()
 	cWindow.define_method("redraw", redraw);
 	cWindow.define_method("from_screen", from_screen);
 	cWindow.define_method(  "to_screen",   to_screen);
+	cWindow.define_method("active?", is_active);
 	cWindow.define_method("title=", set_title);
 	cWindow.define_method("title",  get_title);
 	cWindow.define_method("frame=", set_frame);
@@ -524,11 +533,11 @@ Init_reflex_window ()
 	cWindow.define_method("root",    get_root);
 	cWindow.define_method("focus",   get_focus);
 	cWindow.define_method("painter", get_painter);
-	cWindow.define_method("on_activate",   on_activate);
-	cWindow.define_method("on_deactivate", on_deactivate);
 	cWindow.define_method("on_show",  on_show);
 	cWindow.define_method("on_hide",  on_hide);
 	cWindow.define_method("on_close", on_close);
+	cWindow.define_method("on_activate",   on_activate);
+	cWindow.define_method("on_deactivate", on_deactivate);
 	cWindow.define_method("on_update", on_update);
 	cWindow.define_method("on_draw",   on_draw);
 	cWindow.define_method("on_move",   on_move);

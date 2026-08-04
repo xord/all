@@ -739,8 +739,21 @@ namespace Reflex
 	};// LayoutContext
 
 
-	void
-	View_set_window (View* view, Window* window)
+	static void
+	call_children (View* parent, std::function<bool(View*)> fun, bool sort = true)
+	{
+		auto* children = parent->self->children(false, sort);
+		if (!children) return;
+
+		for (auto it = children->rbegin(), end = children->rend(); it != end; ++it)
+		{
+			if (!fun(it->get()))
+				break;
+		}
+	}
+
+	static void
+	set_window (View* view, Window* window)
 	{
 		if (!view)
 			argument_error(__FILE__, __LINE__);
@@ -759,7 +772,7 @@ namespace Reflex
 		if (children)
 		{
 			for (auto& child : *children)
-				View_set_window(child.get(), window);
+				set_window(child.get(), window);
 		}
 
 		if (view->self->window)
@@ -767,6 +780,28 @@ namespace Reflex
 			Event e;
 			view->on_attach(&e);
 			view->self->add_flag(View::Data::FIT_TO_CONTENT);
+		}
+	}
+
+	void
+	View_set_window (View* view, Window* window)
+	{
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+
+		Window* old = view->self->window;
+		if (old && old->active())
+		{
+			Event e;
+			View_deactivate_tree(view, &e);
+		}
+
+		set_window(view, window);
+
+		if (window && window->active())
+		{
+			Event e;
+			View_activate_tree(view, &e);
 		}
 	}
 
@@ -920,6 +955,40 @@ namespace Reflex
 	View_is_active (const View& view)
 	{
 		return view.self->window;
+	}
+
+	void
+	View_activate_tree (View* view, Event* event)
+	{
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+
+		Event e = event->dup();
+		view->on_activate(&e);
+		if (e.is_blocked()) return;
+
+		call_children(view, [&](View* child) {
+			View_activate_tree(child, &e);
+			return !e.is_blocked();
+		}, false);
+	}
+
+	void
+	View_deactivate_tree (View* view, Event* event)
+	{
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+
+		Event e = event->dup();
+
+		call_children(view, [&](View* child) {
+			View_deactivate_tree(child, &e);
+			return !e.is_blocked();
+		}, false);
+
+		if (e.is_blocked()) return;
+
+		view->on_deactivate(&e);
 	}
 
 	static void
@@ -1457,19 +1526,6 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 
 		view->self->add_flag(View::Data::UPDATE_SHAPES);
-	}
-
-	static void
-	call_children (View* parent, std::function<bool(View*)> fun, bool sort = true)
-	{
-		auto* children = parent->self->children(false, sort);
-		if (!children) return;
-
-		for (auto it = children->rbegin(), end = children->rend(); it != end; ++it)
-		{
-			if (!fun(it->get()))
-				break;
-		}
 	}
 
 	void
@@ -2918,6 +2974,16 @@ namespace Reflex
 
 	void
 	View::on_detach (Event* e)
+	{
+	}
+
+	void
+	View::on_activate (Event* e)
+	{
+	}
+
+	void
+	View::on_deactivate (Event* e)
 	{
 	}
 

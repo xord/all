@@ -176,6 +176,9 @@ namespace Reflex
 
 		Event e;
 		window->on_activate(&e);
+		if (e.is_blocked()) return;
+
+		View_activate_tree(window->root(), &e);
 	}
 
 	void
@@ -183,10 +186,13 @@ namespace Reflex
 	{
 		if (!window) return;
 
+		Xot::remove_flag(&window->self->flags, Window::Data::ACTIVE);
+
 		Event e;
 		window->on_deactivate(&e);
+		if (e.is_blocked()) return;
 
-		Xot::remove_flag(&window->self->flags, Window::Data::ACTIVE);
+		View_deactivate_tree(window->root(), &e);
 	}
 
 	void
@@ -981,6 +987,12 @@ namespace Reflex
 		return point + frame().position();
 	}
 
+	bool
+	Window::active () const
+	{
+		return Xot::has_flag(self->flags, Data::ACTIVE);
+	}
+
 	void
 	Window::set_title (const char* title)
 	{
@@ -1115,16 +1127,6 @@ namespace Reflex
 	}
 
 	void
-	Window::on_activate (Event* e)
-	{
-	}
-
-	void
-	Window::on_deactivate (Event* e)
-	{
-	}
-
-	void
 	Window::on_show (Event* e)
 	{
 	}
@@ -1136,6 +1138,16 @@ namespace Reflex
 
 	void
 	Window::on_close (Event* e)
+	{
+	}
+
+	void
+	Window::on_activate (Event* e)
+	{
+	}
+
+	void
+	Window::on_deactivate (Event* e)
 	{
 	}
 

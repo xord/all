@@ -1043,6 +1043,22 @@ RUCY_DEF1(on_detach, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_activate, event)
+{
+	CHECK;
+	CALL(on_activate(to<Reflex::Event*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_deactivate, event)
+{
+	CHECK;
+	CALL(on_deactivate(to<Reflex::Event*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_show, event)
 {
 	CHECK;
@@ -1416,6 +1432,8 @@ Init_reflex_view ()
 
 	cView.define_method("on_attach", on_attach);
 	cView.define_method("on_detach", on_detach);
+	cView.define_method("on_activate",   on_activate);
+	cView.define_method("on_deactivate", on_deactivate);
 	cView.define_method("on_show",   on_show);
 	cView.define_method("on_hide",   on_hide);
 	cView.define_method("on_update", on_update);

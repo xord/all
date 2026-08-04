@@ -29,24 +29,6 @@ namespace Reflex
 
 		public:
 
-			virtual void on_activate (Event* e)
-			{
-				RUCY_SYM(on_activate);
-				if (this->is_overridable())
-					this->value.call(on_activate, Rucy::value(e));
-				else
-					return Super::on_activate(e);
-			}
-
-			virtual void on_deactivate (Event* e)
-			{
-				RUCY_SYM(on_deactivate);
-				if (this->is_overridable())
-					this->value.call(on_deactivate, Rucy::value(e));
-				else
-					return Super::on_deactivate(e);
-			}
-
 			virtual void on_show (Event* e)
 			{
 				RUCY_SYM(on_show);
@@ -72,6 +54,24 @@ namespace Reflex
 					this->value.call(on_close, Rucy::value(e));
 				else
 					return Super::on_close(e);
+			}
+
+			virtual void on_activate (Event* e)
+			{
+				RUCY_SYM(on_activate);
+				if (this->is_overridable())
+					this->value.call(on_activate, Rucy::value(e));
+				else
+					return Super::on_activate(e);
+			}
+
+			virtual void on_deactivate (Event* e)
+			{
+				RUCY_SYM(on_deactivate);
+				if (this->is_overridable())
+					this->value.call(on_deactivate, Rucy::value(e));
+				else
+					return Super::on_deactivate(e);
 			}
 
 			virtual void on_update (UpdateEvent* e)

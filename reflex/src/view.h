@@ -37,6 +37,10 @@ namespace Reflex
 
 	bool View_is_active (const View& view);
 
+	void View_activate_tree   (View* view, Event* event);
+
+	void View_deactivate_tree (View* view, Event* event);
+
 	void View_update_tree (View* view, const UpdateEvent& event);
 
 	void View_draw_tree (

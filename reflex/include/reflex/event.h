@@ -32,6 +32,8 @@ namespace Reflex
 
 			~Event ();
 
+			Event dup () const;
+
 			void block (bool parent = true);
 
 			bool is_blocked () const;

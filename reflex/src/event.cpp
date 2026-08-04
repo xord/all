@@ -54,6 +54,12 @@ namespace Reflex
 	{
 	}
 
+	Event
+	Event::dup () const
+	{
+		return Event(this);
+	}
+
 	void
 	Event::block (bool parent)
 	{

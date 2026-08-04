@@ -66,6 +66,8 @@ namespace Reflex
 
 			virtual Point   to_screen (const Point& point) const;
 
+			virtual bool active () const;
+
 			virtual void    set_title (const char* title);
 
 			virtual const char* title () const;
@@ -106,15 +108,15 @@ namespace Reflex
 
 			virtual const Painter* painter () const;
 
-			virtual void on_activate   (Event* e);
-
-			virtual void on_deactivate (Event* e);
-
 			virtual void on_show (Event* e);
 
 			virtual void on_hide (Event* e);
 
 			virtual void on_close (Event* e);
+
+			virtual void on_activate   (Event* e);
+
+			virtual void on_deactivate (Event* e);
 
 			virtual void on_update (UpdateEvent* e);
 
