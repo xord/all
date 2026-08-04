@@ -157,10 +157,65 @@ class TestTerminal < Test::Unit::TestCase
     assert_include [T::CURSOR_BAR, T::CURSOR_BLOCK, T::CURSOR_UNDERLINE], style
   end
 
-  def test_colors()
-    fg, bg, = terminal.colors
-    assert_kind_of Integer, fg
-    assert_kind_of Integer, bg
+  def color(r, g, b) = Reflex::Color.new(r, g, b)
+
+  def test_default_colors()
+    # nil until someone says otherwise, so that a renderer can tell the child
+    # asking for a color apart from nobody having asked and use its own theme
+    t = terminal
+    assert_nil t.default_background_color
+    assert_nil t.background_color
+
+    t.default_background_color = color(1, 0, 0)
+    assert_equal color(1, 0, 0), t.default_background_color
+    assert_equal color(1, 0, 0), t.background_color
+
+    # the child changes what is in use without touching what it falls back to
+    t.feed "\e]11;#00ff00\a"
+    t.update
+    assert_equal color(1, 0, 0), t.default_background_color
+    assert_equal color(0, 1, 0), t.background_color
+
+    # and the foreground is set on its own, not as a pair with it
+    t.feed "\e]10;#0000ff\a"
+    t.update
+    assert_equal color(0, 0, 1), t.foreground_color
+
+    t.default_background_color = nil
+    assert_nil t.default_background_color
+
+    # a terminal color is 8 bits a channel, so a value between two of them
+    # comes back as the nearest one rather than as it was given
+    t.default_background_color = color(0.5, 0, 0)
+    assert_in_delta 0.5, t.default_background_color.red, 1.0 / 255
+  end
+
+  def test_palette()
+    t = terminal
+    t.feed "\e[31mR"
+    t.update
+    assert_equal 0..255, T::PALETTE_RANGE
+
+    builtin = t.palette 1
+    assert_equal builtin, t.default_palette(1)
+
+    t.set_default_palette 1, color(1, 1, 1)
+    assert_equal color(1, 1, 1), t.palette(1)
+
+    # a span carries the color the palette resolved to, not the index, so
+    # changing the palette changes what the cell reports
+    t.update
+    assert_equal 0xffffff, t.each_span.first[4]
+
+    t.set_default_palette 0..3, color(0, 0, 1)
+    assert_equal [color(0, 0, 1)] * 4, (0..3).map {|i| t.palette i}
+
+    # a nil color puts the built-in one back
+    t.set_default_palette 1, nil
+    assert_equal builtin, t.palette(1)
+
+    assert_raise(IndexError) {t.palette 256}
+    assert_raise(IndexError) {t.palette(-1)}
   end
 
   def test_feed_device_attributes()

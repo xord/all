@@ -5,6 +5,7 @@
 #include <string.h>
 #include <string>
 #include <ghostty/vt.h>
+#include <rays/color.h>
 #include <reflex/exception.h>
 
 
@@ -513,7 +514,7 @@ namespace Reflex
 				ghostty_render_state_row_cells_get(
 					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN, &nchars);
 
-				int fg = Terminal::COLOR_NONE, bg = Terminal::COLOR_NONE;
+				int fg = Terminal::Span::COLOR_NONE, bg = Terminal::Span::COLOR_NONE;
 				GhosttyColorRgb color;
 				result = ghostty_render_state_row_cells_get(
 					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_FG_COLOR, &color);
@@ -543,7 +544,7 @@ namespace Reflex
 					attribs |= Terminal::Span::SELECTED;
 
 				bool empty = nchars == 0;
-				if (empty && bg == Terminal::COLOR_NONE && attribs == 0)
+				if (empty && bg == Terminal::Span::COLOR_NONE && attribs == 0)
 				{
 					span = NULL;// blank cell without style: leave a gap
 					continue;
@@ -768,8 +769,6 @@ namespace Reflex
 		int cell_width, int cell_height,
 		int screen_width, int screen_height)
 	{
-		if (!*this)
-			invalid_state_error(__FILE__, __LINE__);
 		if (
 			columns <= 0 || UINT16_MAX < columns ||
 			rows    <= 0 || UINT16_MAX < rows)
@@ -778,6 +777,8 @@ namespace Reflex
 		}
 		if (cell_width <= 0 || cell_height <= 0)
 			argument_error(__FILE__, __LINE__, "invalid cell size: %dx%d", cell_width, cell_height);
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
 
 		self->cell_width    = cell_width;
 		self->cell_height   = cell_height;
@@ -1255,22 +1256,157 @@ namespace Reflex
 		return cursor;
 	}
 
-	Terminal::Colors
-	Terminal::colors () const
+	enum {PALETTE_SIZE = Terminal::COLOR_PALETTE_LAST - Terminal::COLOR_PALETTE_FIRST + 1};
+
+	static bool
+	is_palette (Terminal::ColorIndex index)
 	{
-		Colors result = {COLOR_NONE, COLOR_NONE, COLOR_NONE};
-		if (!*this) return result;
+		return Terminal::COLOR_PALETTE_FIRST <= index && index <= Terminal::COLOR_PALETTE_LAST;
+	}
 
-		GhosttyRenderStateColors colors = init_sized<GhosttyRenderStateColors>();
-		if (ghostty_render_state_colors_get(self->render_state, &colors) != GHOSTTY_SUCCESS)
-			return result;
+	static GhosttyColorRgb
+	to_ghostty_color (const Color& color)
+	{
+		GhosttyColorRgb rgb;
+		rgb.r = Color::float2uchar(color.red);
+		rgb.g = Color::float2uchar(color.green);
+		rgb.b = Color::float2uchar(color.blue);
+		return rgb;
+	}
 
-		result.foreground = to_rgb(colors.foreground);
-		result.background = to_rgb(colors.background);
-		if (colors.cursor_has_value)
-			result.cursor = to_rgb(colors.cursor);
+	static GhosttyTerminalOption
+	to_color_option (Terminal::ColorIndex index)
+	{
+		switch (index)
+		{
+			case Terminal::COLOR_FOREGROUND: return GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND;
+			case Terminal::COLOR_BACKGROUND: return GHOSTTY_TERMINAL_OPT_COLOR_BACKGROUND;
+			case Terminal::COLOR_CURSOR:     return GHOSTTY_TERMINAL_OPT_COLOR_CURSOR;
+			default:
+				argument_error(__FILE__, __LINE__, "invalid color index: %d", index);
+		}
+		return GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND;
+	}
 
-		return result;
+	static GhosttyTerminalData
+	to_color_data (Terminal::ColorIndex index, bool default_)
+	{
+		switch (index)
+		{
+			case Terminal::COLOR_FOREGROUND:
+				return default_
+					? GHOSTTY_TERMINAL_DATA_COLOR_FOREGROUND_DEFAULT
+					: GHOSTTY_TERMINAL_DATA_COLOR_FOREGROUND;
+
+			case Terminal::COLOR_BACKGROUND:
+				return default_
+					? GHOSTTY_TERMINAL_DATA_COLOR_BACKGROUND_DEFAULT
+					: GHOSTTY_TERMINAL_DATA_COLOR_BACKGROUND;
+
+			case Terminal::COLOR_CURSOR:
+				return default_
+					? GHOSTTY_TERMINAL_DATA_COLOR_CURSOR_DEFAULT
+					: GHOSTTY_TERMINAL_DATA_COLOR_CURSOR;
+
+			default:
+				argument_error(__FILE__, __LINE__, "invalid color index: %d", index);
+		}
+		return GHOSTTY_TERMINAL_DATA_COLOR_FOREGROUND;
+	}
+
+	static void
+	get_palette (GhosttyTerminal terminal, GhosttyColorRgb* palette, bool default_)
+	{
+		GhosttyTerminalData data = default_
+			? GHOSTTY_TERMINAL_DATA_COLOR_PALETTE_DEFAULT
+			: GHOSTTY_TERMINAL_DATA_COLOR_PALETTE;
+
+		if (ghostty_terminal_get(terminal, data, palette) != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to get a terminal palette");
+	}
+
+	static void
+	set_palette (GhosttyTerminal terminal, const GhosttyColorRgb* palette)
+	{
+		ghostty_terminal_set(terminal, GHOSTTY_TERMINAL_OPT_COLOR_PALETTE, palette);
+	}
+
+	static bool
+	get_terminal_color (
+		const Terminal& terminal, Terminal::ColorIndex index, Color* color, bool default_)
+	{
+		if (!terminal) return false;
+
+		GhosttyColorRgb rgb;
+		if (is_palette(index))
+		{
+			GhosttyColorRgb palette[PALETTE_SIZE];
+			get_palette(terminal.self->terminal, palette, default_);
+			rgb = palette[index - Terminal::COLOR_PALETTE_FIRST];
+		}
+		else
+		{
+			GhosttyTerminalData data = to_color_data(index, default_);
+			if (ghostty_terminal_get(terminal.self->terminal, data, &rgb) != GHOSTTY_SUCCESS)
+				return false;
+		}
+
+		if (color) color->reset8(rgb.r, rgb.g, rgb.b);
+		return true;
+	}
+
+	void
+	Terminal::set_default_color (ColorIndex index, const Color& color)
+	{
+		if (color.alpha != 1)
+			argument_error(__FILE__, __LINE__, "color alpha must be 1");
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		GhosttyColorRgb rgb = to_ghostty_color(color);
+
+		if (is_palette(index))
+		{
+			GhosttyColorRgb palette[PALETTE_SIZE];
+			get_palette(self->terminal, palette, true);
+			palette[index - COLOR_PALETTE_FIRST] = rgb;
+			set_palette(self->terminal, palette);
+		}
+		else
+			ghostty_terminal_set(self->terminal, to_color_option(index), &rgb);
+	}
+
+	void
+	Terminal::clear_default_color (ColorIndex index)
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		if (is_palette(index))
+		{
+			GhosttyColorRgb palette[PALETTE_SIZE], builtin[PALETTE_SIZE];
+			get_palette(self->terminal, palette, true);
+			set_palette(self->terminal, NULL);
+			get_palette(self->terminal, builtin, true);
+
+			int i      = index - COLOR_PALETTE_FIRST;
+			palette[i] = builtin[i];
+			set_palette(self->terminal, palette);
+		}
+		else
+			ghostty_terminal_set(self->terminal, to_color_option(index), NULL);
+	}
+
+	bool
+	Terminal::get_default_color (ColorIndex index, Color* color) const
+	{
+		return get_terminal_color(*this, index, color, true);
+	}
+
+	bool
+	Terminal::get_color (ColorIndex index, Color* color) const
+	{
+		return get_terminal_color(*this, index, color, false);
 	}
 
 	const char*

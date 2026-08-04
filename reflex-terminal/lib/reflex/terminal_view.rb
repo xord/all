@@ -227,7 +227,7 @@ module Reflex
       return unless hollow || @cursor_blink
 
       cw, ch = @renderer.cell_width, @renderer.cell_height
-      color  = to_color terminal.colors[2], to_color(terminal.colors[0], 1)
+      color  = terminal.cursor_color || terminal.foreground_color || Color.new(1, 1, 1)
 
       painter.push fill: color, stroke: nil do |p|
         case hollow ? Terminal::CURSOR_BLOCK_HOLLOW : style
@@ -260,14 +260,6 @@ module Reflex
         (height / ch).floor.clamp(1..),
           cell_width: cw.round,     cell_height: ch,
         screen_width: width.to_i, screen_height: height.to_i)
-    end
-
-    def to_color(rgb, fallback)
-      return fallback unless rgb
-      Color.new(
-        ((rgb >> 16) & 0xff) / 255.0,
-        ((rgb >> 8)  & 0xff) / 255.0,
-        ( rgb        & 0xff) / 255.0)
     end
 
   end# TerminalView

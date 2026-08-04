@@ -262,7 +262,7 @@ namespace ReflexTerminal
 	static Color
 	to_color (int rgb, const Color& fallback)
 	{
-		if (rgb == Terminal::COLOR_NONE)
+		if (rgb == Terminal::Span::COLOR_NONE)
 			return fallback;
 
 		return Color(
@@ -287,14 +287,15 @@ namespace ReflexTerminal
 		if (!self->font)
 			invalid_state_error(__FILE__, __LINE__);
 
-		// a terminal always has a default foreground and background of its
-		// own -- ghostty gives the cursor a has_value flag and these none
-		// -- so what stands in here only ever answers for a broken one
-		Terminal::Colors colors = terminal.colors();
-		Color theme_fg          = to_color(colors.foreground, Color(1, 1, 1));
-		Color theme_bg          = to_color(colors.background, Color(0, 0, 0));
-		coord cw                = self->cell_width;
-		coord ch                = self->cell_height;
+		// what the terminal has not been told is left to the renderer, so the
+		// theme starts here and get_color only writes over it when the child
+		// or the application has named a color of its own
+		Color theme_fg(1, 1, 1), theme_bg(0, 0, 0);
+		terminal.get_color(Terminal::COLOR_FOREGROUND, &theme_fg);
+		terminal.get_color(Terminal::COLOR_BACKGROUND, &theme_bg);
+
+		coord cw = self->cell_width;
+		coord ch = self->cell_height;
 
 		painter->push_state();
 		painter->set_font(self->font);

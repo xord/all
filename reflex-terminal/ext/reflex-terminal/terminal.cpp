@@ -2,6 +2,7 @@
 
 
 #include <xot/exception.h>
+#include <rays/ruby/color.h>
 #include <reflex/ruby/event.h>
 #include "defs.h"
 
@@ -311,8 +312,8 @@ RUCY_DEF0(each_span)
 			yield(
 				value(span.x), value((int) y), value(span.width),
 				value(span.text.c_str(), span.text.size(), rb_utf8_encoding()),
-				span.fg == Reflex::Terminal::COLOR_NONE ? nil() : value(span.fg),
-				span.bg == Reflex::Terminal::COLOR_NONE ? nil() : value(span.bg),
+				span.fg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.fg),
+				span.bg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.bg),
 				value(span.attribs));
 		}
 	}
@@ -369,18 +370,51 @@ RUCY_DEF0(get_cursor)
 }
 RUCY_END
 
+static Reflex::Terminal::ColorIndex
+to_color_index (Value index)
+{
+	int i = to<int>(index);
+	if (i < Reflex::Terminal::COLOR_FOREGROUND || Reflex::Terminal::COLOR_PALETTE_LAST < i)
+		Rucy::argument_error(__FILE__, __LINE__, "invalid color index: %d", i);
+
+	return (Reflex::Terminal::ColorIndex) i;
+}
+
 static
-RUCY_DEF0(get_colors)
+RUCY_DEF2(set_default_color, index, color)
+{
+	CHECK;
+	THIS->set_default_color(to_color_index(index), to<Rays::Color>(color));
+}
+RUCY_END
+
+static
+RUCY_DEF1(clear_default_color, index)
+{
+	CHECK;
+	THIS->clear_default_color(to_color_index(index));
+}
+RUCY_END
+
+static
+RUCY_DEF1(get_default_color, index)
 {
 	CHECK;
 
-	Reflex::Terminal::Colors colors = THIS->colors();
-	Value values[] = {
-		colors.foreground == Reflex::Terminal::COLOR_NONE ? nil() : value(colors.foreground),
-		colors.background == Reflex::Terminal::COLOR_NONE ? nil() : value(colors.background),
-		colors.cursor     == Reflex::Terminal::COLOR_NONE ? nil() : value(colors.cursor)
-	};
-	return array(values, 3);
+	Rays::Color color;
+	if (THIS->get_default_color(to_color_index(index), &color))
+		return value(color);
+}
+RUCY_END
+
+static
+RUCY_DEF1(get_color, index)
+{
+	CHECK;
+
+	Rays::Color color;
+	if (THIS->get_color(to_color_index(index), &color))
+		return value(color);
 }
 RUCY_END
 
@@ -463,7 +497,10 @@ Init_reflex_terminal ()
 	cTerminal.define_method("columns", get_columns);
 	cTerminal.define_method("rows",    get_rows);
 	cTerminal.define_method("cursor",  get_cursor);
-	cTerminal.define_method("colors",  get_colors);
+	cTerminal.define_private_method(  "set_default_color!",   set_default_color);
+	cTerminal.define_private_method("clear_default_color!", clear_default_color);
+	cTerminal.define_private_method(  "get_default_color!",   get_default_color);
+	cTerminal.define_private_method(          "get_color!",           get_color);
 	cTerminal.define_method("title",   get_title);
 	cTerminal.define_method(            "history_rows",   get_history_rows);
 	cTerminal.define_private_method("get_history_lines!", get_history_lines);
@@ -485,6 +522,12 @@ Init_reflex_terminal ()
 	cTerminal.define_const("CURSOR_BLOCK",        Reflex::Terminal::Cursor::BLOCK);
 	cTerminal.define_const("CURSOR_UNDERLINE",    Reflex::Terminal::Cursor::UNDERLINE);
 	cTerminal.define_const("CURSOR_BLOCK_HOLLOW", Reflex::Terminal::Cursor::BLOCK_HOLLOW);
+
+	cTerminal.define_const("COLOR_FOREGROUND",    Reflex::Terminal::COLOR_FOREGROUND);
+	cTerminal.define_const("COLOR_BACKGROUND",    Reflex::Terminal::COLOR_BACKGROUND);
+	cTerminal.define_const("COLOR_CURSOR",        Reflex::Terminal::COLOR_CURSOR);
+	cTerminal.define_const("COLOR_PALETTE_FIRST", Reflex::Terminal::COLOR_PALETTE_FIRST);
+	cTerminal.define_const("COLOR_PALETTE_LAST",  Reflex::Terminal::COLOR_PALETTE_LAST);
 
 	cTerminal.define_const("OPTION_AS_ALT_OFF",   Reflex::Terminal::OPTION_AS_ALT_OFF);
 	cTerminal.define_const("OPTION_AS_ALT_ON",    Reflex::Terminal::OPTION_AS_ALT_ON);

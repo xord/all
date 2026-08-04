@@ -53,6 +53,8 @@ namespace Reflex
 
 				};// Attribute
 
+				enum {COLOR_NONE = -1};
+
 				int x, width;// in cells
 
 				String text;// UTF-8, wide-cell spacers excluded
@@ -95,14 +97,20 @@ namespace Reflex
 
 			};// Cursor
 
-			struct Colors
+			enum ColorIndex
 			{
 
-				int foreground, background, cursor;// 0xRRGGBB, or COLOR_NONE
+				COLOR_FOREGROUND = 1,
 
-			};// Colors
+				COLOR_BACKGROUND,
 
-			enum {COLOR_NONE = -1};
+				COLOR_CURSOR,
+
+				COLOR_PALETTE_FIRST,
+
+				COLOR_PALETTE_LAST = COLOR_PALETTE_FIRST + 255
+
+			};// ColorIndex
 
 			enum OptionAsAlt
 			{
@@ -188,7 +196,13 @@ namespace Reflex
 
 			Cursor cursor () const;
 
-			Colors colors () const;
+			void   set_default_color (ColorIndex index, const Color& color);
+
+			void clear_default_color (ColorIndex index);
+
+			bool   get_default_color (ColorIndex index, Color* color) const;
+
+			bool           get_color (ColorIndex index, Color* color) const;
 
 			const char* title () const;
 

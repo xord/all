@@ -1,5 +1,6 @@
 require 'xot/util'
 require 'xot/const_symbol_accessor'
+require 'xot/universal_accessor'
 require 'reflex-terminal/ext'
 
 
@@ -7,6 +8,8 @@ module Reflex
 
 
   class Terminal
+
+    PALETTE_RANGE      = (0..(COLOR_PALETTE_LAST - COLOR_PALETTE_FIRST)).freeze
 
     HISTORY_CHUNK_SIZE = 500
 
@@ -98,6 +101,43 @@ module Reflex
       right: OPTION_AS_ALT_RIGHT
     }
 
+    def default_foreground_color=(color)
+      set_or_clear_default_color COLOR_FOREGROUND, color
+    end
+
+    def default_background_color=(color)
+      set_or_clear_default_color COLOR_BACKGROUND, color
+    end
+
+    def default_cursor_color=(color)
+      set_or_clear_default_color COLOR_CURSOR, color
+    end
+
+    def set_default_palette(index, color)
+      Array(index).each do |i|
+        set_or_clear_default_color to_palette_index(i), color
+      end
+    end
+
+    def default_foreground_color()      = get_default_color! COLOR_FOREGROUND
+
+    def default_background_color()      = get_default_color! COLOR_BACKGROUND
+
+    def     default_cursor_color()      = get_default_color! COLOR_CURSOR
+
+    def          default_palette(index) = get_default_color! to_palette_index(index)
+
+    def         foreground_color()      =         get_color! COLOR_FOREGROUND
+
+    def         background_color()      =         get_color! COLOR_BACKGROUND
+
+    def             cursor_color()      =         get_color! COLOR_CURSOR
+
+    def                  palette(index) =         get_color! to_palette_index(index)
+
+    universal_accessor :default_foreground_color, :default_background_color,
+      :default_cursor_color
+
     private
 
     def shell_command(command)
@@ -106,6 +146,20 @@ module Reflex
       else
         ['/bin/sh', '-c', command]
       end
+    end
+
+    def set_or_clear_default_color(index, color)
+      if color
+        set_default_color! index, color
+      else
+        clear_default_color! index
+      end
+    end
+
+    def to_palette_index(index)
+      raise IndexError, "palette index out of range: #{index}" unless
+        PALETTE_RANGE.include? index
+      COLOR_PALETTE_FIRST + index
     end
 
   end# Terminal
