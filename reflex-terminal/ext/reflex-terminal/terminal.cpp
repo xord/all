@@ -481,10 +481,10 @@ Init_reflex_terminal ()
 	cTerminal.define_const("UNDERLINE_SHIFT", Reflex::Terminal::UNDERLINE_SHIFT);
 	cTerminal.define_const("UNDERLINE_MASK",  Reflex::Terminal::UNDERLINE_MASK);
 
-	cTerminal.define_const("CURSOR_BAR",          Reflex::Terminal::CURSOR_BAR);
-	cTerminal.define_const("CURSOR_BLOCK",        Reflex::Terminal::CURSOR_BLOCK);
-	cTerminal.define_const("CURSOR_UNDERLINE",    Reflex::Terminal::CURSOR_UNDERLINE);
-	cTerminal.define_const("CURSOR_BLOCK_HOLLOW", Reflex::Terminal::CURSOR_BLOCK_HOLLOW);
+	cTerminal.define_const("CURSOR_BAR",          Reflex::Terminal::Cursor::BAR);
+	cTerminal.define_const("CURSOR_BLOCK",        Reflex::Terminal::Cursor::BLOCK);
+	cTerminal.define_const("CURSOR_UNDERLINE",    Reflex::Terminal::Cursor::UNDERLINE);
+	cTerminal.define_const("CURSOR_BLOCK_HOLLOW", Reflex::Terminal::Cursor::BLOCK_HOLLOW);
 
 	cTerminal.define_const("OPTION_AS_ALT_OFF",   Reflex::Terminal::OPTION_AS_ALT_OFF);
 	cTerminal.define_const("OPTION_AS_ALT_ON",    Reflex::Terminal::OPTION_AS_ALT_ON);

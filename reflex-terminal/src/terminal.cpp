@@ -1226,7 +1226,7 @@ namespace Reflex
 	Terminal::Cursor
 	Terminal::cursor () const
 	{
-		Cursor cursor = {0, 0, CURSOR_BLOCK, false};
+		Cursor cursor = {0, 0, Cursor::BLOCK, false};
 		if (!*this) return cursor;
 
 		bool has_value = false;
@@ -1249,7 +1249,7 @@ namespace Reflex
 		GhosttyRenderStateCursorVisualStyle style = GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK;
 		ghostty_render_state_get(
 			self->render_state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE, &style);
-		cursor.style = (CursorStyle) style;
+		cursor.style = (Cursor::Style) style;
 
 		return cursor;
 	}

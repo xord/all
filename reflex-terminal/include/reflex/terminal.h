@@ -44,25 +44,25 @@ namespace Reflex
 
 			typedef std::map<String, std::optional<String>> EnvMap;
 
-			enum CursorStyle
-			{
-
-				CURSOR_BAR = 0,
-
-				CURSOR_BLOCK,
-
-				CURSOR_UNDERLINE,
-
-				CURSOR_BLOCK_HOLLOW
-
-			};// CursorStyle
-
 			struct Cursor
 			{
 
+				enum Style
+				{
+
+					BAR = 0,
+
+					BLOCK,
+
+					UNDERLINE,
+
+					BLOCK_HOLLOW
+
+				};// Style
+
 				int x, y;
 
-				CursorStyle style;
+				Style style;
 
 				bool visible;
 
