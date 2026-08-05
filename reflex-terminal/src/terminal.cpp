@@ -47,7 +47,11 @@ namespace Reflex
 
 		GhosttyOptionAsAlt option_as_alt           = GHOSTTY_OPTION_AS_ALT_TRUE;
 
-		bool any_button_pressed                    = false;
+		PTY pty;
+
+		RowList spans;
+
+		std::vector<uint> cell_offsets;
 
 		int columns = 0, rows = 0;
 
@@ -55,17 +59,15 @@ namespace Reflex
 
 		int screen_width = 0, screen_height = 0;
 
-		PTY pty;
+		float wheel_rows = 0;
+
+		longlong bells   = 0;
+
+		bool any_button_pressed = false;
 
 		String pending_input;
 
 		String title;
-
-		longlong bells = 0;
-
-		RowList spans;
-
-		std::vector<uint> cell_offsets;
 
 		~Data ()
 		{
@@ -942,16 +944,18 @@ namespace Reflex
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
-		int dy = (int) event.dposition().y;
-		if (dy == 0) return;
+		self->wheel_rows += event.dposition().y / self->cell_height;
+		int rows          = (int) self->wheel_rows;
+		if (rows == 0) return;
+		self->wheel_rows -= rows;
 
-		int button       = dy > 0 ? GHOSTTY_MOUSE_BUTTON_FIVE : GHOSTTY_MOUSE_BUTTON_FOUR;
+		int button       = rows > 0 ? GHOSTTY_MOUSE_BUTTON_FIVE : GHOSTTY_MOUSE_BUTTON_FOUR;
 		GhosttyMods mods = to_ghostty_mods(event.modifiers());
 		float x          = event.position().x;
 		float y          = event.position().y;
 
 		enum {MAX_STEPS = 8};
-		int steps                    = dy > 0 ? dy : -dy;
+		int steps                    = rows > 0 ? rows : -rows;
 		if (steps > MAX_STEPS) steps = MAX_STEPS;
 
 		for (int i = 0; i < steps; ++i)

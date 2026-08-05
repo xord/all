@@ -217,10 +217,16 @@ namespace Reflex
 	}
 
 
+	static coord
+	to_wheel_pixels (WPARAM wp)
+	{
+		return (coord) GET_WHEEL_DELTA_WPARAM(wp) / WHEEL_DELTA * WHEEL_PIXELS_PER_NOTCH;
+	}
+
 	NativeWheelEvent::NativeWheelEvent (WPARAM wp_x, WPARAM wp_y, LPARAM lp)
 	:	WheelEvent(
-			GET_X_LPARAM(lp),              GET_Y_LPARAM(lp),             0,
-			GET_WHEEL_DELTA_WPARAM(wp_x), -GET_WHEEL_DELTA_WPARAM(wp_y), 0,
+			GET_X_LPARAM(lp),       GET_Y_LPARAM(lp),      0,
+			to_wheel_pixels(wp_x), -to_wheel_pixels(wp_y), 0,
 			KeyEvent_get_modifiers())
 	{
 	}

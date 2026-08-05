@@ -175,13 +175,19 @@ namespace Reflex
 	}
 
 
+	static coord
+	to_wheel_pixels (const SDL_MouseWheelEvent& e, float delta)
+	{
+		float scale = WHEEL_PIXELS_PER_NOTCH;
+		if (e.direction == SDL_MOUSEWHEEL_FLIPPED) scale = -scale;
+		return delta * scale;
+	}
+
 	NativeWheelEvent::NativeWheelEvent (
 		const SDL_MouseWheelEvent& e, SDL_Window* window)
 	:	WheelEvent(
 			0, 0, 0,
-			e.direction == SDL_MOUSEWHEEL_FLIPPED ? -e.preciseX : e.preciseX,
-			e.direction == SDL_MOUSEWHEEL_FLIPPED ? -e.preciseY : e.preciseY,
-			0,
+			to_wheel_pixels(e, e.preciseX), to_wheel_pixels(e, -e.preciseY), 0,
 			get_modifiers(SDL_GetModState()))
 	{
 		int mx, my;

@@ -31,12 +31,12 @@ module Reflex
       **kwargs, &block)
 
       super(*args, **kwargs, &block)
-      @terminal, @command, @envs = terminal, command, envs
-      @renderer                  = ReflexTerminal::Renderer.new
-      @cursor_blink              = true
-      @prev_bells                = terminal&.bells || 0
-      @font_size                 = font_size
-      self.font                  = font || DEFAULT_FONT_NAME
+      @terminal, @command, @envs  = terminal, command, envs
+      @renderer                   = ReflexTerminal::Renderer.new
+      @scroll_rows, @cursor_blink = 0, true
+      @prev_bells                 = terminal&.bells || 0
+      @font_size                  = font_size
+      self.font                   = font || DEFAULT_FONT_NAME
     end
 
     attr_reader :terminal
@@ -169,8 +169,11 @@ module Reflex
       if t.mouse_tracking?
         t.write_wheel e
       else
-        rows = (e.dy / @renderer.cell_height).round
+        @scroll_rows += e.dy / @renderer.cell_height
+        rows          = @scroll_rows.truncate
         return if rows == 0
+
+        @scroll_rows -= rows
         t.scroll_by rows
         redraw
       end

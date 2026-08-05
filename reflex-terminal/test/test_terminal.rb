@@ -464,11 +464,20 @@ class TestTerminal < Test::Unit::TestCase
     t.resize 40, 10, cell_width: 8, cell_height: 16
     t.feed "\e[?1000h\e[?1006h"
 
-    # reflex counts a wheel delta downwards, so button 4 is a negative one
-    t.write_wheel R::WheelEvent.new(0, 0, 0, 0, -1, 0, 0)
+    # a wheel delta is in pixels and reflex counts it downwards, so a cell
+    # height upwards is one row, and one row up is button 4
+    t.write_wheel R::WheelEvent.new(0, 0, 0, 0, -16, 0, 0)
     assert_equal "\e[<64;1;1M\e[<64;1;1m", t.read_pending_input
 
-    t.write_wheel R::WheelEvent.new(0, 0, 0, 0, 1, 0, 0)
+    t.write_wheel R::WheelEvent.new(0, 0, 0, 0, 16, 0, 0)
+    assert_equal "\e[<65;1;1M\e[<65;1;1m", t.read_pending_input
+
+    # what does not add up to a whole row waits for the next delta rather
+    # than being dropped
+    t.write_wheel R::WheelEvent.new(0, 0, 0, 0, 8, 0, 0)
+    assert_equal '', t.read_pending_input
+
+    t.write_wheel R::WheelEvent.new(0, 0, 0, 0, 8, 0, 0)
     assert_equal "\e[<65;1;1M\e[<65;1;1m", t.read_pending_input
   end
 

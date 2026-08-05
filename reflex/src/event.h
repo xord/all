@@ -12,6 +12,18 @@ namespace Reflex
 {
 
 
+	enum
+	{
+
+		WHEEL_PIXELS_PER_LINE  = 16,
+
+		WHEEL_LINES_PER_NOTCH  = 3,
+
+		WHEEL_PIXELS_PER_NOTCH = WHEEL_PIXELS_PER_LINE * WHEEL_LINES_PER_NOTCH
+
+	};
+
+
 	void DrawEvent_set_view    (DrawEvent* pthis, View* view);
 
 	void DrawEvent_set_painter (DrawEvent* pthis, Painter* painter);

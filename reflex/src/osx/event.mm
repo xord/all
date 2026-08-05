@@ -190,8 +190,19 @@ namespace Reflex
 	}
 
 
+	static coord
+	to_wheel_pixels (NSEvent* e, CGFloat delta)
+	{
+		return delta * (e.hasPreciseScrollingDeltas ? 1 : WHEEL_PIXELS_PER_LINE);
+	}
+
 	NativeWheelEvent::NativeWheelEvent (NSEvent* e, NSView* view)
-	:	WheelEvent(0, 0, 0, [e deltaX], -[e deltaY], [e deltaZ], get_modifiers(e))
+	:	WheelEvent(
+			0, 0, 0,
+			to_wheel_pixels(e,  e.scrollingDeltaX),
+			to_wheel_pixels(e, -e.scrollingDeltaY),
+			0,
+			get_modifiers(e))
 	{
 		WheelEvent_set_position(this, get_pointer_position(e, view));
 	}
