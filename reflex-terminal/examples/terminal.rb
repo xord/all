@@ -25,10 +25,13 @@ def pasteable?()
   !Reflex::Clipboard.text.to_s.empty?
 end
 
+def resize_font(view, step)
+  view.font_size = (view.font_size + step).clamp 6..96
+end
+
 
 terminal    = Reflex::Terminal.new.spawn
 view        = Reflex::TerminalView.new terminal: terminal, font_size: 24
-shortcut    = Xot.osx? ? %i[command] : %i[control shift]
 taken       = []
 flash       = 0
 flash_timer = nil
@@ -42,13 +45,20 @@ view.after :on_draw do |e|
 end
 
 view.before :on_key_down do |e|
+  # ctrl+c is the interrupt, so everywhere but macos takes shift as well
+  prefix  = (Xot.osx? ? %i[command] : %i[control shift]).sort
+  # a '+' needs shift wherever the layout puts it
+  shifted = (prefix | [:shift]).sort
+
   # locks are states the keyboard is left in rather than keys held for
   # the stroke, so a shortcut has to match with them left out
-  next unless e.modifiers(locks: false).sort == shortcut.sort
-
-  case e.code
-  when Reflex::KEY_C then copy terminal
-  when Reflex::KEY_V then paste terminal
+  case [e.chars, e.code, e.modifiers(locks: false).sort]
+  in ['+' | '=', _,             ^prefix | ^shifted] then resize_font view,  2
+  in ['-',       _,             ^prefix | ^shifted] then resize_font view, -2
+  in [_, Reflex::KEY_NUM_PLUS,  ^prefix]            then resize_font view,  2
+  in [_, Reflex::KEY_NUM_MINUS, ^prefix]            then resize_font view, -2
+  in [_, Reflex::KEY_C,         ^prefix]            then copy terminal
+  in [_, Reflex::KEY_V,         ^prefix]            then paste terminal
   else next
   end
 
