@@ -1,6 +1,7 @@
 // ConPTY needs windows 10 1809
 #define XOT_WIN32_WINNT 0x0A00// for <xot/windows.h>
 #define NTDDI_VERSION   0x0A000006// NTDDI_WIN10_RS5
+#include <xot/windows.h>
 
 #include "../terminal.h"
 
@@ -11,7 +12,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <xot/windows.h>
 #include <reflex/exception.h>
 
 

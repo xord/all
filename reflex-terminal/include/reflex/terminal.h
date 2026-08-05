@@ -13,6 +13,10 @@
 #include <reflex/defs.h>
 #include <reflex/event.h>
 
+#ifdef COLOR_BACKGROUND
+#undef COLOR_BACKGROUND // by Win32's winuser.h
+#endif
+
 
 namespace Reflex
 {
