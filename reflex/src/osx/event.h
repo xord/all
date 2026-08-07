@@ -32,6 +32,16 @@ namespace Reflex
 	};// NativeFlagKeyEvent
 
 
+	class NativeTextEvent : public TextEvent
+	{
+
+		public:
+
+			NativeTextEvent (Action action, NSString* text, NSRange selection);
+
+	};// NativeTextEvent
+
+
 	class NativePointerEvent : public PointerEvent
 	{
 

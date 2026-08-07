@@ -1,8 +1,9 @@
 // -*- objc -*-
 #import <AppKit/NSOpenGLView.h>
+#import <AppKit/NSTextInputClient.h>
 
 
-@interface OpenGLView : NSOpenGLView
+@interface OpenGLView : NSOpenGLView <NSTextInputClient>
 
 	- (id) initWithFrame: (NSRect) frame;
 

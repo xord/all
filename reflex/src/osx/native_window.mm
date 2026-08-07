@@ -409,6 +409,49 @@ move_to_main_screen_origin (NativeWindow* window)
 		Window_call_key_event(win, &e);
 	}
 
+	- (BOOL) isTextInputEnabled
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return NO;
+
+		const Reflex::View* focus = win->focus();
+		return focus && focus->accepts_text_input();
+	}
+
+	- (void) textEdit: (NSString*) text selection: (NSRange) selection
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		Reflex::NativeTextEvent e(Reflex::TextEvent::EDIT, text, selection);
+		Window_call_text_event(win, &e);
+	}
+
+	- (void) textCommit: (NSString*) text synthesizeKeyEvent: (BOOL) synthesize
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		Reflex::NativeTextEvent e(
+			Reflex::TextEvent::COMMIT, text, NSMakeRange(NSNotFound, 0));
+		Window_call_text_event(win, &e, synthesize);
+	}
+
+	- (NSRect) textInputBounds
+	{
+		Reflex::Window* win = self.window;
+		if (!win) return NSZeroRect;
+
+		const Reflex::View* focus = win->focus();
+		if (!focus) return NSZeroRect;
+
+		Reflex::Bounds b = focus->text_input_bounds();
+		Reflex::Point p1 = focus->to_window(b.position());
+		Reflex::Point p2 = focus->to_window(b.position() + b.size());
+
+		return NSMakeRect(p1.x, view.bounds.size.height - p2.y, p2.x - p1.x, p2.y - p1.y);
+	}
+
 	- (void) mouseDown: (NSEvent*) event
 	{
 		Reflex::Window* win = self.window;
