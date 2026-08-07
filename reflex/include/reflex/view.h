@@ -76,7 +76,9 @@ namespace Reflex
 
 				FLAG_FIX_ANGLE     = Xot::bit(4),
 
-				FLAG_LAST          = FLAG_FIX_ANGLE
+				FLAG_TEXT_INPUT    = Xot::bit(5),
+
+				FLAG_LAST          = FLAG_TEXT_INPUT
 
 			};// Flag
 
@@ -116,6 +118,14 @@ namespace Reflex
 			virtual Timer* start_interval (float seconds);
 
 			virtual void update_layout ();
+
+			virtual void fit_to_content ();
+
+			virtual Bounds      content_bounds () const;
+
+			virtual bool accepts_text_input () const;
+
+			virtual Bounds       text_input_bounds () const;
 
 			virtual Point from_parent (const Point& point) const;
 
@@ -227,10 +237,6 @@ namespace Reflex
 			virtual void      set_frame (const Bounds& bounds);
 
 			virtual const Bounds& frame () const;
-
-			virtual Bounds      content_bounds () const;
-
-			virtual void fit_to_content ();
 
 			virtual void set_zoom (float zoom);
 
@@ -392,6 +398,12 @@ namespace Reflex
 			virtual void on_key_down (KeyEvent* e);
 
 			virtual void on_key_up   (KeyEvent* e);
+
+			virtual void on_text        (TextEvent* e);
+
+			virtual void on_text_edit   (TextEvent* e);
+
+			virtual void on_text_commit (TextEvent* e);
 
 			virtual void on_pointer        (PointerEvent* e);
 

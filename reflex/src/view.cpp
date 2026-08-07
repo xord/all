@@ -1570,6 +1570,26 @@ namespace Reflex
 		}
 	}
 
+	void
+	View_call_text_event (View* view, TextEvent* event)
+	{
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		TextEvent e = event->dup();
+		view->on_text(&e);
+		if (e.is_blocked()) return;
+
+		switch (e.action())
+		{
+			case TextEvent::EDIT:   view->on_text_edit(&e);   break;
+			case TextEvent::COMMIT: view->on_text_commit(&e); break;
+			default: break;
+		}
+	}
+
 	static void
 	call_pointer_events_for_each_child (View* parent, PointerEvent* event)
 	{
@@ -1870,6 +1890,39 @@ namespace Reflex
 	{
 		LayoutContext(this).place_children();
 		redraw();
+	}
+
+	void
+	View::fit_to_content ()
+	{
+		self->add_flag(View::Data::FIT_TO_CONTENT);
+	}
+
+	Bounds
+	View::content_bounds () const
+	{
+		Bounds bounds = Rays::invalid_bounds();
+		self->each_shape([&](const Shape* shape)
+		{
+			if (!shape || !Shape_has_frame(*shape))
+				return;
+
+			Bounds frame = shape->frame();
+			if (frame) bounds |= frame;
+		});
+		return bounds;
+	}
+
+	bool
+	View::accepts_text_input () const
+	{
+		return !hidden() && self->has_flag(FLAG_TEXT_INPUT);
+	}
+
+	Bounds
+	View::text_input_bounds () const
+	{
+		return frame().dup().move_to(0, 0);
 	}
 
 	static void
@@ -2501,27 +2554,6 @@ namespace Reflex
 		return self->frame;
 	}
 
-	Bounds
-	View::content_bounds () const
-	{
-		Bounds bounds = Rays::invalid_bounds();
-		self->each_shape([&](const Shape* shape)
-		{
-			if (!shape || !Shape_has_frame(*shape))
-				return;
-
-			Bounds frame = shape->frame();
-			if (frame) bounds |= frame;
-		});
-		return bounds;
-	}
-
-	void
-	View::fit_to_content ()
-	{
-		self->add_flag(View::Data::FIT_TO_CONTENT);
-	}
-
 	void
 	View::set_zoom (float zoom)
 	{
@@ -3049,6 +3081,21 @@ namespace Reflex
 
 	void
 	View::on_key_up (KeyEvent* e)
+	{
+	}
+
+	void
+	View::on_text (TextEvent* e)
+	{
+	}
+
+	void
+	View::on_text_edit (TextEvent* e)
+	{
+	}
+
+	void
+	View::on_text_commit (TextEvent* e)
 	{
 	}
 

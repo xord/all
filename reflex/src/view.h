@@ -54,6 +54,8 @@ namespace Reflex
 
 	void View_call_key_event            (View* view, KeyEvent* event);
 
+	void View_call_text_event           (View* view, TextEvent* event);
+
 	void View_call_pointer_event        (View* view, PointerEvent* event);
 
 	void View_call_wheel_event          (View* view, WheelEvent* event);

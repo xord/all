@@ -250,7 +250,7 @@ namespace Reflex
 	}
 
 	void
-	Window_call_key_event (Window* window, KeyEvent* event)
+	Window_call_key_event (Window* window, KeyEvent* event, bool capture)
 	{
 		assert(window);
 
@@ -269,7 +269,7 @@ namespace Reflex
 			}
 		}
 
-		if (!event->is_blocked())
+		if (capture && !event->is_blocked())
 		{
 			for (auto& [view, targets] : window->self->captures)
 			{
@@ -291,7 +291,43 @@ namespace Reflex
 		if (!event->is_blocked() && window->self->focus)
 			View_call_key_event(window->self->focus.get(), event);
 
-		cleanup_captures(window);
+		if (capture)
+			cleanup_captures(window);
+	}
+
+	void
+	Window_call_text_event (
+		Window* window, TextEvent* event, bool synthesize_key_events)
+	{
+		assert(window);
+
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		window->on_text(event);
+		if (event->is_blocked()) return;
+
+		switch (event->action())
+		{
+			case TextEvent::EDIT:   window->on_text_edit(event);   break;
+			case TextEvent::COMMIT: window->on_text_commit(event); break;
+			default: break;
+		}
+		if (event->is_blocked()) return;
+
+		if (window->self->focus)
+		{
+			View_call_text_event(window->self->focus.get(), event);
+			if (event->is_blocked()) return;
+		}
+
+		if (synthesize_key_events)
+		{
+			KeyEvent down(KeyEvent::DOWN, event->text(), KEY_NONE);
+			KeyEvent up(  KeyEvent::UP,   event->text(), KEY_NONE);
+			Window_call_key_event(window, &down, false);
+			Window_call_key_event(window, &up,   false);
+		}
 	}
 
 	static bool
@@ -1183,6 +1219,21 @@ namespace Reflex
 
 	void
 	Window::on_key_up (KeyEvent* e)
+	{
+	}
+
+	void
+	Window::on_text (TextEvent* e)
+	{
+	}
+
+	void
+	Window::on_text_edit (TextEvent* e)
+	{
+	}
+
+	void
+	Window::on_text_commit (TextEvent* e)
 	{
 	}
 
