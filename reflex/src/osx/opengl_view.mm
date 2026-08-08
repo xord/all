@@ -83,7 +83,7 @@
 
 	- (void) drawRect: (NSRect) rect
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[self activateContext];
@@ -93,12 +93,12 @@
 
 	- (void) viewDidMoveToWindow
 	{
-		[[self window] setAcceptsMouseMovedEvents: YES];
-		[[self window] makeFirstResponder: self];
+		[self.window setAcceptsMouseMovedEvents: YES];
+		[self.window makeFirstResponder: self];
 
 #ifdef TRANSPARENT_BACKGROUND
-		[[self window] setBackgroundColor: [NSColor clearColor]];
-		[[self window] setOpaque: NO];
+		[self.window setBackgroundColor: [NSColor clearColor]];
+		[self.window setOpaque: NO];
 #endif
 	}
 
@@ -144,7 +144,7 @@
 	{
 		//[self interpretKeyEvents: [NSArray arrayWithObject: event]];
 
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win keyDown: event];
@@ -152,7 +152,7 @@
 
 	- (void) keyUp: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win keyUp: event];
@@ -160,7 +160,7 @@
 
 	- (void) flagsChanged: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win flagsChanged: event];
@@ -168,7 +168,7 @@
 
 	- (void) mouseDown: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseDown: event];
@@ -176,7 +176,7 @@
 
 	- (void) mouseUp: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseUp: event];
@@ -184,7 +184,7 @@
 
 	- (void) mouseDragged: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseDragged: event];
@@ -192,7 +192,7 @@
 
 	- (void) rightMouseDown: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseDown: event];
@@ -200,7 +200,7 @@
 
 	- (void) rightMouseUp: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseUp: event];
@@ -208,7 +208,7 @@
 
 	- (void) rightMouseDragged: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseDragged: event];
@@ -216,7 +216,7 @@
 
 	- (void) otherMouseDown: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseDown: event];
@@ -224,7 +224,7 @@
 
 	- (void) otherMouseUp: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseUp: event];
@@ -232,7 +232,7 @@
 
 	- (void) otherMouseDragged: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseDragged: event];
@@ -240,7 +240,7 @@
 
 	- (void) mouseMoved: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseMoved: event];
@@ -248,7 +248,7 @@
 
 	- (void) mouseEntered: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseEntered: event];
@@ -256,7 +256,7 @@
 
 	- (void) mouseExited: (NSEvent*) event
 	{
-		NativeWindow* win = (NativeWindow*) [self window];
+		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
 		[win mouseExited: event];
