@@ -329,7 +329,7 @@ RUCY_DEF0(get_chars)
 {
 	CHECK;
 	const char* chars = THIS->chars();
-	return chars ? value(chars) : nil();
+	return chars ? value(chars, rb_utf8_encoding()) : nil();
 }
 RUCY_END
 

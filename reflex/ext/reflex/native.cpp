@@ -19,6 +19,7 @@ void Init_reflex_frame_event ();
 void Init_reflex_scroll_event ();
 void Init_reflex_focus_event ();
 void Init_reflex_key_event ();
+void Init_reflex_text_event ();
 void Init_reflex_pointer_event ();
 void Init_reflex_wheel_event ();
 void Init_reflex_midi_event ();
@@ -80,6 +81,7 @@ Init_reflex_ext ()
 	Init_reflex_scroll_event();
 	Init_reflex_focus_event();
 	Init_reflex_key_event();
+	Init_reflex_text_event();
 	Init_reflex_pointer_event();
 	Init_reflex_wheel_event();
 	Init_reflex_midi_event();

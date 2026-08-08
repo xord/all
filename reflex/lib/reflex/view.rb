@@ -162,6 +162,21 @@ module Reflex
       end
     end
 
+    # true or false to force, nil to decide by the presence of an on_text handler.
+    def text_input=(state)
+      @text_input = state
+      set_text_input_flag! !!state
+    end
+
+    attr_reader :text_input
+
+    def accepts_text_input?()
+      return false if hidden?
+      return text_input_flag! unless @text_input.nil?
+      %i[on_text on_text_edit on_text_commit]
+        .any? {|name| method(name).owner != Reflex::View}
+    end
+
     def on_contact(e)
     end
 
@@ -172,7 +187,7 @@ module Reflex
     end
 
     universal_accessor :shape, :name, :selector,
-      :frame, :angle, :pivot, :zoom, :capture,
+      :frame, :angle, :pivot, :zoom, :capture, :text_input,
       :density, :friction, :restitution,
       :linear_velocity, :angular_velocity, :gravity_scale,
       :gravity, :time_scale,

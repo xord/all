@@ -123,6 +123,31 @@ RUCY_DEF0(update_layout)
 RUCY_END
 
 static
+RUCY_DEF0(fit_to_content)
+{
+	CHECK;
+	THIS->fit_to_content();
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(content_bounds)
+{
+	CHECK;
+	return value(CALL(content_bounds()));
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_text_input_bounds)
+{
+	CHECK;
+	return value(CALL(text_input_bounds()));
+}
+RUCY_END
+
+static
 RUCY_DEF1(from_parent, point)
 {
 	CHECK;
@@ -447,23 +472,6 @@ RUCY_DEF0(get_frame)
 RUCY_END
 
 static
-RUCY_DEF0(content_bounds)
-{
-	CHECK;
-	return value(CALL(content_bounds()));
-}
-RUCY_END
-
-static
-RUCY_DEF0(fit_to_content)
-{
-	CHECK;
-	THIS->fit_to_content();
-	return self;
-}
-RUCY_END
-
-static
 RUCY_DEF1(set_angle, degree)
 {
 	CHECK;
@@ -729,6 +737,28 @@ RUCY_DEF0(get_fix_angle)
 {
 	CHECK;
 	return value(THIS->has_flag(Reflex::View::FLAG_FIX_ANGLE));
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_text_input, state)
+{
+	CHECK;
+
+	if (state)
+		THIS->   add_flag(Reflex::View::FLAG_TEXT_INPUT);
+	else
+		THIS->remove_flag(Reflex::View::FLAG_TEXT_INPUT);
+
+	return state;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_text_input)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::View::FLAG_TEXT_INPUT));
 }
 RUCY_END
 
@@ -1163,6 +1193,30 @@ RUCY_DEF1(on_key_up, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_text, event)
+{
+	CHECK;
+	CALL(on_text(to<Reflex::TextEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_text_edit, event)
+{
+	CHECK;
+	CALL(on_text_edit(to<Reflex::TextEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_text_commit, event)
+{
+	CHECK;
+	CALL(on_text_commit(to<Reflex::TextEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_pointer, event)
 {
 	CHECK;
@@ -1333,6 +1387,9 @@ Init_reflex_view ()
 	cView.define_method("focus?", has_focus);
 	cView.define_private_method("start_timer!", start_timer);
 	cView.define_method("update_layout", update_layout);
+	cView.define_method("fit_to_content",        fit_to_content);
+	cView.define_method(       "content_bounds",        content_bounds);
+	cView.define_method(    "text_input_bounds", get_text_input_bounds);
 
 	cView.define_method("from_parent", from_parent);
 	cView.define_method(  "to_parent",   to_parent);
@@ -1370,8 +1427,6 @@ Init_reflex_view ()
 
 	cView.define_method("frame=", set_frame);
 	cView.define_method("frame",  get_frame);
-	cView.define_method("content_bounds", content_bounds);
-	cView.define_method("fit_to_content", fit_to_content);
 	cView.define_method("angle=", set_angle);
 	cView.define_method("angle",  get_angle);
 	cView.define_method("pivot=", set_pivot);
@@ -1393,6 +1448,8 @@ Init_reflex_view ()
 	cView.define_method("scroll_to_fit?", get_scroll_to_fit);
 	cView.define_method("fix_angle=", set_fix_angle);
 	cView.define_method("fix_angle?", get_fix_angle);
+	cView.define_private_method("set_text_input_flag!", set_text_input);
+	cView.define_private_method(    "text_input_flag!", get_text_input);
 	cView.define_method("parent", parent);
 	cView.define_method("window", window);
 
@@ -1447,6 +1504,9 @@ Init_reflex_view ()
 	cView.define_method("on_key",      on_key);
 	cView.define_method("on_key_down", on_key_down);
 	cView.define_method("on_key_up",   on_key_up);
+	cView.define_method("on_text",        on_text);
+	cView.define_method("on_text_edit",   on_text_edit);
+	cView.define_method("on_text_commit", on_text_commit);
 	cView.define_method("on_pointer",        on_pointer);
 	cView.define_method("on_pointer_down",   on_pointer_down);
 	cView.define_method("on_pointer_up",     on_pointer_up);
