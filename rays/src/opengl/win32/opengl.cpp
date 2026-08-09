@@ -11,7 +11,7 @@ namespace Rays
 {
 
 
-	static const char* WINDOW_CLASS = "Rays:OffscreenWindow";
+	static const wchar_t* WINDOW_CLASS = L"Rays:OffscreenWindow";
 
 
 	const PIXELFORMATDESCRIPTOR*
@@ -39,21 +39,21 @@ namespace Rays
 
 		OffscreenContext ()
 		{
-			WNDCLASS wc      = {0};
-			wc.lpfnWndProc   = DefWindowProc;
-			wc.hInstance     = GetModuleHandle(NULL);
+			WNDCLASSW wc     = {0};
+			wc.lpfnWndProc   = DefWindowProcW;
+			wc.hInstance     = GetModuleHandleW(NULL);
 			wc.lpszClassName = WINDOW_CLASS;
 			wc.style         = CS_OWNDC;
-			if (!RegisterClass(&wc))
+			if (!RegisterClassW(&wc))
 			{
 				// It's OK to be registered by the duplicated Rays module
 				if (GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
 					system_error(__FILE__, __LINE__);
 			}
 
-			hwnd = CreateWindowEx(
-				WS_EX_LAYERED, WINDOW_CLASS, "", WS_POPUP, 0, 0, 1, 1,
-				NULL, NULL, GetModuleHandle(NULL), NULL);
+			hwnd = CreateWindowExW(
+				WS_EX_LAYERED, WINDOW_CLASS, L"", WS_POPUP, 0, 0, 1, 1,
+				NULL, NULL, GetModuleHandleW(NULL), NULL);
 			if (!hwnd)
 				system_error(__FILE__, __LINE__);
 

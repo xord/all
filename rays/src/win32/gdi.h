@@ -87,6 +87,9 @@ namespace Rays
 				bool get_extent (
 					coord* width, coord* height, const char* str, HDC hdc = NULL);
 
+				bool get_extent (
+					coord* width, coord* height, const wchar_t* str, HDC hdc = NULL);
+
 				HFONT handle () const;
 
 				operator bool () const;

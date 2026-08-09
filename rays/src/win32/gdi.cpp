@@ -2,6 +2,7 @@
 
 
 #include <assert.h>
+#include <string>
 #include <vector>
 
 
@@ -117,7 +118,7 @@ namespace Rays
 				return false;
 
 			LOGPEN logpen;
-			if (!GetObject(handle(), sizeof(logpen), &logpen))
+			if (!GetObjectW(handle(), sizeof(logpen), &logpen))
 				return false;
 
 			if (red)   *red   = GetRValue(logpen.lopnColor);
@@ -179,7 +180,7 @@ namespace Rays
 				return false;
 
 			LOGBRUSH logbrush;
-			if (!GetObject(handle(), sizeof(logbrush), &logbrush))
+			if (!GetObjectW(handle(), sizeof(logbrush), &logbrush))
 				return false;
 
 			if (red)   *red   = GetRValue(logbrush.lbColor);
@@ -217,20 +218,24 @@ namespace Rays
 		static HFONT
 		create_font (const char* name, coord size = 0)
 		{
-			NONCLIENTMETRICSA metrics;
+			NONCLIENTMETRICSW metrics;
 			memset(&metrics, 0, sizeof(metrics));
 			metrics.cbSize = sizeof(metrics);
 
-			if (!SystemParametersInfoA(
+			if (!SystemParametersInfoW(
 				SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0))
 			{
 				return NULL;
 			}
 
-			LOGFONTA& logfont = metrics.lfMessageFont;
+			LOGFONTW& logfont = metrics.lfMessageFont;
 
 			if (name)
-				strcpy(logfont.lfFaceName, name);
+			{
+				std::wstring wname = String(name).to_wstr();
+				wcsncpy(logfont.lfFaceName, wname.c_str(), LF_FACESIZE - 1);
+				logfont.lfFaceName[LF_FACESIZE - 1] = L'\0';
+			}
 
 			if (size == 0)
 				logfont.lfHeight = 0;
@@ -242,7 +247,7 @@ namespace Rays
 					72);
 			}
 
-			return CreateFontIndirectA(&logfont);
+			return CreateFontIndirectW(&logfont);
 		}
 
 
@@ -262,16 +267,15 @@ namespace Rays
 		}
 
 		static bool
-		calc_size (
-			coord* width, coord* height, HDC hdc, const char* str)
+		calc_size (coord* width, coord* height, HDC hdc, const wchar_t* str)
 		{
 			if (!width || !height || !hdc || !str) return false;
 
-			bool empty = *str == '\0';
-			if (empty) str = " ";
+			bool empty = *str == L'\0';
+			if (empty) str = L" ";
 
 			RECT rect = {0, 0, 0, 0};
-			int ret = DrawTextA(
+			int ret = DrawTextW(
 				hdc, str, -1, &rect,
 				DT_EXPANDTABS | DT_NOPREFIX | DT_CALCRECT);
 			if (!ret) return false;
@@ -282,10 +286,16 @@ namespace Rays
 		}
 
 		bool
-		Font::get_extent (
-			coord* width, coord* height, const char* str, HDC hdc)
+		Font::get_extent (coord* width, coord* height, const char* str, HDC hdc)
 		{
-			if (!*this || (!width && !height))
+			if (!str) return false;
+			return get_extent(width, height, String(str).to_wstr().c_str(), hdc);
+		}
+
+		bool
+		Font::get_extent (coord* width, coord* height, const wchar_t* str, HDC hdc)
+		{
+			if (!*this || (!width && !height) || !str)
 				return false;
 
 			if (width)  *width  = 0;
@@ -312,12 +322,12 @@ namespace Rays
 		{
 			if (!*this) return "";
 
-			LOGFONT logfont;
+			LOGFONTW logfont;
 			int size = sizeof(logfont);
-			if (GetObject(self->handle.handle(), size, &logfont) != size)
+			if (GetObjectW(self->handle.handle(), size, &logfont) != size)
 				return "";
 
-			return logfont.lfFaceName;
+			return String(logfont.lfFaceName, wcsnlen(logfont.lfFaceName, LF_FACESIZE));
 		}
 
 		coord
@@ -325,9 +335,9 @@ namespace Rays
 		{
 			if (!*this) return 0;
 
-			LOGFONT logfont;
+			LOGFONTW logfont;
 			int size = sizeof(logfont);
-			if (GetObject(self->handle.handle(), size, &logfont) != size)
+			if (GetObjectW(self->handle.handle(), size, &logfont) != size)
 				return 0;
 
 			if (logfont.lfHeight >= 0)
@@ -373,8 +383,8 @@ namespace Rays
 		static bool
 		load_bitmap (uint id, HINSTANCE hinst = NULL)
 		{
-			if (!hinst) hinst = (HINSTANCE) GetModuleHandle(NULL);
-			self->handle.reset(LoadBitmap(hinst, MAKEINTRESOURCE(id)));
+			if (!hinst) hinst = (HINSTANCE) GetModuleHandleW(NULL);
+			self->handle.reset(LoadBitmapW(hinst, MAKEINTRESOURCEW(id)));
 			return !!self->handle;
 		}
 #endif
@@ -398,7 +408,7 @@ namespace Rays
 		Bitmap::width () const
 		{
 			BITMAP bmp;
-			if (!*this || !GetObject(handle(), sizeof(bmp), &bmp))
+			if (!*this || !GetObjectW(handle(), sizeof(bmp), &bmp))
 				return 0;
 			return bmp.bmWidth;
 		}
@@ -407,7 +417,7 @@ namespace Rays
 		Bitmap::height () const
 		{
 			BITMAP bmp;
-			if (!*this || !GetObject(handle(), sizeof(bmp), &bmp))
+			if (!*this || !GetObjectW(handle(), sizeof(bmp), &bmp))
 				return 0;
 			return bmp.bmHeight;
 		}
