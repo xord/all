@@ -1,6 +1,8 @@
 #include "event.h"
 
 
+#include <string>
+#include <vector>
 #include <xot/time.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
@@ -38,6 +40,90 @@ namespace Reflex
 
 	NativeKeyEvent::NativeKeyEvent (UINT msg, WPARAM wp, LPARAM lp, const char* chars)
 	:	KeyEvent(get_key_action(msg), chars, (int) wp, KeyEvent_get_modifiers(), lp & 0xFF)
+	{
+	}
+
+
+	static std::wstring
+	get_composition_string (HIMC himc, DWORD index)
+	{
+		LONG size = ImmGetCompositionStringW(himc, index, NULL, 0);
+		if (size <= 0) return {};
+
+		std::wstring text(size / sizeof(wchar_t), L'\0');
+		ImmGetCompositionStringW(himc, index, text.data(), size);
+		return text;
+	}
+
+	static int
+	to_char_index (const std::wstring& str, size_t utf16_index)
+	{
+		size_t length = str.size();
+		if (utf16_index > length) utf16_index = length;
+
+		int index = 0;
+		for (size_t i = 0; i < utf16_index; ++i, ++index)
+		{
+			if (!IS_HIGH_SURROGATE(str[i]) || i + 1 >= length)
+				continue;
+
+			if (IS_LOW_SURROGATE(str[i + 1])) ++i;
+		}
+		return index;
+	}
+
+	static void
+	get_selection (
+		HIMC himc, const std::wstring& text, int* offset, int* size)
+	{
+		*offset = *size = 0;
+
+		LONG attr_size = ImmGetCompositionStringW(himc, GCS_COMPATTR, NULL, 0);
+		if (attr_size > 0)
+		{
+			std::vector<char> attrs(attr_size);
+			ImmGetCompositionStringW(himc, GCS_COMPATTR, attrs.data(), attr_size);
+
+			int begin = -1, end = 0;
+			for (LONG i = 0; i < attr_size; ++i)
+			{
+				if (
+					attrs[i] != ATTR_TARGET_CONVERTED &&
+					attrs[i] != ATTR_TARGET_NOTCONVERTED)
+				{
+					continue;
+				}
+
+				if (begin < 0) begin = (int) i;
+				end = (int) i + 1;
+			}
+
+			if (begin >= 0)
+			{
+				*offset = to_char_index(text, begin);
+				*size   = to_char_index(text, end) - *offset;
+				return;
+			}
+		}
+
+		LONG pos = ImmGetCompositionStringW(himc, GCS_CURSORPOS, NULL, 0);
+		*offset  = to_char_index(text, pos >= 0 ? (size_t) pos : text.size());
+	}
+
+	static TextEvent
+	to_text_event (TextEvent::Action action, HIMC himc, DWORD index)
+	{
+		std::wstring text = get_composition_string(himc, index);
+
+		int offset = -1, size = 0;
+		if (action == TextEvent::PREEDIT)
+			get_selection(himc, text, &offset, &size);
+
+		return TextEvent(action, String(text.c_str(), text.size()), offset, size);
+	}
+
+	NativeTextEvent::NativeTextEvent (Action action, HIMC himc, DWORD index)
+	:	TextEvent(to_text_event(action, himc, index))
 	{
 	}
 

@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <map>
 #include <memory>
+#include <imm.h>
 #include <xot/time.h>
 #include <xot/windows.h>
 #include <rays/rays.h>
@@ -290,6 +291,8 @@ namespace Reflex
 	{
 		assert(*win);
 
+		if (wp == VK_PROCESSKEY) return;
+
 		WindowData* self = get_data(win);
 
 		String chars = get_chars(self, msg);
@@ -320,6 +323,74 @@ namespace Reflex
 		Window_call_key_event(win, &e);
 
 		if (it != self->pressing_keys.end()) self->pressing_keys.erase(it);
+	}
+
+	static bool
+	accepts_text_input (Window* win)
+	{
+		const View* focus = win->focus();
+		return focus && focus->accepts_text_input();
+	}
+
+	static void
+	update_composition (Window* win, LPARAM lp)
+	{
+		assert(*win);
+
+		WindowData* self = get_data(win);
+
+		HIMC himc = ImmGetContext(self->hwnd);
+		if (!himc) return;
+
+		if (lp & GCS_RESULTSTR)
+		{
+			NativeTextEvent e(TextEvent::COMMIT, himc, GCS_RESULTSTR);
+			Window_call_text_event(win, &e, true);
+		}
+
+		if (lp & GCS_COMPSTR)
+		{
+			NativeTextEvent e(TextEvent::PREEDIT, himc, GCS_COMPSTR);
+			Window_call_text_event(win, &e);
+		}
+
+		ImmReleaseContext(self->hwnd, himc);
+	}
+
+	static void
+	clear_composition (Window* win)
+	{
+		assert(*win);
+
+		TextEvent e(TextEvent::PREEDIT, "");
+		Window_call_text_event(win, &e);
+	}
+
+	static void
+	update_ime_position (Window* win)
+	{
+		assert(*win);
+
+		const View* focus = win->focus();
+		if (!focus) return;
+
+		WindowData* self = get_data(win);
+
+		HIMC himc = ImmGetContext(self->hwnd);
+		if (!himc) return;
+
+		Bounds b = focus->text_input_bounds();
+		Point p1 = focus->to_window(b.position());
+		Point p2 = focus->to_window(b.position() + b.size());
+
+		CANDIDATEFORM form = {};
+		form.dwIndex       = 0;
+		form.dwStyle       = CFS_EXCLUDE;
+		form.ptCurrentPos  = {(LONG) p1.x, (LONG) p2.y};
+		form.rcArea        = {(LONG) p1.x, (LONG) p1.y, (LONG) p2.x, (LONG) p2.y};
+		ImmSetCandidateWindow(himc, &form);
+
+		ImmReleaseContext(self->hwnd, himc);
 	}
 
 	#ifndef MOUSEEVENTF_FROMTOUCH
@@ -500,6 +571,31 @@ namespace Reflex
 			{
 				key_up(win, msg, wp, lp);
 				break;
+			}
+
+			case WM_IME_STARTCOMPOSITION:
+			{
+				if (!accepts_text_input(win)) break;
+
+				update_ime_position(win);
+				return 0;
+			}
+
+			case WM_IME_ENDCOMPOSITION:
+			{
+				if (!accepts_text_input(win)) break;
+
+				clear_composition(win);
+				return 0;
+			}
+
+			case WM_IME_COMPOSITION:
+			{
+				if (!accepts_text_input(win)) break;
+
+				update_composition(win, lp);
+				update_ime_position(win);
+				return 0;
 			}
 
 			case WM_LBUTTONDOWN:

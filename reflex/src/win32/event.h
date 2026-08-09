@@ -5,6 +5,7 @@
 
 
 #include <xot/windows.h>
+#include <imm.h>
 #include "../event.h"
 
 
@@ -20,6 +21,16 @@ namespace Reflex
 			NativeKeyEvent (UINT msg, WPARAM wp, LPARAM lp, const char* chars = NULL);
 
 	};// NativeKeyEvent
+
+
+	class NativeTextEvent : public TextEvent
+	{
+
+		public:
+
+			NativeTextEvent (Action action, HIMC himc, DWORD index);
+
+	};// NativeTextEvent
 
 
 	class NativePointerEvent : public PointerEvent
