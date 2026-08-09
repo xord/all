@@ -132,11 +132,11 @@ namespace Reflex
 
 			virtual void on_key_up   (KeyEvent* e);
 
-			virtual void on_text        (TextEvent* e);
+			virtual void on_text         (TextEvent* e);
 
-			virtual void on_text_edit   (TextEvent* e);
+			virtual void on_text_preedit (TextEvent* e);
 
-			virtual void on_text_commit (TextEvent* e);
+			virtual void on_text_commit  (TextEvent* e);
 
 			virtual void on_pointer        (PointerEvent* e);
 

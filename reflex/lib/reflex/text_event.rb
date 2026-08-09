@@ -10,13 +10,13 @@ module Reflex
     alias get_action action
 
     const_symbol_reader :action, **{
-      none:   ACTION_NONE,
-      edit:   EDIT,
-      commit: COMMIT
+      none:    ACTION_NONE,
+      preedit: PREEDIT,
+      commit:  COMMIT
     }
 
-    def edit?()
-      get_action == EDIT
+    def preedit?()
+      get_action == PREEDIT
     end
 
     def commit?()

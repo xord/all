@@ -298,7 +298,7 @@ namespace Reflex
 
 		public:
 
-			enum Action {ACTION_NONE = 0, EDIT, COMMIT};
+			enum Action {ACTION_NONE = 0, PREEDIT, COMMIT};
 
 			TextEvent ();
 

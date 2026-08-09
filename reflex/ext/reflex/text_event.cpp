@@ -92,7 +92,7 @@ Init_reflex_text_event ()
 	cTextEvent.define_private_method("selection_size!",   get_selection_size);
 
 	cTextEvent.define_const("ACTION_NONE", Reflex::TextEvent::ACTION_NONE);
-	cTextEvent.define_const("EDIT",        Reflex::TextEvent::EDIT);
+	cTextEvent.define_const("PREEDIT",     Reflex::TextEvent::PREEDIT);
 	cTextEvent.define_const("COMMIT",      Reflex::TextEvent::COMMIT);
 }
 

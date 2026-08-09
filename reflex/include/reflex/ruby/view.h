@@ -224,13 +224,13 @@ namespace Reflex
 					Super::on_text(e);
 			}
 
-			virtual void on_text_edit (TextEvent* e)
+			virtual void on_text_preedit (TextEvent* e)
 			{
-				RUCY_SYM(on_text_edit);
+				RUCY_SYM(on_text_preedit);
 				if (this->is_overridable())
-					this->value.call(on_text_edit, Rucy::value(e));
+					this->value.call(on_text_preedit, Rucy::value(e));
 				else
-					Super::on_text_edit(e);
+					Super::on_text_preedit(e);
 			}
 
 			virtual void on_text_commit (TextEvent* e)

@@ -418,12 +418,12 @@ move_to_main_screen_origin (NativeWindow* window)
 		return focus && focus->accepts_text_input();
 	}
 
-	- (void) textEdit: (NSString*) text selection: (NSRange) selection
+	- (void) textPreedit: (NSString*) text selection: (NSRange) selection
 	{
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
-		Reflex::NativeTextEvent e(Reflex::TextEvent::EDIT, text, selection);
+		Reflex::NativeTextEvent e(Reflex::TextEvent::PREEDIT, text, selection);
 		Window_call_text_event(win, &e);
 	}
 

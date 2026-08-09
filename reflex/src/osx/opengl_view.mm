@@ -320,7 +320,7 @@
 			marked_selection = selection;
 		}
 
-		[win textEdit: text selection: selection];
+		[win textPreedit: text selection: selection];
 	}
 
 	- (void) unmarkText
@@ -331,7 +331,7 @@
 		if (!win) return;
 
 		[self clearMarkedText];
-		[win textEdit: @"" selection: NSMakeRange(NSNotFound, 0)];
+		[win textPreedit: @"" selection: NSMakeRange(NSNotFound, 0)];
 	}
 
 	- (BOOL) hasMarkedText

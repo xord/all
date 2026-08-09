@@ -309,8 +309,8 @@ namespace Reflex
 
 		switch (event->action())
 		{
-			case TextEvent::EDIT:   window->on_text_edit(event);   break;
-			case TextEvent::COMMIT: window->on_text_commit(event); break;
+			case TextEvent::PREEDIT: window->on_text_preedit(event); break;
+			case TextEvent::COMMIT:  window->on_text_commit(event);  break;
 			default: break;
 		}
 		if (event->is_blocked()) return;
@@ -1228,7 +1228,7 @@ namespace Reflex
 	}
 
 	void
-	Window::on_text_edit (TextEvent* e)
+	Window::on_text_preedit (TextEvent* e)
 	{
 	}
 

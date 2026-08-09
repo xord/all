@@ -10,7 +10,7 @@
 
 	- (BOOL) isTextInputEnabled;
 
-	- (void) textEdit: (NSString*) text selection: (NSRange) selection;
+	- (void) textPreedit: (NSString*) text selection: (NSRange) selection;
 
 	- (void) textCommit: (NSString*) text synthesizeKeyEvent: (BOOL) synthesize;
 

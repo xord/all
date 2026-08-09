@@ -173,7 +173,7 @@ module Reflex
     def accepts_text_input?()
       return false if hidden?
       return text_input_flag! unless @text_input.nil?
-      %i[on_text on_text_edit on_text_commit]
+      %i[on_text on_text_preedit on_text_commit]
         .any? {|name| method(name).owner != Reflex::View}
     end
 

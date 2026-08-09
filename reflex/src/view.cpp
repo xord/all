@@ -1584,8 +1584,8 @@ namespace Reflex
 
 		switch (e.action())
 		{
-			case TextEvent::EDIT:   view->on_text_edit(&e);   break;
-			case TextEvent::COMMIT: view->on_text_commit(&e); break;
+			case TextEvent::PREEDIT: view->on_text_preedit(&e); break;
+			case TextEvent::COMMIT:  view->on_text_commit(&e);  break;
 			default: break;
 		}
 	}
@@ -3090,7 +3090,7 @@ namespace Reflex
 	}
 
 	void
-	View::on_text_edit (TextEvent* e)
+	View::on_text_preedit (TextEvent* e)
 	{
 	}
 

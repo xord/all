@@ -503,7 +503,7 @@ class TestView < Test::Unit::TestCase
     assert_false new_class.call(:on_text).new.hide     .accepts_text_input?
     assert_true  new_class.call(:on_text).new.hide.show.accepts_text_input?
 
-    %w[on_text on_text_edit on_text_commit].each do |hook|
+    %w[on_text on_text_preedit on_text_commit].each do |hook|
       on_less = hook.sub 'on_', ''
       assert_true new_class.call(hook).new        .accepts_text_input?, hook
       assert_true view.tap {_1.on(on_less)  {|*|}}.accepts_text_input?, hook
