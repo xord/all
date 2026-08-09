@@ -39,7 +39,7 @@ namespace Reflex
 
 		MONITORINFO mi = {0};
 		mi.cbSize      = sizeof(mi);
-		if (!GetMonitorInfo(self->handle, &mi))
+		if (!GetMonitorInfoW(self->handle, &mi))
 			system_error(__FILE__, __LINE__);
 
 		const auto& r = mi.rcMonitor;

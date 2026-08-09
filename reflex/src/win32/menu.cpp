@@ -1,6 +1,7 @@
 #include "menu.h"
 
 
+#include <string>
 #include "reflex/exception.h"
 #include "reflex/event.h"
 #include "reflex/view.h"
@@ -104,9 +105,9 @@ namespace Reflex
 	{
 		if (!hparent) return NULL;
 
-		MENUITEMINFO mii = {sizeof(mii)};
-		mii.fMask        = MIIM_DATA;
-		if (!GetMenuItemInfo(hparent, index, TRUE, &mii))
+		MENUITEMINFOW mii = {sizeof(mii)};
+		mii.fMask         = MIIM_DATA;
+		if (!GetMenuItemInfoW(hparent, index, TRUE, &mii))
 			return NULL;
 
 		return (Menu*) mii.dwItemData;
@@ -130,14 +131,14 @@ namespace Reflex
 	{
 		MenuData& self = get_data(item);
 
-		MENUITEMINFO mii = {sizeof(mii)};
-		mii.fMask        = MIIM_ID | MIIM_DATA | MIIM_FTYPE | MIIM_STRING;
-		mii.fType        = MFT_STRING;
-		mii.wID          = self.id;
-		mii.dwItemData   = (ULONG_PTR) item;
-		mii.dwTypeData   = (LPSTR) "";
+		MENUITEMINFOW mii = {sizeof(mii)};
+		mii.fMask         = MIIM_ID | MIIM_DATA | MIIM_FTYPE | MIIM_STRING;
+		mii.fType         = MFT_STRING;
+		mii.wID           = self.id;
+		mii.dwItemData    = (ULONG_PTR) item;
+		mii.dwTypeData    = (LPWSTR) L"";
 
-		if (!InsertMenuItem(hparent, (UINT) index, TRUE, &mii))
+		if (!InsertMenuItemW(hparent, (UINT) index, TRUE, &mii))
 			system_error(__FILE__, __LINE__);
 
 		self.hparent = hparent;
@@ -175,22 +176,22 @@ namespace Reflex
 
 		if (!self.hparent) return;
 
-		MENUITEMINFO mii = {sizeof(mii)};
-		mii.fMask        =
+		MENUITEMINFOW mii = {sizeof(mii)};
+		mii.fMask         =
 			MIIM_ID | MIIM_DATA | MIIM_FTYPE | MIIM_STATE | MIIM_BITMAP | MIIM_SUBMENU;
-		mii.wID          = self.id;
-		mii.dwItemData   = (ULONG_PTR) menu;
+		mii.wID           = self.id;
+		mii.dwItemData    = (ULONG_PTR) menu;
 
-		String label;
+		std::wstring label;
 		if (menu->is_separator())
 			mii.fType = MFT_SEPARATOR;
 		else
 		{
-			label = make_item_string(menu);
+			label = make_item_string(menu).to_wstr();
 
 			mii.fMask     |= MIIM_STRING;
 			mii.fType      = MFT_STRING;
-			mii.dwTypeData = (LPSTR) label.c_str();
+			mii.dwTypeData = (LPWSTR) label.c_str();
 			mii.fState     =
 				(menu->is_enabled() ? MFS_ENABLED : MFS_GRAYED) |
 				(menu->is_checked() ? MFS_CHECKED : MFS_UNCHECKED);
@@ -198,7 +199,7 @@ namespace Reflex
 			mii.hSubMenu   = menu->empty() ? NULL : self.hsubmenu;
 		}
 
-		SetMenuItemInfo(self.hparent, self.id, FALSE, &mii);
+		SetMenuItemInfoW(self.hparent, self.id, FALSE, &mii);
 	}
 
 	void
@@ -240,7 +241,7 @@ namespace Reflex
 		TrackPopupMenu(
 			hmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
 			pos.x, pos.y, 0, hwnd, NULL);
-		PostMessage(hwnd, WM_NULL, 0, 0);
+		PostMessageW(hwnd, WM_NULL, 0, 0);
 	}
 
 	void
