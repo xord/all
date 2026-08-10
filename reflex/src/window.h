@@ -142,15 +142,19 @@ namespace Reflex
 
 	void Window_call_update_event     (Window* window);
 
-	void Window_call_draw_event       (Window* window, DrawEvent*    event);
+	void Window_call_draw_event       (Window* window, DrawEvent* event);
 
-	void Window_call_key_event        (Window* window, KeyEvent*     event);
+	void Window_call_key_event        (
+		Window* window, KeyEvent* event, bool capture = true);
+
+	void Window_call_text_event       (
+		Window* window, TextEvent* event, bool synthesize_key_events = false);
 
 	void Window_call_pointer_event    (Window* window, PointerEvent* event);
 
-	void Window_call_wheel_event      (Window* window, WheelEvent*   event);
+	void Window_call_wheel_event      (Window* window, WheelEvent* event);
 
-	void Window_call_midi_event       (Window* window, MIDIEvent*    event);
+	void Window_call_midi_event       (Window* window, MIDIEvent* event);
 
 
 	typedef View* (*Window_CreateRootViewFun) ();

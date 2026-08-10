@@ -105,6 +105,49 @@ namespace Reflex
 	}
 
 
+	static int
+	to_char_index (NSString* str, NSUInteger utf16_index)
+	{
+		if (utf16_index > str.length) utf16_index = str.length;
+
+		int index = 0;
+		for (NSUInteger i = 0; i < utf16_index; ++i, ++index)
+		{
+			unichar c = [str characterAtIndex: i];
+			if (!CFStringIsSurrogateHighCharacter(c) || i + 1 >= str.length)
+				continue;
+
+			if (CFStringIsSurrogateLowCharacter([str characterAtIndex: i + 1]))
+				++i;
+		}
+		return index;
+	}
+
+	static int
+	get_selection_offset (NSString* str, NSRange selection)
+	{
+		if (selection.location == NSNotFound) return -1;
+		return to_char_index(str, selection.location);
+	}
+
+	static int
+	get_selection_size (NSString* str, NSRange selection)
+	{
+		if (selection.location == NSNotFound) return 0;
+		return
+			to_char_index(str, selection.location + selection.length) -
+			to_char_index(str, selection.location);
+	}
+
+	NativeTextEvent::NativeTextEvent (
+		Action action, NSString* text, NSRange selection)
+	:	TextEvent(
+			action, text.UTF8String,
+			get_selection_offset(text, selection), get_selection_size(text, selection))
+	{
+	}
+
+
 	static bool
 	is_pointer_dragging (NSEvent* e)
 	{

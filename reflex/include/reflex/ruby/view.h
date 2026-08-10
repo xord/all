@@ -41,6 +41,27 @@ namespace Reflex
 					return Super::content_bounds();
 			}
 
+			virtual bool accepts_text_input () const
+			{
+				RUCY_SYM_Q(accepts_text_input);
+				if (this->is_overridable())
+					return Rucy::to<bool>(this->value.call(accepts_text_input));
+				else
+					return Super::accepts_text_input();
+			}
+
+			virtual Bounds text_input_bounds () const
+			{
+				RUCY_SYM(text_input_bounds);
+				if (this->is_overridable())
+				{
+					Rucy::Value ret = this->value.call(text_input_bounds);
+					return ret.is_nil() ? Super::text_input_bounds() : Rucy::to<Bounds>(ret);
+				}
+				else
+					return Super::text_input_bounds();
+			}
+
 			virtual void on_attach (Event* e)
 			{
 				RUCY_SYM(on_attach);
@@ -192,6 +213,33 @@ namespace Reflex
 					this->value.call(on_key_up, Rucy::value(e));
 				else
 					Super::on_key_up(e);
+			}
+
+			virtual void on_text (TextEvent* e)
+			{
+				RUCY_SYM(on_text);
+				if (this->is_overridable())
+					this->value.call(on_text, Rucy::value(e));
+				else
+					Super::on_text(e);
+			}
+
+			virtual void on_text_preedit (TextEvent* e)
+			{
+				RUCY_SYM(on_text_preedit);
+				if (this->is_overridable())
+					this->value.call(on_text_preedit, Rucy::value(e));
+				else
+					Super::on_text_preedit(e);
+			}
+
+			virtual void on_text_commit (TextEvent* e)
+			{
+				RUCY_SYM(on_text_commit);
+				if (this->is_overridable())
+					this->value.call(on_text_commit, Rucy::value(e));
+				else
+					Super::on_text_commit(e);
 			}
 
 			virtual void on_pointer (PointerEvent* e)

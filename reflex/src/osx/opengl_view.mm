@@ -16,6 +16,18 @@
 	{
 		bool setup_context_done;
 		NSTrackingArea* tracking_area;
+
+		// the text being composed by the input method
+		NSString* marked_text;
+
+		// the clause being converted, relative to marked_text
+		NSRange marked_selection;
+
+		// whether marked text existed when the current keyDown: started
+		BOOL was_marked;
+
+		// whether the input method handled the key in the current keyDown:
+		BOOL consumed_by_ime;
 	}
 
 	- (id) initWithFrame: (NSRect) frame
@@ -32,6 +44,10 @@
 
 		setup_context_done = false;
 		tracking_area      = nil;
+		marked_text        = nil;
+		marked_selection   = NSMakeRange(NSNotFound, 0);
+		was_marked         = NO;
+		consumed_by_ime    = NO;
 
 		return self;
 	}
@@ -132,22 +148,23 @@
 			[tracking_area release];
 			tracking_area = nil;
 		}
+		[self clearMarkedText];
 		[super dealloc];
-	}
-
-	- (void) insertText: (id) str
-	{
-		//NSLog(@"interText: %@", str);
 	}
 
 	- (void) keyDown: (NSEvent*) event
 	{
-		//[self interpretKeyEvents: [NSArray arrayWithObject: event]];
-
 		NativeWindow* win = (NativeWindow*) self.window;
 		if (!win) return;
 
-		[win keyDown: event];
+		was_marked      = self.hasMarkedText;
+		consumed_by_ime = NO;
+
+		if (win.isTextInputEnabled)
+			[self interpretKeyEvents: [NSArray arrayWithObject: event]];
+
+		if (!consumed_by_ime)
+			[win keyDown: event];
 	}
 
 	- (void) keyUp: (NSEvent*) event
@@ -260,6 +277,120 @@
 		if (!win) return;
 
 		[win mouseExited: event];
+	}
+
+	static NSString*
+	to_string (id str)
+	{
+		return [str isKindOfClass: NSAttributedString.class]
+			?	[(NSAttributedString*) str string]
+			:	(NSString*) str;
+	}
+
+	- (void) insertText: (id) string replacementRange: (NSRange) range
+	{
+		NativeWindow* win = (NativeWindow*) self.window;
+		if (!win) return;
+
+		// text committed from a composition session, or inserted without a key
+		// event (candidate window, emoji palette, dictation), has no key to
+		// report, so a key event is synthesized for it.
+		// otherwise, let keyDown: deliver the original key event.
+		BOOL synthesize = was_marked || NSApp.currentEvent.type != NSKeyDown;
+		consumed_by_ime = synthesize;
+
+		[self clearMarkedText];
+		[win textCommit: to_string(string) synthesizeKeyEvent: synthesize];
+	}
+
+	- (void) setMarkedText: (id) string
+		selectedRange: (NSRange) selection
+		replacementRange: (NSRange) range
+	{
+		NativeWindow* win = (NativeWindow*) self.window;
+		if (!win) return;
+
+		NSString* text  = to_string(string);
+		consumed_by_ime = YES;
+
+		[self clearMarkedText];
+		if (text.length > 0)
+		{
+			marked_text      = [text retain];
+			marked_selection = selection;
+		}
+
+		[win textPreedit: text selection: selection];
+	}
+
+	- (void) unmarkText
+	{
+		if (!marked_text) return;
+
+		NativeWindow* win = (NativeWindow*) self.window;
+		if (!win) return;
+
+		[self clearMarkedText];
+		[win textPreedit: @"" selection: NSMakeRange(NSNotFound, 0)];
+	}
+
+	- (BOOL) hasMarkedText
+	{
+		return marked_text != nil;
+	}
+
+	- (NSRange) markedRange
+	{
+		return marked_text
+			?	NSMakeRange(0, marked_text.length)
+			:	NSMakeRange(NSNotFound, 0);
+	}
+
+	- (NSRange) selectedRange
+	{
+		return marked_selection;
+	}
+
+	- (void) clearMarkedText
+	{
+		if (marked_text)
+		{
+			[marked_text release];
+			marked_text = nil;
+		}
+		marked_selection = NSMakeRange(NSNotFound, 0);
+	}
+
+	- (NSRect) firstRectForCharacterRange: (NSRange) range
+		actualRange: (NSRangePointer) actual
+	{
+		NativeWindow* win = (NativeWindow*) self.window;
+		if (!win) return NSZeroRect;
+
+		NSRect rect = win.textInputBounds;
+		return [win convertRectToScreen: [self convertRect: rect toView: nil]];
+	}
+
+	- (NSAttributedString*) attributedSubstringForProposedRange: (NSRange) range
+		actualRange: (NSRangePointer) actual
+	{
+		return nil;
+	}
+
+	- (NSUInteger) characterIndexForPoint: (NSPoint) point
+	{
+		return NSNotFound;
+	}
+
+	- (NSArray*) validAttributesForMarkedText
+	{
+		return [NSArray array];
+	}
+
+	- (void) doCommandBySelector: (SEL) selector
+	{
+		// NSResponder's default beeps for unhandled selectors, and keyDown:
+		// delivers the event as a key event anyway.
 	}
 
 @end// OpenGLView

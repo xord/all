@@ -22,6 +22,18 @@ namespace Reflex
 	};// NativeKeyEvent
 
 
+	class NativeTextEvent : public TextEvent
+	{
+
+		public:
+
+			NativeTextEvent (const char* text, int selection_offset, int selection_size);
+
+			NativeTextEvent (const SDL_TextInputEvent& event);
+
+	};// NativeTextEvent
+
+
 	class NativePointerEvent : public PointerEvent
 	{
 

@@ -137,6 +137,33 @@ namespace Reflex
 					Super::on_key_up(e);
 			}
 
+			virtual void on_text (TextEvent* e)
+			{
+				RUCY_SYM(on_text);
+				if (this->is_overridable())
+					this->value.call(on_text, Rucy::value(e));
+				else
+					Super::on_text(e);
+			}
+
+			virtual void on_text_preedit (TextEvent* e)
+			{
+				RUCY_SYM(on_text_preedit);
+				if (this->is_overridable())
+					this->value.call(on_text_preedit, Rucy::value(e));
+				else
+					Super::on_text_preedit(e);
+			}
+
+			virtual void on_text_commit (TextEvent* e)
+			{
+				RUCY_SYM(on_text_commit);
+				if (this->is_overridable())
+					this->value.call(on_text_commit, Rucy::value(e));
+				else
+					Super::on_text_commit(e);
+			}
+
 			virtual void on_pointer (PointerEvent* e)
 			{
 				RUCY_SYM(on_pointer);

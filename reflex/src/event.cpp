@@ -626,6 +626,73 @@ namespace Reflex
 	}
 
 
+	struct TextEvent::Data
+	{
+
+		Action action;
+
+		String text;
+
+		int selection_offset, selection_size;
+
+		Data (
+			Action action = ACTION_NONE, const char* text = NULL,
+			int selection_offset = -1, int selection_size = 0)
+		:	action(action), text(text ? text : ""),
+			selection_offset(selection_offset), selection_size(selection_size)
+		{
+		}
+
+	};// TextEvent::Data
+
+
+	TextEvent::TextEvent ()
+	{
+	}
+
+	TextEvent::TextEvent (
+		Action action, const char* text,
+		int selection_offset, int selection_size)
+	:	self(new Data(action, text, selection_offset, selection_size))
+	{
+	}
+
+	TextEvent::TextEvent (const TextEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	TextEvent
+	TextEvent::dup () const
+	{
+		return TextEvent(this);
+	}
+
+	TextEvent::Action
+	TextEvent::action () const
+	{
+		return self->action;
+	}
+
+	const char*
+	TextEvent::text () const
+	{
+		return self->text;
+	}
+
+	int
+	TextEvent::selection_offset () const
+	{
+		return self->selection_offset;
+	}
+
+	int
+	TextEvent::selection_size () const
+	{
+		return self->selection_size;
+	}
+
+
 	struct PointerEvent::Data
 	{
 

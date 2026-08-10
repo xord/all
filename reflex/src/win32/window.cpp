@@ -1,11 +1,13 @@
 #include "window.h"
 
 
+#include <xot/windows.h>
+#include <imm.h>
+
 #include <assert.h>
 #include <map>
 #include <memory>
 #include <xot/time.h>
-#include <xot/windows.h>
 #include <rays/rays.h>
 #include "reflex/defs.h"
 #include "reflex/exception.h"
@@ -285,21 +287,45 @@ namespace Reflex
 		return "";
 	}
 
+	static bool
+	accepts_text_input (Window* win)
+	{
+		const View* focus = win->focus();
+		return focus && focus->accepts_text_input();
+	}
+
+	// macos never commits a control character, so it is not text here either
+	static bool
+	is_committable (const String& chars)
+	{
+		uchar c = chars.empty() ? 0 : (uchar) chars[0];
+		return c >= 0x20 && c != 0x7f;
+	}
+
 	static void
 	key_down (Window* win, UINT msg, WPARAM wp, LPARAM lp)
 	{
 		assert(*win);
 
+		if (wp == VK_PROCESSKEY) return;
+
 		WindowData* self = get_data(win);
 
 		String chars = get_chars(self, msg);
-		NativeKeyEvent e(msg, wp, lp, chars);
 
+		NativeKeyEvent e(msg, wp, lp, chars);
 		self->pressing_keys.insert_or_assign(e.code(), chars);
+
 #if 0
 		for (auto kv : self->pressing_keys)
 			doutln("0x%x : %s", kv.first, (const char*) kv.second);
 #endif
+
+		if (accepts_text_input(win) && is_committable(chars))
+		{
+			TextEvent te(TextEvent::COMMIT, chars);
+			Window_call_text_event(win, &te);
+		}
 
 		Window_call_key_event(win, &e);
 	}
@@ -315,11 +341,73 @@ namespace Reflex
 
 		auto it = self->pressing_keys.find(e.code());
 		if (it != self->pressing_keys.end())
+		{
 			KeyEvent_set_chars(&e, it->second);
+			self->pressing_keys.erase(it);
+		}
 
 		Window_call_key_event(win, &e);
+	}
 
-		if (it != self->pressing_keys.end()) self->pressing_keys.erase(it);
+	static void
+	update_composition (Window* win, LPARAM lp)
+	{
+		assert(*win);
+
+		WindowData* self = get_data(win);
+
+		HIMC himc = ImmGetContext(self->hwnd);
+		if (!himc) return;
+
+		if (lp & GCS_RESULTSTR)
+		{
+			NativeTextEvent e(TextEvent::COMMIT, himc, GCS_RESULTSTR);
+			Window_call_text_event(win, &e, true);
+		}
+
+		if (lp & GCS_COMPSTR)
+		{
+			NativeTextEvent e(TextEvent::PREEDIT, himc, GCS_COMPSTR);
+			Window_call_text_event(win, &e);
+		}
+
+		ImmReleaseContext(self->hwnd, himc);
+	}
+
+	static void
+	clear_composition (Window* win)
+	{
+		assert(*win);
+
+		TextEvent e(TextEvent::PREEDIT, "");
+		Window_call_text_event(win, &e);
+	}
+
+	static void
+	update_ime_position (Window* win)
+	{
+		assert(*win);
+
+		const View* focus = win->focus();
+		if (!focus) return;
+
+		WindowData* self = get_data(win);
+
+		HIMC himc = ImmGetContext(self->hwnd);
+		if (!himc) return;
+
+		Bounds b = focus->text_input_bounds();
+		Point p1 = focus->to_window(b.position());
+		Point p2 = focus->to_window(b.position() + b.size());
+
+		CANDIDATEFORM form = {};
+		form.dwIndex       = 0;
+		form.dwStyle       = CFS_EXCLUDE;
+		form.ptCurrentPos  = {(LONG) p1.x, (LONG) p2.y};
+		form.rcArea        = {(LONG) p1.x, (LONG) p1.y, (LONG) p2.x, (LONG) p2.y};
+		ImmSetCandidateWindow(himc, &form);
+
+		ImmReleaseContext(self->hwnd, himc);
 	}
 
 	#ifndef MOUSEEVENTF_FROMTOUCH
@@ -500,6 +588,31 @@ namespace Reflex
 			{
 				key_up(win, msg, wp, lp);
 				break;
+			}
+
+			case WM_IME_STARTCOMPOSITION:
+			{
+				if (!accepts_text_input(win)) break;
+
+				update_ime_position(win);
+				return 0;
+			}
+
+			case WM_IME_ENDCOMPOSITION:
+			{
+				if (!accepts_text_input(win)) break;
+
+				clear_composition(win);
+				return 0;
+			}
+
+			case WM_IME_COMPOSITION:
+			{
+				if (!accepts_text_input(win)) break;
+
+				update_composition(win, lp);
+				update_ime_position(win);
+				return 0;
 			}
 
 			case WM_LBUTTONDOWN:

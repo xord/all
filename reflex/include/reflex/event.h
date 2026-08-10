@@ -293,6 +293,40 @@ namespace Reflex
 	};// KeyEvent
 
 
+	class TextEvent : public Event
+	{
+
+		public:
+
+			enum Action {ACTION_NONE = 0, PREEDIT, COMMIT};
+
+			TextEvent ();
+
+			TextEvent (
+				Action action, const char* text,
+				int selection_offset = -1, int selection_size = 0);
+
+			TextEvent dup () const;
+
+			Action action () const;
+
+			const char* text () const;
+
+			int selection_offset () const;
+
+			int selection_size () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			TextEvent (const TextEvent* src);
+
+	};// TextEvent
+
+
 	class PointerEvent : public Event
 	{
 

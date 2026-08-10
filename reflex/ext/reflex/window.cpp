@@ -392,6 +392,30 @@ RUCY_DEF1(on_key_up, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_text, event)
+{
+	CHECK;
+	CALL(on_text(to<Reflex::TextEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_text_preedit, event)
+{
+	CHECK;
+	CALL(on_text_preedit(to<Reflex::TextEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_text_commit, event)
+{
+	CHECK;
+	CALL(on_text_commit(to<Reflex::TextEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_pointer, event)
 {
 	CHECK;
@@ -545,6 +569,9 @@ Init_reflex_window ()
 	cWindow.define_method("on_key",      on_key);
 	cWindow.define_method("on_key_down", on_key_down);
 	cWindow.define_method("on_key_up",   on_key_up);
+	cWindow.define_method("on_text",         on_text);
+	cWindow.define_method("on_text_preedit", on_text_preedit);
+	cWindow.define_method("on_text_commit",  on_text_commit);
 	cWindow.define_method("on_pointer",      on_pointer);
 	cWindow.define_method("on_pointer_down",   on_pointer_down);
 	cWindow.define_method("on_pointer_up",     on_pointer_up);

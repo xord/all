@@ -486,6 +486,45 @@ class TestView < Test::Unit::TestCase
     v.capture += [];                      assert_equal [],                      v.capture
   end
 
+  def test_accepts_text_input()
+    assert_false view                                             .accepts_text_input?
+    assert_true  view.tap {_1.text_input = true}                  .accepts_text_input?
+    assert_true  view.tap {_1.text_input = true;  _1.on(:text) {}}.accepts_text_input?
+    assert_false view.tap {_1.text_input = false}                 .accepts_text_input?
+    assert_false view.tap {_1.text_input = false; _1.on(:text) {}}.accepts_text_input?
+    assert_false view.tap {_1.text_input = nil}                   .accepts_text_input?
+    assert_true  view.tap {_1.text_input = nil;   _1.on(:text) {}}.accepts_text_input?
+
+    new_class = -> hook = nil {
+      Class.new(Reflex::View) {define_method(hook) {|*|} if hook}
+    }
+
+    assert_true  new_class.call(:on_text).new          .accepts_text_input?
+    assert_false new_class.call(:on_text).new.hide     .accepts_text_input?
+    assert_true  new_class.call(:on_text).new.hide.show.accepts_text_input?
+
+    %w[on_text on_text_preedit on_text_commit].each do |hook|
+      on_less = hook.sub 'on_', ''
+      assert_true new_class.call(hook).new        .accepts_text_input?, hook
+      assert_true view.tap {_1.on(on_less)  {|*|}}.accepts_text_input?, hook
+      assert_true view.tap {_1.before(hook) {|*|}}.accepts_text_input?, hook
+      assert_true view.tap {_1.after(hook)  {|*|}}.accepts_text_input?, hook
+    end
+  end
+
+  def test_text_input()
+    v            = view;  assert_nil   v.text_input
+    v.text_input = true;  assert_true  v.text_input
+    v.text_input = false; assert_false v.text_input
+    v.text_input = nil;   assert_nil   v.text_input
+  end
+
+  def test_text_input_bounds()
+    v = view
+    v.frame = [10, 20, 30, 40]
+    assert_equal Reflex::Bounds.new(0, 0, 30, 40), v.text_input_bounds
+  end
+
   def test_capturing()
     v, w = view, window
     w.add v

@@ -25,6 +25,8 @@ RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::FocusEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::KeyEvent)
 
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::TextEvent)
+
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::PointerEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::WheelEvent)
@@ -71,6 +73,9 @@ namespace Reflex
 
 	REFLEX_EXPORT Rucy::Class key_event_class ();
 	// class Reflex::KeyEvent
+
+	REFLEX_EXPORT Rucy::Class text_event_class ();
+	// class Reflex::TextEvent
 
 	REFLEX_EXPORT Rucy::Class pointer_event_class ();
 	// class Reflex::PointerEvent
@@ -153,6 +158,12 @@ namespace Rucy
 	get_ruby_class<Reflex::KeyEvent> ()
 	{
 		return Reflex::key_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::TextEvent> ()
+	{
+		return Reflex::text_event_class();
 	}
 
 	template <> inline Class

@@ -24,6 +24,10 @@ namespace Reflex
 
 		bool need_rebind   = false;
 
+		// whether the input method is composing, which is what tells the text
+		// it commits apart from the text a key produces on its own
+		bool composing     = false;
+
 		OpenGLContext context;
 
 		mutable String title_tmp;
@@ -183,6 +187,62 @@ namespace Reflex
 
 			win->on_resize(&e);
 		}
+	}
+
+	static bool
+	accepts_text_input (Window* win)
+	{
+		const View* focus = win->focus();
+		return focus && focus->accepts_text_input();
+	}
+
+	static void
+	update_text_input_rect (Window* win)
+	{
+		const View* focus = win->focus();
+		if (!focus) return;
+
+		Bounds b = focus->text_input_bounds();
+		Point p1 = focus->to_window(b.position());
+		Point p2 = focus->to_window(b.position() + b.size());
+
+		SDL_Rect rect = {(int) p1.x, (int) p1.y, (int) (p2.x - p1.x), (int) (p2.y - p1.y)};
+		SDL_SetTextInputRect(&rect);
+	}
+
+	static void
+	preedit (Window* win, const char* text, int offset, int size)
+	{
+		WindowData* self = get_data(win);
+
+		// the input method reports an empty composition before anything is typed
+		bool empty = !text || *text == '\0';
+		if (empty && !self->composing)
+			return;
+
+		self->composing = !empty;
+
+		if (!accepts_text_input(win))
+			return;
+
+		NativeTextEvent e(text ? text : "", offset, size);
+		Window_call_text_event(win, &e);
+
+		update_text_input_rect(win);
+	}
+
+	static void
+	commit (Window* win, const SDL_TextInputEvent& event)
+	{
+		WindowData* self = get_data(win);
+
+		bool composed = self->composing;
+
+		if (!accepts_text_input(win))
+			return;
+
+		NativeTextEvent e(event);
+		Window_call_text_event(win, &e, composed);
 	}
 
 
@@ -418,6 +478,26 @@ namespace Reflex
 			{
 				NativeKeyEvent e(event.key, KeyEvent::UP);
 				Window_call_key_event(win, &e);
+				break;
+			}
+
+			case SDL_TEXTEDITING:
+			{
+				preedit(win, event.edit.text, event.edit.start, event.edit.length);
+				break;
+			}
+
+#if SDL_VERSION_ATLEAST(2, 0, 22)
+			case SDL_TEXTEDITING_EXT:
+			{
+				preedit(win, event.editExt.text, event.editExt.start, event.editExt.length);
+				break;
+			}
+#endif
+
+			case SDL_TEXTINPUT:
+			{
+				commit(win, event.text);
 				break;
 			}
 
