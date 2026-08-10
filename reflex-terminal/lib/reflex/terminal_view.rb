@@ -11,6 +11,8 @@ module Reflex
 
   class TerminalView < View
 
+    include HasTextPreedit
+
     DEFAULT_FONT_SIZE     = 14
 
     DEFAULT_FONT_NAME     =
@@ -104,7 +106,8 @@ module Reflex
       t = @terminal || return
 
       @renderer.draw e.painter, t, e.bounds
-      draw_cursor e.painter, t
+      draw_cursor  e.painter, t
+      draw_preedit e.painter, t
     end
 
     def on_key_down(e)
@@ -122,6 +125,13 @@ module Reflex
 
     def on_key_up(e)
       @terminal&.write_key e
+    end
+
+    # tells the input method where to put the candidate window.
+    def text_input_bounds()
+      x, y,  = @terminal&.cursor || [0, 0]
+      cw, ch = @renderer.cell_width, @renderer.cell_height
+      [x * cw, y * ch, preedit_width, ch]
     end
 
     def on_pointer_down(e)
@@ -243,6 +253,27 @@ module Reflex
           p.fill color.dup.tap {|c| c.alpha = 0.5}
           p.rect x * cw, y * ch, cw, ch
         end
+      end
+    end
+
+    def preedit_width()
+      preedit? ? font.width(preedit) : @renderer.cell_width
+    end
+
+    def draw_preedit(painter, terminal)
+      return unless preedit?
+
+      x, y,  = terminal.cursor
+      cw, ch = @renderer.cell_width, @renderer.cell_height
+      x, y   = x * cw, y * ch
+      fore   = terminal.foreground_color || Color.new(1, 1, 1)
+      back   = terminal.background_color || Color.new(0, 0, 0)
+
+      painter.push fill: back, stroke: nil, font: font do |p|
+        p.rect x, y, preedit_width, ch
+
+        p.fill fore
+        super p, x, y, height: ch
       end
     end
 
