@@ -287,6 +287,21 @@ namespace Reflex
 		return "";
 	}
 
+	static bool
+	accepts_text_input (Window* win)
+	{
+		const View* focus = win->focus();
+		return focus && focus->accepts_text_input();
+	}
+
+	// macos never commits a control character, so it is not text here either
+	static bool
+	is_committable (const String& chars)
+	{
+		uchar c = chars.empty() ? 0 : (uchar) chars[0];
+		return c >= 0x20 && c != 0x7f;
+	}
+
 	static void
 	key_down (Window* win, UINT msg, WPARAM wp, LPARAM lp)
 	{
@@ -297,13 +312,20 @@ namespace Reflex
 		WindowData* self = get_data(win);
 
 		String chars = get_chars(self, msg);
-		NativeKeyEvent e(msg, wp, lp, chars);
 
+		NativeKeyEvent e(msg, wp, lp, chars);
 		self->pressing_keys.insert_or_assign(e.code(), chars);
+
 #if 0
 		for (auto kv : self->pressing_keys)
 			doutln("0x%x : %s", kv.first, (const char*) kv.second);
 #endif
+
+		if (accepts_text_input(win) && is_committable(chars))
+		{
+			TextEvent te(TextEvent::COMMIT, chars);
+			Window_call_text_event(win, &te);
+		}
 
 		Window_call_key_event(win, &e);
 	}
@@ -319,18 +341,12 @@ namespace Reflex
 
 		auto it = self->pressing_keys.find(e.code());
 		if (it != self->pressing_keys.end())
+		{
 			KeyEvent_set_chars(&e, it->second);
+			self->pressing_keys.erase(it);
+		}
 
 		Window_call_key_event(win, &e);
-
-		if (it != self->pressing_keys.end()) self->pressing_keys.erase(it);
-	}
-
-	static bool
-	accepts_text_input (Window* win)
-	{
-		const View* focus = win->focus();
-		return focus && focus->accepts_text_input();
 	}
 
 	static void

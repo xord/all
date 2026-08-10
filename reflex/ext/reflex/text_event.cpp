@@ -25,7 +25,7 @@ RUCY_DEF4(initialize, action, text, selection_offset, selection_size)
 
 	*THIS = Reflex::TextEvent(
 		(Reflex::TextEvent::Action) to<uint>(action),
-		text.c_str(),
+		text.is_nil() ? "" : text.c_str(),
 		to<int>(selection_offset),
 		to<int>(selection_size));
 
