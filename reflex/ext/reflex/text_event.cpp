@@ -54,7 +54,7 @@ static
 RUCY_DEF0(get_text)
 {
 	CHECK;
-	return value(THIS->text(), rb_utf8_encoding());
+	return value(THIS->text());
 }
 RUCY_END
 

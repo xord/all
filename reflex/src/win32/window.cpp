@@ -1,12 +1,13 @@
 #include "window.h"
 
 
+#include <xot/windows.h>
+#include <imm.h>
+
 #include <assert.h>
 #include <map>
 #include <memory>
-#include <imm.h>
 #include <xot/time.h>
-#include <xot/windows.h>
 #include <rays/rays.h>
 #include "reflex/defs.h"
 #include "reflex/exception.h"
