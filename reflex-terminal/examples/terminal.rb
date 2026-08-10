@@ -36,6 +36,10 @@ taken       = []
 flash       = 0
 flash_timer = nil
 
+view.after :on_attach do |e|
+  view.focus
+end
+
 view.after :on_draw do |e|
   next if flash <= 0
   e.painter.fill 1, flash

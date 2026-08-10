@@ -70,7 +70,6 @@ module Reflex
         @terminal.spawn(@envs, *[@command].compact)
       end
       resize_terminal
-      focus
     end
 
     def on_detach(e)
