@@ -31,10 +31,10 @@ class TestRenderer < Test::Unit::TestCase
     r = renderer f
     # the font crosses back as a copy, so it is the same one by its own
     # measure rather than by object
-    assert_equal f.name,        r.font.name
-    assert_equal f.size,        r.font.size
-    assert_equal f.width('M'),  r.cell_width
-    assert_equal f.height.ceil, r.cell_height
+    assert_equal f.name,            r.font.name
+    assert_equal f.size,            r.font.size
+    assert_equal f.width('M').ceil, r.cell_width
+    assert_equal f.height.ceil,     r.cell_height
 
     # the atlas holds glyphs of one size, so it goes with the old font
     r.bake_glyphs terminal('hello')

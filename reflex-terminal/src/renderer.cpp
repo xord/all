@@ -94,7 +94,7 @@ namespace ReflexTerminal
 			argument_error(__FILE__, __LINE__);
 
 		self->font        = font;
-		self->cell_width  = font.get_width("M");
+		self->cell_width  = ceil(font.get_width("M"));
 		self->cell_height = ceil(font.get_height());
 		reset_atlas(self.get());
 	}

@@ -12,7 +12,7 @@ class TestTerminalView < Test::Unit::TestCase
   # drag that would reach back to one
   def press(view, x, y, click_count: 1, modifiers: 0, button: Reflex::Pointer::MOUSE_LEFT)
     position = Reflex::Point.new(
-      x * view.font.width('M'), y * view.font.height.ceil)
+      x * view.font.width('M').ceil, y * view.font.height.ceil)
     Reflex::PointerEvent.new Reflex::Pointer.new(
       1, Reflex::Pointer::MOUSE | button,
       Reflex::Pointer::DOWN, position, modifiers, click_count, false, 0)
