@@ -70,6 +70,21 @@ namespace Reflex
 	}
 
 
+	NativeTextEvent::NativeTextEvent (
+		const char* text, int selection_offset, int selection_size)
+	:	TextEvent(
+			PREEDIT, text, selection_offset,
+			// a size below zero is how sdl says nothing is selected
+			selection_size < 0 ? 0 : selection_size)
+	{
+	}
+
+	NativeTextEvent::NativeTextEvent (const SDL_TextInputEvent& e)
+	:	TextEvent(COMMIT, e.text)
+	{
+	}
+
+
 	static uint
 	get_pointer_type (Uint8 button)
 	{

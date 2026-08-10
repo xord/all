@@ -65,10 +65,17 @@ namespace Reflex
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
-			if (dispatch_window_event(event))
-				continue;
+			bool dispatched = dispatch_window_event(event);
 
-			if (event.type == SDL_QUIT)
+#if SDL_VERSION_ATLEAST(2, 0, 22)
+			// the text of an extended composition event is handed over to
+			// whoever takes the event, so it is freed here rather than in the
+			// window that may or may not have been found for it
+			if (event.type == SDL_TEXTEDITING_EXT)
+				SDL_free(event.editExt.text);
+#endif
+
+			if (!dispatched && event.type == SDL_QUIT)
 				app->quit();
 		}
 	}
