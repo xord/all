@@ -33,13 +33,13 @@ module Xot
     end
 
     def bits2symbols(bits)
-      array = []
-      bits.to_s(2).reverse.each_char.with_index do |char, index|
-        next unless char == '1'
-        symbol = @bit2sym[bit index]
-        raise "unknown bit #{index} for flag." unless symbol
+      array, rest = [], bits
+      @bit2sym.each do |bit, symbol|
+        next if (bits & bit) == 0
         array << symbol
+        rest &= ~bit
       end
+      raise "unknown bits 0b#{rest.to_s 2} for flag." if rest != 0
       array
     end
 

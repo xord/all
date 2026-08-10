@@ -16,28 +16,34 @@ class TestBitFlag < Test::Unit::TestCase
   end
 
   def test_bits2symbols()
-    assert_equal [], flag.bits2symbols(0)
-    assert_equal [:bit1], flag.bits2symbols(bit 1)
-    assert_equal [:bit2], flag.bits2symbols(bit 2)
-    assert_equal [:bit5], flag.bits2symbols(bit 5)
-    assert_equal [:bit1, :bit2], flag.bits2symbols(bit 1, 2)
-    assert_equal [:bit1, :bit5], flag.bits2symbols(bit 1, 5)
-    assert_equal [:bit3, :bit5], flag.bits2symbols(bit 3, 5)
+    assert_equal [],                           flag.bits2symbols(0)
+    assert_equal [:bit1],                      flag.bits2symbols(bit 1)
+    assert_equal [:bit2],                      flag.bits2symbols(bit 2)
+    assert_equal [:bit5],                      flag.bits2symbols(bit 5)
+    assert_equal [:bit1, :bit2],               flag.bits2symbols(bit 1, 2)
+    assert_equal [:bit1, :bit5],               flag.bits2symbols(bit 1, 5)
+    assert_equal [:bit3, :bit5],               flag.bits2symbols(bit 3, 5)
     assert_equal [:bit1, :bit2, :bit3, :bit5], flag.bits2symbols(bit 1, 2, 3, 5)
 
     assert_raise(RuntimeError) {flag.bits2symbols(bit 0)}
     assert_raise(RuntimeError) {flag.bits2symbols(bit 4)}
     assert_raise(RuntimeError) {flag.bits2symbols(bit 6)}
     assert_raise(RuntimeError) {flag.bits2symbols(bit 0, 1)}
+
+    Xot::BitFlag.new.tap do |bf|
+      bf.flag :first,  bit(9)
+      bf.flag :second, bit(1)
+      assert_equal [:first, :second], bf.bits2symbols(bit 1, 9)
+    end
   end
 
   def test_symbols2bits()
-    assert_equal bit(1), flag.symbols2bits(:bit1)
-    assert_equal bit(2), flag.symbols2bits(:bit2)
-    assert_equal bit(5), flag.symbols2bits(:bit5)
-    assert_equal bit(1, 2), flag.symbols2bits(:bit1, :bit2)
-    assert_equal bit(1, 5), flag.symbols2bits(:bit1, :bit5)
-    assert_equal bit(3, 5), flag.symbols2bits(:bit3, :bit5)
+    assert_equal bit(1),          flag.symbols2bits(:bit1)
+    assert_equal bit(2),          flag.symbols2bits(:bit2)
+    assert_equal bit(5),          flag.symbols2bits(:bit5)
+    assert_equal bit(1, 2),       flag.symbols2bits(:bit1, :bit2)
+    assert_equal bit(1, 5),       flag.symbols2bits(:bit1, :bit5)
+    assert_equal bit(3, 5),       flag.symbols2bits(:bit3, :bit5)
     assert_equal bit(1, 2, 3, 5), flag.symbols2bits(:bit1, :bit2, :bit3, :bit5)
 
     assert_equal 0, flag.symbols2bits(:none)
