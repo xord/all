@@ -2,6 +2,7 @@
 
 
 #include <assert.h>
+#include <string>
 #include <set>
 #include "rays/exception.h"
 #include "gdi.h"
@@ -40,15 +41,18 @@ namespace Rays
 
 	static int CALLBACK
 	enum_callback (
-		const ENUMLOGFONT* elf, const NEWTEXTMETRIC* ntm, DWORD font_type, LPARAM lp)
+		const ENUMLOGFONTW* elf, const NEWTEXTMETRICW* ntm, DWORD font_type, LPARAM lp)
 	{
-		const auto* params = (EnumFontFamiliesCallbackParams*) lp;
-		const char* name   = params->fullname
-			?	(const char*) elf->elfFullName
-			:	(const char*) elf->elfLogFont.lfFaceName;
+		const auto* params  = (EnumFontFamiliesCallbackParams*) lp;
+		const wchar_t* name = params->fullname
+			?	elf->elfFullName
+			:	elf->elfLogFont.lfFaceName;
 
-		if (name && *name != '\0'  && *name != '@')
-			params->names->insert(name);
+		if (name && *name != L'\0' && *name != L'@')
+		{
+			size_t max_ = params->fullname ? LF_FULLFACESIZE : LF_FACESIZE;
+			params->names->insert(String(name, wcsnlen(name, max_)));
+		}
 
 		return TRUE;
 	}
@@ -57,16 +61,19 @@ namespace Rays
 	get_font_names (
 		StringSet* names, HDC hdc, const char* query = NULL, bool fullname = false)
 	{
-		assert(!query || strlen(query) < LF_FACESIZE);
-
-		LOGFONT lf   = {0};
+		LOGFONTW lf  = {0};
 		lf.lfCharSet = DEFAULT_CHARSET;
 
-		if (query) strcpy(lf.lfFaceName, query);
+		if (query)
+		{
+			std::wstring wquery = String(query).to_wstr();
+			assert(wquery.size() < LF_FACESIZE);
+			wcsncpy(lf.lfFaceName, wquery.c_str(), LF_FACESIZE - 1);
+		}
 
 		EnumFontFamiliesCallbackParams params(names, fullname);
-		EnumFontFamiliesEx(
-			hdc, &lf, (FONTENUMPROC) &enum_callback, (LPARAM) &params, 0);
+		EnumFontFamiliesExW(
+			hdc, &lf, (FONTENUMPROCW) &enum_callback, (LPARAM) &params, 0);
 	}
 
 	const FontFamilyMap&
@@ -142,8 +149,10 @@ namespace Rays
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
+		std::wstring wstr = String(str).to_wstr();
+
 		coord width = 0, height = 0;
-		if (!self->font.get_extent(&width, &height, str))
+		if (!self->font.get_extent(&width, &height, wstr.c_str()))
 			rays_error(__FILE__, __LINE__, "failed to get font extent.");
 
 		DC dc               = hdc;
@@ -155,7 +164,7 @@ namespace Rays
 		dc.set_text_color(RGB(255, 255, 255));
 		dc.set_back_color(RGB(0, 0, 0));
 
-		BOOL ret = TextOutA(dc.handle(), x, y, str, strlen(str));
+		BOOL ret = TextOutW(dc.handle(), x, y, wstr.c_str(), (int) wstr.size());
 
 		dc.set_font(font);
 		dc.set_text_color(text_color);
@@ -208,8 +217,8 @@ namespace Rays
 			Win32::DC dc(GetDC(NULL), true, Win32::DC::RELEASE_DC);
 			dc.set_font(self->font);
 
-			TEXTMETRIC tm;
-			GetTextMetrics(dc.handle(), &tm);
+			TEXTMETRICW tm;
+			GetTextMetricsW(dc.handle(), &tm);
 
 			if (ascent)  *ascent  = tm.tmAscent;
 			if (descent) *descent = tm.tmDescent;
@@ -217,7 +226,7 @@ namespace Rays
 		}
 
 		coord height;
-		if (!self->font.get_extent(NULL, &height, "X"))
+		if (!self->font.get_extent(NULL, &height, L"X"))
 			rays_error(__FILE__, __LINE__, "failed to get font height");
 
 		return height;

@@ -25,19 +25,22 @@ namespace Reflex
 	typedef std::map<int, String> PressingKeyMap;
 
 
-	static const char* WINDOWCLASS   = "Reflex:WindowClass";
+	static const wchar_t* WINDOWCLASS   = L"Reflex:WindowClass";
 
-	static const char* USERDATA_PROP = "Reflex:Window:HWND";
+	static const wchar_t* USERDATA_PROP = L"Reflex:Window:HWND";
 
 
 	struct WindowData : public Window::Data
 	{
 
-		HWND hwnd        = NULL;
+		HWND hwnd                 = NULL;
 
-		bool need_rebind = false;
+		bool need_rebind          = false;
 
-		bool tracking_mouse = false;
+		bool tracking_mouse       = false;
+
+		// the first half of a surrogate pair, waiting for the second half
+		wchar_t pending_surrogate = 0;
 
 		OpenGLContext context;
 
@@ -72,7 +75,7 @@ namespace Reflex
 	{
 		if (!hwnd) return false;
 
-		WNDPROC proc = (WNDPROC) GetWindowLongPtr(hwnd, GWLP_WNDPROC);
+		WNDPROC proc = (WNDPROC) GetWindowLongPtrW(hwnd, GWLP_WNDPROC);
 		if (proc == wndproc)
 			return true;
 
@@ -80,24 +83,24 @@ namespace Reflex
 		// it can not determine the hwnd is mine or not.
 
 		enum {BUFSIZE = 256};
-		char buf[BUFSIZE + 1];
+		wchar_t buf[BUFSIZE + 1];
 		if (
-			GetClassName(hwnd, &buf[0], BUFSIZE) == 0 &&
+			GetClassNameW(hwnd, &buf[0], BUFSIZE) == 0 &&
 			GetLastError() != 0)
 		{
 			return false;
 		}
 
-		return stricmp(buf, WINDOWCLASS) == 0;
+		return _wcsicmp(buf, WINDOWCLASS) == 0;
 	}
 
 	static Window*
 	get_window_from_hwnd (HWND hwnd)
 	{
 		if (window_has_wndproc(hwnd))
-			return (Window*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+			return (Window*) GetWindowLongPtrW(hwnd, GWLP_USERDATA);
 		else
-			return (Window*) GetProp(hwnd, USERDATA_PROP);
+			return (Window*) GetPropW(hwnd, USERDATA_PROP);
 	}
 
 	static void
@@ -111,13 +114,13 @@ namespace Reflex
 		if (window_has_wndproc(hwnd))
 		{
 			SetLastError(0);
-			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) win);
+			SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR) win);
 			if (GetLastError() != 0)
 				system_error(__FILE__, __LINE__);
 		}
 		else
 		{
-			if (!SetProp(hwnd, USERDATA_PROP, (HANDLE) win))
+			if (!SetPropW(hwnd, USERDATA_PROP, (HANDLE) win))
 				system_error(__FILE__, __LINE__);
 		}
 
@@ -158,13 +161,13 @@ namespace Reflex
 		if (window_has_wndproc(self->hwnd))
 		{
 			SetLastError(0);
-			SetWindowLongPtr(self->hwnd, GWLP_USERDATA, 0);
+			SetWindowLongPtrW(self->hwnd, GWLP_USERDATA, 0);
 			if (GetLastError() != 0)
 				system_error(__FILE__, __LINE__);
 		}
 		else
 		{
-			if (!RemoveProp(self->hwnd, USERDATA_PROP))
+			if (!RemovePropW(self->hwnd, USERDATA_PROP))
 				system_error(__FILE__, __LINE__);
 		}
 
@@ -250,6 +253,38 @@ namespace Reflex
 		}
 	}
 
+	static String
+	get_chars (WindowData* self, UINT msg)
+	{
+		MSG wmchar;
+		UINT filter = msg == WM_SYSKEYDOWN ? WM_SYSCHAR : WM_CHAR;
+		BOOL peeked = PeekMessageW(&wmchar, self->hwnd, filter, filter, PM_NOREMOVE);
+		if (peeked)
+		{
+			// a character outside the BMP is injected as one VK_PACKET per
+			// UTF-16 code unit, so the halves of the surrogate pair arrive in
+			// two key events and the first of them has to be held back until
+			// the second one completes the character.
+			wchar_t unit            = (wchar_t) wmchar.wParam;
+			wchar_t pending         = self->pending_surrogate;
+			self->pending_surrogate = 0;
+
+			if (IS_HIGH_SURROGATE(unit))
+				self->pending_surrogate = unit;
+			else if (IS_LOW_SURROGATE(unit))
+			{
+				if (pending)
+				{
+					wchar_t pair[] = {pending, unit};
+					return String(pair, 2);
+				}
+			}
+			else
+				return String(&unit, 1);
+		}
+		return "";
+	}
+
 	static void
 	key_down (Window* win, UINT msg, WPARAM wp, LPARAM lp)
 	{
@@ -257,13 +292,7 @@ namespace Reflex
 
 		WindowData* self = get_data(win);
 
-		MSG wmchar;
-		UINT filter = msg == WM_SYSKEYDOWN ? WM_SYSCHAR : WM_CHAR;
-		BOOL peeked = PeekMessage(&wmchar, self->hwnd, filter, filter, PM_NOREMOVE);
-
-		String chars;
-		if (peeked) chars += (char) wmchar.wParam;
-
+		String chars = get_chars(self, msg);
 		NativeKeyEvent e(msg, wp, lp, chars);
 
 		self->pressing_keys.insert_or_assign(e.code(), chars);
@@ -346,14 +375,14 @@ namespace Reflex
 		{
 			wp_y = wp;
 			MSG m;
-			if (PeekMessage(&m, self->hwnd, WM_MOUSEHWHEEL, WM_MOUSEHWHEEL, PM_REMOVE))
+			if (PeekMessageW(&m, self->hwnd, WM_MOUSEHWHEEL, WM_MOUSEHWHEEL, PM_REMOVE))
 				wp_x = m.wParam;
 		}
 		else
 		{
 			wp_x = wp;
 			MSG m;
-			if (PeekMessage(&m, self->hwnd, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE))
+			if (PeekMessageW(&m, self->hwnd, WM_MOUSEWHEEL, WM_MOUSEWHEEL, PM_REMOVE))
 				wp_y = m.wParam;
 		}
 
@@ -385,7 +414,7 @@ namespace Reflex
 	window_proc (Window* win, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
 		if (!win || !*win || hwnd != get_data(win)->hwnd)
-			return DefWindowProc(hwnd, msg, wp, lp);
+			return DefWindowProcW(hwnd, msg, wp, lp);
 
 		WindowData* self = get_data(win);
 
@@ -512,7 +541,7 @@ namespace Reflex
 			}
 		}
 
-		return DefWindowProc(hwnd, msg, wp, lp);
+		return DefWindowProcW(hwnd, msg, wp, lp);
 	}
 
 	static LRESULT CALLBACK
@@ -521,7 +550,7 @@ namespace Reflex
 		Window* win = NULL;
 		if (msg == WM_NCCREATE)
 		{
-			CREATESTRUCT* cs = (CREATESTRUCT*) lp;
+			CREATESTRUCTW* cs = (CREATESTRUCTW*) lp;
 			win = (Window*) cs->lpCreateParams;
 			setup_window(win, hwnd);
 		}
@@ -543,22 +572,22 @@ namespace Reflex
 		static bool registered = false;
 		if (registered) return;
 
-		WNDCLASSEX wc;
+		WNDCLASSEXW wc;
 		memset(&wc, 0, sizeof(wc));
 
 		wc.cbSize        = sizeof(wc);
 		wc.lpszClassName = WINDOWCLASS;
 		wc.lpfnWndProc   = (WNDPROC) wndproc;
 		wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
-		wc.hInstance     = GetModuleHandle(NULL);
-		//wc.hIcon         = LoadIcon(wc.hInstance, IDI_APP_LARGE);
-		//wc.hIconSm       = LoadIcon(wc.hInstance, IDI_APP_SMALL);
-		wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
+		wc.hInstance     = GetModuleHandleW(NULL);
+		//wc.hIcon         = LoadIconW(wc.hInstance, IDI_APP_LARGE);
+		//wc.hIconSm       = LoadIconW(wc.hInstance, IDI_APP_SMALL);
+		wc.hCursor       = LoadCursorW(NULL, (LPCWSTR) IDC_ARROW);
 		wc.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
 		wc.lpszMenuName  = NULL;
 		wc.cbWndExtra    = sizeof(Window*);
 
-		if (!RegisterClassEx(&wc))
+		if (!RegisterClassExW(&wc))
 			system_error(__FILE__, __LINE__);
 
 		registered = true;
@@ -571,10 +600,10 @@ namespace Reflex
 			invalid_state_error(__FILE__, __LINE__);
 
 		register_windowclass();
-		HWND hwnd = CreateWindowEx(
-			0, WINDOWCLASS, "",
+		HWND hwnd = CreateWindowExW(
+			0, WINDOWCLASS, L"",
 			WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-			0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), win);
+			0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), win);
 		if (!hwnd)
 			system_error(__FILE__, __LINE__);
 
@@ -654,7 +683,7 @@ namespace Reflex
 
 		if (!*window) return;
 
-		if (!SetWindowText(get_data(window)->hwnd, title))
+		if (!SetWindowTextW(get_data(window)->hwnd, String(title).to_wstr().c_str()))
 			system_error(__FILE__, __LINE__);
 	}
 
@@ -665,14 +694,14 @@ namespace Reflex
 
 		const WindowData* self = get_data(&window);
 
-		int size = GetWindowTextLength(self->hwnd);
+		int size = GetWindowTextLengthW(self->hwnd);
 		if (size <= 0) return "";
 
-		std::unique_ptr<char[]> buf(new char[size + 1]);
-		if (GetWindowText(self->hwnd, &buf[0], size + 1) != size)
+		std::unique_ptr<wchar_t[]> buf(new wchar_t[size + 1]);
+		if (GetWindowTextW(self->hwnd, &buf[0], size + 1) != size)
 			return "";
 
-		self->title_tmp = &buf[0];
+		self->title_tmp = String(&buf[0], size);
 		return self->title_tmp.c_str();
 	}
 
