@@ -389,10 +389,13 @@ namespace Reflex
 		GhosttyKey key   = to_ghostty_key(event.code());
 		GhosttyMods mods = to_ghostty_mods(event.modifiers());
 
-		// send the composed text only when it is printable and no
-		// command/meta modifier is in effect
+		// send the composed text only on a press -- text goes with presses
+		// alone, and the encoder writes a release's text out again as if it
+		// were typed -- and only when it is printable and no command/meta
+		// modifier is in effect
 		const char* chars = event.chars();
 		bool use_utf8 =
+			action != GHOSTTY_KEY_ACTION_RELEASE &&
 			is_printable(chars) &&
 			!(mods & GHOSTTY_MODS_SUPER) &&
 			!((mods & GHOSTTY_MODS_ALT) && self->option_as_alt != GHOSTTY_OPTION_AS_ALT_FALSE);

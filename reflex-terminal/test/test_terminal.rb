@@ -322,6 +322,17 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[13;1:3u", t.read_pending_input
   end
 
+  def test_write_key_release_of_committed_text()
+    t = terminal
+    # a key event synthesized for a committed text carries the text as chars
+    # and no key at all; its release must not write the text a second time
+    t.feed "\e[>3u"# report event types
+    t.write_key key_down('あ', -1)# KEY_NONE
+    assert_equal 'あ'.b, t.read_pending_input
+    t.write_key key_up('あ', -1)
+    assert_equal '', t.read_pending_input
+  end
+
   def test_read_pending_input()
     t = terminal
     t.write_key key_down("\r", R::KEY_ENTER)
