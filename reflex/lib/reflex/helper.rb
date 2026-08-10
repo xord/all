@@ -19,19 +19,16 @@ module Reflex
     numpad:   MOD_NUMPAD,
     caps:     MOD_CAPS,
     scroll:   MOD_SCROLL
-  }
+  }.freeze
 
   SHORTCUT_MODIFIER_SYMBOLS = MODIFIER_SYMBOLS.slice(
     :shift,
     :control,
     :alt,
+    :win,
     :option,
-    :command)
-
-  LOCK_MODIFIER_SYMBOLS = MODIFIER_SYMBOLS.slice(
-    :numpad,
-    :caps,
-    :scroll)
+    :command
+  ).freeze
 
 
   module HasFrame

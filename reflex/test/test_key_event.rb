@@ -3,10 +3,12 @@ require_relative 'helper'
 
 class TestKeyEvent < Test::Unit::TestCase
 
-  DOWN, UP = Reflex::KeyEvent::DOWN, Reflex::KeyEvent::UP
+  R = Reflex
+
+  DOWN, UP = R::KeyEvent::DOWN, R::KeyEvent::UP
 
   def event(*args)
-    Reflex::KeyEvent.new(*args)
+    R::KeyEvent.new(*args)
   end
 
   def test_initialize()
@@ -44,9 +46,16 @@ class TestKeyEvent < Test::Unit::TestCase
   end
 
   def test_modifiers()
-    e = event DOWN, 'a', 1, Reflex::MOD_CONTROL | Reflex::MOD_CAPS, 0
-    assert_equal [:control, :caps], e.modifiers
-    assert_equal [:control],        e.modifiers(locks: false)
+    e = event DOWN, 'a', 1, R::MOD_CONTROL | R::MOD_CAPS, 0
+    assert_equal [:control],        e.modifiers
+    assert_equal [:control, :caps], e.modifiers(all: true)
+  end
+
+  def test_inspect()
+    hex_z = R::KEY_Z.to_s(16).upcase
+    assert_equal(
+      "#<Reflex::KeyEvent :down chars:'z' key:z code:0x#{hex_z} mod:[:control, :caps] repeat:2 captured?:false>",
+      event(DOWN, 'z', R::KEY_Z, R::MOD_CONTROL | R::MOD_CAPS, 2).inspect)
   end
 
 end# TestKeyEvent

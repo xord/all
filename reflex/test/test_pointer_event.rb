@@ -3,16 +3,20 @@ require_relative 'helper'
 
 class TestPointerEvent < Test::Unit::TestCase
 
-  TYPE_NONE = Reflex::Pointer::TYPE_NONE
-  TOUCH     = Reflex::Pointer::TOUCH
-  PEN       = Reflex::Pointer::PEN
+  R = Reflex
 
-  ACTION_NONE = Reflex::Pointer::ACTION_NONE
-  DOWN        = Reflex::Pointer::DOWN
-  UP          = Reflex::Pointer::UP
+  TYPE_NONE = R::Pointer::TYPE_NONE
+  MOUSE     = R::Pointer::MOUSE
+  LEFT      = R::Pointer::MOUSE_LEFT
+  TOUCH     = R::Pointer::TOUCH
+  PEN       = R::Pointer::PEN
+
+  ACTION_NONE = R::Pointer::ACTION_NONE
+  DOWN        = R::Pointer::DOWN
+  UP          = R::Pointer::UP
 
   def event(*args, **kwargs)
-    Reflex::PointerEvent.new(*args, **kwargs)
+    R::PointerEvent.new(*args, **kwargs)
   end
 
   def pointer(
@@ -20,8 +24,7 @@ class TestPointerEvent < Test::Unit::TestCase
     position: 0, modifiers: 0, click_count: 0, drag: false,
     time: 0)
 
-    Reflex::Pointer.new(
-      id, type, action, position, modifiers, click_count, drag, time)
+    R::Pointer.new(id, type, action, position, modifiers, click_count, drag, time)
   end
 
   def test_initialize()
@@ -87,6 +90,18 @@ class TestPointerEvent < Test::Unit::TestCase
     assert_equal p3, e[-1]
     assert_equal p1, e[-3]
     assert_nil       e[-4]
+  end
+
+  def test_inspect()
+    assert_equal(
+      "#<Reflex::PointerEvent id:1 [:mouse, :mouse_left] :down (2.0, 3.0) mod:[:shift, :control] click:5 drag:true time:4.0>",
+      event(
+        pointer(
+          id: 1, type: MOUSE | LEFT, action: DOWN,
+          position: [2, 3], modifiers: 6, drag: true, click_count: 5,
+          time: 4),
+        pointer(id: 10, type: TOUCH, action: UP)
+      ).inspect)
   end
 
 end# TestPointerEvent

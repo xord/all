@@ -3,22 +3,24 @@ require_relative 'helper'
 
 class TestPointer < Test::Unit::TestCase
 
-  TYPE_NONE = Reflex::Pointer::TYPE_NONE
-  MOUSE     = Reflex::Pointer::MOUSE
-  LEFT      = Reflex::Pointer::MOUSE_LEFT
-  RIGHT     = Reflex::Pointer::MOUSE_RIGHT
-  MIDDLE    = Reflex::Pointer::MOUSE_MIDDLE
-  TOUCH     = Reflex::Pointer::TOUCH
-  PEN       = Reflex::Pointer::PEN
+  R = Reflex
 
-  ACTION_NONE = Reflex::Pointer::ACTION_NONE
-  DOWN        = Reflex::Pointer::DOWN
-  UP          = Reflex::Pointer::UP
-  MOVE        = Reflex::Pointer::MOVE
-  CANCEL      = Reflex::Pointer::CANCEL
-  ENTER       = Reflex::Pointer::ENTER
-  LEAVE       = Reflex::Pointer::LEAVE
-  STAY        = Reflex::Pointer::STAY
+  TYPE_NONE = R::Pointer::TYPE_NONE
+  MOUSE     = R::Pointer::MOUSE
+  LEFT      = R::Pointer::MOUSE_LEFT
+  RIGHT     = R::Pointer::MOUSE_RIGHT
+  MIDDLE    = R::Pointer::MOUSE_MIDDLE
+  TOUCH     = R::Pointer::TOUCH
+  PEN       = R::Pointer::PEN
+
+  ACTION_NONE = R::Pointer::ACTION_NONE
+  DOWN        = R::Pointer::DOWN
+  UP          = R::Pointer::UP
+  MOVE        = R::Pointer::MOVE
+  CANCEL      = R::Pointer::CANCEL
+  ENTER       = R::Pointer::ENTER
+  LEAVE       = R::Pointer::LEAVE
+  STAY        = R::Pointer::STAY
 
   T = true
   F = false
@@ -28,8 +30,7 @@ class TestPointer < Test::Unit::TestCase
     position: 0, modifiers: 0, click_count: 0, drag: false,
     time: 0)
 
-    Reflex::Pointer.new(
-      id, types, action, position, modifiers, click_count, drag, time)
+    R::Pointer.new(id, types, action, position, modifiers, click_count, drag, time)
   end
 
   def test_initialize()
@@ -142,9 +143,9 @@ class TestPointer < Test::Unit::TestCase
   end
 
   def test_modifiers()
-    p = pointer modifiers: Reflex::MOD_SHIFT | Reflex::MOD_NUMPAD
-    assert_equal [:shift, :numpad], p.modifiers
-    assert_equal [:shift],          p.modifiers(locks: false)
+    p = pointer modifiers: R::MOD_SHIFT | R::MOD_NUMPAD
+    assert_equal [:shift],          p.modifiers
+    assert_equal [:shift, :numpad], p.modifiers(all: true)
   end
 
   def test_down()
@@ -156,13 +157,22 @@ class TestPointer < Test::Unit::TestCase
     assert_equal pointer, pointer
 
     assert_not_equal pointer, pointer(id:          1)
-    assert_not_equal pointer, pointer(types:       Reflex::Pointer::PEN)
-    assert_not_equal pointer, pointer(action:      Reflex::Pointer::UP)
+    assert_not_equal pointer, pointer(types:       R::Pointer::PEN)
+    assert_not_equal pointer, pointer(action:      R::Pointer::UP)
     assert_not_equal pointer, pointer(position:    2)
     assert_not_equal pointer, pointer(modifiers:   3)
     assert_not_equal pointer, pointer(click_count: 4)
     assert_not_equal pointer, pointer(drag:        true)
     assert_not_equal pointer, pointer(time:        5)
+  end
+
+  def test_inspect()
+    assert_equal(
+      '#<Reflex::Pointer id:1 [:mouse, :mouse_left] :up (2.0, 3.0) mod:[:shift, :control] click:5 drag:true time:4.0>',
+      pointer(
+        id: 1, types: MOUSE | LEFT, action: UP, position: [2, 3], modifiers: 6,
+        click_count: 5, drag: true, time: 4
+      ).inspect)
   end
 
 end# TestPointer

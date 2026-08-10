@@ -50,9 +50,7 @@ view.before :on_key_down do |e|
   # a '+' needs shift wherever the layout puts it
   shifted = (prefix | [:shift]).sort
 
-  # locks are states the keyboard is left in rather than keys held for
-  # the stroke, so a shortcut has to match with them left out
-  case [e.chars, e.code, e.modifiers(locks: false).sort]
+  case [e.chars, e.code, e.modifiers.sort]
   in ['+' | '=', _,             ^prefix | ^shifted] then resize_font view,  2
   in ['-',       _,             ^prefix | ^shifted] then resize_font view, -2
   in [_, Reflex::KEY_NUM_PLUS,  ^prefix]            then resize_font view,  2

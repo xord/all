@@ -20,8 +20,8 @@ module Reflex
     bit_flag_reader :modifiers, **MODIFIER_SYMBOLS
     private alias_method :get_modifiers!, :modifiers
 
-    def modifiers(locks: true)
-      locks ? get_modifiers! : (get_modifiers! - LOCK_MODIFIER_SYMBOLS.keys)
+    def modifiers(all: false)
+      all ? get_modifiers! : (get_modifiers!.select {SHORTCUT_MODIFIER_SYMBOLS.key? _1})
     end
 
     def down?()
@@ -37,12 +37,13 @@ module Reflex
     end
 
     def inspect()
-      "#<Reflex::KeyEvent action:%s chars:%s key:%s code:0x%X mod:%s repeat:%d captured?:%s>" % [
+      "#<Reflex::KeyEvent %p chars:%s key:%s code:0x%X mod:%p repeat:%d captured?:%p>" %
+      [
         action,
         chars ? "'#{chars}'" : :nil,
         key ? key : :nil,
         code,
-        modifiers.join(','),
+        modifiers(all: true),
         repeat,
         captured?
       ]

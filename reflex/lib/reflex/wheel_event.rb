@@ -11,12 +11,21 @@ module Reflex
     bit_flag_reader :modifiers, **MODIFIER_SYMBOLS
     private alias_method :get_modifiers!, :modifiers
 
-    def modifiers(locks: true)
-      locks ? get_modifiers! : (get_modifiers! - LOCK_MODIFIER_SYMBOLS.keys)
+    def modifiers(all: false)
+      all ? get_modifiers! : (get_modifiers!.select {SHORTCUT_MODIFIER_SYMBOLS.key? _1})
     end
 
     def inspect()
-      "#<Reflex::WheelEvent x:#{x} y:#{y} z:#{z} dx:#{dx} dy:#{dy} dz:#{dz} mod:#{modifiers}>"
+      "#<Reflex::WheelEvent x:%p y:%p z:%p dx:%p dy:%p dz:%p mod:%p>" %
+      [
+        x.round(2),
+        y.round(2),
+        z.round(2),
+        dx.round(2),
+        dy.round(2),
+        dz.round(2),
+        modifiers(all: true)
+      ]
     end
 
   end# WheelEvent

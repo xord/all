@@ -3,8 +3,10 @@ require_relative 'helper'
 
 class TestWheelEvent < Test::Unit::TestCase
 
+  R = Reflex
+
   def event(*args)
-    Reflex::WheelEvent.new(*args)
+    R::WheelEvent.new(*args)
   end
 
   def point(*args)
@@ -35,9 +37,15 @@ class TestWheelEvent < Test::Unit::TestCase
   end
 
   def test_modifiers()
-    e = event 0, 0, 0, 0, 0, 0, Reflex::MOD_CONTROL | Reflex::MOD_SCROLL
-    assert_equal [:control, :scroll], e.modifiers
-    assert_equal [:control],          e.modifiers(locks: false)
+    e = event 0, 0, 0, 0, 0, 0, R::MOD_CONTROL | R::MOD_SCROLL
+    assert_equal [:control],          e.modifiers
+    assert_equal [:control, :scroll], e.modifiers(all: true)
+  end
+
+  def test_inspect()
+    assert_equal(
+      "#<Reflex::WheelEvent x:1.0 y:2.0 z:3.0 dx:4.0 dy:5.0 dz:6.79 mod:[:control, :scroll]>",
+      event(1, 2, 3, 4, 5, 6.789, R::MOD_CONTROL | R::MOD_SCROLL).inspect)
   end
 
 end# TestWheelEvent
