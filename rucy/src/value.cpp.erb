@@ -58,15 +58,13 @@ namespace Rucy
 	static VALUE
 	str_new (const char* s, rb_encoding* encoding)
 	{
-		rb_encoding* e = encoding ? encoding : rb_default_internal_encoding();
-		return e ? rb_enc_str_new_cstr(s, e) : rb_str_new_cstr(s);
+		return rb_enc_str_new_cstr(s, encoding ? encoding : rb_utf8_encoding());
 	}
 
 	static VALUE
 	str_new (const char* s, size_t len, rb_encoding* encoding)
 	{
-		rb_encoding* e = encoding ? encoding : rb_default_internal_encoding();
-		return e ? rb_enc_str_new(s, len, e) : rb_str_new(s, len);
+		return rb_enc_str_new(s, len, encoding ? encoding : rb_utf8_encoding());
 	}
 
 	Value::Value (const char* s, rb_encoding* encoding)

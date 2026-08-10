@@ -258,7 +258,7 @@ RUCY_DEF0(get_selected_text)
 {
 	CHECK;
 	Reflex::String text = THIS->selected_text();
-	return value(text.c_str(), text.size(), rb_utf8_encoding());
+	return value(text.c_str(), text.size());
 }
 RUCY_END
 
@@ -294,7 +294,7 @@ RUCY_DEF0(each_line)
 	CHECK;
 
 	for (const auto& line : THIS->lines())
-		yield(value(line.c_str(), line.size(), rb_utf8_encoding()));
+		yield(value(line.c_str(), line.size()));
 	return self;
 }
 RUCY_END
@@ -311,7 +311,7 @@ RUCY_DEF0(each_span)
 		{
 			yield(
 				value(span.x), value((int) y), value(span.width),
-				value(span.text.c_str(), span.text.size(), rb_utf8_encoding()),
+				value(span.text.c_str(), span.text.size()),
 				span.fg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.fg),
 				span.bg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.bg),
 				value(span.attribs));
@@ -422,7 +422,7 @@ static
 RUCY_DEF0(get_title)
 {
 	CHECK;
-	return value(THIS->title(), rb_utf8_encoding());
+	return value(THIS->title());
 }
 RUCY_END
 
@@ -441,7 +441,7 @@ RUCY_DEF2(get_history_lines, offset, size)
 
 	Value result = array(NULL, 0);// a std::vector<Value> would be invisible to the gc
 	for (const auto& line : THIS->get_history_lines(to<int>(offset), to<int>(size)))
-		result.push(value(line.c_str(), line.size(), rb_utf8_encoding()));
+		result.push(value(line.c_str(), line.size()));
 	return result;
 }
 RUCY_END

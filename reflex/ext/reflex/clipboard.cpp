@@ -27,7 +27,7 @@ RUCY_DEF0(get_text)
 {
 	Reflex::Clipboard clipboard = Reflex::get_clipboard();
 	const char* text = clipboard.text();
-	return text ? value(text, rb_utf8_encoding()) : nil();
+	return text ? value(text) : nil();
 }
 RUCY_END
 
