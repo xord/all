@@ -2,6 +2,7 @@ require 'xot/universal_accessor'
 require 'reflex/ext'
 require 'reflex/point'
 require 'reflex/bounds'
+require 'reflex/text_event'
 
 
 module Reflex
@@ -107,6 +108,59 @@ module Reflex
     end
 
   end# HasTags
+
+
+  # keeps the text being composed by the input method. defining the hooks
+  # below is also what lets the view accept text input.
+  module HasTextPreedit
+
+    def preedit()
+      @preedit ||= ''
+    end
+
+    def preedit_selection()
+      @preedit_selection
+    end
+
+    def preedit?()
+      !preedit.empty?
+    end
+
+    def on_text_preedit(e)
+      @preedit, @preedit_selection = e.text, e.selection
+      redraw
+    end
+
+    def on_text_commit(e)
+      return unless preedit?
+
+      @preedit, @preedit_selection = '', nil
+      redraw
+    end
+
+    # draws the composing text underlined, with a double underline under the
+    # clause being converted, in the painter's current font and fill color.
+    def draw_preedit(painter, x, y, height: nil)
+      return unless preedit?
+
+      font     = painter.font
+      height ||= font.height
+      width    = font.width preedit
+      uy       = y + height - 1
+
+      painter.push stroke: painter.fill do |p|
+        p.text preedit, x, y
+        p.line x, uy, x + width, uy
+
+        if preedit_selection
+          sx = x + font.width(preedit[0...preedit_selection.begin] || '')
+          sw =     font.width(preedit[preedit_selection]           || '')
+          p.line sx, uy - 2, sx + sw, uy - 2
+        end
+      end
+    end
+
+  end# HasTextPreedit
 
 
 end# Reflex
