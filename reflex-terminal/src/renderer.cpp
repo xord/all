@@ -17,16 +17,13 @@ namespace ReflexTerminal
 	using namespace Reflex;
 
 
-	enum
-	{
+	static constexpr int ATLAS_WIDTH        = 1024;
 
-		ATLAS_WIDTH        = 1024,
+	static constexpr int ATLAS_INITIAL_ROWS = 8;
 
-		ATLAS_INITIAL_ROWS = 8,
+	static constexpr int ATLAS_MAX_HEIGHT   = 4096;
 
-		ATLAS_MAX_HEIGHT   = 4096
-
-	};
+	static constexpr float FAINT_OPACITY    = 0.5f;
 
 
 	struct Glyph
@@ -279,6 +276,15 @@ namespace ReflexTerminal
 			((attribs & Terminal::Span::SELECTED) != 0);
 	}
 
+	static Color
+	to_text_color (uint attribs, Color color)
+	{
+		if (attribs & Terminal::Span::FAINT)
+			color.alpha *= FAINT_OPACITY;
+
+		return color;
+	}
+
 	void
 	Renderer::draw (Painter* painter, const Terminal& terminal, const Bounds& bounds)
 	{
@@ -329,7 +335,9 @@ namespace ReflexTerminal
 				if (span.cell_size == 0) continue;
 
 				bool inverted = colors_inverted(span.attribs);
-				painter->set_fill(inverted ? to_color(span.bg, theme_bg) : to_color(span.fg, theme_fg));
+				painter->set_fill(to_text_color(
+					span.attribs,
+					inverted ? to_color(span.bg, theme_bg) : to_color(span.fg, theme_fg)));
 
 				// a span breaks where narrow meets wide, so every cell in
 				// one steps the same distance
