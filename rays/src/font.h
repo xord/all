@@ -21,9 +21,9 @@ namespace Rays
 
 			RawFont ();
 
-			RawFont (const char* name, coord size);
-
-			RawFont (const This& obj, coord size);
+			RawFont (
+				const char* name, coord size,
+				int weight = Font::DEFAULT_WEIGHT, bool italic = false);
 
 			~RawFont ();
 
@@ -32,8 +32,6 @@ namespace Rays
 				const char* str, coord x, coord y) const;
 
 			String name () const;
-
-			coord size () const;
 
 			coord get_width (const char* str) const;
 
@@ -54,6 +52,10 @@ namespace Rays
 
 
 	const RawFont& Font_get_raw (const Font& font, float pixel_density);
+
+	bool Font_has_same_attributes (
+		const Font& font, const char* name, coord size,
+		int weight, bool italic, bool smooth);
 
 
 	RawFont RawFont_load (const char* path, coord size);

@@ -7,6 +7,7 @@
 #include "rays/debug.h"
 #include "polygon.h"
 #include "image.h"
+#include "font.h"
 
 
 namespace Rays
@@ -741,21 +742,20 @@ namespace Rays
 		return self->state.clip;
 	}
 
-	static bool
-	has_same_font (const Font& font, const char* name, coord size, bool smooth)
-	{
-		return
-			font.size()   == size &&
-			font.smooth() == smooth &&
-			font.name()   == (name ? name : get_default_font().name().c_str());
-	}
-
 	void
-	Painter::set_font (const char* name, coord size, bool smooth)
+	Painter::set_font (
+		const char* name, coord size, int weight, bool italic, bool smooth)
 	{
-		if (has_same_font(self->state.font, name, size, smooth)) return;
+		if (weight < 0)
+			weight = Font::DEFAULT_WEIGHT;
 
-		set_font(Font(name, size, smooth));
+		if (Font_has_same_attributes(
+			self->state.font, name, size, weight, italic, smooth))
+		{
+			return;
+		}
+
+		set_font(Font(name, size, weight, italic, smooth));
 	}
 
 	void

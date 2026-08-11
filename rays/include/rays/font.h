@@ -19,21 +19,63 @@ namespace Rays
 
 		public:
 
-			enum {DEFAULT_SIZE = 12};
+			enum
+			{
+
+				WEIGHT_MIN        = 0,
+
+				WEIGHT_THIN       = 100,
+
+				WEIGHT_EXTRALIGHT = 200,
+
+				WEIGHT_LIGHT      = 300,
+
+				WEIGHT_NORMAL     = 400,
+
+				WEIGHT_MEDIUM     = 500,
+
+				WEIGHT_SEMIBOLD   = 600,
+
+				WEIGHT_BOLD       = 700,
+
+				WEIGHT_EXTRABOLD  = 800,
+
+				WEIGHT_BLACK      = 900,
+
+				WEIGHT_MAX        = 1000,
+
+				DEFAULT_SIZE      = 12,
+
+				DEFAULT_WEIGHT    = WEIGHT_NORMAL,
+
+			};
 
 			Font ();
 
-			Font (const char* name, coord size = DEFAULT_SIZE, bool smooth = true);
+			Font (
+				const char* name,
+				coord size  = DEFAULT_SIZE,
+				int weight  = DEFAULT_WEIGHT,
+				bool italic = false,
+				bool smooth = true);
 
 			~Font ();
 
 			Font dup () const;
 
-			String name () const;
+			String name (bool resolved = false) const;
 
 			void set_size (coord size);
 
 			coord    size () const;
+
+			void set_weight (int weight);
+
+			int      weight () const;
+
+			void set_italic (bool italic);
+
+			bool     italic () const;
 
 			void set_smooth (bool smooth);
 
@@ -63,7 +105,7 @@ namespace Rays
 
 	Font load_font (const char* path, coord size = Font::DEFAULT_SIZE);
 
-	const Font& get_default_font ();
+	Font get_default_font ();
 
 
 }// Rays

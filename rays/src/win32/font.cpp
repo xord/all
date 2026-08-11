@@ -17,8 +17,6 @@ namespace Rays
 
 		Win32::Font font;
 
-		String path;
-
 	};// RawFont::Data
 
 
@@ -112,18 +110,11 @@ namespace Rays
 	{
 	}
 
-	RawFont::RawFont (const char* name, coord size)
+	RawFont::RawFont (const char* name, coord size, int weight, bool italic)
 	{
+		// TODO: apply weight (LOGFONT.lfWeight shares the 0..1000 scale)
+		// and italic (lfItalic); they are taken but not applied yet
 		self->font = Win32::Font(name, size);
-	}
-
-	RawFont::RawFont (const This& obj, coord size)
-	{
-		const char* path = obj.self->path.empty() ? NULL : obj.self->path.c_str();
-		if (path)
-			*this = RawFont_load(path, size);
-		else
-			self->font = Win32::Font(obj.name().c_str(), size);
 	}
 
 	RawFont::~RawFont ()
@@ -179,13 +170,6 @@ namespace Rays
 	{
 		if (!*this) return "";
 		return self->font.name();
-	}
-
-	coord
-	RawFont::size () const
-	{
-		if (!*this) return 0;
-		return self->font.size();
 	}
 
 	coord
