@@ -156,22 +156,22 @@ namespace Rays
 	});
 
 	EM_JS(double, rays_wasm_font_text_width_, (
-		const char* str, const char* name, double size),
+		const char* str, const char* name, double size, int weight, int italic),
 	{
 		const s = UTF8ToString(str);
 		const n = UTF8ToString(name);
 		const c = Module._raysFontContext;
-		c.font  = `${size}px "${n}"`;
+		c.font  = `${italic ? 'italic' : 'normal'} ${weight} ${size}px "${n}"`;
 		return c.measureText(s).width;
 	});
 
 	EM_JS(void, rays_wasm_font_get_metrics_, (
-		const char* name, double size,
+		const char* name, double size, int weight, int italic,
 		double* out_ascent, double* out_descent, double* out_leading),
 	{
 		const n   = UTF8ToString(name);
 		const c   = Module._raysFontContext;
-		c.font    = `${size}px "${n}"`;
+		c.font    = `${italic ? 'italic' : 'normal'} ${weight} ${size}px "${n}"`;
 		const m   = c.measureText('Mgjpqy');
 		const asc = Math.max(
 			m.  fontBoundingBoxAscent  ?? 0,
@@ -186,29 +186,30 @@ namespace Rays
 	});
 
 	EM_JS(void*, rays_wasm_font_render_, (
-		const char* str, const char* name, double size,
+		const char* str, const char* name, double size, int weight, int italic,
 		int* out_width,  int* out_height, double* out_ascent, double* out_descent),
 	{
-		const s   = UTF8ToString(str);
-		const n   = UTF8ToString(name);
-		const c   = Module._raysFontContext;
-		const cv  = Module._raysFontCanvas;
-		c.font    = `${size}px "${n}"`;
-		const m   = c.measureText(s);
-		const asc = Math.max(
+		const s    = UTF8ToString(str);
+		const n    = UTF8ToString(name);
+		const c    = Module._raysFontContext;
+		const cv   = Module._raysFontCanvas;
+		const font = `${italic ? 'italic' : 'normal'} ${weight} ${size}px "${n}"`;
+		c.font     = font;
+		const m    = c.measureText(s);
+		const asc  = Math.max(
 			m.  fontBoundingBoxAscent  ?? 0,
 			m.actualBoundingBoxAscent  ?? size * 0.8);
-		const dsc = Math.max(
+		const dsc  = Math.max(
 			m.  fontBoundingBoxDescent ?? 0,
 			m.actualBoundingBoxDescent ?? size * 0.2);
-		const w   = Math.max(1, Math.ceil(m.width));
-		const h   = Math.max(1, Math.ceil(asc + dsc));
+		const w    = Math.max(1, Math.ceil(m.width));
+		const h    = Math.max(1, Math.ceil(asc + dsc));
 
 		if (cv.width  < w) cv.width  = w;
 		if (cv.height < h) cv.height = h;
 
 		c.clearRect(0, 0, cv.width, cv.height);
-		c.font         = `${size}px "${n}"`;// re-apply after canvas resize
+		c.font         = font;// re-apply after canvas resize
 		c.fillStyle    = 'white';
 		c.textBaseline = 'alphabetic';
 		c.fillText(s, 0, asc);
@@ -252,7 +253,6 @@ namespace Rays
 
 			this->name   = name && *name != '\0' ? name : "sans-serif";
 			this->size   = size;
-			// TODO: the canvas font string could carry them as CSS
 			this->weight = weight;
 			this->italic = italic;
 		}
@@ -263,7 +263,7 @@ namespace Rays
 			double ascent = 0, descent = 0;
 			std::shared_ptr<void> pixels(
 				rays_wasm_font_render_(
-					str, name.c_str(), (double) size,
+					str, name.c_str(), (double) size, weight, italic,
 					&w, &h, &ascent, &descent),
 				free);
 			if (!pixels || w <= 0 || h <= 0) return;
@@ -283,13 +283,15 @@ namespace Rays
 
 		coord get_width (const char* str) override
 		{
-			return (coord) rays_wasm_font_text_width_(str, name.c_str(), (double) size);
+			return (coord) rays_wasm_font_text_width_(
+				str, name.c_str(), (double) size, weight, italic);
 		}
 
 		coord get_height (coord* ascent, coord* descent, coord* leading) override
 		{
 			double asc = 0, desc = 0, lead = 0;
-			rays_wasm_font_get_metrics_(name.c_str(), (double) size, &asc, &desc, &lead);
+			rays_wasm_font_get_metrics_(
+				name.c_str(), (double) size, weight, italic, &asc, &desc, &lead);
 
 			if (ascent)  *ascent  = (coord) asc;
 			if (descent) *descent = (coord) desc;
