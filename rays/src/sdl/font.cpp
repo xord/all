@@ -355,16 +355,11 @@ namespace Rays
 #endif
 	}
 
-	RawFont::RawFont (const char* name, coord size)
+	RawFont::RawFont (const char* name, coord size, int weight, bool italic)
 	:	self(create_data(name, size))
 	{
-	}
-
-	RawFont::RawFont (const This& obj, coord size)
-	{
-		if (!obj) return;
-
-		self.reset(obj.self->dup(size));
+		// TODO: apply weight (TTF_STYLE_BOLD from 600 up) and italic
+		// (TTF_STYLE_ITALIC); they are taken but not applied yet
 	}
 
 	RawFont::~RawFont ()
@@ -396,13 +391,6 @@ namespace Rays
 	{
 		if (!*this) return "";
 		return self->name;
-	}
-
-	coord
-	RawFont::size () const
-	{
-		if (!*this) return 0;
-		return self->size;
 	}
 
 	coord

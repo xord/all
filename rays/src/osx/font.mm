@@ -17,6 +17,8 @@ namespace Rays
 
 	typedef std::shared_ptr<const __CFAttributedString> CFAttributedStringPtr;
 
+	typedef std::shared_ptr<const __CTFontDescriptor>   CTFontDescriptorPtr;
+
 	typedef std::shared_ptr<CGDataProvider>             CGDataProviderPtr;
 
 	typedef std::shared_ptr<CGFont>                     CGFontPtr;
@@ -29,8 +31,6 @@ namespace Rays
 
 		CTFontRef font = NULL;
 
-		String path;
-
 		~Data ()
 		{
 			if (font)
@@ -41,6 +41,63 @@ namespace Rays
 		}
 
 	};// RawFont::Data
+
+
+	static const struct {int weight; CGFloat native;} NATIVE_WEIGHTS[] =
+	{
+		{Font::WEIGHT_MIN,        -1.0},
+		{Font::WEIGHT_THIN,       NSFontWeightUltraLight},
+		{Font::WEIGHT_EXTRALIGHT, NSFontWeightThin},
+		{Font::WEIGHT_LIGHT,      NSFontWeightLight},
+		{Font::WEIGHT_NORMAL,     NSFontWeightRegular},
+		{Font::WEIGHT_MEDIUM,     NSFontWeightMedium},
+		{Font::WEIGHT_SEMIBOLD,   NSFontWeightSemibold},
+		{Font::WEIGHT_BOLD,       NSFontWeightBold},
+		{Font::WEIGHT_EXTRABOLD,  NSFontWeightHeavy},
+		{Font::WEIGHT_BLACK,      NSFontWeightBlack},
+		{Font::WEIGHT_MAX,        1.0}
+	};
+
+	static CGFloat
+	to_native_weight (int weight)
+	{
+		size_t last = sizeof(NATIVE_WEIGHTS) / sizeof(NATIVE_WEIGHTS[0]) - 1;
+		for (size_t i = 1; i <= last; ++i)
+		{
+			if (weight > NATIVE_WEIGHTS[i].weight) continue;
+
+			const auto& lo = NATIVE_WEIGHTS[i - 1];
+			const auto& hi = NATIVE_WEIGHTS[i];
+			CGFloat t      = (CGFloat) (weight - lo.weight) / (hi.weight - lo.weight);
+			return lo.native + (hi.native - lo.native) * t;
+		}
+		return NATIVE_WEIGHTS[last].native;
+	}
+
+	static CTFontRef
+	create_styled_font (CTFontRef base, coord size, int weight, bool italic)
+	{
+		Xot::CFStringPtr family(CTFontCopyFamilyName(base), CFRelease);
+		if (!family) return NULL;
+
+		NSDictionary* traits     =
+		@{
+			(id) kCTFontWeightTrait:   @(to_native_weight(weight)),
+			(id) kCTFontSymbolicTrait: @(italic ? kCTFontTraitItalic : 0)
+		};
+		NSDictionary* attributes =
+		@{
+			(id) kCTFontFamilyNameAttribute: (__bridge NSString*) family.get(),
+			(id) kCTFontTraitsAttribute:     traits
+		};
+
+		CTFontDescriptorPtr descriptor(
+			CTFontDescriptorCreateWithAttributes((__bridge CFDictionaryRef) attributes),
+			CFRelease);
+		if (!descriptor) return NULL;
+
+		return CTFontCreateWithFontDescriptor(descriptor.get(), size, NULL);
+	}
 
 
 	static CTLinePtr
@@ -118,7 +175,6 @@ namespace Rays
 
 		RawFont rawfont;
 		rawfont.self->font = ctfont;
-		rawfont.self->path = path;
 		return rawfont;
 	}
 
@@ -127,20 +183,23 @@ namespace Rays
 	{
 	}
 
-	RawFont::RawFont (const char* name, coord size)
+	RawFont::RawFont (const char* name, coord size, int weight, bool italic)
 	{
-		self->font = name
+		CTFontRef font = name
 			?	CTFontCreateWithName(Xot::String(name).to_cfstr().get(), size, NULL)
 			:	CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, size, NULL);
-	}
 
-	RawFont::RawFont (const This& obj, coord size)
-	{
-		const char* path = obj.self->path.empty() ? NULL : obj.self->path.c_str();
-		if (path)
-			*this = RawFont_load(path, size);
-		else
-			self->font = CTFontCreateWithName(obj.name().to_cfstr().get(), size, NULL);
+		if (font && (weight != Font::WEIGHT_NORMAL || italic))
+		{
+			CTFontRef styled = create_styled_font(font, size, weight, italic);
+			if (styled)
+			{
+				CFRelease(font);
+				font = styled;
+			}
+		}
+
+		self->font = font;
 	}
 
 	RawFont::~RawFont ()
@@ -191,13 +250,6 @@ namespace Rays
 
 		Xot::CFStringPtr str(CTFontCopyFullName(self->font), CFRelease);
 		return Xot::to_s(str);
-	}
-
-	coord
-	RawFont::size () const
-	{
-		if (!*this) return 0;
-		return CTFontGetSize(self->font);
 	}
 
 	coord
