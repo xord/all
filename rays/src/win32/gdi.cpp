@@ -216,7 +216,7 @@ namespace Rays
 
 
 		static HFONT
-		create_font (const char* name, coord size = 0)
+		create_font (const char* name, coord size, int weight, bool italic)
 		{
 			NONCLIENTMETRICSW metrics;
 			memset(&metrics, 0, sizeof(metrics));
@@ -246,6 +246,9 @@ namespace Rays
 					GetDeviceCaps(screen_dc().handle(), LOGPIXELSY),
 					72);
 			}
+			if (weight == 0) weight = 1;// 0 == FW_DONTCARE
+			if (weight >= 0) logfont.lfWeight = weight;
+			if (italic)      logfont.lfItalic = TRUE;
 
 			return CreateFontIndirectW(&logfont);
 		}
@@ -257,9 +260,9 @@ namespace Rays
 			self->handle.reset(handle, owner);
 		}
 
-		Font::Font (const char* name, coord size)
+		Font::Font (const char* name, coord size, int weight, bool italic)
 		{
-			self->handle.reset(create_font(name, size));
+			self->handle.reset(create_font(name, size, weight, italic));
 		}
 
 		Font::~Font ()

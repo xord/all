@@ -112,9 +112,7 @@ namespace Rays
 
 	RawFont::RawFont (const char* name, coord size, int weight, bool italic)
 	{
-		// TODO: apply weight (LOGFONT.lfWeight shares the 0..1000 scale)
-		// and italic (lfItalic); they are taken but not applied yet
-		self->font = Win32::Font(name, size);
+		self->font = Win32::Font(name, size, weight, italic);
 	}
 
 	RawFont::~RawFont ()
