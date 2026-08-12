@@ -76,7 +76,9 @@ namespace Rays
 
 				Font (HFONT handle = NULL, bool owner = false);
 
-				Font (const char* name, coord size = 0);
+				Font (
+					const char* name, coord size = 0,
+					int weight = -1, bool italic = false);
 
 				~Font ();
 

@@ -20,7 +20,11 @@ namespace Rays
 
 		String name;
 
-		coord size = 0;
+		coord size  = 0;
+
+		int weight  = Font::WEIGHT_NORMAL;
+
+		bool italic = false;
 
 		virtual ~Data ()
 		{
@@ -63,7 +67,7 @@ namespace Rays
 
 		String path;
 
-		SDLFontData (const char* path, coord size)
+		SDLFontData (const char* path, coord size, int weight, bool italic)
 		{
 			if (!path)
 				argument_error(__FILE__, __LINE__);
@@ -72,8 +76,16 @@ namespace Rays
 			if (!font)
 				rays_error(__FILE__, __LINE__, "failed to open font: %s", TTF_GetError());
 
-			this->path = path;
-			this->size = size;
+			this->path   = path;
+			this->size   = size;
+			this->weight = weight;
+			this->italic = italic;
+
+			int style = TTF_STYLE_NORMAL;
+			if (weight >= Font::WEIGHT_SEMIBOLD) style |= TTF_STYLE_BOLD;
+			if (italic)                          style |= TTF_STYLE_ITALIC;
+			if (style != TTF_STYLE_NORMAL)
+				TTF_SetFontStyle(font, style);
 
 			const char* family = TTF_FontFaceFamilyName(font);
 			if (family) this->name = family;
@@ -126,7 +138,7 @@ namespace Rays
 
 		Data* dup (coord size) const override
 		{
-			return new SDLFontData(path.c_str(), size);
+			return new SDLFontData(path.c_str(), size, weight, italic);
 		}
 
 	};// SDLData
@@ -144,22 +156,22 @@ namespace Rays
 	});
 
 	EM_JS(double, rays_wasm_font_text_width_, (
-		const char* str, const char* name, double size),
+		const char* str, const char* name, double size, int weight, int italic),
 	{
 		const s = UTF8ToString(str);
 		const n = UTF8ToString(name);
 		const c = Module._raysFontContext;
-		c.font  = `${size}px "${n}"`;
+		c.font  = `${italic ? 'italic' : 'normal'} ${weight} ${size}px "${n}"`;
 		return c.measureText(s).width;
 	});
 
 	EM_JS(void, rays_wasm_font_get_metrics_, (
-		const char* name, double size,
+		const char* name, double size, int weight, int italic,
 		double* out_ascent, double* out_descent, double* out_leading),
 	{
 		const n   = UTF8ToString(name);
 		const c   = Module._raysFontContext;
-		c.font    = `${size}px "${n}"`;
+		c.font    = `${italic ? 'italic' : 'normal'} ${weight} ${size}px "${n}"`;
 		const m   = c.measureText('Mgjpqy');
 		const asc = Math.max(
 			m.  fontBoundingBoxAscent  ?? 0,
@@ -174,29 +186,30 @@ namespace Rays
 	});
 
 	EM_JS(void*, rays_wasm_font_render_, (
-		const char* str, const char* name, double size,
+		const char* str, const char* name, double size, int weight, int italic,
 		int* out_width,  int* out_height, double* out_ascent, double* out_descent),
 	{
-		const s   = UTF8ToString(str);
-		const n   = UTF8ToString(name);
-		const c   = Module._raysFontContext;
-		const cv  = Module._raysFontCanvas;
-		c.font    = `${size}px "${n}"`;
-		const m   = c.measureText(s);
-		const asc = Math.max(
+		const s    = UTF8ToString(str);
+		const n    = UTF8ToString(name);
+		const c    = Module._raysFontContext;
+		const cv   = Module._raysFontCanvas;
+		const font = `${italic ? 'italic' : 'normal'} ${weight} ${size}px "${n}"`;
+		c.font     = font;
+		const m    = c.measureText(s);
+		const asc  = Math.max(
 			m.  fontBoundingBoxAscent  ?? 0,
 			m.actualBoundingBoxAscent  ?? size * 0.8);
-		const dsc = Math.max(
+		const dsc  = Math.max(
 			m.  fontBoundingBoxDescent ?? 0,
 			m.actualBoundingBoxDescent ?? size * 0.2);
-		const w   = Math.max(1, Math.ceil(m.width));
-		const h   = Math.max(1, Math.ceil(asc + dsc));
+		const w    = Math.max(1, Math.ceil(m.width));
+		const h    = Math.max(1, Math.ceil(asc + dsc));
 
 		if (cv.width  < w) cv.width  = w;
 		if (cv.height < h) cv.height = h;
 
 		c.clearRect(0, 0, cv.width, cv.height);
-		c.font         = `${size}px "${n}"`;// re-apply after canvas resize
+		c.font         = font;// re-apply after canvas resize
 		c.fillStyle    = 'white';
 		c.textBaseline = 'alphabetic';
 		c.fillText(s, 0, asc);
@@ -234,12 +247,14 @@ namespace Rays
 	struct CanvasFontData : public RawFont::Data
 	{
 
-		CanvasFontData (const char* name, coord size)
+		CanvasFontData (const char* name, coord size, int weight, bool italic)
 		{
 			rays_wasm_font_init_();
 
-			this->name = name && *name != '\0' ? name : "sans-serif";
-			this->size = size;
+			this->name   = name && *name != '\0' ? name : "sans-serif";
+			this->size   = size;
+			this->weight = weight;
+			this->italic = italic;
 		}
 
 		void draw_string (SDL_Surface* target, const char* str, coord x, coord y) override
@@ -248,7 +263,7 @@ namespace Rays
 			double ascent = 0, descent = 0;
 			std::shared_ptr<void> pixels(
 				rays_wasm_font_render_(
-					str, name.c_str(), (double) size,
+					str, name.c_str(), (double) size, weight, italic,
 					&w, &h, &ascent, &descent),
 				free);
 			if (!pixels || w <= 0 || h <= 0) return;
@@ -268,13 +283,15 @@ namespace Rays
 
 		coord get_width (const char* str) override
 		{
-			return (coord) rays_wasm_font_text_width_(str, name.c_str(), (double) size);
+			return (coord) rays_wasm_font_text_width_(
+				str, name.c_str(), (double) size, weight, italic);
 		}
 
 		coord get_height (coord* ascent, coord* descent, coord* leading) override
 		{
 			double asc = 0, desc = 0, lead = 0;
-			rays_wasm_font_get_metrics_(name.c_str(), (double) size, &asc, &desc, &lead);
+			rays_wasm_font_get_metrics_(
+				name.c_str(), (double) size, weight, italic, &asc, &desc, &lead);
 
 			if (ascent)  *ascent  = (coord) asc;
 			if (descent) *descent = (coord) desc;
@@ -290,7 +307,7 @@ namespace Rays
 
 		Data* dup (coord size) const override
 		{
-			return new CanvasFontData(name.c_str(), size);
+			return new CanvasFontData(name.c_str(), size, weight, italic);
 		}
 
 	};// CanvasData
@@ -334,7 +351,7 @@ namespace Rays
 	RawFont_load (const char* path, coord size)
 	{
 		RawFont rawfont;
-		rawfont.self.reset(new SDLFontData(path, size));
+		rawfont.self.reset(new SDLFontData(path, size, Font::WEIGHT_NORMAL, false));
 		return rawfont;
 	}
 
@@ -344,27 +361,21 @@ namespace Rays
 	}
 
 	static RawFont::Data*
-	create_data (const char* name, coord size)
+	create_data (const char* name, coord size, int weight, bool italic)
 	{
 #ifdef WASM
-		return new CanvasFontData(name, size);
+		return new CanvasFontData(name, size, weight, italic);
 #else
 		if (name)
 			not_implemented_error(__FILE__, __LINE__);
-		return new SDLFontData("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size);
+		return new SDLFontData(
+			"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size, weight, italic);
 #endif
 	}
 
-	RawFont::RawFont (const char* name, coord size)
-	:	self(create_data(name, size))
+	RawFont::RawFont (const char* name, coord size, int weight, bool italic)
+	:	self(create_data(name, size, weight, italic))
 	{
-	}
-
-	RawFont::RawFont (const This& obj, coord size)
-	{
-		if (!obj) return;
-
-		self.reset(obj.self->dup(size));
 	}
 
 	RawFont::~RawFont ()
@@ -396,13 +407,6 @@ namespace Rays
 	{
 		if (!*this) return "";
 		return self->name;
-	}
-
-	coord
-	RawFont::size () const
-	{
-		if (!*this) return 0;
-		return self->size;
 	}
 
 	coord

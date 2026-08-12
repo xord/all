@@ -17,7 +17,7 @@ module Rays
     end
 
     def inspect()
-      "#<Rays::Font name='#{name}', size=#{size}>"
+      "#<Rays::Font name='#{name}', size=#{size}, weight=#{weight}#{italic? ? ', italic' : ''}>"
     end
 
   end# Font
