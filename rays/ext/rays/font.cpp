@@ -129,7 +129,7 @@ RUCY_DEF1(set_italic, italic)
 RUCY_END
 
 static
-RUCY_DEF0(is_italic)
+RUCY_DEF0(get_italic)
 {
 	CHECK;
 	return value(THIS->italic());
@@ -146,7 +146,7 @@ RUCY_DEF1(set_smooth, smooth)
 RUCY_END
 
 static
-RUCY_DEF0(smooth)
+RUCY_DEF0(get_smooth)
 {
 	CHECK;
 	return value(THIS->smooth());
@@ -246,9 +246,9 @@ Init_rays_font ()
 	cFont.define_method("weight=", set_weight);
 	cFont.define_method("weight",      weight);
 	cFont.define_method("italic=", set_italic);
-	cFont.define_method("italic?",  is_italic);
+	cFont.define_method("italic",  get_italic);
 	cFont.define_method("smooth=", set_smooth);
-	cFont.define_method("smooth",      smooth);
+	cFont.define_method("smooth",  get_smooth);
 	cFont.define_method("width",   width);
 	cFont.define_method("height",  height);
 	cFont.define_method("ascent",  ascent);

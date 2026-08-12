@@ -18,6 +18,8 @@ module Rays
       initialize! args, pixel_density, smooth
     end
 
+    alias smooth? smooth
+
     def paint(&block)
       painter.paint self, &block
       self

@@ -11,6 +11,9 @@ module Rays
     alias w width
     alias h height
 
+    alias italic? italic
+    alias smooth? smooth
+
     def <=>(o)
       ret = name <=> o.name; return ret if ret != 0
             size <=> o.size

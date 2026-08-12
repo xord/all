@@ -74,6 +74,12 @@ class TestFont < Test::Unit::TestCase
     assert_false font(italic: false).italic?
   end
 
+  def test_smooth?()
+    assert_true  font               .smooth?
+    assert_true  font(smooth: true) .smooth?
+    assert_false font(smooth: false).smooth?
+  end
+
   def test_width()
     assert_equal 0, font.width('')
     w = font.width 'X'
