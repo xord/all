@@ -511,6 +511,18 @@ namespace ReflexTerminal
 		}
 	}
 
+	static Color
+	to_decoration_color (
+		const Terminal::Span& span, const Color& theme_fg, const Color& theme_bg)
+	{
+		if (span.ul != Terminal::Span::COLOR_NONE)
+			return to_color(span.ul, theme_fg);
+		else if (colors_inverted(span.attribs))
+			return to_color(span.bg, theme_bg);
+		else
+			return to_color(span.fg, theme_fg);
+	}
+
 	static void
 	draw_decorations (
 		Renderer::Data* self, Painter* painter, const Terminal& terminal,
@@ -524,14 +536,12 @@ namespace ReflexTerminal
 		{
 			for (const Terminal::Span& span : rows[y])
 			{
-				if (!has_decorations(span.attribs)) continue;
+				if (!has_decorations(span.attribs))
+					continue;
 
-				bool inverted = colors_inverted(span.attribs);
 				draw_decoration(
 					painter, span.attribs,
-					to_text_color(
-						span.attribs,
-						inverted ? to_color(span.bg, theme_bg) : to_color(span.fg, theme_fg)),
+					to_text_color(span.attribs, to_decoration_color(span, theme_fg, theme_bg)),
 					span.x * cw, y * ch, span.width * cw, cw, ch);
 			}
 		}

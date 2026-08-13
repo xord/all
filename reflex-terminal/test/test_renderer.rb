@@ -116,6 +116,18 @@ class TestRenderer < Test::Unit::TestCase
     end
   end
 
+  def test_draw_decoration_colors()
+    r = renderer
+    r.bake_glyphs terminal('aaaa')
+
+    # SGR 58 colors the line apart from the text, and SGR 59 hands it back
+    default = pixels(r, terminal("\e[4maaaa"))
+    red     = pixels(r, terminal("\e[4m\e[58:2::255:0:0maaaa"))
+    reset   = pixels(r, terminal("\e[4m\e[58:2::255:0:0m\e[59maaaa"))
+    assert_not_equal default, red
+    assert_equal     default, reset
+  end
+
   def test_draw_invisible()
     r = renderer
     r.bake_glyphs terminal('hello')

@@ -82,7 +82,7 @@ namespace Reflex
 
 				uint cell_offset, cell_size;
 
-				int fg, bg;// 0xRRGGBB, or COLOR_NONE
+				int fg, bg, ul;// 0xRRGGBB, or COLOR_NONE
 
 				uint attribs;
 

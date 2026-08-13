@@ -314,6 +314,7 @@ RUCY_DEF0(each_span)
 				value(span.text.c_str(), span.text.size()),
 				span.fg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.fg),
 				span.bg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.bg),
+				span.ul == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.ul),
 				value(span.attribs));
 		}
 	}
