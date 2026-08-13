@@ -65,6 +65,8 @@ namespace Reflex
 
 		longlong bells          = 0;
 
+		bool spans_blink        = false;
+
 		bool any_button_pressed = false;
 
 		Cursor last_cursor;
@@ -554,6 +556,7 @@ namespace Reflex
 	{
 		self->spans.clear();
 		self->cell_offsets.clear();
+		self->spans_blink = false;
 
 		GhosttyResult result = ghostty_render_state_get(
 			self->render_state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &self->row_iterator);
@@ -621,6 +624,8 @@ namespace Reflex
 					if (result == GHOSTTY_SUCCESS)
 					{
 						attribs = to_attribs(style);
+						if (attribs & Terminal::Span::BLINK)
+							self->spans_blink = true;
 
 						if (style.underline_color.tag == GHOSTTY_STYLE_COLOR_PALETTE && !palette)
 						{
@@ -1100,6 +1105,12 @@ namespace Reflex
 	Terminal::is_alive () const
 	{
 		return self && self->pty.is_child_alive();
+	}
+
+	bool
+	Terminal::is_blinking () const
+	{
+		return self->spans_blink;
 	}
 
 	bool

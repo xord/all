@@ -130,6 +130,20 @@ class TestTerminal < Test::Unit::TestCase
     assert_nil   uls[3]
   end
 
+  def test_blinking()
+    t = terminal 20, 4
+    t.update
+    assert_false t.blinking?
+
+    t.feed "\e[5mB"
+    t.update
+    assert_true t.blinking?
+
+    t.feed "\e[H\e[2J"
+    t.update
+    assert_false t.blinking?
+  end
+
   def test_wide_chars()
     t = terminal 20, 4
     t.feed %q[あい]

@@ -71,6 +71,10 @@ namespace ReflexTerminal
 
 		coord cell_width = 0, cell_height = 0;
 
+		// whether blinking spans are in their lit phase. the renderer only
+		// draws one frame, so the timer toggling this lives with a view
+		bool blink_visible = true;
+
 		// where the next glyph goes. the faces share the one atlas, so
 		// that a row mixing them still draws from a single texture and
 		// the painter's batch holds
@@ -150,6 +154,18 @@ namespace ReflexTerminal
 	Renderer::cell_height () const
 	{
 		return self->cell_height;
+	}
+
+	void
+	Renderer::set_blink_visible (bool visible)
+	{
+		self->blink_visible = visible;
+	}
+
+	bool
+	Renderer::blink_visible () const
+	{
+		return self->blink_visible;
 	}
 
 	static bool
@@ -241,8 +257,9 @@ namespace ReflexTerminal
 	static void
 	add_missing_glyphs (Renderer::Data* self, FUN fun)
 	{
-		for (const auto& missing : self->missing)
-			assert(missing.empty());
+		assert(std::all_of(
+			self->missing, self->missing + NFONTS,
+			[](const auto& missing) {return missing.empty();}));
 
 		fun();
 
@@ -357,6 +374,12 @@ namespace ReflexTerminal
 		return
 			(attribs & (Terminal::Span::STRIKETHROUGH | Terminal::Span::OVERLINE)) ||
 			underline_style(attribs) != Terminal::Span::UNDERLINE_NONE;
+	}
+
+	static bool
+	is_blink_hidden (const Renderer::Data* self, uint attribs)
+	{
+		return (attribs & Terminal::Span::BLINK) && !self->blink_visible;
 	}
 
 	static void
@@ -474,6 +497,9 @@ namespace ReflexTerminal
 				if (span.attribs & Terminal::Span::INVISIBLE)
 					continue;
 
+				if (is_blink_hidden(self, span.attribs))
+					continue;
+
 				bool inverted = colors_inverted(span.attribs);
 				painter->set_fill(to_text_color(
 					span.attribs,
@@ -537,6 +563,9 @@ namespace ReflexTerminal
 			for (const Terminal::Span& span : rows[y])
 			{
 				if (!has_decorations(span.attribs))
+					continue;
+
+				if (is_blink_hidden(self, span.attribs))
 					continue;
 
 				draw_decoration(

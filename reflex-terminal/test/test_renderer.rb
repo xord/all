@@ -128,6 +128,23 @@ class TestRenderer < Test::Unit::TestCase
     assert_equal     default, reset
   end
 
+  def test_draw_blink()
+    r = renderer
+    r.bake_glyphs terminal("\e[5;4mhello")
+    lit   = pixels(r, terminal("\e[5;4mhello"))
+    plain = pixels(r, terminal('hello'))
+
+    # the off phase hides the glyphs and their decorations, but not the
+    # background, and leaves text without the attribute alone
+    r.blink_visible = false
+    assert_equal     pixels(r, terminal('')), pixels(r, terminal("\e[5;4mhello"))
+    assert_not_equal pixels(r, terminal('')), pixels(r, terminal("\e[5;41mhello"))
+    assert_equal     plain,                   pixels(r, terminal('hello'))
+
+    r.blink_visible = true
+    assert_equal lit, pixels(r, terminal("\e[5;4mhello"))
+  end
+
   def test_draw_invisible()
     r = renderer
     r.bake_glyphs terminal('hello')

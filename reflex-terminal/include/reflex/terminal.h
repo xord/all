@@ -187,6 +187,8 @@ namespace Reflex
 
 			bool is_alive () const;
 
+			bool is_blinking () const;
+
 			bool is_mouse_tracking () const;
 
 			void     select (int x1, int y1, int x2, int y2);

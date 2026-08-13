@@ -23,6 +23,8 @@ module Reflex
 
     CURSOR_BLINK_INTERVAL = 0.5
 
+    TEXT_BLINK_INTERVAL   = 0.5
+
     def initialize(
       *args,
       terminal:  nil, # attach this instead of spawning one
@@ -76,6 +78,7 @@ module Reflex
 
     def on_detach(e)
       stop_cursor_blink
+      stop_text_blink
     end
 
     def on_activate(e)
@@ -96,6 +99,7 @@ module Reflex
         @renderer.bake_glyphs t
         redraw
       end
+      update_text_blink t
       if t.bells > @prev_bells
         bells, @prev_bells = t.bells - @prev_bells, t.bells
         on_bell BellEvent.new(bells)
@@ -226,6 +230,26 @@ module Reflex
     def stop_cursor_blink()
       @cursor_blinker&.stop
       @cursor_blinker = nil
+    end
+
+    def update_text_blink(terminal)
+      if terminal.blinking?
+        @text_blinker ||= interval TEXT_BLINK_INTERVAL do
+          @renderer.blink_visible = !@renderer.blink_visible?
+          redraw
+        end
+      elsif @text_blinker
+        stop_text_blink
+      end
+    end
+
+    def stop_text_blink()
+      @text_blinker&.stop
+      @text_blinker = nil
+      unless @renderer.blink_visible?
+        @renderer.blink_visible = true
+        redraw
+      end
     end
 
     def draw_cursor(painter, terminal)

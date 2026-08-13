@@ -40,6 +40,10 @@ namespace ReflexTerminal
 
 			size_t    glyph_count () const;
 
+			void set_blink_visible (bool visible);
+
+			bool     blink_visible () const;
+
 			void draw (
 				Painter* painter, const Reflex::Terminal& terminal,
 				const Bounds& bounds);

@@ -193,6 +193,14 @@ RUCY_DEF0(is_alive)
 RUCY_END
 
 static
+RUCY_DEF0(is_blinking)
+{
+	CHECK;
+	return value(THIS->is_blinking());
+}
+RUCY_END
+
+static
 RUCY_DEF0(is_mouse_tracking)
 {
 	CHECK;
@@ -480,6 +488,7 @@ Init_reflex_terminal ()
 	cTerminal.define_method("write_wheel",   write_wheel);
 	cTerminal.define_method("paste",         paste);
 	cTerminal.define_method("alive?",          is_alive);
+	cTerminal.define_method("blinking?",       is_blinking);
 	cTerminal.define_method("mouse_tracking?", is_mouse_tracking);
 	cTerminal.define_method(  "select",            select);
 	cTerminal.define_method(  "select_rect",       select_rect);

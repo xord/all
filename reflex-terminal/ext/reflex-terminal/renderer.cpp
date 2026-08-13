@@ -73,6 +73,22 @@ RUCY_DEF0(get_glyph_count)
 RUCY_END
 
 static
+RUCY_DEF1(set_blink_visible, visible)
+{
+	CHECK;
+	THIS->set_blink_visible(to<bool>(visible));
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_blink_visible)
+{
+	CHECK;
+	return value(THIS->blink_visible());
+}
+RUCY_END
+
+static
 RUCY_DEF3(draw, painter, terminal, bounds)
 {
 	CHECK;
@@ -100,6 +116,8 @@ Init_reflex_terminal_renderer ()
 	cRenderer.define_method("cell_height", get_cell_height);
 	cRenderer.define_method("bake_glyphs",     bake_glyphs);
 	cRenderer.define_method(     "glyph_count", get_glyph_count);
+	cRenderer.define_method("blink_visible=", set_blink_visible);
+	cRenderer.define_method("blink_visible?",  is_blink_visible);
 	cRenderer.define_method("draw", draw);
 }
 
