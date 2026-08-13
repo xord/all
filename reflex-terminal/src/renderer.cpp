@@ -128,6 +128,7 @@ namespace ReflexTerminal
 		Image grown(ATLAS_WIDTH, height);
 		Painter painter = grown.painter();
 		painter.begin();
+		painter.set_blend_mode(Rays::BLEND_REPLACE);
 		painter.image(self->atlas);
 		painter.end();
 
@@ -177,6 +178,7 @@ namespace ReflexTerminal
 		Painter painter = self->atlas.painter();
 		painter.begin();
 		painter.set_font(self->font);
+		painter.set_blend_mode(Rays::BLEND_REPLACE);
 		painter.set_fill(1, 1, 1);
 		for (const auto& it : added)
 			painter.text(it.first.c_str(), it.second.x, it.second.y);
