@@ -481,6 +481,32 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[<0;2;2M", t.read_pending_input# cell (2, 2), left press
   end
 
+  def test_mouse_encoding_with_a_fractional_cell()
+    # rounding the cell width would land this press cells off
+    t = terminal 100, 10
+    t.resize 100, 10, cell_width: 8.43, cell_height: 18.62
+    t.feed "\e[?1000h\e[?1006h"
+
+    types = R::Pointer::MOUSE | R::Pointer::MOUSE_LEFT
+    t.read_pending_input
+    t.write_pointer R::PointerEvent.new(
+      R::Pointer.new(0, types, R::Pointer::DOWN, [79 * 8.43 + 4, 5], 0, 1, false, 0))
+    assert_equal "\e[<0;80;1M", t.read_pending_input
+  end
+
+  def test_mouse_encoding_in_sgr_pixels_mode()
+    # the offset inside the cell survives, scaled onto the integral grid
+    t = terminal 100, 10
+    t.resize 100, 10, cell_width: 8.43, cell_height: 18.62
+    t.feed "\e[?1000h\e[?1016h"
+
+    types = R::Pointer::MOUSE | R::Pointer::MOUSE_LEFT
+    t.read_pending_input
+    t.write_pointer R::PointerEvent.new(
+      R::Pointer.new(0, types, R::Pointer::DOWN, [79 * 8.43 + 2, 5], 0, 1, false, 0))
+    assert_equal "\e[<0;634;5M", t.read_pending_input
+  end
+
   def test_write_wheel()
     t = terminal 40, 10
     t.resize 40, 10, cell_width: 8, cell_height: 16

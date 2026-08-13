@@ -291,7 +291,7 @@ module Reflex
       @terminal.resize(
         (width  / cw).floor.clamp(1..),
         (height / ch).floor.clamp(1..),
-          cell_width: cw.round,     cell_height: ch,
+          cell_width: cw,           cell_height: ch,
         screen_width: width.to_i, screen_height: height.to_i)
     end
 

@@ -3,7 +3,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <string>
+#include <algorithm>
 #include <ghostty/vt.h>
 #include <rays/color.h>
 #include <reflex/exception.h>
@@ -55,7 +57,7 @@ namespace Reflex
 
 		int columns = 0, rows = 0;
 
-		int   cell_width = 8,   cell_height = 16;
+		coord cell_width = 8,   cell_height = 16;
 
 		int screen_width = 0, screen_height = 0;
 
@@ -442,13 +444,26 @@ namespace Reflex
 	{
 		ghostty_mouse_encoder_setopt_from_terminal(self->mouse_encoder, self->terminal);
 
+		// the encoder's cell size is integral, so handing it the position and
+		// a rounded cell width would drift by a cell or more toward the right
+		// edge. the cell is settled here with the fractional size instead, and
+		// the position is projected onto an integer grid of the encoder's own,
+		// where its division cannot miss: the offset inside the cell is scaled
+		// to the integral cell and clamped so that rounding cannot carry it
+		// into the next cell, keeping the sub-cell precision that SGR-Pixels
+		// mode reports
+		uint32_t cell_width  = std::max(1L, lround(self->cell_width));
+		uint32_t cell_height = std::max(1L, lround(self->cell_height));
+		int      cell_x      = (int) (x / self->cell_width);
+		int      cell_y      = (int) (y / self->cell_height);
+		float    offset_x    = (x - cell_x * self->cell_width)  * (cell_width  / self->cell_width);
+		float    offset_y    = (y - cell_y * self->cell_height) * (cell_height / self->cell_height);
+
 		GhosttyMouseEncoderSize size = init_sized<GhosttyMouseEncoderSize>();
-		size.screen_width  = self->screen_width  > 0
-			? self->screen_width  : self->columns * self->cell_width;
-		size.screen_height = self->screen_height > 0
-			? self->screen_height : self->rows    * self->cell_height;
-		size.cell_width    = self->cell_width;
-		size.cell_height   = self->cell_height;
+		size.screen_width  = cell_width  * self->columns;
+		size.screen_height = cell_height * self->rows;
+		size.cell_width    = cell_width;
+		size.cell_height   = cell_height;
 		ghostty_mouse_encoder_setopt(self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_SIZE, &size);
 		ghostty_mouse_encoder_setopt(
 			self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED, &self->any_button_pressed);
@@ -461,7 +476,10 @@ namespace Reflex
 			ghostty_mouse_event_clear_button(e);
 		ghostty_mouse_event_set_mods(e, mods);
 
-		GhosttyMousePosition position = {x, y};
+		GhosttyMousePosition position = {
+			cell_x * cell_width  + std::clamp(offset_x, 0.f, cell_width  - 1.f),
+			cell_y * cell_height + std::clamp(offset_y, 0.f, cell_height - 1.f)
+		};
 		ghostty_mouse_event_set_position(e, position);
 
 		char buffer[64];
@@ -778,7 +796,7 @@ namespace Reflex
 	void
 	Terminal::resize (
 		int columns, int rows,
-		int cell_width, int cell_height,
+		coord cell_width, coord cell_height,
 		int screen_width, int screen_height)
 	{
 		if (
@@ -788,7 +806,7 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__, "invalid terminal size: %dx%d", columns, rows);
 		}
 		if (cell_width <= 0 || cell_height <= 0)
-			argument_error(__FILE__, __LINE__, "invalid cell size: %dx%d", cell_width, cell_height);
+			argument_error(__FILE__, __LINE__, "invalid cell size: %gx%g", cell_width, cell_height);
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
@@ -797,10 +815,13 @@ namespace Reflex
 		self->screen_width  = screen_width;
 		self->screen_height = screen_height;
 
+		// rounded the same way as encode_mouse rounds, so that the terminal
+		// and the mouse encoder agree on the integral cell size
 		GhosttyResult result = ghostty_terminal_resize(
 			self->terminal,
 			(uint16_t) columns, (uint16_t) rows,
-			(uint32_t) cell_width, (uint32_t) cell_height);
+			(uint32_t) std::max(1L, lround(cell_width)),
+			(uint32_t) std::max(1L, lround(cell_height)));
 		if (result != GHOSTTY_SUCCESS)
 			system_error(__FILE__, __LINE__, "failed to resize a terminal");
 
@@ -808,7 +829,7 @@ namespace Reflex
 		self->rows    = rows;
 
 		// sends SIGWINCH to the child process
-		self->pty.set_size(columns, rows, cell_width, cell_height);
+		self->pty.set_size(columns, rows, (int) cell_width, (int) cell_height);
 	}
 
 	void

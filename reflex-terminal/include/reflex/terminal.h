@@ -147,7 +147,7 @@ namespace Reflex
 
 			void resize (
 				int columns, int rows,
-				int   cell_width, int   cell_height,
+				coord cell_width, coord cell_height,
 				int screen_width, int screen_height);
 
 			void feed (const char* bytes, size_t size);

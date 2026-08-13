@@ -62,9 +62,9 @@ RUCY_DEF6(resize, columns, rows, cell_width, cell_height, screen_width, screen_h
 {
 	CHECK;
 	THIS->resize(
-		to<int>(columns),      to<int>(rows),
-		to<int>(cell_width),   to<int>(cell_height),
-		to<int>(screen_width), to<int>(screen_height));
+		to<int>(columns),              to<int>(rows),
+		to<Reflex::coord>(cell_width), to<Reflex::coord>(cell_height),
+		to<int>(screen_width),         to<int>(screen_height));
 	return self;
 }
 RUCY_END
