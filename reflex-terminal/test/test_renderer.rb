@@ -66,6 +66,34 @@ class TestRenderer < Test::Unit::TestCase
     assert_equal ascii + 3, r.glyph_count
   end
 
+  def test_bake_glyphs_by_style()
+    r     = renderer
+    ascii = (0x20..0x7e).size
+
+    # a styled cell is another glyph even for a character the seed holds:
+    # each face keeps glyphs of its own, over the one shared atlas
+    r.bake_glyphs terminal("a \e[1ma\e[0m \e[3ma\e[0m \e[1;3ma\e[0m")
+    assert_equal ascii + 3, r.glyph_count
+
+    # and only the regular face is seeded with ascii
+    r.bake_glyphs terminal("\e[1mb")
+    assert_equal ascii + 4, r.glyph_count
+  end
+
+  def test_draw_styles()
+    r = renderer
+    t = terminal "aaaa \e[1maaaa\e[0m \e[3maaaa\e[0m"
+    r.bake_glyphs t
+
+    # the same character in another style cannot draw the same
+    plain  = pixels(r, terminal('aaaa'))
+    bold   = pixels(r, terminal("\e[1maaaa"))
+    italic = pixels(r, terminal("\e[3maaaa"))
+    assert_not_equal plain, bold
+    assert_not_equal plain, italic
+    assert_not_equal bold,  italic
+  end
+
   def test_draw()
     r = renderer
     t = terminal "hello \e[31mworld\e[0m"
