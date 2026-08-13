@@ -3,6 +3,7 @@
 
 #include <SDL.h>
 #include "reflex/exception.h"
+#include "../vk.h"
 
 
 namespace Reflex
