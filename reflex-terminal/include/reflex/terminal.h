@@ -57,6 +57,23 @@ namespace Reflex
 
 				};// Attribute
 
+				enum Underline
+				{
+
+					UNDERLINE_NONE = 0,
+
+					UNDERLINE_SINGLE,
+
+					UNDERLINE_DOUBLE,
+
+					UNDERLINE_CURLY,
+
+					UNDERLINE_DOTTED,
+
+					UNDERLINE_DASHED
+
+				};// Underline
+
 				enum {COLOR_NONE = -1};
 
 				int x, width;// in cells
@@ -65,7 +82,7 @@ namespace Reflex
 
 				uint cell_offset, cell_size;
 
-				int fg, bg;// 0xRRGGBB, or COLOR_NONE
+				int fg, bg, ul;// 0xRRGGBB, or COLOR_NONE
 
 				uint attribs;
 
@@ -169,6 +186,8 @@ namespace Reflex
 			void paste (const char* text, size_t size);
 
 			bool is_alive () const;
+
+			bool is_blinking () const;
 
 			bool is_mouse_tracking () const;
 

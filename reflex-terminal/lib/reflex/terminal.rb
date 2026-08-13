@@ -48,9 +48,10 @@ module Reflex
 
     # Yields each style span of the visible screen.
     #
-    # @yield [x, y, width, text, fg, bg, flags] a run of cells sharing
+    # @yield [x, y, width, text, fg, bg, ul, flags] a run of cells sharing
     #   the same style; x, y and width are in cells, and fg/bg are
-    #   0xRRGGBB or nil for the terminal's default color
+    #   0xRRGGBB or nil for the terminal's default color. ul is the
+    #   underline color (SGR 58), 0xRRGGBB or nil to draw with fg
     #
     # @return [Enumerator] when no block is given
     #

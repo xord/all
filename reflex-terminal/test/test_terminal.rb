@@ -66,10 +66,10 @@ class TestTerminal < Test::Unit::TestCase
     spans = t.each_span.to_a
     assert_equal 2, spans.size
 
-    x, y, width, text, fg, bg, flags = spans[0]
-    assert_equal [0, 0, 3, %q[hi ], nil, nil, 0], [x, y, width, text, fg, bg, flags]
+    x, y, width, text, fg, bg, ul, flags = spans[0]
+    assert_equal [0, 0, 3, %q[hi ], nil, nil, nil, 0], [x, y, width, text, fg, bg, ul, flags]
 
-    x, y, width, text, fg, bg, flags = spans[1]
+    x, y, width, text, fg, bg, ul, flags = spans[1]
     assert_equal [3, 0, 3, %q[red]], [x, y, width, text]
     assert_kind_of Integer, fg
     assert_nil bg
@@ -110,10 +110,38 @@ class TestTerminal < Test::Unit::TestCase
     t.feed "\e[1mB\e[0m \e[4mU\e[0m \e[7mR"
     t.update
 
-    flags = t.each_span.map {|x, y, w, str, fg, bg, flags| flags}
+    flags = t.each_span.map {|x, y, w, str, fg, bg, ul, flags| flags}
     assert_equal T::BOLD,    flags[0]  & T::BOLD
     assert_equal 1,          (flags[2] & T::UNDERLINE_MASK) >> T::UNDERLINE_SHIFT
     assert_equal T::INVERSE, flags[4]  & T::INVERSE
+  end
+
+  def test_each_span_underline_color()
+    t = terminal 80, 4
+    t.feed "\e]4;12;#123456\a"# pin palette 12, whose default is the theme's
+    t.feed "\e[4mA\e[58:2::255:0:0mB\e[58:5:12mC\e[59mD"
+    t.update
+
+    uls = t.each_span.map {|x, y, w, str, fg, bg, ul, flags| ul}
+    assert_equal 4,        uls.size# one span per color
+    assert_nil   uls[0]
+    assert_equal 0xff0000, uls[1]
+    assert_equal 0x123456, uls[2]
+    assert_nil   uls[3]
+  end
+
+  def test_blinking()
+    t = terminal 20, 4
+    t.update
+    assert_false t.blinking?
+
+    t.feed "\e[5mB"
+    t.update
+    assert_true t.blinking?
+
+    t.feed "\e[H\e[2J"
+    t.update
+    assert_false t.blinking?
   end
 
   def test_wide_chars()
@@ -584,7 +612,7 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'あ', t.selected_text
     assert_equal(
       [['あ', true], ['いうえお', false]],
-      t.each_span.map {|x, y, w, str, fg, bg, flags|
+      t.each_span.map {|x, y, w, str, fg, bg, ul, flags|
         [str, (flags & T::SELECTED) != 0]})
   end
 

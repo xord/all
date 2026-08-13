@@ -65,6 +65,8 @@ namespace Reflex
 
 		longlong bells          = 0;
 
+		bool spans_blink        = false;
+
 		bool any_button_pressed = false;
 
 		Cursor last_cursor;
@@ -156,9 +158,15 @@ namespace Reflex
 	to_attribs (const GhosttyStyle& style)
 	{
 		// INVERSE is reported rather than applied: swapping fg/bg is left to
-		// the renderer, which is the one that knows the theme's default colors.
-		// UNDERLINE_MASK is a 3-bit field holding ghostty's style number --
-		// 0: none, 1: single, 2: double, 3: curly, 4: dotted, 5: dashed
+		// the renderer, which is the one that knows the theme's default colors
+
+		// the mask carries ghostty's style number as is
+		static_assert(Terminal::Span::UNDERLINE_NONE   == (int) GHOSTTY_SGR_UNDERLINE_NONE);
+		static_assert(Terminal::Span::UNDERLINE_SINGLE == (int) GHOSTTY_SGR_UNDERLINE_SINGLE);
+		static_assert(Terminal::Span::UNDERLINE_DOUBLE == (int) GHOSTTY_SGR_UNDERLINE_DOUBLE);
+		static_assert(Terminal::Span::UNDERLINE_CURLY  == (int) GHOSTTY_SGR_UNDERLINE_CURLY);
+		static_assert(Terminal::Span::UNDERLINE_DOTTED == (int) GHOSTTY_SGR_UNDERLINE_DOTTED);
+		static_assert(Terminal::Span::UNDERLINE_DASHED == (int) GHOSTTY_SGR_UNDERLINE_DASHED);
 
 		uint attribs = 0;
 		if (style.bold)          attribs |= Terminal::Span::BOLD;
@@ -178,6 +186,47 @@ namespace Reflex
 	to_rgb (const GhosttyColorRgb& color)
 	{
 		return (color.r << 16) | (color.g << 8) | color.b;
+	}
+
+	enum {PALETTE_SIZE = Terminal::COLOR_PALETTE_LAST - Terminal::COLOR_PALETTE_FIRST + 1};
+
+	static bool
+	is_palette (Terminal::ColorIndex index)
+	{
+		return Terminal::COLOR_PALETTE_FIRST <= index && index <= Terminal::COLOR_PALETTE_LAST;
+	}
+
+	static void
+	get_palette (GhosttyTerminal terminal, GhosttyColorRgb* palette, bool default_)
+	{
+		GhosttyTerminalData data = default_
+			? GHOSTTY_TERMINAL_DATA_COLOR_PALETTE_DEFAULT
+			: GHOSTTY_TERMINAL_DATA_COLOR_PALETTE;
+
+		if (ghostty_terminal_get(terminal, data, palette) != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to get a terminal palette");
+	}
+
+	static void
+	set_palette (GhosttyTerminal terminal, const GhosttyColorRgb* palette)
+	{
+		ghostty_terminal_set(terminal, GHOSTTY_TERMINAL_OPT_COLOR_PALETTE, palette);
+	}
+
+	static int
+	to_underline_color (const GhosttyStyle& style, const GhosttyColorRgb* palette)
+	{
+		switch (style.underline_color.tag)
+		{
+			case GHOSTTY_STYLE_COLOR_PALETTE:
+				return to_rgb(palette[style.underline_color.value.palette]);
+
+			case GHOSTTY_STYLE_COLOR_RGB:
+				return to_rgb(style.underline_color.value.rgb);
+
+			default:
+				return Terminal::Span::COLOR_NONE;
+		}
 	}
 
 	static GhosttyKey
@@ -463,8 +512,8 @@ namespace Reflex
 		// to the integral cell and clamped so that rounding cannot carry it
 		// into the next cell, keeping the sub-cell precision that SGR-Pixels
 		// mode reports
-		uint32_t cell_width  = std::max(1L, lround(self->cell_width));
-		uint32_t cell_height = std::max(1L, lround(self->cell_height));
+		uint32_t cell_width  = (uint32_t) std::max(1L, lround(self->cell_width));
+		uint32_t cell_height = (uint32_t) std::max(1L, lround(self->cell_height));
 		int      cell_x      = (int) (x / self->cell_width);
 		int      cell_y      = (int) (y / self->cell_height);
 		float    offset_x    = (x - cell_x * self->cell_width)  * (cell_width  / self->cell_width);
@@ -507,10 +556,13 @@ namespace Reflex
 	{
 		self->spans.clear();
 		self->cell_offsets.clear();
+		self->spans_blink = false;
 
 		GhosttyResult result = ghostty_render_state_get(
 			self->render_state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &self->row_iterator);
 		if (result != GHOSTTY_SUCCESS) return;
+
+		GhosttyColorRgb *palette = NULL, palette_data[PALETTE_SIZE];
 
 		String utf8;
 		while (ghostty_render_state_row_iterator_next(self->row_iterator))
@@ -560,6 +612,7 @@ namespace Reflex
 				if (result == GHOSTTY_SUCCESS) bg = to_rgb(color);
 
 				uint attribs      = 0;
+				int ul            = Terminal::Span::COLOR_NONE;
 				bool has_styling  = false;
 				ghostty_render_state_row_cells_get(
 					self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_HAS_STYLING, &has_styling);
@@ -569,7 +622,18 @@ namespace Reflex
 					result = ghostty_render_state_row_cells_get(
 						self->row_cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE, &style);
 					if (result == GHOSTTY_SUCCESS)
+					{
 						attribs = to_attribs(style);
+						if (attribs & Terminal::Span::BLINK)
+							self->spans_blink = true;
+
+						if (style.underline_color.tag == GHOSTTY_STYLE_COLOR_PALETTE && !palette)
+						{
+							get_palette(self->terminal, palette_data, false);
+							palette = palette_data;
+						}
+						ul = to_underline_color(style, palette);
+					}
 				}
 
 				// a wide cell answers for the spacer that follows it, which
@@ -612,8 +676,8 @@ namespace Reflex
 
 				if (
 					!span ||
-					span->fg != fg || span->bg != bg || span->attribs != attribs ||
-					span_is_wide != is_wide)
+					span->fg != fg || span->bg != bg || span->ul != ul ||
+					span->attribs != attribs || span_is_wide != is_wide)
 				{
 					row.emplace_back();
 					span              = &row.back();
@@ -623,6 +687,7 @@ namespace Reflex
 					span->cell_size   = 0;
 					span->fg          = fg;
 					span->bg          = bg;
+					span->ul          = ul;
 					span->attribs     = attribs;
 					span_is_wide      = is_wide;
 				}
@@ -1043,6 +1108,12 @@ namespace Reflex
 	}
 
 	bool
+	Terminal::is_blinking () const
+	{
+		return self->spans_blink;
+	}
+
+	bool
 	Terminal::is_mouse_tracking () const
 	{
 		if (!*this) return false;
@@ -1302,14 +1373,6 @@ namespace Reflex
 		return cursor;
 	}
 
-	enum {PALETTE_SIZE = Terminal::COLOR_PALETTE_LAST - Terminal::COLOR_PALETTE_FIRST + 1};
-
-	static bool
-	is_palette (Terminal::ColorIndex index)
-	{
-		return Terminal::COLOR_PALETTE_FIRST <= index && index <= Terminal::COLOR_PALETTE_LAST;
-	}
-
 	static GhosttyColorRgb
 	to_ghostty_color (const Color& color)
 	{
@@ -1358,23 +1421,6 @@ namespace Reflex
 				argument_error(__FILE__, __LINE__, "invalid color index: %d", index);
 		}
 		return GHOSTTY_TERMINAL_DATA_COLOR_FOREGROUND;
-	}
-
-	static void
-	get_palette (GhosttyTerminal terminal, GhosttyColorRgb* palette, bool default_)
-	{
-		GhosttyTerminalData data = default_
-			? GHOSTTY_TERMINAL_DATA_COLOR_PALETTE_DEFAULT
-			: GHOSTTY_TERMINAL_DATA_COLOR_PALETTE;
-
-		if (ghostty_terminal_get(terminal, data, palette) != GHOSTTY_SUCCESS)
-			system_error(__FILE__, __LINE__, "failed to get a terminal palette");
-	}
-
-	static void
-	set_palette (GhosttyTerminal terminal, const GhosttyColorRgb* palette)
-	{
-		ghostty_terminal_set(terminal, GHOSTTY_TERMINAL_OPT_COLOR_PALETTE, palette);
 	}
 
 	static bool

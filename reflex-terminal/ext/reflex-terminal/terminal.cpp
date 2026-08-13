@@ -193,6 +193,14 @@ RUCY_DEF0(is_alive)
 RUCY_END
 
 static
+RUCY_DEF0(is_blinking)
+{
+	CHECK;
+	return value(THIS->is_blinking());
+}
+RUCY_END
+
+static
 RUCY_DEF0(is_mouse_tracking)
 {
 	CHECK;
@@ -314,6 +322,7 @@ RUCY_DEF0(each_span)
 				value(span.text.c_str(), span.text.size()),
 				span.fg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.fg),
 				span.bg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.bg),
+				span.ul == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.ul),
 				value(span.attribs));
 		}
 	}
@@ -479,6 +488,7 @@ Init_reflex_terminal ()
 	cTerminal.define_method("write_wheel",   write_wheel);
 	cTerminal.define_method("paste",         paste);
 	cTerminal.define_method("alive?",          is_alive);
+	cTerminal.define_method("blinking?",       is_blinking);
 	cTerminal.define_method("mouse_tracking?", is_mouse_tracking);
 	cTerminal.define_method(  "select",            select);
 	cTerminal.define_method(  "select_rect",       select_rect);
@@ -517,6 +527,13 @@ Init_reflex_terminal ()
 	cTerminal.define_const("SELECTED",        Reflex::Terminal::Span::SELECTED);
 	cTerminal.define_const("UNDERLINE_SHIFT", Reflex::Terminal::Span::UNDERLINE_SHIFT);
 	cTerminal.define_const("UNDERLINE_MASK",  Reflex::Terminal::Span::UNDERLINE_MASK);
+
+	cTerminal.define_const("UNDERLINE_NONE",   Reflex::Terminal::Span::UNDERLINE_NONE);
+	cTerminal.define_const("UNDERLINE_SINGLE", Reflex::Terminal::Span::UNDERLINE_SINGLE);
+	cTerminal.define_const("UNDERLINE_DOUBLE", Reflex::Terminal::Span::UNDERLINE_DOUBLE);
+	cTerminal.define_const("UNDERLINE_CURLY",  Reflex::Terminal::Span::UNDERLINE_CURLY);
+	cTerminal.define_const("UNDERLINE_DOTTED", Reflex::Terminal::Span::UNDERLINE_DOTTED);
+	cTerminal.define_const("UNDERLINE_DASHED", Reflex::Terminal::Span::UNDERLINE_DASHED);
 
 	cTerminal.define_const("CURSOR_BAR",          Reflex::Terminal::Cursor::BAR);
 	cTerminal.define_const("CURSOR_BLOCK",        Reflex::Terminal::Cursor::BLOCK);

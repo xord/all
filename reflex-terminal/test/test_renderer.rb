@@ -66,6 +66,105 @@ class TestRenderer < Test::Unit::TestCase
     assert_equal ascii + 3, r.glyph_count
   end
 
+  def test_bake_glyphs_by_style()
+    r     = renderer
+    ascii = (0x20..0x7e).size
+
+    # a styled cell is another glyph even for a character the seed holds:
+    # each face keeps glyphs of its own, over the one shared atlas
+    r.bake_glyphs terminal("a \e[1ma\e[0m \e[3ma\e[0m \e[1;3ma\e[0m")
+    assert_equal ascii + 3, r.glyph_count
+
+    # and only the regular face is seeded with ascii
+    r.bake_glyphs terminal("\e[1mb")
+    assert_equal ascii + 4, r.glyph_count
+  end
+
+  def test_draw_styles()
+    r = renderer
+    t = terminal "aaaa \e[1maaaa\e[0m \e[3maaaa\e[0m"
+    r.bake_glyphs t
+
+    # the same character in another style cannot draw the same
+    plain  = pixels(r, terminal('aaaa'))
+    bold   = pixels(r, terminal("\e[1maaaa"))
+    italic = pixels(r, terminal("\e[3maaaa"))
+    assert_not_equal plain, bold
+    assert_not_equal plain, italic
+    assert_not_equal bold,  italic
+  end
+
+  def test_draw_decorations()
+    r      = renderer
+    styles = {
+      single:        "\e[4m",
+      double:        "\e[21m",
+      curly:         "\e[4:3m",
+      dotted:        "\e[4:4m",
+      dashed:        "\e[4:5m",
+      strikethrough: "\e[9m",
+      overline:      "\e[53m",
+    }
+    r.bake_glyphs terminal('aaaa')
+
+    # every decoration adds its own marks, and no two draw the same
+    plain = pixels(r, terminal('aaaa'))
+    drawn = styles.map {|name, sgr| [name, pixels(r, terminal("#{sgr}aaaa"))]}
+    drawn.each {|name, px| assert_not_equal plain, px, name}
+    drawn.combination(2).each do |(n1, p1), (n2, p2)|
+      assert_not_equal p1, p2, "#{n1} vs #{n2}"
+    end
+  end
+
+  def test_draw_decoration_colors()
+    r = renderer
+    r.bake_glyphs terminal('aaaa')
+
+    # SGR 58 colors the line apart from the text, and SGR 59 hands it back
+    default = pixels(r, terminal("\e[4maaaa"))
+    red     = pixels(r, terminal("\e[4m\e[58:2::255:0:0maaaa"))
+    reset   = pixels(r, terminal("\e[4m\e[58:2::255:0:0m\e[59maaaa"))
+    assert_not_equal default, red
+    assert_equal     default, reset
+  end
+
+  def test_draw_blink()
+    r = renderer
+    r.bake_glyphs terminal("\e[5;4mhello")
+    lit   = pixels(r, terminal("\e[5;4mhello"))
+    plain = pixels(r, terminal('hello'))
+
+    # the off phase hides the glyphs and their decorations, but not the
+    # background, and leaves text without the attribute alone
+    r.blink_visible = false
+    assert_equal     pixels(r, terminal('')), pixels(r, terminal("\e[5;4mhello"))
+    assert_not_equal pixels(r, terminal('')), pixels(r, terminal("\e[5;41mhello"))
+    assert_equal     plain,                   pixels(r, terminal('hello'))
+
+    r.blink_visible = true
+    assert_equal lit, pixels(r, terminal("\e[5;4mhello"))
+  end
+
+  def test_draw_invisible()
+    r = renderer
+    r.bake_glyphs terminal('hello')
+
+    # conceal hides the glyphs, not the cell or its decorations
+    assert_equal     pixels(r, terminal('')),      pixels(r, terminal("\e[8mhello"))
+    assert_not_equal pixels(r, terminal('hello')), pixels(r, terminal("\e[8mhello"))
+    assert_not_equal pixels(r, terminal('')),      pixels(r, terminal("\e[8;4mhello"))
+    assert_not_equal pixels(r, terminal('')),      pixels(r, terminal("\e[8;41mhello"))
+  end
+
+  def test_bake_glyphs_skips_concealed()
+    r     = renderer
+    ascii = (0x20..0x7e).size
+
+    # a concealed span draws no glyphs, so it bakes none either
+    r.bake_glyphs terminal("\e[8mあ")
+    assert_equal ascii, r.glyph_count
+  end
+
   def test_draw()
     r = renderer
     t = terminal "hello \e[31mworld\e[0m"
