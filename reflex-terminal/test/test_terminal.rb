@@ -292,6 +292,17 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal 'A', t.read_pending_input
   end
 
+  def test_write_key_kitty_arrows()
+    t = terminal
+    # macos delivers an arrow with its function-key character (U+F702) as
+    # chars. legacy encoding takes the key over the text, but the kitty
+    # protocol sends the text when there is one, so the character has to
+    # be recognized as a key rather than text
+    t.feed "\e[>1u"
+    t.write_key key_down("\uF702", R::KEY_LEFT)
+    assert_equal "\e[D", t.read_pending_input
+  end
+
   def test_write_key_ctrl()
     t = terminal
     # ghostty leaves these to the kitty protocol (fixterms), so they would

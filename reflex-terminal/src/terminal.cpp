@@ -350,6 +350,17 @@ namespace Reflex
 		{
 			unsigned char c = (unsigned char) *p;
 			if (c < 0x20 || c == 0x7f) return false;
+
+			// U+F700-U+F8FF (utf-8 "\xEF\x9C\x80"-"\xEF\xA3\xBF"): the private
+			// use range where macos hands over its function keys, arrows
+			// included -- a key rather than text, and the kitty protocol
+			// would otherwise send it out as the key's text
+			if (
+				c == 0xef &&
+				0x9c <= (unsigned char) p[1] && (unsigned char) p[1] <= 0xa3)
+			{
+				return false;
+			}
 		}
 		return true;
 	}
