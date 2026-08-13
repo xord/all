@@ -93,11 +93,13 @@ namespace Reflex
 
 				};// Style
 
-				int x, y;
+				int x = 0, y = 0;
 
-				Style style;
+				Style style  = BLOCK;
 
-				bool visible;
+				bool visible = false;
+
+				bool operator == (const Cursor&) const = default;
 
 			};// Cursor
 

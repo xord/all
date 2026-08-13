@@ -59,11 +59,13 @@ namespace Reflex
 
 		int screen_width = 0, screen_height = 0;
 
-		float wheel_rows = 0;
+		float wheel_rows        = 0;
 
-		longlong bells   = 0;
+		longlong bells          = 0;
 
 		bool any_button_pressed = false;
+
+		Cursor last_cursor;
 
 		String pending_input;
 
@@ -747,8 +749,13 @@ namespace Reflex
 
 		GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
 		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &dirty);
+
+		Cursor cursor     = this->cursor();
+		bool cursor_moved = cursor != self->last_cursor;
+		self->last_cursor = cursor;
+
 		if (dirty == GHOSTTY_RENDER_STATE_DIRTY_FALSE && !self->spans.empty())
-			return false;
+			return cursor_moved;// moving the cursor dirties no cell, but a renderer draws it
 
 		rebuild_spans(self.get());
 
@@ -1235,7 +1242,7 @@ namespace Reflex
 	Terminal::Cursor
 	Terminal::cursor () const
 	{
-		Cursor cursor = {0, 0, Cursor::BLOCK, false};
+		Cursor cursor;
 		if (!*this) return cursor;
 
 		bool has_value = false;

@@ -94,6 +94,17 @@ class TestTerminal < Test::Unit::TestCase
     assert_false t.update
   end
 
+  def test_update_sees_a_bare_cursor_motion()
+    t = terminal 80, 4
+    t.update
+
+    # moving the cursor dirties no cell, but whoever draws the screen
+    # draws the cursor too, so it has to count as damage
+    t.feed "\e[C"
+    assert_true  t.update
+    assert_false t.update
+  end
+
   def test_each_span_attributes()
     t = terminal 80, 4
     t.feed "\e[1mB\e[0m \e[4mU\e[0m \e[7mR"
