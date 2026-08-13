@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <algorithm>
 #include <vector>
 #include <map>
 #include <xot/util.h>
@@ -28,6 +29,8 @@ namespace ReflexTerminal
 		bool is_valid () const {return width > 0;}
 
 	};// Glyph
+
+	typedef std::map<String, Glyph> GlyphMap;
 
 
 	enum
@@ -79,7 +82,7 @@ namespace ReflexTerminal
 
 		// the empty Glyph of a character too wide for the atlas is kept
 		// as well, so that it is not measured again on every frame
-		std::map<String, Glyph> glyphs[NFONTS];
+		GlyphMap glyphs[NFONTS];
 
 		// reused between frames so that a screenful of new characters
 		// does not allocate
@@ -196,7 +199,7 @@ namespace ReflexTerminal
 		// far more than the drawing itself, so the unknown glyphs of every
 		// face are collected first and drawn in the one session
 
-		std::map<String, Glyph> added[NFONTS];
+		GlyphMap added[NFONTS];
 		size_t nadded = 0;
 		for (int i = 0; i < NFONTS; ++i)
 		{
@@ -282,6 +285,8 @@ namespace ReflexTerminal
 			{
 				for (const Terminal::Span& span : row)
 				{
+					if (span.attribs & Terminal::Span::INVISIBLE) continue;
+
 					int font_index      = to_font_index(span.attribs);
 					const uint* offsets = cell_offsets + span.cell_offset;
 					for (uint i = 0; i < span.cell_size; ++i)
@@ -340,33 +345,98 @@ namespace ReflexTerminal
 		return color;
 	}
 
-	void
-	Renderer::draw (Painter* painter, const Terminal& terminal, const Bounds& bounds)
+	static int
+	underline_style (uint attribs)
 	{
-		if (!painter)
-			argument_error(__FILE__, __LINE__);
-		if (!self->fonts[0])
-			invalid_state_error(__FILE__, __LINE__);
+		return (int) ((attribs & Terminal::Span::UNDERLINE_MASK) >> Terminal::Span::UNDERLINE_SHIFT);
+	}
 
-		// what the terminal has not been told is left to the renderer, so the
-		// theme starts here and get_color only writes over it when the child
-		// or the application has named a color of its own
-		Color theme_fg(1, 1, 1), theme_bg(0, 0, 0);
-		terminal.get_color(Terminal::COLOR_FOREGROUND, &theme_fg);
-		terminal.get_color(Terminal::COLOR_BACKGROUND, &theme_bg);
+	static bool
+	has_decorations (uint attribs)
+	{
+		return
+			(attribs & (Terminal::Span::STRIKETHROUGH | Terminal::Span::OVERLINE)) ||
+			underline_style(attribs) != Terminal::Span::UNDERLINE_NONE;
+	}
 
+	static void
+	draw_curly_underline (
+		Painter* painter, const Color& color,
+		coord left, coord top, coord width, coord cw, coord ch,
+		coord thickness, coord amplitude)
+	{
+		enum {NSEGMENTS = 8};
+
+		coord center_y = top + ch - amplitude - thickness * 0.5f;
+		size_t npoints = (size_t) ceil(width / cw * NSEGMENTS) + 1;
+
+		std::vector<Point> points;
+		points.reserve(npoints);
+		for (size_t i = 0; i < npoints; ++i)
+		{
+			coord x = std::min((coord) (cw / NSEGMENTS * i), width);
+			points.emplace_back(left + x, center_y + amplitude * sin(x / cw * 2 * M_PI));
+		}
+
+		painter->push_state();
+		painter->no_fill();
+		painter->set_stroke(color);
+		painter->set_stroke_width(thickness);
+		painter->line(&points[0], points.size());
+		painter->pop_state();
+	}
+
+	static void
+	draw_decoration (
+		Painter* painter, uint attribs, const Color& color,
+		coord left, coord top, coord width, coord cw, coord ch)
+	{
+		coord amplitude = std::max((coord) 1, (coord) round(ch / 16));
+		coord t         = amplitude;
+		if (attribs & Terminal::Span::BOLD) t = ceil(t * 1.5f);
+
+		painter->set_fill(color);
+		if (attribs & Terminal::Span::STRIKETHROUGH)
+			painter->rect(left, top + ch * 0.5f - t, width, t);
+		if (attribs & Terminal::Span::OVERLINE)
+			painter->rect(left, top, width, t);
+
+		coord bottom = top + ch - t;
+		switch (underline_style(attribs))
+		{
+			case Terminal::Span::UNDERLINE_SINGLE:
+				painter->rect(left, bottom, width, t);
+				break;
+
+			case Terminal::Span::UNDERLINE_DOUBLE:
+				painter->rect(left, bottom,         width, t);
+				painter->rect(left, bottom - t * 2, width, t);
+				break;
+
+			case Terminal::Span::UNDERLINE_DOTTED:
+				for (coord x = 0; x < width; x += t * 2)
+					painter->rect(left + x, bottom, std::min(t, width - x), t);
+				break;
+
+			case Terminal::Span::UNDERLINE_DASHED:
+				for (coord x = 0, dash = cw / 3; x < width; x += dash * 2)
+					painter->rect(left + x, bottom, std::min(dash, width - x), t);
+				break;
+
+			case Terminal::Span::UNDERLINE_CURLY:
+				draw_curly_underline(painter, color, left, top, width, cw, ch, t, amplitude);
+				break;
+		}
+	}
+
+	static void
+	draw_backgrounds (
+		Renderer::Data* self, Painter* painter, const Terminal& terminal,
+		const Color& theme_fg, const Color& theme_bg)
+	{
 		coord cw = self->cell_width;
 		coord ch = self->cell_height;
 
-		painter->push_state();
-		painter->set_font(self->fonts[0]);
-
-		painter->set_fill(theme_bg);
-		painter->rect(bounds);
-
-		// every background first, then every glyph: alternating shapes
-		// and images breaks the painter's batch and costs several times
-		// more than the two passes do
 		const Terminal::RowList& rows = terminal.spans();
 		for (size_t y = 0; y < rows.size(); ++y)
 		{
@@ -380,22 +450,37 @@ namespace ReflexTerminal
 				painter->rect(span.x * cw, y * ch, span.width * cw, ch);
 			}
 		}
+	}
+
+	static void
+	draw_glyphs (
+		Renderer::Data* self, Painter* painter, const Terminal& terminal,
+		const Color& theme_fg, const Color& theme_bg)
+	{
+		coord cw = self->cell_width;
+		coord ch = self->cell_height;
 
 		const Image& atlas       = self->atlas;
 		const uint* cell_offsets = Terminal_get_cell_offsets(terminal).data();
+
+		const Terminal::RowList& rows = terminal.spans();
 		for (size_t y = 0; y < rows.size(); ++y)
 		{
 			for (const Terminal::Span& span : rows[y])
 			{
-				if (span.cell_size == 0) continue;
+				if (span.cell_size == 0)
+					continue;
+
+				if (span.attribs & Terminal::Span::INVISIBLE)
+					continue;
 
 				bool inverted = colors_inverted(span.attribs);
 				painter->set_fill(to_text_color(
 					span.attribs,
 					inverted ? to_color(span.bg, theme_bg) : to_color(span.fg, theme_fg)));
 
-				int font_index = to_font_index(span.attribs);
-				const std::map<String, Glyph>& glyphs = self->glyphs[font_index];
+				int font_index         = to_font_index(span.attribs);
+				const GlyphMap& glyphs = self->glyphs[font_index];
 
 				// a span breaks where narrow meets wide, so every cell in
 				// one steps the same distance
@@ -424,6 +509,61 @@ namespace ReflexTerminal
 				}
 			}
 		}
+	}
+
+	static void
+	draw_decorations (
+		Renderer::Data* self, Painter* painter, const Terminal& terminal,
+		const Color& theme_fg, const Color& theme_bg)
+	{
+		coord cw = self->cell_width;
+		coord ch = self->cell_height;
+
+		const Terminal::RowList& rows = terminal.spans();
+		for (size_t y = 0; y < rows.size(); ++y)
+		{
+			for (const Terminal::Span& span : rows[y])
+			{
+				if (!has_decorations(span.attribs)) continue;
+
+				bool inverted = colors_inverted(span.attribs);
+				draw_decoration(
+					painter, span.attribs,
+					to_text_color(
+						span.attribs,
+						inverted ? to_color(span.bg, theme_bg) : to_color(span.fg, theme_fg)),
+					span.x * cw, y * ch, span.width * cw, cw, ch);
+			}
+		}
+	}
+
+	void
+	Renderer::draw (Painter* painter, const Terminal& terminal, const Bounds& bounds)
+	{
+		if (!painter)
+			argument_error(__FILE__, __LINE__);
+		if (!self->fonts[0])
+			invalid_state_error(__FILE__, __LINE__);
+
+		// what the terminal has not been told is left to the renderer, so the
+		// theme starts here and get_color only writes over it when the child
+		// or the application has named a color of its own
+		Color theme_fg(1, 1, 1), theme_bg(0, 0, 0);
+		terminal.get_color(Terminal::COLOR_FOREGROUND, &theme_fg);
+		terminal.get_color(Terminal::COLOR_BACKGROUND, &theme_bg);
+
+		painter->push_state();
+		painter->set_font(self->fonts[0]);
+
+		painter->set_fill(theme_bg);
+		painter->rect(bounds);
+
+		// a pass per kind rather than span by span: alternating shapes and
+		// images would break the painter's batch and cost several times
+		// more. decorations go last, over the glyphs they cross
+		draw_backgrounds(self.get(), painter, terminal, theme_fg, theme_bg);
+		draw_glyphs(     self.get(), painter, terminal, theme_fg, theme_bg);
+		draw_decorations(self.get(), painter, terminal, theme_fg, theme_bg);
 
 		painter->pop_state();
 	}

@@ -57,6 +57,23 @@ namespace Reflex
 
 				};// Attribute
 
+				enum Underline
+				{
+
+					UNDERLINE_NONE = 0,
+
+					UNDERLINE_SINGLE,
+
+					UNDERLINE_DOUBLE,
+
+					UNDERLINE_CURLY,
+
+					UNDERLINE_DOTTED,
+
+					UNDERLINE_DASHED
+
+				};// Underline
+
 				enum {COLOR_NONE = -1};
 
 				int x, width;// in cells

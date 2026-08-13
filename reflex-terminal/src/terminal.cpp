@@ -156,9 +156,15 @@ namespace Reflex
 	to_attribs (const GhosttyStyle& style)
 	{
 		// INVERSE is reported rather than applied: swapping fg/bg is left to
-		// the renderer, which is the one that knows the theme's default colors.
-		// UNDERLINE_MASK is a 3-bit field holding ghostty's style number --
-		// 0: none, 1: single, 2: double, 3: curly, 4: dotted, 5: dashed
+		// the renderer, which is the one that knows the theme's default colors
+
+		// the mask carries ghostty's style number as is
+		static_assert(Terminal::Span::UNDERLINE_NONE   == GHOSTTY_SGR_UNDERLINE_NONE);
+		static_assert(Terminal::Span::UNDERLINE_SINGLE == GHOSTTY_SGR_UNDERLINE_SINGLE);
+		static_assert(Terminal::Span::UNDERLINE_DOUBLE == GHOSTTY_SGR_UNDERLINE_DOUBLE);
+		static_assert(Terminal::Span::UNDERLINE_CURLY  == GHOSTTY_SGR_UNDERLINE_CURLY);
+		static_assert(Terminal::Span::UNDERLINE_DOTTED == GHOSTTY_SGR_UNDERLINE_DOTTED);
+		static_assert(Terminal::Span::UNDERLINE_DASHED == GHOSTTY_SGR_UNDERLINE_DASHED);
 
 		uint attribs = 0;
 		if (style.bold)          attribs |= Terminal::Span::BOLD;
