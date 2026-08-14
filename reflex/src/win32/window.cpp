@@ -819,63 +819,57 @@ namespace Reflex
 	}
 
 	static void
-	get_window_bounds (
-		HWND hwnd, coord* x, coord* y, coord* width, coord* height,
-		coord* nonclient_width = NULL, coord* nonclient_height = NULL)
+	get_client_bounds (HWND hwnd, coord* x, coord* y, coord* w, coord* h)
 	{
-		if (!x && !y && !width && !height && !nonclient_width && !nonclient_height)
+		if (!x && !y && !w && !h)
 			argument_error(__FILE__, __LINE__);
-
-		RECT window;
-		if (!GetWindowRect(hwnd, &window))
-			system_error(__FILE__, __LINE__);
 
 		RECT client;
 		if (!GetClientRect(hwnd, &client))
 			system_error(__FILE__, __LINE__);
 
-		if (x)      *x      = window.left;
-		if (y)      *y      = window.top;
-		if (width)  *width  = client.right  - client.left;
-		if (height) *height = client.bottom - client.top;
+		POINT pos = {client.left, client.top};
+		if (!ClientToScreen(hwnd, &pos))
+			system_error(__FILE__, __LINE__);
 
-		if (nonclient_width)
-		{
-			coord ww = window.right  - window.left;
-			coord cw = client.right  - client.left;
-			*nonclient_width  = ww - cw;
-		}
-		if (nonclient_height)
-		{
-			coord wh = window.bottom - window.top;
-			coord ch = client.bottom - client.top;
-			*nonclient_height = wh - ch;
-		}
+		if (x) *x = pos.x;
+		if (y) *y = pos.y;
+		if (w) *w = client.right  - client.left;
+		if (h) *h = client.bottom - client.top;
+	}
+
+	static void
+	client_to_window_rect (HWND hwnd, RECT* rect)
+	{
+		DWORD style   = (DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE);
+		DWORD exstyle = (DWORD) GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+		if (!AdjustWindowRectEx(rect, style, GetMenu(hwnd) != NULL, exstyle))
+			system_error(__FILE__, __LINE__);
 	}
 
 	void
-	Window_set_frame (Window* window, coord x, coord y, coord width, coord height)
+	Window_set_frame (Window* window, coord x, coord y, coord w, coord h)
 	{
 		if (!*window) return;
 
-		WindowData* self = get_data(window);
+		HWND hwnd = get_data(window)->hwnd;
 
-		coord xx, yy, ww, hh, nonclient_w, nonclient_h;
-		get_window_bounds(
-			self->hwnd, &xx, &yy, &ww, &hh, &nonclient_w, &nonclient_h);
-
-		width  += nonclient_w;
-		height += nonclient_h;
+		coord xx, yy, ww, hh;
+		get_client_bounds(hwnd, &xx, &yy, &ww, &hh);
 
 		UINT flags = 0;
-		if (x     == xx && y      == yy) flags |= SWP_NOMOVE;
-		if (width == ww && height == hh) flags |= SWP_NOSIZE;
+		if (x == xx && y == yy) flags |= SWP_NOMOVE;
+		if (w == ww && h == hh) flags |= SWP_NOSIZE;
 
 		if (flags == (SWP_NOMOVE | SWP_NOSIZE))
 			return;
 
+		RECT rect = {(int) x, (int) y, (int) (x + w), (int) (y + h)};
+		client_to_window_rect(hwnd, &rect);
+
 		if (!SetWindowPos(
-			self->hwnd, NULL, (int) x, (int) y, (int) width, (int) height,
+			hwnd, NULL,
+			rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
 			flags | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER))
 		{
 			system_error(__FILE__, __LINE__);
@@ -889,7 +883,7 @@ namespace Reflex
 			invalid_state_error(__FILE__, __LINE__);
 
 		coord x, y, w, h;
-		get_window_bounds(get_data(&window)->hwnd, &x, &y, &w, &h);
+		get_client_bounds(get_data(&window)->hwnd, &x, &y, &w, &h);
 		return Bounds(x, y, w, h);
 	}
 
