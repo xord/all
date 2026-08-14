@@ -847,6 +847,27 @@ namespace Reflex
 			system_error(__FILE__, __LINE__);
 	}
 
+	static void
+	keep_caption_on_screen (HWND hwnd, RECT* rect)
+	{
+		DWORD style = (DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE);
+		if ((style & WS_CAPTION) != WS_CAPTION)
+			return;
+
+		HMONITOR hmonitor = MonitorFromRect(rect, MONITOR_DEFAULTTONEAREST);
+		if (!hmonitor) return;
+
+		MONITORINFO info = {sizeof(info)};
+		if (!GetMonitorInfoW(hmonitor, &info))
+			system_error(__FILE__, __LINE__);
+
+		LONG over = info.rcWork.top - rect->top;
+		if (over <= 0) return;
+
+		rect->top    += over;
+		rect->bottom += over;
+	}
+
 	void
 	Window_set_frame (Window* window, coord x, coord y, coord w, coord h)
 	{
@@ -866,6 +887,7 @@ namespace Reflex
 
 		RECT rect = {(int) x, (int) y, (int) (x + w), (int) (y + h)};
 		client_to_window_rect(hwnd, &rect);
+		keep_caption_on_screen(hwnd, &rect);
 
 		if (!SetWindowPos(
 			hwnd, NULL,
