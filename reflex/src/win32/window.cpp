@@ -3,6 +3,7 @@
 
 #include <xot/windows.h>
 #include <imm.h>
+#include <dwmapi.h>
 
 #include <assert.h>
 #include <map>
@@ -38,6 +39,8 @@ namespace Reflex
 		HWND hwnd                 = NULL;
 
 		bool need_rebind          = false;
+
+		bool transparent          = false;
 
 		bool tracking_mouse       = false;
 
@@ -456,7 +459,7 @@ namespace Reflex
 		Point p1 = focus->to_window(b.position());
 		Point p2 = focus->to_window(b.position() + b.size());
 
-		CANDIDATEFORM form = {};
+		CANDIDATEFORM form = {0};
 		form.dwIndex       = 0;
 		form.dwStyle       = CFS_EXCLUDE;
 		form.ptCurrentPos  = {(LONG) p1.x, (LONG) p2.y};
@@ -1034,7 +1037,7 @@ namespace Reflex
 	static void
 	set_window_style (HWND hwnd, DWORD style)
 	{
-		RECT client = {};
+		RECT client = {0};
 		bool normal = !IsIconic(hwnd) && !IsZoomed(hwnd) && GetClientRect(hwnd, &client);
 
 		POINT pos = {0, 0};
@@ -1067,6 +1070,30 @@ namespace Reflex
 		}
 	}
 
+	static void
+	set_background_transparent (HWND hwnd, bool transparent)
+	{
+		std::shared_ptr<HRGN__> region;
+		if (transparent)
+		{
+			region.reset(CreateRectRgn(0, 0, -1, -1), DeleteObject);// no blur
+			if (!region)
+				system_error(__FILE__, __LINE__);
+		}
+
+		DWM_BLURBEHIND blur = {0};
+		blur.dwFlags        = DWM_BB_ENABLE | (transparent ? DWM_BB_BLURREGION : 0);
+		blur.fEnable        = transparent ? TRUE : FALSE;
+		blur.hRgnBlur       = region.get();
+		HRESULT result      = DwmEnableBlurBehindWindow(hwnd, &blur);
+		if (FAILED(result))
+		{
+			system_error(
+				__FILE__, __LINE__,
+				"DwmEnableBlurBehindWindow failed (0x%08x)", (uint) result);
+		}
+	}
+
 	void
 	Window_set_flags (Window* window, uint flags)
 	{
@@ -1078,9 +1105,6 @@ namespace Reflex
 				__FILE__, __LINE__, "FLAG_TITLEBAR_BUTTONS needs FLAG_TITLEBAR_BACKGROUND");
 		}
 
-		if (Xot::has_flag(flags, Window::FLAG_TRANSPARENT))
-			not_implemented_error(__FILE__, __LINE__, "FLAG_TRANSPARENT");
-
 		if (Xot::has_flag(flags, Window::FLAG_PORTRAIT))
 			argument_error(__FILE__, __LINE__, "FLAG_PORTRAIT is not supported");
 
@@ -1090,12 +1114,20 @@ namespace Reflex
 		if (!*window)
 			invalid_state_error(__FILE__, __LINE__);
 
-		HWND hwnd     = get_data(window)->hwnd;
-		DWORD current = (DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE);
+		WindowData* self = get_data(window);
+
+		bool transparent = Xot::has_flag(flags, Window::FLAG_TRANSPARENT);
+		if (transparent != self->transparent)
+		{
+			set_background_transparent(self->hwnd, transparent);
+			self->transparent = transparent;
+		}
+
+		DWORD current = (DWORD) GetWindowLongPtrW(self->hwnd, GWL_STYLE);
 		DWORD style   = make_window_style(flags, current);
 		if (style == current) return;
 
-		set_window_style(hwnd, style);
+		set_window_style(self->hwnd, style);
 	}
 
 	float
