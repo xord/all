@@ -199,6 +199,29 @@ move_to_main_screen_origin (NativeWindow* window)
 		timer = nil;
 	}
 
+	- (void) setTitlebarBackgroundVisible: (BOOL) visible
+	{
+		self.titlebarAppearsTransparent = !visible;
+		self.titleVisibility            =
+			visible ? NSWindowTitleVisible : NSWindowTitleHidden;
+	}
+
+	- (void) setTitlebarButtonsVisible: (BOOL) visible
+	{
+		NSWindowButton buttons[] = {
+			NSWindowCloseButton,
+			NSWindowMiniaturizeButton,
+			NSWindowZoomButton
+		};
+		for (auto button : buttons)
+			[self standardWindowButton: button].hidden = !visible;
+	}
+
+	- (BOOL) hasFullScreenFlag
+	{
+		return self.styleMask & NSWindowStyleMaskFullScreen;
+	}
+
 	- (void) update: (NSTimer*) t
 	{
 		Reflex::Window* win = self.window;
@@ -236,11 +259,6 @@ move_to_main_screen_origin (NativeWindow* window)
 
 		Reflex::DrawEvent e(dt, fps);
 		Window_call_draw_event(win, &e);
-	}
-
-	- (BOOL) hasFullScreenFlag
-	{
-		return self.styleMask & NSWindowStyleMaskFullScreen;
 	}
 
 	- (BOOL) windowShouldClose: (id) sender

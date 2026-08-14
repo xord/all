@@ -51,6 +51,11 @@ namespace Reflex
 		else
 			styleMask &= ~NSWindowStyleMaskResizable;
 
+		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
+			styleMask &= ~NSWindowStyleMaskFullSizeContentView;
+		else
+			styleMask |=  NSWindowStyleMaskFullSizeContentView;
+
 		return styleMask;
 	}
 
@@ -75,9 +80,11 @@ namespace Reflex
 	Window_default_flags ()
 	{
 		return
-			Window::FLAG_CLOSABLE  |
-			Window::FLAG_RESIZABLE |
-			Window::FLAG_MINIMIZABLE;
+			Window::FLAG_CLOSABLE         |
+			Window::FLAG_MINIMIZABLE      |
+			Window::FLAG_RESIZABLE        |
+			Window::FLAG_TITLEBAR_BUTTONS |
+			Window::FLAG_TITLEBAR_BACKGROUND;
 	}
 
 	void
@@ -174,10 +181,19 @@ namespace Reflex
 
 		NativeWindow* native        = get_native(window);
 		NSWindowStyleMask styleMask =
-			Window_make_style_mask(window->self->flags, native.styleMask);
+			Window_make_style_mask(flags, native.styleMask);
 
 		if (styleMask != native.styleMask)
+		{
+			NSRect content   = [native contentRectForFrameRect: native.frame];
 			native.styleMask = styleMask;
+			[native setFrame: [native frameRectForContentRect: content] display: YES];
+		}
+
+		[native setTitlebarButtonsVisible:
+			Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS)];
+		[native setTitlebarBackgroundVisible:
+			Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND)];
 
 		if (native.hasFullScreenFlag != Xot::has_flag(flags, Window::FLAG_FULLSCREEN))
 			[native toggleFullScreen: native];

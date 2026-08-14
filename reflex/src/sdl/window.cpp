@@ -256,9 +256,11 @@ namespace Reflex
 	Window_default_flags ()
 	{
 		return
-			Window::FLAG_CLOSABLE  |
-			Window::FLAG_RESIZABLE |
-			Window::FLAG_MINIMIZABLE;
+			Window::FLAG_CLOSABLE         |
+			Window::FLAG_MINIMIZABLE      |
+			Window::FLAG_RESIZABLE        |
+			Window::FLAG_TITLEBAR_BUTTONS |
+			Window::FLAG_TITLEBAR_BACKGROUND;
 	}
 
 	void
@@ -370,6 +372,12 @@ namespace Reflex
 	{
 		if (!*win)
 			invalid_state_error(__FILE__, __LINE__);
+
+		if (!Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS))
+			not_implemented_error(__FILE__, __LINE__, "missing FLAG_TITLEBAR_BUTTONS");
+
+		if (!Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
+			not_implemented_error(__FILE__, __LINE__, "missing FLAG_TITLEBAR_BACKGROUND");
 
 		WindowData* self = get_data(win);
 		Uint32 sdl_flags = self->to_sdl_flags(flags);

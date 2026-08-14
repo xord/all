@@ -21,6 +21,11 @@ module Reflex
 
     extend Forwardable
 
+    bit_flag_accessor :titlebar do
+      flag :buttons,    TITLEBAR_BUTTONS
+      flag :background, TITLEBAR_BACKGROUND
+    end
+
     bit_flag_accessor :orientations do
       flag :portrait,  ORIENTATION_PORTRAIT
       flag :landscape, ORIENTATION_LANDSCAPE

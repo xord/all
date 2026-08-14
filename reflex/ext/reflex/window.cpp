@@ -210,6 +210,28 @@ RUCY_DEF0(is_resizable)
 }
 RUCY_END
 
+static const uint TITLEBAR_MASK =
+	Reflex::Window::FLAG_TITLEBAR_BUTTONS |
+	Reflex::Window::FLAG_TITLEBAR_BACKGROUND;
+
+static
+RUCY_DEF1(set_titlebar, titlebar)
+{
+	CHECK;
+
+	uint flags = to<uint>(titlebar);
+	THIS->set_flag((flags & TITLEBAR_MASK) | (THIS->flags() & ~TITLEBAR_MASK));
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_titlebar)
+{
+	CHECK;
+	return value(THIS->flags() & TITLEBAR_MASK);
+}
+RUCY_END
+
 static
 RUCY_DEF1(set_fullscreen, state)
 {
@@ -238,8 +260,6 @@ static const uint ORIENTATION_MASK =
 static
 RUCY_DEF1(set_orientations, orientations)
 {
-	using namespace Reflex;
-
 	CHECK;
 
 	uint flags = to<uint>(orientations);
@@ -252,8 +272,6 @@ RUCY_END
 static
 RUCY_DEF0(get_orientations)
 {
-	using namespace Reflex;
-
 	CHECK;
 	return value(THIS->flags() & ORIENTATION_MASK);
 }
@@ -548,6 +566,8 @@ Init_reflex_window ()
 	cWindow.define_method("minimizable?",  is_minimizable);
 	cWindow.define_method("resizable=",   set_resizable);
 	cWindow.define_method("resizable?",    is_resizable);
+	cWindow.define_method("titlebar=",    set_titlebar);
+	cWindow.define_method("titlebar",     get_titlebar);
 	cWindow.define_method("fullscreen=",  set_fullscreen);
 	cWindow.define_method("fullscreen?",   is_fullscreen);
 	cWindow.define_method("orientations=", set_orientations);
@@ -585,6 +605,9 @@ Init_reflex_window ()
 	cWindow.define_method("on_note_on",        on_note_on);
 	cWindow.define_method("on_note_off",       on_note_off);
 	cWindow.define_method("on_control_change", on_control_change);
+
+	cWindow.define_const("TITLEBAR_BUTTONS",    Reflex::Window::FLAG_TITLEBAR_BUTTONS);
+	cWindow.define_const("TITLEBAR_BACKGROUND", Reflex::Window::FLAG_TITLEBAR_BACKGROUND);
 
 	cWindow.define_const("ORIENTATION_PORTRAIT",  Reflex::Window::FLAG_PORTRAIT);
 	cWindow.define_const("ORIENTATION_LANDSCAPE", Reflex::Window::FLAG_LANDSCAPE);
