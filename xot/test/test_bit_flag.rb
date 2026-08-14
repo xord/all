@@ -25,10 +25,10 @@ class TestBitFlag < Test::Unit::TestCase
     assert_equal [:bit3, :bit5],               flag.bits2symbols(bit 3, 5)
     assert_equal [:bit1, :bit2, :bit3, :bit5], flag.bits2symbols(bit 1, 2, 3, 5)
 
-    assert_raise(RuntimeError) {flag.bits2symbols(bit 0)}
-    assert_raise(RuntimeError) {flag.bits2symbols(bit 4)}
-    assert_raise(RuntimeError) {flag.bits2symbols(bit 6)}
-    assert_raise(RuntimeError) {flag.bits2symbols(bit 0, 1)}
+    assert_raise(ArgumentError) {flag.bits2symbols(bit 0)}
+    assert_raise(ArgumentError) {flag.bits2symbols(bit 4)}
+    assert_raise(ArgumentError) {flag.bits2symbols(bit 6)}
+    assert_raise(ArgumentError) {flag.bits2symbols(bit 0, 1)}
 
     Xot::BitFlag.new.tap do |bf|
       bf.flag :first,  bit(9)
@@ -50,11 +50,11 @@ class TestBitFlag < Test::Unit::TestCase
     assert_equal 0, flag.symbols2bits(:no)
     assert_equal 0, flag.symbols2bits(:none, :no)
 
-    assert_raise(RuntimeError) {flag.symbols2bits(:bit0)}
-    assert_raise(RuntimeError) {flag.symbols2bits(:bit4)}
-    assert_raise(RuntimeError) {flag.symbols2bits(:bit6)}
-    assert_raise(RuntimeError) {flag.symbols2bits(:bit0, :bit1)}
-    assert_raise(RuntimeError) {flag.symbols2bits(nil)}
+    assert_raise(ArgumentError) {flag.symbols2bits(:bit0)}
+    assert_raise(ArgumentError) {flag.symbols2bits(:bit4)}
+    assert_raise(ArgumentError) {flag.symbols2bits(:bit6)}
+    assert_raise(ArgumentError) {flag.symbols2bits(:bit0, :bit1)}
+    assert_raise(ArgumentError) {flag.symbols2bits(nil)}
   end
 
 end# TestBitFlag

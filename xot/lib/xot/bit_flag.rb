@@ -39,7 +39,7 @@ module Xot
         array << symbol
         rest &= ~bit
       end
-      raise "unknown bits 0b#{rest.to_s 2} for flag." if rest != 0
+      raise ArgumentError, "unknown bits 0b#{rest.to_s 2} for flag." if rest != 0
       array
     end
 
@@ -52,7 +52,7 @@ module Xot
       def sym2bit(symbol)
         bit = @sym2bit[symbol]
         bit = flag symbol if !bit && @auto
-        raise "unknown symbol #{symbol.inspect} for flag." unless bit
+        raise ArgumentError, "unknown symbol #{symbol.inspect} for flag." unless bit
         bit
       end
 
