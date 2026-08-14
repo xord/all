@@ -195,6 +195,8 @@ namespace Reflex
 		[native setTitlebarBackgroundVisible:
 			Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND)];
 
+		[native setBackgroundTransparent: Xot::has_flag(flags, Window::FLAG_TRANSPARENT)];
+
 		if (native.hasFullScreenFlag != Xot::has_flag(flags, Window::FLAG_FULLSCREEN))
 			[native toggleFullScreen: native];
 	}

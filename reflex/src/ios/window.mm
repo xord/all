@@ -272,6 +272,9 @@ namespace Reflex
 		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
 			argument_error(__FILE__, __LINE__, "FLAG_TITLEBAR_BACKGROUND is not supported");
 
+		if (Xot::has_flag(flags, Window::FLAG_TRANSPARENT))
+			argument_error(__FILE__, __LINE__, "FLAG_TRANSPARENT is not supported");
+
 		Window_set_orientation_mask(
 			get_vc(window),
 			flags_to_orientation_mask(flags & (Window::FLAG_PORTRAIT | Window::FLAG_LANDSCAPE)));

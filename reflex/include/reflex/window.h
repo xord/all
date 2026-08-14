@@ -44,11 +44,13 @@ namespace Reflex
 
 				FLAG_TITLEBAR_BACKGROUND = Xot::bit(4),
 
-				FLAG_FULLSCREEN          = Xot::bit(5),
+				FLAG_TRANSPARENT         = Xot::bit(5),
 
-				FLAG_PORTRAIT            = Xot::bit(6),
+				FLAG_FULLSCREEN          = Xot::bit(6),
 
-				FLAG_LANDSCAPE           = Xot::bit(7),
+				FLAG_PORTRAIT            = Xot::bit(7),
+
+				FLAG_LANDSCAPE           = Xot::bit(8),
 
 				FLAG_LAST                = FLAG_LANDSCAPE
 

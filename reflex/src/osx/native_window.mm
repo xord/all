@@ -217,6 +217,16 @@ move_to_main_screen_origin (NativeWindow* window)
 			[self standardWindowButton: button].hidden = !visible;
 	}
 
+	- (void) setBackgroundTransparent: (BOOL) transparent
+	{
+		if (transparent == !self.opaque) return;
+
+		self.opaque          = !transparent;
+		self.hasShadow       = !transparent;
+		self.backgroundColor =
+			transparent ? NSColor.clearColor : NSColor.windowBackgroundColor;
+	}
+
 	- (BOOL) hasFullScreenFlag
 	{
 		return self.styleMask & NSWindowStyleMaskFullScreen;

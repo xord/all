@@ -8,6 +8,8 @@
 
 	- (void) setTitlebarButtonsVisible: (BOOL) visible;
 
+	- (void) setBackgroundTransparent: (BOOL) transparent;
+
 	- (BOOL) hasFullScreenFlag;
 
 	- (void) draw;

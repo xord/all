@@ -1078,6 +1078,9 @@ namespace Reflex
 				__FILE__, __LINE__, "FLAG_TITLEBAR_BUTTONS needs FLAG_TITLEBAR_BACKGROUND");
 		}
 
+		if (Xot::has_flag(flags, Window::FLAG_TRANSPARENT))
+			not_implemented_error(__FILE__, __LINE__, "FLAG_TRANSPARENT");
+
 		if (Xot::has_flag(flags, Window::FLAG_PORTRAIT))
 			argument_error(__FILE__, __LINE__, "FLAG_PORTRAIT is not supported");
 

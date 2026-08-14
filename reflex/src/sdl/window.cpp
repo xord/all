@@ -385,6 +385,9 @@ namespace Reflex
 				"FLAG_TITLEBAR_BUTTONS and FLAG_TITLEBAR_BACKGROUND must match");
 		}
 
+		if (Xot::has_flag(flags, Window::FLAG_TRANSPARENT))
+			not_implemented_error(__FILE__, __LINE__, "FLAG_TRANSPARENT");
+
 		WindowData* self = get_data(win);
 		Uint32 sdl_flags = self->to_sdl_flags(flags);
 

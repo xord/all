@@ -8,13 +8,12 @@
 #import "native_window.h"
 
 
-//#define TRANSPARENT_BACKGROUND
-
 
 @implementation OpenGLView
 
 	{
 		bool setup_context_done;
+		GLint surface_opacity;
 		NSTrackingArea* tracking_area;
 
 		// the text being composed by the input method
@@ -43,6 +42,7 @@
 		if (!self) return nil;
 
 		setup_context_done = false;
+		surface_opacity    = 1;
 		tracking_area      = nil;
 		marked_text        = nil;
 		marked_selection   = NSMakeRange(NSNotFound, 0);
@@ -64,11 +64,6 @@
 
 		GLint swapInterval = 1;
 		[context setValues: &swapInterval forParameter: NSOpenGLCPSwapInterval];
-
-#ifdef TRANSPARENT_BACKGROUND
-		GLint opacity = 0;
-		[context setValues: &opacity forParameter: NSOpenGLCPSurfaceOpacity];
-#endif
 	}
 
 	- (void) activateContext
@@ -76,8 +71,16 @@
 		[self setupContext];
 
 		NSOpenGLContext* context = self.openGLContext;
-		if (context.view != self) [context setView: self];
+		BOOL moved               = context.view != self;
+		if (moved) [context setView: self];
 		[context makeCurrentContext];
+
+		GLint opacity = !self.window || self.window.isOpaque ? 1 : 0;
+		if (moved || opacity != surface_opacity)
+		{
+			surface_opacity = opacity;
+			[context setValues: &opacity forParameter: NSOpenGLCPSurfaceOpacity];
+		}
 	}
 
 	- (BOOL) acceptsFirstResponder
@@ -90,12 +93,10 @@
 		return YES;
 	}
 
-#ifdef TRANSPARENT_BACKGROUND
 	- (BOOL) isOpaque
 	{
-		return YES;
+		return self.window ? self.window.isOpaque : YES;
 	}
-#endif
 
 	- (void) drawRect: (NSRect) rect
 	{
@@ -111,11 +112,6 @@
 	{
 		[self.window setAcceptsMouseMovedEvents: YES];
 		[self.window makeFirstResponder: self];
-
-#ifdef TRANSPARENT_BACKGROUND
-		[self.window setBackgroundColor: [NSColor clearColor]];
-		[self.window setOpaque: NO];
-#endif
 	}
 
 	- (void) updateTrackingAreas
