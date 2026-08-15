@@ -155,6 +155,25 @@ class TestWindow < Test::Unit::TestCase
     assert_raise(ArgumentError) {w.titlebar = [:unknown]}
   end
 
+  def test_shadow?()
+    w = win
+    assert_true  w.shadow?
+
+    w.shadow = false
+    assert_false w.shadow?
+
+    w.shadow = true
+    assert_true  w.shadow?
+
+    w.shadow false
+    assert_false w.shadow?
+
+    w.shadow true
+    assert_true  w.shadow?
+
+    assert_false win(shadow: false).shadow?
+  end
+
   def test_transparent?()
     w = win
     assert_false w.transparent?

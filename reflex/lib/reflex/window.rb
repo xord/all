@@ -77,6 +77,7 @@ module Reflex
       closable:    {reader: :closable?},
       minimizable: {reader: :minimizable?},
       resizable:   {reader: :resizable?},
+      shadow:      {reader: :shadow?},
       transparent: {reader: :transparent?},
       fullscreen:  {reader: :fullscreen?}
 

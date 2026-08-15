@@ -233,6 +233,26 @@ RUCY_DEF0(get_titlebar)
 RUCY_END
 
 static
+RUCY_DEF1(set_shadow, state)
+{
+	CHECK;
+
+	if (state)
+		THIS->   add_flag(Reflex::Window::FLAG_SHADOW);
+	else
+		THIS->remove_flag(Reflex::Window::FLAG_SHADOW);
+}
+RUCY_END
+
+static
+RUCY_DEF0(has_shadow)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::Window::FLAG_SHADOW));
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_transparent, state)
 {
 	CHECK;
@@ -588,6 +608,8 @@ Init_reflex_window ()
 	cWindow.define_method("resizable?",    is_resizable);
 	cWindow.define_method("titlebar=",    set_titlebar);
 	cWindow.define_method("titlebar",     get_titlebar);
+	cWindow.define_method("shadow=",      set_shadow);
+	cWindow.define_method("shadow?",      has_shadow);
 	cWindow.define_method("transparent=", set_transparent);
 	cWindow.define_method("transparent?",  is_transparent);
 	cWindow.define_method("fullscreen=",  set_fullscreen);

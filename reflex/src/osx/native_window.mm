@@ -217,14 +217,24 @@ move_to_main_screen_origin (NativeWindow* window)
 			[self standardWindowButton: button].hidden = !visible;
 	}
 
+	- (void) setTitlebarContainerVisible: (BOOL) visible
+	{
+		// the titlebar keeps a backdrop that a see-through window shows as a shadow
+		NSView* container =
+			[self standardWindowButton: NSWindowCloseButton].superview.superview;
+		if ([container isKindOfClass: NSClassFromString(@"NSTitlebarContainerView")])
+			container.hidden = !visible;
+	}
+
 	- (void) setBackgroundTransparent: (BOOL) transparent
 	{
 		if (transparent == !self.opaque) return;
 
 		self.opaque          = !transparent;
-		self.hasShadow       = !transparent;
 		self.backgroundColor =
 			transparent ? NSColor.clearColor : NSColor.windowBackgroundColor;
+
+		[self invalidateShadow];
 	}
 
 	- (BOOL) hasFullScreenFlag

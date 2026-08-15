@@ -186,17 +186,20 @@ namespace Reflex
 	}
 
 	static bool
-	has_caption (HWND hwnd)
+	has_style (HWND hwnd, DWORD style)
 	{
-		DWORD style = (DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE);
-		return (style & WS_CAPTION) == WS_CAPTION;
+		return ((DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE) & style) == style;
 	}
 
 	static bool
 	calc_size (LRESULT* result, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
-		if (!wp || has_caption(hwnd) || IsZoomed(hwnd))
+		if (
+			!wp || IsZoomed(hwnd) ||
+			has_style(hwnd, WS_CAPTION) || !has_style(hwnd, WS_THICKFRAME))
+		{
 			return false;
+		}
 
 		// without a caption the sizing border is still drawn at the
 		// top of the window, so let the client area cover it
@@ -216,11 +219,15 @@ namespace Reflex
 	}
 
 	static bool
-	hit_test (LRESULT* result, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+	hit_test (LRESULT* result, Window* win, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
-		// the client area covers the top of the frame, so the hit
-		// test lands on it there and the window loses its top edge
-		if (has_caption(hwnd) || IsZoomed(hwnd))
+		// the client area covers the sizing border, or there is no border at
+		// all, so an edge answers HTCLIENT and cannot resize. this gives the
+		// edges back.
+		if (has_style(hwnd, WS_CAPTION) || IsZoomed(hwnd))
+			return false;
+
+		if (!win || !win->has_flag(Window::FLAG_RESIZABLE))
 			return false;
 
 		LRESULT hit = DefWindowProcW(hwnd, msg, wp, lp);
@@ -231,13 +238,37 @@ namespace Reflex
 		if (!GetWindowRect(hwnd, &window))
 			system_error(__FILE__, __LINE__);
 
-		POINT pos = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
-		if (pos.y >= window.top + border_size())
+		int size    = border_size();
+		POINT pos   = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+		bool left   = pos.x <  window.left   + size;
+		bool right  = pos.x >= window.right  - size;
+		bool top    = pos.y <  window.top    + size;
+		bool bottom = pos.y >= window.bottom - size;
+
+		// a sizing border draws the other edges outside the client area
+		if (has_style(hwnd, WS_THICKFRAME) && !top)
 			return false;
 
-		if      (pos.x <  window.left  + border_size()) *result = HTTOPLEFT;
-		else if (pos.x >= window.right - border_size()) *result = HTTOPRIGHT;
-		else                                            *result = HTTOP;
+		int corner  = size * 2;
+		bool near_l = pos.x <  window.left   + corner;
+		bool near_r = pos.x >= window.right  - corner;
+		bool near_t = pos.y <  window.top    + corner;
+		bool near_b = pos.y >= window.bottom - corner;
+
+		if      (top    && near_l) *result =    HTTOPLEFT;
+		else if (top    && near_r) *result =    HTTOPRIGHT;
+		else if (bottom && near_l) *result = HTBOTTOMLEFT;
+		else if (bottom && near_r) *result = HTBOTTOMRIGHT;
+		else if (left   && near_t) *result =    HTTOPLEFT;
+		else if (left   && near_b) *result = HTBOTTOMLEFT;
+		else if (right  && near_t) *result =    HTTOPRIGHT;
+		else if (right  && near_b) *result = HTBOTTOMRIGHT;
+		else if (top)              *result = HTTOP;
+		else if (bottom)           *result = HTBOTTOM;
+		else if (left)             *result = HTLEFT;
+		else if (right)            *result = HTRIGHT;
+		else return false;
+
 		return true;
 	}
 
@@ -578,7 +609,7 @@ namespace Reflex
 			case WM_NCHITTEST:
 			{
 				LRESULT result = 0;
-				if (hit_test(&result, hwnd, msg, wp, lp))
+				if (hit_test(&result, win, hwnd, msg, wp, lp))
 					return result;
 				break;
 			}
@@ -813,11 +844,12 @@ namespace Reflex
 	Window_default_flags ()
 	{
 		return
-			Window::FLAG_CLOSABLE         |
-			Window::FLAG_MINIMIZABLE      |
-			Window::FLAG_RESIZABLE        |
-			Window::FLAG_TITLEBAR_BUTTONS |
-			Window::FLAG_TITLEBAR_BACKGROUND;
+			Window::FLAG_CLOSABLE            |
+			Window::FLAG_MINIMIZABLE         |
+			Window::FLAG_RESIZABLE           |
+			Window::FLAG_TITLEBAR_BUTTONS    |
+			Window::FLAG_TITLEBAR_BACKGROUND |
+			Window::FLAG_SHADOW;
 	}
 
 	void
@@ -925,15 +957,15 @@ namespace Reflex
 		if (!AdjustWindowRectEx(rect, style, GetMenu(hwnd) != NULL, exstyle))
 			system_error(__FILE__, __LINE__);
 
-		// WM_NCCALCSIZE gives the top of the frame to the client area when
-		// there is no caption, so it takes no room here either
-		if (!has_caption(hwnd)) rect->top = top;
+		// WM_NCCALCSIZE gives the top of the sizing border to the client area
+		// when there is no caption, so it takes no room here either
+		if (!has_style(hwnd, WS_CAPTION)) rect->top = top;
 	}
 
 	static void
 	keep_caption_on_screen (HWND hwnd, RECT* rect)
 	{
-		if (!has_caption(hwnd)) return;
+		if (!has_style(hwnd, WS_CAPTION)) return;
 
 		HMONITOR hmonitor = MonitorFromRect(rect, MONITOR_DEFAULTTONEAREST);
 		if (!hmonitor) return;
@@ -1031,6 +1063,13 @@ namespace Reflex
 		else
 			style &= ~WS_CAPTION;
 
+		// the shadow comes with the frame, so a window with no shadow keeps no
+		// sizing border either, and WM_NCHITTEST gives the resizing back
+		if (Xot::has_flag(flags, Window::FLAG_SHADOW))
+			style |=  WS_THICKFRAME;
+		else
+			style &= ~WS_THICKFRAME;
+
 		return style;
 	}
 
@@ -1103,6 +1142,14 @@ namespace Reflex
 		{
 			argument_error(
 				__FILE__, __LINE__, "FLAG_TITLEBAR_BUTTONS needs FLAG_TITLEBAR_BACKGROUND");
+		}
+
+		if (
+			 Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND) &&
+			!Xot::has_flag(flags, Window::FLAG_SHADOW))
+		{
+			argument_error(
+				__FILE__, __LINE__, "FLAG_TITLEBAR_BACKGROUND needs FLAG_SHADOW");
 		}
 
 		if (Xot::has_flag(flags, Window::FLAG_PORTRAIT))

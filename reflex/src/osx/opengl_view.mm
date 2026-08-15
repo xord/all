@@ -106,6 +106,9 @@
 		[self activateContext];
 		[win draw];
 		[[NSOpenGLContext currentContext] flushBuffer];
+
+		if (!win.isOpaque && win.hasShadow)
+			[win invalidateShadow];// the shadow is made from what was drawn
 	}
 
 	- (void) viewDidMoveToWindow
