@@ -98,6 +98,9 @@ namespace Reflex
 		{
 			Uint32 sdl_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
 
+			if (!Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
+				sdl_flags |= SDL_WINDOW_BORDERLESS;
+
 			if (Xot::has_flag(flags, Window::FLAG_RESIZABLE))
 				sdl_flags |= SDL_WINDOW_RESIZABLE;
 
@@ -373,14 +376,19 @@ namespace Reflex
 		if (!*win)
 			invalid_state_error(__FILE__, __LINE__);
 
-		if (!Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS))
-			not_implemented_error(__FILE__, __LINE__, "missing FLAG_TITLEBAR_BUTTONS");
-
-		if (!Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
-			not_implemented_error(__FILE__, __LINE__, "missing FLAG_TITLEBAR_BACKGROUND");
+		bool buttons    = Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS);
+		bool background = Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND);
+		if (buttons != background)
+		{
+			argument_error(
+				__FILE__, __LINE__,
+				"FLAG_TITLEBAR_BUTTONS and FLAG_TITLEBAR_BACKGROUND must match");
+		}
 
 		WindowData* self = get_data(win);
 		Uint32 sdl_flags = self->to_sdl_flags(flags);
+
+		SDL_SetWindowBordered(self->native, background ? SDL_TRUE : SDL_FALSE);
 
 		SDL_SetWindowResizable(
 			self->native,
