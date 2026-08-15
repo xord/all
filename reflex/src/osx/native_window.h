@@ -4,9 +4,13 @@
 
 @interface NativeWindow : NSWindow <NSWindowDelegate>
 
-	- (void) draw;
+	- (void) setTitlebarBackgroundVisible: (BOOL) visible;
+
+	- (void) setTitlebarButtonsVisible: (BOOL) visible;
 
 	- (BOOL) hasFullScreenFlag;
+
+	- (void) draw;
 
 	- (BOOL) isTextInputEnabled;
 

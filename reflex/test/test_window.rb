@@ -134,6 +134,27 @@ class TestWindow < Test::Unit::TestCase
     assert_true  w.resizable?
   end
 
+  def test_titlebar()
+    w = win
+    assert_equal [:buttons, :background], w.titlebar
+
+    w.titlebar = [:background]
+    assert_equal [:background], w.titlebar
+
+    w.titlebar = [:buttons]
+    assert_equal [:buttons], w.titlebar
+
+    w.titlebar = []
+    assert_equal [], w.titlebar
+
+    w.titlebar = [:buttons, :background]
+    assert_equal [:buttons, :background], w.titlebar
+
+    assert_equal [], win(titlebar: []).titlebar
+
+    assert_raise(ArgumentError) {w.titlebar = [:unknown]}
+  end
+
   def test_fullscreen?()
     w = win
     assert_false w.fullscreen?

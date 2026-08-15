@@ -266,6 +266,12 @@ namespace Reflex
 		if (Xot::has_flag(flags, Window::FLAG_MINIMIZABLE))
 			argument_error(__FILE__, __LINE__, "FLAG_MINIMIZABLE is not supported");
 
+		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS))
+			argument_error(__FILE__, __LINE__, "FLAG_TITLEBAR_BUTTONS is not supported");
+
+		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
+			argument_error(__FILE__, __LINE__, "FLAG_TITLEBAR_BACKGROUND is not supported");
+
 		Window_set_orientation_mask(
 			get_vc(window),
 			flags_to_orientation_mask(flags & (Window::FLAG_PORTRAIT | Window::FLAG_LANDSCAPE)));

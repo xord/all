@@ -34,19 +34,23 @@ namespace Reflex
 			enum Flag
 			{
 
-				FLAG_CLOSABLE    = Xot::bit(0),
+				FLAG_CLOSABLE            = Xot::bit(0),
 
-				FLAG_MINIMIZABLE = Xot::bit(1),
+				FLAG_MINIMIZABLE         = Xot::bit(1),
 
-				FLAG_RESIZABLE   = Xot::bit(2),
+				FLAG_RESIZABLE           = Xot::bit(2),
 
-				FLAG_FULLSCREEN  = Xot::bit(3),
+				FLAG_TITLEBAR_BUTTONS    = Xot::bit(3),
 
-				FLAG_PORTRAIT    = Xot::bit(4),
+				FLAG_TITLEBAR_BACKGROUND = Xot::bit(4),
 
-				FLAG_LANDSCAPE   = Xot::bit(5),
+				FLAG_FULLSCREEN          = Xot::bit(5),
 
-				FLAG_LAST        = FLAG_LANDSCAPE
+				FLAG_PORTRAIT            = Xot::bit(6),
+
+				FLAG_LANDSCAPE           = Xot::bit(7),
+
+				FLAG_LAST                = FLAG_LANDSCAPE
 
 			};// Flag
 

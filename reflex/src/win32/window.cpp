@@ -182,6 +182,62 @@ namespace Reflex
 			Reflex::app()->quit();
 	}
 
+	static bool
+	has_caption (HWND hwnd)
+	{
+		DWORD style = (DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE);
+		return (style & WS_CAPTION) == WS_CAPTION;
+	}
+
+	static bool
+	calc_size (LRESULT* result, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		if (!wp || has_caption(hwnd) || IsZoomed(hwnd))
+			return false;
+
+		// without a caption the sizing border is still drawn at the
+		// top of the window, so let the client area cover it
+		NCCALCSIZE_PARAMS* params = (NCCALCSIZE_PARAMS*) lp;
+		LONG top                  = params->rgrc[0].top;
+		*result                   = DefWindowProcW(hwnd, msg, wp, lp);
+		params->rgrc[0].top       = top;
+		return true;
+	}
+
+	static int
+	border_size ()
+	{
+		return
+			GetSystemMetrics(SM_CYSIZEFRAME) +
+			GetSystemMetrics(SM_CXPADDEDBORDER);
+	}
+
+	static bool
+	hit_test (LRESULT* result, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		// the client area covers the top of the frame, so the hit
+		// test lands on it there and the window loses its top edge
+		if (has_caption(hwnd) || IsZoomed(hwnd))
+			return false;
+
+		LRESULT hit = DefWindowProcW(hwnd, msg, wp, lp);
+		if (hit != HTCLIENT)
+			return false;
+
+		RECT window;
+		if (!GetWindowRect(hwnd, &window))
+			system_error(__FILE__, __LINE__);
+
+		POINT pos = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+		if (pos.y >= window.top + border_size())
+			return false;
+
+		if      (pos.x <  window.left  + border_size()) *result = HTTOPLEFT;
+		else if (pos.x >= window.right - border_size()) *result = HTTOPRIGHT;
+		else                                            *result = HTTOP;
+		return true;
+	}
+
 	void
 	Window_update (Window* win)
 	{
@@ -508,6 +564,22 @@ namespace Reflex
 
 		switch (msg)
 		{
+			case WM_NCCALCSIZE:
+			{
+				LRESULT result = 0;
+				if (calc_size(&result, hwnd, msg, wp, lp))
+					return result;
+				break;
+			}
+
+			case WM_NCHITTEST:
+			{
+				LRESULT result = 0;
+				if (hit_test(&result, hwnd, msg, wp, lp))
+					return result;
+				break;
+			}
+
 			case WM_ACTIVATE:
 			{
 				if (LOWORD(wp) == WA_INACTIVE)
@@ -738,9 +810,11 @@ namespace Reflex
 	Window_default_flags ()
 	{
 		return
-			Window::FLAG_CLOSABLE  |
-			Window::FLAG_RESIZABLE |
-			Window::FLAG_MINIMIZABLE;
+			Window::FLAG_CLOSABLE         |
+			Window::FLAG_MINIMIZABLE      |
+			Window::FLAG_RESIZABLE        |
+			Window::FLAG_TITLEBAR_BUTTONS |
+			Window::FLAG_TITLEBAR_BACKGROUND;
 	}
 
 	void
@@ -843,16 +917,20 @@ namespace Reflex
 	{
 		DWORD style   = (DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE);
 		DWORD exstyle = (DWORD) GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+
+		LONG top = rect->top;
 		if (!AdjustWindowRectEx(rect, style, GetMenu(hwnd) != NULL, exstyle))
 			system_error(__FILE__, __LINE__);
+
+		// WM_NCCALCSIZE gives the top of the frame to the client area when
+		// there is no caption, so it takes no room here either
+		if (!has_caption(hwnd)) rect->top = top;
 	}
 
 	static void
 	keep_caption_on_screen (HWND hwnd, RECT* rect)
 	{
-		DWORD style = (DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE);
-		if ((style & WS_CAPTION) != WS_CAPTION)
-			return;
+		if (!has_caption(hwnd)) return;
 
 		HMONITOR hmonitor = MonitorFromRect(rect, MONITOR_DEFAULTTONEAREST);
 		if (!hmonitor) return;
@@ -937,14 +1015,84 @@ namespace Reflex
 		return s;
 	}
 
+	static DWORD
+	make_window_style (uint flags, DWORD style)
+	{
+		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS))
+			style |=  WS_SYSMENU;
+		else
+			style &= ~WS_SYSMENU;
+
+		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
+			style |=  WS_CAPTION;
+		else
+			style &= ~WS_CAPTION;
+
+		return style;
+	}
+
+	static void
+	set_window_style (HWND hwnd, DWORD style)
+	{
+		RECT client = {};
+		bool normal = !IsIconic(hwnd) && !IsZoomed(hwnd) && GetClientRect(hwnd, &client);
+
+		POINT pos = {0, 0};
+		if (normal && !ClientToScreen(hwnd, &pos))
+			system_error(__FILE__, __LINE__);
+
+		RECT rect = {
+			pos.x, pos.y,
+			pos.x + (client.right  - client.left),
+			pos.y + (client.bottom - client.top)
+		};
+
+		SetLastError(0);
+		SetWindowLongPtrW(hwnd, GWL_STYLE, style);
+		if (GetLastError() != 0)
+			system_error(__FILE__, __LINE__);
+
+		UINT posflags = SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE;
+		if (normal)
+			client_to_window_rect(hwnd, &rect);
+		else
+			posflags |= SWP_NOMOVE | SWP_NOSIZE;
+
+		if (!SetWindowPos(
+			hwnd, NULL,
+			rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+			posflags))
+		{
+			system_error(__FILE__, __LINE__);
+		}
+	}
+
 	void
 	Window_set_flags (Window* window, uint flags)
 	{
+		if (
+			 Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS) &&
+			!Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
+		{
+			argument_error(
+				__FILE__, __LINE__, "FLAG_TITLEBAR_BUTTONS needs FLAG_TITLEBAR_BACKGROUND");
+		}
+
 		if (Xot::has_flag(flags, Window::FLAG_PORTRAIT))
 			argument_error(__FILE__, __LINE__, "FLAG_PORTRAIT is not supported");
 
 		if (Xot::has_flag(flags, Window::FLAG_LANDSCAPE))
 			argument_error(__FILE__, __LINE__, "FLAG_LANDSCAPE is not supported");
+
+		if (!*window)
+			invalid_state_error(__FILE__, __LINE__);
+
+		HWND hwnd     = get_data(window)->hwnd;
+		DWORD current = (DWORD) GetWindowLongPtrW(hwnd, GWL_STYLE);
+		DWORD style   = make_window_style(flags, current);
+		if (style == current) return;
+
+		set_window_style(hwnd, style);
 	}
 
 	float
