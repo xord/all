@@ -75,6 +75,8 @@ namespace ReflexTerminal
 		// draws one frame, so the timer toggling this lives with a view
 		bool blink_visible = true;
 
+		float background_alpha = 1;
+
 		// where the next glyph goes. the faces share the one atlas, so
 		// that a row mixing them still draws from a single texture and
 		// the painter's batch holds
@@ -166,6 +168,21 @@ namespace ReflexTerminal
 	Renderer::blink_visible () const
 	{
 		return self->blink_visible;
+	}
+
+	void
+	Renderer::set_background_alpha (float alpha)
+	{
+		if (!(0 <= alpha && alpha <= 1))
+			argument_error(__FILE__, __LINE__, "invalid background alpha: %g", alpha);
+
+		self->background_alpha = alpha;
+	}
+
+	float
+	Renderer::background_alpha () const
+	{
+		return self->background_alpha;
 	}
 
 	static bool
@@ -465,11 +482,13 @@ namespace ReflexTerminal
 		{
 			for (const Terminal::Span& span : rows[y])
 			{
-				bool inverted = colors_inverted(span.attribs);
-				Color fill    = inverted ? to_color(span.fg, theme_fg) : to_color(span.bg, theme_bg);
-				if (fill == theme_bg) continue;
+				if (colors_inverted(span.attribs))
+					painter->set_fill(to_color(span.fg, theme_fg));
+				else if (span.bg != Terminal::Span::COLOR_NONE)
+					painter->set_fill(to_color(span.bg, theme_bg));
+				else
+					continue;
 
-				painter->set_fill(fill);
 				painter->rect(span.x * cw, y * ch, span.width * cw, ch);
 			}
 		}
@@ -594,8 +613,13 @@ namespace ReflexTerminal
 		painter->push_state();
 		painter->set_font(self->fonts[0]);
 
-		painter->set_fill(theme_bg);
-		painter->rect(bounds);
+		if (self->background_alpha > 0)
+		{
+			Color background = theme_bg;
+			background.alpha = self->background_alpha;
+			painter->set_fill(background);
+			painter->rect(bounds);
+		}
 
 		// a pass per kind rather than span by span: alternating shapes and
 		// images would break the painter's batch and cost several times

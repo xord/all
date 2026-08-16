@@ -44,6 +44,10 @@ namespace ReflexTerminal
 
 			bool     blink_visible () const;
 
+			void set_background_alpha (float alpha);
+
+			float    background_alpha () const;
+
 			void draw (
 				Painter* painter, const Reflex::Terminal& terminal,
 				const Bounds& bounds);

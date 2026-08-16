@@ -31,7 +31,8 @@ end
 
 
 terminal    = Reflex::Terminal.new.spawn
-view        = Reflex::TerminalView.new terminal: terminal, font_size: 24
+view        = Reflex::TerminalView.new(
+  terminal: terminal, font_size: 18, background_alpha: 0.8)
 taken       = []
 flash       = 0
 flash_timer = nil
@@ -106,6 +107,7 @@ end
 win = Reflex::Window.new do
   title 'Terminal Example'
   frame 100, 100, 720, 450
+  transparent true
 end
 win.add view
 win.show

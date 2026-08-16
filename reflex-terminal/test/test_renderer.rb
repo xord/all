@@ -128,6 +128,25 @@ class TestRenderer < Test::Unit::TestCase
     assert_equal     default, reset
   end
 
+  def test_background_alpha()
+    r = renderer
+    assert_equal 1, r.background_alpha
+    assert_raise(ArgumentError) {r.background_alpha = 1.5}
+
+    # the theme background thins out, while a cell the child colored
+    # itself stays opaque over it
+    r.background_alpha = 0.5
+    assert_in_delta 0.5, pixels(r, terminal('')).first.last, 1.0 / 255
+
+    r.background_alpha = 0
+    assert_equal [0, 0, 0, 0], pixels(r, terminal('')).first
+    assert_equal 1, pixels(r, terminal("\e[41m ")).first.last
+
+    # a cell colored like the theme was still colored by the child, so it
+    # stays opaque rather than joining the background it happens to match
+    assert_equal 1, pixels(r, terminal("\e[48;2;0;0;0m ")).first.last
+  end
+
   def test_draw_blink()
     r = renderer
     r.bake_glyphs terminal("\e[5;4mhello")

@@ -34,13 +34,11 @@ module Reflex
       font_size: DEFAULT_FONT_SIZE,
       **kwargs, &block)
 
+      @terminal, @command, @envs, @font_size   = terminal, command, envs, font_size
+      @scroll_rows, @cursor_blink, @prev_bells = 0, true, (terminal&.bells || 0)
+      @renderer                                = ReflexTerminal::Renderer.new
+      self.font                                = font || DEFAULT_FONT_NAME
       super(*args, **kwargs, &block)
-      @terminal, @command, @envs  = terminal, command, envs
-      @renderer                   = ReflexTerminal::Renderer.new
-      @scroll_rows, @cursor_blink = 0, true
-      @prev_bells                 = terminal&.bells || 0
-      @font_size                  = font_size
-      self.font                   = font || DEFAULT_FONT_NAME
     end
 
     attr_reader :terminal
@@ -66,6 +64,15 @@ module Reflex
 
     def font_size()
       font.size
+    end
+
+    def background_alpha=(alpha)
+      @renderer.background_alpha = alpha
+      redraw
+    end
+
+    def background_alpha()
+      @renderer.background_alpha
     end
 
     def on_attach(e)
