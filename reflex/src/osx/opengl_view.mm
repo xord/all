@@ -98,6 +98,11 @@
 		return self.window ? self.window.isOpaque : YES;
 	}
 
+	- (BOOL) mouseDownCanMoveWindow
+	{
+		return NO;
+	}
+
 	- (void) drawRect: (NSRect) rect
 	{
 		NativeWindow* win = (NativeWindow*) self.window;
