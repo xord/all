@@ -80,11 +80,12 @@ namespace Reflex
 	Window_default_flags ()
 	{
 		return
-			Window::FLAG_CLOSABLE         |
-			Window::FLAG_MINIMIZABLE      |
-			Window::FLAG_RESIZABLE        |
-			Window::FLAG_TITLEBAR_BUTTONS |
-			Window::FLAG_TITLEBAR_BACKGROUND;
+			Window::FLAG_CLOSABLE            |
+			Window::FLAG_MINIMIZABLE         |
+			Window::FLAG_RESIZABLE           |
+			Window::FLAG_TITLEBAR_BUTTONS    |
+			Window::FLAG_TITLEBAR_BACKGROUND |
+			Window::FLAG_SHADOW;
 	}
 
 	void
@@ -190,10 +191,15 @@ namespace Reflex
 			[native setFrame: [native frameRectForContentRect: content] display: YES];
 		}
 
-		[native setTitlebarButtonsVisible:
-			Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS)];
-		[native setTitlebarBackgroundVisible:
-			Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND)];
+		bool buttons    = Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS);
+		bool background = Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND);
+		[native setTitlebarButtonsVisible:    buttons];
+		[native setTitlebarBackgroundVisible: background];
+		[native setTitlebarContainerVisible:  buttons || background];
+
+		native.hasShadow = Xot::has_flag(flags, Window::FLAG_SHADOW);
+
+		[native setBackgroundTransparent: Xot::has_flag(flags, Window::FLAG_TRANSPARENT)];
 
 		if (native.hasFullScreenFlag != Xot::has_flag(flags, Window::FLAG_FULLSCREEN))
 			[native toggleFullScreen: native];

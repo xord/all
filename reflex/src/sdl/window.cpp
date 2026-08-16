@@ -259,11 +259,12 @@ namespace Reflex
 	Window_default_flags ()
 	{
 		return
-			Window::FLAG_CLOSABLE         |
-			Window::FLAG_MINIMIZABLE      |
-			Window::FLAG_RESIZABLE        |
-			Window::FLAG_TITLEBAR_BUTTONS |
-			Window::FLAG_TITLEBAR_BACKGROUND;
+			Window::FLAG_CLOSABLE            |
+			Window::FLAG_MINIMIZABLE         |
+			Window::FLAG_RESIZABLE           |
+			Window::FLAG_TITLEBAR_BUTTONS    |
+			Window::FLAG_TITLEBAR_BACKGROUND |
+			Window::FLAG_SHADOW;
 	}
 
 	void
@@ -384,6 +385,12 @@ namespace Reflex
 				__FILE__, __LINE__,
 				"FLAG_TITLEBAR_BUTTONS and FLAG_TITLEBAR_BACKGROUND must match");
 		}
+
+		if (!Xot::has_flag(flags, Window::FLAG_SHADOW))
+			not_implemented_error(__FILE__, __LINE__, "missing FLAG_SHADOW");
+
+		if (Xot::has_flag(flags, Window::FLAG_TRANSPARENT))
+			not_implemented_error(__FILE__, __LINE__, "FLAG_TRANSPARENT");
 
 		WindowData* self = get_data(win);
 		Uint32 sdl_flags = self->to_sdl_flags(flags);
