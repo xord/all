@@ -227,10 +227,16 @@ namespace Reflex
 		if (has_style(hwnd, WS_CAPTION) || IsZoomed(hwnd))
 			return false;
 
-		if (!win || !win->has_flag(Window::FLAG_RESIZABLE))
-			return false;
-
 		LRESULT hit = DefWindowProcW(hwnd, msg, wp, lp);
+
+		// the sizing border of a window that cannot resize is only there for
+		// the shadow, so its edges answer as a plain border
+		if (!win || !win->has_flag(Window::FLAG_RESIZABLE))
+		{
+			*result = HTBORDER;
+			return HTSIZEFIRST <= hit && hit <= HTSIZELAST;
+		}
+
 		if (hit != HTCLIENT)
 			return false;
 
@@ -1050,6 +1056,30 @@ namespace Reflex
 		return s;
 	}
 
+	static void
+	set_background_transparent (HWND hwnd, bool transparent)
+	{
+		std::shared_ptr<HRGN__> region;
+		if (transparent)
+		{
+			region.reset(CreateRectRgn(0, 0, -1, -1), DeleteObject);// no blur
+			if (!region)
+				system_error(__FILE__, __LINE__);
+		}
+
+		DWM_BLURBEHIND blur = {0};
+		blur.dwFlags        = DWM_BB_ENABLE | (transparent ? DWM_BB_BLURREGION : 0);
+		blur.fEnable        = transparent ? TRUE : FALSE;
+		blur.hRgnBlur       = region.get();
+		HRESULT result      = DwmEnableBlurBehindWindow(hwnd, &blur);
+		if (FAILED(result))
+		{
+			system_error(
+				__FILE__, __LINE__,
+				"DwmEnableBlurBehindWindow failed (0x%08x)", (uint) result);
+		}
+	}
+
 	static DWORD
 	make_window_style (uint flags, DWORD style)
 	{
@@ -1058,14 +1088,28 @@ namespace Reflex
 		else
 			style &= ~WS_SYSMENU;
 
-		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
+		bool caption = Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND);
+		if (caption)
 			style |=  WS_CAPTION;
 		else
 			style &= ~WS_CAPTION;
 
-		// the shadow comes with the frame, so a window with no shadow keeps no
-		// sizing border either, and WM_NCHITTEST gives the resizing back
-		if (Xot::has_flag(flags, Window::FLAG_SHADOW))
+		if (Xot::has_flag(flags, Window::FLAG_MINIMIZABLE))
+			style |=  WS_MINIMIZEBOX;
+		else
+			style &= ~WS_MINIMIZEBOX;
+
+		if (Xot::has_flag(flags, Window::FLAG_RESIZABLE))
+			style |=  WS_MAXIMIZEBOX;
+		else
+			style &= ~WS_MAXIMIZEBOX;
+
+		// the sizing border follows resizable, but a captionless window keeps
+		// it for the shadow and leaves the resizing to the hit test
+		bool sizing_border = caption
+			?	Xot::has_flag(flags, Window::FLAG_RESIZABLE)
+			:	Xot::has_flag(flags, Window::FLAG_SHADOW);
+		if (sizing_border)
 			style |=  WS_THICKFRAME;
 		else
 			style &= ~WS_THICKFRAME;
@@ -1110,27 +1154,14 @@ namespace Reflex
 	}
 
 	static void
-	set_background_transparent (HWND hwnd, bool transparent)
+	set_closable (HWND hwnd, bool closable)
 	{
-		std::shared_ptr<HRGN__> region;
-		if (transparent)
-		{
-			region.reset(CreateRectRgn(0, 0, -1, -1), DeleteObject);// no blur
-			if (!region)
-				system_error(__FILE__, __LINE__);
-		}
+		// the close button follows the state of the close menu item
+		HMENU menu = GetSystemMenu(hwnd, FALSE);
+		if (!menu) return;
 
-		DWM_BLURBEHIND blur = {0};
-		blur.dwFlags        = DWM_BB_ENABLE | (transparent ? DWM_BB_BLURREGION : 0);
-		blur.fEnable        = transparent ? TRUE : FALSE;
-		blur.hRgnBlur       = region.get();
-		HRESULT result      = DwmEnableBlurBehindWindow(hwnd, &blur);
-		if (FAILED(result))
-		{
-			system_error(
-				__FILE__, __LINE__,
-				"DwmEnableBlurBehindWindow failed (0x%08x)", (uint) result);
-		}
+		EnableMenuItem(
+			menu, SC_CLOSE, MF_BYCOMMAND | (closable ? MF_ENABLED : MF_GRAYED));
 	}
 
 	void
@@ -1172,9 +1203,10 @@ namespace Reflex
 
 		DWORD current = (DWORD) GetWindowLongPtrW(self->hwnd, GWL_STYLE);
 		DWORD style   = make_window_style(flags, current);
-		if (style == current) return;
+		if (style != current)
+			set_window_style(self->hwnd, style);
 
-		set_window_style(self->hwnd, style);
+		set_closable(self->hwnd, Xot::has_flag(flags, Window::FLAG_CLOSABLE));
 	}
 
 	float
