@@ -36,6 +36,22 @@ class TestTerminal < Test::Unit::TestCase
     R::KeyEvent.new R::KeyEvent::UP, chars, code, modifiers, 0
   end
 
+  # A spawned child is forked from this process, so its parent id and the
+  # script it was handed are enough to pick it out from everything running.
+  def child_pids(script)
+    `ps -eo pid,ppid,command`.lines.drop(1).filter_map do |line|
+      pid, ppid, command = line.strip.split ' ', 3
+      pid.to_i if ppid.to_i == Process.pid && command.include?(script)
+    end
+  end
+
+  def process_alive?(pid)
+    Process.kill 0, pid
+    true
+  rescue Errno::ESRCH
+    false
+  end
+
   def wait_for(t, timeout = 5)
     deadline = Time.now + timeout
     until yield
@@ -448,6 +464,24 @@ class TestTerminal < Test::Unit::TestCase
     wait_for(t) {text(t).include? 'after close'}
     assert_include text(t), 'after close'
   end
+
+  def test_close_ends_the_child()
+    # a child that never reads its end of the terminal, so nothing short of
+    # a signal ends it. alive? says nothing about that: close() forgets the
+    # process, and a forgotten one is reported gone whether it is or not.
+    # The comment is a name, so that no other test's child answers to it
+    script = 'sleep# close-test'
+
+    t = terminal 40, 6
+    t.spawn(*ruby(script))
+    wait_for(t) {t.alive?}
+
+    pids = child_pids script
+    assert_equal 1, pids.size
+
+    t.close
+    assert_false process_alive?(pids.first)
+  end unless win32?# child_pids reads ps
 
   def test_spawn_with_args()
     t = terminal 40, 6

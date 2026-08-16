@@ -197,10 +197,32 @@ namespace Reflex
 			::close(self->fd);
 			self->fd = -1;
 		}
+
 		if (self->pid >= 0)
 		{
-			waitpid(self->pid, NULL, WNOHANG);// reap if already exited
+			pid_t pid = self->pid;
 			self->pid = -1;
+
+			// closing the master is not a hangup: the kernel revokes the
+			// terminal when the process that owned it goes away, and none has.
+			// The group, not the child, so that its own children leave too
+			::kill(-pid, SIGHUP);
+
+			enum {HANGUP_WAIT_MSEC = 100};
+			for (int i = 0; i < HANGUP_WAIT_MSEC; ++i)
+			{
+				// zero is the only answer that means one is still to come:
+				// is_child_alive() reaps, and a reaped child is gone already
+				if (waitpid(pid, NULL, WNOHANG) != 0) return;
+				usleep(1000);
+			}
+
+			// polled rather than waited on, because a signal arriving
+			// meanwhile would cut a blocking wait short and leave the child
+			// unreaped. Nothing refuses SIGKILL, so this is not a long wait
+			::kill(-pid, SIGKILL);
+			while (waitpid(pid, NULL, WNOHANG) == 0)
+				usleep(1000);
 		}
 	}
 
@@ -213,9 +235,16 @@ namespace Reflex
 	bool
 	PTY::is_child_alive () const
 	{
-		if (self->pid < 0) return false;
+		if (self->pid < 0)
+			return false;
 
-		return waitpid(self->pid, NULL, WNOHANG) == 0;
+		if (waitpid(self->pid, NULL, WNOHANG) == 0)
+			return true;
+
+		// waitpid reaps as it answers, and a pid the kernel is free to hand
+		// out again is not one for close() to signal later
+		self->pid = -1;
+		return false;
 	}
 
 	PTY::operator bool () const
