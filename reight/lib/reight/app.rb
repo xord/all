@@ -157,6 +157,9 @@ class Reight::AppInterface < Reight::ViewController
     #navigator.flash(...) if history.enabled?
   end
 
+  def setup_handlers()
+  end
+
   def activated()
     update_layout
     @setup_handlers_done__ ||= true.tap {setup_handlers}

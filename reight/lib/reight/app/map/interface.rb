@@ -3,10 +3,61 @@ using Reight
 
 class Reight::MapEditorInterface < Reight::AppInterface
 
-  def initialize(editor, navigator)
-    super
+  def update_layout()
+    app     = Reight::App
+    button  = app::BUTTON_SIZE
+    table_w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
+    table_h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
 
+    layout space: app::SPACE do
+      row h: :fill, pad: app::SPACE, gap: app::SPACE do
+        column w: table_w do
+          row h: button, gap: 1 do
+            put :sprite_table_page_prev, Button(label: '<'),      w: button
+            put :sprite_table_page,      Label(0, align: CENTER), w: button
+            put :sprite_table_page_next, Button(label: '>'),      w: button
+          end
+          space_m
+          put :sprite_table, -> {
+            Reight::AssetTable.new(
+              editor.asset_table_width,      editor.asset_table_width,
+              editor.asset_table_page_width, editor.asset_table_page_height)
+          }, h: table_h
+          space_l
+          put :mini_map, -> {Reight::MapEditor::MiniMap.new}
+        end
+
+        column w: :fill do
+          row h: button, gap: 1 do
+            put :map_prev,   Button(label: '<'),      w: button
+            put :map_index,  Label(0, align: CENTER), w: button
+            put :map_next,   Button(label: '>'),      w: button
+            put :map_add,    Button(label: '+'),      w: button
+            put :map_remove, Button(label: '-'),      w: button
+            space_s
+            put :map_name,   Label(editable: true, regexp: /^\w+$/)
+          end
+          space_m
+          put :canvas, -> {Reight::MapEditor::Canvas.new}
+          space_m
+          row h: button, gap: 1 do
+            tools.each {put _1, w: button}
+          end
+        end
+      end
+    end
+  end
+
+  def tools() = @tools ||= editor.tools.map {|tool|
+    Reight::Button.new(name: tool.name, icon: r8.icon(tool.icon_index, 2, 8)).tap do |b|
+      b.set_help left: tool.help_text
+      b.singleton_class.define_method(:tool) {tool}
+    end
+  }
+
+  def setup_handlers()
     e = editor
+
     e.map_changed    {map_changed _1, _2}
     e.sprite_changed {sprite_changed _1}
     e.tool_changed   {|tool| tools.each {_1.active = _1.tool == tool}}
@@ -60,80 +111,6 @@ class Reight::MapEditorInterface < Reight::AppInterface
 
   def get_map_index()
     editor.maps&.find_index(editor.map) || 0
-  end
-
-  def sprite_table()           = @sprite_table           ||= Reight::AssetTable.new(
-    editor.asset_table_width,      editor.asset_table_width,
-    editor.asset_table_page_width, editor.asset_table_page_height)
-
-  def sprite_table_page()      = @sprite_table_page      ||= Reight::Label.new(0, align: CENTER)
-
-  def sprite_table_page_prev() = @sprite_table_page_prev ||= Reight::Button.new(label: '<')
-
-  def sprite_table_page_next() = @sprite_table_page_next ||= Reight::Button.new(label: '>')
-
-  def mini_map()               = @mini_map               ||= Reight::MapEditor::MiniMap.new
-
-  def map_index()              = @map_index              ||= Reight::Label.new(0, align: CENTER)
-
-  def map_prev()               = @map_prev               ||= Reight::Button.new(label: '<')
-
-  def map_next()               = @map_next               ||= Reight::Button.new(label: '>')
-
-  def map_add()                = @map_add                ||= Reight::Button.new(label: '+')
-
-  def map_remove()             = @map_remove             ||= Reight::Button.new(label: '-')
-
-  def map_name()               = @map_name               ||= Reight::Label.new(
-    editable: true, regexp: /^\w+$/)
-
-  def canvas()                 = @canvas                 ||= Reight::MapEditor::Canvas.new
-
-  def tools()                  = @tools                  ||= editor.tools.map {|tool|
-    Reight::Button.new(name: tool.name, icon: r8.icon(tool.icon_index, 2, 8)).tap do |b|
-      b.set_help left: tool.help_text
-      b.singleton_class.define_method(:tool) {tool}
-    end
-  }
-
-  def update_layout()
-    app     = Reight::App
-    button  = app::BUTTON_SIZE
-    table_w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
-    table_h = editor.asset_table_page_height + Reight::AssetTable::PADDING * 2
-
-    layout do
-      row h: :fill, pad: app::SPACE, gap: app::SPACE do
-        column w: table_w do
-          row h: button, gap: 1 do
-            put sprite_table_page_prev, w: button
-            put sprite_table_page,      w: button
-            put sprite_table_page_next, w: button
-          end
-          space app::SPACE / 2
-          put sprite_table, h: table_h
-          space app::SPACE
-          put mini_map
-        end
-        column w: :fill do
-          row h: button, gap: 1 do
-            put map_prev,   w: button
-            put map_index,  w: button
-            put map_next,   w: button
-            put map_add,    w: button
-            put map_remove, w: button
-            space 1
-            put map_name
-          end
-          space app::SPACE / 2
-          put canvas
-          space app::SPACE / 2
-          row h: button, gap: 1 do
-            tools.each {put _1, w: button}
-          end
-        end
-      end
-    end
   end
 
 =begin
