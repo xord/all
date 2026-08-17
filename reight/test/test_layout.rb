@@ -259,7 +259,93 @@ class TestLayout < Test::Unit::TestCase
       end
     end
     assert_equal [40, 15, 10, 10], a.frame # stack origin + at
-    assert_equal [12, 13, 10, 20], b.frame # sizes still default to the stack box
+    assert_equal [12, 13, 80, 20], b.frame # sizes still default to the stack box
+  end
+
+  def test_stack_fills_its_box_by_default()
+    a, b = widget, widget
+    apply width: 100, height: 50 do
+      row h: :fill do
+        stack do            # no size: fills, unlike row/column/grid
+          put a
+        end
+        stack w: 30, h: 10 do
+          put b
+        end
+      end
+    end
+    assert_equal [0,  0, 70, 50], a.frame
+    assert_equal [70, 0, 30, 10], b.frame
+  end
+
+  def test_stack_anchors_children_to_corners_and_edges()
+    ws = {}
+    apply width: 100, height: 50 do
+      stack do
+        %i[
+          top_left    top_center    top_right
+          center_left center        center_right
+          bottom_left bottom_center bottom_right
+        ].each {put ws[_1] = widget, at: _1, w: 10, h: 10}
+      end
+    end
+    assert_equal [0,  0,  10, 10], ws[:top_left]     .frame
+    assert_equal [45, 0,  10, 10], ws[:top_center]   .frame
+    assert_equal [90, 0,  10, 10], ws[:top_right]    .frame
+    assert_equal [0,  20, 10, 10], ws[:center_left]  .frame
+    assert_equal [45, 20, 10, 10], ws[:center]       .frame
+    assert_equal [90, 20, 10, 10], ws[:center_right] .frame
+    assert_equal [0,  40, 10, 10], ws[:bottom_left]  .frame
+    assert_equal [45, 40, 10, 10], ws[:bottom_center].frame
+    assert_equal [90, 40, 10, 10], ws[:bottom_right] .frame
+  end
+
+  def test_stack_anchors_containers_too()
+    a = widget
+    apply width: 100, height: 50 do
+      stack do
+        column at: :center_right do
+          put a, w: 10, h: 10
+        end
+      end
+    end
+    assert_equal [90, 20, 10, 10], a.frame
+  end
+
+  def test_stack_pad_insets_anchored_children()
+    a, b = widget, widget
+    apply width: 100, height: 50 do
+      stack pad: 5 do
+        put a                                   # fills the padded box
+        put b, at: :bottom_right, w: 10, h: 10
+      end
+    end
+    assert_equal [5,  5,  90, 40], a.frame
+    assert_equal [85, 35, 10, 10], b.frame
+  end
+
+  def test_stack_rejects_align()
+    assert_raise(ArgumentError) do
+      apply {stack {put widget, align: :center, w: 10, h: 10}}
+    end
+  end
+
+  def test_stack_rejects_unknown_anchor()
+    assert_raise(ArgumentError) do
+      apply {stack {put widget, at: :middle_left, w: 10, h: 10}}
+    end
+  end
+
+  def test_stack_derives_size_from_aspect()
+    a, b = widget, widget
+    apply width: 100, height: 50 do
+      stack do
+        put a, at: :top_left,     w: 40, aspect: 2
+        put b, at: :bottom_right, h: 20, aspect: 2
+      end
+    end
+    assert_equal [0,  0,  40, 20], a.frame
+    assert_equal [60, 30, 40, 20], b.frame
   end
 
   def test_grid_requires_either_columns_or_rows()

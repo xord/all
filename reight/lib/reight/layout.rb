@@ -12,14 +12,30 @@
 #
 # Containers (row/column/grid) place children along their main axis.
 # Main axis sizes: a Numeric is fixed, :fill takes a share of the
-# leftover space (the default for widgets), and containers default to
-# hugging their contents. On the cross axis a Numeric is fixed and nil
-# stretches; fixed-size children are placed by align: (:start, :center
-# or :end). aspect: (= w / h) derives one dimension from the other, so
-# only use it where the other dimension is determined.
+# leftover space (the default for widgets and for stack), and
+# row/column/grid default to hugging their contents. On the cross axis
+# a Numeric is fixed and nil stretches; fixed-size children are placed
+# by align: (:start, :center or :end). aspect: (= w / h) derives one
+# dimension from the other, so only use it where the other dimension
+# is determined.
 #
-# stack layers children on the same box; a child with at: [x, y] is
-# offset from the stack origin instead (for floating widgets).
+# stack layers children on the same box, so widgets can float over a
+# full-size one. It fills its box unless told otherwise. at: pins a
+# child to an edge or corner by name --
+# :top_left, :top_center, :top_right, :center_left, :center,
+# :center_right, :bottom_left, :bottom_center, :bottom_right -- or to
+# raw [x, y] coordinates offset from the stack origin. A stack leaves
+# both axes free, so its children take at: and not align:. Anchored
+# children keep their fixed w:/h:; the rest fill the box. pad: insets
+# every child, which is what keeps floating panels off the edges:
+#
+#   stack pad: 6 do
+#     put canvas                                  # fills the window
+#     put table,  at: :top_left,     w: 60, h: 80
+#     column at: :center_right, gap: 1 do
+#       tools.each {put _1, w: 12, h: 12}
+#     end
+#   end
 #
 # put also accepts a Symbol name with a factory (a lambda, or a Symbol
 # naming a delegate method); the widget is then created once via the
@@ -56,6 +72,8 @@ class Reight::Layout
 
     attr_reader :align, :at
 
+    def aspect()    = nil
+
     def spec(dir)   = dir == :h ? @w : @h
 
     def cspec(dir)  = dir == :h ? @h : @w
@@ -86,6 +104,8 @@ class Reight::Layout
       super(**kwargs)
       @widget, @aspect = widget, aspect
     end
+
+    attr_reader :aspect
 
     def flex?(dir) = super && !@aspect
 
@@ -211,31 +231,92 @@ class Reight::Layout
   # @private
   class Stack < Node
 
-    def initialize(**kwargs)
-      super
-      @children = []
+    ANCHORS = {
+      top_left:      [:start,  :start],
+      top_center:    [:center, :start],
+      top_right:     [:end,    :start],
+      center_left:   [:start,  :center],
+      center:        [:center, :center],
+      center_right:  [:end,    :center],
+      bottom_left:   [:start,  :end],
+      bottom_center: [:center, :end],
+      bottom_right:  [:end,    :end]
+    }
+
+    def initialize(pad: 0, **kwargs)
+      super(**kwargs)
+      @pad, @children = pad, []
     end
 
-    def add(node) = @children.push(node).then {node}
+    # align: positions a child on the one axis a row or column leaves
+    # free, and a stack leaves both, so it takes at: instead
+    def add(node)
+      raise ArgumentError, "use 'at:' instead of 'align:' in a stack" if node.align
+      @children.push(node).then {node}
+    end
 
-    def flex?(dir) = spec(dir) == :fill
+    # no flex? override: unlike the other containers a stack fills its
+    # box, since it usually stands for a whole region with widgets
+    # floating over it
 
     def natural(dir, cross)
       s = spec dir
       return s if s.is_a? Numeric
-      @children.map {_1.natural dir, cross}.max || 0
+      inner = [cross - @pad * 2, 0].max
+      @pad * 2 + (@children.map {_1.natural dir, inner}.max || 0)
     end
 
     def place__(x, y, w, h)
+      x, y   = x + @pad,     y + @pad
+      w, h   = w - @pad * 2, h - @pad * 2
       @children.each do |c|
-        cw     = c.spec(:h).is_a?(Numeric) ? c.spec(:h) : w
-        ch     = c.spec(:v).is_a?(Numeric) ? c.spec(:v) : h
-        cx, cy = c.at ? [x + c.at[0], y + c.at[1]] : [x, y]
-        c.place__ cx, cy, cw, ch
+        cw, ch = size__ c, w, h
+        if c.at.is_a? Array
+          c.place__ x + c.at[0], y + c.at[1], cw, ch
+        else
+          ha, va = anchor__ c.at
+          c.place__ x + offset__(ha, w, cw), y + offset__(va, h, ch), cw, ch
+        end
       end
     end
 
     def widgets__(list) = @children.each {_1.widgets__ list}
+
+    private
+
+    def anchor__(at)
+      return [:start, :start] unless at
+      ANCHORS[at] or raise ArgumentError,
+        "unknown anchor '#{at}' (#{ANCHORS.keys.join ', '})"
+    end
+
+    def offset__(align, size, csize)
+      case align
+      when :center then (size - csize) / 2
+      when :end    then  size - csize
+      else              0
+      end
+    end
+
+    # a fixed dimension wins and aspect derives the other. an anchored
+    # child then hugs its contents -- it cannot be pinned to an edge and
+    # fill the box at once -- while everything else fills it.
+    def size__(c, w, h)
+      cw = c.spec(:h) if c.spec(:h).is_a? Numeric
+      ch = c.spec(:v) if c.spec(:v).is_a? Numeric
+      if a = c.aspect
+        cw ||= ch * a if ch
+        ch ||= cw / a if cw
+      end
+      cw ||= hug__ c, :h, ch || h, w
+      ch ||= hug__ c, :v, cw,      h
+      [cw, ch]
+    end
+
+    # widgets have no natural size of their own, so they still fill
+    def hug__(c, dir, cross, fill)
+      c.at ? (c.natural(dir, cross).nonzero? || fill) : fill
+    end
 
   end# Stack
 
