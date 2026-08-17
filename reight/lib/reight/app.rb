@@ -128,9 +128,9 @@ class Reight::AppInterface < Reight::ViewController
     @popup_world__                           = RubySketch::SpriteWorld.new
   end
 
-  def layout(&block)
+  def layout(**kwargs, &block)
     nav = @navigator__.layout_block
-    super() do
+    super(**kwargs) do
       instance_exec(&nav)
       instance_exec(&block)
     end
@@ -159,6 +159,7 @@ class Reight::AppInterface < Reight::ViewController
 
   def activated()
     update_layout
+    @setup_handlers_done__ ||= true.tap {setup_handlers}
     add_world world, @popup_world__
   end
 

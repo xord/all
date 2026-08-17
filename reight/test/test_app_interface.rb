@@ -54,4 +54,25 @@ class TestAppInterface < Test::Unit::TestCase
     assert_false a.sprite.hidden?
   end
 
+  def test_widget_creates_once_and_memoizes()
+    i     = interface
+    calls = 0
+    made  = i.widget(:foo, -> {calls += 1; button})
+    assert_equal made, i.widget(:foo)
+    assert_equal made, i.widget(:foo, -> {calls += 1; button})
+    assert_equal 1,    calls
+  end
+
+  def test_widget_calls_delegate_method_for_symbol_factory()
+    i = interface
+    b = button
+    i.define_singleton_method(:new_foo) {b}
+    assert_equal b, i.widget(:foo, :new_foo)
+    assert_equal b, i.widget(:foo)
+  end
+
+  def test_widget_raises_before_creation()
+    assert_raise(ArgumentError) {interface.widget :unknown}
+  end
+
 end# TestAppInterface

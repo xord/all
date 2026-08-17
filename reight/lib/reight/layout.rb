@@ -21,6 +21,14 @@
 # stack layers children on the same box; a child with at: [x, y] is
 # offset from the stack origin instead (for floating widgets).
 #
+# put also accepts a Symbol name with a factory (a lambda, or a Symbol
+# naming a delegate method); the widget is then created once via the
+# delegate's widget and can be fetched by widget(name) (or by bare
+# name, via method_missing) for wiring:
+#
+#   put :remove, -> {Reight::Button.new label: '-'}, w: 12, h: 12
+#   put :canvas, :new_canvas, aspect: 1
+#
 # Blocks are instance_exec'd on a Builder; unknown methods fall through
 # to the caller, so widget accessors can be used directly. Beware that
 # methods added to Object by the 'using Reight' refinement win over
@@ -30,9 +38,10 @@
 #
 class Reight::Layout
 
-  def self.apply(width, height, delegate: nil, &block)
-    root = Group.new dir: :v
-    Builder.new(root, delegate || block.binding.receiver).instance_exec(&block)
+  def self.apply(width, height, delegate: nil, **kwargs, &block)
+    root       = Group.new dir: :v
+    delegate ||= block.binding.receiver
+    Builder.new(root, delegate, **kwargs).instance_exec(&block)
     root.place__ 0, 0, width, height
     [].tap {root.widgets__ _1}
   end
@@ -284,8 +293,9 @@ class Reight::Layout
   # @private
   class Builder
 
-    def initialize(group, delegate)
-      @group, @delegate = group, delegate
+    def initialize(group, delegate, **options)
+      @group, @delegate, @options = group, delegate, options
+      @space                      = options.fetch(:space, 8)
     end
 
     def row(   **kwargs, &block) = group__(Group.new(dir: :h, **kwargs), &block)
@@ -296,11 +306,25 @@ class Reight::Layout
 
     def stack( **kwargs, &block) = group__(Stack.new(**kwargs), &block)
 
-    def put(widget, **kwargs)    = @group.add Item.new(widget, **kwargs)
+    def put(widget, factory = nil, **kwargs)
+      widget = @delegate.widget widget, factory if widget.is_a?(Symbol)
+      raise ArgumentError, "no widget for #{widget.inspect}" unless widget
+      @group.add Item.new(widget, **kwargs)
+    end
 
-    def space(size)              = @group.add FixedSpace.new(size)
+    def spacer(weight = 1) = @group.add Spacer.new(weight)
 
-    def spacer(weight = 1)       = @group.add Spacer.new(weight)
+    def space(size = nil)  = @group.add FixedSpace.new(size || @space)
+
+    def space_l(n = 0)     = space (@space     + n).clamp(0..).floor
+
+    def space_m(n = 0)     = space (@space / 2 + n).clamp(0..).floor
+
+    def space_s(n = 0)     = space (1          + n).clamp(0..).floor
+
+    def Button(...)        = -> {Reight::Button.new(...)}
+
+    def Label(...)         = -> {Reight::Label.new(...)}
 
     def respond_to_missing?(name, include_private = false)
       @delegate.respond_to?(name, true) || super
@@ -315,7 +339,7 @@ class Reight::Layout
 
     def group__(group, &block)
       @group.add group
-      Builder.new(group, @delegate).instance_exec(&block) if block
+      Builder.new(group, @delegate, **@options).instance_exec(&block) if block
       group
     end
 

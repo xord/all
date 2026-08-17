@@ -11,8 +11,8 @@ class TestLayout < Test::Unit::TestCase
 
   def widget(*args) = Widget.new
 
-  def apply(width: 100, height: 100, &block)
-    Reight::Layout.apply width, height, &block
+  def apply(width: 100, height: 100, **kwargs, &block)
+    Reight::Layout.apply width, height, **kwargs, &block
   end
 
   def test_row_places_fixed_sizes_with_gap()
@@ -150,6 +150,29 @@ class TestLayout < Test::Unit::TestCase
     assert_equal [0, 5, 20, 10], a.frame
   end
 
+  def test_space_lms_derive_from_space_option()
+    a = widget
+    apply space: 6 do
+      space_l         # 6
+      space_m         # 3
+      space_s         # 1
+      space_l(-2)     # 4
+      put a, h: 10
+    end
+    assert_equal [0, 14, 100, 10], a.frame
+  end
+
+  def test_space_option_propagates_to_nested_builders()
+    a = widget
+    apply space: 6 do
+      row h: 10 do
+        space_m       # 3, not the default 8 / 2
+        put a, w: 10
+      end
+    end
+    assert_equal [3, 0, 10, 10], a.frame
+  end
+
   def test_pad_insets_children()
     a = widget
     apply do
@@ -281,6 +304,18 @@ class TestLayout < Test::Unit::TestCase
       put layout_test_widget, h: 10
     end
     assert_equal [0, 0, 100, 10], layout_test_widget.frame
+  end
+
+  def test_put_symbol_resolves_widget_via_delegate_widget()
+    a        = widget
+    calls    = []
+    delegate = Object.new
+    delegate.define_singleton_method(:widget) {|name, factory| calls << [name, factory]; a}
+    Reight::Layout.apply 100, 100, delegate: delegate do
+      put :foo, :new_foo, w: 10, h: 10
+    end
+    assert_equal [[:foo, :new_foo]], calls
+    assert_equal [0, 0, 10, 10],     a.frame
   end
 
   private
