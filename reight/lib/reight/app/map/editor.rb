@@ -32,6 +32,13 @@ class Reight::MapEditor < Reight::ModelController
     :asset_table_page_width,
     :asset_table_page_height
 
+  def map_index=(index)
+    return unless (0...(maps&.size || 0)).cover? index
+    self.map = maps[index]
+  end
+
+  def map_index() = maps&.find_index(@map)
+
   def tools()
     @tools ||= [
       Reight::MapEditor::Brush     .new(self),

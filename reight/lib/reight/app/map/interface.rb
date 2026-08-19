@@ -69,10 +69,10 @@ class Reight::MapEditorInterface < Reight::AppInterface
     sprite_table_page_next.enabled? {sprite_table.page  < sprite_table.npages - 1}
     sprite_table_page_next.clicked  {sprite_table.page += 1}
     mini_map.offset_changed         {canvas.offset = _1}
-    map_prev  .enabled?             {get_map_index > 0}
-    map_prev  .clicked              {e.map = e.maps[get_map_index - 1]}
-    map_next  .enabled?             {get_map_index < e.maps.size - 1}
-    map_next  .clicked              {e.map = e.maps[get_map_index + 1]}
+    map_prev  .enabled?             {e.map_index&.then {_1 > 0}}
+    map_prev  .clicked              {e.map_index -= 1}
+    map_next  .enabled?             {e.map_index&.then {_1 < e.maps.size - 1}}
+    map_next  .clicked              {e.map_index += 1}
     map_add   .clicked              {e.append_map}
     map_remove.enabled?             {e.maps.size > 1}
     map_remove.clicked              {e.remove_map}
@@ -100,17 +100,13 @@ class Reight::MapEditorInterface < Reight::AppInterface
   def map_changed(map, old)
     canvas.map      = map
     mini_map.map    = map
-    map_index.value = get_map_index
+    map_index.value = editor.map_index
     bind(__method__, map, old) {map_name.value = map&.name}
   end
 
   def sprite_changed(sprite)
     sprite_table.select sprite
     canvas.sprite = sprite
-  end
-
-  def get_map_index()
-    editor.maps&.find_index(editor.map) || 0
   end
 
 =begin

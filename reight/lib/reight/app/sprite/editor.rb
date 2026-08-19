@@ -47,6 +47,13 @@ class Reight::SpriteEditor < Reight::ModelController
     :asset_table_page_width,
     :asset_table_page_height
 
+  def anim_index=(index)
+    return unless (0...(@sprite&.size || 0)).cover? index
+    self.anim = @sprite[index]
+  end
+
+  def anim_index() = @sprite&.find_index(@anim)
+
   def tools()
     @tools ||= [
       Reight::SpriteEditor::Select       .new(self),
