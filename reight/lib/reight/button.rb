@@ -30,7 +30,7 @@ class Reight::Button
       rect 0, @shadow, sp.w, sp.h, round
     end
 
-    if @label
+    if @label || !@icon
       fill 210
       rect 0, pressing? ? 1 : 0, sp.w, sp.h, round
     end

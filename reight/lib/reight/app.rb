@@ -124,6 +124,7 @@ class Reight::AppInterface < Reight::ViewController
   def initialize(editor, navigator)
     super(editor)
     @navigator__                             = navigator
+    @layout_popup_blocks__                   = {}
     @popup_widgets__, @popup_ready_widgets__ = [], []
     @popup_world__                           = RubySketch::SpriteWorld.new
   end
@@ -136,18 +137,18 @@ class Reight::AppInterface < Reight::ViewController
     end
   end
 
-  def layout_popup(&block)
-    @layout_popup_block__ = block
+  def layout_popup(name, &block)
+    @layout_popup_blocks__[name] = block
 
     # Applied right away, not just on open, so widgets declared here are
     # created before setup_handlers runs and can be wired like any other.
-    apply_layout_popup__
+    apply_layout_popup__ name
   end
 
-  def popup(*widgets, alpha: 50)
+  def popup(name, alpha: 100)
     close_popup
-    apply_layout_popup__
-    @popup_widgets__ = [backdrop__, *widgets.flatten]
+    @popup_widgets__ = apply_layout_popup__ name
+    return if @popup_widgets__.empty?
     @popup_widgets__.each {_1.sprite.show}
     animate_value(0.2, from: 0, to: alpha) {backdrop__.alpha = _1}
   end
@@ -185,18 +186,18 @@ class Reight::AppInterface < Reight::ViewController
 
   private
 
-  def apply_layout_popup__()
-    layout_block = @layout_popup_block__ || return
-    bd           = backdrop__
-    layout_into @popup_world__ do
+  def apply_layout_popup__(name)
+    block   = @layout_popup_blocks__[name] || (return [])
+    bd      = backdrop__
+    widgets = layout_into @popup_world__ do
       stack h: :fill do
         put bd
-        instance_exec(&layout_block)
+        instance_exec(&block)
       end
-    end.tap do |widgets|
-      (widgets - @popup_ready_widgets__).each {_1.sprite.hide}
-      @popup_ready_widgets__ |= widgets
     end
+    (widgets - @popup_ready_widgets__).each {_1.sprite.hide}
+    @popup_ready_widgets__ |= widgets
+    widgets
   end
 
   def backdrop__()
