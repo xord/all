@@ -19,13 +19,16 @@ RS = RubySketch
 module HasContext
 
   def setup()
-    $processing_context__ = RS::Window.new.context
+    @window_for_context__ = RS::Window.new
+    $processing_context__ = @window_for_context__.context
     super
   end
 
   def teardown()
     super
     $processing_context__ = nil
+    @window_for_context__&.close
+    @window_for_context__ = nil
   end
 
   def context()

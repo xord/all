@@ -15,16 +15,32 @@ class TestAppInterface < Test::Unit::TestCase
     R8::Button.new label: label
   end
 
-  def test_popup_shows_its_own_widgets_and_hides_the_others()
-    a, b, c = button(1), button(2), button(3)
-    i       = R8::AppInterface.new nil, nil
-    i.layout_popup(:one) {[a, b].each {put _1, w: 10, h: 10}}
-    i.layout_popup(:two) {put c, w: 10, h: 10}
+  def test_popup_shows_every_widget_its_block_puts()
+    a, b = button(1), button(2)
+    i    = interface {[a, b].each {put _1, w: 10, h: 10}}
+
+    i.popup :test
+    assert_false a.sprite.hidden?
+    assert_false b.sprite.hidden?
+  end
+
+  def test_popup_leaves_other_popups_hidden()
+    a, b = button(1), button(2)
+    i    = R8::AppInterface.new nil, nil
+    i.layout_popup(:one) {put a, w: 10, h: 10}
+    i.layout_popup(:two) {put b, w: 10, h: 10}
 
     i.popup :one
-    assert_false a.sprite.hidden?, 'every widget the block puts must show'
-    assert_false b.sprite.hidden?, 'every widget the block puts must show'
-    assert_true  c.sprite.hidden?, 'another popup must stay hidden'
+    assert_false a.sprite.hidden?
+    assert_true  b.sprite.hidden?
+  end
+
+  def test_popup_with_unknown_name_shows_nothing()
+    a = button
+    i = interface {put a, w: 10, h: 10}
+
+    i.popup :unknown
+    assert_true a.sprite.hidden?
   end
 
   def test_close_popup_hides_widgets()
