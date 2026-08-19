@@ -3,9 +3,7 @@ require_relative 'helper'
 
 class TestLinkConstraint < Test::Unit::TestCase
 
-  def window()
-    Reflex::Window.new
-  end
+  include HasWindow
 
   def view(x = 0, y = 0, w = 50, h = 50, **options, &block)
     Reflex::View.new(

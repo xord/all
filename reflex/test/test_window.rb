@@ -3,15 +3,13 @@ require_relative 'helper'
 
 class TestWindow < Test::Unit::TestCase
 
-  def win(*a, **k, &b)
-    Reflex::Window.new(*a, **k, &b)
-  end
+  include HasWindow
 
   def point(*a)  Reflex::Point.new(*a) end
   def bounds(*a) Reflex::Bounds.new(*a) end
 
   def test_show_hide_hidden()
-    w = win
+    w = window
     assert_true  w.hidden
     w.show
     assert_false w.hidden
@@ -20,7 +18,7 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_hidden_count()
-    w = win
+    w = window
     w.hide
     assert_true  w.hidden
     w.show
@@ -30,20 +28,20 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_coord_conversion()
-    w = win x: 100, y: 200
+    w = window x: 100, y: 200
     assert_equal [400, 300], w.from_screen(500).to_a
     assert_equal [600, 700], w.  to_screen(500).to_a
   end
 
   def test_title()
-    w = win
+    w = window
     assert_equal '',  w.title
     w.title = 'A'
     assert_equal 'A', w.title
   end
 
   def test_frame()
-    w = win
+    w = window
     b = w.frame.dup
     assert_equal b, w.frame
 
@@ -74,7 +72,7 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_menu()
-    w = win
+    w = window
     m = Reflex::Menu.new
     assert_nil      w.menu
     w.menu = m
@@ -84,7 +82,7 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_closable?()
-    w = win
+    w = window
     assert_true  w.closable?
 
     w.closable = false
@@ -101,7 +99,7 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_minimizable?()
-    w = win
+    w = window
     assert_true  w.minimizable?
 
     w.minimizable = false
@@ -118,7 +116,7 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_resizable?()
-    w = win
+    w = window
     assert_true  w.resizable?
 
     w.resizable = false
@@ -135,7 +133,7 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_titlebar()
-    w = win
+    w = window
     assert_equal [:buttons, :background], w.titlebar
 
     w.titlebar = [:background]
@@ -150,13 +148,13 @@ class TestWindow < Test::Unit::TestCase
     w.titlebar = [:buttons, :background]
     assert_equal [:buttons, :background], w.titlebar
 
-    assert_equal [], win(titlebar: []).titlebar
+    assert_equal [], window(titlebar: []).titlebar
 
     assert_raise(ArgumentError) {w.titlebar = [:unknown]}
   end
 
   def test_shadow?()
-    w = win
+    w = window
     assert_true  w.shadow?
 
     w.shadow = false
@@ -171,11 +169,11 @@ class TestWindow < Test::Unit::TestCase
     w.shadow true
     assert_true  w.shadow?
 
-    assert_false win(shadow: false).shadow?
+    assert_false window(shadow: false).shadow?
   end
 
   def test_transparent?()
-    w = win
+    w = window
     assert_false w.transparent?
 
     w.transparent = true
@@ -190,11 +188,11 @@ class TestWindow < Test::Unit::TestCase
     w.transparent false
     assert_false w.transparent?
 
-    assert_true win(transparent: true).transparent?
+    assert_true window(transparent: true).transparent?
   end
 
   def test_fullscreen?()
-    w = win
+    w = window
     assert_false w.fullscreen?
 
     w.fullscreen = true
@@ -211,7 +209,7 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_orientations()
-    w = win
+    w = window
     assert_equal [], w.orientations
 
     assert_raise(ArgumentError) {w.orientations = [:portrait]}.then do |e|
@@ -223,11 +221,11 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_screen()
-    assert_not_nil win.screen
+    assert_not_nil window.screen
   end
 
   def test_root()
-    w = win
+    w = window
     assert_not_nil       w.root
     assert_nil           w.root.parent
     assert_equal 'ROOT', w.root.name
@@ -235,7 +233,7 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_inspect()
-    assert_match %r|#<Reflex::Window:0x\w{16}>|, win.inspect
+    assert_match %r|#<Reflex::Window:0x\w{16}>|, window.inspect
   end
 
 end# TestWindow

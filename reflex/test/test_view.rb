@@ -3,12 +3,10 @@ require_relative 'helper'
 
 class TestView < Test::Unit::TestCase
 
+  include HasWindow
+
   def view(*a, **k, &b)
     Reflex::View.new(*a, **k, &b)
-  end
-
-  def window(*a, **k, &b)
-    Reflex::Window.new(*a, **k, &b)
   end
 
   def style(*a, **k, &b)

@@ -3,8 +3,10 @@ require_relative 'helper'
 
 class TestScreen < Test::Unit::TestCase
 
+  include HasWindow
+
   def screen()
-    Reflex::Window.new.screen
+    window.screen
   end
 
   def test_initialize()

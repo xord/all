@@ -3,11 +3,9 @@ require_relative 'helper'
 
 class TestConstraint < Test::Unit::TestCase
 
-  R = Reflex
+  include HasWindow
 
-  def window()
-    R::Window.new
-  end
+  R = Reflex
 
   def view(x = 0, y = 0, w = 50, h = 50, **options, &block)
     R::View.new(

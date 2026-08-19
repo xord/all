@@ -10,6 +10,23 @@ require 'test/unit'
 include Xot::Test
 
 
+module HasWindow
+
+  def window(*args, **kwargs, &block)
+    win = Reflex::Window.new(*args, **kwargs, &block)
+    (@windows_for_test__ ||= []).push win
+    win
+  end
+
+  def teardown()
+    super
+    @windows_for_test__&.each(&:close)
+    @windows_for_test__ = nil
+  end
+
+end# HasWindow
+
+
 def assert_equal_point(expected, actual, delta = 0.01, *args)
   assert_in_delta expected.x, actual.x, delta, *args
   assert_in_delta expected.y, actual.y, delta, *args
