@@ -19,7 +19,7 @@ class Reight::ScriptEditorInterface < Reight::AppInterface
 
   def text_editor = @text_editor ||= Reight::ScriptEditor::TextEditor.new
 
-  def update_layout()
+  def recompose()
     layout do
       put text_editor
     end

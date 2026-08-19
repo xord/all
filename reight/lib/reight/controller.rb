@@ -55,7 +55,7 @@ class Reight::ViewController
     layout_into world, **kwargs, &block
   end
 
-  def update_layout()
+  def recompose()
     layout {}
   end
 

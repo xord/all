@@ -16,7 +16,7 @@ class Reight::SoundEditorInterface < Reight::AppInterface
     noise:     12
   }.transform_values {Reight::App::PALETTE_COLORS[_1]}
 
-  def update_layout()
+  def recompose()
     app     = Reight::App
     button  = app::BUTTON_SIZE
     table_w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2

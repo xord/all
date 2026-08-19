@@ -5,7 +5,7 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
 
   SPRITE_SIZES = [8, 16, 32]
 
-  def update_layout()
+  def recompose()
     app     = Reight::App
     button  = app::BUTTON_SIZE
     table_w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2

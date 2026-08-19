@@ -74,7 +74,7 @@ class Reight::App
   end
 
   def window_resized()
-    @interface.update_layout
+    @interface.recompose
   end
 
   def setup()          = nil
@@ -161,7 +161,7 @@ class Reight::AppInterface < Reight::ViewController
   end
 
   def activated()
-    update_layout
+    recompose
     @setup_handlers_done__ ||= true.tap {setup_handlers}
     add_world world, @popup_world__
   end

@@ -3,7 +3,7 @@ using Reight
 
 class Reight::MapEditorInterface < Reight::AppInterface
 
-  def update_layout()
+  def recompose()
     app     = Reight::App
     button  = app::BUTTON_SIZE
     table_w = editor.asset_table_page_width  + Reight::AssetTable::PADDING * 2
