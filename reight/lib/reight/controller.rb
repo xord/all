@@ -30,8 +30,8 @@ end# ModelController
 class Reight::ViewController
 
   def initialize(editor)
-    @editor__, @world__ = editor, RubySketch::SpriteWorld.new
-    @widgets__          = {}
+    @editor__, @world__     = editor, RubySketch::SpriteWorld.new
+    @widgets__, @composed__ = {}, false
   end
 
   def editor() = @editor__
@@ -48,6 +48,7 @@ class Reight::ViewController
   def widget(name, factory = nil)
     return @widgets__[name] if @widgets__.key? name
     raise ArgumentError, "widget '#{name}' is not created yet" unless factory
+    raise "widget '#{name}' must be created in the first compose" if @composed__
     @widgets__[name] = factory.is_a?(Symbol) ? __send__(factory) : factory.call
   end
 
@@ -55,13 +56,22 @@ class Reight::ViewController
     layout_into world, **kwargs, &block
   end
 
-  def recompose()
-    layout {}
+  def compose()
+    recompose
+    @composed__ = true
   end
 
   def draw()
     sprite world
   end
+
+  protected
+
+  def recompose()
+    layout {}
+  end
+
+  private
 
   def respond_to_missing?(name, include_private = false)
     @widgets__.key?(name) || super
@@ -73,8 +83,6 @@ class Reight::ViewController
       args.empty? && kwargs.empty? && !block
     @widgets__[name]
   end
-
-  private
 
   def layout_into(world, **kwargs, &block)
     Reight::Layout

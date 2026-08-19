@@ -74,7 +74,7 @@ class Reight::App
   end
 
   def window_resized()
-    @interface.recompose
+    @interface.compose
   end
 
   def setup()          = nil
@@ -138,6 +138,10 @@ class Reight::AppInterface < Reight::ViewController
 
   def layout_popup(&block)
     @layout_popup_block__ = block
+
+    # Applied right away, not just on open, so widgets declared here are
+    # created before setup_handlers runs and can be wired like any other.
+    apply_layout_popup__
   end
 
   def popup(*widgets, alpha: 50)
@@ -161,7 +165,7 @@ class Reight::AppInterface < Reight::ViewController
   end
 
   def activated()
-    recompose
+    compose
     @setup_handlers_done__ ||= true.tap {setup_handlers}
     add_world world, @popup_world__
   end

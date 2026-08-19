@@ -74,25 +74,24 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
 
     layout_popup do
       base = sprite_size.sprite
-      sprite_sizes.each.with_index do |b, index|
-        index -= SPRITE_SIZES.index(editor.sprite_size)
-        put b, at: [base.x + (base.w + (app::SPACE / 2)) * index, base.y], w: button, h: button
+      SPRITE_SIZES.each.with_index do |size, index|
+        index -= SPRITE_SIZES.index(editor.sprite_size) || 0
+        put :"sprite_size_#{size}", Button(label: size, shadow: 1),
+          at: [base.x + (base.w + (app::SPACE / 2)) * index, base.y], w: button, h: button
       end
     end
   end
 
-  def sprite_sizes() = @sprite_sizes ||=
-    SPRITE_SIZES.map {Reight::Button.new(label: _1, shadow: 1)}
+  def sprite_sizes() = SPRITE_SIZES.map {widget :"sprite_size_#{_1}"}
 
-  def tools()        = @tools        ||= editor.tools.map {|tool|
+  def tools()  = @tools  ||= editor.tools.map {|tool|
     Reight::Button.new(name: tool.name, icon: r8.icon(tool.icon_index, 2, 8)).tap do |b|
       b.set_help left: tool.help_text
       b.singleton_class.define_method(:tool) {tool}
     end
   }
 
-  def colors()       = @colors       ||=
-    editor.colors.map {Reight::SpriteEditor::Color.new _1}
+  def colors() = @colors ||= editor.colors.map {Reight::SpriteEditor::Color.new _1}
 
   def setup_handlers()
     e = editor

@@ -407,6 +407,8 @@ class Reight::Layout
 
     def Label(...)         = -> {Reight::Label.new(...)}
 
+    private
+
     def respond_to_missing?(name, include_private = false)
       @delegate.respond_to?(name, true) || super
     end
@@ -415,8 +417,6 @@ class Reight::Layout
       return super unless @delegate.respond_to? name, true
       @delegate.__send__ name, *args, **kwargs, &block
     end
-
-    private
 
     def group__(group, &block)
       @group.add group

@@ -25,6 +25,8 @@ class Reight::Sprite < RubySketch::Sprite
     @props[key] = value
   end
 
+  private
+
   def respond_to_missing?(name, include_private = false)
     name = name.to_s.delete_suffix('=').to_sym if name.end_with? '='
     @props.key?(name) || super
@@ -41,7 +43,6 @@ class Reight::Sprite < RubySketch::Sprite
     end
   end
 
-  # @private
   def draw__(...)
     #if frame = @state&.frame_at(c__.frame_count - @frame_start)
     #  self.offset = [frame.x, frame.y]
