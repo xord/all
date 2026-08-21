@@ -16,7 +16,11 @@ namespace Reflex
 
 	void Pointer_set_id (Pointer* it, Pointer::ID id);
 
+	void Pointer_set_types (Pointer* it, uint types);
+
 	void Pointer_set_action (Pointer* it, Pointer::Action action);
+
+	void Pointer_set_time (Pointer* it, double time);
 
 	void Pointer_set_floatable (Pointer* it, bool floatable);
 

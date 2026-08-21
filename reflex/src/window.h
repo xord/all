@@ -136,6 +136,8 @@ namespace Reflex
 	void Window_unregister_capture (
 		Window* window, View* view, Pointer::ID target);
 
+	void Window_cancel_active_pointers (Window* window);
+
 	void Window_call_activate_event   (Window* window);
 
 	void Window_call_deactivate_event (Window* window);

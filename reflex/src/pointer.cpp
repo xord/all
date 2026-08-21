@@ -87,9 +87,21 @@ namespace Reflex
 	}
 
 	void
+	Pointer_set_types (Pointer* it, uint types)
+	{
+		it->self->types = types;
+	}
+
+	void
 	Pointer_set_action (Pointer* it, Pointer::Action action)
 	{
 		it->self->action = action;
+	}
+
+	void
+	Pointer_set_time (Pointer* it, double time)
+	{
+		it->self->time = time;
 	}
 
 	void
