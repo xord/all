@@ -530,6 +530,12 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::Window* win = self.window;
 		if (!win) return;
 
+		// macos delivers hover moves to the key window even outside its
+		// bounds, but no other platform can see them, so a cross-platform
+		// app must not either
+		NSPoint pos = [view convertPoint: event.locationInWindow fromView: nil];
+		if (!NSPointInRect(pos, view.bounds)) return;
+
 		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::MOVE);
 		Window_call_pointer_event(win, &e);
 	}
