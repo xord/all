@@ -76,10 +76,7 @@ view.before :on_key_up do |e|
   :skip if taken.delete e.code
 end
 
-# on the release, not the press: a native menu runs an event loop of its
-# own and swallows the mouse up, which would leave the window believing the
-# button was still down and every later drag starting where it was clicked
-view.before :on_pointer_up do |e|
+view.after :on_pointer_down do |e|
   next unless e.right?
   m = Reflex::Menu.new
 

@@ -554,6 +554,31 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal "\e[<0;2;2M", t.read_pending_input# cell (2, 2), left press
   end
 
+  def test_write_pointer_cancel()
+    t = terminal 40, 10
+    t.resize 40, 10, cell_width: 8, cell_height: 16
+    t.feed "\e[?1000h\e[?1006h"# normal tracking + SGR format
+
+    mouse = R::Pointer::MOUSE
+    left  = R::Pointer::MOUSE_LEFT
+    right = R::Pointer::MOUSE_RIGHT
+    press = -> types {R::PointerEvent.new(
+      R::Pointer.new(0, mouse | types, R::Pointer::DOWN, [12, 20], 0, 1, false, 0))}
+
+    t.read_pending_input
+    t.write_pointer press[left]
+    assert_equal "\e[<0;2;2M", t.read_pending_input
+    t.write_pointer press[right]
+    assert_equal "\e[<2;2;2M", t.read_pending_input
+
+    # a cancel carries every button being pressed, and the child hears each
+    # of them released
+    t.write_pointer R::PointerEvent.new(
+      R::Pointer.new(
+        0, mouse | left | right, R::Pointer::CANCEL, [12, 20], 0, 1, false, 0))
+    assert_equal "\e[<0;2;2m\e[<2;2;2m", t.read_pending_input
+  end
+
   def test_mouse_encoding_with_a_fractional_cell()
     # rounding the cell width would land this press cells off
     t = terminal 100, 10

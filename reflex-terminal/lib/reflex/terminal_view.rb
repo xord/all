@@ -169,6 +169,8 @@ module Reflex
       @selecting = false
     end
 
+    alias on_pointer_cancel on_pointer_up
+
     def on_pointer_move(e)
       t = @terminal || return
       return t.write_pointer(e) unless @selecting

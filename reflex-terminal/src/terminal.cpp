@@ -61,13 +61,13 @@ namespace Reflex
 
 		int screen_width = 0, screen_height = 0;
 
-		float wheel_rows        = 0;
+		uint pressed_buttons = 0;
 
-		longlong bells          = 0;
+		float wheel_rows     = 0;
 
-		bool spans_blink        = false;
+		longlong bells       = 0;
 
-		bool any_button_pressed = false;
+		bool spans_blink     = false;
 
 		Cursor last_cursor;
 
@@ -359,6 +359,15 @@ namespace Reflex
 		return mods;
 	}
 
+	static int
+	to_ghostty_button (uint types)
+	{
+		if (types & Pointer::MOUSE_LEFT)   return GHOSTTY_MOUSE_BUTTON_LEFT;
+		if (types & Pointer::MOUSE_RIGHT)  return GHOSTTY_MOUSE_BUTTON_RIGHT;
+		if (types & Pointer::MOUSE_MIDDLE) return GHOSTTY_MOUSE_BUTTON_MIDDLE;
+		return 0;
+	}
+
 	static uint32_t
 	to_unshifted_codepoint (GhosttyKey key)
 	{
@@ -525,8 +534,10 @@ namespace Reflex
 		size.cell_width    = cell_width;
 		size.cell_height   = cell_height;
 		ghostty_mouse_encoder_setopt(self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_SIZE, &size);
+
+		bool any_button_pressed = self->pressed_buttons != 0;
 		ghostty_mouse_encoder_setopt(
-			self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED, &self->any_button_pressed);
+			self->mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED, &any_button_pressed);
 
 		GhosttyMouseEvent e = self->mouse_event;
 		ghostty_mouse_event_set_action(e, action);
@@ -1012,37 +1023,40 @@ namespace Reflex
 		uint types             = pointer.types();
 		if (!(types & Pointer::MOUSE)) return;// touch/pen: not supported yet
 
-		int button = 0;
-		if      (types & Pointer::MOUSE_LEFT)   button = GHOSTTY_MOUSE_BUTTON_LEFT;
-		else if (types & Pointer::MOUSE_RIGHT)  button = GHOSTTY_MOUSE_BUTTON_RIGHT;
-		else if (types & Pointer::MOUSE_MIDDLE) button = GHOSTTY_MOUSE_BUTTON_MIDDLE;
-
 		GhosttyMouseAction action;
 		switch (pointer.action())
 		{
-			case Pointer::DOWN:
-				action                   = GHOSTTY_MOUSE_ACTION_PRESS;
-				self->any_button_pressed = true;
-				break;
-
+			case Pointer::DOWN:   action = GHOSTTY_MOUSE_ACTION_PRESS;   break;
 			case Pointer::UP:
-				action = GHOSTTY_MOUSE_ACTION_RELEASE;
-				break;
-
-			case Pointer::MOVE:
-				action = GHOSTTY_MOUSE_ACTION_MOTION;
-				break;
-
+			case Pointer::CANCEL: action = GHOSTTY_MOUSE_ACTION_RELEASE; break;
+			case Pointer::MOVE:   action = GHOSTTY_MOUSE_ACTION_MOTION;  break;
 			default: return;
 		}
 
-		encode_mouse(
-			self.get(), action, button,
-			to_ghostty_mods(pointer.modifiers()),
-			pointer.position().x, pointer.position().y);
+		GhosttyMods mods = to_ghostty_mods(pointer.modifiers());
+		coord x          = pointer.position().x;
+		coord y          = pointer.position().y;
 
-		if (pointer.action() == Pointer::UP)
-			self->any_button_pressed = false;
+		if (action == GHOSTTY_MOUSE_ACTION_MOTION)
+		{
+			encode_mouse(self.get(), action, to_ghostty_button(types), mods, x, y);
+			return;
+		}
+
+		// a press or a release names the one button that changed, but a cancel
+		// names every button being pressed, and each of them ends here
+
+		bool press = action == GHOSTTY_MOUSE_ACTION_PRESS;
+		for (uint button : {Pointer::MOUSE_LEFT, Pointer::MOUSE_RIGHT, Pointer::MOUSE_MIDDLE})
+		{
+			if (!(types & button)) continue;
+
+			if (press) self->pressed_buttons |= button;
+
+			encode_mouse(self.get(), action, to_ghostty_button(button), mods, x, y);
+
+			if (!press) self->pressed_buttons &= ~button;
+		}
 	}
 
 	void

@@ -405,7 +405,7 @@ namespace ReflexTerminal
 		coord left, coord top, coord width, coord cw, coord ch,
 		coord thickness, coord amplitude)
 	{
-		enum {NSEGMENTS = 8};
+		static constexpr int NSEGMENTS = 8;
 
 		coord center_y = top + ch - amplitude - thickness * 0.5f;
 		size_t npoints = (size_t) ceil(width / cw * NSEGMENTS) + 1;
