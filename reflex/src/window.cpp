@@ -690,6 +690,65 @@ namespace Reflex
 		if (blocked) event->block();
 	}
 
+	static bool
+	is_inside_window (Window* window, const Point& position)
+	{
+		View* root = window->root();
+		return root && Bounds(root->frame().size()).is_include(position);
+	}
+
+	static bool
+	is_inside_window (Window* window, const Pointer& pointer)
+	{
+		// a boundary event says which side the pointer came out on and is taken
+		// at its word; the position it carries cannot be, since sdl reports the
+		// last one inside and win32 the one under a menu
+		auto action = pointer.action();
+		if (action == Pointer::ENTER) return true;
+		if (action == Pointer::LEAVE) return false;
+
+		// a pointer that ends here is nowhere afterwards: a lifted finger, or a
+		// pen taken out of hover range
+		return
+			is_inside_window(window, pointer.position()) &&
+			!is_last_pointer_event(pointer);
+	}
+
+	static Pointer::Action
+	get_window_boundary_transition (Window* window, const Pointer& pointer)
+	{
+		const Pointer* prev = pointer.prev();
+		bool  is_inside =         is_inside_window(window, pointer);
+		bool was_inside = prev && is_inside_window(window, *prev);
+
+		if ( is_inside && !was_inside) return Pointer::ENTER;
+		if (!is_inside &&  was_inside) return Pointer::LEAVE;
+		return Pointer::ACTION_NONE;
+	}
+
+	static void
+	call_pointer_window_boundary_events (
+		Window* window, const auto& pointers, Pointer::Action action)
+	{
+		for (const auto& pointer : pointers)
+		{
+			if (get_window_boundary_transition(window, pointer) != action)
+				continue;
+
+			Pointer p = pointer;
+			Pointer_set_action(&p, action);
+
+			PointerEvent event(&p, 1);
+			window->on_pointer(&event);
+			if (event.is_blocked()) continue;
+
+			if (action == Pointer::ENTER)
+				window->on_pointer_enter(&event);
+			else
+				window->on_pointer_leave(&event);
+		}
+	}
+
 	static void
 	get_current_hovered_views (
 		ViewList* result, Window* window, const Pointer& pointer)
@@ -815,10 +874,46 @@ namespace Reflex
 		}
 	}
 
-	static bool
-	is_boundary_action (Pointer::Action action)
+	static void
+	call_pointer_event (Window* window, PointerEvent* event)
 	{
-		return action == Pointer::ENTER || action == Pointer::LEAVE;
+		auto action   = (*event)[0].action();
+		bool boundary = action == Pointer::ENTER || action == Pointer::LEAVE;
+
+		std::vector<Pointer> pointers;
+		PointerEvent_each_pointer(event, [&](const auto& p) {pointers.emplace_back(p);});
+
+		call_pointer_window_boundary_events(window, pointers, Pointer::ENTER);
+		call_pointer_enter_events(window, pointers);
+
+		if (!boundary)
+		{
+			window->on_pointer(event);
+
+			if (!event->is_blocked())
+			{
+				switch (action)
+				{
+					case Pointer::DOWN:   window->on_pointer_down(event);   break;
+					case Pointer::UP:     window->on_pointer_up(event);     break;
+					case Pointer::MOVE:   window->on_pointer_move(event);   break;
+					case Pointer::CANCEL: window->on_pointer_cancel(event); break;
+					default: break;
+				}
+			}
+
+			if (!event->is_blocked())
+				call_captured_pointer_events(window, event);
+
+			if (!event->is_blocked())
+			{
+				PointerEvent_update_for_child_view(event, window->root());
+				View_call_pointer_event(window->root(), event);
+			}
+		}
+
+		call_pointer_leave_events(window, pointers);
+		call_pointer_window_boundary_events(window, pointers, Pointer::LEAVE);
 	}
 
 	void
@@ -830,41 +925,8 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 
 		setup_pointer_event(window, event);
-
-		bool boundary = !event->empty() && is_boundary_action((*event)[0].action());
-		std::vector<Pointer> pointers;
-		PointerEvent_each_pointer(event, [&](const auto& p) {pointers.emplace_back(p);});
-
 		if (!event->empty())
-			window->on_pointer(event);
-
-		if (!event->empty() && !event->is_blocked())
-		{
-			switch ((*event)[0].action())
-			{
-				case Pointer::DOWN:   window->on_pointer_down(event);   break;
-				case Pointer::UP:     window->on_pointer_up(event);     break;
-				case Pointer::MOVE:   window->on_pointer_move(event);   break;
-				case Pointer::CANCEL: window->on_pointer_cancel(event); break;
-				case Pointer::ENTER:  window->on_pointer_enter(event);  break;
-				case Pointer::LEAVE:  window->on_pointer_leave(event);  break;
-				default: break;
-			}
-		}
-
-		call_pointer_enter_events(window, pointers);
-		if (!boundary)
-		{
-			if (!event->empty() && !event->is_blocked())
-				call_captured_pointer_events(window, event);
-
-			if (!event->empty() && !event->is_blocked())
-			{
-				PointerEvent_update_for_child_view(event, window->root());
-				View_call_pointer_event(window->root(), event);
-			}
-		}
-		call_pointer_leave_events(window, pointers);
+			call_pointer_event(window, event);
 
 		cleanup_captures(window);
 	}

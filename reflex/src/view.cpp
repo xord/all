@@ -1655,7 +1655,7 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		if (view->hidden() || event->empty())
+		if (event->empty() || view->hidden())
 			return;
 
 		Window* win = view->window();

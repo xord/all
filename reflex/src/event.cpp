@@ -779,6 +779,8 @@ namespace Reflex
 		if (!child)
 			argument_error(__FILE__, __LINE__);
 
+		if (pthis->empty()) return;
+
 		const Bounds& frame = child->frame();
 
 		std::vector<Pointer> pointers;
