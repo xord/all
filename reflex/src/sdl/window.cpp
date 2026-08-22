@@ -470,6 +470,7 @@ namespace Reflex
 						break;
 
 					case SDL_WINDOWEVENT_FOCUS_LOST:
+						Window_cancel_active_pointers(win);
 						Window_call_deactivate_event(win);
 						break;
 
@@ -528,6 +529,10 @@ namespace Reflex
 			{
 				NativePointerEvent e(self->native, event.button, Pointer::DOWN);
 				Window_call_pointer_event(win, &e);
+
+				#if SDL_VERSION_ATLEAST(2, 0, 4)
+					SDL_CaptureMouse(SDL_TRUE);
+				#endif
 				break;
 			}
 
@@ -535,6 +540,13 @@ namespace Reflex
 			{
 				NativePointerEvent e(self->native, event.button, Pointer::UP);
 				Window_call_pointer_event(win, &e);
+
+				#if SDL_VERSION_ATLEAST(2, 0, 4)
+					static const uint32_t BUTTONS =
+						SDL_BUTTON_LMASK | SDL_BUTTON_RMASK | SDL_BUTTON_MMASK;
+					if ((SDL_GetMouseState(NULL, NULL) & BUTTONS) == 0)
+						SDL_CaptureMouse(SDL_FALSE);
+				#endif
 				break;
 			}
 

@@ -517,6 +517,33 @@ namespace Reflex
 	}
 
 	static void
+	capture_mouse_events_outside_window (HWND hwnd, UINT msg, WPARAM wp)
+	{
+		switch (msg)
+		{
+			case WM_LBUTTONDOWN:
+			case WM_RBUTTONDOWN:
+			case WM_MBUTTONDOWN:
+			case WM_LBUTTONDBLCLK:
+			case WM_RBUTTONDBLCLK:
+			case WM_MBUTTONDBLCLK:
+				SetCapture(hwnd);
+				break;
+
+			case WM_LBUTTONUP:
+			case WM_RBUTTONUP:
+			case WM_MBUTTONUP:
+				if (
+					(wp & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)) == 0 &&
+					hwnd == GetCapture())
+				{
+					ReleaseCapture();
+				}
+				break;
+		}
+	}
+
+	static void
 	mouse (Window* win, UINT msg, WPARAM wp, LPARAM lp)
 	{
 		if (is_from_touch_event()) return;
@@ -545,6 +572,8 @@ namespace Reflex
 
 		NativePointerEvent e(msg, wp, lp);
 		Window_call_pointer_event(win, &e);
+
+		capture_mouse_events_outside_window(self->hwnd, msg, wp);
 	}
 
 	static void
@@ -747,6 +776,12 @@ namespace Reflex
 			case WM_MOUSEHWHEEL:
 			{
 				mouse_wheel(win, msg, wp, lp);
+				break;
+			}
+
+			case WM_CAPTURECHANGED:
+			{
+				Window_cancel_active_pointers(win);
 				break;
 			}
 
