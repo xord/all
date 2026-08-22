@@ -71,6 +71,17 @@ class TestWindow < Test::Unit::TestCase
     w.frame = [bounds(1, 2, 3, 4, 5, 6)]; assert_equal [1, 2, 0, minw[4], 5, 0], w.frame.to_a(3)
   end
 
+  def test_frame_without_titlebar()
+    w = window titlebar: []
+    b = [100, 100, [w.frame.width, 300].max, 400]
+
+    w.frame = b
+    assert_equal b, w.frame.to_a
+
+    w.frame = w.frame
+    assert_equal b, w.frame.to_a
+  end
+
   def test_menu()
     w = window
     m = Reflex::Menu.new

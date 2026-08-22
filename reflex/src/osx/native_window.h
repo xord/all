@@ -24,6 +24,4 @@
 
 	- (NSRect) textInputBounds;
 
-	+ (NSRect) frameRectForContentRect: (NSRect) contentRect;
-
 @end// NativeWindow

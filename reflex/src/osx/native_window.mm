@@ -567,11 +567,4 @@ move_to_main_screen_origin (NativeWindow* window)
 		Window_call_wheel_event(win, &e);
 	}
 
-	+ (NSRect) frameRectForContentRect: (NSRect) contentRect
-	{
-		return [NSWindow
-			frameRectForContentRect: contentRect
-			styleMask: default_style_mask()];
-	}
-
 @end// NativeWindow
