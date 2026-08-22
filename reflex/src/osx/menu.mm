@@ -206,6 +206,8 @@ namespace Reflex
 	void
 	Menu_popup (Menu* menu, View* view, coord x, coord y)
 	{
+		Menu_cancel_active_pointers_for_popup(view);
+
 		MenuData& self = get_data(menu);
 
 		if (!self.nssubmenu)

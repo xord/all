@@ -167,6 +167,50 @@ namespace Reflex
 		}
 	}
 
+	static const uint MOUSE_BUTTONS =
+		Pointer::MOUSE_LEFT  |
+		Pointer::MOUSE_RIGHT |
+		Pointer::MOUSE_MIDDLE;
+
+	void
+	Window_cancel_active_pointers (Window* window)
+	{
+		assert(window);
+
+		// synthesizes a cancel for every pointer being pressed and delivers
+		// it through the normal path, so the existing up/cancel handling
+		// releases captures and pressed states
+
+		Window::Data* self = window->self.get();
+
+		double now = Xot::time();
+
+		PointerEvent event;
+
+		const auto& mouse = self->prev_mouse_pointer;
+		uint pressed      = Pointer_mask_flag(mouse, MOUSE_BUTTONS);
+		if (pressed != 0)
+		{
+			Pointer pointer = mouse;
+			Pointer_set_types(&pointer, Pointer::MOUSE | pressed);
+			Pointer_set_action(&pointer, Pointer::CANCEL);
+			Pointer_set_time(&pointer, now);
+			PointerEvent_add_pointer(&event, pointer);
+		}
+
+		for (const auto& p : self->prev_pointers)
+		{
+			if (!p.down()) continue;
+			Pointer pointer = p;
+			Pointer_set_action(&pointer, Pointer::CANCEL);
+			Pointer_set_time(&pointer, now);
+			PointerEvent_add_pointer(&event, pointer);
+		}
+
+		if (!event.empty())
+			Window_call_pointer_event(window, &event);
+	}
+
 	void
 	Window_call_activate_event (Window* window)
 	{
@@ -335,7 +379,8 @@ namespace Reflex
 	{
 		return
 			     pointer.action() == Pointer::DOWN ||
-			prev_pointer.action() == Pointer::UP;
+			prev_pointer.action() == Pointer::UP   ||
+			prev_pointer.action() == Pointer::CANCEL;
 	}
 
 	static Pointer::ID
@@ -347,11 +392,6 @@ namespace Reflex
 	static void
 	setup_mouse_pointer (Window* window, Pointer* pointer)
 	{
-		static const uint MOUSE_BUTTONS =
-			Pointer::MOUSE_LEFT  |
-			Pointer::MOUSE_RIGHT |
-			Pointer::MOUSE_MIDDLE;
-
 		Window::Data* self = window->self.get();
 
 		auto& prev_pointer = self->prev_mouse_pointer;
@@ -449,6 +489,23 @@ namespace Reflex
 	}
 
 	static void
+	reject_unpaired_up_pointers (PointerEvent* event)
+	{
+		// a canceled pointer must deliver nothing until its next down, so
+		// an up whose down was never delivered stays silent
+
+		std::vector<Pointer::ID> ids;
+		PointerEvent_each_pointer(event, [&](const auto& pointer)
+		{
+			if (pointer.action() == Pointer::UP && !pointer.down())
+				ids.emplace_back(pointer.id());
+		});
+
+		for (auto id : ids)
+			PointerEvent_erase_pointer(event, id);
+	}
+
+	static void
 	setup_pointer_event (Window* window, PointerEvent* event)
 	{
 		for (size_t i = 0; i < event->size(); ++i)
@@ -459,6 +516,8 @@ namespace Reflex
 			else
 				setup_pointer(window, &pointer);
 		}
+
+		reject_unpaired_up_pointers(event);
 	}
 
 	static void

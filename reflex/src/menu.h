@@ -58,6 +58,8 @@ namespace Reflex
 
 	void Menu_child_removed (Menu* parent, Menu* child);
 
+	void Menu_cancel_active_pointers_for_popup (View* view);
+
 
 }// Reflex
 

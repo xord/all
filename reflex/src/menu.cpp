@@ -4,10 +4,25 @@
 #include <algorithm>
 #include <rays/point.h>
 #include "reflex/exception.h"
+#include "view.h"
+#include "window.h"
 
 
 namespace Reflex
 {
+
+
+	void
+	Menu_cancel_active_pointers_for_popup (View* view)
+	{
+		Window* window = view ? view->window() : Window_get_active();
+		if (!window) return;
+
+		// popup runs a modal event loop that swallows every event until the
+		// menu is dismissed, so pointers being pressed would never see their
+		// up; canceling them first keeps every pointer stream closed.
+		Window_cancel_active_pointers(window);
+	}
 
 
 	Menu::Data::Data ()
