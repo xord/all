@@ -8,6 +8,7 @@
 #include "reflex/debug.h"
 #include "view.h"
 #include "event.h"
+#include "midi.h"
 
 
 namespace Reflex
@@ -244,14 +245,15 @@ namespace Reflex
 	{
 		Window::Data* self = window->self.get();
 
+		MIDI_process_events();
+
 		double now = Xot::time();
 		UpdateEvent e(now, now - self->prev_time_update);
 		self->prev_time_update = now;
 
 		window->on_update(&e);
-		if (e.is_blocked()) return;
-
-		View_update_tree(window->root(), e);
+		if (!e.is_blocked())
+			View_update_tree(window->root(), e);
 	}
 
 	void
