@@ -122,7 +122,10 @@ namespace Reflex
 		dispatch_events(app);
 
 		if (get_data(app)->quit)
+		{
 			emscripten_cancel_main_loop();
+			Application_cleanup(app);
+		}
 		else
 			update_all_windows(app);
 	}
@@ -138,6 +141,7 @@ namespace Reflex
 		emscripten_set_main_loop_arg(emscripten_main_loop, this, 0, true);
 #else
 		main_loop(this);
+		Application_cleanup(this);
 #endif
 	}
 

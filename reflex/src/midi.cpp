@@ -317,6 +317,10 @@ namespace Reflex
 	void
 	MIDI_fin (Application* app)
 	{
+#ifdef WASM
+		return;
+#endif
+
 		if (!manager)
 			invalid_state_error(__FILE__, __LINE__);
 

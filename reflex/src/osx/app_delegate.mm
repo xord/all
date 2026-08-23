@@ -208,6 +208,9 @@ create_window_menu ()
 
 	- (void) applicationWillTerminate: (NSNotification*) notification
 	{
+		if (application)
+			Application_cleanup(application);
+
 		[self unbind];
 	}
 

@@ -29,6 +29,8 @@ namespace Reflex
 	void Application_set_menu (Application* app, Menu* menu);
 
 
+	void Application_cleanup (Application* app);
+
 	void Application_call_start (Application* app, Event* e);
 
 	void Application_call_quit  (Application* app, Event* e);

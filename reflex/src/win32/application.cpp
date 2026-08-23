@@ -82,6 +82,8 @@ namespace Reflex
 
 		timeEndPeriod(1);
 
+		Application_cleanup(this);
+
 		if (msg.wParam != 0)
 			reflex_error(__FILE__, __LINE__, "WM_QUIT with wParam %d.", msg.wParam);
 	}

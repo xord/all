@@ -21,12 +21,19 @@ namespace Reflex
 
 
 	void
+	Application_cleanup (Application* app)
+	{
+		MIDI_fin(app);
+		Gamepad_fin(app);
+	}
+
+	void
 	Application_call_start (Application* app, Event* e)
 	{
-		app->on_start(e);
-
 		Gamepad_init(app);
 		MIDI_init(app);
+
+		app->on_start(e);
 	}
 
 	static void
@@ -47,8 +54,6 @@ namespace Reflex
 		app->self->quitting = true;
 
 		close_all_windows(app);
-		MIDI_fin(app);
-		Gamepad_fin(app);
 	}
 
 	void

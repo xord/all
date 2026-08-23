@@ -153,6 +153,8 @@
 				Reflex::not_implemented_error(
 					__FILE__, __LINE__, "blocking to quit is not supported.");
 			}
+
+			Application_cleanup(self->application);
 		}
 
 		[self unbind];
