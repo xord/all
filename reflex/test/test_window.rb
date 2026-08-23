@@ -150,8 +150,14 @@ class TestWindow < Test::Unit::TestCase
     w.titlebar = [:background]
     assert_equal [:background], w.titlebar
 
-    w.titlebar = [:buttons]
-    assert_equal [:buttons], w.titlebar
+    if win32?
+      assert_raise(ArgumentError) {w.titlebar = [:buttons]}.then do |e|
+        assert_match(/buttons.*needs.*background/i, e.message)
+      end
+    else
+      w.titlebar = [:buttons]
+      assert_equal [:buttons], w.titlebar
+    end
 
     w.titlebar = []
     assert_equal [], w.titlebar
@@ -165,7 +171,8 @@ class TestWindow < Test::Unit::TestCase
   end
 
   def test_shadow?()
-    w = window
+    titlebar = win32? ? [] : [:buttons, :background]
+    w        = window titlebar: titlebar
     assert_true  w.shadow?
 
     w.shadow = false
@@ -180,7 +187,7 @@ class TestWindow < Test::Unit::TestCase
     w.shadow true
     assert_true  w.shadow?
 
-    assert_false window(shadow: false).shadow?
+    assert_false window(titlebar: titlebar, shadow: false).shadow?
   end
 
   def test_transparent?()
