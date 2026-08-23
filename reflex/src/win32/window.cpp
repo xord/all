@@ -1022,6 +1022,13 @@ namespace Reflex
 		rect->bottom += over;
 	}
 
+	static UINT
+	make_flags_for_frame (UINT flags)
+	{
+		return flags | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER |
+			SWP_NOSENDCHANGING;// to skip widening a captioned window
+	}
+
 	void
 	Window_set_frame (Window* window, coord x, coord y, coord w, coord h)
 	{
@@ -1046,7 +1053,7 @@ namespace Reflex
 		if (!SetWindowPos(
 			hwnd, NULL,
 			rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-			flags | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER))
+			make_flags_for_frame(flags)))
 		{
 			system_error(__FILE__, __LINE__);
 		}
@@ -1173,16 +1180,16 @@ namespace Reflex
 		if (GetLastError() != 0)
 			system_error(__FILE__, __LINE__);
 
-		UINT posflags = SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE;
+		UINT flags = SWP_FRAMECHANGED;
 		if (normal)
 			client_to_window_rect(hwnd, &rect);
 		else
-			posflags |= SWP_NOMOVE | SWP_NOSIZE;
+			flags |= SWP_NOMOVE | SWP_NOSIZE;
 
 		if (!SetWindowPos(
 			hwnd, NULL,
 			rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-			posflags))
+			make_flags_for_frame(flags)))
 		{
 			system_error(__FILE__, __LINE__);
 		}
