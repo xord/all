@@ -165,7 +165,7 @@ RUCY_DEF1(op_add, obj)
 		});
 	}
 
-	return value(Rays::Polygon(&polylines[0], polylines.size()));
+	return value(Rays::Polygon(polylines.data(), polylines.size()));
 }
 RUCY_END
 
@@ -428,14 +428,14 @@ namespace Rucy
 					polylines.reserve(argc);
 					for (int i = 0; i < argc; ++i)
 						polylines.emplace_back(to<Rays::Polyline&>(argv[i]));
-					return Rays::Polygon(&polylines[0], polylines.size());
+					return Rays::Polygon(polylines.data(), polylines.size());
 				}
 			}
 			else if (argv->is_num() || argv->is_array())
 			{
 				std::vector<Rays::Point> points;
 				get_points(&points, argc, argv);
-				return Rays::Polygon(&points[0], points.size());
+				return Rays::Polygon(points.data(), points.size());
 			}
 		}
 

@@ -705,7 +705,7 @@ namespace Reflex
 			if (points.empty())
 				return Polygon();
 
-			return Rays::create_line(&points[0], points.size(), loop);
+			return Rays::create_line(points.data(), points.size(), loop);
 		}
 
 		Bounds get_fixed_frame () const override

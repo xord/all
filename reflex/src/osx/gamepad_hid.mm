@@ -567,7 +567,7 @@ namespace Reflex
 
 		CFIndex count = CFSetGetCount(set.get());
 		std::vector<IOHIDDeviceRef> devices(count, NULL);
-		CFSetGetValues(set.get(), (const void**) &devices[0]);
+		CFSetGetValues(set.get(), (const void**) devices.data());
 
 		for (CFIndex i = 0; i < count; ++i)
 			handle_connect_event(app, kIOReturnSuccess, manager, devices[i]);

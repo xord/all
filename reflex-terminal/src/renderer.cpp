@@ -422,7 +422,7 @@ namespace ReflexTerminal
 		painter->no_fill();
 		painter->set_stroke(color);
 		painter->set_stroke_width(thickness);
-		painter->line(&points[0], points.size());
+		painter->line(points.data(), points.size());
 		painter->pop_state();
 	}
 

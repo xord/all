@@ -608,7 +608,7 @@ get_32bit_pixels_string (const Rays::Bitmap& bmp)
 	}
 
 	return value(
-		(const char*) &pixels[0], pixels.size() * sizeof(uint32_t),
+		(const char*) pixels.data(), pixels.size() * sizeof(uint32_t),
 		rb_ascii8bit_encoding());
 }
 
@@ -634,7 +634,7 @@ RUCY_DEF0(get_pixels)
 
 	std::vector<VALUE> pixels;
 	get_pixels(&pixels, *THIS);
-	return array((const Value*) &pixels[0], pixels.size());
+	return array((const Value*) pixels.data(), pixels.size());
 }
 RUCY_END
 

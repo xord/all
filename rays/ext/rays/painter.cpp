@@ -172,7 +172,7 @@ RUCY_DEFN(point)
 	std::vector<Rays::Point> points;
 	get_points(&points, argc, argv);
 
-	THIS->points(&points[0], points.size());
+	THIS->points(points.data(), points.size());
 	return self;
 }
 RUCY_END
@@ -185,7 +185,7 @@ RUCY_DEF2(line, args, loop)
 	std::vector<Rays::Point> points;
 	get_points(&points, args.size(), args.as_array());
 
-	THIS->line(&points[0], points.size(), loop);
+	THIS->line(points.data(), points.size(), loop);
 	return self;
 }
 RUCY_END
@@ -247,7 +247,7 @@ RUCY_DEF2(curve, args, loop)
 	std::vector<Rays::Point> points;
 	get_points(&points, args.size(), args.as_array());
 
-	THIS->curve(&points[0], points.size(), loop);
+	THIS->curve(points.data(), points.size(), loop);
 	return self;
 }
 RUCY_END
@@ -263,7 +263,7 @@ RUCY_DEF2(bezier, args, loop)
 	std::vector<Rays::Point> points;
 	get_points(&points, args.size(), args.as_array());
 
-	THIS->bezier(&points[0], points.size(), loop);
+	THIS->bezier(points.data(), points.size(), loop);
 	return self;
 }
 RUCY_END

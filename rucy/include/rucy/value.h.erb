@@ -265,7 +265,7 @@ namespace Rucy
 		>::value>::type* = nullptr)
 	{
 		std::vector<Value> v(begin, end);
-		return array(&v[0], v.size());
+		return array(v.data(), v.size());
 	}
 
 

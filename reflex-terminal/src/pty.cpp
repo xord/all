@@ -103,7 +103,7 @@ namespace Reflex
 			}
 
 			// exec the real path; argv[0] may be the login shell name
-			execvp(args[0].c_str(), (char* const*) &argv[0]);
+			execvp(args[0].c_str(), (char* const*) argv.data());
 			_exit(127);// exec failed
 		}
 

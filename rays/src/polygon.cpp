@@ -147,18 +147,18 @@ namespace Rays
 				{
 					draw_polygon(
 						painter, MODE_TRIANGLES,
-						&points[0],  points.size(),
-						&indices[0], indices.size(),
-						&(*pcolors)[0],
-						ptexcoords ? &(*ptexcoords)[0] : NULL);
+						points.data(),  points.size(),
+						indices.data(), indices.size(),
+						pcolors->data(),
+						ptexcoords ? ptexcoords->data() : NULL);
 				}
 				else
 				{
 					draw_polygon(
 						painter, MODE_TRIANGLES, color,
-						&points[0],  points.size(),
-						&indices[0], indices.size(),
-						ptexcoords ? &(*ptexcoords)[0] : NULL);
+						points.data(),  points.size(),
+						indices.data(), indices.size(),
+						ptexcoords ? ptexcoords->data() : NULL);
 				}
 			}
 
@@ -227,7 +227,7 @@ namespace Rays
 				size_t index_offset = 0;
 				for (const auto& seg : segments)
 				{
-					Polyline polyline(&points[0] + seg.begin, seg.end - seg.begin);
+					Polyline polyline(points.data() + seg.begin, seg.end - seg.begin);
 					if (!seg.hole)
 					{
 						triangulate(polylines, index_offset);
@@ -902,7 +902,7 @@ namespace Rays
 					points.emplace_back(make_ellipse_point(
 						x, y, width, height, radian_from, radian_to, nsegment, seg));
 				}
-				append(Polyline(&points[0], points.size(), true));
+				append(Polyline(points.data(), points.size(), true));
 
 				if (has_hole)
 				{
@@ -916,7 +916,7 @@ namespace Rays
 							hole_x, hole_y, hole_size.x, hole_size.y,
 							radian_from, radian_to, nsegment, seg));
 					}
-					append(Polyline(&points[0], points.size(), true, NULL, NULL, true));
+					append(Polyline(points.data(), points.size(), true, NULL, NULL, true));
 				}
 			}
 
@@ -961,7 +961,7 @@ namespace Rays
 					}
 				}
 
-				append(Polyline(&points[0], points.size(), true));
+				append(Polyline(points.data(), points.size(), true));
 			}
 
 			Point make_ellipse_point (
@@ -1040,7 +1040,7 @@ namespace Rays
 			array.reserve(size + 1);
 			array.insert(array.begin(), points, points + size);
 			array.emplace_back(points[0]);
-			polygon->self->append(Polyline(&array[0], array.size(), true, false));
+			polygon->self->append(Polyline(array.data(), array.size(), true, false));
 		}
 #endif
 		return p;
@@ -1138,9 +1138,9 @@ namespace Rays
 		}
 
 		p.self->append(Polyline(
-			&points_[0], points_.size(), true,
-			pcolors_    ? &(*pcolors_)[0]    : NULL,
-			ptexcoords_ ? &(*ptexcoords_)[0] : NULL));
+			points_.data(), points_.size(), true,
+			pcolors_    ? pcolors_->data()    : NULL,
+			ptexcoords_ ? ptexcoords_->data() : NULL));
 		if (size >= 4)
 		{
 			p.self->append(Polyline(
@@ -1297,9 +1297,9 @@ namespace Rays
 		}
 
 		p.self->append(Polyline(
-			&points_[0], points_.size(), true,
-			pcolors_    ? &(*pcolors_)[0]    : NULL,
-			ptexcoords_ ? &(*ptexcoords_)[0] : NULL));
+			points_.data(), points_.size(), true,
+			pcolors_    ? pcolors_->data()    : NULL,
+			ptexcoords_ ? ptexcoords_->data() : NULL));
 		for (size_t i = 2; i < in_last; i += 2)
 		{
 			p.self->append(Polyline(
@@ -1410,7 +1410,7 @@ namespace Rays
 			}
 		}
 
-		return create_line(&result[0], result.size(), loop);
+		return create_line(result.data(), result.size(), loop);
 	}
 
 	Polygon
@@ -1632,7 +1632,7 @@ namespace Rays
 		for (const auto& polyline : lhs)
 			polylines.emplace_back(polyline);
 		polylines.emplace_back(rhs);
-		return Polygon(&polylines[0], polylines.size());
+		return Polygon(polylines.data(), polylines.size());
 	}
 
 	Polygon
@@ -1641,7 +1641,7 @@ namespace Rays
 		std::vector<Polyline> polylines;
 		for (const auto& polyline : lhs) polylines.emplace_back(polyline);
 		for (const auto& polyline : rhs) polylines.emplace_back(polyline);
-		return Polygon(&polylines[0], polylines.size());
+		return Polygon(polylines.data(), polylines.size());
 	}
 
 	Polygon

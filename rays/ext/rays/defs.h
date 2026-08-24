@@ -72,17 +72,17 @@ struct CreateParams
 
 	const Rays::Point* ppoints () const
 	{
-		return points.empty() ? NULL : &points[0];
+		return points.empty() ? NULL : points.data();
 	}
 
 	const Rays::Color* pcolors () const
 	{
-		return colors.empty() ? NULL : &colors[0];
+		return colors.empty() ? NULL : colors.data();
 	}
 
 	const Rays::Point* ptexcoords () const
 	{
-		return texcoords.empty() ? NULL : &texcoords[0];
+		return texcoords.empty() ? NULL : texcoords.data();
 	}
 
 	size_t size () const

@@ -200,7 +200,7 @@ namespace Reflex
 
 		STARTUPINFOEXW startup  = {};
 		startup.StartupInfo.cb  = sizeof(startup);
-		startup.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST) &attrs[0];
+		startup.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST) attrs.data();
 
 		if (
 			!InitializeProcThreadAttributeList(startup.lpAttributeList, 1, 0, &attrs_size) ||

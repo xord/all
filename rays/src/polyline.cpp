@@ -129,7 +129,7 @@ namespace Rays
 
 		Polyline pl;
 		pl.self->reset(
-			&cleaned[0], NULL, NULL, cleaned.size(), loop, loop, hole,
+			cleaned.data(), NULL, NULL, cleaned.size(), loop, loop, hole,
 			[](const IntPoint& point) {return from_clipper(point);});
 		return pl;
 	}
@@ -224,21 +224,21 @@ namespace Rays
 	Polyline::points () const
 	{
 		const auto& v = self->points;
-		return !v.empty() ? &v[0] : NULL;
+		return !v.empty() ? v.data() : NULL;
 	}
 
 	const Color*
 	Polyline::colors () const
 	{
 		const auto& pv = self->pcolors;
-		return pv && !pv->empty() ? &(*pv)[0] : NULL;
+		return pv && !pv->empty() ? pv->data() : NULL;
 	}
 
 	const Coord3*
 	Polyline::texcoords () const
 	{
 		const auto& pv = self->ptexcoords;
-		return pv && !pv->empty() ? &(*pv)[0] : NULL;
+		return pv && !pv->empty() ? pv->data() : NULL;
 	}
 
 	size_t

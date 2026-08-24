@@ -243,7 +243,7 @@ namespace Rucy
 			{
 				std::vector<Rays::Point> points;
 				get_points(&points, argc, argv);
-				return Rays::Polyline(&points[0], points.size());
+				return Rays::Polyline(points.data(), points.size());
 			}
 		}
 

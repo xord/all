@@ -33,7 +33,7 @@ RUCY_DEFN(initialize)
 	for (size_t i = 0; i < argc; ++i)
 		pointers.emplace_back(to<Reflex::Pointer&>(argv[i]));
 
-	*THIS = Reflex::PointerEvent(&pointers[0], pointers.size());
+	*THIS = Reflex::PointerEvent(pointers.data(), pointers.size());
 	return rb_call_super(0, NULL);
 }
 RUCY_END

@@ -132,7 +132,7 @@ namespace Rays
 
 			const uint* get () const
 			{
-				return &indices[0];
+				return indices.data();
 			}
 
 		private:
@@ -249,7 +249,7 @@ namespace Rays
 
 			if (!buffers.empty())
 			{
-				glDeleteBuffers((GLsizei) buffers.size(), &buffers[0]);
+				glDeleteBuffers((GLsizei) buffers.size(), buffers.data());
 				OpenGL_check_error(__FILE__, __LINE__);
 			}
 
@@ -489,7 +489,7 @@ namespace Rays
 			std::vector<Color> colors_(npoints, *color);
 			apply_attribute(
 				self, program, names.attribute_color_names,
-				(const Coord4*) &colors_[0], npoints);
+				(const Coord4*) colors_.data(), npoints);
 #else
 			for (const auto& name : names.attribute_color_names)
 			{
@@ -862,8 +862,9 @@ namespace Rays
 			if (!setup_triangle_fan_indices(&fan_indices, npoints))
 				return;
 			batch(
-				painter, MODE_TRIANGLES, color, points, npoints, &fan_indices[0], fan_indices.size(),
-				colors, texcoords, texinfo, *shader);
+				painter, MODE_TRIANGLES, color, points, npoints,
+				fan_indices.data(), fan_indices.size(), colors, texcoords,
+				texinfo, *shader);
 		}
 		else
 		{
