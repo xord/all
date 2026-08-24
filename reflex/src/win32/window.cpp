@@ -278,6 +278,51 @@ namespace Reflex
 		return true;
 	}
 
+	static void
+	keep_caption_on_screen (HWND hwnd, RECT* rect)
+	{
+		if (!has_style(hwnd, WS_CAPTION)) return;
+
+		HMONITOR hmonitor = MonitorFromRect(rect, MONITOR_DEFAULTTONEAREST);
+		if (!hmonitor) return;
+
+		MONITORINFO info = {sizeof(info)};
+		if (!GetMonitorInfoW(hmonitor, &info))
+			system_error(__FILE__, __LINE__);
+
+		LONG over = info.rcWork.top - rect->top;
+		if (over <= 0) return;
+
+		rect->top    += over;
+		rect->bottom += over;
+	}
+
+	static bool
+	window_pos_changing (LRESULT* result, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		WINDOWPOS* pos = (WINDOWPOS*) lp;
+
+		if (!(pos->flags & SWP_SHOWWINDOW) && !IsWindowVisible(hwnd))
+		{
+			// a hidden window gets the size it asks for, but windows widens
+			// a captioned one here, so take the width back
+			int cx  = pos->cx;
+			*result = DefWindowProcW(hwnd, msg, wp, lp);
+			pos->cx = cx;
+			return true;
+		}
+
+		if (!(pos->flags & SWP_NOMOVE) && !IsIconic(hwnd) && !IsZoomed(hwnd))
+		{
+			// once on screen the caption has to stay where it can be grabbed
+			RECT rect = {pos->x, pos->y, pos->x + pos->cx, pos->y + pos->cy};
+			keep_caption_on_screen(hwnd, &rect);
+			pos->y = rect.top;
+		}
+
+		return false;
+	}
+
 	void
 	Window_update (Window* win)
 	{
@@ -649,6 +694,14 @@ namespace Reflex
 				break;
 			}
 
+			case WM_WINDOWPOSCHANGING:
+			{
+				LRESULT result = 0;
+				if (window_pos_changing(&result, hwnd, msg, wp, lp))
+					return result;
+				break;
+			}
+
 			case WM_ACTIVATE:
 			{
 				if (LOWORD(wp) == WA_INACTIVE)
@@ -909,9 +962,15 @@ namespace Reflex
 
 		WindowData* self = get_data(window);
 
+		// the frame is passed so that WM_WINDOWPOSCHANGING can correct it
+		RECT rect = {0};
+		if (!GetWindowRect(self->hwnd, &rect))
+			system_error(__FILE__, __LINE__);
+
 		SetWindowPos(
-			self->hwnd, HWND_TOP, 0, 0, 0, 0,
-			SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE);
+			self->hwnd, HWND_TOP,
+			rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+			SWP_SHOWWINDOW);
 		UpdateWindow(self->hwnd);
 	}
 
@@ -1003,25 +1062,6 @@ namespace Reflex
 		if (!has_style(hwnd, WS_CAPTION)) rect->top = top;
 	}
 
-	static void
-	keep_caption_on_screen (HWND hwnd, RECT* rect)
-	{
-		if (!has_style(hwnd, WS_CAPTION)) return;
-
-		HMONITOR hmonitor = MonitorFromRect(rect, MONITOR_DEFAULTTONEAREST);
-		if (!hmonitor) return;
-
-		MONITORINFO info = {sizeof(info)};
-		if (!GetMonitorInfoW(hmonitor, &info))
-			system_error(__FILE__, __LINE__);
-
-		LONG over = info.rcWork.top - rect->top;
-		if (over <= 0) return;
-
-		rect->top    += over;
-		rect->bottom += over;
-	}
-
 	void
 	Window_set_frame (Window* window, coord x, coord y, coord w, coord h)
 	{
@@ -1041,7 +1081,6 @@ namespace Reflex
 
 		RECT rect = {(int) x, (int) y, (int) (x + w), (int) (y + h)};
 		client_to_window_rect(hwnd, &rect);
-		keep_caption_on_screen(hwnd, &rect);
 
 		if (!SetWindowPos(
 			hwnd, NULL,
