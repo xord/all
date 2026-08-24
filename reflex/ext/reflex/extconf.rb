@@ -13,7 +13,7 @@ require 'reflex/extension'
 Xot::ExtConf.new Xot, Rucy, Rays, Reflex do
   setup do
     headers    << 'ruby.h'
-    libs.unshift 'gdi32', 'imm32', 'winmm', 'dwmapi', 'opengl32', 'glew32', 'xinput' if win32?
+    libs.unshift 'gdi32', 'imm32', 'winmm', 'dwmapi', 'opengl32', 'glew32', 'xinput1_4' if win32?
     frameworks << 'Cocoa' << 'GameController'         if osx?
     $LDFLAGS   << ' -Wl,--out-implib=libreflex.dll.a' if mingw? || cygwin?
   end

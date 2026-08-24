@@ -42,6 +42,10 @@ jobs:
       - name: ext
         run: rake verbose ext
 
+      - name: mesa
+        if: runner.os == 'windows'
+        run: ruby -I.github/workflows -rutils -e 'setup_mesa'
+
       - name: test
         if: runner.os == 'macos'
         run: rake verbose test
