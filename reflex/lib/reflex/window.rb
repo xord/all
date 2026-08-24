@@ -74,12 +74,14 @@ module Reflex
       :restitution=, :restitution
 
     universal_accessor :title, :frame,
-      closable:    {reader: :closable?},
-      minimizable: {reader: :minimizable?},
-      resizable:   {reader: :resizable?},
-      shadow:      {reader: :shadow?},
-      transparent: {reader: :transparent?},
-      fullscreen:  {reader: :fullscreen?}
+      closable:         {reader: :closable?},
+      minimizable:      {reader: :minimizable?},
+      resizable:        {reader: :resizable?},
+      shadow:           {reader: :shadow?},
+      transparent:      {reader: :transparent?},
+      fullscreen:       {reader: :fullscreen?},
+      always_on_top:    {reader: :always_on_top?},
+      always_on_bottom: {reader: :always_on_bottom?}
 
     def initialize(options = nil, &block)
       super()

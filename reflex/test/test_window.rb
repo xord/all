@@ -223,6 +223,33 @@ class TestWindow < Test::Unit::TestCase
     assert_false w.fullscreen?
   end
 
+  def test_always_on_top_and_bottom?()
+    w = window
+    assert_false w.always_on_top?
+    assert_false w.always_on_bottom?
+
+    w.always_on_top = true
+    assert_true  w.always_on_top?
+    assert_false w.always_on_bottom?
+
+    assert_true window(always_on_top: true).always_on_top?
+
+    if linux?
+      assert_raise(Rucy::NativeError) {w.always_on_bottom = true}
+      return
+    else
+      assert_true window(always_on_bottom: true).always_on_bottom?
+    end
+
+    w.always_on_bottom = true
+    assert_false w.always_on_top?
+    assert_true  w.always_on_bottom?
+
+    w.always_on_bottom = false
+    assert_false w.always_on_top?
+    assert_false w.always_on_bottom?
+  end
+
   def test_orientations()
     w = window
     assert_equal [], w.orientations

@@ -50,9 +50,13 @@ namespace Reflex
 
 				FLAG_FULLSCREEN          = Xot::bit(7),
 
-				FLAG_PORTRAIT            = Xot::bit(8),
+				FLAG_ALWAYS_ON_TOP       = Xot::bit(8),
 
-				FLAG_LANDSCAPE           = Xot::bit(9),
+				FLAG_ALWAYS_ON_BOTTOM    = Xot::bit(9),
+
+				FLAG_PORTRAIT            = Xot::bit(10),
+
+				FLAG_LANDSCAPE           = Xot::bit(11),
 
 				FLAG_LAST                = FLAG_LANDSCAPE
 

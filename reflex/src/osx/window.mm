@@ -205,6 +205,13 @@ namespace Reflex
 
 		if (native.hasFullScreenFlag != Xot::has_flag(flags, Window::FLAG_FULLSCREEN))
 			[native toggleFullScreen: native];
+
+		if (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_TOP))
+			native.level = NSFloatingWindowLevel;
+		else if (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_BOTTOM))
+			native.level = NSNormalWindowLevel - 1;
+		else
+			native.level = NSNormalWindowLevel;
 	}
 
 	float

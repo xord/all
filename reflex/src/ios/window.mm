@@ -278,6 +278,12 @@ namespace Reflex
 		if (Xot::has_flag(flags, Window::FLAG_TRANSPARENT))
 			argument_error(__FILE__, __LINE__, "FLAG_TRANSPARENT is not supported");
 
+		if (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_TOP))
+			argument_error(__FILE__, __LINE__, "FLAG_ALWAYS_ON_TOP is not supported");
+
+		if (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_BOTTOM))
+			argument_error(__FILE__, __LINE__, "FLAG_ALWAYS_ON_BOTTOM is not supported");
+
 		Window_set_orientation_mask(
 			get_vc(window),
 			flags_to_orientation_mask(flags & (Window::FLAG_PORTRAIT | Window::FLAG_LANDSCAPE)));

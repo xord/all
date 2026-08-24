@@ -294,6 +294,52 @@ RUCY_DEF0(is_fullscreen)
 }
 RUCY_END
 
+static
+RUCY_DEF1(set_always_on_top, state)
+{
+	CHECK;
+
+	if (state)
+	{
+		THIS->remove_flag(Reflex::Window::FLAG_ALWAYS_ON_BOTTOM);
+		THIS->   add_flag(Reflex::Window::FLAG_ALWAYS_ON_TOP);
+	}
+	else
+		THIS->remove_flag(Reflex::Window::FLAG_ALWAYS_ON_TOP);
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_always_on_top)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::Window::FLAG_ALWAYS_ON_TOP));
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_always_on_bottom, state)
+{
+	CHECK;
+
+	if (state)
+	{
+		THIS->remove_flag(Reflex::Window::FLAG_ALWAYS_ON_TOP);
+		THIS->   add_flag(Reflex::Window::FLAG_ALWAYS_ON_BOTTOM);
+	}
+	else
+		THIS->remove_flag(Reflex::Window::FLAG_ALWAYS_ON_BOTTOM);
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_always_on_bottom)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::Window::FLAG_ALWAYS_ON_BOTTOM));
+}
+RUCY_END
+
 static const uint ORIENTATION_MASK =
 	Reflex::Window::FLAG_PORTRAIT | Reflex::Window::FLAG_LANDSCAPE;
 
@@ -614,6 +660,10 @@ Init_reflex_window ()
 	cWindow.define_method("transparent?",  is_transparent);
 	cWindow.define_method("fullscreen=",  set_fullscreen);
 	cWindow.define_method("fullscreen?",   is_fullscreen);
+	cWindow.define_method("always_on_top=",    set_always_on_top);
+	cWindow.define_method("always_on_top?",     is_always_on_top);
+	cWindow.define_method("always_on_bottom=", set_always_on_bottom);
+	cWindow.define_method("always_on_bottom?",  is_always_on_bottom);
 	cWindow.define_method("orientations=", set_orientations);
 	cWindow.define_method("orientations",  get_orientations);
 	cWindow.define_method("hidden", hidden);

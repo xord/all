@@ -298,9 +298,16 @@ namespace Reflex
 	}
 
 	static bool
-	window_pos_changing (LRESULT* result, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+	window_pos_changing (
+		LRESULT* result, Window* win, HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
 		WINDOWPOS* pos = (WINDOWPOS*) lp;
+
+		if (win && win->has_flag(Window::FLAG_ALWAYS_ON_BOTTOM))
+		{
+			pos->hwndInsertAfter = HWND_BOTTOM;
+			pos->flags          &= ~SWP_NOZORDER;
+		}
 
 		if (!(pos->flags & SWP_SHOWWINDOW) && !IsWindowVisible(hwnd))
 		{
@@ -697,7 +704,7 @@ namespace Reflex
 			case WM_WINDOWPOSCHANGING:
 			{
 				LRESULT result = 0;
-				if (window_pos_changing(&result, hwnd, msg, wp, lp))
+				if (window_pos_changing(&result, win, hwnd, msg, wp, lp))
 					return result;
 				break;
 			}
@@ -1281,6 +1288,17 @@ namespace Reflex
 			set_window_style(self->hwnd, style);
 
 		set_closable(self->hwnd, Xot::has_flag(flags, Window::FLAG_CLOSABLE));
+
+		HWND after = HWND_NOTOPMOST;
+		if      (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_TOP))
+			after    = HWND_TOPMOST;
+		else if (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_BOTTOM))
+			after    = HWND_BOTTOM;
+		if (!SetWindowPos(
+			self->hwnd, after, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE))
+		{
+			system_error(__FILE__, __LINE__);
+		}
 	}
 
 	float

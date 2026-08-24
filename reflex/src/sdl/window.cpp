@@ -392,14 +392,26 @@ namespace Reflex
 		if (Xot::has_flag(flags, Window::FLAG_TRANSPARENT))
 			not_implemented_error(__FILE__, __LINE__, "FLAG_TRANSPARENT");
 
+		if (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_BOTTOM))
+			not_implemented_error(__FILE__, __LINE__, "FLAG_ALWAYS_ON_BOTTOM");
+
 		WindowData* self = get_data(win);
 		Uint32 sdl_flags = self->to_sdl_flags(flags);
 
-		SDL_SetWindowBordered(self->native, background ? SDL_TRUE : SDL_FALSE);
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+		SDL_SetWindowAlwaysOnTop(
+			self->native,
+			Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_TOP) ? SDL_TRUE : SDL_FALSE);
+#else
+		if (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_TOP))
+			not_implemented_error(__FILE__, __LINE__, "FLAG_ALWAYS_ON_TOP");
+#endif
 
 		SDL_SetWindowResizable(
 			self->native,
 			sdl_flags & SDL_WINDOW_RESIZABLE ? SDL_TRUE : SDL_FALSE);
+
+		SDL_SetWindowBordered(self->native, background ? SDL_TRUE : SDL_FALSE);
 
 		int result = SDL_SetWindowFullscreen(
 			self->native,
