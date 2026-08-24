@@ -1235,6 +1235,24 @@ namespace Reflex
 	}
 
 	static void
+	set_pointer_through (HWND hwnd, bool through)
+	{
+		static const DWORD THROUGH = WS_EX_TRANSPARENT | WS_EX_LAYERED;
+
+		DWORD current = (DWORD) GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+		DWORD exstyle = through ? current | THROUGH : current & ~THROUGH;
+		if (exstyle == current) return;
+
+		SetLastError(0);
+		SetWindowLongPtrW(hwnd, GWL_EXSTYLE, exstyle);
+		if (GetLastError() != 0)
+			system_error(__FILE__, __LINE__);
+
+		if (through && !SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA))
+			system_error(__FILE__, __LINE__);
+	}
+
+	static void
 	set_closable (HWND hwnd, bool closable)
 	{
 		// the close button follows the state of the close menu item
@@ -1299,6 +1317,9 @@ namespace Reflex
 		{
 			system_error(__FILE__, __LINE__);
 		}
+
+		set_pointer_through(
+			self->hwnd, Xot::has_flag(flags, Window::FLAG_POINTER_THROUGH));
 	}
 
 	float

@@ -395,6 +395,9 @@ namespace Reflex
 		if (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_BOTTOM))
 			not_implemented_error(__FILE__, __LINE__, "FLAG_ALWAYS_ON_BOTTOM");
 
+		if (Xot::has_flag(flags, Window::FLAG_POINTER_THROUGH))
+			not_implemented_error(__FILE__, __LINE__, "FLAG_POINTER_THROUGH");
+
 		WindowData* self = get_data(win);
 		Uint32 sdl_flags = self->to_sdl_flags(flags);
 

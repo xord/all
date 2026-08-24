@@ -212,6 +212,9 @@ namespace Reflex
 			native.level = NSNormalWindowLevel - 1;
 		else
 			native.level = NSNormalWindowLevel;
+
+		native.ignoresMouseEvents =
+			Xot::has_flag(flags, Window::FLAG_POINTER_THROUGH);
 	}
 
 	float

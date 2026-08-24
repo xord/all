@@ -250,6 +250,30 @@ class TestWindow < Test::Unit::TestCase
     assert_false w.always_on_bottom?
   end
 
+  def test_pointer_through?()
+    w = window
+    assert_false w.pointer_through?
+
+    if linux?
+      assert_raise(Rucy::NativeError) {w.pointer_through = true}
+      return
+    end
+
+    w.pointer_through = true
+    assert_true  w.pointer_through?
+
+    w.pointer_through = false
+    assert_false w.pointer_through?
+
+    w.pointer_through true
+    assert_true  w.pointer_through?
+
+    w.pointer_through false
+    assert_false w.pointer_through?
+
+    assert_true window(pointer_through: true).pointer_through?
+  end
+
   def test_orientations()
     w = window
     assert_equal [], w.orientations

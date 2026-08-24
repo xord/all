@@ -54,9 +54,11 @@ namespace Reflex
 
 				FLAG_ALWAYS_ON_BOTTOM    = Xot::bit(9),
 
-				FLAG_PORTRAIT            = Xot::bit(10),
+				FLAG_POINTER_THROUGH     = Xot::bit(10),
 
-				FLAG_LANDSCAPE           = Xot::bit(11),
+				FLAG_PORTRAIT            = Xot::bit(11),
+
+				FLAG_LANDSCAPE           = Xot::bit(12),
 
 				FLAG_LAST                = FLAG_LANDSCAPE
 

@@ -81,7 +81,8 @@ module Reflex
       transparent:      {reader: :transparent?},
       fullscreen:       {reader: :fullscreen?},
       always_on_top:    {reader: :always_on_top?},
-      always_on_bottom: {reader: :always_on_bottom?}
+      always_on_bottom: {reader: :always_on_bottom?},
+      pointer_through:  {reader: :pointer_through?}
 
     def initialize(options = nil, &block)
       super()
