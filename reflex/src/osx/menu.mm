@@ -148,6 +148,21 @@ namespace Reflex
 		return new MenuData();
 	}
 
+	void
+	Menu_validate_shortcut_modifiers (uint modifiers)
+	{
+		static const uint SUPPORTED =
+			MOD_SHIFT | MOD_CONTROL | MOD_ALT | MOD_OPTION | MOD_COMMAND;
+
+		if (modifiers & ~SUPPORTED)
+		{
+			argument_error(
+				__FILE__, __LINE__,
+				"modifiers 0x%X can not be used for a shortcut on macOS.",
+				modifiers & ~SUPPORTED);
+		}
+	}
+
 	static NSString*
 	get_keyequivalent_string (int key)
 	{

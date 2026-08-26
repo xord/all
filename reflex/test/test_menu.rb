@@ -128,9 +128,9 @@ class TestMenu < Test::Unit::TestCase
     assert_equal :s, m.shortcut_key
     assert_equal [], m.shortcut_modifiers
 
-    m.shortcut = [:c, :command]
+    m.shortcut = [:c, :control]
     assert_equal :c,          m.shortcut_key
-    assert_equal [:command],  m.shortcut_modifiers
+    assert_equal [:control],  m.shortcut_modifiers
   end
 
   def test_shortcut_key_symbol_roundtrip()
@@ -156,12 +156,21 @@ class TestMenu < Test::Unit::TestCase
 
   def test_shortcut_key_keeps_modifiers()
     m = menu
-    m.shortcut = [:c, :command, :shift]
+    m.shortcut = [:c, :control, :shift]
     assert_equal :c,                     m.shortcut_key
-    assert_equal %i[command shift].sort, m.shortcut_modifiers.sort
+    assert_equal %i[control shift].sort, m.shortcut_modifiers.sort
     m.shortcut_key = :v
     assert_equal :v,                     m.shortcut_key
-    assert_equal %i[command shift].sort, m.shortcut_modifiers.sort
+    assert_equal %i[control shift].sort, m.shortcut_modifiers.sort
+  end
+
+  def test_shortcut_modifiers_unsupported_on_platform_raise()
+    if osx?
+      assert_raise(ArgumentError) {menu.shortcut_modifiers = [:win]}
+    elsif win32?
+      assert_raise(ArgumentError) {menu.shortcut_modifiers = [:command]}
+      assert_raise(ArgumentError) {menu.shortcut_modifiers = [:win]}
+    end
   end
 
   def test_image()

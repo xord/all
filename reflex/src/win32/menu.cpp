@@ -152,6 +152,21 @@ namespace Reflex
 		return new MenuData();
 	}
 
+	void
+	Menu_validate_shortcut_modifiers (uint modifiers)
+	{
+		static const uint SUPPORTED =
+			MOD_SHIFT | MOD_CONTROL | MOD_ALT | MOD_OPTION;
+
+		if (modifiers & ~SUPPORTED)
+		{
+			argument_error(
+				__FILE__, __LINE__,
+				"modifiers 0x%X can not be used for a shortcut on Windows.",
+				modifiers & ~SUPPORTED);
+		}
+	}
+
 	static String
 	get_shortcut_key_name (int key)
 	{

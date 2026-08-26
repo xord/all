@@ -12,6 +12,11 @@ namespace Reflex
 	}
 
 	void
+	Menu_validate_shortcut_modifiers (uint modifiers)
+	{
+	}
+
+	void
 	Menu_update (Menu* menu)
 	{
 	}

@@ -211,6 +211,8 @@ namespace Reflex
 	void
 	Menu::set_shortcut (KeyCode key, uint modifiers)
 	{
+		Menu_validate_shortcut_modifiers(modifiers);
+
 		if (key == self->key && modifiers == self->modifiers)
 			return;
 

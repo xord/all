@@ -52,6 +52,8 @@ namespace Reflex
 
 	Menu::Data* Menu_create_data ();
 
+	void Menu_validate_shortcut_modifiers (uint modifiers);
+
 	void Menu_update (Menu* menu);
 
 	void Menu_popup (Menu* menu, View* view, coord x, coord y);
