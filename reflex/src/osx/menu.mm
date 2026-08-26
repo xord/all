@@ -20,7 +20,6 @@ namespace Rays
 
 
 @interface ReflexMenuTarget : NSObject <NSMenuDelegate>
-	- (void) handleMenuItem: (NSMenuItem*) sender;
 @end
 
 
@@ -396,10 +395,52 @@ namespace Reflex
 }// Reflex
 
 
+static NSMenuItem*
+find_key_equivalent_item (NSMenu* nsmenu, NSEvent* event)
+{
+	static const NSEventModifierFlags KEY_EQUIVALENT_MODIFIER_MASK =
+		NSEventModifierFlagCommand |
+		NSEventModifierFlagShift   |
+		NSEventModifierFlagOption  |
+		NSEventModifierFlagControl;
+
+	if (event.type != NSEventTypeKeyDown)
+		return nil;
+
+	NSEventModifierFlags mods = event.modifierFlags & KEY_EQUIVALENT_MODIFIER_MASK;
+	NSString* chars           = event.charactersIgnoringModifiers;
+
+	for (NSMenuItem* nsitem in nsmenu.itemArray)
+	{
+		if (!nsitem.enabled) continue;
+
+		if (nsitem.hasSubmenu)
+		{
+			NSMenuItem* found = find_key_equivalent_item(nsitem.submenu, event);
+			if (found) return found;
+		}
+		else if (
+			nsitem.keyEquivalent.length > 0          &&
+			nsitem.keyEquivalentModifierMask == mods &&
+			[nsitem.keyEquivalent isEqualToString: chars])
+		{
+			return nsitem;
+		}
+	}
+	return nil;
+}
+
+
 @implementation ReflexMenuTarget
 
-	- (void) handleMenuItem: (NSMenuItem*) nsitem
+	- (void) handleMenuItem: (id) sender
 	{
+		NSMenuItem* nsitem = nil;
+		if ([sender isKindOfClass: NSMenuItem.class])
+			nsitem = (NSMenuItem*) sender;
+		else if ([sender isKindOfClass: NSMenu.class])
+			nsitem = find_key_equivalent_item((NSMenu*) sender, NSApp.currentEvent);
+
 		Reflex::Menu* menu = get_owner(nsitem);
 		if (!menu) return;
 
@@ -453,27 +494,13 @@ namespace Reflex
 		// answer key equivalent matching ourselves: AppKit's own scanning of
 		// delegate-backed menus caches stale results across setMainMenu calls,
 		// leaving every shortcut dead until the menu bar is clicked once
-		static const NSEventModifierFlags MODIFIER_MASK =
-			NSEventModifierFlagCommand |
-			NSEventModifierFlagShift   |
-			NSEventModifierFlagOption  |
-			NSEventModifierFlagControl;
 
-		NSEventModifierFlags mods = event.modifierFlags & MODIFIER_MASK;
-		NSString* chars           = event.charactersIgnoringModifiers;
+		NSMenuItem* nsitem = find_key_equivalent_item(nsmenu, event);
+		if (!nsitem) return NO;
 
-		for (NSMenuItem* nsitem in nsmenu.itemArray)
-		{
-			if (nsitem.hasSubmenu || !nsitem.enabled)           continue;
-			if (nsitem.keyEquivalent.length == 0)               continue;
-			if (nsitem.keyEquivalentModifierMask != mods)       continue;
-			if (![nsitem.keyEquivalent isEqualToString: chars]) continue;
-
-			*target = nsitem.target;
-			*action = nsitem.action;
-			return YES;
-		}
-		return NO;
+		*target = nsitem.target;
+		*action = nsitem.action;
+		return YES;
 	}
 
 @end// ReflexMenuTarget
