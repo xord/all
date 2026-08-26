@@ -65,6 +65,8 @@ namespace Reflex
 
 		bool menubar   = false;
 
+		bool modified  = false;
+
 		Image image;
 
 		std::shared_ptr<HBITMAP__> hbitmap;
@@ -99,6 +101,19 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 
 		return (MenuData&) *menu->self;
+	}
+
+	static Menu*
+	get_root (Menu* menu)
+	{
+		while (menu->parent()) menu = menu->parent();
+		return menu;
+	}
+
+	static void
+	set_modified (Menu* menu)
+	{
+		get_data(get_root(menu)).modified = true;
 	}
 
 	static Menu*
@@ -234,6 +249,8 @@ namespace Reflex
 		}
 
 		SetMenuItemInfoW(self.hparent, self.id, FALSE, &mii);
+
+		set_modified(menu);
 	}
 
 	void
@@ -304,12 +321,20 @@ namespace Reflex
 
 		RemoveMenu(p.hsubmenu, c.id, MF_BYCOMMAND);
 		c.hparent = NULL;
+
+		set_modified(parent);
 	}
 
 	HMENU
 	Menu_get_hmenu (Menu* menu)
 	{
 		return menu ? get_data(menu).get_hsubmenu(menu, true) : NULL;
+	}
+
+	bool
+	Menu_is_modified (Menu* menu)
+	{
+		return menu && get_data(menu).modified;
 	}
 
 	static void
@@ -343,6 +368,8 @@ namespace Reflex
 	Menu_create_accelerator_table (Menu* menu)
 	{
 		if (!menu) return NULL;
+
+		get_data(menu).modified = false;
 
 		std::vector<ACCEL> accels;
 		collect_accels(&accels, menu);

@@ -369,11 +369,22 @@ namespace Reflex
 		return false;
 	}
 
+	static void
+	update_accelerator_table (Window* win)
+	{
+		Menu* menu = win->menu();
+		if (!menu || !Menu_is_modified(menu))
+			return;
+
+		get_data(win)->set_accelerator_table(Menu_create_accelerator_table(menu));
+	}
+
 	void
 	Window_update (Window* win)
 	{
 		WindowData* self = get_data(win);
 
+		update_accelerator_table(win);
 		Gamepad_poll();
 
 		Window_call_update_event(win);
