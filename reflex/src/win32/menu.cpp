@@ -2,6 +2,7 @@
 
 
 #include <string>
+#include <vector>
 #include "reflex/exception.h"
 #include "reflex/event.h"
 #include "reflex/view.h"
@@ -64,6 +65,8 @@ namespace Reflex
 
 		bool menubar   = false;
 
+		bool modified  = false;
+
 		Image image;
 
 		std::shared_ptr<HBITMAP__> hbitmap;
@@ -98,6 +101,19 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 
 		return (MenuData&) *menu->self;
+	}
+
+	static Menu*
+	get_root (Menu* menu)
+	{
+		while (menu->parent()) menu = menu->parent();
+		return menu;
+	}
+
+	static void
+	set_modified (Menu* menu)
+	{
+		get_data(get_root(menu)).modified = true;
 	}
 
 	static Menu*
@@ -152,21 +168,54 @@ namespace Reflex
 		return new MenuData();
 	}
 
+	void
+	Menu_validate_shortcut_modifiers (uint modifiers)
+	{
+		static const uint SUPPORTED =
+			MOD_SHIFT | MOD_CONTROL | MOD_ALT | MOD_OPTION;
+
+		if (modifiers & ~SUPPORTED)
+		{
+			argument_error(
+				__FILE__, __LINE__,
+				"modifiers 0x%X can not be used for a shortcut on Windows.",
+				modifiers & ~SUPPORTED);
+		}
+	}
+
+	static String
+	get_shortcut_key_name (int key)
+	{
+		if (key < 0) return "";
+
+		UINT vsc = MapVirtualKeyW((UINT) key, MAPVK_VK_TO_VSC_EX);
+		if (vsc == 0) return "";
+
+		LONG lparam = (LONG) ((vsc & 0xff) << 16);
+		if (vsc & 0xff00) lparam |= 1 << 24;// extended key
+
+		wchar_t name[64] = {0};
+		int len = GetKeyNameTextW(lparam, name, (int) (sizeof(name) / sizeof(*name)));
+		if (len <= 0) return "";
+
+		return String(name, (size_t) len);
+	}
+
 	static String
 	make_item_string (const Menu* menu)
 	{
-		String s        = menu->label();
-		const char* key = menu->shortcut_key();
-		if (key && *key)
+		String str = menu->label();
+		String key = menu->empty() ? get_shortcut_key_name(menu->shortcut_key()) : "";
+		if (!key.empty())
 		{
-			s += '\t';
+			str += '\t';
 			uint mods = menu->shortcut_modifiers();
-			if (mods &  MOD_CONTROL)           s += "Ctrl+";
-			if (mods &  MOD_SHIFT)             s += "Shift+";
-			if (mods & (MOD_ALT | MOD_OPTION)) s += "Alt+";
-			s += key;
+			if (mods &  MOD_CONTROL)           str += "Ctrl+";
+			if (mods &  MOD_SHIFT)             str += "Shift+";
+			if (mods & (MOD_ALT | MOD_OPTION)) str += "Alt+";
+			str += key;
 		}
-		return s;
+		return str;
 	}
 
 	void
@@ -200,6 +249,8 @@ namespace Reflex
 		}
 
 		SetMenuItemInfoW(self.hparent, self.id, FALSE, &mii);
+
+		set_modified(menu);
 	}
 
 	void
@@ -270,12 +321,89 @@ namespace Reflex
 
 		RemoveMenu(p.hsubmenu, c.id, MF_BYCOMMAND);
 		c.hparent = NULL;
+
+		set_modified(parent);
 	}
 
 	HMENU
 	Menu_get_hmenu (Menu* menu)
 	{
 		return menu ? get_data(menu).get_hsubmenu(menu, true) : NULL;
+	}
+
+	bool
+	Menu_is_modified (Menu* menu)
+	{
+		return menu && get_data(menu).modified;
+	}
+
+	static void
+	collect_accels (std::vector<ACCEL>* accels, Menu* menu)
+	{
+		for (auto& child : *menu)
+		{
+			Menu* item = child.get();
+			if (!item) continue;
+
+			int key = item->shortcut_key();
+			if (key >= 0 && item->empty())
+			{
+				uint mods = item->shortcut_modifiers();
+
+				ACCEL accel = {0};
+				accel.key   = (WORD) key;// KeyCode == VK
+				accel.cmd   = (WORD) get_data(item).id;
+				accel.fVirt = (BYTE)              (FVIRTKEY      |
+					(mods &  MOD_CONTROL           ? FCONTROL : 0) |
+					(mods &  MOD_SHIFT             ? FSHIFT   : 0) |
+					(mods & (MOD_ALT | MOD_OPTION) ? FALT     : 0));
+				accels->emplace_back(accel);
+			}
+
+			collect_accels(accels, item);
+		}
+	}
+
+	HACCEL
+	Menu_create_accelerator_table (Menu* menu)
+	{
+		if (!menu) return NULL;
+
+		get_data(menu).modified = false;
+
+		std::vector<ACCEL> accels;
+		collect_accels(&accels, menu);
+		if (accels.empty()) return NULL;
+
+		return CreateAcceleratorTableW(accels.data(), (int) accels.size());
+	}
+
+	static Menu*
+	find_item (Menu* menu, UINT id)
+	{
+		for (auto& child : *menu)
+		{
+			Menu* item = child.get();
+			if (!item || !item->is_enabled()) continue;
+
+			if (get_data(item).id == id) return item;
+
+			Menu* found = find_item(item, id);
+			if (found) return found;
+		}
+		return NULL;
+	}
+
+	void
+	Menu_call_command_event (Menu* menu, uint id)
+	{
+		if (!menu) return;
+
+		Menu* item = find_item(menu, (UINT) id);
+		if (!item) return;
+
+		Event e;
+		item->on_click(&e);
 	}
 
 	void

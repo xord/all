@@ -14,6 +14,12 @@ namespace Reflex
 
 	HMENU Menu_get_hmenu (Menu* menu);
 
+	bool Menu_is_modified (Menu* menu);
+
+	HACCEL Menu_create_accelerator_table (Menu* menu);
+
+	void Menu_call_command_event (Menu* menu, uint id);
+
 	void Menu_call_command_event (HMENU hmenu, uint index);
 
 	void Menu_call_open_event  (HMENU hmenu);

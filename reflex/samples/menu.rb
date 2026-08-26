@@ -8,9 +8,11 @@ require 'reflex'
 icon = Rays::Image.new(8, 8).paint {fill :red; ellipse 0, 0, 8}
 
 Reflex.start do
+  mod      = Xot.osx? ? :command : :control
   app_menu = Reflex::Application.instance.menu || Reflex::Menu.new
   file     = app_menu.add Reflex::Menu.new('File'), index: 1
-  hello    = file    .add Reflex::Menu.new('Hello', image: icon)
+  hello    = file    .add Reflex::Menu.new('Hello', image: icon, shortcut: [:e, mod])
+  help     = file    .add Reflex::Menu.new('Help', shortcut: :f1)
 
   popup_menu = Reflex::Menu.new
   cut        = popup_menu.add Reflex::Menu.new('Cut')
@@ -18,6 +20,7 @@ Reflex.start do
   paste      = popup_menu.add Reflex::Menu.new('Paste')
 
   hello.on(:click) {|e| p :hello}
+  help .on(:click) {|e| p :help}
   cut  .on(:click) {|e| p :cut}
   copy .on(:click) {|e| p :copy}
   paste.on(:click) {|e| p :paste}

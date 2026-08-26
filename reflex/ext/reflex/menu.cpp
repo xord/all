@@ -4,6 +4,7 @@
 #include <ranges>
 #include <rays/ruby/image.h>
 #include "reflex/exception.h"
+#include "reflex/ruby/reflex.h"
 #include "reflex/ruby/selector.h"
 #include "reflex/ruby/view.h"
 #include "defs.h"
@@ -158,7 +159,7 @@ RUCY_DEF1(set_shortcut_key, key)
 {
 	CHECK;
 	THIS->set_shortcut(
-		key ? to<const char*>(key) : NULL,
+		key ? to<Reflex::KeyCode>(key) : Reflex::KEY_NONE,
 		THIS->shortcut_modifiers());
 }
 RUCY_END
@@ -167,7 +168,7 @@ static
 RUCY_DEF0(get_shortcut_key)
 {
 	CHECK;
-	return value(THIS->shortcut_key());
+	return value((int) THIS->shortcut_key());
 }
 RUCY_END
 
@@ -296,10 +297,10 @@ Init_reflex_menu ()
 	cMenu.define_method("enabled?", is_enabled);
 	cMenu.define_method("check!",      check);
 	cMenu.define_method("checked?", is_checked);
-	cMenu.define_method("shortcut_key=",       set_shortcut_key);
-	cMenu.define_method("shortcut_key",        get_shortcut_key);
-	cMenu.define_method("shortcut_modifiers=", set_shortcut_modifiers);
-	cMenu.define_method("shortcut_modifiers",  get_shortcut_modifiers);
+	cMenu.define_private_method("set_shortcut_key!", set_shortcut_key);
+	cMenu.define_private_method("shortcut_key!",     get_shortcut_key);
+	cMenu.define_method("shortcut_modifiers=",       set_shortcut_modifiers);
+	cMenu.define_method("shortcut_modifiers",        get_shortcut_modifiers);
 	cMenu.define_method("separator?", is_separator);
 	cMenu.define_method("parent", get_parent);
 	cMenu.define_method("size",  get_size);

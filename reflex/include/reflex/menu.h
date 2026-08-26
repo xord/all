@@ -65,11 +65,11 @@ namespace Reflex
 
 			virtual bool is_checked () const;
 
-			virtual void    set_shortcut (const char* key, uint modifiers = MOD_NONE);
+			virtual void set_shortcut (KeyCode key, uint modifiers = MOD_NONE);
 
-			virtual const char* shortcut_key () const;
+			virtual KeyCode  shortcut_key () const;
 
-			virtual uint        shortcut_modifiers () const;
+			virtual uint     shortcut_modifiers () const;
 
 			virtual void     set_image (const Image& image);
 

@@ -58,7 +58,12 @@ namespace Reflex
 		{
 			if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 			{
-				if (msg.message == WM_QUIT) break;
+				if (msg.message == WM_QUIT)
+					break;
+
+				if (Window_translate_accelerator(&msg))
+					continue;
+
 				TranslateMessage(&msg);
 				DispatchMessageW(&msg);
 			}

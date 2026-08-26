@@ -14,6 +14,8 @@ namespace Reflex
 
 	HWND Window_get_hwnd (const Window* window);
 
+	bool Window_translate_accelerator (MSG* msg);
+
 	void Window_update (Window* win);
 
 

@@ -125,22 +125,52 @@ class TestMenu < Test::Unit::TestCase
   def test_shortcut()
     m = menu
     m.shortcut_key = :s
-    assert_equal 's', m.shortcut_key
-    assert_equal [],  m.shortcut_modifiers
+    assert_equal :s, m.shortcut_key
+    assert_equal [], m.shortcut_modifiers
 
-    m.shortcut = [:c, :command]
-    assert_equal 'c',         m.shortcut_key
-    assert_equal [:command],  m.shortcut_modifiers
+    m.shortcut = [:c, :control]
+    assert_equal :c,          m.shortcut_key
+    assert_equal [:control],  m.shortcut_modifiers
+  end
+
+  def test_shortcut_key_symbol_roundtrip()
+    m = menu
+    # non-character keys are representable now (were impossible as strings)
+    m.shortcut_key = :f1
+    assert_equal :f1, m.shortcut_key
+    m.shortcut_key = :left
+    assert_equal :left, m.shortcut_key
+
+    # a KeyCode constant is also accepted directly
+    m.shortcut_key = Reflex::KEY_A
+    assert_equal :a, m.shortcut_key
+
+    # nil clears it
+    m.shortcut_key = nil
+    assert_nil m.shortcut_key
+  end
+
+  def test_shortcut_key_unknown_symbol_raises()
+    assert_raise(ArgumentError) {menu.shortcut_key = :nonexistent}
   end
 
   def test_shortcut_key_keeps_modifiers()
     m = menu
-    m.shortcut = [:c, :command, :shift]
-    assert_equal  'c',                   m.shortcut_key
-    assert_equal %i[command shift].sort, m.shortcut_modifiers.sort
+    m.shortcut = [:c, :control, :shift]
+    assert_equal :c,                     m.shortcut_key
+    assert_equal %i[control shift].sort, m.shortcut_modifiers.sort
     m.shortcut_key = :v
-    assert_equal     'v',                m.shortcut_key
-    assert_equal %i[command shift].sort, m.shortcut_modifiers.sort
+    assert_equal :v,                     m.shortcut_key
+    assert_equal %i[control shift].sort, m.shortcut_modifiers.sort
+  end
+
+  def test_shortcut_modifiers_unsupported_on_platform_raise()
+    if osx?
+      assert_raise(ArgumentError) {menu.shortcut_modifiers = [:win]}
+    elsif win32?
+      assert_raise(ArgumentError) {menu.shortcut_modifiers = [:command]}
+      assert_raise(ArgumentError) {menu.shortcut_modifiers = [:win]}
+    end
   end
 
   def test_image()

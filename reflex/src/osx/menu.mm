@@ -20,7 +20,6 @@ namespace Rays
 
 
 @interface ReflexMenuTarget : NSObject <NSMenuDelegate>
-	- (void) handleMenuItem: (NSMenuItem*) sender;
 @end
 
 
@@ -149,6 +148,126 @@ namespace Reflex
 		return new MenuData();
 	}
 
+	void
+	Menu_validate_shortcut_modifiers (uint modifiers)
+	{
+		static const uint SUPPORTED =
+			MOD_SHIFT | MOD_CONTROL | MOD_ALT | MOD_OPTION | MOD_COMMAND;
+
+		if (modifiers & ~SUPPORTED)
+		{
+			argument_error(
+				__FILE__, __LINE__,
+				"modifiers 0x%X can not be used for a shortcut on macOS.",
+				modifiers & ~SUPPORTED);
+		}
+	}
+
+	static NSString*
+	get_keyequivalent_string (int key)
+	{
+		using namespace Reflex;
+		switch (key)
+		{
+			#define KEY_STR(key) [NSString stringWithFormat: @"%C", (unichar) (key)]
+
+			case KEY_A: return @"a";
+			case KEY_B: return @"b";
+			case KEY_C: return @"c";
+			case KEY_D: return @"d";
+			case KEY_E: return @"e";
+			case KEY_F: return @"f";
+			case KEY_G: return @"g";
+			case KEY_H: return @"h";
+			case KEY_I: return @"i";
+			case KEY_J: return @"j";
+			case KEY_K: return @"k";
+			case KEY_L: return @"l";
+			case KEY_M: return @"m";
+			case KEY_N: return @"n";
+			case KEY_O: return @"o";
+			case KEY_P: return @"p";
+			case KEY_Q: return @"q";
+			case KEY_R: return @"r";
+			case KEY_S: return @"s";
+			case KEY_T: return @"t";
+			case KEY_U: return @"u";
+			case KEY_V: return @"v";
+			case KEY_W: return @"w";
+			case KEY_X: return @"x";
+			case KEY_Y: return @"y";
+			case KEY_Z: return @"z";
+
+			case KEY_0: return @"0";
+			case KEY_1: return @"1";
+			case KEY_2: return @"2";
+			case KEY_3: return @"3";
+			case KEY_4: return @"4";
+			case KEY_5: return @"5";
+			case KEY_6: return @"6";
+			case KEY_7: return @"7";
+			case KEY_8: return @"8";
+			case KEY_9: return @"9";
+
+			case KEY_MINUS:     return @"-";
+			case KEY_EQUAL:     return @"=";
+			case KEY_COMMA:     return @",";
+			case KEY_PERIOD:    return @".";
+			case KEY_SEMICOLON: return @";";
+			case KEY_QUOTE:     return @"'";
+			case KEY_SLASH:     return @"/";
+			case KEY_BACKSLASH: return @"\\";
+			case KEY_GRAVE:     return @"`";
+			case KEY_LBRACKET:  return @"[";
+			case KEY_RBRACKET:  return @"]";
+
+			case KEY_ENTER:     return @"\r";
+			case KEY_SPACE:     return @" ";
+			case KEY_TAB:       return @"\t";
+			case KEY_ESCAPE:    return @"\033";
+			case KEY_BACKSPACE: return @"\b";
+			case KEY_DELETE:    return KEY_STR(NSDeleteFunctionKey);
+			case KEY_INSERT:    return KEY_STR(NSInsertFunctionKey);
+
+			case KEY_LEFT:     return KEY_STR(NSLeftArrowFunctionKey);
+			case KEY_RIGHT:    return KEY_STR(NSRightArrowFunctionKey);
+			case KEY_UP:       return KEY_STR(NSUpArrowFunctionKey);
+			case KEY_DOWN:     return KEY_STR(NSDownArrowFunctionKey);
+			case KEY_HOME:     return KEY_STR(NSHomeFunctionKey);
+			case KEY_END:      return KEY_STR(NSEndFunctionKey);
+			case KEY_PAGEUP:   return KEY_STR(NSPageUpFunctionKey);
+			case KEY_PAGEDOWN: return KEY_STR(NSPageDownFunctionKey);
+
+			case KEY_F1:  return KEY_STR(NSF1FunctionKey);
+			case KEY_F2:  return KEY_STR(NSF2FunctionKey);
+			case KEY_F3:  return KEY_STR(NSF3FunctionKey);
+			case KEY_F4:  return KEY_STR(NSF4FunctionKey);
+			case KEY_F5:  return KEY_STR(NSF5FunctionKey);
+			case KEY_F6:  return KEY_STR(NSF6FunctionKey);
+			case KEY_F7:  return KEY_STR(NSF7FunctionKey);
+			case KEY_F8:  return KEY_STR(NSF8FunctionKey);
+			case KEY_F9:  return KEY_STR(NSF9FunctionKey);
+			case KEY_F10: return KEY_STR(NSF10FunctionKey);
+			case KEY_F11: return KEY_STR(NSF11FunctionKey);
+			case KEY_F12: return KEY_STR(NSF12FunctionKey);
+			case KEY_F13: return KEY_STR(NSF13FunctionKey);
+			case KEY_F14: return KEY_STR(NSF14FunctionKey);
+			case KEY_F15: return KEY_STR(NSF15FunctionKey);
+			case KEY_F16: return KEY_STR(NSF16FunctionKey);
+			case KEY_F17: return KEY_STR(NSF17FunctionKey);
+			case KEY_F18: return KEY_STR(NSF18FunctionKey);
+			case KEY_F19: return KEY_STR(NSF19FunctionKey);
+			case KEY_F20: return KEY_STR(NSF20FunctionKey);
+			case KEY_F21: return KEY_STR(NSF21FunctionKey);
+			case KEY_F22: return KEY_STR(NSF22FunctionKey);
+			case KEY_F23: return KEY_STR(NSF23FunctionKey);
+			case KEY_F24: return KEY_STR(NSF24FunctionKey);
+
+			#undef KEY_STR
+		}
+		return @"";
+	}
+
 	static NSEventModifierFlags
 	modifiers2mask (uint mods)
 	{
@@ -197,7 +316,7 @@ namespace Reflex
 		[self.nsitem setTitle: [NSString stringWithUTF8String: menu->label()]];
 		[self.nsitem setEnabled: menu->is_enabled() ? YES : NO];
 		[self.nsitem setState: menu->is_checked() ? NSControlStateValueOn : NSControlStateValueOff];
-		[self.nsitem setKeyEquivalent: [NSString stringWithUTF8String: menu->shortcut_key()]];
+		[self.nsitem setKeyEquivalent: get_keyequivalent_string(menu->shortcut_key())];
 		[self.nsitem setKeyEquivalentModifierMask: modifiers2mask(menu->shortcut_modifiers())];
 		[self.nsitem setImage: menu->image() ? Rays::Bitmap_get_nsimage(menu->image().bitmap()) : nil];
 		[self.nsitem setSubmenu: menu->empty() ? nil : self.nssubmenu];
@@ -291,10 +410,52 @@ namespace Reflex
 }// Reflex
 
 
+static NSMenuItem*
+find_key_equivalent_item (NSMenu* nsmenu, NSEvent* event)
+{
+	static const NSEventModifierFlags KEY_EQUIVALENT_MODIFIER_MASK =
+		NSEventModifierFlagCommand |
+		NSEventModifierFlagShift   |
+		NSEventModifierFlagOption  |
+		NSEventModifierFlagControl;
+
+	if (event.type != NSEventTypeKeyDown)
+		return nil;
+
+	NSEventModifierFlags mods = event.modifierFlags & KEY_EQUIVALENT_MODIFIER_MASK;
+	NSString* chars           = event.charactersIgnoringModifiers;
+
+	for (NSMenuItem* nsitem in nsmenu.itemArray)
+	{
+		if (!nsitem.enabled) continue;
+
+		if (nsitem.hasSubmenu)
+		{
+			NSMenuItem* found = find_key_equivalent_item(nsitem.submenu, event);
+			if (found) return found;
+		}
+		else if (
+			nsitem.keyEquivalent.length > 0          &&
+			nsitem.keyEquivalentModifierMask == mods &&
+			[nsitem.keyEquivalent isEqualToString: chars])
+		{
+			return nsitem;
+		}
+	}
+	return nil;
+}
+
+
 @implementation ReflexMenuTarget
 
-	- (void) handleMenuItem: (NSMenuItem*) nsitem
+	- (void) handleMenuItem: (id) sender
 	{
+		NSMenuItem* nsitem = nil;
+		if ([sender isKindOfClass: NSMenuItem.class])
+			nsitem = (NSMenuItem*) sender;
+		else if ([sender isKindOfClass: NSMenu.class])
+			nsitem = find_key_equivalent_item((NSMenu*) sender, NSApp.currentEvent);
+
 		Reflex::Menu* menu = get_owner(nsitem);
 		if (!menu) return;
 
@@ -348,27 +509,13 @@ namespace Reflex
 		// answer key equivalent matching ourselves: AppKit's own scanning of
 		// delegate-backed menus caches stale results across setMainMenu calls,
 		// leaving every shortcut dead until the menu bar is clicked once
-		static const NSEventModifierFlags MODIFIER_MASK =
-			NSEventModifierFlagCommand |
-			NSEventModifierFlagShift   |
-			NSEventModifierFlagOption  |
-			NSEventModifierFlagControl;
 
-		NSEventModifierFlags mods = event.modifierFlags & MODIFIER_MASK;
-		NSString* chars           = event.charactersIgnoringModifiers;
+		NSMenuItem* nsitem = find_key_equivalent_item(nsmenu, event);
+		if (!nsitem) return NO;
 
-		for (NSMenuItem* nsitem in nsmenu.itemArray)
-		{
-			if (nsitem.hasSubmenu || !nsitem.enabled)           continue;
-			if (nsitem.keyEquivalent.length == 0)               continue;
-			if (nsitem.keyEquivalentModifierMask != mods)       continue;
-			if (![nsitem.keyEquivalent isEqualToString: chars]) continue;
-
-			*target = nsitem.target;
-			*action = nsitem.action;
-			return YES;
-		}
-		return NO;
+		*target = nsitem.target;
+		*action = nsitem.action;
+		return YES;
 	}
 
 @end// ReflexMenuTarget
