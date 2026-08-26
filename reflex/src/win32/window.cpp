@@ -47,11 +47,24 @@ namespace Reflex
 		// the first half of a surrogate pair, waiting for the second half
 		wchar_t pending_surrogate = 0;
 
+		HACCEL haccel             = NULL;
+
 		OpenGLContext context;
 
 		PressingKeyMap pressing_keys;
 
 		mutable String title_tmp;
+
+		virtual ~WindowData ()
+		{
+			set_accelerator_table(NULL);
+		}
+
+		void set_accelerator_table (HACCEL haccel)
+		{
+			if (this->haccel) DestroyAcceleratorTable(this->haccel);
+			this->haccel = haccel;
+		}
 
 		bool is_valid () const
 		{
@@ -73,6 +86,14 @@ namespace Reflex
 	get_data (const Window* window)
 	{
 		return get_data(const_cast<Window*>(window));
+	}
+
+	HWND
+	Window_get_hwnd (const Window* window)
+	{
+		if (!window) return NULL;
+
+		return get_data(window)->hwnd;
 	}
 
 	static bool
@@ -106,6 +127,24 @@ namespace Reflex
 			return (Window*) GetWindowLongPtrW(hwnd, GWLP_USERDATA);
 		else
 			return (Window*) GetPropW(hwnd, USERDATA_PROP);
+	}
+
+	bool
+	Window_translate_accelerator (MSG* msg)
+	{
+		if (!msg || !msg->hwnd) return false;
+
+		if (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN)
+			return false;
+
+		HWND hwnd   = GetAncestor(msg->hwnd, GA_ROOT);
+		Window* win = get_window_from_hwnd(hwnd);
+		if (!win) return false;
+
+		HACCEL haccel = get_data(win)->haccel;
+		if (!haccel) return false;
+
+		return TranslateAcceleratorW(hwnd, haccel, msg) != 0;
 	}
 
 	static void
@@ -727,6 +766,18 @@ namespace Reflex
 				return 0;
 			}
 
+			case WM_COMMAND:
+			{
+				if (HIWORD(wp) == 1)
+				{
+					// menu items are reported by WM_MENUCOMMAND (MNS_NOTIFYBYPOS),
+					// so only accelerators (HIWORD == 1) arrive here
+					Menu_call_command_event(win->menu(), LOWORD(wp));
+					return 0;
+				}
+				break;
+			}
+
 			case WM_MENUCOMMAND:
 			{
 				Menu_call_command_event((HMENU) lp, (uint) wp);
@@ -1109,22 +1160,17 @@ namespace Reflex
 		return Bounds(x, y, w, h);
 	}
 
-	HWND
-	Window_get_hwnd (const Window* window)
-	{
-		if (!window) return NULL;
-
-		return get_data(window)->hwnd;
-	}
-
 	void
 	Window_set_menu (Window* window, Menu* menu)
 	{
-		HWND hwnd = get_data(window)->hwnd;
+		WindowData* self = get_data(window);
+		HWND hwnd        = self->hwnd;
 		if (!hwnd) return;
 
 		SetMenu(hwnd, menu ? Menu_get_hmenu(menu) : NULL);
 		DrawMenuBar(hwnd);
+
+		self->set_accelerator_table(menu ? Menu_create_accelerator_table(menu) : NULL);
 	}
 
 	Screen

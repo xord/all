@@ -2,6 +2,7 @@
 
 
 #include <string>
+#include <vector>
 #include "reflex/exception.h"
 #include "reflex/event.h"
 #include "reflex/view.h"
@@ -172,24 +173,24 @@ namespace Reflex
 	{
 		if (key < 0) return "";
 
-		UINT vsc = MapVirtualKey((UINT) key, MAPVK_VK_TO_VSC_EX);
+		UINT vsc = MapVirtualKeyW((UINT) key, MAPVK_VK_TO_VSC_EX);
 		if (vsc == 0) return "";
 
 		LONG lparam = (LONG) ((vsc & 0xff) << 16);
 		if (vsc & 0xff00) lparam |= 1 << 24;// extended key
 
-		char name[64] = {0};
-		if (GetKeyNameTextA(lparam, name, sizeof(name)) <= 0)
-			return "";
+		wchar_t name[64] = {0};
+		int len = GetKeyNameTextW(lparam, name, (int) (sizeof(name) / sizeof(*name)));
+		if (len <= 0) return "";
 
-		return name;
+		return String(name, (size_t) len);
 	}
 
 	static String
 	make_item_string (const Menu* menu)
 	{
 		String str = menu->label();
-		String key = get_shortcut_key_name(menu->shortcut_key());
+		String key = menu->empty() ? get_shortcut_key_name(menu->shortcut_key()) : "";
 		if (!key.empty())
 		{
 			str += '\t';
@@ -309,6 +310,73 @@ namespace Reflex
 	Menu_get_hmenu (Menu* menu)
 	{
 		return menu ? get_data(menu).get_hsubmenu(menu, true) : NULL;
+	}
+
+	static void
+	collect_accels (std::vector<ACCEL>* accels, Menu* menu)
+	{
+		for (auto& child : *menu)
+		{
+			Menu* item = child.get();
+			if (!item) continue;
+
+			int key = item->shortcut_key();
+			if (key >= 0 && item->empty())
+			{
+				uint mods = item->shortcut_modifiers();
+
+				ACCEL accel = {0};
+				accel.key   = (WORD) key;// KeyCode == VK
+				accel.cmd   = (WORD) get_data(item).id;
+				accel.fVirt = (BYTE)              (FVIRTKEY      |
+					(mods &  MOD_CONTROL           ? FCONTROL : 0) |
+					(mods &  MOD_SHIFT             ? FSHIFT   : 0) |
+					(mods & (MOD_ALT | MOD_OPTION) ? FALT     : 0));
+				accels->emplace_back(accel);
+			}
+
+			collect_accels(accels, item);
+		}
+	}
+
+	HACCEL
+	Menu_create_accelerator_table (Menu* menu)
+	{
+		if (!menu) return NULL;
+
+		std::vector<ACCEL> accels;
+		collect_accels(&accels, menu);
+		if (accels.empty()) return NULL;
+
+		return CreateAcceleratorTableW(accels.data(), (int) accels.size());
+	}
+
+	static Menu*
+	find_item (Menu* menu, UINT id)
+	{
+		for (auto& child : *menu)
+		{
+			Menu* item = child.get();
+			if (!item || !item->is_enabled()) continue;
+
+			if (get_data(item).id == id) return item;
+
+			Menu* found = find_item(item, id);
+			if (found) return found;
+		}
+		return NULL;
+	}
+
+	void
+	Menu_call_command_event (Menu* menu, uint id)
+	{
+		if (!menu) return;
+
+		Menu* item = find_item(menu, (UINT) id);
+		if (!item) return;
+
+		Event e;
+		item->on_click(&e);
 	}
 
 	void
