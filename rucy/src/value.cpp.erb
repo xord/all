@@ -313,6 +313,12 @@ namespace Rucy
 	}
 
 	Value
+	Value::freeze ()
+	{
+		return rb_obj_freeze(val);
+	}
+
+	Value
 	Value::inspect () const
 	{
 		RUCY_SYM(inspect);
