@@ -83,7 +83,6 @@ create_window_menu ()
 
 	{
 		Reflex::Application* application;
-		bool started;
 		NSStatusItem* status_item;
 	}
 
@@ -93,7 +92,6 @@ create_window_menu ()
 		if (!self) return nil;
 
 		application = NULL;
-		started     = false;
 		status_item = nil;
 
 		return self;
@@ -149,12 +147,11 @@ create_window_menu ()
 
 	- (BOOL) callOnStart
 	{
-		if (!application || started)
+		if (!application)
 			return YES;
 
 		Reflex::Event e;
 		Application_call_start(application, &e);
-		started = true;
 
 		if (e.is_blocked()) [self quit];
 		return !e.is_blocked();

@@ -129,8 +129,13 @@ namespace Reflex
 		Menu* menu = app ? app->background_menu() : NULL;
 		if (!menu && app && app->background())
 			menu = app->menu();
+
 		if (!menu)
-			return Tray_remove_icon();
+		{
+			Tray_remove_icon();
+			Application_quit_if_should();
+			return;
+		}
 
 		if (!tray_hwnd)
 			tray_hwnd = create_tray_window();

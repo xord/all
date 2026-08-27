@@ -21,6 +21,8 @@ namespace Reflex
 
 		bool background = false;
 
+		bool started    = false;
+
 		bool quitting   = false;
 
 	};// Application::Data

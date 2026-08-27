@@ -23,7 +23,7 @@ namespace Reflex
 	bool
 	Application_should_quit (Application* app)
 	{
-		if (!app)
+		if (!app || !app->self->started)
 			return false;
 
 		if (app->background_menu())
@@ -45,10 +45,14 @@ namespace Reflex
 	void
 	Application_call_start (Application* app, Event* e)
 	{
+		if (app->self->started) return;
+
 		Gamepad_init(app);
 		MIDI_init(app);
 
 		app->on_start(e);
+
+		app->self->started = true;
 	}
 
 	static void

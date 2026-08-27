@@ -1,4 +1,4 @@
-#include "../application.h"
+#include "application.h"
 
 
 #include <xot/windows.h>
@@ -33,6 +33,13 @@ namespace Reflex
 	Application_set_background_menu (Application* app, Menu* menu)
 	{
 		Tray_update_icon(app);
+	}
+
+	void
+	Application_quit_if_should ()
+	{
+		if (Application_should_quit(app()))
+			app()->quit();
 	}
 
 

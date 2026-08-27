@@ -15,10 +15,11 @@
 #include "reflex/debug.h"
 #include "../view.h"
 #include "event.h"
-#include "gamepad.h"
-#include "screen.h"
-#include "opengl.h"
+#include "application.h"
 #include "menu.h"
+#include "screen.h"
+#include "gamepad.h"
+#include "opengl.h"
 
 
 namespace Reflex
@@ -220,8 +221,7 @@ namespace Reflex
 
 		win->release();
 
-		if (Application_should_quit(Reflex::app()))
-			Reflex::app()->quit();
+		Application_quit_if_should();
 	}
 
 	static bool

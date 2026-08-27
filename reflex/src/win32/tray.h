@@ -4,7 +4,7 @@
 #define __REFLEX_SRC_WIN32_TRAY_H__
 
 
-#include "../application.h"
+#include "application.h"
 
 
 namespace Reflex
