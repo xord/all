@@ -1178,7 +1178,7 @@ namespace Reflex
 		HWND hwnd        = self->hwnd;
 		if (!hwnd) return;
 
-		SetMenu(hwnd, menu ? Menu_get_hmenu(menu) : NULL);
+		SetMenu(hwnd, menu ? Menu_get_hmenu(menu, true) : NULL);
 		DrawMenuBar(hwnd);
 
 		self->set_accelerator_table(menu ? Menu_create_accelerator_table(menu) : NULL);

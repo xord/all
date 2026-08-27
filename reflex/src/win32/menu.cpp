@@ -255,7 +255,7 @@ namespace Reflex
 
 		MenuData& self = get_data(menu);
 
-		HMENU hmenu = self.get_hsubmenu(menu, false);
+		HMENU hmenu = self.get_hsubmenu(menu);
 		if (!hmenu)
 			invalid_state_error(__FILE__, __LINE__);
 
@@ -321,9 +321,9 @@ namespace Reflex
 	}
 
 	HMENU
-	Menu_get_hmenu (Menu* menu)
+	Menu_get_hmenu (Menu* menu, bool menubar)
 	{
-		return menu ? get_data(menu).get_hsubmenu(menu, true) : NULL;
+		return menu ? get_data(menu).get_hsubmenu(menu, menubar) : NULL;
 	}
 
 	bool
