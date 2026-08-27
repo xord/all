@@ -1,9 +1,10 @@
-#include "../application.h"
+#include "application.h"
 
 
 #include <xot/windows.h>
 #include "reflex/exception.h"
 #include "window.h"
+#include "tray.h"
 
 
 namespace Reflex
@@ -19,6 +20,26 @@ namespace Reflex
 	void
 	Application_set_menu (Application* app, Menu* menu)
 	{
+		Tray_update_icon(app);
+	}
+
+	void
+	Application_set_background (Application* app, bool state)
+	{
+		Tray_update_icon(app);
+	}
+
+	void
+	Application_set_background_menu (Application* app, Menu* menu)
+	{
+		Tray_update_icon(app);
+	}
+
+	void
+	Application_quit_if_should ()
+	{
+		if (Application_should_quit(app()))
+			app()->quit();
 	}
 
 
@@ -46,6 +67,8 @@ namespace Reflex
 	void
 	Application::start ()
 	{
+		Tray_update_icon(this);
+
 		Event e;
 		Application_call_start(this, &e);
 
@@ -87,6 +110,7 @@ namespace Reflex
 
 		timeEndPeriod(1);
 
+		Tray_remove_icon();
 		Application_cleanup(this);
 
 		if (msg.wParam != 0)

@@ -15,10 +15,11 @@
 #include "reflex/debug.h"
 #include "../view.h"
 #include "event.h"
-#include "gamepad.h"
-#include "screen.h"
-#include "opengl.h"
+#include "application.h"
 #include "menu.h"
+#include "screen.h"
+#include "gamepad.h"
+#include "opengl.h"
 
 
 namespace Reflex
@@ -220,8 +221,7 @@ namespace Reflex
 
 		win->release();
 
-		if (Window_all().empty())
-			Reflex::app()->quit();
+		Application_quit_if_should();
 	}
 
 	static bool
@@ -1178,7 +1178,7 @@ namespace Reflex
 		HWND hwnd        = self->hwnd;
 		if (!hwnd) return;
 
-		SetMenu(hwnd, menu ? Menu_get_hmenu(menu) : NULL);
+		SetMenu(hwnd, menu ? Menu_get_hmenu(menu, true) : NULL);
 		DrawMenuBar(hwnd);
 
 		self->set_accelerator_table(menu ? Menu_create_accelerator_table(menu) : NULL);

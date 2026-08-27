@@ -12,7 +12,7 @@ namespace Reflex
 {
 
 
-	HMENU Menu_get_hmenu (Menu* menu);
+	HMENU Menu_get_hmenu (Menu* menu, bool menubar = false);
 
 	bool Menu_is_modified (Menu* menu);
 

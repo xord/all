@@ -76,6 +76,40 @@ RUCY_DEF0(get_menu)
 RUCY_END
 
 static
+RUCY_DEF1(set_background, state)
+{
+	CHECK;
+	THIS->set_background(to<bool>(state));
+	return state;
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_background)
+{
+	CHECK;
+	return value(THIS->background());
+}
+RUCY_END
+
+static
+RUCY_DEF1(set_background_menu, menu)
+{
+	CHECK;
+	THIS->set_background_menu(menu ? to<Reflex::Menu*>(menu) : NULL);
+	return menu;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_background_menu)
+{
+	CHECK;
+	return value(THIS->background_menu());
+}
+RUCY_END
+
+static
 RUCY_DEF0(each_window)
 {
 	CHECK;
@@ -170,6 +204,10 @@ Init_reflex_application ()
 	cApplication.define_method("name",  get_name);
 	cApplication.define_method("menu=", set_menu);
 	cApplication.define_method("menu",  get_menu);
+	cApplication.define_method("background=",      set_background);
+	cApplication.define_method("background?",       is_background);
+	cApplication.define_method("background_menu=", set_background_menu);
+	cApplication.define_method("background_menu",  get_background_menu);
 	cApplication.define_method("each_window", each_window);
 	cApplication.define_method("on_start", on_start);
 	cApplication.define_method("on_quit",  on_quit);

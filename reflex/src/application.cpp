@@ -20,6 +20,21 @@ namespace Reflex
 	}// global
 
 
+	bool
+	Application_should_quit (Application* app)
+	{
+		if (!app || !app->self->started)
+			return false;
+
+		if (app->background_menu())
+			return false;
+
+		if (app->background() && app->menu())
+			return false;
+
+		return Reflex::Window_all().empty();
+	}
+
 	void
 	Application_cleanup (Application* app)
 	{
@@ -30,10 +45,14 @@ namespace Reflex
 	void
 	Application_call_start (Application* app, Event* e)
 	{
+		if (app->self->started) return;
+
 		Gamepad_init(app);
 		MIDI_init(app);
 
 		app->on_start(e);
+
+		app->self->started = true;
 	}
 
 	static void
@@ -123,6 +142,41 @@ namespace Reflex
 	Application::menu () const
 	{
 		return const_cast<Application*>(this)->menu();
+	}
+
+	void
+	Application::set_background (bool state)
+	{
+		if (state == self->background)
+			return;
+
+		self->background = state;
+		Application_set_background(this, state);
+	}
+
+	bool
+	Application::background () const
+	{
+		return self->background;
+	}
+
+	void
+	Application::set_background_menu (Menu* menu)
+	{
+		self->background_menu = menu;
+		Application_set_background_menu(this, menu);
+	}
+
+	Menu*
+	Application::background_menu ()
+	{
+		return self->background_menu.get();
+	}
+
+	const Menu*
+	Application::background_menu () const
+	{
+		return const_cast<Application*>(this)->background_menu();
 	}
 
 	Application::window_iterator

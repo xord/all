@@ -6,6 +6,7 @@
 #import <Cocoa/Cocoa.h>
 #include "reflex/event.h"
 #include "reflex/exception.h"
+#include "../rays.h"
 #include "menu.h"
 
 
@@ -82,7 +83,7 @@ create_window_menu ()
 
 	{
 		Reflex::Application* application;
-		bool started;
+		NSStatusItem* status_item;
 	}
 
 	- (id) init
@@ -91,7 +92,7 @@ create_window_menu ()
 		if (!self) return nil;
 
 		application = NULL;
-		started     = false;
+		status_item = nil;
 
 		return self;
 	}
@@ -100,7 +101,18 @@ create_window_menu ()
 	{
 		assert(!application);
 
+		[self clearStatusItem];
+
 		[super dealloc];
+	}
+
+	- (void) clearStatusItem
+	{
+		if (!status_item) return;
+
+		[NSStatusBar.systemStatusBar removeStatusItem: status_item];
+		[status_item release];
+		status_item = nil;
 	}
 
 	- (void) bind: (Reflex::Application*) app
@@ -135,15 +147,48 @@ create_window_menu ()
 
 	- (BOOL) callOnStart
 	{
-		if (!application || started)
+		if (!application)
 			return YES;
 
 		Reflex::Event e;
 		Application_call_start(application, &e);
-		started = true;
 
 		if (e.is_blocked()) [self quit];
 		return !e.is_blocked();
+	}
+
+	- (void) updateStatusItem
+	{
+		Reflex::Menu* menu = application ? application->background_menu() : NULL;
+		if (!menu && application && application->background())
+			menu = application->menu();
+		if (!menu)
+			return [self clearStatusItem];
+
+		if (!status_item)
+		{
+			status_item =
+				[[NSStatusBar.systemStatusBar statusItemWithLength: NSVariableStatusItemLength]
+					retain];
+		}
+
+		NSImage* image =
+			menu->image() ? Rays::Bitmap_get_nsimage(menu->image().bitmap()) : nil;
+		[image setTemplate: YES];
+
+		NSString* title = @"";
+		if (!image)
+		{
+			Reflex::String label     = menu->label();
+			if (label.empty()) label = application->name();
+			title = !label.empty()
+				?	[NSString stringWithUTF8String: label]
+				:	NSProcessInfo.processInfo.processName;
+		}
+
+		status_item.button.image = image;
+		status_item.button.title = title;
+		status_item.menu         = Reflex::Menu_get_nssubmenu(menu);
 	}
 
 	- (void) quit
@@ -185,8 +230,8 @@ create_window_menu ()
 
 	- (void) applicationDidFinishLaunching: (NSNotification*) notification
 	{
-		[NSApp setActivationPolicy: NSApplicationActivationPolicyRegular];
-		[NSApp activateIgnoringOtherApps: YES];
+		if (application)
+			Application_set_background(application, application->background());
 
 		[self callOnStart];
 	}
@@ -205,7 +250,7 @@ create_window_menu ()
 
 	- (BOOL) applicationShouldTerminateAfterLastWindowClosed: (NSApplication*) application
 	{
-		return YES;
+		return Application_should_quit(self->application);
 	}
 
 	- (void) applicationWillTerminate: (NSNotification*) notification

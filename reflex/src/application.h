@@ -17,17 +17,18 @@ namespace Reflex
 
 		String name;
 
-		Menu::Ref menu;
+		Menu::Ref menu, background_menu;
 
-		bool quitting = false;
+		bool background = false;
+
+		bool started    = false;
+
+		bool quitting   = false;
 
 	};// Application::Data
 
 
-	Application::Data* Application_create_data ();
-
-	void Application_set_menu (Application* app, Menu* menu);
-
+	bool Application_should_quit (Application* app);
 
 	void Application_cleanup (Application* app);
 
@@ -38,6 +39,15 @@ namespace Reflex
 	void Application_call_device_connect    (Application* app, Device* device);
 
 	void Application_call_device_disconnect (Application* app, Device* device);
+
+
+	Application::Data* Application_create_data ();
+
+	void Application_set_menu (Application* app, Menu* menu);
+
+	void Application_set_background (Application* app, bool state);
+
+	void Application_set_background_menu (Application* app, Menu* menu);
 
 
 }// Reflex

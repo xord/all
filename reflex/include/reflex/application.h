@@ -50,6 +50,16 @@ namespace Reflex
 
 			virtual const Menu* menu () const;
 
+			virtual void    set_background (bool state);
+
+			virtual bool        background () const;
+
+			virtual void    set_background_menu (Menu* menu);
+
+			virtual       Menu* background_menu ();
+
+			virtual const Menu* background_menu () const;
+
 			virtual       window_iterator window_begin ();
 
 			virtual const_window_iterator window_begin () const;
