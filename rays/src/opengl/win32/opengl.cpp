@@ -15,7 +15,7 @@ namespace Rays
 
 
 	const PIXELFORMATDESCRIPTOR*
-	get_pixel_format_descriptor ()
+	OpenGL_get_pixel_format_descriptor ()
 	{
 		static const PIXELFORMATDESCRIPTOR PFD =
 		{
@@ -59,7 +59,7 @@ namespace Rays
 				system_error(__FILE__, __LINE__);
 
 			hdc             = GetDC(hwnd);
-			const auto* pfd = get_pixel_format_descriptor();
+			const auto* pfd = OpenGL_get_pixel_format_descriptor();
 			int pf          = ChoosePixelFormat(hdc, pfd);
 			if (!SetPixelFormat(hdc, pf, pfd))
 				system_error(__FILE__, __LINE__);

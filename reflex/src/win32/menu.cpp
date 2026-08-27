@@ -6,13 +6,8 @@
 #include "reflex/exception.h"
 #include "reflex/event.h"
 #include "reflex/view.h"
+#include "../rays.h"
 #include "window.h"
-
-
-namespace Rays
-{
-	HBITMAP Bitmap_get_hbitmap (const Bitmap& bmp);
-}
 
 
 namespace Reflex

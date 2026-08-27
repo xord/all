@@ -3,14 +3,7 @@
 
 #include <rays/rays.h>
 #include "reflex/exception.h"
-
-
-namespace Rays
-{
-
-	const PIXELFORMATDESCRIPTOR* get_pixel_format_descriptor ();
-
-}// Rays
+#include "../rays.h"
 
 
 namespace Reflex
@@ -40,7 +33,7 @@ namespace Reflex
 		if (!hdc)
 			system_error(__FILE__, __LINE__);
 
-		const auto* pfd = Rays::get_pixel_format_descriptor();
+		const auto* pfd = Rays::OpenGL_get_pixel_format_descriptor();
 		int pf          = ChoosePixelFormat(hdc, pfd);
 		if (pf == 0)
 			system_error(__FILE__, __LINE__);

@@ -8,15 +8,10 @@
 #include "reflex/exception.h"
 #include "reflex/event.h"
 #include "reflex/view.h"
+#include "../rays.h"
 #include "window.h"
 #include "screen.h"
 #import "native_window.h"
-
-
-namespace Rays
-{
-	NSImage* Bitmap_get_nsimage (const Bitmap& bmp);
-}
 
 
 @interface ReflexMenuTarget : NSObject <NSMenuDelegate>
