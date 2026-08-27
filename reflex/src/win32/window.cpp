@@ -220,7 +220,7 @@ namespace Reflex
 
 		win->release();
 
-		if (Window_all().empty())
+		if (Application_should_quit(Reflex::app()))
 			Reflex::app()->quit();
 	}
 

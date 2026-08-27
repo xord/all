@@ -33,6 +33,16 @@ namespace Reflex
 	{
 	}
 
+	void
+	Application_set_background (Application* app, bool state)
+	{
+	}
+
+	void
+	Application_set_background_menu (Application* app, Menu* menu)
+	{
+	}
+
 	ApplicationData&
 	Application_get_data (Application* app)
 	{
