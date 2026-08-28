@@ -103,6 +103,10 @@ get_key_symbol (Reflex::KeyCode code)
 		#define SYMBOL1(name)     SYMBOL2(_##name, #name)
 		#define SYMBOL2(var, sym) {RUCY_SYMBOL(var, sym); return var.value();}
 
+		#if !defined(OSX) && !defined(WIN32)
+			#define HID
+		#endif
+
 		CASE(A): SYMBOL1(a);
 		CASE(B): SYMBOL1(b);
 		CASE(C): SYMBOL1(c);
@@ -165,12 +169,7 @@ get_key_symbol (Reflex::KeyCode code)
 		CASE(LBRACKET):   SYMBOL1(lbracket);
 		CASE(RBRACKET):   SYMBOL1(rbracket);
 
-#if defined(OSX) || defined(IOS) || defined(WIN32) || defined(LINUX) || defined(WASM)
-		CASE(ENTER):     SYMBOL1(enter);
-#else
-		CASE(ENTER):     SYMBOL1(enter);
-		CASE(RETURN):    SYMBOL2(_return, "return");
-#endif
+		CASE(ENTER):     SYMBOL1(enter);// no RETURN
 		CASE(SPACE):     SYMBOL1(space);
 		CASE(TAB):       SYMBOL1(tab);
 		CASE(DELETE):    SYMBOL2(_delete, "delete");
@@ -187,26 +186,28 @@ get_key_symbol (Reflex::KeyCode code)
 		CASE(PAGEUP):   SYMBOL1(pageup);
 		CASE(PAGEDOWN): SYMBOL1(pagedown);
 
-#if !defined(OSX) && !defined(IOS) && !defined(LINUX) && !defined(WASM)
+#if !defined(HID) && !defined(OSX)
 		CASE(SHIFT):
 #endif
 		CASE(LSHIFT):
 		CASE(RSHIFT):   SYMBOL1(shift);
-#if !defined(OSX) && !defined(IOS) && !defined(LINUX) && !defined(WASM)
+#if !defined(HID) && !defined(OSX)
 		CASE(CONTROL):
 #endif
 		CASE(LCONTROL):
 		CASE(RCONTROL): SYMBOL1(control);
 		CASE(ALT):
-#if !defined(IOS) && !defined(LINUX) && !defined(WASM)
+#if !defined(HID)
 		CASE(LALT):
 #endif
 		CASE(RALT):     SYMBOL1(alt);
 		CASE(LWIN):
 		CASE(RWIN):     SYMBOL1(win);
-#if !defined(IOS) && !defined(LINUX) && !defined(WASM)
+#if !defined(HID)
 		CASE(LCOMMAND):
 		CASE(RCOMMAND): SYMBOL1(command);
+#endif
+#if !defined(HID)
 		CASE(LOPTION):
 		CASE(ROPTION):  SYMBOL1(option);
 #endif
@@ -244,7 +245,7 @@ get_key_symbol (Reflex::KeyCode code)
 		CASE(NUM_EQUAL):    SYMBOL1(equal);
 		CASE(NUM_COMMA):    SYMBOL1(comma);
 		CASE(NUM_DECIMAL):  SYMBOL1(decimal);
-#if !defined(IOS) && !defined(LINUX) && !defined(WASM)
+#if !defined(HID)
 		CASE(NUM_CLEAR):    SYMBOL1(clear);
 #endif
 		CASE(NUM_ENTER):    SYMBOL1(enter);
@@ -358,6 +359,7 @@ get_key_symbol (Reflex::KeyCode code)
 		CASE(GAMEPAD_BUTTON_14):    SYMBOL1(gamepad_button_14);
 		CASE(GAMEPAD_BUTTON_15):    SYMBOL1(gamepad_button_15);
 
+		#undef HID
 		#undef CASE
 		#undef SYMBOL1
 		#undef SYMBOL2
