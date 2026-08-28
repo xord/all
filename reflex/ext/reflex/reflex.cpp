@@ -203,9 +203,15 @@ get_key_symbol (Reflex::KeyCode code)
 		CASE(RALT):     SYMBOL1(alt);
 		CASE(LWIN):
 		CASE(RWIN):     SYMBOL1(win);
+#if !defined(HID) && !defined(OSX)
+		CASE(COMMAND):
+#endif
 #if !defined(HID)
 		CASE(LCOMMAND):
 		CASE(RCOMMAND): SYMBOL1(command);
+#endif
+#if !defined(HID) && !defined(OSX)
+		CASE(OPTION):
 #endif
 #if !defined(HID)
 		CASE(LOPTION):
@@ -416,7 +422,7 @@ Init_reflex ()
 
 	#define DEFINE_KEY_CONST(key) \
 		mReflex.define_const(#key, key); \
-		keys.emplace_back(key)
+		if ((int) key >= 0) keys.emplace_back(key)
 	{
 		std::vector<Value> keys;
 
