@@ -24,6 +24,8 @@
 #include <reflex/view.h>
 #include <reflex/menu.h>
 #include <reflex/screen.h>
+#include <reflex/clipboard.h>
+#include <reflex/file_dialog.h>
 
 #include <reflex/device.h>
 #include <reflex/midi.h>

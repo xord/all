@@ -1171,6 +1171,54 @@ namespace Reflex
 	}
 
 
+	struct FileEvent::Data
+	{
+
+		Action action;
+
+		StringList paths;
+
+		Data (Action action = ACTION_NONE, const StringList& paths = {})
+		:	action(action), paths(paths)
+		{
+		}
+
+	};// FileEvent::Data
+
+
+	FileEvent::FileEvent ()
+	{
+	}
+
+	FileEvent::FileEvent (Action action, const StringList& paths)
+	:	self(new Data(action, paths))
+	{
+	}
+
+	FileEvent::FileEvent (const FileEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	FileEvent
+	FileEvent::dup () const
+	{
+		return FileEvent(this);
+	}
+
+	FileEvent::Action
+	FileEvent::action () const
+	{
+		return self->action;
+	}
+
+	const StringList&
+	FileEvent::paths () const
+	{
+		return self->paths;
+	}
+
+
 	struct MIDIEvent::Data
 	{
 

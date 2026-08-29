@@ -168,6 +168,12 @@ namespace Reflex
 
 			virtual void on_wheel (WheelEvent* e);
 
+			virtual void on_file      (FileEvent* e);
+
+			virtual void on_file_open (FileEvent* e);
+
+			virtual void on_file_save (FileEvent* e);
+
 			virtual void on_midi (MIDIEvent* e);
 
 			virtual void on_note     (NoteEvent* e);

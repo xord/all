@@ -156,6 +156,8 @@ namespace Reflex
 
 	void Window_call_wheel_event      (Window* window, WheelEvent* event);
 
+	void Window_call_file_event       (Window* window, FileEvent* event);
+
 	void Window_call_midi_event       (Window* window, MIDIEvent* event);
 
 

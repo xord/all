@@ -509,6 +509,34 @@ namespace Reflex
 	};// MotionEvent
 
 
+	class FileEvent : public Event
+	{
+
+		public:
+
+			enum Action {ACTION_NONE = 0, OPEN, SAVE};
+
+			FileEvent ();
+
+			FileEvent (Action action, const StringList& paths);
+
+			FileEvent dup () const;
+
+			Action action () const;
+
+			const StringList& paths () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			FileEvent (const FileEvent* src);
+
+	};// FileEvent
+
+
 	class MIDIEvent : public Event
 	{
 

@@ -948,6 +948,25 @@ namespace Reflex
 			View_call_wheel_event(window->root(), event);
 	}
 
+	void
+	Window_call_file_event (Window* window, FileEvent* event)
+	{
+		if (!window)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		window->on_file(event);
+		if (event->is_blocked()) return;
+
+		switch (event->action())
+		{
+			case FileEvent::OPEN: window->on_file_open(event); break;
+			case FileEvent::SAVE: window->on_file_save(event); break;
+			default: break;
+		}
+	}
+
 	static void
 	Window_call_note_event (Window* window, NoteEvent* event)
 	{
@@ -1397,6 +1416,21 @@ namespace Reflex
 
 	void
 	Window::on_wheel (WheelEvent* e)
+	{
+	}
+
+	void
+	Window::on_file (FileEvent* e)
+	{
+	}
+
+	void
+	Window::on_file_open (FileEvent* e)
+	{
+	}
+
+	void
+	Window::on_file_save (FileEvent* e)
 	{
 	}
 
