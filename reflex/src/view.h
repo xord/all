@@ -60,13 +60,13 @@ namespace Reflex
 
 	void View_call_wheel_event          (View* view, WheelEvent* event);
 
+	void View_call_contact_event        (View* view, ContactEvent* event);
+
 	void View_call_midi_event           (View* view, MIDIEvent* event);
 
 	void View_call_note_event           (View* view, NoteEvent* event);
 
 	void View_call_control_change_event (View* view, ControlChangeEvent* event);
-
-	void View_call_contact_event        (View* view, ContactEvent* event);
 
 
 }// Reflex

@@ -31,12 +31,6 @@ RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::PointerEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::WheelEvent)
 
-RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDIEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::NoteEvent)
-
-RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ControlChangeEvent)
-
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::CaptureEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::TimerEvent)
@@ -44,6 +38,12 @@ RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::TimerEvent)
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ContactEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MotionEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDIEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::NoteEvent)
+
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ControlChangeEvent)
 
 
 namespace Reflex
@@ -83,15 +83,6 @@ namespace Reflex
 	REFLEX_EXPORT Rucy::Class wheel_event_class ();
 	// class Reflex::WheelEvent
 
-	REFLEX_EXPORT Rucy::Class midi_event_class ();
-	// class Reflex::MIDIEvent
-
-	REFLEX_EXPORT Rucy::Class note_event_class ();
-	// class Reflex::NoteEvent
-
-	REFLEX_EXPORT Rucy::Class control_change_event_class ();
-	// class Reflex::ControlChangeEvent
-
 	REFLEX_EXPORT Rucy::Class capture_event_class ();
 	// class Reflex::CaptureEvent
 
@@ -103,6 +94,15 @@ namespace Reflex
 
 	REFLEX_EXPORT Rucy::Class motion_event_class ();
 	// class Reflex::MotionEvent
+
+	REFLEX_EXPORT Rucy::Class midi_event_class ();
+	// class Reflex::MIDIEvent
+
+	REFLEX_EXPORT Rucy::Class note_event_class ();
+	// class Reflex::NoteEvent
+
+	REFLEX_EXPORT Rucy::Class control_change_event_class ();
+	// class Reflex::ControlChangeEvent
 
 
 }// Reflex
@@ -179,24 +179,6 @@ namespace Rucy
 	}
 
 	template <> inline Class
-	get_ruby_class<Reflex::MIDIEvent> ()
-	{
-		return Reflex::midi_event_class();
-	}
-
-	template <> inline Class
-	get_ruby_class<Reflex::NoteEvent> ()
-	{
-		return Reflex::note_event_class();
-	}
-
-	template <> inline Class
-	get_ruby_class<Reflex::ControlChangeEvent> ()
-	{
-		return Reflex::control_change_event_class();
-	}
-
-	template <> inline Class
 	get_ruby_class<Reflex::CaptureEvent> ()
 	{
 		return Reflex::capture_event_class();
@@ -218,6 +200,24 @@ namespace Rucy
 	get_ruby_class<Reflex::MotionEvent> ()
 	{
 		return Reflex::motion_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::MIDIEvent> ()
+	{
+		return Reflex::midi_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::NoteEvent> ()
+	{
+		return Reflex::note_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::ControlChangeEvent> ()
+	{
+		return Reflex::control_change_event_class();
 	}
 
 

@@ -421,16 +421,6 @@ namespace Reflex
 
 			virtual void on_wheel (WheelEvent* e);
 
-			virtual void on_midi (MIDIEvent* e);
-
-			virtual void on_note     (NoteEvent* e);
-
-			virtual void on_note_on  (NoteEvent* e);
-
-			virtual void on_note_off (NoteEvent* e);
-
-			virtual void on_control_change (ControlChangeEvent* e);
-
 			virtual void on_capture (CaptureEvent* e);
 
 			virtual void on_timer (TimerEvent* e);
@@ -442,6 +432,16 @@ namespace Reflex
 			virtual void   on_contact_begin (ContactEvent* e);
 
 			virtual void   on_contact_end   (ContactEvent* e);
+
+			virtual void on_midi (MIDIEvent* e);
+
+			virtual void on_note     (NoteEvent* e);
+
+			virtual void on_note_on  (NoteEvent* e);
+
+			virtual void on_note_off (NoteEvent* e);
+
+			virtual void on_control_change (ControlChangeEvent* e);
 
 			virtual operator bool () const;
 

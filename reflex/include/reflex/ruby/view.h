@@ -314,51 +314,6 @@ namespace Reflex
 					Super::on_wheel(e);
 			}
 
-			virtual void on_midi (MIDIEvent* e)
-			{
-				RUCY_SYM(on_midi);
-				if (this->is_overridable())
-					this->value.call(on_midi, Rucy::value(e));
-				else
-					Super::on_midi(e);
-			}
-
-			virtual void on_note (NoteEvent* e)
-			{
-				RUCY_SYM(on_note);
-				if (this->is_overridable())
-					this->value.call(on_note, Rucy::value(e));
-				else
-					Super::on_note(e);
-			}
-
-			virtual void on_note_on (NoteEvent* e)
-			{
-				RUCY_SYM(on_note_on);
-				if (this->is_overridable())
-					this->value.call(on_note_on, Rucy::value(e));
-				else
-					Super::on_note_on(e);
-			}
-
-			virtual void on_note_off (NoteEvent* e)
-			{
-				RUCY_SYM(on_note_off);
-				if (this->is_overridable())
-					this->value.call(on_note_off, Rucy::value(e));
-				else
-					Super::on_note_off(e);
-			}
-
-			virtual void on_control_change (ControlChangeEvent* e)
-			{
-				RUCY_SYM(on_control_change);
-				if (this->is_overridable())
-					this->value.call(on_control_change, Rucy::value(e));
-				else
-					Super::on_control_change(e);
-			}
-
 			virtual void on_capture (CaptureEvent* e)
 			{
 				RUCY_SYM(on_capture);
@@ -411,6 +366,51 @@ namespace Reflex
 					this->value.call(on_contact_end, Rucy::value(e));
 				else
 					Super::on_contact_end(e);
+			}
+
+			virtual void on_midi (MIDIEvent* e)
+			{
+				RUCY_SYM(on_midi);
+				if (this->is_overridable())
+					this->value.call(on_midi, Rucy::value(e));
+				else
+					Super::on_midi(e);
+			}
+
+			virtual void on_note (NoteEvent* e)
+			{
+				RUCY_SYM(on_note);
+				if (this->is_overridable())
+					this->value.call(on_note, Rucy::value(e));
+				else
+					Super::on_note(e);
+			}
+
+			virtual void on_note_on (NoteEvent* e)
+			{
+				RUCY_SYM(on_note_on);
+				if (this->is_overridable())
+					this->value.call(on_note_on, Rucy::value(e));
+				else
+					Super::on_note_on(e);
+			}
+
+			virtual void on_note_off (NoteEvent* e)
+			{
+				RUCY_SYM(on_note_off);
+				if (this->is_overridable())
+					this->value.call(on_note_off, Rucy::value(e));
+				else
+					Super::on_note_off(e);
+			}
+
+			virtual void on_control_change (ControlChangeEvent* e)
+			{
+				RUCY_SYM(on_control_change);
+				if (this->is_overridable())
+					this->value.call(on_control_change, Rucy::value(e));
+				else
+					Super::on_control_change(e);
 			}
 
 	};// RubyView

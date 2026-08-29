@@ -945,6 +945,232 @@ namespace Reflex
 	}
 
 
+	struct CaptureEvent::Data
+	{
+
+		uint begin, end;
+
+		Data (uint begin = 0, uint end = 0)
+		:	begin(begin), end(end)
+		{
+		}
+
+	};// CaptureEvent::Data
+
+
+	CaptureEvent::CaptureEvent ()
+	{
+	}
+
+	CaptureEvent::CaptureEvent (uint begin, uint end)
+	:	self(new Data(begin, end))
+	{
+	}
+
+	CaptureEvent::CaptureEvent (const CaptureEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	CaptureEvent
+	CaptureEvent::dup () const
+	{
+		return CaptureEvent(this);
+	}
+
+	uint
+	CaptureEvent::begin () const
+	{
+		return self->begin;
+	}
+
+	uint
+	CaptureEvent::end () const
+	{
+		return self->end;
+	}
+
+
+	struct TimerEvent::Data
+	{
+
+		Timer::Ref timer;
+
+		Data (Timer* timer = NULL)
+		:	timer(timer)
+		{
+		}
+
+	};// TimerEvent::Data
+
+
+	TimerEvent::TimerEvent ()
+	{
+	}
+
+	TimerEvent::TimerEvent (Timer* timer)
+	:	self(new Data(timer))
+	{
+	}
+
+	TimerEvent::TimerEvent (const TimerEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	TimerEvent
+	TimerEvent::dup () const
+	{
+		return TimerEvent(this);
+	}
+
+	Timer*
+	TimerEvent::timer ()
+	{
+		return self->timer;
+	}
+
+	const Timer*
+	TimerEvent::timer () const
+	{
+		return const_cast<TimerEvent*>(this)->timer();
+	}
+
+	View*
+	TimerEvent::owner () const
+	{
+		return self->timer ? self->timer->owner() : NULL;
+	}
+
+	int
+	TimerEvent::id () const
+	{
+		return self->timer ? self->timer->id() : Timer::ID_INVALID;
+	}
+
+	float
+	TimerEvent::interval () const
+	{
+		return self->timer ? self->timer->interval() : -1;
+	}
+
+	int
+	TimerEvent::count () const
+	{
+		return self->timer ? self->timer->count() : 0;
+	}
+
+	bool
+	TimerEvent::is_finished () const
+	{
+		return self->timer ? self->timer->is_finished() : true;
+	}
+
+
+	struct ContactEvent::Data
+	{
+
+		Action action;
+
+		Shape* shape;
+
+		View* view;
+
+		Data (Action action = ACTION_NONE, Shape* shape = NULL, View* view = NULL)
+		:	action(action), shape(shape), view(view)
+		{
+		}
+
+	};// ContactEvent::Data
+
+
+	ContactEvent::ContactEvent ()
+	{
+	}
+
+	ContactEvent::ContactEvent (Action action, Shape* shape)
+	:	self(new Data(action, shape, shape ? shape->owner() : NULL))
+	{
+	}
+
+	ContactEvent::ContactEvent (const ContactEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	ContactEvent
+	ContactEvent::dup () const
+	{
+		return ContactEvent(this);
+	}
+
+	ContactEvent::Action
+	ContactEvent::action () const
+	{
+		return self->action;
+	}
+
+	Shape*
+	ContactEvent::shape ()
+	{
+		return self->shape;
+	}
+
+	const Shape*
+	ContactEvent::shape () const
+	{
+		return const_cast<ContactEvent*>(this)->shape();
+	}
+
+	View*
+	ContactEvent::view ()
+	{
+		return self->view;
+	}
+
+	const View*
+	ContactEvent::view () const
+	{
+		return const_cast<ContactEvent*>(this)->view();
+	}
+
+
+	struct MotionEvent::Data
+	{
+
+		Point gravity;
+
+		Data (const Point& gravity)
+		:	gravity(gravity)
+		{
+		}
+
+	};// MotionEvent::Data
+
+
+	MotionEvent::MotionEvent (const Point& gravity)
+	:	self(new Data(gravity))
+	{
+	}
+
+	MotionEvent::MotionEvent (const MotionEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	MotionEvent
+	MotionEvent::dup () const
+	{
+		return MotionEvent(this);
+	}
+
+	const Point&
+	MotionEvent::gravity () const
+	{
+		return self->gravity;
+	}
+
+
 	struct MIDIEvent::Data
 	{
 
@@ -1216,232 +1442,6 @@ namespace Reflex
 	ControlChangeEvent::is_captured () const
 	{
 		return self->captured;
-	}
-
-
-	struct CaptureEvent::Data
-	{
-
-		uint begin, end;
-
-		Data (uint begin = 0, uint end = 0)
-		:	begin(begin), end(end)
-		{
-		}
-
-	};// CaptureEvent::Data
-
-
-	CaptureEvent::CaptureEvent ()
-	{
-	}
-
-	CaptureEvent::CaptureEvent (uint begin, uint end)
-	:	self(new Data(begin, end))
-	{
-	}
-
-	CaptureEvent::CaptureEvent (const CaptureEvent* src)
-	:	Event(src), self(new Data(*src->self))
-	{
-	}
-
-	CaptureEvent
-	CaptureEvent::dup () const
-	{
-		return CaptureEvent(this);
-	}
-
-	uint
-	CaptureEvent::begin () const
-	{
-		return self->begin;
-	}
-
-	uint
-	CaptureEvent::end () const
-	{
-		return self->end;
-	}
-
-
-	struct TimerEvent::Data
-	{
-
-		Timer::Ref timer;
-
-		Data (Timer* timer = NULL)
-		:	timer(timer)
-		{
-		}
-
-	};// TimerEvent::Data
-
-
-	TimerEvent::TimerEvent ()
-	{
-	}
-
-	TimerEvent::TimerEvent (Timer* timer)
-	:	self(new Data(timer))
-	{
-	}
-
-	TimerEvent::TimerEvent (const TimerEvent* src)
-	:	Event(src), self(new Data(*src->self))
-	{
-	}
-
-	TimerEvent
-	TimerEvent::dup () const
-	{
-		return TimerEvent(this);
-	}
-
-	Timer*
-	TimerEvent::timer ()
-	{
-		return self->timer;
-	}
-
-	const Timer*
-	TimerEvent::timer () const
-	{
-		return const_cast<TimerEvent*>(this)->timer();
-	}
-
-	View*
-	TimerEvent::owner () const
-	{
-		return self->timer ? self->timer->owner() : NULL;
-	}
-
-	int
-	TimerEvent::id () const
-	{
-		return self->timer ? self->timer->id() : Timer::ID_INVALID;
-	}
-
-	float
-	TimerEvent::interval () const
-	{
-		return self->timer ? self->timer->interval() : -1;
-	}
-
-	int
-	TimerEvent::count () const
-	{
-		return self->timer ? self->timer->count() : 0;
-	}
-
-	bool
-	TimerEvent::is_finished () const
-	{
-		return self->timer ? self->timer->is_finished() : true;
-	}
-
-
-	struct ContactEvent::Data
-	{
-
-		Action action;
-
-		Shape* shape;
-
-		View* view;
-
-		Data (Action action = ACTION_NONE, Shape* shape = NULL, View* view = NULL)
-		:	action(action), shape(shape), view(view)
-		{
-		}
-
-	};// ContactEvent::Data
-
-
-	ContactEvent::ContactEvent ()
-	{
-	}
-
-	ContactEvent::ContactEvent (Action action, Shape* shape)
-	:	self(new Data(action, shape, shape ? shape->owner() : NULL))
-	{
-	}
-
-	ContactEvent::ContactEvent (const ContactEvent* src)
-	:	Event(src), self(new Data(*src->self))
-	{
-	}
-
-	ContactEvent
-	ContactEvent::dup () const
-	{
-		return ContactEvent(this);
-	}
-
-	ContactEvent::Action
-	ContactEvent::action () const
-	{
-		return self->action;
-	}
-
-	Shape*
-	ContactEvent::shape ()
-	{
-		return self->shape;
-	}
-
-	const Shape*
-	ContactEvent::shape () const
-	{
-		return const_cast<ContactEvent*>(this)->shape();
-	}
-
-	View*
-	ContactEvent::view ()
-	{
-		return self->view;
-	}
-
-	const View*
-	ContactEvent::view () const
-	{
-		return const_cast<ContactEvent*>(this)->view();
-	}
-
-
-	struct MotionEvent::Data
-	{
-
-		Point gravity;
-
-		Data (const Point& gravity)
-		:	gravity(gravity)
-		{
-		}
-
-	};// MotionEvent::Data
-
-
-	MotionEvent::MotionEvent (const Point& gravity)
-	:	self(new Data(gravity))
-	{
-	}
-
-	MotionEvent::MotionEvent (const MotionEvent* src)
-	:	Event(src), self(new Data(*src->self))
-	{
-	}
-
-	MotionEvent
-	MotionEvent::dup () const
-	{
-		return MotionEvent(this);
-	}
-
-	const Point&
-	MotionEvent::gravity () const
-	{
-		return self->gravity;
 	}
 
 

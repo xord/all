@@ -1709,6 +1709,25 @@ namespace Reflex
 	}
 
 	void
+	View_call_contact_event (View* view, ContactEvent* event)
+	{
+		if (!view)
+			argument_error(__FILE__, __LINE__);
+		if (!event)
+			argument_error(__FILE__, __LINE__);
+
+		ContactEvent e = event->dup();
+		view->on_contact(&e);
+
+		switch (e.action())
+		{
+			case ContactEvent::BEGIN: view->on_contact_begin(&e); break;
+			case ContactEvent::END:   view->on_contact_end(&e);   break;
+			default: break;
+		}
+	}
+
+	void
 	View_call_midi_event (View* view, MIDIEvent* event)
 	{
 		if (!view)
@@ -1756,25 +1775,6 @@ namespace Reflex
 
 		ControlChangeEvent e = event->dup();
 		view->on_control_change(&e);
-	}
-
-	void
-	View_call_contact_event (View* view, ContactEvent* event)
-	{
-		if (!view)
-			argument_error(__FILE__, __LINE__);
-		if (!event)
-			argument_error(__FILE__, __LINE__);
-
-		ContactEvent e = event->dup();
-		view->on_contact(&e);
-
-		switch (e.action())
-		{
-			case ContactEvent::BEGIN: view->on_contact_begin(&e); break;
-			case ContactEvent::END:   view->on_contact_end(&e);   break;
-			default: break;
-		}
 	}
 
 
@@ -3141,31 +3141,6 @@ namespace Reflex
 	}
 
 	void
-	View::on_midi (MIDIEvent* e)
-	{
-	}
-
-	void
-	View::on_note (NoteEvent* e)
-	{
-	}
-
-	void
-	View::on_note_on (NoteEvent* e)
-	{
-	}
-
-	void
-	View::on_note_off (NoteEvent* e)
-	{
-	}
-
-	void
-	View::on_control_change (ControlChangeEvent* e)
-	{
-	}
-
-	void
 	View::on_capture (CaptureEvent* e)
 	{
 	}
@@ -3193,6 +3168,31 @@ namespace Reflex
 
 	void
 	View::on_contact_end (ContactEvent* e)
+	{
+	}
+
+	void
+	View::on_midi (MIDIEvent* e)
+	{
+	}
+
+	void
+	View::on_note (NoteEvent* e)
+	{
+	}
+
+	void
+	View::on_note_on (NoteEvent* e)
+	{
+	}
+
+	void
+	View::on_note_off (NoteEvent* e)
+	{
+	}
+
+	void
+	View::on_control_change (ControlChangeEvent* e)
 	{
 	}
 

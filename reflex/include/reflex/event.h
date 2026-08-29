@@ -391,6 +391,124 @@ namespace Reflex
 	};// WheelEvent
 
 
+	class CaptureEvent : public Event
+	{
+
+		public:
+
+			CaptureEvent ();
+
+			CaptureEvent (uint begin, uint end);
+
+			CaptureEvent dup () const;
+
+			uint begin () const;
+
+			uint end () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			CaptureEvent (const CaptureEvent* src);
+
+	};// CaptureEvent
+
+
+	class TimerEvent : public Event
+	{
+
+		public:
+
+			TimerEvent ();
+
+			TimerEvent (Timer* timer);
+
+			TimerEvent dup () const;
+
+			      Timer* timer ();
+
+			const Timer* timer () const;
+
+			View* owner () const;
+
+			int id () const;
+
+			float interval () const;
+
+			int count () const;
+
+			bool is_finished () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			TimerEvent (const TimerEvent* src);
+
+	};// TimerEvent
+
+
+	class ContactEvent : public Event
+	{
+
+		public:
+
+			enum Action {ACTION_NONE = 0, BEGIN, END};
+
+			ContactEvent ();
+
+			ContactEvent (Action action, Shape* shape);
+
+			ContactEvent dup () const;
+
+			Action action () const;
+
+			      Shape* shape ();
+
+			const Shape* shape () const;
+
+			      View* view ();
+
+			const View* view () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			ContactEvent (const ContactEvent* src);
+
+	};// ContactEvent
+
+
+	class MotionEvent : public Event
+	{
+
+		public:
+
+			MotionEvent (const Point& gravity = Point(0, 9.8));
+
+			MotionEvent dup () const;
+
+			const Point& gravity () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			MotionEvent (const MotionEvent* src);
+
+	};// MotionEvent
+
+
 	class MIDIEvent : public Event
 	{
 
@@ -514,124 +632,6 @@ namespace Reflex
 			ControlChangeEvent (const ControlChangeEvent* src);
 
 	};// ControlChangeEvent
-
-
-	class CaptureEvent : public Event
-	{
-
-		public:
-
-			CaptureEvent ();
-
-			CaptureEvent (uint begin, uint end);
-
-			CaptureEvent dup () const;
-
-			uint begin () const;
-
-			uint end () const;
-
-			struct Data;
-
-			Xot::PSharedImpl<Data> self;
-
-		private:
-
-			CaptureEvent (const CaptureEvent* src);
-
-	};// CaptureEvent
-
-
-	class TimerEvent : public Event
-	{
-
-		public:
-
-			TimerEvent ();
-
-			TimerEvent (Timer* timer);
-
-			TimerEvent dup () const;
-
-			      Timer* timer ();
-
-			const Timer* timer () const;
-
-			View* owner () const;
-
-			int id () const;
-
-			float interval () const;
-
-			int count () const;
-
-			bool is_finished () const;
-
-			struct Data;
-
-			Xot::PSharedImpl<Data> self;
-
-		private:
-
-			TimerEvent (const TimerEvent* src);
-
-	};// TimerEvent
-
-
-	class ContactEvent : public Event
-	{
-
-		public:
-
-			enum Action {ACTION_NONE = 0, BEGIN, END};
-
-			ContactEvent ();
-
-			ContactEvent (Action action, Shape* shape);
-
-			ContactEvent dup () const;
-
-			Action action () const;
-
-			      Shape* shape ();
-
-			const Shape* shape () const;
-
-			      View* view ();
-
-			const View* view () const;
-
-			struct Data;
-
-			Xot::PSharedImpl<Data> self;
-
-		private:
-
-			ContactEvent (const ContactEvent* src);
-
-	};// ContactEvent
-
-
-	class MotionEvent : public Event
-	{
-
-		public:
-
-			MotionEvent (const Point& gravity = Point(0, 9.8));
-
-			MotionEvent dup () const;
-
-			const Point& gravity () const;
-
-			struct Data;
-
-			Xot::PSharedImpl<Data> self;
-
-		private:
-
-			MotionEvent (const MotionEvent* src);
-
-	};// MotionEvent
 
 
 }// Reflex

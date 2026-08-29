@@ -22,13 +22,13 @@ void Init_reflex_key_event ();
 void Init_reflex_text_event ();
 void Init_reflex_pointer_event ();
 void Init_reflex_wheel_event ();
-void Init_reflex_midi_event ();
-void Init_reflex_note_event ();
-void Init_reflex_control_change_event ();
 void Init_reflex_capture_event ();
 void Init_reflex_timer_event ();
 void Init_reflex_contact_event ();
 void Init_reflex_motion_event ();
+void Init_reflex_midi_event ();
+void Init_reflex_note_event ();
+void Init_reflex_control_change_event ();
 
 void Init_reflex_shape ();
 void Init_reflex_polygon_shape ();
@@ -84,13 +84,13 @@ Init_reflex_ext ()
 	Init_reflex_text_event();
 	Init_reflex_pointer_event();
 	Init_reflex_wheel_event();
-	Init_reflex_midi_event();
-	Init_reflex_note_event();
-	Init_reflex_control_change_event();
 	Init_reflex_capture_event();
 	Init_reflex_timer_event();
 	Init_reflex_contact_event();
 	Init_reflex_motion_event();
+	Init_reflex_midi_event();
+	Init_reflex_note_event();
+	Init_reflex_control_change_event();
 
 	Init_reflex_shape();
 	Init_reflex_polygon_shape();
