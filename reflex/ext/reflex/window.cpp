@@ -601,6 +601,30 @@ RUCY_DEF1(on_wheel, event)
 RUCY_END
 
 static
+RUCY_DEF1(on_file, event)
+{
+	CHECK;
+	CALL(on_file(to<Reflex::FileEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_file_open, event)
+{
+	CHECK;
+	CALL(on_file_open(to<Reflex::FileEvent*>(event)));
+}
+RUCY_END
+
+static
+RUCY_DEF1(on_file_save, event)
+{
+	CHECK;
+	CALL(on_file_save(to<Reflex::FileEvent*>(event)));
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_midi, event)
 {
 	CHECK;
@@ -713,6 +737,9 @@ Init_reflex_window ()
 	cWindow.define_method("on_pointer_enter",  on_pointer_enter);
 	cWindow.define_method("on_pointer_leave",  on_pointer_leave);
 	cWindow.define_method("on_wheel",          on_wheel);
+	cWindow.define_method("on_file",      on_file);
+	cWindow.define_method("on_file_open", on_file_open);
+	cWindow.define_method("on_file_save", on_file_save);
 	cWindow.define_method("on_midi",           on_midi);
 	cWindow.define_method("on_note",           on_note);
 	cWindow.define_method("on_note_on",        on_note_on);

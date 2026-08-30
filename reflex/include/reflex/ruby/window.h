@@ -241,6 +241,33 @@ namespace Reflex
 					Super::on_wheel(e);
 			}
 
+			virtual void on_file (FileEvent* e)
+			{
+				RUCY_SYM(on_file);
+				if (this->is_overridable())
+					this->value.call(on_file, Rucy::value(e));
+				else
+					Super::on_file(e);
+			}
+
+			virtual void on_file_open (FileEvent* e)
+			{
+				RUCY_SYM(on_file_open);
+				if (this->is_overridable())
+					this->value.call(on_file_open, Rucy::value(e));
+				else
+					Super::on_file_open(e);
+			}
+
+			virtual void on_file_save (FileEvent* e)
+			{
+				RUCY_SYM(on_file_save);
+				if (this->is_overridable())
+					this->value.call(on_file_save, Rucy::value(e));
+				else
+					Super::on_file_save(e);
+			}
+
 			virtual void on_midi (MIDIEvent* e)
 			{
 				RUCY_SYM(on_midi);
