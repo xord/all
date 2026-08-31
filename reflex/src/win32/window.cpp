@@ -1299,6 +1299,21 @@ namespace Reflex
 			menu, SC_CLOSE, MF_BYCOMMAND | (closable ? MF_ENABLED : MF_GRAYED));
 	}
 
+	static void
+	set_unlisted (HWND hwnd, bool state)
+	{
+		DWORD current = (DWORD) GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+		DWORD exstyle = state
+			?	current |  WS_EX_TOOLWINDOW
+			:	current & ~WS_EX_TOOLWINDOW;
+		if (exstyle == current) return;
+
+		SetLastError(0);
+		SetWindowLongPtrW(hwnd, GWL_EXSTYLE, exstyle);
+		if (GetLastError() != 0)
+			system_error(__FILE__, __LINE__);
+	}
+
 	void
 	Window_set_flags (Window* window, uint flags)
 	{
@@ -1342,6 +1357,8 @@ namespace Reflex
 			set_window_style(self->hwnd, style);
 
 		set_closable(self->hwnd, Xot::has_flag(flags, Window::FLAG_CLOSABLE));
+
+		set_unlisted(self->hwnd, Xot::has_flag(flags, Window::FLAG_UNLISTED));
 
 		HWND after = HWND_NOTOPMOST;
 		if      (Xot::has_flag(flags, Window::FLAG_ALWAYS_ON_TOP))

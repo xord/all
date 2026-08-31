@@ -199,6 +199,19 @@ namespace Reflex
 		[native setTitlebarBackgroundVisible: background];
 		[native setTitlebarContainerVisible:  buttons || background];
 
+		NSWindowCollectionBehavior behavior = native.collectionBehavior;
+		if (Xot::has_flag(flags, Window::FLAG_UNLISTED))
+		{
+			behavior &= ~NSWindowCollectionBehaviorManaged;
+			behavior |=  NSWindowCollectionBehaviorTransient;
+		}
+		else
+		{
+			behavior &= ~NSWindowCollectionBehaviorTransient;
+			behavior |=  NSWindowCollectionBehaviorManaged;
+		}
+		native.collectionBehavior = behavior;
+
 		native.hasShadow = Xot::has_flag(flags, Window::FLAG_SHADOW);
 
 		[native setBackgroundTransparent: Xot::has_flag(flags, Window::FLAG_TRANSPARENT)];
@@ -213,8 +226,7 @@ namespace Reflex
 		else
 			native.level = NSNormalWindowLevel;
 
-		native.ignoresMouseEvents =
-			Xot::has_flag(flags, Window::FLAG_POINTER_THROUGH);
+		native.ignoresMouseEvents = Xot::has_flag(flags, Window::FLAG_POINTER_THROUGH);
 	}
 
 	float

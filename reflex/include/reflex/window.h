@@ -44,21 +44,23 @@ namespace Reflex
 
 				FLAG_TITLEBAR_BACKGROUND = Xot::bit(4),
 
-				FLAG_SHADOW              = Xot::bit(5),
+				FLAG_UNLISTED            = Xot::bit(5),
 
-				FLAG_TRANSPARENT         = Xot::bit(6),
+				FLAG_SHADOW              = Xot::bit(6),
 
-				FLAG_FULLSCREEN          = Xot::bit(7),
+				FLAG_TRANSPARENT         = Xot::bit(7),
 
-				FLAG_ALWAYS_ON_TOP       = Xot::bit(8),
+				FLAG_FULLSCREEN          = Xot::bit(8),
 
-				FLAG_ALWAYS_ON_BOTTOM    = Xot::bit(9),
+				FLAG_ALWAYS_ON_TOP       = Xot::bit(9),
 
-				FLAG_POINTER_THROUGH     = Xot::bit(10),
+				FLAG_ALWAYS_ON_BOTTOM    = Xot::bit(10),
 
-				FLAG_PORTRAIT            = Xot::bit(11),
+				FLAG_POINTER_THROUGH     = Xot::bit(11),
 
-				FLAG_LANDSCAPE           = Xot::bit(12),
+				FLAG_PORTRAIT            = Xot::bit(12),
+
+				FLAG_LANDSCAPE           = Xot::bit(13),
 
 				FLAG_LAST                = FLAG_LANDSCAPE
 

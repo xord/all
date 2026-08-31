@@ -272,6 +272,9 @@ namespace Reflex
 		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
 			argument_error(__FILE__, __LINE__, "FLAG_TITLEBAR_BACKGROUND is not supported");
 
+		if (Xot::has_flag(flags, Window::FLAG_UNLISTED))
+			argument_error(__FILE__, __LINE__, "FLAG_UNLISTED is not supported");
+
 		if (Xot::has_flag(flags, Window::FLAG_SHADOW))
 			argument_error(__FILE__, __LINE__, "FLAG_SHADOW is not supported");
 

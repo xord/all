@@ -25,12 +25,17 @@ require 'reflex'
 # the counter says which one got it. Only one window at a time can do it, so
 # there is always another one left to click on.
 #
+# An unlisted window is still there on screen, but it leaves the window
+# overviews: Mission Control on macOS, the taskbar and alt-tab on Windows.
+# Toggle it and open the overview to watch the window drop out of the list
+# while staying right where it is.
+#
 # Not every platform can do all of this, and the ones that cannot say so.
 #
 #   1: titlebar buttons, 2: titlebar background, 3: both
 #   4: shadow, 5: transparent
 #   6: closable, 7: minimizable, 8: resizable
-#   9: pointer through
+#   9: pointer through, 0: unlisted
 #   ESC: quit
 class StyledWindow < Reflex::Window
 
@@ -63,7 +68,8 @@ class StyledWindow < Reflex::Window
 
     p.fill 1
     p.text "titlebar: #{titlebar.inspect}", 10, 10
-    p.text "shadow: #{shadow?}, transparent: #{transparent?}", 10, 30
+    p.text "shadow: #{shadow?}, transparent: #{transparent?}, " \
+           "unlisted: #{unlisted?}", 10, 30
     p.text "closable: #{closable?}, minimizable: #{minimizable?}, " \
            "resizable: #{resizable?}", 10, 50
     p.text "pointer through: #{pointer_through?}, clicks: #{@clicks}", 10, 70
@@ -71,7 +77,7 @@ class StyledWindow < Reflex::Window
     p.text '1: buttons, 2: background, 3: both', 10, 110
     p.text '4: shadow, 5: transparent', 10, 130
     p.text '6: closable, 7: minimizable, 8: resizable', 10, 150
-    p.text '9: pointer through, ESC: quit', 10, 170
+    p.text '9: pointer through, 0: unlisted, ESC: quit', 10, 170
 
     if @@message
       p.fill 1, 0.4, 0.4
@@ -96,6 +102,7 @@ class StyledWindow < Reflex::Window
     when '7' then change {|w| w.minimizable = !w.minimizable?}
     when '8' then change {|w| w.resizable   = !w.resizable?}
     when '9' then change {|w| w.pointer_through = w.equal?(self) && !pointer_through?}
+    when '0' then change {|w| w.unlisted    = !w.unlisted?}
     end
     Reflex.quit if e.key == :escape
   end

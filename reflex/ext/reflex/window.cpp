@@ -233,6 +233,26 @@ RUCY_DEF0(get_titlebar)
 RUCY_END
 
 static
+RUCY_DEF1(set_unlisted, state)
+{
+	CHECK;
+
+	if (state)
+		THIS->   add_flag(Reflex::Window::FLAG_UNLISTED);
+	else
+		THIS->remove_flag(Reflex::Window::FLAG_UNLISTED);
+}
+RUCY_END
+
+static
+RUCY_DEF0(is_unlisted)
+{
+	CHECK;
+	return value(THIS->has_flag(Reflex::Window::FLAG_UNLISTED));
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_shadow, state)
 {
 	CHECK;
@@ -695,6 +715,8 @@ Init_reflex_window ()
 	cWindow.define_method("resizable?",         is_resizable);
 	cWindow.define_method("titlebar=",         set_titlebar);
 	cWindow.define_method("titlebar",          get_titlebar);
+	cWindow.define_method("unlisted=",         set_unlisted);
+	cWindow.define_method("unlisted?",          is_unlisted);
 	cWindow.define_method("shadow=",           set_shadow);
 	cWindow.define_method("shadow?",           has_shadow);
 	cWindow.define_method("transparent=",      set_transparent);

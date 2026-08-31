@@ -167,6 +167,19 @@ class TestWindow < Test::Unit::TestCase
     assert_raise(ArgumentError) {w.titlebar = [:unknown]}
   end
 
+  def test_unlisted?()
+    w = window
+    assert_false w.unlisted?
+
+    w.unlisted = true
+    assert_true  w.unlisted?
+
+    w.unlisted = false
+    assert_false w.unlisted?
+
+    assert_true window(unlisted: true).unlisted?
+  end
+
   def test_shadow?()
     titlebar = win32? ? [] : [:buttons, :background]
     w        = window titlebar: titlebar

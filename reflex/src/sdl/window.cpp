@@ -358,6 +358,9 @@ namespace Reflex
 				"FLAG_TITLEBAR_BUTTONS and FLAG_TITLEBAR_BACKGROUND must match");
 		}
 
+		if (Xot::has_flag(flags, Window::FLAG_UNLISTED))
+			not_implemented_error(__FILE__, __LINE__, "FLAG_UNLISTED");
+
 		if (!Xot::has_flag(flags, Window::FLAG_SHADOW))
 			not_implemented_error(__FILE__, __LINE__, "missing FLAG_SHADOW");
 
