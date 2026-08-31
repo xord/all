@@ -20,6 +20,8 @@
 #include <reflex/ruby/window.h>
 #include <reflex/ruby/view.h>
 #include <reflex/ruby/screen.h>
+#include <reflex/ruby/clipboard.h>
+#include <reflex/ruby/file_dialog.h>
 
 #include <reflex/ruby/image_view.h>
 

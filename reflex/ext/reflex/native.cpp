@@ -26,6 +26,7 @@ void Init_reflex_capture_event ();
 void Init_reflex_timer_event ();
 void Init_reflex_contact_event ();
 void Init_reflex_motion_event ();
+void Init_reflex_file_event ();
 void Init_reflex_midi_event ();
 void Init_reflex_note_event ();
 void Init_reflex_control_change_event ();
@@ -49,6 +50,7 @@ void Init_reflex_view ();
 void Init_reflex_menu ();
 void Init_reflex_screen ();
 void Init_reflex_clipboard ();
+void Init_reflex_file_dialog ();
 
 void Init_reflex_device ();
 void Init_reflex_midi ();
@@ -88,6 +90,7 @@ Init_reflex_ext ()
 	Init_reflex_timer_event();
 	Init_reflex_contact_event();
 	Init_reflex_motion_event();
+	Init_reflex_file_event();
 	Init_reflex_midi_event();
 	Init_reflex_note_event();
 	Init_reflex_control_change_event();
@@ -111,6 +114,7 @@ Init_reflex_ext ()
 	Init_reflex_menu();
 	Init_reflex_screen();
 	Init_reflex_clipboard();
+	Init_reflex_file_dialog();
 
 	Init_reflex_device();
 	Init_reflex_midi();
