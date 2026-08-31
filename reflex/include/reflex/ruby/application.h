@@ -49,9 +49,14 @@ namespace Reflex
 
 			virtual void on_start (Event* e)
 			{
-				RUCY_SYM(on_start);
 				if (this->is_overridable())
+				{
+					RUCY_SYM(call_start_block);
+					this->value.call(call_start_block);
+
+					RUCY_SYM(on_start);
 					this->value.call(on_start, Rucy::value(e));
+				}
 				else
 					return Super::on_start(e);
 			}

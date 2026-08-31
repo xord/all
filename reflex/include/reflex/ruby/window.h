@@ -31,9 +31,14 @@ namespace Reflex
 
 			virtual void on_show (Event* e)
 			{
-				RUCY_SYM(on_show);
 				if (this->is_overridable())
+				{
+					RUCY_SYM(call_show_block);
+					this->value.call(call_show_block);
+
+					RUCY_SYM(on_show);
 					this->value.call(on_show, Rucy::value(e));
+				}
 				else
 					return Super::on_show(e);
 			}

@@ -420,9 +420,6 @@ RUCY_DEF1(on_show, event)
 {
 	CHECK;
 
-	RUCY_SYM(call_show_block);
-	self.call(call_show_block);
-
 	CALL(on_show(to<Reflex::Event*>(event)));
 }
 RUCY_END
