@@ -1212,6 +1212,8 @@ namespace Reflex
 	void
 	Window::close (bool force)
 	{
+		if (!*this) return;
+
 		Event e;
 		on_close(&e);
 		if (!force && e.is_blocked()) return;
