@@ -73,7 +73,7 @@ module Reflex
       :friction=,    :friction,
       :restitution=, :restitution
 
-    universal_accessor :title, :frame,
+    universal_accessor :title, :frame, :titlebar, :orientations,
       closable:         {reader: :closable?},
       minimizable:      {reader: :minimizable?},
       resizable:        {reader: :resizable?},
