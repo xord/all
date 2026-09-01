@@ -10,21 +10,21 @@ class TestWindow < Test::Unit::TestCase
 
   def test_show_hide_hidden()
     w = window
-    assert_true  w.hidden
+    assert_true  w.hidden?
     w.show
-    assert_false w.hidden
+    assert_false w.hidden?
     w.hide
-    assert_true  w.hidden
+    assert_true  w.hidden?
   end
 
   def test_hidden_count()
     w = window
     w.hide
-    assert_true  w.hidden
+    assert_true  w.hidden?
     w.show
-    assert_true  w.hidden
+    assert_true  w.hidden?
     w.show
-    assert_false w.hidden
+    assert_false w.hidden?
   end
 
   def test_coord_conversion()

@@ -44,7 +44,7 @@ RUCY_DEF0(hide)
 RUCY_END
 
 static
-RUCY_DEF0(hidden)
+RUCY_DEF0(is_hidden)
 {
 	CHECK;
 	return value(THIS->hidden());
@@ -694,8 +694,9 @@ Init_reflex_window ()
 
 	cWindow = mReflex.define_class("Window");
 	cWindow.define_alloc_func(alloc);
-	cWindow.define_method("show", show);
-	cWindow.define_method("hide", hide);
+	cWindow.define_method("show",       show);
+	cWindow.define_method("hide",       hide);
+	cWindow.define_method("hidden?", is_hidden);
 	cWindow.define_method("close", close);
 	cWindow.define_method("redraw", redraw);
 	cWindow.define_method("from_screen", from_screen);
@@ -731,7 +732,6 @@ Init_reflex_window ()
 	cWindow.define_method("pointer_through?",   is_pointer_through);
 	cWindow.define_method("orientations=",     set_orientations);
 	cWindow.define_method("orientations",      get_orientations);
-	cWindow.define_method("hidden", hidden);
 	cWindow.define_method("screen",  get_screen);
 	cWindow.define_method("root",    get_root);
 	cWindow.define_method("focus",   get_focus);

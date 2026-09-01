@@ -53,7 +53,7 @@ RUCY_DEF0(hide)
 RUCY_END
 
 static
-RUCY_DEF0(hidden)
+RUCY_DEF0(is_hidden)
 {
 	CHECK;
 	return value(THIS->hidden());
@@ -1378,9 +1378,9 @@ Init_reflex_view ()
 
 	cView = mReflex.define_class("View");
 	cView.define_alloc_func(alloc);
-	cView.define_method("show",    show);
-	cView.define_method("hide",    hide);
-	cView.define_method("hidden?", hidden);
+	cView.define_method("show",       show);
+	cView.define_method("hide",       hide);
+	cView.define_method("hidden?", is_hidden);
 	cView.define_method("redraw",  redraw);
 	cView.define_method("focus",  focus);
 	cView.define_method("blur",   blur);
