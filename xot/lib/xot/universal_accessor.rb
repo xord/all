@@ -18,7 +18,7 @@ module Xot
           alias_method :#{get}, options[:reader] || :#{name}
           private :#{set}, :#{get}
           def #{name}(*args, **kwargs)
-            #{set}(*args, **kwargs) unless args.empty? && args.empty?
+            #{set}(*args, **kwargs) unless args.empty? && kwargs.empty?
             #{get}
           end
         END
