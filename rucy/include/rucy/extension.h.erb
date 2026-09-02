@@ -256,7 +256,8 @@
 	catch (...) \
 	{ \
 		RUCY_GOTO_RAISE(rb_exc_new2( \
-			Rucy::native_error_class(), "Unknown C++ exception was thrown.")); \
+			Rucy::native_error_class(), \
+			Rucy::get_unknown_exception_message(std::current_exception()).c_str())); \
 	}
 
 #define RUCY_GOTO_RAISE(exception) \

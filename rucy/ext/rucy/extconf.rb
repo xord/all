@@ -10,7 +10,8 @@ require 'rucy/extension'
 
 Xot::ExtConf.new Xot, Rucy do
   setup do
-    headers << 'ruby.h'
+    headers    << 'ruby.h'
+    frameworks << 'Foundation' if osx?
   end
 
   create_makefile 'rucy/tester'

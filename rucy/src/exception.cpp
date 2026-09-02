@@ -144,4 +144,18 @@ namespace Rucy
 	}
 
 
+	Xot::String
+	get_unknown_exception_message (std::exception_ptr exception)
+	{
+#if defined(OSX) || defined(IOS)
+		Xot::String get_native_unknown_exception_message (std::exception_ptr);
+		Xot::String message = get_native_unknown_exception_message(exception);
+		if (!message.empty())
+			return message;
+#endif
+
+		return "Unknown C++ exception was thrown.";
+	}
+
+
 }// Rucy
