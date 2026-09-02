@@ -30,7 +30,7 @@ namespace Rucy
 
 		private:
 
-			/*Global*/Value val;
+			GlobalValue val;
 
 	};// RubyException
 
