@@ -18,6 +18,12 @@ namespace Reflex
 	}
 
 	void
+	Application_stop (Application* app)
+	{
+		PostQuitMessage(0);
+	}
+
+	void
 	Application_set_menu (Application* app, Menu* menu)
 	{
 		Tray_update_icon(app);
@@ -67,6 +73,10 @@ namespace Reflex
 	void
 	Application::start ()
 	{
+		self->started  = false;
+		self->quitting = false;
+		self->running  = true;
+
 		Tray_update_icon(this);
 
 		Event e;
@@ -110,8 +120,11 @@ namespace Reflex
 
 		timeEndPeriod(1);
 
+		self->running = false;
+
 		Tray_remove_icon();
 		Application_cleanup(this);
+		Application_throw_exception(this);
 
 		if (msg.wParam != 0)
 			reflex_error(__FILE__, __LINE__, "WM_QUIT with wParam %d.", msg.wParam);
@@ -124,7 +137,7 @@ namespace Reflex
 		Application_call_quit(this, &e);
 		if (e.is_blocked()) return;
 
-		PostQuitMessage(0);
+		Application_stop(this);
 	}
 
 	void

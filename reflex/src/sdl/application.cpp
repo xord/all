@@ -42,6 +42,12 @@ namespace Reflex
 	}
 
 	void
+	Application_stop (Application* app)
+	{
+		get_data(app)->quit = true;
+	}
+
+	void
 	Application_set_menu (Application* app, Menu* menu)
 	{
 	}
@@ -144,6 +150,11 @@ namespace Reflex
 	void
 	Application::start ()
 	{
+		get_data(this)->quit = false;
+		self->started        = false;
+		self->quitting       = false;
+		self->running        = true;
+
 		Event e;
 		Application_call_start(this, &e);
 
@@ -151,7 +162,10 @@ namespace Reflex
 		emscripten_set_main_loop_arg(emscripten_main_loop, this, 0, true);
 #else
 		main_loop(this);
+		self->running = false;
+
 		Application_cleanup(this);
+		Application_throw_exception(this);
 #endif
 	}
 
@@ -162,7 +176,7 @@ namespace Reflex
 		Application_call_quit(this, &e);
 		if (e.is_blocked()) return;
 
-		get_data(this)->quit = true;
+		Application_stop(this);
 	}
 
 	void

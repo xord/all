@@ -89,6 +89,38 @@ namespace Reflex
 		app->on_device_disconnect(&e);
 	}
 
+	bool
+	Application_has_exception ()
+	{
+		Application* app = global::instance;
+		return app && app->self->exception;
+	}
+
+	bool
+	Application_keep_exception (std::exception_ptr exception)
+	{
+		Application* app = global::instance;
+		if (!app || !app->self->running)
+			return false;
+
+		// the first one is the cause, so keep it and drop the rest
+		if (!app->self->exception)
+			app->self->exception = exception;
+
+		Application_stop(app);
+		return true;
+	}
+
+	void
+	Application_throw_exception (Application* app)
+	{
+		std::exception_ptr exception = app->self->exception;
+		if (!exception) return;
+
+		app->self->exception = NULL;
+		std::rethrow_exception(exception);
+	}
+
 	Application*
 	app ()
 	{

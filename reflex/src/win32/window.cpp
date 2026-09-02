@@ -13,6 +13,7 @@
 #include "reflex/defs.h"
 #include "reflex/exception.h"
 #include "reflex/debug.h"
+#include "../application.h"
 #include "../view.h"
 #include "event.h"
 #include "application.h"
@@ -929,23 +930,26 @@ namespace Reflex
 	static LRESULT CALLBACK
 	wndproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
-		Window* win = NULL;
-		if (msg == WM_NCCREATE)
+		return Application_guard([&]() -> LRESULT
 		{
-			CREATESTRUCTW* cs = (CREATESTRUCTW*) lp;
-			win = (Window*) cs->lpCreateParams;
-			setup_window(win, hwnd);
-		}
+			Window* win = NULL;
+			if (msg == WM_NCCREATE)
+			{
+				CREATESTRUCTW* cs = (CREATESTRUCTW*) lp;
+				win = (Window*) cs->lpCreateParams;
+				setup_window(win, hwnd);
+			}
 
-		if (!win) win = get_window_from_hwnd(hwnd);
-		if  (win) rebind(win);
+			if (!win) win = get_window_from_hwnd(hwnd);
+			if  (win) rebind(win);
 
-		LRESULT ret = window_proc(win, hwnd, msg, wp, lp);
+			LRESULT ret = window_proc(win, hwnd, msg, wp, lp);
 
-		if (msg == WM_NCDESTROY)
-			cleanup_window(win);
+			if (msg == WM_NCDESTROY)
+				cleanup_window(win);
 
-		return ret;
+			return ret;
+		}, (LRESULT) 0);
 	}
 
 	static void
