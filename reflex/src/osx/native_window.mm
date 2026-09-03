@@ -245,25 +245,23 @@ move_to_main_screen_origin (NativeWindow* window)
 
 	- (void) update: (NSTimer*) t
 	{
-		Reflex::Application_guard([&]()
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		++update_count;
+
+		Window_call_update_event(win);
+
+		if (win->self->redraw)
 		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
-
-			++update_count;
-
-			Window_call_update_event(win);
-
-			if (win->self->redraw)
-			{
-				view.needsDisplay = YES;
-				win->self->redraw = false;
-			}
-		});
+			view.needsDisplay = YES;
+			win->self->redraw = false;
+		}
 	}
 
 	- (void) draw
 	{
+		// guarded here too, since rays can throw before the draw event
 		Reflex::Application_guard([&]()
 		{
 			Reflex::Window* win = self.window;
@@ -290,23 +288,17 @@ move_to_main_screen_origin (NativeWindow* window)
 
 	- (BOOL) windowShouldClose: (id) sender
 	{
-		return Reflex::Application_guard([&]() -> BOOL
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return YES;
+		Reflex::Window* win = self.window;
+		if (!win) return YES;
 
-			win->close();
-			return NO;
-		}, NO);
+		Window_call_close(win);
+		return NO;
 	}
 
 	- (void) windowWillClose: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			if (self.isKeyWindow)
-				Window_call_deactivate_event(self.window);
-		});
+		if (self.isKeyWindow)
+			Window_call_deactivate_event(self.window);
 
 		[self stopTimer];
 		[self unbind];
@@ -315,115 +307,63 @@ move_to_main_screen_origin (NativeWindow* window)
 
 	- (void) windowDidBecomeMain: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Menu_apply_to_main_menu(win->menu());
-		});
+		Menu_apply_to_main_menu(win->menu());
 	}
 
 	- (void) windowWillMove: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			win->self->prev_position = win->frame().position();
-		});
+		win->self->prev_position = win->frame().position();
 	}
 
 	- (void) windowDidMove: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			[self frameChanged];
-		});
+		[self frameChanged];
 	}
 
 	- (NSSize) windowWillResize: (NSWindow*) sender toSize: (NSSize) frameSize
 	{
-		return Reflex::Application_guard([&]() -> NSSize
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return frameSize;
+		Reflex::Window* win = self.window;
+		if (!win) return frameSize;
 
-			win->self->prev_size = win->frame().size();
+		win->self->prev_size = win->frame().size();
 
-			return frameSize;
-		}, frameSize);
+		return frameSize;
 	}
 
 	- (void) windowDidResize: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			[self frameChanged];
-		});
+		[self frameChanged];
 	}
 
 	- (void) frameChanged
 	{
-		Reflex::Window* win = self.window;
-		if (!win) return;
-
-		Rays::Bounds b           = win->frame();
-		Rays::Point dpos         = b.position() - win->self->prev_position;
-		Rays::Point dsize        = b.size()     - win->self->prev_size;
-		win->self->prev_position = b.position();
-		win->self->prev_size     = b.size();
-
-		if (dpos == 0 && dsize == 0) return;
-
-		Reflex::FrameEvent e(b, dpos.x, dpos.y, 0, dsize.x, dsize.y, 0);
-		if (dpos  != 0) win->on_move(&e);
-		if (dsize != 0)
-		{
-			Rays::Bounds b = win->frame();
-			b.move_to(0, 0);
-
-			if (win->painter())
-				win->painter()->canvas(b, win->painter()->pixel_density());
-
-			if (win->root())
-				View_set_frame(win->root(), b);
-
-			win->on_resize(&e);
-		}
+		Window_call_frame_event(self.window);
 	}
 
 	- (void) windowWillEnterFullScreen: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			[self updateFullScreenFlag];
-		});
+		[self updateFullScreenFlag];
 	}
 
 	- (void) windowDidEnterFullScreen: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			[self updateFullScreenFlag];
-		});
+		[self updateFullScreenFlag];
 	}
 
 	- (void) windowWillExitFullScreen: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			[self updateFullScreenFlag];
-		});
+		[self updateFullScreenFlag];
 	}
 
 	- (void) windowDidExitFullScreen: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			[self updateFullScreenFlag];
-		});
+		[self updateFullScreenFlag];
 	}
 
 	- (void) updateFullScreenFlag
@@ -443,216 +383,168 @@ move_to_main_screen_origin (NativeWindow* window)
 
 	- (void) windowDidBecomeKey: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			Window_call_activate_event(self.window);
-		});
+		Window_call_activate_event(self.window);
 	}
 
 	- (void) windowDidResignKey: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			Window_call_deactivate_event(self.window);
-		});
+		Window_call_deactivate_event(self.window);
 	}
 
 	- (void) keyDown: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		int code = (int) event.keyCode;
+		if (event.isARepeat && code == repeating_key_code)
+			++repeating_key_count;
+		else
 		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+			repeating_key_code  = code;
+			repeating_key_count = 0;
+		}
 
-			int code = (int) event.keyCode;
-			if (event.isARepeat && code == repeating_key_code)
-				++repeating_key_count;
-			else
-			{
-				repeating_key_code  = code;
-				repeating_key_count = 0;
-			}
-
-			Reflex::NativeKeyEvent e(event, Reflex::KeyEvent::DOWN, repeating_key_count);
-			Window_call_key_event(win, &e);
-		});
+		Reflex::NativeKeyEvent e(event, Reflex::KeyEvent::DOWN, repeating_key_count);
+		Window_call_key_event(win, &e);
 	}
 
 	- (void) keyUp: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativeKeyEvent e(event, Reflex::KeyEvent::UP);
-			Window_call_key_event(win, &e);
-		});
+		Reflex::NativeKeyEvent e(event, Reflex::KeyEvent::UP);
+		Window_call_key_event(win, &e);
 	}
 
 	- (void) flagsChanged: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativeFlagKeyEvent e(event);
-			Window_call_key_event(win, &e);
-		});
+		Reflex::NativeFlagKeyEvent e(event);
+		Window_call_key_event(win, &e);
 	}
 
 	- (BOOL) isTextInputEnabled
 	{
-		return Reflex::Application_guard([&]() -> BOOL
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return NO;
+		Reflex::Window* win = self.window;
+		if (!win) return NO;
 
-			const Reflex::View* focus = win->focus();
-			return focus && focus->accepts_text_input();
-		}, NO);
+		const Reflex::View* focus = win->focus();
+		return focus && focus->accepts_text_input();
 	}
 
 	- (void) textPreedit: (NSString*) text selection: (NSRange) selection
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativeTextEvent e(Reflex::TextEvent::PREEDIT, text, selection);
-			Window_call_text_event(win, &e);
-		});
+		Reflex::NativeTextEvent e(Reflex::TextEvent::PREEDIT, text, selection);
+		Window_call_text_event(win, &e);
 	}
 
 	- (void) textCommit: (NSString*) text synthesizeKeyEvent: (BOOL) synthesize
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativeTextEvent e(
-				Reflex::TextEvent::COMMIT, text, NSMakeRange(NSNotFound, 0));
-			Window_call_text_event(win, &e, synthesize);
-		});
+		Reflex::NativeTextEvent e(
+			Reflex::TextEvent::COMMIT, text, NSMakeRange(NSNotFound, 0));
+		Window_call_text_event(win, &e, synthesize);
 	}
 
 	- (NSRect) textInputBounds
 	{
-		return Reflex::Application_guard([&]() -> NSRect
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return NSZeroRect;
+		Reflex::Window* win = self.window;
+		if (!win) return NSZeroRect;
 
-			const Reflex::View* focus = win->focus();
-			if (!focus) return NSZeroRect;
+		const Reflex::View* focus = win->focus();
+		if (!focus) return NSZeroRect;
 
-			Reflex::Bounds b = focus->text_input_bounds();
-			Reflex::Point p1 = focus->to_window(b.position());
-			Reflex::Point p2 = focus->to_window(b.position() + b.size());
+		Reflex::Bounds b = focus->text_input_bounds();
+		Reflex::Point p1 = focus->to_window(b.position());
+		Reflex::Point p2 = focus->to_window(b.position() + b.size());
 
-			return NSMakeRect(p1.x, view.bounds.size.height - p2.y, p2.x - p1.x, p2.y - p1.y);
-		}, NSZeroRect);
+		return NSMakeRect(p1.x, view.bounds.size.height - p2.y, p2.x - p1.x, p2.y - p1.y);
 	}
 
 	- (void) mouseDown: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
+		Reflex::Window* win = self.window;
+		if (!win) return;
+
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::DOWN);
+
+		if (e[0].position().y < 0)
 		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+			// ignore mouseDown event since the mouseUp event to the window title bar
+			// will not come and will break clicking_count.
+			return;
+		}
 
-			Reflex::NativePointerEvent e(event, view, Reflex::Pointer::DOWN);
-
-			if (e[0].position().y < 0)
-			{
-				// ignore mouseDown event since the mouseUp event to the window title bar
-				// will not come and will break clicking_count.
-				return;
-			}
-
-			Window_call_pointer_event(win, &e);
-		});
+		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) mouseUp: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativePointerEvent e(event, view, Reflex::Pointer::UP);
-			Window_call_pointer_event(win, &e);
-		});
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::UP);
+		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) mouseDragged: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativePointerEvent e(event, view, Reflex::Pointer::MOVE);
-			Window_call_pointer_event(win, &e);
-		});
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::MOVE);
+		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) mouseMoved: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			// macos delivers hover moves to the key window even outside its
-			// bounds, but no other platform can see them, so a cross-platform
-			// app must not either
-			NSPoint pos = [view convertPoint: event.locationInWindow fromView: nil];
-			if (!NSPointInRect(pos, view.bounds)) return;
+		// macos delivers hover moves to the key window even outside its
+		// bounds, but no other platform can see them, so a cross-platform
+		// app must not either
+		NSPoint pos = [view convertPoint: event.locationInWindow fromView: nil];
+		if (!NSPointInRect(pos, view.bounds)) return;
 
-			Reflex::NativePointerEvent e(event, view, Reflex::Pointer::MOVE);
-			Window_call_pointer_event(win, &e);
-		});
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::MOVE);
+		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) mouseEntered: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativePointerEvent e(event, view, Reflex::Pointer::ENTER);
-			Window_call_pointer_event(win, &e);
-		});
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::ENTER);
+		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) mouseExited: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativePointerEvent e(event, view, Reflex::Pointer::LEAVE);
-			Window_call_pointer_event(win, &e);
-		});
+		Reflex::NativePointerEvent e(event, view, Reflex::Pointer::LEAVE);
+		Window_call_pointer_event(win, &e);
 	}
 
 	- (void) scrollWheel: (NSEvent*) event
 	{
-		Reflex::Application_guard([&]()
-		{
-			Reflex::Window* win = self.window;
-			if (!win) return;
+		Reflex::Window* win = self.window;
+		if (!win) return;
 
-			Reflex::NativeWheelEvent e(event, view);
-			Window_call_wheel_event(win, &e);
-		});
+		Reflex::NativeWheelEvent e(event, view);
+		Window_call_wheel_event(win, &e);
 	}
 
 @end// NativeWindow

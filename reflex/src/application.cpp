@@ -43,16 +43,28 @@ namespace Reflex
 	}
 
 	void
-	Application_call_start (Application* app, Event* e)
+	Application_call_quit (Application* app)
+	{
+		Application_guard([&]()
+		{
+			app->quit();
+		});
+	}
+
+	void
+	Application_call_start_event (Application* app, Event* e)
 	{
 		if (app->self->started) return;
 
-		Gamepad_init(app);
-		MIDI_init(app);
+		Application_guard([&]()
+		{
+			Gamepad_init(app);
+			MIDI_init(app);
 
-		app->on_start(e);
+			app->on_start(e);
 
-		app->self->started = true;
+			app->self->started = true;
+		});
 	}
 
 	static void
@@ -63,30 +75,66 @@ namespace Reflex
 	}
 
 	void
-	Application_call_quit (Application* app, Event* e)
+	Application_call_quit_event (Application* app, Event* e)
 	{
 		if (app->self->quitting) return;
 
-		app->on_quit(e);
-		if (e->is_blocked()) return;
+		Application_guard([&]()
+		{
+			app->on_quit(e);
+			if (e->is_blocked()) return;
 
-		app->self->quitting = true;
+			app->self->quitting = true;
 
-		close_all_windows(app);
+			close_all_windows(app);
+		});
 	}
 
 	void
-	Application_call_device_connect (Application* app, Device* device)
+	Application_call_device_connect_event (Application* app, Device* device)
 	{
-		DeviceEvent e(device);
-		app->on_device_connect(&e);
+		Application_guard([&]()
+		{
+			DeviceEvent e(device);
+			app->on_device_connect(&e);
+		});
 	}
 
 	void
-	Application_call_device_disconnect (Application* app, Device* device)
+	Application_call_device_disconnect_event (Application* app, Device* device)
 	{
-		DeviceEvent e(device);
-		app->on_device_disconnect(&e);
+		Application_guard([&]()
+		{
+			DeviceEvent e(device);
+			app->on_device_disconnect(&e);
+		});
+	}
+
+	void
+	Application_call_motion_event (Application* app, MotionEvent* e)
+	{
+		Application_guard([&]()
+		{
+			app->on_motion(e);
+		});
+	}
+
+	void
+	Application_call_preference_event (Application* app, Event* e)
+	{
+		Application_guard([&]()
+		{
+			app->on_preference(e);
+		});
+	}
+
+	void
+	Application_call_about_event (Application* app, Event* e)
+	{
+		Application_guard([&]()
+		{
+			app->on_about(e);
+		});
 	}
 
 	bool

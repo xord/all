@@ -92,7 +92,7 @@ namespace Reflex
 #endif
 
 			if (!dispatched && event.type == SDL_QUIT)
-				app->quit();
+				Application_call_quit(app);
 		}
 	}
 
@@ -156,12 +156,16 @@ namespace Reflex
 		self->running        = true;
 
 		Event e;
-		Application_call_start(this, &e);
+		Application_call_start_event(this, &e);
 
 #ifdef WASM
 		emscripten_set_main_loop_arg(emscripten_main_loop, this, 0, true);
 #else
-		main_loop(this);
+		// guarded here too, since rays can throw while drawing
+		Application_guard([&]()
+		{
+			main_loop(this);
+		});
 		self->running = false;
 
 		Application_cleanup(this);
@@ -173,7 +177,7 @@ namespace Reflex
 	Application::quit ()
 	{
 		Event e;
-		Application_call_quit(this, &e);
+		Application_call_quit_event(this, &e);
 		if (e.is_blocked()) return;
 
 		Application_stop(this);

@@ -11,7 +11,6 @@
 #include <xot/util.h>
 #include "reflex/application.h"
 #include "reflex/exception.h"
-#include "../application.h"
 #include "reflex/debug.h"
 #include "event.h"
 #include "window.h"
@@ -362,15 +361,12 @@ namespace Reflex
 	static void
 	call_gamepad_event (int key_code, bool pressed)
 	{
-		Reflex::Application_guard([&]()
-		{
-			Window* win = Window_get_active();
-			if (!win) return;
+		Window* win = Window_get_active();
+		if (!win) return;
 
-			auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
-			KeyEvent e(action, NULL, key_code, KeyEvent_get_modifiers(), 0);
-			Window_call_key_event(win, &e);
-		});
+		auto action = pressed ? KeyEvent::DOWN : KeyEvent::UP;
+		KeyEvent e(action, NULL, key_code, KeyEvent_get_modifiers(), 0);
+		Window_call_key_event(win, &e);
 	}
 
 	static void

@@ -150,17 +150,14 @@ create_window_menu ()
 
 	- (BOOL) callOnStart
 	{
-		return Reflex::Application_guard([&]() -> BOOL
-		{
-			if (!application)
-				return YES;
+		if (!application)
+			return YES;
 
-			Reflex::Event e;
-			Application_call_start(application, &e);
+		Reflex::Event e;
+		Application_call_start_event(application, &e);
 
-			if (e.is_blocked()) [self quit];
-			return !e.is_blocked();
-		}, NO);
+		if (e.is_blocked()) [self quit];
+		return !e.is_blocked();
 	}
 
 	- (BOOL) isLaunched
@@ -204,84 +201,66 @@ create_window_menu ()
 
 	- (void) quit
 	{
-		Reflex::Application_guard([&]()
-		{
-			if (application)
-				application->quit();
-			else
-				[NSApp terminate: nil];
-		});
+		if (application)
+			Application_call_quit(application);
+		else
+			[NSApp terminate: nil];
 	}
 
 	- (void) showPreference
 	{
-		Reflex::Application_guard([&]()
-		{
-			if (!application) return;
+		if (!application) return;
 
-			Reflex::Event e;
-			application->on_preference(&e);
-		});
+		Reflex::Event e;
+		Application_call_preference_event(application, &e);
 	}
 
 	- (void) showAbout
 	{
-		Reflex::Application_guard([&]()
+		if (application)
 		{
-			if (application)
-			{
-				Reflex::Event e;
-				application->on_about(&e);
-			}
-			else
-				[NSApp orderFrontStandardAboutPanel: nil];
-		});
+			Reflex::Event e;
+			Application_call_about_event(application, &e);
+		}
+		else
+			[NSApp orderFrontStandardAboutPanel: nil];
 	}
 
 	- (void) applicationWillFinishLaunching: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			if (!application || [NSApp mainMenu]) return;
+		if (!application || [NSApp mainMenu]) return;
 
-			Reflex::Menu::Ref menu = new Reflex::Menu();
-			menu->add_child(create_application_menu(application));
-			menu->add_child(create_window_menu());
-			application->set_menu(menu);
-		});
+		Reflex::Menu::Ref menu = new Reflex::Menu();
+		menu->add_child(create_application_menu(application));
+		menu->add_child(create_window_menu());
+		application->set_menu(menu);
 	}
 
 	- (void) applicationDidFinishLaunching: (NSNotification*) notification
 	{
-		Reflex::Application_guard([&]()
-		{
-			if (application)
-				Application_set_background(application, application->background());
+		if (application)
+			Application_set_background(application, application->background());
 
-			launched = true;
-			[self callOnStart];
-		});
+		launched = true;
+		[self callOnStart];
 	}
 
 	- (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication*) application
 	{
-		return Reflex::Application_guard([&]()
+		Reflex::Application* app = self->application;
+		if (!app) return NSTerminateNow;
+
+		if (app->self->running && !self.isQuitBySystem)
 		{
-			Reflex::Application* app = self->application;
-			if (!app) return NSTerminateNow;
+			Application_call_quit(app);
+			return NSTerminateCancel;
+		}
 
-			if (app->self->running && !self.isQuitBySystem)
-			{
-				app->quit();
-				return NSTerminateCancel;
-			}
+		Reflex::Event e;
+		Application_call_quit_event(app, &e);
+		if (e.is_blocked()) return NSTerminateCancel;
 
-			Reflex::Event e;
-			Application_call_quit(app, &e);
-			if (e.is_blocked()) return NSTerminateCancel;
-
-			return NSTerminateNow;
-		}, NSTerminateNow);
+		return NSTerminateNow;
 	}
 
 	- (BOOL) isQuitBySystem

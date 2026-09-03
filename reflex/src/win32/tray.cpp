@@ -6,6 +6,7 @@
 #include <shellapi.h>
 #include "reflex/exception.h"
 #include "../rays.h"
+#include "application.h"
 #include "menu.h"
 
 
@@ -46,34 +47,37 @@ namespace Reflex
 	static LRESULT CALLBACK
 	tray_wndproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
-		switch (msg)
+		return Application_guard([&]() -> LRESULT
 		{
-			case WM_TRAY_ICON:
+			switch (msg)
 			{
-				if (lp == WM_LBUTTONUP || lp == WM_RBUTTONUP)
-					popup_tray_menu();
-				return 0;
-			}
+				case WM_TRAY_ICON:
+				{
+					if (lp == WM_LBUTTONUP || lp == WM_RBUTTONUP)
+						popup_tray_menu();
+					return 0;
+				}
 
-			case WM_MENUCOMMAND:
-			{
-				Menu_call_command_event((HMENU) lp, (uint) wp);
-				return 0;
-			}
+				case WM_MENUCOMMAND:
+				{
+					Menu_call_command_event((HMENU) lp, (uint) wp);
+					return 0;
+				}
 
-			case WM_INITMENUPOPUP:
-			{
-				Menu_call_open_event((HMENU) wp);
-				break;
-			}
+				case WM_INITMENUPOPUP:
+				{
+					Menu_call_open_event((HMENU) wp);
+					break;
+				}
 
-			case WM_UNINITMENUPOPUP:
-			{
-				Menu_call_close_event((HMENU) wp);
-				break;
+				case WM_UNINITMENUPOPUP:
+				{
+					Menu_call_close_event((HMENU) wp);
+					break;
+				}
 			}
-		}
-		return DefWindowProcW(hwnd, msg, wp, lp);
+			return DefWindowProcW(hwnd, msg, wp, lp);
+		}, (LRESULT) 0);
 	}
 
 	static HWND

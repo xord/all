@@ -9,7 +9,6 @@
 #include "reflex/event.h"
 #include "reflex/view.h"
 #include "../rays.h"
-#include "../application.h"
 #include "window.h"
 #include "screen.h"
 #import "native_window.h"
@@ -446,64 +445,55 @@ find_key_equivalent_item (NSMenu* nsmenu, NSEvent* event)
 
 	- (void) handleMenuItem: (id) sender
 	{
-		Reflex::Application_guard([&]()
-		{
-			NSMenuItem* nsitem = nil;
-			if ([sender isKindOfClass: NSMenuItem.class])
-				nsitem = (NSMenuItem*) sender;
-			else if ([sender isKindOfClass: NSMenu.class])
-				nsitem = find_key_equivalent_item((NSMenu*) sender, NSApp.currentEvent);
+		NSMenuItem* nsitem = nil;
+		if ([sender isKindOfClass: NSMenuItem.class])
+			nsitem = (NSMenuItem*) sender;
+		else if ([sender isKindOfClass: NSMenu.class])
+			nsitem = find_key_equivalent_item((NSMenu*) sender, NSApp.currentEvent);
 
-			Reflex::Menu* menu = get_owner(nsitem);
-			if (!menu) return;
+		Reflex::Menu* menu = get_owner(nsitem);
+		if (!menu) return;
 
-			Reflex::Event e;
-			menu->on_click(&e);
-		});
+		Reflex::Event e;
+		Reflex::Menu_call_click_event(menu, &e);
 	}
 
 	- (void) menuWillOpen: (NSMenu*) nsmenu
 	{
-		Reflex::Application_guard([&]()
+		Reflex::Menu_validate_items(nsmenu);
+
+		Reflex::Menu* menu = get_owner(nsmenu);
+		if (!menu) return;
+
+		Reflex::Event e;
+		Reflex::Menu_call_open_submenu_event(menu, &e);
+
+		for (NSMenuItem* nsitem in nsmenu.itemArray)
 		{
-			Reflex::Menu_validate_items(nsmenu);
+			Reflex::Menu* child = get_owner(nsitem);
+			if (!child) continue;
 
-			Reflex::Menu* menu = get_owner(nsmenu);
-			if (!menu) return;
-
-			Reflex::Event e;
-			menu->on_open_submenu(&e);
-
-			for (NSMenuItem* nsitem in nsmenu.itemArray)
-			{
-				Reflex::Menu* child = get_owner(nsitem);
-				if (!child) continue;
-
-				Reflex::Event ce;
-				child->on_show(&ce);
-			}
-		});
+			Reflex::Event ce;
+			Reflex::Menu_call_show_event(child, &ce);
+		}
 	}
 
 	- (void) menuDidClose: (NSMenu*) nsmenu
 	{
-		Reflex::Application_guard([&]()
+		Reflex::Menu* menu = get_owner(nsmenu);
+		if (!menu) return;
+
+		for (NSMenuItem* nsitem in nsmenu.itemArray)
 		{
-			Reflex::Menu* menu = get_owner(nsmenu);
-			if (!menu) return;
+			Reflex::Menu* child = get_owner(nsitem);
+			if (!child) continue;
 
-			for (NSMenuItem* nsitem in nsmenu.itemArray)
-			{
-				Reflex::Menu* child = get_owner(nsitem);
-				if (!child) continue;
+			Reflex::Event ce;
+			Reflex::Menu_call_hide_event(child, &ce);
+		}
 
-				Reflex::Event ce;
-				child->on_hide(&ce);
-			}
-
-			Reflex::Event e;
-			menu->on_close_submenu(&e);
-		});
+		Reflex::Event e;
+		Reflex::Menu_call_close_submenu_event(menu, &e);
 	}
 
 	- (BOOL) menuHasKeyEquivalent: (NSMenu*) nsmenu
@@ -511,19 +501,16 @@ find_key_equivalent_item (NSMenu* nsmenu, NSEvent* event)
 		target: (id*) target
 		action: (SEL*) action
 	{
-		return Reflex::Application_guard([&]() -> BOOL
-		{
-			// answer key equivalent matching ourselves: AppKit's own scanning of
-			// delegate-backed menus caches stale results across setMainMenu calls,
-			// leaving every shortcut dead until the menu bar is clicked once
+		// answer key equivalent matching ourselves: AppKit's own scanning of
+		// delegate-backed menus caches stale results across setMainMenu calls,
+		// leaving every shortcut dead until the menu bar is clicked once
 
-			NSMenuItem* nsitem = find_key_equivalent_item(nsmenu, event);
-			if (!nsitem) return NO;
+		NSMenuItem* nsitem = find_key_equivalent_item(nsmenu, event);
+		if (!nsitem) return NO;
 
-			*target = nsitem.target;
-			*action = nsitem.action;
-			return YES;
-		}, NO);
+		*target = nsitem.target;
+		*action = nsitem.action;
+		return YES;
 	}
 
 @end// ReflexMenuTarget

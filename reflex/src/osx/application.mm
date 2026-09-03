@@ -153,7 +153,7 @@ namespace Reflex
 			invalid_state_error(__FILE__, __LINE__, "the application is not running.");
 
 		Event e;
-		Application_call_quit(this, &e);
+		Application_call_quit_event(this, &e);
 		if (e.is_blocked()) return;
 
 		if (self->running)

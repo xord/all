@@ -76,7 +76,7 @@
 			return YES;
 
 		Reflex::Event e;
-		Application_call_start(application, &e);
+		Application_call_start_event(application, &e);
 		started = true;
 
 		return !e.is_blocked();
@@ -109,7 +109,7 @@
 
 				Reflex::MotionEvent e(
 					Reflex::Point(motion.gravity.x, -motion.gravity.y, motion.gravity.z));
-				application->on_motion(&e);
+				Application_call_motion_event(application, &e);
 			}
 		];
 
@@ -147,7 +147,7 @@
 		if (self->application)
 		{
 			Reflex::Event e;
-			Application_call_quit(self->application, &e);
+			Application_call_quit_event(self->application, &e);
 			if (e.is_blocked())
 			{
 				Reflex::not_implemented_error(

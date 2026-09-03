@@ -45,7 +45,7 @@ namespace Reflex
 	Application_quit_if_should ()
 	{
 		if (Application_should_quit(app()))
-			app()->quit();
+			Application_call_quit(app());
 	}
 
 
@@ -80,7 +80,7 @@ namespace Reflex
 		Tray_update_icon(this);
 
 		Event e;
-		Application_call_start(this, &e);
+		Application_call_start_event(this, &e);
 
 		timeBeginPeriod(1);
 
@@ -113,7 +113,11 @@ namespace Reflex
 					continue;
 				}
 
-				update_all_windows(this);
+				// guarded here too, since rays can throw while drawing
+				Application_guard([&]()
+				{
+					update_all_windows(this);
+				});
 				prev = now;
 			}
 		}
@@ -134,7 +138,7 @@ namespace Reflex
 	Application::quit ()
 	{
 		Event e;
-		Application_call_quit(this, &e);
+		Application_call_quit_event(this, &e);
 		if (e.is_blocked()) return;
 
 		Application_stop(this);

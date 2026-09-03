@@ -39,13 +39,21 @@ namespace Reflex
 
 	void Application_cleanup (Application* app);
 
-	void Application_call_start (Application* app, Event* e);
+	void Application_call_quit (Application* app);
 
-	void Application_call_quit  (Application* app, Event* e);
+	void Application_call_start_event             (Application* app, Event* e);
 
-	void Application_call_device_connect    (Application* app, Device* device);
+	void Application_call_quit_event              (Application* app, Event* e);
 
-	void Application_call_device_disconnect (Application* app, Device* device);
+	void Application_call_device_connect_event    (Application* app, Device* device);
+
+	void Application_call_device_disconnect_event (Application* app, Device* device);
+
+	void Application_call_motion_event            (Application* app, MotionEvent* e);
+
+	void Application_call_preference_event        (Application* app, Event* e);
+
+	void Application_call_about_event             (Application* app, Event* e);
 
 	bool Application_has_exception ();
 
@@ -69,6 +77,21 @@ namespace Reflex
 	inline RET
 	Application_guard (FUN&& fun, RET fallback)
 	{
+		// Runs 'fun' so that no C++ exception gets out of it while start()
+		// runs the event loop. The exception is kept, the loop is stopped,
+		// and start() throws it again after the loop returns. Once one is
+		// kept, later calls return 'fallback' without running 'fun'.
+		//
+		// Where to use it:
+		// 1. Platform code never calls anything that reaches on_* by itself,
+		//    not even close() or quit(). It goes through a Foo_call_* function
+		//    in src/, and those are the places to guard.
+		// 2. Guard the body of Foo_call_*. The argument checks stay outside,
+		//    a bug inside reflex should fail right there.
+		// 3. Two exceptions: the window procedures on windows, since an
+		//    exception can not cross the kernel callback boundary, and the
+		//    drawing calls of each platform loop, since rays can throw there.
+
 		if (Application_has_exception())
 			return fallback;
 

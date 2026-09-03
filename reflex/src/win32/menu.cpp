@@ -398,7 +398,7 @@ namespace Reflex
 		if (!item) return;
 
 		Event e;
-		item->on_click(&e);
+		Menu_call_click_event(item, &e);
 	}
 
 	void
@@ -408,7 +408,7 @@ namespace Reflex
 		if (!menu) return;
 
 		Event e;
-		menu->on_click(&e);
+		Menu_call_click_event(menu, &e);
 	}
 
 	void
@@ -418,7 +418,7 @@ namespace Reflex
 		if (!menu) return;
 
 		Event e;
-		menu->on_open_submenu(&e);
+		Menu_call_open_submenu_event(menu, &e);
 
 		int count = GetMenuItemCount(hmenu);
 		for (int i = 0; i < count; ++i)
@@ -427,7 +427,7 @@ namespace Reflex
 			if (!child) continue;
 
 			Event ce;
-			child->on_show(&ce);
+			Menu_call_show_event(child, &ce);
 		}
 	}
 
@@ -444,11 +444,11 @@ namespace Reflex
 			if (!child) continue;
 
 			Event ce;
-			child->on_hide(&ce);
+			Menu_call_hide_event(child, &ce);
 		}
 
 		Event e;
-		menu->on_close_submenu(&e);
+		Menu_call_close_submenu_event(menu, &e);
 	}
 
 

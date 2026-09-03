@@ -7,6 +7,7 @@
 #include <rays/polygon.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
+#include "application.h"
 #include "selector.h"
 #include "view.h"
 #include "world.h"
@@ -449,18 +450,22 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		shape->on_contact(event);
-
-		switch (event->action())
+		// called back from box2d, which can not let an exception through
+		Application_guard([&]()
 		{
-			case ContactEvent::BEGIN: shape->on_contact_begin(event); break;
-			case ContactEvent::END:   shape->on_contact_end(event);   break;
-			default: break;
-		}
+			shape->on_contact(event);
 
-		if (event->is_blocked()) return;
+			switch (event->action())
+			{
+				case ContactEvent::BEGIN: shape->on_contact_begin(event); break;
+				case ContactEvent::END:   shape->on_contact_end(event);   break;
+				default: break;
+			}
 
-		View_call_contact_event(shape->owner(), event);
+			if (event->is_blocked()) return;
+
+			View_call_contact_event(shape->owner(), event);
+		});
 	}
 
 
