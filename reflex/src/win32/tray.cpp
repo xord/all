@@ -47,6 +47,9 @@ namespace Reflex
 	static LRESULT CALLBACK
 	tray_wndproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
+		if (Application_has_exception())
+			return DefWindowProcW(hwnd, msg, wp, lp);
+
 		return Application_guard([&]() -> LRESULT
 		{
 			switch (msg)

@@ -902,6 +902,9 @@ namespace Reflex
 	static LRESULT CALLBACK
 	wndproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
+		if (Application_has_exception())
+			return DefWindowProcW(hwnd, msg, wp, lp);
+
 		return Application_guard([&]() -> LRESULT
 		{
 			Window* win = NULL;

@@ -11,16 +11,30 @@ namespace Reflex
 {
 
 
+	struct ApplicationData : public Application::Data
+	{
+
+		bool quit = false;
+
+	};// ApplicationData
+
+
+	static ApplicationData*
+	get_data (Application* app)
+	{
+		return (ApplicationData*) app->self.get();
+	}
+
 	Application::Data*
 	Application_create_data ()
 	{
-		return new Application::Data();
+		return new ApplicationData();
 	}
 
 	void
 	Application_stop (Application* app)
 	{
-		PostQuitMessage(0);
+		get_data(app)->quit = true;
 	}
 
 	void
@@ -73,8 +87,10 @@ namespace Reflex
 	void
 	Application::start ()
 	{
-		self->started  = false;
+		ApplicationData* self = get_data(this);
+		self->quit     = false;
 		self->quitting = false;
+		self->started  = false;
 		self->running  = true;
 
 		Tray_update_icon(this);
@@ -86,8 +102,8 @@ namespace Reflex
 
 		double prev = get_time();
 
-		MSG msg;
-		while (true)
+		MSG msg = {0};
+		while (!self->quit)
 		{
 			if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -130,7 +146,7 @@ namespace Reflex
 		Application_cleanup(this);
 		Application_throw_exception(this);
 
-		if (msg.wParam != 0)
+		if (msg.message == WM_QUIT && msg.wParam != 0)
 			reflex_error(__FILE__, __LINE__, "WM_QUIT with wParam %d.", msg.wParam);
 	}
 
