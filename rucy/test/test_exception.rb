@@ -33,4 +33,10 @@ class TestException < Test::Unit::TestCase
     assert_raise(Rucy::NativeError) {throw_cstring}
   end
 
+  def test_throw_objc_exception()
+    return unless osx?
+    e = assert_raise(Rucy::NativeError) {throw_objc_exception}
+    assert_match(/TesterException: throw_objc_exception/, e.message)
+  end
+
 end# TestException

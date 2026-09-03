@@ -91,7 +91,7 @@ namespace Reflex
 			if (win) win->release();
 
 			if (Window_all().empty())
-				Reflex::app()->quit();
+				Reflex::Application_call_quit(Reflex::app());
 		}
 
 		Uint32 to_sdl_flags (uint flags)
@@ -162,34 +162,6 @@ namespace Reflex
 
 		Reflex::DrawEvent e(dt, fps);
 		Window_call_draw_event(win, &e);
-	}
-
-	static void
-	frame_changed (Window* win)
-	{
-		Rays::Bounds b           = win->frame();
-		Rays::Point dpos         = b.position() - win->self->prev_position;
-		Rays::Point dsize        = b.size()     - win->self->prev_size;
-		win->self->prev_position = b.position();
-		win->self->prev_size     = b.size();
-
-		if (dpos == 0 && dsize == 0) return;
-
-		Reflex::FrameEvent e(b, dpos.x, dpos.y, 0, dsize.x, dsize.y, 0);
-		if (dpos  != 0) win->on_move(&e);
-		if (dsize != 0)
-		{
-			Rays::Bounds b = win->frame();
-			b.move_to(0, 0);
-
-			if (win->painter())
-				win->painter()->canvas(b, win->painter()->pixel_density());
-
-			if (win->root())
-				View_set_frame(win->root(), b);
-
-			win->on_resize(&e);
-		}
 	}
 
 	static bool
@@ -462,7 +434,7 @@ namespace Reflex
 				switch (event.window.event)
 				{
 					case SDL_WINDOWEVENT_CLOSE:
-						win->close();
+						Window_call_close(win);
 						break;
 
 					case SDL_WINDOWEVENT_EXPOSED:
@@ -477,7 +449,7 @@ namespace Reflex
 					case SDL_WINDOWEVENT_RESTORED:
 					case SDL_WINDOWEVENT_MAXIMIZED:
 					case SDL_WINDOWEVENT_MINIMIZED:
-						frame_changed(win);
+						Window_call_frame_event(win);
 						break;
 
 					case SDL_WINDOWEVENT_FOCUS_GAINED:

@@ -11,10 +11,30 @@ namespace Reflex
 {
 
 
+	struct ApplicationData : public Application::Data
+	{
+
+		bool quit = false;
+
+	};// ApplicationData
+
+
+	static ApplicationData*
+	get_data (Application* app)
+	{
+		return (ApplicationData*) app->self.get();
+	}
+
 	Application::Data*
 	Application_create_data ()
 	{
-		return new Application::Data();
+		return new ApplicationData();
+	}
+
+	void
+	Application_stop (Application* app)
+	{
+		get_data(app)->quit = true;
 	}
 
 	void
@@ -39,7 +59,7 @@ namespace Reflex
 	Application_quit_if_should ()
 	{
 		if (Application_should_quit(app()))
-			app()->quit();
+			Application_call_quit(app());
 	}
 
 
@@ -67,17 +87,23 @@ namespace Reflex
 	void
 	Application::start ()
 	{
+		ApplicationData* self = get_data(this);
+		self->quit     = false;
+		self->quitting = false;
+		self->started  = false;
+		self->running  = true;
+
 		Tray_update_icon(this);
 
 		Event e;
-		Application_call_start(this, &e);
+		Application_call_start_event(this, &e);
 
 		timeBeginPeriod(1);
 
 		double prev = get_time();
 
-		MSG msg;
-		while (true)
+		MSG msg = {0};
+		while (!self->quit)
 		{
 			if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -103,17 +129,24 @@ namespace Reflex
 					continue;
 				}
 
-				update_all_windows(this);
+				// guarded here too, since rays can throw while drawing
+				Application_guard([&]()
+				{
+					update_all_windows(this);
+				});
 				prev = now;
 			}
 		}
 
 		timeEndPeriod(1);
 
+		self->running = false;
+
 		Tray_remove_icon();
 		Application_cleanup(this);
+		Application_throw_exception(this);
 
-		if (msg.wParam != 0)
+		if (msg.message == WM_QUIT && msg.wParam != 0)
 			reflex_error(__FILE__, __LINE__, "WM_QUIT with wParam %d.", msg.wParam);
 	}
 
@@ -121,10 +154,10 @@ namespace Reflex
 	Application::quit ()
 	{
 		Event e;
-		Application_call_quit(this, &e);
+		Application_call_quit_event(this, &e);
 		if (e.is_blocked()) return;
 
-		PostQuitMessage(0);
+		Application_stop(this);
 	}
 
 	void

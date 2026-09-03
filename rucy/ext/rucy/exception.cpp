@@ -1,6 +1,15 @@
 #include "defs.h"
 
 
+#ifdef OSX
+	#include <objc/runtime.h>
+	#include <objc/message.h>
+	#include <objc/objc-exception.h>
+	#include <CoreFoundation/CoreFoundation.h>
+	#undef nil// hides Rucy::nil()
+#endif
+
+
 using namespace Rucy;
 
 
@@ -89,6 +98,26 @@ RUCY_DEF0(throw_cstring)
 }
 RUCY_END
 
+#ifdef OSX
+/*
+	throw NSException. this file is c++, so go through the objc runtime.
+*/
+static
+RUCY_DEF0(throw_objc_exception)
+{
+	typedef id (*Fun) (id, SEL, id, id, id);
+
+	CFStringRef name   = CFSTR("TesterException");
+	CFStringRef reason = CFSTR("throw_objc_exception");
+	id exception       = ((Fun) objc_msgSend)(
+		(id) objc_getClass("NSException"),
+		sel_registerName("exceptionWithName:reason:userInfo:"),
+		(id) name, (id) reason, NULL);
+	objc_exception_throw(exception);
+}
+RUCY_END
+#endif
+
 
 void
 Init_exception ()
@@ -104,4 +133,7 @@ Init_exception ()
 	mTester.define_method("throw_custom_exception", throw_custom_exception);
 	mTester.define_method("throw_std_string", throw_std_string);
 	mTester.define_method("throw_cstring", throw_cstring);
+#ifdef OSX
+	mTester.define_method("throw_objc_exception", throw_objc_exception);
+#endif
 }

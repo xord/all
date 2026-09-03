@@ -6,6 +6,7 @@
 #import <Cocoa/Cocoa.h>
 #include "reflex/event.h"
 #include "reflex/exception.h"
+#include "../application.h"
 #include "../rays.h"
 #include "menu.h"
 
@@ -84,6 +85,7 @@ create_window_menu ()
 	{
 		Reflex::Application* application;
 		NSStatusItem* status_item;
+		bool launched;
 	}
 
 	- (id) init
@@ -93,6 +95,7 @@ create_window_menu ()
 
 		application = NULL;
 		status_item = nil;
+		launched    = false;
 
 		return self;
 	}
@@ -151,10 +154,15 @@ create_window_menu ()
 			return YES;
 
 		Reflex::Event e;
-		Application_call_start(application, &e);
+		Application_call_start_event(application, &e);
 
 		if (e.is_blocked()) [self quit];
 		return !e.is_blocked();
+	}
+
+	- (BOOL) isLaunched
+	{
+		return launched;
 	}
 
 	- (void) updateStatusItem
@@ -194,7 +202,7 @@ create_window_menu ()
 	- (void) quit
 	{
 		if (application)
-			application->quit();
+			Application_call_quit(application);
 		else
 			[NSApp terminate: nil];
 	}
@@ -204,7 +212,7 @@ create_window_menu ()
 		if (!application) return;
 
 		Reflex::Event e;
-		application->on_preference(&e);
+		Application_call_preference_event(application, &e);
 	}
 
 	- (void) showAbout
@@ -212,7 +220,7 @@ create_window_menu ()
 		if (application)
 		{
 			Reflex::Event e;
-			application->on_about(&e);
+			Application_call_about_event(application, &e);
 		}
 		else
 			[NSApp orderFrontStandardAboutPanel: nil];
@@ -233,24 +241,46 @@ create_window_menu ()
 		if (application)
 			Application_set_background(application, application->background());
 
+		launched = true;
 		[self callOnStart];
 	}
 
 	- (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication*) application
 	{
-		if (self->application)
+		Reflex::Application* app = self->application;
+		if (!app) return NSTerminateNow;
+
+		if (app->self->running && !self.isQuitBySystem)
 		{
-			Reflex::Event e;
-			Application_call_quit(self->application, &e);
-			if (e.is_blocked()) return NSTerminateCancel;
+			Application_call_quit(app);
+			return NSTerminateCancel;
 		}
+
+		Reflex::Event e;
+		Application_call_quit_event(app, &e);
+		if (e.is_blocked()) return NSTerminateCancel;
 
 		return NSTerminateNow;
 	}
 
+	- (BOOL) isQuitBySystem
+	{
+		// log out, shut down and restart put a reason on the quit event,
+		// while a quit from the dock or a script comes without one
+		NSAppleEventDescriptor* event =
+			NSAppleEventManager.sharedAppleEventManager.currentAppleEvent;
+		return
+			event &&
+			event.eventClass == kCoreEventClass &&
+			event.eventID    == kAEQuitApplication &&
+			[event attributeDescriptorForKeyword: kAEQuitReason];
+	}
+
 	- (BOOL) applicationShouldTerminateAfterLastWindowClosed: (NSApplication*) application
 	{
-		return Application_should_quit(self->application);
+		if (Application_should_quit(self->application))
+			[self quit];
+		return NO;
 	}
 
 	- (void) applicationWillTerminate: (NSNotification*) notification

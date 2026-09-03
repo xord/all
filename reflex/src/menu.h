@@ -64,6 +64,16 @@ namespace Reflex
 
 	void Menu_cancel_active_pointers_for_popup (View* view);
 
+	void Menu_call_click_event         (Menu* menu, Event* event);
+
+	void Menu_call_show_event          (Menu* menu, Event* event);
+
+	void Menu_call_hide_event          (Menu* menu, Event* event);
+
+	void Menu_call_open_submenu_event  (Menu* menu, Event* event);
+
+	void Menu_call_close_submenu_event (Menu* menu, Event* event);
+
 
 }// Reflex
 

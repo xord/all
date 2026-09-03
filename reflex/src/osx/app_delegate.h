@@ -9,6 +9,8 @@
 
 	- (BOOL) callOnStart;
 
+	- (BOOL) isLaunched;
+
 	- (void) updateStatusItem;
 
 @end// ReflexAppDelegate

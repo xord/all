@@ -6,6 +6,7 @@
 #import <Cocoa/Cocoa.h>
 #include <rays/rays.h>
 #include "reflex/exception.h"
+#include "../application.h"
 #include "../view.h"
 #include "../pointer.h"
 #include "event.h"
@@ -260,25 +261,29 @@ move_to_main_screen_origin (NativeWindow* window)
 
 	- (void) draw
 	{
-		Reflex::Window* win = self.window;
-		if (!win) return;
+		// guarded here too, since rays can throw before the draw event
+		Reflex::Application_guard([&]()
+		{
+			Reflex::Window* win = self.window;
+			if (!win) return;
 
-		update_pixel_density(win);
+			update_pixel_density(win);
 
-		if (update_count == 0)
-			[self update];
+			if (update_count == 0)
+				[self update];
 
-		double now = Xot::time();
-		double dt  = now - win->self->prev_time_draw;
-		double fps = 1. / dt;
+			double now = Xot::time();
+			double dt  = now - win->self->prev_time_draw;
+			double fps = 1. / dt;
 
-		fps = win->self->prev_fps * 0.9 + fps * 0.1;// LPF
+			fps = win->self->prev_fps * 0.9 + fps * 0.1;// LPF
 
-		win->self->prev_time_draw = now;
-		win->self->prev_fps       = fps;
+			win->self->prev_time_draw = now;
+			win->self->prev_fps       = fps;
 
-		Reflex::DrawEvent e(dt, fps);
-		Window_call_draw_event(win, &e);
+			Reflex::DrawEvent e(dt, fps);
+			Window_call_draw_event(win, &e);
+		});
 	}
 
 	- (BOOL) windowShouldClose: (id) sender
@@ -286,7 +291,7 @@ move_to_main_screen_origin (NativeWindow* window)
 		Reflex::Window* win = self.window;
 		if (!win) return YES;
 
-		win->close();
+		Window_call_close(win);
 		return NO;
 	}
 
@@ -338,32 +343,7 @@ move_to_main_screen_origin (NativeWindow* window)
 
 	- (void) frameChanged
 	{
-		Reflex::Window* win = self.window;
-		if (!win) return;
-
-		Rays::Bounds b           = win->frame();
-		Rays::Point dpos         = b.position() - win->self->prev_position;
-		Rays::Point dsize        = b.size()     - win->self->prev_size;
-		win->self->prev_position = b.position();
-		win->self->prev_size     = b.size();
-
-		if (dpos == 0 && dsize == 0) return;
-
-		Reflex::FrameEvent e(b, dpos.x, dpos.y, 0, dsize.x, dsize.y, 0);
-		if (dpos  != 0) win->on_move(&e);
-		if (dsize != 0)
-		{
-			Rays::Bounds b = win->frame();
-			b.move_to(0, 0);
-
-			if (win->painter())
-				win->painter()->canvas(b, win->painter()->pixel_density());
-
-			if (win->root())
-				View_set_frame(win->root(), b);
-
-			win->on_resize(&e);
-		}
+		Window_call_frame_event(self.window);
 	}
 
 	- (void) windowWillEnterFullScreen: (NSNotification*) notification

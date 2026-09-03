@@ -201,6 +201,8 @@ namespace Rucy
 
 			GlobalValue (const This& obj, bool gc = false);
 
+			GlobalValue& operator = (const RubyValue& v);
+
 			GlobalValue& operator = (const Value& v);
 
 			GlobalValue& operator = (const This& obj);

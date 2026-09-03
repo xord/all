@@ -455,7 +455,7 @@ find_key_equivalent_item (NSMenu* nsmenu, NSEvent* event)
 		if (!menu) return;
 
 		Reflex::Event e;
-		menu->on_click(&e);
+		Reflex::Menu_call_click_event(menu, &e);
 	}
 
 	- (void) menuWillOpen: (NSMenu*) nsmenu
@@ -466,7 +466,7 @@ find_key_equivalent_item (NSMenu* nsmenu, NSEvent* event)
 		if (!menu) return;
 
 		Reflex::Event e;
-		menu->on_open_submenu(&e);
+		Reflex::Menu_call_open_submenu_event(menu, &e);
 
 		for (NSMenuItem* nsitem in nsmenu.itemArray)
 		{
@@ -474,7 +474,7 @@ find_key_equivalent_item (NSMenu* nsmenu, NSEvent* event)
 			if (!child) continue;
 
 			Reflex::Event ce;
-			child->on_show(&ce);
+			Reflex::Menu_call_show_event(child, &ce);
 		}
 	}
 
@@ -489,11 +489,11 @@ find_key_equivalent_item (NSMenu* nsmenu, NSEvent* event)
 			if (!child) continue;
 
 			Reflex::Event ce;
-			child->on_hide(&ce);
+			Reflex::Menu_call_hide_event(child, &ce);
 		}
 
 		Reflex::Event e;
-		menu->on_close_submenu(&e);
+		Reflex::Menu_call_close_submenu_event(menu, &e);
 	}
 
 	- (BOOL) menuHasKeyEquivalent: (NSMenu*) nsmenu

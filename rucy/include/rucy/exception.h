@@ -5,6 +5,7 @@
 
 
 #include <stdexcept>
+#include <exception>
 #include <xot/exception.h>
 #include <rucy/value.h>
 
@@ -30,7 +31,7 @@ namespace Rucy
 
 		private:
 
-			/*Global*/Value val;
+			GlobalValue val;
 
 	};// RubyException
 
@@ -96,6 +97,9 @@ namespace Rucy
 	[[noreturn]]
 	void system_error (
 		const char* file, int line, const char* format = NULL, ...);
+
+
+	Xot::String get_unknown_exception_message (std::exception_ptr exception);
 
 
 }// Rucy

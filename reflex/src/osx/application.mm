@@ -43,6 +43,19 @@ namespace Reflex
 	}
 
 	void
+	Application_stop (Application* app)
+	{
+		[NSApp stop: nil];
+
+		// stop: takes effect only after an event is handled, so post one
+		NSEvent* e = [NSEvent
+			otherEventWithType: NSEventTypeApplicationDefined
+			location: NSZeroPoint modifierFlags: 0 timestamp: 0
+			windowNumber: 0 context: nil subtype: 0 data1: 0 data2: 0];
+		[NSApp postEvent: e atStart: YES];
+	}
+
+	void
 	Application_set_menu (Application* app, Menu* menu)
 	{
 		update_status_item(app);
@@ -106,10 +119,29 @@ namespace Reflex
 		ReflexAppDelegate* delegate = setup_app_delegate(app);
 		[delegate bind: this];
 
-		if (!app.isRunning)
-			[app run];
-		else
+		if (app.isRunning)
+		{
+			// the host app runs the event loop
 			[delegate callOnStart];
+			return;
+		}
+
+		if (delegate.isLaunched)
+		{
+			// the app is launched only once, so the later runs start by themselves
+			[delegate performSelector: @selector(callOnStart) withObject: nil afterDelay: 0];
+		}
+
+		self->started  = false;
+		self->quitting = false;
+		self->running  = true;
+		[app run];
+		self->running  = false;
+
+		Application_cleanup(this);
+		[delegate unbind];
+
+		Application_throw_exception(this);
 	}
 
 	void
@@ -120,7 +152,14 @@ namespace Reflex
 		if (!NSApp.isRunning)
 			invalid_state_error(__FILE__, __LINE__, "the application is not running.");
 
-		[NSApp terminate: nil];
+		Event e;
+		Application_call_quit_event(this, &e);
+		if (e.is_blocked()) return;
+
+		if (self->running)
+			Application_stop(this);
+		else
+			[NSApp terminate: nil];
 	}
 
 	void

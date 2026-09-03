@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <rays/point.h>
 #include "reflex/exception.h"
+#include "application.h"
 #include "view.h"
 #include "window.h"
 
@@ -22,6 +23,51 @@ namespace Reflex
 		// menu is dismissed, so pointers being pressed would never see their
 		// up; canceling them first keeps every pointer stream closed.
 		Window_cancel_active_pointers(window);
+	}
+
+	void
+	Menu_call_click_event (Menu* menu, Event* event)
+	{
+		Application_guard([&]()
+		{
+			menu->on_click(event);
+		});
+	}
+
+	void
+	Menu_call_show_event (Menu* menu, Event* event)
+	{
+		Application_guard([&]()
+		{
+			menu->on_show(event);
+		});
+	}
+
+	void
+	Menu_call_hide_event (Menu* menu, Event* event)
+	{
+		Application_guard([&]()
+		{
+			menu->on_hide(event);
+		});
+	}
+
+	void
+	Menu_call_open_submenu_event (Menu* menu, Event* event)
+	{
+		Application_guard([&]()
+		{
+			menu->on_open_submenu(event);
+		});
+	}
+
+	void
+	Menu_call_close_submenu_event (Menu* menu, Event* event)
+	{
+		Application_guard([&]()
+		{
+			menu->on_close_submenu(event);
+		});
 	}
 
 

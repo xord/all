@@ -6,6 +6,7 @@
 #include <set>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
+#include "application.h"
 #include "view.h"
 #include "event.h"
 #include "midi.h"
@@ -213,17 +214,31 @@ namespace Reflex
 	}
 
 	void
+	Window_call_close (Window* window)
+	{
+		if (!window) return;
+
+		Application_guard([&]()
+		{
+			window->close();
+		});
+	}
+
+	void
 	Window_call_activate_event (Window* window)
 	{
 		if (!window) return;
 
-		Xot::add_flag(&window->self->flags, Window::Data::ACTIVE);
+		Application_guard([&]()
+		{
+			Xot::add_flag(&window->self->flags, Window::Data::ACTIVE);
 
-		Event e;
-		window->on_activate(&e);
-		if (e.is_blocked()) return;
+			Event e;
+			window->on_activate(&e);
+			if (e.is_blocked()) return;
 
-		View_activate_tree(window->root(), &e);
+			View_activate_tree(window->root(), &e);
+		});
 	}
 
 	void
@@ -231,29 +246,35 @@ namespace Reflex
 	{
 		if (!window) return;
 
-		Xot::remove_flag(&window->self->flags, Window::Data::ACTIVE);
+		Application_guard([&]()
+		{
+			Xot::remove_flag(&window->self->flags, Window::Data::ACTIVE);
 
-		Event e;
-		window->on_deactivate(&e);
-		if (e.is_blocked()) return;
+			Event e;
+			window->on_deactivate(&e);
+			if (e.is_blocked()) return;
 
-		View_deactivate_tree(window->root(), &e);
+			View_deactivate_tree(window->root(), &e);
+		});
 	}
 
 	void
 	Window_call_update_event (Window* window)
 	{
-		Window::Data* self = window->self.get();
+		Application_guard([&]()
+		{
+			Window::Data* self = window->self.get();
 
-		MIDI_process_events();
+			MIDI_process_events();
 
-		double now = Xot::time();
-		UpdateEvent e(now, now - self->prev_time_update);
-		self->prev_time_update = now;
+			double now = Xot::time();
+			UpdateEvent e(now, now - self->prev_time_update);
+			self->prev_time_update = now;
 
-		window->on_update(&e);
-		if (!e.is_blocked())
-			View_update_tree(window->root(), e);
+			window->on_update(&e);
+			if (!e.is_blocked())
+				View_update_tree(window->root(), e);
+		});
 	}
 
 	void
@@ -264,26 +285,63 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		Painter* painter = window->painter();
-		if (!painter)
-			Xot::invalid_state_error(__FILE__, __LINE__);
+		Application_guard([&]()
+		{
+			Painter* painter = window->painter();
+			if (!painter)
+				Xot::invalid_state_error(__FILE__, __LINE__);
 
-		Rays::Bounds frame = window->frame();
+			Rays::Bounds frame = window->frame();
 
-		DrawEvent_set_painter(event, painter);
-		DrawEvent_set_bounds(event, Bounds(0, 0, frame.width, frame.height));
+			DrawEvent_set_painter(event, painter);
+			DrawEvent_set_bounds(event, Bounds(0, 0, frame.width, frame.height));
 
-		painter->begin();
-		painter->push_state();
-		painter->clear();
+			painter->begin();
+			painter->push_state();
+			painter->clear();
 
-		window->on_draw(event);
-		if (!event->is_blocked())
-			View_draw_tree(window->root(), event, 0, frame.move_to(0));
+			window->on_draw(event);
+			if (!event->is_blocked())
+				View_draw_tree(window->root(), event, 0, frame.move_to(0));
 
-		painter->pop_state();
-		painter->end();
+			painter->pop_state();
+			painter->end();
+		});
 	}
+
+	void
+	Window_call_frame_event (Window* window)
+	{
+		if (!window) return;
+
+		Application_guard([&]()
+		{
+			Rays::Bounds b              = window->frame();
+			Rays::Point dpos            = b.position() - window->self->prev_position;
+			Rays::Point dsize           = b.size()     - window->self->prev_size;
+			window->self->prev_position = b.position();
+			window->self->prev_size     = b.size();
+
+			if (dpos == 0 && dsize == 0) return;
+
+			FrameEvent e(b, dpos.x, dpos.y, 0, dsize.x, dsize.y, 0);
+			if (dpos  != 0) window->on_move(&e);
+			if (dsize != 0)
+			{
+				Rays::Bounds b = window->frame();
+				b.move_to(0, 0);
+
+				if (window->painter())
+					window->painter()->canvas(b, window->painter()->pixel_density());
+
+				if (window->root())
+					View_set_frame(window->root(), b);
+
+				window->on_resize(&e);
+			}
+		});
+	}
+
 
 	static bool
 	is_capturing (
@@ -303,42 +361,45 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		window->on_key(event);
-
-		if (!event->is_blocked())
+		Application_guard([&]()
 		{
-			switch (event->action())
-			{
-				case KeyEvent::DOWN: window->on_key_down(event); break;
-				case KeyEvent::UP:   window->on_key_up(event);   break;
-				default: break;
-			}
-		}
+			window->on_key(event);
 
-		if (capture && !event->is_blocked())
-		{
-			for (auto& [view, targets] : window->self->captures)
+			if (!event->is_blocked())
 			{
-				if (
-					!view->window() ||
-					!is_capturing(view.get(), targets, View::CAPTURE_KEY))
+				switch (event->action())
 				{
-					continue;
+					case KeyEvent::DOWN: window->on_key_down(event); break;
+					case KeyEvent::UP:   window->on_key_up(event);   break;
+					default: break;
 				}
-
-				KeyEvent e = event->dup();
-				KeyEvent_set_captured(&e, true);
-				View_call_key_event(const_cast<View*>(view.get()), &e);
-
-				if (e.is_blocked()) event->block();
 			}
-		}
 
-		if (!event->is_blocked() && window->self->focus)
-			View_call_key_event(window->self->focus.get(), event);
+			if (capture && !event->is_blocked())
+			{
+				for (auto& [view, targets] : window->self->captures)
+				{
+					if (
+						!view->window() ||
+						!is_capturing(view.get(), targets, View::CAPTURE_KEY))
+					{
+						continue;
+					}
 
-		if (capture)
-			cleanup_captures(window);
+					KeyEvent e = event->dup();
+					KeyEvent_set_captured(&e, true);
+					View_call_key_event(const_cast<View*>(view.get()), &e);
+
+					if (e.is_blocked()) event->block();
+				}
+			}
+
+			if (!event->is_blocked() && window->self->focus)
+				View_call_key_event(window->self->focus.get(), event);
+
+			if (capture)
+				cleanup_captures(window);
+		});
 	}
 
 	void
@@ -350,30 +411,33 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		window->on_text(event);
-		if (event->is_blocked()) return;
-
-		switch (event->action())
+		Application_guard([&]()
 		{
-			case TextEvent::PREEDIT: window->on_text_preedit(event); break;
-			case TextEvent::COMMIT:  window->on_text_commit(event);  break;
-			default: break;
-		}
-		if (event->is_blocked()) return;
-
-		if (window->self->focus)
-		{
-			View_call_text_event(window->self->focus.get(), event);
+			window->on_text(event);
 			if (event->is_blocked()) return;
-		}
 
-		if (synthesize_key_events)
-		{
-			KeyEvent down(KeyEvent::DOWN, event->text(), KEY_NONE);
-			KeyEvent up(  KeyEvent::UP,   event->text(), KEY_NONE);
-			Window_call_key_event(window, &down, false);
-			Window_call_key_event(window, &up,   false);
-		}
+			switch (event->action())
+			{
+				case TextEvent::PREEDIT: window->on_text_preedit(event); break;
+				case TextEvent::COMMIT:  window->on_text_commit(event);  break;
+				default: break;
+			}
+			if (event->is_blocked()) return;
+
+			if (window->self->focus)
+			{
+				View_call_text_event(window->self->focus.get(), event);
+				if (event->is_blocked()) return;
+			}
+
+			if (synthesize_key_events)
+			{
+				KeyEvent down(KeyEvent::DOWN, event->text(), KEY_NONE);
+				KeyEvent up(  KeyEvent::UP,   event->text(), KEY_NONE);
+				Window_call_key_event(window, &down, false);
+				Window_call_key_event(window, &up,   false);
+			}
+		});
 	}
 
 	static bool
@@ -926,11 +990,14 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		setup_pointer_event(window, event);
-		if (!event->empty())
-			call_pointer_event(window, event);
+		Application_guard([&]()
+		{
+			setup_pointer_event(window, event);
+			if (!event->empty())
+				call_pointer_event(window, event);
 
-		cleanup_captures(window);
+			cleanup_captures(window);
+		});
 	}
 
 	void
@@ -941,11 +1008,14 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		if (!event->is_blocked())
-			window->on_wheel(event);
+		Application_guard([&]()
+		{
+			if (!event->is_blocked())
+				window->on_wheel(event);
 
-		if (!event->is_blocked())
-			View_call_wheel_event(window->root(), event);
+			if (!event->is_blocked())
+				View_call_wheel_event(window->root(), event);
+		});
 	}
 
 	void
@@ -956,15 +1026,18 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		window->on_file(event);
-		if (event->is_blocked()) return;
-
-		switch (event->action())
+		Application_guard([&]()
 		{
-			case FileEvent::OPEN: window->on_file_open(event); break;
-			case FileEvent::SAVE: window->on_file_save(event); break;
-			default: break;
-		}
+			window->on_file(event);
+			if (event->is_blocked()) return;
+
+			switch (event->action())
+			{
+				case FileEvent::OPEN: window->on_file_open(event); break;
+				case FileEvent::SAVE: window->on_file_save(event); break;
+				default: break;
+			}
+		});
 	}
 
 	static void
@@ -1043,38 +1116,41 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		for (auto& [view, targets] : window->self->captures)
+		Application_guard([&]()
 		{
-			if (
-				!view->window() ||
-				!is_capturing(view.get(), targets, View::CAPTURE_MIDI))
+			for (auto& [view, targets] : window->self->captures)
 			{
-				continue;
+				if (
+					!view->window() ||
+					!is_capturing(view.get(), targets, View::CAPTURE_MIDI))
+				{
+					continue;
+				}
+
+				MIDIEvent e = event->dup();
+				MIDIEvent_set_captured(&e, true);
+				View_call_midi_event(const_cast<View*>(view.get()), &e);
 			}
 
-			MIDIEvent e = event->dup();
-			MIDIEvent_set_captured(&e, true);
-			View_call_midi_event(const_cast<View*>(view.get()), &e);
-		}
+			if (!event->is_blocked())
+				window->on_midi(event);
 
-		if (!event->is_blocked())
-			window->on_midi(event);
+			if (!event->is_blocked() && window->self->focus)
+				View_call_midi_event(window->self->focus.get(), event);
 
-		if (!event->is_blocked() && window->self->focus)
-			View_call_midi_event(window->self->focus.get(), event);
+			if (!event->is_blocked())
+			{
+				NoteEvent note_e;
+				if (MIDIEvent_to_note_event(&note_e, *event))
+					Window_call_note_event(window, &note_e);
 
-		if (!event->is_blocked())
-		{
-			NoteEvent note_e;
-			if (MIDIEvent_to_note_event(&note_e, *event))
-				Window_call_note_event(window, &note_e);
+				ControlChangeEvent cc_e;
+				if (MIDIEvent_to_control_change_event(&cc_e, *event))
+					Window_call_control_change_event(window, &cc_e);
+			}
 
-			ControlChangeEvent cc_e;
-			if (MIDIEvent_to_control_change_event(&cc_e, *event))
-				Window_call_control_change_event(window, &cc_e);
-		}
-
-		cleanup_captures(window);
+			cleanup_captures(window);
+		});
 	}
 
 

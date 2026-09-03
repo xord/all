@@ -497,6 +497,13 @@ namespace Rucy
 	}
 
 	GlobalValue&
+	GlobalValue::operator = (const RubyValue& v)
+	{
+		Super::operator=(v);
+		return *this;
+	}
+
+	GlobalValue&
 	GlobalValue::operator = (const Value& v)
 	{
 		Super::operator=(v);

@@ -13,6 +13,7 @@
 #include "reflex/defs.h"
 #include "reflex/exception.h"
 #include "reflex/debug.h"
+#include "../application.h"
 #include "../view.h"
 #include "event.h"
 #include "application.h"
@@ -425,34 +426,6 @@ namespace Reflex
 		Window_call_draw_event(win, &e);
 	}
 
-	static void
-	frame_changed (Window* win)
-	{
-		Rays::Bounds b           = win->frame();
-		Rays::Point dpos         = b.position() - win->self->prev_position;
-		Rays::Point dsize        = b.size()     - win->self->prev_size;
-		win->self->prev_position = b.position();
-		win->self->prev_size     = b.size();
-
-		if (dpos == 0 && dsize == 0) return;
-
-		Reflex::FrameEvent e(b, dpos.x, dpos.y, 0, dsize.x, dsize.y, 0);
-		if (dpos  != 0) win->on_move(&e);
-		if (dsize != 0)
-		{
-			Rays::Bounds b = win->frame();
-			b.move_to(0, 0);
-
-			if (win->painter())
-				win->painter()->canvas(b, win->painter()->pixel_density());
-
-			if (win->root())
-				View_set_frame(win->root(), b);
-
-			win->on_resize(&e);
-		}
-	}
-
 	static String
 	get_chars (WindowData* self, UINT msg)
 	{
@@ -773,7 +746,7 @@ namespace Reflex
 
 			case WM_CLOSE:
 			{
-				win->close();
+				Window_call_close(win);
 				return 0;
 			}
 
@@ -829,13 +802,13 @@ namespace Reflex
 
 			case WM_MOVE:
 			{
-				frame_changed(win);
+				Window_call_frame_event(win);
 				break;
 			}
 
 			case WM_SIZE:
 			{
-				frame_changed(win);
+				Window_call_frame_event(win);
 				break;
 			}
 
@@ -929,23 +902,29 @@ namespace Reflex
 	static LRESULT CALLBACK
 	wndproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
-		Window* win = NULL;
-		if (msg == WM_NCCREATE)
+		if (Application_has_exception())
+			return DefWindowProcW(hwnd, msg, wp, lp);
+
+		return Application_guard([&]() -> LRESULT
 		{
-			CREATESTRUCTW* cs = (CREATESTRUCTW*) lp;
-			win = (Window*) cs->lpCreateParams;
-			setup_window(win, hwnd);
-		}
+			Window* win = NULL;
+			if (msg == WM_NCCREATE)
+			{
+				CREATESTRUCTW* cs = (CREATESTRUCTW*) lp;
+				win = (Window*) cs->lpCreateParams;
+				setup_window(win, hwnd);
+			}
 
-		if (!win) win = get_window_from_hwnd(hwnd);
-		if  (win) rebind(win);
+			if (!win) win = get_window_from_hwnd(hwnd);
+			if  (win) rebind(win);
 
-		LRESULT ret = window_proc(win, hwnd, msg, wp, lp);
+			LRESULT ret = window_proc(win, hwnd, msg, wp, lp);
 
-		if (msg == WM_NCDESTROY)
-			cleanup_window(win);
+			if (msg == WM_NCDESTROY)
+				cleanup_window(win);
 
-		return ret;
+			return ret;
+		}, (LRESULT) 0);
 	}
 
 	static void

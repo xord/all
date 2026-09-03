@@ -2,6 +2,7 @@
 
 
 #include "reflex/exception.h"
+#include "application.h"
 #include "window.h"
 
 
@@ -17,11 +18,14 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		dialog->on_file(event);
-		if (event->is_blocked()) return;
+		Application_guard([&]()
+		{
+			dialog->on_file(event);
+			if (event->is_blocked()) return;
 
-		if (dialog->owner())
-			Window_call_file_event(dialog->owner(), event);
+			if (dialog->owner())
+				Window_call_file_event(dialog->owner(), event);
+		});
 	}
 
 	void
@@ -32,7 +36,10 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		dialog->on_cancel(event);
+		Application_guard([&]()
+		{
+			dialog->on_cancel(event);
+		});
 	}
 
 

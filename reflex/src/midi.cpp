@@ -197,7 +197,7 @@ namespace Reflex
 	add_midi (MIDI* midi)
 	{
 		midis.emplace_back(midi);
-		Application_call_device_connect(app(), midi);
+		Application_call_device_connect_event(app(), midi);
 	}
 
 	static void
@@ -208,7 +208,7 @@ namespace Reflex
 		if (it == midis.end()) return;
 
 		midis.erase(it);
-		Application_call_device_disconnect(app(), ref);
+		Application_call_device_disconnect_event(app(), ref);
 	}
 
 
@@ -227,7 +227,7 @@ namespace Reflex
 		~MIDIDeviceManager ()
 		{
 			for (auto& midi : midis)
-				Application_call_device_disconnect(app(), midi);
+				Application_call_device_disconnect_event(app(), midi);
 		}
 
 		void update ()
