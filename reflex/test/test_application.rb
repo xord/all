@@ -32,7 +32,7 @@ class TestApplication < Test::Unit::TestCase
   def test_start_raises_from_window_event()
     w = nil
     e = assert_raise(RuntimeError) do
-      start {w = Reflex.window; w.on(:update) {|e| raise 'in update'}}
+      start {w = Reflex::Window.new; w.on(:update) {|e| raise 'in update'}}
     end
     assert_equal 'in update', e.message
   ensure
