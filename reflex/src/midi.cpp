@@ -104,10 +104,11 @@ namespace Reflex
 
 		call_midi_event(midi, event);
 
-		Window* win = Window_get_active();
-		if (!win) return;
-
-		Window_call_midi_event(win, &event);
+		for (auto& win : Window_all())
+		{
+			MIDIEvent e = event.dup();
+			Window_call_midi_event(win, &e);
+		}
 	}
 
 	static Queue<RtMidiEvent> queue;
