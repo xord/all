@@ -40,6 +40,7 @@ require 'reflex/contact_event'
 require 'reflex/file_event'
 require 'reflex/midi_event'
 require 'reflex/note_event'
+require 'reflex/control_change_event'
 
 require 'reflex/shape'
 require 'reflex/polygon_shape'

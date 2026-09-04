@@ -24,7 +24,7 @@ module Reflex
     end
 
     def inspect()
-      "#<Reflex::NoteEvent action:%s channel:%d note:%d vel:0f time:%f captured?:%s>" %
+      "#<Reflex::NoteEvent action:%s channel:%d note:%d vel:%f time:%f captured?:%s>" %
         [action, channel, note, velocity, time, captured?]
     end
 
