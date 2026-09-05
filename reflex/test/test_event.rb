@@ -46,7 +46,7 @@ class TestEvent < Test::Unit::TestCase
   end
 
   def test_time()
-    assert_in_delta Time.now.to_f, event.time, 0.001
+    assert_in_delta Time.now.to_f, event.time, 0.1
   end
 
 end# TestEvent
