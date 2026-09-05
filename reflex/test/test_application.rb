@@ -5,19 +5,25 @@ class TestApplication < Test::Unit::TestCase
 
   @@app = Reflex::Application.new
 
+  def omit_on_macos_ci()
+    omit 'the macos runner aborts in CoreAnimation on an event loop' if ci? && osx?
+  end
+
   def start(&block)
     @@app.on(:start) {|e| block.call}
     @@app.start
   end
 
   def test_start_returns_on_quit()
+    omit_on_macos_ci
+
     started = false
     start {started = true; @@app.quit}
     assert_true started
   end
 
   def test_start_returns_when_last_window_closed()
-    omit 'the ci runner aborts in CoreAnimation on a window' if ci?
+    omit_on_macos_ci
 
     quit = false
     @@app.on(:quit) {|e| quit = true}
@@ -26,13 +32,15 @@ class TestApplication < Test::Unit::TestCase
   end
 
   def test_start_raises_on_start_block()
+    omit_on_macos_ci
+
     e = assert_raise(RuntimeError) {start {raise 'boom'}}
     assert_equal 'boom', e.message
     assert_match(/#{__FILE__}/, e.backtrace.first)
   end
 
   def test_start_raises_from_window_event()
-    omit 'the ci runner aborts in CoreAnimation on a window' if ci?
+    omit_on_macos_ci
 
     w = nil
     e = assert_raise(RuntimeError) do
@@ -44,15 +52,21 @@ class TestApplication < Test::Unit::TestCase
   end
 
   def test_start_passes_exit()
+    omit_on_macos_ci
+
     e = assert_raise(SystemExit) {start {exit 3}}
     assert_equal 3, e.status
   end
 
   def test_start_passes_throw()
+    omit_on_macos_ci
+
     assert_throw(:tag) {start {throw :tag}}
   end
 
   def test_start_twice()
+    omit_on_macos_ci
+
     count = 0
     2.times {start {count += 1; @@app.quit}}
     assert_equal 2, count
