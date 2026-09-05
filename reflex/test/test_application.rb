@@ -17,6 +17,8 @@ class TestApplication < Test::Unit::TestCase
   end
 
   def test_start_returns_when_last_window_closed()
+    omit 'the ci runner aborts in CoreAnimation on a window' if ci?
+
     quit = false
     @@app.on(:quit) {|e| quit = true}
     start {w = Reflex.window; w.on(:update) {|e| w.close}}
@@ -30,6 +32,8 @@ class TestApplication < Test::Unit::TestCase
   end
 
   def test_start_raises_from_window_event()
+    omit 'the ci runner aborts in CoreAnimation on a window' if ci?
+
     w = nil
     e = assert_raise(RuntimeError) do
       start {w = Reflex::Window.new; w.on(:update) {|e| raise 'in update'}}
