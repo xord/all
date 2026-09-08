@@ -5,9 +5,9 @@ using namespace Rucy;
 
 
 static
-RUCY_DEF1(value_to_char, num)
+RUCY_DEF1(value_to_schar, num)
 {
-	return value(to<char>(num));
+	return value(to<signed char>(num));
 }
 RUCY_END
 
@@ -117,7 +117,7 @@ Init_value ()
 	Module mRucy   =       define_module("Rucy");
 	Module mTester = mRucy.define_module("Tester");
 
-	mTester.define_method("value_to_char",   value_to_char);
+	mTester.define_method("value_to_schar",  value_to_schar);
 	mTester.define_method("value_to_uchar",  value_to_uchar);
 	mTester.define_method("value_to_short",  value_to_short);
 	mTester.define_method("value_to_ushort", value_to_ushort);

@@ -5,12 +5,12 @@ class TestFunction < Test::Unit::TestCase
 
   include Rucy::Tester
 
-  def test_value_to_char()
-    assert_equal    0,        value_to_char(   0)
-    assert_equal  127,        value_to_char( 127)
-    assert_raise(RangeError) {value_to_char  128}
-    assert_equal(-128,        value_to_char(-128))
-    assert_raise(RangeError) {value_to_char(-129)}
+  def test_value_to_schar()
+    assert_equal    0,        value_to_schar(   0)
+    assert_equal  127,        value_to_schar( 127)
+    assert_raise(RangeError) {value_to_schar  128}
+    assert_equal(-128,        value_to_schar(-128))
+    assert_raise(RangeError) {value_to_schar(-129)}
   end
 
   def test_value_to_uchar()

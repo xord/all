@@ -564,6 +564,12 @@ namespace Rucy
 	}
 
 	Value
+	value (signed char n)
+	{
+		return (int) n;
+	}
+
+	Value
 	value (unsigned char n)
 	{
 		return (unsigned int) n;
@@ -663,18 +669,18 @@ namespace Rucy
 		return (bool) obj;
 	}
 
-	template <> char
-	value_to<char> (Value obj, bool convert)
+	template <> signed char
+	value_to<signed char> (Value obj, bool convert)
 	{
 		if (convert) obj = obj.to_i();
 		int n = NUM2INT(obj.value());
 		if (
-			n < std::numeric_limits<char>::min() ||
-			n > std::numeric_limits<char>::max())
+			n < std::numeric_limits<signed char>::min() ||
+			n > std::numeric_limits<signed char>::max())
 		{
-			range_error(__FILE__, __LINE__, "cannot cast '%d' to char", n);
+			range_error(__FILE__, __LINE__, "cannot cast '%d' to signed char", n);
 		}
-		return (char) n;
+		return (signed char) n;
 	}
 
 	template <> unsigned char

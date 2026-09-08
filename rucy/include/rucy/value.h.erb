@@ -228,6 +228,8 @@ namespace Rucy
 
 	Value value (         char n);
 
+	Value value (  signed char n);
+
 	Value value (unsigned char n);
 
 	Value value (         short n);
@@ -295,6 +297,10 @@ namespace Rucy
 	{
 		return value_to<T>(*this, convert);
 	}
+
+
+	// the range of char changes with the platform, so use signed or unsigned char
+	template <> char value_to<char> (Value obj, bool convert) = delete;
 
 
 }// Rucy
