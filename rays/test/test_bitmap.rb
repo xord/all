@@ -37,6 +37,10 @@ class TestBitmap < Test::Unit::TestCase
 
     bmp.pixels = [0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00]
     assert_equal [0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00], bmp.pixels
+
+    bmp.pixels = [0x80ff0000, 0x4000ff00, 0x010000ff, 0x00ffffff]
+    assert_equal [0x80ff0000, 0x4000ff00, 0x010000ff, 0x00000000], bmp.pixels
+    assert_equal_color color(1, 0, 0, 0.5), bmp[0, 0], 0.01
   end
 
   def test_pixels_float()
@@ -45,6 +49,9 @@ class TestBitmap < Test::Unit::TestCase
 
     bmp.pixels = [1,0,0,1, 0,1,0,1, 0,0,1,1, 1,1,0,1]
     assert_equal [1,0,0,1, 0,1,0,1, 0,0,1,1, 1,1,0,1], bmp.pixels
+
+    bmp.pixels = [1,0,0,0.5, 0,1,0,0.25, 0,0,1,1, 1,1,0,0]
+    assert_equal [1,0,0,0.5, 0,1,0,0.25, 0,0,1,1, 0,0,0,0], bmp.pixels
   end unless win32?
 
   def test_at()

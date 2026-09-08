@@ -31,6 +31,8 @@ namespace Rays
 
 			Bitmap dup () const;
 
+			Bitmap dup (bool premult) const;
+
 			int width () const;
 
 			int height () const;

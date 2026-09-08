@@ -73,7 +73,7 @@ RUCY_DEF0(color_space)
 RUCY_END
 
 static void
-set_pixels (Rays::Bitmap* bmp, Value pixels)
+set_raw_pixels (Rays::Bitmap* bmp, Value pixels)
 {
 	int w = bmp->width(), h = bmp->height();
 	const auto& cs = bmp->color_space();
@@ -321,6 +321,23 @@ set_pixels (Rays::Bitmap* bmp, Value pixels)
 		default:
 			argument_error(__FILE__, __LINE__);
 	}
+}
+
+static void
+set_pixels (Rays::Bitmap* bmp, Value pixels)
+{
+	const auto& cs = bmp->color_space();
+	if (!cs.has_alpha() || !cs.is_premult())
+		return set_raw_pixels(bmp, pixels);
+
+	int w = bmp->width(), h = bmp->height();
+	Rays::Bitmap straight(w, h, Rays::ColorSpace(cs.type(), false));
+	set_raw_pixels(&straight, pixels);
+
+	Rays::Bitmap premult = straight.dup(true);
+	size_t size          = w * cs.Bpp();
+	for (int y = 0; y < h; ++y)
+		memcpy(bmp->at<uint8_t>(0, y), premult.at<uint8_t>(0, y), size);
 }
 
 static inline uint32_t
@@ -627,13 +644,16 @@ RUCY_DEF0(get_pixels)
 {
 	CHECK;
 
+	const auto& cs = THIS->color_space();
+	Rays::Bitmap bmp = cs.has_alpha() && cs.is_premult() ? THIS->dup(false) : *THIS;
+
 #ifdef RAYS_32BIT_PIXELS_STRING
-	Value str = get_32bit_pixels_string(*THIS);
+	Value str = get_32bit_pixels_string(bmp);
 	if (str) return str;
 #endif
 
 	std::vector<VALUE> pixels;
-	get_pixels(&pixels, *THIS);
+	get_pixels(&pixels, bmp);
 	return array((const Value*) pixels.data(), pixels.size());
 }
 RUCY_END

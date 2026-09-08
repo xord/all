@@ -211,11 +211,9 @@ namespace Rays
 			p.end();
 			bmp = img.bitmap();
 		}
-		else if (cs.has_alpha())
-			bmp = bmp.dup();
 
 		if (bmp.color_space().has_alpha())
-			Bitmap_unpremultiply(&bmp);// stb_image_write expects straight alpha
+			bmp = bmp.dup(false);// stb_image_write expects straight alpha
 
 		save_bitmap(bmp, path);
 	}
@@ -235,9 +233,9 @@ namespace Rays
 		ColorSpace cs;
 		switch (Bpp)
 		{
-			case 1: cs = GRAY_8;    break;
-			case 3: cs = RGB_888;   break;
-			case 4: cs = RGBA_8888; break;
+			case 1: cs = GRAY_8;  break;
+			case 3: cs = RGB_888; break;
+			case 4: cs = ColorSpace(RGBA_8888, false); break;// stb_image gives straight alpha
 			default:
 				rays_error(__FILE__, __LINE__, "unsupported image file: '%s'", path);
 		}
@@ -250,10 +248,7 @@ namespace Rays
 		for (int y = 0; y < h; ++y)
 			memcpy(bmp.at<uchar>(0, y), pixels.get() + pitch * y, pitch);
 
-		if (cs.has_alpha())
-			Bitmap_premultiply(&bmp);// stb_image gives straight alpha
-
-		return bmp;
+		return cs.has_alpha() ? bmp.dup(true) : bmp;
 	}
 
 	HBITMAP
