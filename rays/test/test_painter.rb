@@ -379,6 +379,45 @@ class TestPainter < Test::Unit::TestCase
     end
   end
 
+  def test_alpha_blending()
+    i = image bg: color(0, 0, 0, 0) do
+      fill 1, 1, 1, 0.5
+      rect 0, 0, 2
+    end
+    assert_rgba [1, 1, 1, 0.5], i[0, 0]
+
+    i = image bg: color(0, 1, 0) do
+      fill 1, 1, 1, 0.5
+      rect 0, 0, 2
+    end
+    assert_rgba [0.5, 1, 0.5, 1], i[0, 0]
+  end
+
+  def test_alpha_accumulation()
+    i = image bg: color(0, 0, 0, 0) do
+      fill 1, 1, 1, 0.5
+      rect 0, 0, 2
+      rect 0, 0, 2
+    end
+    assert_rgba [1, 1, 1, 0.75], i[0, 0]
+  end
+
+  def test_clear_with_alpha()
+    i = image bg: color(1, 0, 0, 0.5)
+    assert_rgba [1, 0, 0, 0.5], i[0, 0]
+  end
+
+  def test_image_with_alpha()
+    src = image bg: color(0, 0, 0, 0) do
+      fill 1, 1, 1, 0.5
+      rect 0, 0, 16
+    end
+    i = image bg: color(0, 1, 0) do
+      image src, 0, 0
+    end
+    assert_rgba [0.5, 1, 0.5, 1], i[0, 0]
+  end
+
   def test_push()
     pa = painter
     pa.fill =           [1, 0, 0]

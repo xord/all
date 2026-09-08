@@ -159,6 +159,13 @@ namespace Rays
 			}
 		}
 
+		if (cs.has_alpha() && cs.is_premult() && alpha > 0)
+		{
+			red   = std::min(red   / alpha, 1.f);
+			green = std::min(green / alpha, 1.f);
+			blue  = std::min(blue  / alpha, 1.f);
+		}
+
 		return *this;
 	}
 
@@ -211,6 +218,16 @@ namespace Rays
 			argument_error(__FILE__, __LINE__);
 
 		const float* c = array;
+		float premult[4];
+		if (cs.has_alpha() && cs.is_premult())
+		{
+			premult[0] = red   * alpha;
+			premult[1] = green * alpha;
+			premult[2] = blue  * alpha;
+			premult[3] = alpha;
+			c = premult;
+		}
+
 		if (cs.is_float())
 		{
 			float* p = (float*) pixel;

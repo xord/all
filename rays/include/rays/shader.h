@@ -20,6 +20,9 @@ namespace Rays
 
 	class Shader
 	{
+		// A fragment shader sees premultiplied alpha and must produce it too:
+		// samples from the texture uniform are premultiplied, and gl_FragColor
+		// is blended as premultiplied. The vertex color is straight.
 
 		typedef Shader This;
 
