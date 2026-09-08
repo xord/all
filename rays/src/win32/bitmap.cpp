@@ -170,13 +170,13 @@ namespace Rays
 		}
 
 		const auto& cs = bitmap.color_space();
-		size_t w       = bitmap.width();
-		size_t h       = bitmap.height();
-		size_t pitch   = w * cs.Bpp();
+		int w          = bitmap.width();
+		int h          = bitmap.height();
+		int row_size   = w * cs.Bpp();
 
-		std::unique_ptr<uchar[]> pixels(new uchar[h * pitch]);
-		for (size_t y = 0; y < h; ++y)
-			memcpy(pixels.get() + pitch * y, bitmap.at<uchar>(0, y), pitch);
+		std::unique_ptr<uchar[]> pixels(new uchar[h * row_size]);
+		for (int y = 0; y < h; ++y)
+			memcpy(pixels.get() + row_size * y, bitmap.at<uchar>(0, y), row_size);
 
 		String ext = extension;
 		ext.downcase();
@@ -244,9 +244,9 @@ namespace Rays
 		if (!bmp)
 			rays_error(__FILE__, __LINE__, "failed to create Bitmap object");
 
-		int pitch = Bpp * w;
+		int size = Bpp * w;
 		for (int y = 0; y < h; ++y)
-			memcpy(bmp.at<uchar>(0, y), pixels.get() + pitch * y, pitch);
+			memcpy(bmp.at<uchar>(0, y), pixels.get() + size * y, size);
 
 		return cs.has_alpha() ? bmp.dup(true) : bmp;
 	}
