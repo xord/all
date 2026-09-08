@@ -259,53 +259,75 @@ namespace Rays
 
 		void apply_blend_mode ()
 		{
+			// sources arrive premultiplied (see rays/shader.h), so the source color
+			// is never scaled by GL_SRC_ALPHA here, and alpha always accumulates
+			// as a union: a = a_src + a_dst * (1 - a_src)
+
 			switch (state.blend_mode)
 			{
 				case BLEND_NORMAL:
 					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 					glBlendFuncSeparate(
-						GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+						GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
+						GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 					break;
 
 				case BLEND_ADD:
 					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE);
+					glBlendFuncSeparate(
+						GL_ONE, GL_ONE,
+						GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 					break;
 
 				case BLEND_SUBTRACT:
 					glBlendEquationSeparate(GL_FUNC_REVERSE_SUBTRACT, GL_FUNC_ADD);
-					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE);
+					glBlendFuncSeparate(
+						GL_ONE, GL_ONE,
+						GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 					break;
 
 				case BLEND_LIGHTEST:
 					glBlendEquationSeparate(GL_MAX, GL_FUNC_ADD);
-					glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
+					glBlendFuncSeparate(
+						GL_ONE, GL_ONE,
+						GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 					break;
 
 				case BLEND_DARKEST:
 					glBlendEquationSeparate(GL_MIN, GL_FUNC_ADD);
-					glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
+					glBlendFuncSeparate(
+						GL_ONE, GL_ONE,
+						GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 					break;
 
 				case BLEND_EXCLUSION:
 					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 					glBlendFuncSeparate(
-						GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_ONE, GL_ONE);
+						GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR,
+						GL_ONE,                 GL_ONE_MINUS_SRC_ALPHA);
 					break;
 
 				case BLEND_MULTIPLY:
+					// assumes an opaque destination; the Cs * (1 - Ad) term of the
+					// exact formula is not expressible with fixed-function blending
 					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-					glBlendFuncSeparate(GL_ZERO, GL_SRC_COLOR, GL_ONE, GL_ONE);
+					glBlendFuncSeparate(
+						GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA,
+						GL_ONE,       GL_ONE_MINUS_SRC_ALPHA);
 					break;
 
 				case BLEND_SCREEN:
 					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-					glBlendFuncSeparate(GL_ONE_MINUS_DST_COLOR, GL_ONE, GL_ONE, GL_ONE);
+					glBlendFuncSeparate(
+						GL_ONE, GL_ONE_MINUS_SRC_COLOR,
+						GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 					break;
 
 				case BLEND_REPLACE:
 					glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-					glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+					glBlendFuncSeparate(
+						GL_ONE, GL_ZERO,
+						GL_ONE, GL_ZERO);
 					break;
 
 				default:
@@ -1093,7 +1115,7 @@ namespace Rays
 		Painter_flush(this);
 
 		const Color& c = self->state.background;
-		glClearColor(c.red, c.green, c.blue, c.alpha);
+		glClearColor(c.red * c.alpha, c.green * c.alpha, c.blue * c.alpha, c.alpha);
 		glClear(GL_COLOR_BUFFER_BIT);
 		OpenGL_check_error(__FILE__, __LINE__);
 	}

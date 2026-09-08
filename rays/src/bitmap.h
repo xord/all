@@ -26,6 +26,10 @@ namespace Rays
 		Bitmap* bitmap, const RawFont& font,
 		const char* str, coord x, coord y, bool smooth);
 
+	void Bitmap_premultiply (Bitmap* bitmap);
+
+	void Bitmap_unpremultiply (Bitmap* bitmap);
+
 	void Bitmap_set_modified (Bitmap* bitmap, bool modified = true);
 
 	bool Bitmap_get_modified (const Bitmap& bitmap);

@@ -72,7 +72,7 @@ namespace Rays
 			"varying vec4 " + V_COLOR + ";\n"
 			"void main ()\n"
 			"{\n"
-			"  gl_FragColor = " + V_COLOR + ";\n"
+			"  gl_FragColor = vec4(" + V_COLOR + ".rgb * " + V_COLOR + ".a, " + V_COLOR + ".a);\n"
 			"}\n");
 	}
 
@@ -95,7 +95,8 @@ namespace Rays
 				V_TEXCOORD_MIN + ".xy, " +
 				V_TEXCOORD_MAX + ".xy - " + U_TEXCOORD_PIXEL + ".xy);\n"
 			"  vec4 _rays_color    = texture2D(" + U_TEXTURE + ", _rays_texcoord);\n"
-			"  gl_FragColor        = " + V_COLOR + " * _rays_color;\n"
+			"  gl_FragColor        = _rays_color *\n"
+			"    vec4(" + V_COLOR + ".rgb * " + V_COLOR + ".a, " + V_COLOR + ".a);\n"
 			"}\n");
 	}
 
@@ -114,9 +115,11 @@ namespace Rays
 			"{\n"
 			"  vec2 _rays_min      = " + V_TEXCOORD_MIN + ".xy;\n"
 			"  vec2 _rays_len      = " + V_TEXCOORD_MAX + ".xy - _rays_min;\n"
-			"  vec2 _rays_texcoord = mod(" + V_TEXCOORD + ".xy - _rays_min, _rays_len) + _rays_min;\n"
+			"  vec2 _rays_texcoord =\n"
+			"    mod(" + V_TEXCOORD + ".xy - _rays_min, _rays_len) + _rays_min;\n"
 			"  vec4 _rays_color    = texture2D(" + U_TEXTURE + ", _rays_texcoord);\n"
-			"  gl_FragColor        = " + V_COLOR + " * _rays_color;\n"
+			"  gl_FragColor        = _rays_color *\n"
+			"    vec4(" + V_COLOR + ".rgb * " + V_COLOR + ".a, " + V_COLOR + ".a);\n"
 			"}\n");
 	}
 
@@ -131,16 +134,15 @@ namespace Rays
 			"uniform sampler2D " + U_TEXTURE + ";\n"
 			"void main ()\n"
 			"{\n"
-			"  vec4 _rays_col = texture2D(" + U_TEXTURE + ", " + V_TEXCOORD + ".xy);\n"
-			#if defined(OSX) || defined(IOS) || defined(LINUX)
-			// restore premultiplied rgb values
-			"  vec3 _rays_rgb = _rays_col.a != 0.0 ? _rays_col.rgb / _rays_col.a : _rays_col.rgb;\n"
-			"  gl_FragColor   = " + V_COLOR + " * vec4(_rays_rgb, _rays_col.a);\n"
-			#elif defined(WIN32)
-			"  float _rays_a  = (_rays_col.r + _rays_col.g + _rays_col.b) / 3.0;\n"
-			"  gl_FragColor   = " + V_COLOR + " * vec4(1.0, 1.0, 1.0, _rays_a);\n"
+			"  vec4 _rays_tex = texture2D(" + U_TEXTURE + ", " + V_TEXCOORD + ".xy);\n"
+			"  vec4 _rays_col =\n"
+			"    vec4(" + V_COLOR + ".rgb * " + V_COLOR + ".a, " + V_COLOR + ".a);\n"
+			#if defined(WIN32)
+			// GDI writes no alpha; white text on black gives the coverage
+			"  float _rays_a  = (_rays_tex.r + _rays_tex.g + _rays_tex.b) / 3.0;\n"
+			"  gl_FragColor   = _rays_col * _rays_a;\n"
 			#else
-			"  gl_FragColor   = " + V_COLOR + " * _rays_col;\n"
+			"  gl_FragColor   = _rays_tex * _rays_col;\n"
 			#endif
 			"}\n");
 	}

@@ -22,13 +22,13 @@ class TestBitmap < Test::Unit::TestCase
   def test_dup()
     o          = bitmap
     assert_equal color(0, 0, 0, 0), o[0, 0]
-    o[0, 0]    = color(1, 0, 0, 0)
-    assert_equal color(1, 0, 0, 0), o[0, 0]
+    o[0, 0]    = color(1, 0, 0, 1)
+    assert_equal color(1, 0, 0, 1), o[0, 0]
     x          = o.dup
-    assert_equal color(1, 0, 0, 0), x[0, 0]
-    x[0, 0]    = color(0, 1, 0, 0)
-    assert_equal color(0, 1, 0, 0), x[0, 0]
-    assert_equal color(1, 0, 0, 0), o[0, 0]
+    assert_equal color(1, 0, 0, 1), x[0, 0]
+    x[0, 0]    = color(0, 1, 0, 1)
+    assert_equal color(0, 1, 0, 1), x[0, 0]
+    assert_equal color(1, 0, 0, 1), o[0, 0]
   end
 
   def test_pixels()
@@ -57,14 +57,25 @@ class TestBitmap < Test::Unit::TestCase
     o[0, 0] =         [0, 1, 0]
     assert_equal color(0, 1, 0, 1), o[0, 0]
 
-    o[0, 0] =         [0, 1, 0, 0]
-    assert_equal color(0, 1, 0, 0), o[0, 0]
+    o[0, 0] =         [0, 1, 0, 0.5]
+    assert_equal_color color(0, 1, 0, 0.5), o[0, 0], 0.01
 
     o[0, 0] =    color(0, 0, 1)
     assert_equal color(0, 0, 1, 1), o[0, 0]
 
-    o[0, 0] =    color(0, 0, 1, 0)
-    assert_equal color(0, 0, 1, 0), o[0, 0]
+    o[0, 0] =    color(0, 0, 1, 0.5)
+    assert_equal_color color(0, 0, 1, 0.5), o[0, 0], 0.01
+  end
+
+  def test_at_with_alpha()
+    o       = bitmap
+    o[0, 0] = color(1, 0.5, 0, 0.5)
+    assert_equal_color color(1, 0.5, 0, 0.5), o[0, 0], 0.01
+
+    # pixels are stored premultiplied, so a fully transparent color keeps no
+    # color of its own
+    o[0, 0] = color(1, 0.5, 0, 0)
+    assert_equal color(0, 0, 0, 0), o[0, 0]
   end
 
   def test_to_a()

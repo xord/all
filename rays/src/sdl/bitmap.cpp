@@ -6,6 +6,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+#include <memory>
 #include <SDL.h>
 #include <xot/util.h>
 #include "rays/exception.h"
@@ -196,6 +197,12 @@ namespace Rays
 			p.end();
 			bmp = img.bitmap();
 		}
+		else if (cs.has_alpha())
+			bmp = bmp.dup();
+
+		if (bmp.color_space().has_alpha())
+			Bitmap_unpremultiply(&bmp);// stb_image_write expects straight alpha
+
 		save_bitmap(bmp, path);
 	}
 
@@ -206,7 +213,8 @@ namespace Rays
 			argument_error(__FILE__, __LINE__);
 
 		int w = 0, h = 0, Bpp = 0;
-		uchar* pixels = stbi_load(path, &w, &h, &Bpp, 0);
+		std::unique_ptr<uchar, decltype(&stbi_image_free)>
+			pixels(stbi_load(path, &w, &h, &Bpp, 0), stbi_image_free);
 		if (!pixels)
 			rays_error(__FILE__, __LINE__, "failed to load: '%s'", path);
 
@@ -226,7 +234,10 @@ namespace Rays
 
 		int pitch = Bpp * w;
 		for (int y = 0; y < h; ++y)
-			memcpy(bmp.at<uchar>(0, y), pixels + pitch * y, pitch);
+			memcpy(bmp.at<uchar>(0, y), pixels.get() + pitch * y, pitch);
+
+		if (cs.has_alpha())
+			Bitmap_premultiply(&bmp);// stb_image gives straight alpha
 
 		return bmp;
 	}

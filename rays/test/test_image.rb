@@ -32,13 +32,13 @@ class TestImage < Test::Unit::TestCase
   def test_dup()
     o          = image 10, 10
     assert_equal color(0, 0, 0, 0), o[0, 0]
-    o[0, 0]    = color(1, 0, 0, 0)
-    assert_equal color(1, 0, 0, 0), o[0, 0]
+    o[0, 0]    = color(1, 0, 0, 1)
+    assert_equal color(1, 0, 0, 1), o[0, 0]
     x          = o.dup
-    assert_equal color(1, 0, 0, 0), x[0, 0]
-    x[0, 0]    = color(0, 1, 0, 0)
-    assert_equal color(0, 1, 0, 0), x[0, 0]
-    assert_equal color(1, 0, 0, 0), o[0, 0]
+    assert_equal color(1, 0, 0, 1), x[0, 0]
+    x[0, 0]    = color(0, 1, 0, 1)
+    assert_equal color(0, 1, 0, 1), x[0, 0]
+    assert_equal color(1, 0, 0, 1), o[0, 0]
   end
 
   def test_bitmap()
