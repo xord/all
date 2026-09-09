@@ -1103,7 +1103,7 @@ namespace Rays
 		self->opengl_state.pop();
 		self->default_indices.clear();
 
-		glFinish();
+		glFlush();
 
 		if (self->frame_buffer)
 			FrameBuffer_unbind();
