@@ -13,6 +13,8 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Window)
 
 #define THIS      to<Reflex::Window*>(self)
 
+#define CHECK_OBJ RUCY_CHECK_OBJ(Reflex::Window, self)
+
 #define CHECK     RUCY_CHECK_OBJECT(Reflex::Window, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
@@ -54,8 +56,8 @@ RUCY_END
 static
 RUCY_DEF0(close)
 {
-	CHECK;
-	THIS->close();
+	CHECK_OBJ;
+	if (*THIS) THIS->close();
 	return self;
 }
 RUCY_END
