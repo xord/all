@@ -179,7 +179,9 @@ namespace Rays
 
 			PAINTING                  = Xot::bit(1, Painter::FLAG_LAST),
 
-			UNBATCHABLE_STATE_CHANGED = Xot::bit(2, Painter::FLAG_LAST),
+			CLEAR_DEPTH               = Xot::bit(2, Painter::FLAG_LAST),
+
+			UNBATCHABLE_STATE_CHANGED = Xot::bit(3, Painter::FLAG_LAST),
 
 		};// Flag
 

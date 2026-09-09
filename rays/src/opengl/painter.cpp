@@ -863,6 +863,12 @@ namespace Rays
 		if (!self->is_painting())
 			invalid_state_error(__FILE__, __LINE__, "'painting' should be true.");
 
+		if (Xot::check_and_remove_flag(&self->flags, Painter::Data::CLEAR_DEPTH))
+		{
+			glClear(GL_DEPTH_BUFFER_BIT);
+			OpenGL_check_error(__FILE__, __LINE__);
+		}
+
 		std::unique_ptr<TextureInfo> ptexinfo;
 		texinfo = setup_texinfo(self, texinfo, &ptexinfo);
 		shader  = setup_shader(self, shader, texinfo);
@@ -1073,9 +1079,8 @@ namespace Rays
 		self->batcher.init(self->state);
 
 		Xot::remove_flag(&self->flags, Painter::Data::UNBATCHABLE_STATE_CHANGED);
+		Xot::   add_flag(&self->flags, Painter::Data::CLEAR_DEPTH);
 		Xot::   add_flag(&self->flags, Painter::Data::PAINTING);
-
-		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
 	void
