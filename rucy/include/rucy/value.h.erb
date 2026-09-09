@@ -111,7 +111,11 @@ namespace Rucy
 
 			bool respond_to (Symbol name) const;
 
-			Value freeze ();
+			Value      freeze ();
+
+			bool    is_frozen () const;
+
+			void check_frozen () const;
 
 			Value inspect () const;
 

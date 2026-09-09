@@ -318,6 +318,18 @@ namespace Rucy
 		return rb_obj_freeze(val);
 	}
 
+	bool
+	Value::is_frozen () const
+	{
+		return RB_OBJ_FROZEN(val);
+	}
+
+	void
+	Value::check_frozen () const
+	{
+		rb_check_frozen(val);
+	}
+
 	Value
 	Value::inspect () const
 	{

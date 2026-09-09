@@ -110,6 +110,21 @@ RUCY_DEFN(array_value)
 }
 RUCY_END
 
+static
+RUCY_DEF1(value_is_frozen, obj)
+{
+	return value(obj.is_frozen());
+}
+RUCY_END
+
+static
+RUCY_DEF1(value_check_frozen, obj)
+{
+	obj.check_frozen();
+	return obj;
+}
+RUCY_END
+
 
 void
 Init_value ()
@@ -126,10 +141,13 @@ Init_value ()
 	mTester.define_method("value_to_long",   value_to_long);
 	mTester.define_method("value_to_ulong",  value_to_ulong);
 
-	mTester.define_method("true_to_value", true_to_value);
+	mTester.define_method( "true_to_value",  true_to_value);
 	mTester.define_method("false_to_value", false_to_value);
-	mTester.define_method("null_to_value", NULL_to_value);
+	mTester.define_method( "null_to_value",  NULL_to_value);
 
-	mTester.define_method("nil_value", nil_value);
+	mTester.define_method(  "nil_value",   nil_value);
 	mTester.define_method("array_value", array_value);
+
+	mTester.define_method("value_is_frozen",    value_is_frozen);
+	mTester.define_method("value_check_frozen", value_check_frozen);
 }

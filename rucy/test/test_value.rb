@@ -61,4 +61,13 @@ class TestFunction < Test::Unit::TestCase
     assert_raise(ArgumentError) {array_value 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
   end
 
+  def test_frozen()
+    assert_false value_is_frozen(+'')
+    assert_true  value_is_frozen( ''.freeze)
+
+    o = Object.new
+    assert_equal o,            value_check_frozen(o)
+    assert_raise(FrozenError) {value_check_frozen o.freeze}
+  end
+
 end# TestFunction
