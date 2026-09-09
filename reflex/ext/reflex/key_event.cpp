@@ -8,7 +8,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::KeyEvent)
 
 #define THIS  to<Reflex::KeyEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::KeyEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::KeyEvent, self)
 
 
 static

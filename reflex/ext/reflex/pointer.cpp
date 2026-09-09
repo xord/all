@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Pointer)
 
 #define THIS  to<Reflex::Pointer*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::Pointer, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::Pointer, self)
 
 
 static

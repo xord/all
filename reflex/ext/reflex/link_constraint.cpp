@@ -10,7 +10,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::LinkConstraint)
 
 #define THIS  to<Reflex::LinkConstraint*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::LinkConstraint, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::LinkConstraint, self)
 
 
 static

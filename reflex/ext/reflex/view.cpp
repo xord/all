@@ -22,7 +22,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::View)
 #define   THIS    to<      Reflex::View*>(self)
 #define C_THIS    to<const Reflex::View*>(self)
 
-#define CHECK     RUCY_CHECK_OBJECT(Reflex::View, self)
+#define CHECK     RUCY_CHECK_OBJ(Reflex::View, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
 

@@ -11,7 +11,7 @@ RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Bitmap)
 
 #define THIS  to<Rays::Bitmap*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::Bitmap, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::Bitmap, self)
 
 
 static
@@ -24,7 +24,7 @@ RUCY_END
 static
 RUCY_DEFN(initialize)
 {
-	RUCY_CHECK_OBJ(Rays::Bitmap, self);
+	RUCY_CHECK_PTR(Rays::Bitmap, self);
 	check_arg_count(__FILE__, __LINE__, "Bitmap#initialize", argc, 2, 3);
 
 	*THIS = Rays::Bitmap(
@@ -38,7 +38,7 @@ RUCY_END
 static
 RUCY_DEF1(initialize_copy, obj)
 {
-	RUCY_CHECK_OBJ(Rays::Bitmap, self);
+	RUCY_CHECK_PTR(Rays::Bitmap, self);
 
 	*THIS = to<Rays::Bitmap&>(obj).dup();
 	return self;

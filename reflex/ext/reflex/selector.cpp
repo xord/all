@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(REFLEX_EXPORT, Reflex::Selector)
 #define   THIS to<      Reflex::Selector*>(self)
 #define C_THIS to<const Reflex::Selector*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::Selector, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::Selector, self)
 
 
 static

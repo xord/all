@@ -13,7 +13,7 @@ RUCY_DEFINE_CONVERT_TO(REFLEX_TERMINAL_EXPORT, Reflex::Terminal::OptionAsAlt)
 
 #define THIS  to<Reflex::Terminal*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Reflex::Terminal, self)
+#define CHECK RUCY_CHECK_OBJ(Reflex::Terminal, self)
 
 
 static
@@ -26,7 +26,7 @@ RUCY_END
 static
 RUCY_DEF3(initialize, columns, rows, scrollback)
 {
-	RUCY_CHECK_OBJ(Reflex::Terminal, self);
+	RUCY_CHECK_PTR(Reflex::Terminal, self);
 
 	*THIS = Reflex::Terminal(to<int>(columns), to<int>(rows), to<size_t>(scrollback));
 	return self;

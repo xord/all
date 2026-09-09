@@ -10,7 +10,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Shader)
 
 #define THIS  to<Rays::Shader*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::Shader, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::Shader, self)
 
 
 static
@@ -93,7 +93,7 @@ RUCY_DEF4(initialize,
 	fragment_shader_source, vertex_shader_source,
 	builtin_variable_names, ignore_no_uniform_location_error)
 {
-	RUCY_CHECK_OBJ(Rays::Shader, self);
+	RUCY_CHECK_PTR(Rays::Shader, self);
 
 	if (fragment_shader_source.is_nil())
 		argument_error(__FILE__, __LINE__);

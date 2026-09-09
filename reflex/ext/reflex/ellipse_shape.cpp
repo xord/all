@@ -8,7 +8,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::EllipseShape)
 
 #define THIS      to<Reflex::EllipseShape*>(self)
 
-#define CHECK     RUCY_CHECK_OBJ(Reflex::EllipseShape, self)
+#define CHECK     RUCY_CHECK_PTR(Reflex::EllipseShape, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
 

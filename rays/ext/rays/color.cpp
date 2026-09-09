@@ -10,7 +10,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Color)
 
 #define THIS  to<Rays::Color*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Rays::Color, self)
+#define CHECK RUCY_CHECK_PTR(Rays::Color, self)
 
 
 static const char* NIL_COLOR_NO   = "no";

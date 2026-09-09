@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Font)
 
 #define THIS  to<Rays::Font*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::Font, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::Font, self)
 
 
 static
@@ -22,7 +22,7 @@ RUCY_END
 static
 RUCY_DEFN(initialize)
 {
-	RUCY_CHECK_OBJ(Rays::Font, self);
+	RUCY_CHECK_PTR(Rays::Font, self);
 	check_arg_count(__FILE__, __LINE__, "Font#initialize", argc, 0, 1, 2, 3);
 
 	*THIS = to<Rays::Font>(argc, argv);
@@ -33,7 +33,7 @@ RUCY_END
 static
 RUCY_DEF1(initialize_copy, obj)
 {
-	RUCY_CHECK_OBJ(Rays::Font, self);
+	RUCY_CHECK_PTR(Rays::Font, self);
 
 	*THIS = to<Rays::Font&>(obj).dup();
 	return self;

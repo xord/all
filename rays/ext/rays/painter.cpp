@@ -17,7 +17,7 @@ RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Painter)
 
 #define THIS  to<Rays::Painter*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::Painter, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::Painter, self)
 
 
 static

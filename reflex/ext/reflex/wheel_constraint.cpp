@@ -10,7 +10,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::WheelConstraint)
 
 #define THIS  to<Reflex::WheelConstraint*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::WheelConstraint, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::WheelConstraint, self)
 
 
 static

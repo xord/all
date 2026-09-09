@@ -11,7 +11,7 @@ template <typename T>
 static
 RUCY_DEF1(set_name, name)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	Reflex::HasSelector* this_ = Rucy::to<T*>(self);
 
 	this_->set_name(name.is_nil() ? NULL : name.c_str());
@@ -22,7 +22,7 @@ template <typename T>
 static
 RUCY_DEF0(get_name)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	const Reflex::HasSelector* this_ = Rucy::to<const T*>(self);
 
 	return this_->name() ? Rucy::value(this_->name()) : Rucy::nil();
@@ -33,7 +33,7 @@ template <typename T>
 static
 RUCY_DEF1(add_tag, tag)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	Reflex::HasSelector* this_ = Rucy::to<T*>(self);
 
 	this_->add_tag(tag.c_str());
@@ -44,7 +44,7 @@ template <typename T>
 static
 RUCY_DEF1(remove_tag, tag)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	Reflex::HasSelector* this_ = Rucy::to<T*>(self);
 
 	this_->remove_tag(tag.c_str());
@@ -55,7 +55,7 @@ template <typename T>
 static
 RUCY_DEF0(clear_tags)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	Reflex::HasSelector* this_ = Rucy::to<T*>(self);
 
 	this_->clear_tags();
@@ -66,7 +66,7 @@ template <typename T>
 static
 RUCY_DEF1(has_tag, tag)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	const Reflex::HasSelector* this_ = Rucy::to<const T*>(self);
 
 	return Rucy::value(this_->has_tag(tag.c_str()));
@@ -77,7 +77,7 @@ template <typename T>
 static
 RUCY_DEF0(each_tag)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	const Reflex::HasSelector* this_ = Rucy::to<const T*>(self);
 
 	Rucy::Value ret;
@@ -92,7 +92,7 @@ template <typename T>
 static
 RUCY_DEF1(set_selector, selector)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	Reflex::HasSelector* this_ = Rucy::to<T*>(self);
 
 	this_->set_selector(Rucy::to<Reflex::Selector>(selector));
@@ -103,7 +103,7 @@ template <typename T>
 static
 RUCY_DEF0(get_selector)
 {
-	RUCY_CHECK_OBJ(T, self);
+	RUCY_CHECK_PTR(T, self);
 	const Reflex::HasSelector* this_ = Rucy::to<const T*>(self);
 
 	return Rucy::value(this_->selector());

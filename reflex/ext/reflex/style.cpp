@@ -13,7 +13,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Style)
 #define   THIS to<      Reflex::Style*>(self)
 #define C_THIS to<const Reflex::Style*>(self)
 
-#define CHECK  RUCY_CHECK_OBJ(Reflex::Style, self)
+#define CHECK  RUCY_CHECK_PTR(Reflex::Style, self)
 
 
 static

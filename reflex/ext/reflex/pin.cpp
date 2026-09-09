@@ -11,7 +11,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(REFLEX_EXPORT, Reflex::Pin)
 
 #define THIS  to<Reflex::Pin*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::Pin, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::Pin, self)
 
 
 static

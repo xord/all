@@ -10,7 +10,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::DrawEvent)
 
 #define THIS  to<Reflex::DrawEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::DrawEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::DrawEvent, self)
 
 
 static

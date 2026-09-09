@@ -12,7 +12,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ChaseConstraint)
 
 #define THIS  to<Reflex::ChaseConstraint*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::ChaseConstraint, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::ChaseConstraint, self)
 
 
 static

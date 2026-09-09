@@ -10,7 +10,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Filter)
 
 #define THIS      to<Reflex::Filter*>(self)
 
-#define CHECK     RUCY_CHECK_OBJ(Reflex::Filter, self)
+#define CHECK     RUCY_CHECK_PTR(Reflex::Filter, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
 

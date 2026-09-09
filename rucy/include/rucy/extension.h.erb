@@ -291,7 +291,7 @@
 	}
 
 
-#define RUCY_CHECK_OBJ(native_class, obj) \
+#define RUCY_CHECK_PTR(native_class, obj) \
 	do \
 	{ \
 		native_class* p = \
@@ -300,7 +300,7 @@
 	} \
 	while(0)
 
-#define RUCY_CHECK_OBJECT(native_class, obj) \
+#define RUCY_CHECK_OBJ(native_class, obj) \
 	do \
 	{ \
 		native_class* p = \
@@ -497,7 +497,7 @@ namespace Rucy
 	static
 	RUCY_DEF1(wrapper_equal, other)
 	{
-		RUCY_CHECK_OBJ(T, self);
+		RUCY_CHECK_PTR(T, self);
 		if (!other.is_a(get_ruby_class<T>()))
 			return value(false);
 		return value(get_type_ptr<T>(self) == get_type_ptr<T>(other));
@@ -508,7 +508,7 @@ namespace Rucy
 	static
 	RUCY_DEF0(wrapper_hash)
 	{
-		RUCY_CHECK_OBJ(T, self);
+		RUCY_CHECK_PTR(T, self);
 		return value((unsigned long long) get_type_ptr<T>(self));
 	}
 	RUCY_DEF_END

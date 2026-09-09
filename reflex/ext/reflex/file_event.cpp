@@ -8,7 +8,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::FileEvent)
 
 #define THIS  to<Reflex::FileEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::FileEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::FileEvent, self)
 
 
 static

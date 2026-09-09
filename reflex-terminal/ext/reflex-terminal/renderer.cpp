@@ -12,7 +12,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_TERMINAL_EXPORT, ReflexTerminal::Renderer)
 
 #define THIS  to<ReflexTerminal::Renderer*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(ReflexTerminal::Renderer, self)
+#define CHECK RUCY_CHECK_PTR(ReflexTerminal::Renderer, self)
 
 
 static

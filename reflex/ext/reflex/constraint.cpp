@@ -13,7 +13,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Constraint)
 
 #define THIS  to<Reflex::Constraint*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::Constraint, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::Constraint, self)
 
 
 static

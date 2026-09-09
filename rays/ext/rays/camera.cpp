@@ -10,7 +10,7 @@ RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Camera)
 
 #define THIS  to<Rays::Camera*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::Camera, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::Camera, self)
 
 
 static
@@ -23,7 +23,7 @@ RUCY_END
 static
 RUCY_DEF5(initialize, device_name, min_width, min_height, resize, crop)
 {
-	RUCY_CHECK_OBJ(Rays::Camera, self);
+	RUCY_CHECK_PTR(Rays::Camera, self);
 
 	*THIS = Rays::Camera(
 		device_name ? device_name.c_str() : NULL,

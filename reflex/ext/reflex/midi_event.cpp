@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDIEvent)
 
 #define THIS  to<Reflex::MIDIEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::MIDIEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::MIDIEvent, self)
 
 
 static

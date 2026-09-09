@@ -11,7 +11,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::PointerEvent)
 
 #define THIS  to<Reflex::PointerEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::PointerEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::PointerEvent, self)
 
 
 static

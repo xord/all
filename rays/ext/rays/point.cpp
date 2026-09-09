@@ -8,7 +8,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Point)
 
 #define THIS  to<Rays::Point*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Rays::Point, self)
+#define CHECK RUCY_CHECK_PTR(Rays::Point, self)
 
 
 static

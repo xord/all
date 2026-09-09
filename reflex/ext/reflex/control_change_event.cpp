@@ -8,7 +8,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ControlChangeEvent)
 
 #define THIS  to<Reflex::ControlChangeEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::ControlChangeEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::ControlChangeEvent, self)
 
 
 static

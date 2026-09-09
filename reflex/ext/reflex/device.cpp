@@ -8,7 +8,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Device)
 
 #define THIS  to<Reflex::Device*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Reflex::Device, self)
+#define CHECK RUCY_CHECK_OBJ(Reflex::Device, self)
 
 
 static

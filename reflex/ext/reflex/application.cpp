@@ -10,8 +10,8 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Application)
 
 #define THIS      to<Reflex::Application*>(self)
 
-#define CHECK_OBJ RUCY_CHECK_OBJ(   Reflex::Application, self)
-#define CHECK     RUCY_CHECK_OBJECT(Reflex::Application, self)
+#define CHECK_PTR RUCY_CHECK_PTR(Reflex::Application, self)
+#define CHECK     RUCY_CHECK_OBJ(Reflex::Application, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
 
@@ -26,7 +26,7 @@ RUCY_END
 static
 RUCY_DEF0(start)
 {
-	CHECK_OBJ;
+	CHECK_PTR;
 	CALL(start());
 	return self;
 }

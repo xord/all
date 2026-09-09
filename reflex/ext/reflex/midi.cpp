@@ -10,7 +10,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDI)
 
 #define THIS      to<Reflex::MIDI*>(self)
 
-#define CHECK     RUCY_CHECK_OBJECT(Reflex::MIDI, self)
+#define CHECK     RUCY_CHECK_OBJ(Reflex::MIDI, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
 

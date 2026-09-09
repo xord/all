@@ -10,7 +10,7 @@ RUCY_DEFINE_CONVERT_TO(RAYS_EXPORT, Rays::ColorSpaceType)
 
 #define THIS  to<Rays::ColorSpace*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::ColorSpace, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::ColorSpace, self)
 
 
 static struct ColorSpaceEnum
@@ -74,7 +74,7 @@ RUCY_END
 static
 RUCY_DEFN(initialize)
 {
-	RUCY_CHECK_OBJ(Rays::ColorSpace, self);
+	RUCY_CHECK_PTR(Rays::ColorSpace, self);
 	check_arg_count(__FILE__, __LINE__, "ColorSpace#initialize", argc, 1, 2);
 
 	*THIS = to<Rays::ColorSpace>(argc, argv);

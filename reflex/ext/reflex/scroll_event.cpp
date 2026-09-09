@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ScrollEvent)
 
 #define THIS  to<Reflex::ScrollEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::ScrollEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::ScrollEvent, self)
 
 
 static

@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(REFLEX_EXPORT, Reflex::StyleLength)
 
 #define THIS  to<Reflex::StyleLength*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::StyleLength, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::StyleLength, self)
 
 
 static

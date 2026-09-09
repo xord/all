@@ -12,7 +12,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Timer)
 
 #define THIS      to<Reflex::Timer*>(self)
 
-#define CHECK     RUCY_CHECK_OBJ(Reflex::Timer, self)
+#define CHECK     RUCY_CHECK_PTR(Reflex::Timer, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
 

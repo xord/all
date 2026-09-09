@@ -15,7 +15,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Menu)
 
 #define THIS      to<Reflex::Menu*>(self)
 
-#define CHECK     RUCY_CHECK_OBJ(Reflex::Menu, self)
+#define CHECK     RUCY_CHECK_PTR(Reflex::Menu, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
 

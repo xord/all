@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::Screen)
 
 #define THIS  to<Reflex::Screen*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Reflex::Screen, self)
+#define CHECK RUCY_CHECK_OBJ(Reflex::Screen, self)
 
 
 static

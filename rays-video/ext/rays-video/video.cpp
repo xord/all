@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_FROM_TO(RAYS_VIDEO_EXPORT, Rays::Video)
 
 #define THIS  to<Rays::Video*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::Video, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::Video, self)
 
 
 static
@@ -22,7 +22,7 @@ RUCY_END
 static
 RUCY_DEF4(initialize, width, height, fps, pixel_density)
 {
-	RUCY_CHECK_OBJ(Rays::Video, self);
+	RUCY_CHECK_PTR(Rays::Video, self);
 
 	float fps_ = to<float>(fps);
 	*THIS = Rays::Video(
@@ -36,7 +36,7 @@ RUCY_END
 static
 RUCY_DEF1(initialize_copy, obj)
 {
-	RUCY_CHECK_OBJ(Rays::Video, self);
+	RUCY_CHECK_PTR(Rays::Video, self);
 
 	*THIS = to<Rays::Video&>(obj).dup();
 }

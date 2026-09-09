@@ -8,7 +8,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::NoteEvent)
 
 #define THIS  to<Reflex::NoteEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::NoteEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::NoteEvent, self)
 
 
 static

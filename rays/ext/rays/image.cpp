@@ -11,7 +11,7 @@ RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Image)
 
 #define THIS  to<Rays::Image*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::Image, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::Image, self)
 
 
 static
@@ -24,7 +24,7 @@ RUCY_END
 static
 RUCY_DEF3(initialize, args, pixel_density, smooth)
 {
-	RUCY_CHECK_OBJ(Rays::Image, self);
+	RUCY_CHECK_PTR(Rays::Image, self);
 
 	size_t argc = args.size();
 	check_arg_count(__FILE__, __LINE__, "Image#initialize!", argc, 1, 2, 3);
@@ -53,7 +53,7 @@ RUCY_END
 static
 RUCY_DEF1(initialize_copy, obj)
 {
-	RUCY_CHECK_OBJ(Rays::Image, self);
+	RUCY_CHECK_PTR(Rays::Image, self);
 
 	*THIS = to<Rays::Image&>(obj).dup();
 	return self;

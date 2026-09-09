@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MotionEvent)
 
 #define THIS  to<Reflex::MotionEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::MotionEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::MotionEvent, self)
 
 
 static

@@ -11,7 +11,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ContactEvent)
 
 #define THIS  to<Reflex::ContactEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::ContactEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::ContactEvent, self)
 
 
 static

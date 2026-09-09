@@ -9,7 +9,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::SnapConstraint)
 
 #define THIS  to<Reflex::SnapConstraint*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::SnapConstraint, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::SnapConstraint, self)
 
 
 static

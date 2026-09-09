@@ -12,7 +12,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Polygon)
 
 #define THIS  to<Rays::Polygon*>(self)
 
-#define CHECK RUCY_CHECK_OBJECT(Rays::Polygon, self)
+#define CHECK RUCY_CHECK_OBJ(Rays::Polygon, self)
 
 
 static

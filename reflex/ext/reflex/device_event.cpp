@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::DeviceEvent)
 
 #define THIS  to<Reflex::DeviceEvent*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Reflex::DeviceEvent, self)
+#define CHECK RUCY_CHECK_PTR(Reflex::DeviceEvent, self)
 
 
 static

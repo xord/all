@@ -9,7 +9,7 @@ RUCY_DEFINE_VALUE_OR_ARRAY_FROM_TO(RAYS_EXPORT, Rays::Bounds)
 
 #define THIS  to<Rays::Bounds*>(self)
 
-#define CHECK RUCY_CHECK_OBJ(Rays::Bounds, self)
+#define CHECK RUCY_CHECK_PTR(Rays::Bounds, self)
 
 
 static

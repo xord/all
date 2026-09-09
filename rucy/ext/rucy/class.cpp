@@ -49,7 +49,7 @@ class RubyBase : public ClassWrapper<T>
 
 #define THIS(type)     to<type*>(self)
 
-#define CHECK(type)    RUCY_CHECK_OBJ(type, self)
+#define CHECK(type)    RUCY_CHECK_PTR(type, self)
 
 #define CALL(obj, fun) RUCY_CALL_SUPER(obj, fun)
 
