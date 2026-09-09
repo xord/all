@@ -5,13 +5,15 @@ class TestApplication < Test::Unit::TestCase
 
   @@app = Reflex::Application.new
 
-  def omit_on_macos_ci()
-    omit 'the macos runner aborts in CoreAnimation on an event loop' if ci? && osx?
-  end
-
   def start(&block)
     @@app.on(:start) {|e| block.call}
     @@app.start
+  ensure
+    @@app.singleton_class.remove_method :on_start
+  end
+
+  def omit_on_macos_ci()
+    omit 'the macos runner aborts in CoreAnimation on an event loop' if ci? && osx?
   end
 
   def test_start_returns_on_quit()

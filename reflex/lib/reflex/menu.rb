@@ -20,7 +20,7 @@ module Reflex
     def initialize(label = nil, **options, &block)
       super()
       self.label = label if label
-      set **options unless options.empty?
+      set(**options) unless options.empty?
       Xot::BlockUtil.instance_eval_or_block_call self, &block if block
     end
 
