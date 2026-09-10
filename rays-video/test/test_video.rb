@@ -88,9 +88,15 @@ class TestVideo < Test::Unit::TestCase
   end
 
   def test_append()
-    v = video;                     assert_equal [],           grays(v)
-    v.append image(10);            assert_equal [10],         grays(v)
-    v.append image(20), image(30); assert_equal [10, 20, 30], grays(v)
+    v = video;                     assert_equal [],                       grays(v)
+    v.append image(10);            assert_equal [10],                     grays(v)
+    v.append image(20), image(30); assert_equal [10, 20, 30],             grays(v)
+    v.push   image(40);            assert_equal [10, 20, 30, 40],         grays(v)
+    v << image(50) << image(60);   assert_equal [10, 20, 30, 40, 50, 60], grays(v)
+
+    assert_same v, v.append(image)
+    assert_same v, v.push(image)
+    assert_same v, v << image
   end
 
   def test_remove()

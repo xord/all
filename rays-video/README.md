@@ -64,7 +64,7 @@ A finite sequence of `Rays::Image` frames with a fixed `width`, `height`, `fps`,
 | `Video.new(width, height, fps:, pixel_density:)` | Create an empty video (`fps` defaults to 30)                 |
 | `Video.load(path)`                         | Load a video file from disk                                        |
 | `Video.exts`                               | Supported video file extensions on the current platform            |
-| `video.append(*images)`                    | Append one or more frames                                          |
+| `video.append(*images)`                    | Append one or more frames (also `push` and `<<`)                   |
 | `video.insert(index, *images)`             | Insert frames at the given index                                   |
 | `video.remove(index)`                      | Remove the frame at the given index                                |
 | `video.each { \|image\| ... }`             | Iterate frames (also includes `Enumerable`)                        |

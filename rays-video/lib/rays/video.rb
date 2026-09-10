@@ -22,7 +22,11 @@ module Rays
 
     def append(*images)
       images.each {|image| append! image}
+      self
     end
+
+    alias push append
+    alias <<   append
 
     def remove(index_or_range)
       case index_or_range
