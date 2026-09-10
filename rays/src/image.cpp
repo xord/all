@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <assert.h>
+#include <memory>
 #include "rays/exception.h"
 #include "rays/debug.h"
 #include "bitmap.h"
@@ -10,7 +11,7 @@
 
 
 #if 0
-#define PRINT_MODIFIED_FLAGS(message) get_data(this)->print_modified_flags(message)
+#define PRINT_MODIFIED_FLAGS(message) self->print_modified_flags(message)
 #else
 #define PRINT_MODIFIED_FLAGS(message)
 #endif
@@ -20,7 +21,19 @@ namespace Rays
 {
 
 
-	struct ImageData : Image::Data
+	struct Pixels
+	{
+
+		typedef std::shared_ptr<Pixels> Ptr;
+
+		mutable Bitmap bitmap;
+
+		mutable Texture texture;
+
+	};// Pixels
+
+
+	struct Image::Data
 	{
 
 		int width = 0, height = 0;
@@ -31,50 +44,52 @@ namespace Rays
 
 		ColorSpace color_space;
 
-		mutable Bitmap bitmap;
+		Pixels::Ptr pixels;
 
-		mutable Texture texture;
+		std::unique_ptr<Image::Loader> loader;
+
+		Data ()
+		:	pixels(new Pixels())
+		{
+		}
 
 		void print_modified_flags (const char* message)
 		{
 			printf("%s: %d %d %d %d \n",
 				message,
-				bitmap ? 1 : 0,
-				Bitmap_get_modified(bitmap) ? 1 : 0,
-				texture ? 1 : 0,
-				texture.modified() ? 1 : 0);
+				pixels->bitmap ? 1 : 0,
+				Bitmap_get_modified(pixels->bitmap) ? 1 : 0,
+				pixels->texture ? 1 : 0,
+				pixels->texture.modified() ? 1 : 0);
 		}
 
 	};// Image::Data
 
 
-	static ImageData*
-	get_data (Image* image)
-	{
-		return (ImageData*) image->self.get();
-	}
-
-	static const ImageData*
-	get_data (const Image* image)
-	{
-		return (const ImageData*) image->self.get();
-	}
-
-
 	static void
 	clear_modified_flags (Image* image)
 	{
-		ImageData* self = get_data(image);
+		Pixels* pixels = image->self->pixels.get();
 
-		if (self->bitmap)  Bitmap_set_modified(&self->bitmap, false);
-		if (self->texture) self->texture.set_modified(false);
+		if (pixels->bitmap)
+			Bitmap_set_modified(&pixels->bitmap, false);
+
+		if (pixels->texture)
+			pixels->texture.set_modified(false);
 	}
 
 	static void
 	invalidate_texture (Image* image)
 	{
 		image->bitmap();// update bitmap
-		get_data(image)->texture = Texture();
+		image->self->pixels->texture = Texture();
+	}
+
+	static void
+	check_writable (const Image* image)
+	{
+		if (image->self->loader)
+			invalid_state_error(__FILE__, __LINE__, "image is read-only");
 	}
 
 	static Bitmap&
@@ -82,31 +97,32 @@ namespace Rays
 	{
 		assert(image);
 
-		ImageData* self = get_data(image);
+		Image::Data* self = image->self.get();
+		Pixels* pixels    = self->pixels.get();
 
 		if (!*image)
 		{
-			assert(!self->bitmap);
-			return self->bitmap;
+			assert(!pixels->bitmap);
+			return pixels->bitmap;
 		}
 
-		if (!self->bitmap)
+		if (!pixels->bitmap)
 		{
-			if (self->texture)
+			if (pixels->texture)
 			{
 				PRINT_MODIFIED_FLAGS("new bitmap from texture");
-				self->bitmap = Bitmap_from(self->texture);
+				pixels->bitmap = Bitmap_from(pixels->texture);
 			}
 			else
 			{
 				PRINT_MODIFIED_FLAGS("new bitmap");
-				self->bitmap = Bitmap(self->width, self->height, self->color_space);
+				pixels->bitmap = Bitmap(self->width, self->height, self->color_space);
 			}
 			clear_modified_flags(image);
 		}
-		else if (self->texture && self->texture.modified())
+		else if (pixels->texture && pixels->texture.modified())
 		{
-			if (Bitmap_get_modified(self->bitmap))
+			if (Bitmap_get_modified(pixels->bitmap))
 			{
 				invalid_state_error(
 					__FILE__, __LINE__, "bitmap and texture modifications conflicted");
@@ -114,36 +130,42 @@ namespace Rays
 			else
 			{
 				PRINT_MODIFIED_FLAGS("bitmap from texture");
-				self->bitmap = Bitmap_from(self->texture);
+				pixels->bitmap = Bitmap_from(pixels->texture);
 				clear_modified_flags(image);
 			}
 		}
 
-		return self->bitmap;
+		if (self->loader && self->loader->load(&pixels->bitmap))
+			Bitmap_set_modified(&pixels->bitmap);
+
+		return pixels->bitmap;
 	}
 
 	Texture&
 	Image_get_texture (Image& image)
 	{
-		ImageData* self = get_data(&image);
+		Image::Data* self = image.self.get();
+		Pixels* pixels    = self->pixels.get();
 
 		if (!image)
 		{
-			assert(!self->texture);
-			return self->texture;
+			assert(!pixels->texture);
+			return pixels->texture;
 		}
 
-		if (!self->texture)
+		if (self->loader) get_bitmap(&image);
+
+		if (!pixels->texture)
 		{
-			if (self->bitmap)
+			if (pixels->bitmap)
 			{
 				PRINT_MODIFIED_FLAGS("new texture from bitmap");
-				self->texture = Texture(self->bitmap, self->smooth);
+				pixels->texture = Texture(pixels->bitmap, self->smooth);
 			}
 			else
 			{
 				PRINT_MODIFIED_FLAGS("new texture");
-				self->texture = Texture(
+				pixels->texture = Texture(
 					self->width, self->height, self->color_space, self->smooth);
 
 				Painter p = image.painter();
@@ -153,9 +175,9 @@ namespace Rays
 			}
 			clear_modified_flags(&image);
 		}
-		else if (self->bitmap && Bitmap_get_modified(self->bitmap))
+		else if (pixels->bitmap && Bitmap_get_modified(pixels->bitmap))
 		{
-			if (self->texture.modified())
+			if (pixels->texture.modified())
 			{
 				invalid_state_error(
 					__FILE__, __LINE__, "texture and bitmap modifications conflicted");
@@ -163,12 +185,12 @@ namespace Rays
 			else
 			{
 				PRINT_MODIFIED_FLAGS("texture from bitmap");
-				self->texture = self->bitmap;
+				pixels->texture = pixels->bitmap;
 				clear_modified_flags(&image);
 			}
 		}
 
-		return self->texture;
+		return pixels->texture;
 	}
 
 	const Texture&
@@ -184,30 +206,22 @@ namespace Rays
 	}
 
 
-	Image::Data::~Data ()
-	{
-	}
-
-	void
-	Image::Data::preprocess (const Image*) const
+	Image::Loader::~Loader ()
 	{
 	}
 
 
 	Image::Image ()
-	:	self(new ImageData())
 	{
 	}
 
 	Image::Image (
 		int width, int height, const ColorSpace& cs,
 		float pixel_density, bool smooth)
-	:	self(new ImageData())
 	{
 		if (pixel_density <= 0)
 			argument_error(__FILE__, __LINE__, "invalid pixel_density.");
 
-		ImageData* self     = get_data(this);
 		self->width         = (int) (width  * pixel_density);
 		self->height        = (int) (height * pixel_density);
 		self->color_space   = cs;
@@ -216,23 +230,33 @@ namespace Rays
 	}
 
 	Image::Image (const Bitmap& bitmap, float pixel_density, bool smooth)
-	:	self(new ImageData())
 	{
 		if (pixel_density <= 0)
 			argument_error(__FILE__, __LINE__, "invalid pixel_density.");
 
-		ImageData* self     = get_data(this);
-		self->bitmap        = bitmap;
-		self->width         = bitmap.width();
-		self->height        = bitmap.height();
-		self->color_space   = bitmap.color_space();
-		self->pixel_density = pixel_density;
-		self->smooth        = smooth;
+		self->pixels->bitmap = bitmap;
+		self->width          = bitmap.width();
+		self->height         = bitmap.height();
+		self->color_space    = bitmap.color_space();
+		self->pixel_density  = pixel_density;
+		self->smooth         = smooth;
 	}
 
-	Image::Image (Data* data)
-	:	self(data)
+	Image::Image (const Image& pixels, Loader* loader)
 	{
+		std::unique_ptr<Loader> loader_(loader);
+		if (!loader)
+			argument_error(__FILE__, __LINE__, "loader is NULL.");
+		if (!pixels)
+			argument_error(__FILE__, __LINE__, "invalid pixels image.");
+
+		self->width         = pixels.self->width;
+		self->height        = pixels.self->height;
+		self->color_space   = pixels.self->color_space;
+		self->pixel_density = pixels.self->pixel_density;
+		self->smooth        = pixels.self->smooth;
+		self->pixels        = pixels.self->pixels;
+		self->loader        = std::move(loader_);
 	}
 
 	Image::~Image ()
@@ -242,16 +266,12 @@ namespace Rays
 	Image
 	Image::dup () const
 	{
-		self->preprocess(this);
-
 		return Image(bitmap().dup(), pixel_density());
 	}
 
 	void
 	Image::save (const char* path)
 	{
-		self->preprocess(this);
-
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
@@ -261,45 +281,31 @@ namespace Rays
 	coord
 	Image::width () const
 	{
-		self->preprocess(this);
-
-		const ImageData* self = get_data(this);
 		return self->width / self->pixel_density;
 	}
 
 	coord
 	Image::height () const
 	{
-		self->preprocess(this);
-
-		const ImageData* self = get_data(this);
 		return self->height / self->pixel_density;
 	}
 
 	const ColorSpace&
 	Image::color_space () const
 	{
-		self->preprocess(this);
-
-		const ImageData* self = get_data(this);
 		return self->color_space;
 	}
 
 	float
 	Image::pixel_density () const
 	{
-		self->preprocess(this);
-
-		const ImageData* self = get_data(this);
 		return self->pixel_density;
 	}
 
 	void
 	Image::set_smooth (bool smooth)
 	{
-		self->preprocess(this);
-
-		ImageData* self = get_data(this);
+		check_writable(this);
 
 		if (smooth == self->smooth) return;
 		self->smooth = smooth;
@@ -309,16 +315,13 @@ namespace Rays
 	bool
 	Image::smooth () const
 	{
-		self->preprocess(this);
-
-		const ImageData* self = get_data(this);
 		return self->smooth;
 	}
 
 	Painter
 	Image::painter ()
 	{
-		self->preprocess(this);
+		check_writable(this);
 
 		Painter p;
 		p.bind(*this);
@@ -328,15 +331,11 @@ namespace Rays
 	Bitmap&
 	Image::bitmap (bool modify)
 	{
-		self->preprocess(this);
+		if (modify) check_writable(this);
 
-		ImageData* self = get_data(this);
-		if (modify)
-		{
-			if (!self->bitmap) get_bitmap(this);
-			Bitmap_set_modified(&self->bitmap);
-		}
-		return get_bitmap(this);
+		Bitmap& bitmap = get_bitmap(this);
+		if (modify) Bitmap_set_modified(&bitmap);
+		return bitmap;
 	}
 
 	const Bitmap&
@@ -345,11 +344,14 @@ namespace Rays
 		return const_cast<Image*>(this)->bitmap();
 	}
 
+	const Image::Loader*
+	Image::loader () const
+	{
+		return self->loader.get();
+	}
+
 	Image::operator bool () const
 	{
-		self->preprocess(this);
-
-		const ImageData* self = get_data(this);
 		return
 			self->width         > 0 &&
 			self->height        > 0 &&

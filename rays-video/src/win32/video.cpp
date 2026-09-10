@@ -8,63 +8,63 @@ namespace Rays
 {
 
 
-	struct VideoReader::Data
+	struct VideoDecoder::Data
 	{
-	};// VideoReader::Data
+	};// VideoDecoder::Data
 
 
-	VideoReader::VideoReader ()
+	VideoDecoder::VideoDecoder ()
 	{
 	}
 
-	VideoReader::VideoReader (const char*)
+	VideoDecoder::VideoDecoder (const char*)
 	{
 		not_implemented_error(__FILE__, __LINE__);
 	}
 
-	Image
-	VideoReader::decode_image (size_t, float) const
+	void
+	VideoDecoder::get_bitmap (Bitmap*, size_t) const
 	{
 		not_implemented_error(__FILE__, __LINE__);
 	}
 
 	VideoAudioInList
-	VideoReader::get_audio_tracks () const
+	VideoDecoder::get_audio_tracks () const
 	{
 		return {};
 	}
 
 	coord
-	VideoReader::width () const
+	VideoDecoder::width () const
 	{
 		return 0;
 	}
 
 	coord
-	VideoReader::height () const
+	VideoDecoder::height () const
 	{
 		return 0;
 	}
 
 	float
-	VideoReader::fps () const
+	VideoDecoder::fps () const
 	{
 		return 0;
 	}
 
 	size_t
-	VideoReader::size () const
+	VideoDecoder::size () const
 	{
 		return 0;
 	}
 
-	VideoReader::operator bool () const
+	VideoDecoder::operator bool () const
 	{
 		return false;
 	}
 
 	bool
-	VideoReader::operator ! () const
+	VideoDecoder::operator ! () const
 	{
 		return !operator bool();
 	}

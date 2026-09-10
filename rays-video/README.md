@@ -74,9 +74,14 @@ A finite sequence of `Rays::Image` frames with a fixed `width`, `height`, `fps`,
 | `video.time_scale` / `video.time_scale =`  | Speed multiplier for playback                                      |
 | `video.size`, `video.empty?`               | Frame count / emptiness                                            |
 | `video.width`, `video.height`, `video.fps`, `video.pixel_density` | Read-only metadata                          |
-| `video.dup`                                | Deep-ish copy (shares image references)                            |
+| `video.dup`                                | Copy the frame list; loaded frames get their own decoder           |
 | `video.save(path)`                         | Encode the video to a file                                         |
 | `video.to_image` (`Image()` cast)          | Get the frame at the current `pos` as a `Rays::Image`              |
+
+Frames of a loaded video are read-only views: each source keeps a single
+decoded frame, and a frame's pixels are decoded into it on access. Such
+frames are frozen, so `paint` and `[]=` raise `FrozenError`. `dup` a frame
+to keep or edit it.
 
 ## 💡 Usage
 

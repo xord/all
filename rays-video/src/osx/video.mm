@@ -16,12 +16,12 @@ namespace Rays
 {
 
 
-	struct VideoReader::Data
+	struct VideoDecoder::Data
 	{
 
 		virtual ~Data () {}
 
-		virtual Image decode_image (size_t index, float pixel_density) const = 0;
+		virtual void get_bitmap (Bitmap* bitmap, size_t index) const = 0;
 
 		virtual VideoAudioInList get_audio_tracks () const
 		{
@@ -38,41 +38,52 @@ namespace Rays
 
 		virtual operator bool () const = 0;
 
-	};// VideoReader::Data
+	};// VideoDecoder::Data
 
 
-	static Bitmap
-	to_bitmap (CGImageRef cgimage)
+	static void
+	decode_bitmap (Bitmap* bitmap, CGImageRef cgimage)
 	{
+		if (!bitmap)
+			argument_error(__FILE__, __LINE__);
+		if (!*bitmap)
+			argument_error(__FILE__, __LINE__, "bitmap is empty");
 		if (!cgimage)
 			argument_error(__FILE__, __LINE__);
 
 		int w = (int) CGImageGetWidth(cgimage);
 		int h = (int) CGImageGetHeight(cgimage);
-		Bitmap bmp(w, h, RGBA);
+		if (bitmap->width() != w || bitmap->height() != h)
+		{
+			rays_error(
+				__FILE__, __LINE__,
+				"frame size %dx%d does not match the video size %dx%d",
+				w, h, bitmap->width(), bitmap->height());
+		}
+		if (bitmap->color_space().type() != RGBA)
+			argument_error(__FILE__, __LINE__, "bitmap must be RGBA");
 
 		std::shared_ptr<CGColorSpace> colorspace(
 			CGColorSpaceCreateDeviceRGB(),
 			CGColorSpaceRelease);
 		std::shared_ptr<CGContext> context(
 			CGBitmapContextCreate(
-				bmp.pixels(), w, h, 8, bmp.pitch(), colorspace.get(),
+				bitmap->pixels(), w, h, 8, bitmap->pitch(), colorspace.get(),
 				(CGBitmapInfo) kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big),
 			CGContextRelease);
+		CGContextSetBlendMode(context.get(), kCGBlendModeCopy);
 		CGContextDrawImage(context.get(), CGRectMake(0, 0, w, h), cgimage);
-
-		return bmp;
 	}
 
 
-	struct VideoFileReader : VideoReader::Data
+	struct VideoFileDecoder : VideoDecoder::Data
 	{
 
 		AVAsset* asset = nil;
 
 		AVAssetTrack* video_track = nil;
 
-		VideoFileReader (const char* path)
+		VideoFileDecoder (const char* path)
 		{
 			NSURL* url = [NSURL fileURLWithPath: [NSString stringWithUTF8String: path]];
 			if (!url)
@@ -96,13 +107,13 @@ namespace Rays
 			video_track = [track retain];
 		}
 
-		~VideoFileReader ()
+		~VideoFileDecoder ()
 		{
 			[video_track release];
 			[asset       release];
 		}
 
-		Image decode_image (size_t index, float pixel_density) const override
+		void get_bitmap (Bitmap* bitmap, size_t index) const override
 		{
 			AVAssetImageGenerator* generator =
 				[[[AVAssetImageGenerator alloc] initWithAsset: asset] autorelease];
@@ -122,7 +133,7 @@ namespace Rays
 					index, error ? error.localizedDescription.UTF8String : "unknown");
 			}
 
-			return Image(to_bitmap(cgimage.get()), pixel_density);
+			decode_bitmap(bitmap, cgimage.get());
 		}
 
 		VideoAudioInList get_audio_tracks () const override
@@ -165,10 +176,10 @@ namespace Rays
 			return asset && video_track && video_track.nominalFrameRate > 0;
 		}
 
-	};// VideoFileReader
+	};// VideoFileDecoder
 
 
-	struct GIFFileReader : VideoReader::Data
+	struct GIFFileDecoder : VideoDecoder::Data
 	{
 
 		enum {DEFAULT_FPS = 10};
@@ -179,7 +190,7 @@ namespace Rays
 
 		float fps_ = 0;
 
-		GIFFileReader (const char* path)
+		GIFFileDecoder (const char* path)
 		{
 			NSURL* url = [NSURL fileURLWithPath: [NSString stringWithUTF8String: path]];
 			if (!url)
@@ -208,7 +219,7 @@ namespace Rays
 			this->fps_   = delay > 0 ? std::round(1 / delay) : (float) DEFAULT_FPS;
 		}
 
-		Image decode_image (size_t index, float pixel_density) const override
+		void get_bitmap (Bitmap* bitmap, size_t index) const override
 		{
 			std::shared_ptr<CGImage> cgimage(
 				CGImageSourceCreateImageAtIndex(source.get(), index, NULL),
@@ -219,7 +230,7 @@ namespace Rays
 					__FILE__, __LINE__, "failed to decode GIF frame %zu", index);
 			}
 
-			return Image(to_bitmap(cgimage.get()), pixel_density);
+			decode_bitmap(bitmap, cgimage.get());
 		}
 
 		coord width () const override
@@ -281,7 +292,7 @@ namespace Rays
 			return 0;
 		}
 
-	};// GIFFileReader
+	};// GIFFileDecoder
 
 
 	static bool
@@ -291,74 +302,74 @@ namespace Rays
 	}
 
 
-	VideoReader::VideoReader ()
+	VideoDecoder::VideoDecoder ()
 	:	self(NULL)
 	{
 	}
 
-	VideoReader::VideoReader (const char* path)
+	VideoDecoder::VideoDecoder (const char* path)
 	:	self(NULL)
 	{
 		if (!path || *path == '\0')
 			argument_error(__FILE__, __LINE__, "path is empty");
 
 		if (is_gif_path(path))
-			self.reset(new GIFFileReader(path));
+			self.reset(new GIFFileDecoder(path));
 		else
-			self.reset(new VideoFileReader(path));
+			self.reset(new VideoFileDecoder(path));
 	}
 
-	Image
-	VideoReader::decode_image (size_t index, float pixel_density) const
+	void
+	VideoDecoder::get_bitmap (Bitmap* bitmap, size_t index) const
 	{
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
-		return self->decode_image(index, pixel_density);
+		self->get_bitmap(bitmap, index);
 	}
 
 	VideoAudioInList
-	VideoReader::get_audio_tracks () const
+	VideoDecoder::get_audio_tracks () const
 	{
 		if (!*this) return {};
 		return self->get_audio_tracks();
 	}
 
 	coord
-	VideoReader::width () const
+	VideoDecoder::width () const
 	{
 		if (!*this) return 0;
 		return self->width();
 	}
 
 	coord
-	VideoReader::height () const
+	VideoDecoder::height () const
 	{
 		if (!*this) return 0;
 		return self->height();
 	}
 
 	float
-	VideoReader::fps () const
+	VideoDecoder::fps () const
 	{
 		if (!*this) return 0;
 		return self->fps();
 	}
 
 	size_t
-	VideoReader::size () const
+	VideoDecoder::size () const
 	{
 		if (!*this) return 0;
 		return self->size();
 	}
 
-	VideoReader::operator bool () const
+	VideoDecoder::operator bool () const
 	{
 		return self && *self;
 	}
 
 	bool
-	VideoReader::operator ! () const
+	VideoDecoder::operator ! () const
 	{
 		return !operator bool();
 	}
