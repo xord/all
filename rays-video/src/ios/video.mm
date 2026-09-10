@@ -6,6 +6,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#include <xot/util.h>
 #include "rays/bitmap.h"
 #include "rays/exception.h"
 #include "video_audio_in.h"
@@ -186,7 +187,7 @@ namespace Rays
 
 			std::shared_ptr<CGImageSource> source(
 				CGImageSourceCreateWithURL((CFURLRef) url, NULL),
-				CFRelease);
+				Xot::safe_cfrelease);
 			if (!source)
 				rays_error(__FILE__, __LINE__, "failed to create CGImageSource");
 
@@ -250,7 +251,7 @@ namespace Rays
 		{
 			std::shared_ptr<const __CFDictionary> props(
 				CGImageSourceCopyPropertiesAtIndex(source.get(), index, NULL),
-				CFRelease);
+				Xot::safe_cfrelease);
 			if (!props)
 				return 0;
 
@@ -501,7 +502,7 @@ namespace Rays
 
 		std::shared_ptr<CGImageDestination> dest(
 			CGImageDestinationCreateWithURL((CFURLRef) url, kUTTypeGIF, video.size(), NULL),
-			CFRelease);
+			Xot::safe_cfrelease);
 		if (!dest)
 			rays_error(__FILE__, __LINE__, "CGImageDestinationCreateWithURL() failed");
 

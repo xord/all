@@ -3,6 +3,7 @@
 
 
 #import <AVFoundation/AVFoundation.h>
+#include <xot/util.h>
 #include "rays/exception.h"
 
 
@@ -134,7 +135,7 @@ namespace Rays
 
 			std::shared_ptr<opaqueCMSampleBuffer> samples(
 				[output copyNextSampleBuffer],
-				CFRelease);
+				Xot::safe_cfrelease);
 			if (!samples)
 				return false;
 

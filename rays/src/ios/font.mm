@@ -79,7 +79,7 @@ namespace Rays
 	static CTFontRef
 	create_styled_font (CTFontRef base, coord size, int weight, bool italic)
 	{
-		Xot::CFStringPtr family(CTFontCopyFamilyName(base), CFRelease);
+		Xot::CFStringPtr family(CTFontCopyFamilyName(base), Xot::safe_cfrelease);
 		if (!family) return NULL;
 
 		NSDictionary* traits     =
@@ -95,7 +95,7 @@ namespace Rays
 
 		CTFontDescriptorPtr descriptor(
 			CTFontDescriptorCreateWithAttributes((__bridge CFDictionaryRef) attributes),
-			CFRelease);
+			Xot::safe_cfrelease);
 		if (!descriptor) return NULL;
 
 		return CTFontCreateWithFontDescriptor(descriptor.get(), size, NULL);
@@ -122,15 +122,15 @@ namespace Rays
 			CFDictionaryCreate(
 				NULL, (const void**) &keys, (const void**) &values, nkeys,
 				&kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks),
-			CFRelease);
+			Xot::safe_cfrelease);
 
 		CFAttributedStringPtr attrstr(
 			CFAttributedStringCreate(NULL, Xot::String(str).to_cfstr().get(), attr.get()),
-			CFRelease);
+			Xot::safe_cfrelease);
 
 		return CTLinePtr(
 			CTLineCreateWithAttributedString(attrstr.get()),
-			CFRelease);
+			Xot::safe_cfrelease);
 	}
 
 	const FontFamilyMap&
@@ -250,7 +250,7 @@ namespace Rays
 	{
 		if (!*this) return "";
 
-		Xot::CFStringPtr str(CTFontCopyFullName(self->font), CFRelease);
+		Xot::CFStringPtr str(CTFontCopyFullName(self->font), Xot::safe_cfrelease);
 		return Xot::to_s(str);
 	}
 
