@@ -7,7 +7,27 @@
 #include "defs.h"
 
 
-RUCY_DEFINE_VALUE_FROM_TO(RAYS_EXPORT, Rays::Image)
+RUCY_DEFINE_VALUE_TO(RAYS_EXPORT, Rays::Image)
+
+namespace Rucy
+{
+
+	// An image with a loader is read-only, so its ruby object is frozen
+	RAYS_EXPORT Value
+	value (const Rays::Image& obj)
+	{
+		Value v = new_type(get_ruby_class<Rays::Image>(), new Rays::Image(obj));
+		if (obj.loader()) v.freeze();
+		return v;
+	}
+
+	RAYS_EXPORT Value
+	value (const Rays::Image* obj)
+	{
+		return obj ? value(*obj) : nil();
+	}
+
+}// Rucy
 
 #define THIS  to<Rays::Image*>(self)
 
@@ -105,6 +125,7 @@ static
 RUCY_DEF0(painter)
 {
 	CHECK;
+	self.check_frozen();
 	return value(THIS->painter());
 }
 RUCY_END
@@ -113,6 +134,7 @@ static
 RUCY_DEF1(get_bitmap, modify)
 {
 	CHECK;
+	if (modify) self.check_frozen();
 	return value(THIS->bitmap(modify));
 }
 RUCY_END
@@ -121,6 +143,7 @@ static
 RUCY_DEF1(set_smooth, smooth)
 {
 	CHECK;
+	self.check_frozen();
 	THIS->set_smooth(smooth);
 	return smooth;
 }

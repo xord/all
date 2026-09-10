@@ -105,6 +105,22 @@ class TestImage < Test::Unit::TestCase
     assert drawn.call {|p| p.text "a"}
   end
 
+  def test_frozen()
+    img = image(2, 1).freeze
+    assert_equal color(0, 0, 0, 0),        img[0, 0]
+    assert_equal [0x00000000, 0x00000000], img.pixels
+    assert_raise(FrozenError) {img.paint {}}
+    assert_raise(FrozenError) {img[0, 0]  = color 1, 0, 0, 1}
+    assert_raise(FrozenError) {img.pixels = [0xffff0000, 0xff00ff00]}
+    assert_raise(FrozenError) {img.smooth = true}
+
+    dup = img.dup
+    assert_false dup.frozen?
+    dup[0, 0] = color 1, 0, 0, 1
+    assert_equal color(1, 0, 0, 1), dup[0, 0]
+    assert_equal color(0, 0, 0, 0), img[0, 0]
+  end
+
   def test_save_load()
     get_image_type = -> filename {
       `file #{filename}`.match(/#{filename}: ([^,]+),/)[1]

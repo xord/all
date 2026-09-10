@@ -12,18 +12,20 @@ namespace Rays
 {
 
 
-	class VideoReader
+	class VideoDecoder
 	{
 
 		public:
 
-			VideoReader ();
+			VideoDecoder ();
 
-			VideoReader (const char* path);
+			VideoDecoder (const char* path);
 
-			Image decode_image (size_t index, float pixel_density) const;
+			void get_bitmap (Bitmap* bitmap, size_t index);
 
 			VideoAudioInList get_audio_tracks () const;
+
+			const char* path () const;
 
 			coord width () const;
 
@@ -41,7 +43,7 @@ namespace Rays
 
 			Xot::PSharedImpl<Data> self;
 
-	};// VideoReader
+	};// VideoDecoder
 
 
 }// Rays

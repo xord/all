@@ -1,7 +1,8 @@
 #include "video.h"
 
 
-#include <xot/util.h>
+#include <memory>
+#include <map>
 #include <beeps/sound.h>
 #include "rays/bitmap.h"
 #include "rays/exception.h"
@@ -9,6 +10,64 @@
 
 namespace Rays
 {
+
+
+	struct VideoReader
+	{
+
+		typedef std::shared_ptr<VideoReader>     Ptr;
+
+		typedef std::  weak_ptr<VideoReader> WeakPtr;
+
+		VideoDecoder decoder;
+
+		Image pixels;
+
+		ssize_t loaded_index = -1;
+
+		VideoReader (const VideoDecoder& decoder, float pixel_density)
+		:	decoder(decoder),
+			pixels(
+				(int) (decoder.width()  / pixel_density),
+				(int) (decoder.height() / pixel_density),
+				RGBA, pixel_density)
+		{
+		}
+
+	};// VideoReader
+
+
+	struct FrameLoader : public Image::Loader
+	{
+
+		VideoReader::Ptr reader;
+
+		ssize_t index;
+
+		FrameLoader (const VideoReader::Ptr& reader, ssize_t index)
+		:	reader(reader), index(index)
+		{
+		}
+
+		bool load (Bitmap* bitmap) override
+		{
+			VideoReader* r = reader.get();
+			if (r->loaded_index == index)
+				return false;
+
+			r->decoder.get_bitmap(bitmap, index);
+			r->loaded_index = index;
+			return true;
+		}
+
+	};// FrameLoader
+
+
+	static Image
+	make_frame (const VideoReader::Ptr& reader, ssize_t index)
+	{
+		return Image(reader->pixels, new FrameLoader(reader, index));
+	}
 
 
 	struct Video::Data
@@ -22,57 +81,60 @@ namespace Rays
 
 		std::vector<Image> images;
 
+		std::map<String, VideoReader::WeakPtr> readers;
+
 		VideoAudioInList audio_tracks;
 
 		Beeps::SoundPlayer player;
 
+		VideoReader::Ptr get_reader (const VideoDecoder& decoder)
+		{
+			if (!decoder)
+				argument_error(__FILE__, __LINE__, "invalid decoder");
+
+			VideoReader::WeakPtr& weak = readers[decoder.path()];
+			VideoReader::Ptr reader    = weak.lock();
+			if (!reader)
+			{
+				reader.reset(new VideoReader(VideoDecoder(decoder.path()), pixel_density));
+				weak = reader;
+			}
+			return reader;
+		}
+
+		Image to_frame (const Image& image)
+		{
+			auto* loader = dynamic_cast<const FrameLoader*>(image.loader());
+			if (!loader) return image;
+
+			return make_frame(get_reader(loader->reader->decoder), loader->index);
+		}
+
 	};// Video::Data
-
-
-	struct VideoImageData : public Image::Data
-	{
-
-		VideoReader reader;
-
-		size_t index;
-
-		VideoImageData (const VideoReader& reader, size_t index)
-		:	reader(reader), index(index)
-		{
-		}
-
-		void preprocess (const Image* image) const override
-		{
-			Image decoded = reader.decode_image(index, 1);
-			Bitmap bitmap = decoded.bitmap();
-			if (bitmap) Xot::hint_memory_usage(bitmap.size());
-			const_cast<Image*>(image)->self = decoded.self;
-		}
-
-	};// VideoImageData
 
 
 	Video
 	load_video (const char* path)
 	{
-		VideoReader reader(path);
-		if (!reader)
+		VideoDecoder decoder(path);
+		if (!decoder)
 			invalid_state_error(__FILE__, __LINE__);
 
 		Video video;
 		Video::Data* self   = video.self.get();
-		self->width         = reader.width();
-		self->height        = reader.height();
-		self->fps           = reader.fps();
+		self->width         = decoder.width();
+		self->height        = decoder.height();
+		self->fps           = decoder.fps();
 		self->pixel_density = 1;
 		self->position      = 0;
 
-		size_t size = reader.size();
+		VideoReader::Ptr reader = self->get_reader(decoder);
+		size_t size             = decoder.size();
 		self->images.reserve(size);
 		for (size_t i = 0; i < size; ++i)
-			self->images.push_back(Image(new VideoImageData(reader, i)));
+			self->images.push_back(make_frame(reader, i));
 
-		self->audio_tracks = reader.get_audio_tracks();
+		self->audio_tracks = decoder.get_audio_tracks();
 
 		return video;
 	}
@@ -108,6 +170,11 @@ namespace Rays
 	{
 		Video v;
 		*v.self = *self;
+
+		v.self->readers.clear();
+		for (auto& image : v.self->images)
+			image = v.self->to_frame(image);
+
 		return v;
 	}
 
@@ -117,7 +184,7 @@ namespace Rays
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__, "video is not initialized");
 
-		self->images.insert(self->images.begin() + index, image);
+		self->images.insert(self->images.begin() + index, self->to_frame(image));
 	}
 
 	void

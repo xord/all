@@ -14,6 +14,20 @@ class TestVideo < Test::Unit::TestCase
     Rays::Image.new(w, h)
   end
 
+  def color(*args)
+    Rays::Color.new(*args)
+  end
+
+  def load_video(colors, ext = 'gif', &block)
+    tmpdir do |dir|
+      v = video
+      v.append(*colors.map {|c| image.paint {fill(*c); rect 0, 0, 10, 10}})
+      path = File.join dir, "test.#{ext}"
+      v.save path
+      block.call Rays::Video.load(path)
+    end
+  end
+
   def test_initialize()
     assert_equal 1,  video(1, 2,  3, 4).width
     assert_equal 2,  video(1, 2,  3, 4).height
@@ -154,6 +168,75 @@ class TestVideo < Test::Unit::TestCase
       path = File.join dir, 'test.gif'
       v.save path
       assert_equal 3, Rays::Video.load(path).size
+    end
+  end
+
+  def test_load_mp4_frames_in_any_order()
+    colors = 40.times.map {|i| [0, 0, 0].tap {_1[i % 3] = 1}}
+    load_video colors, 'mp4' do |v|
+      # sequential, skip forward, seek back, jump to the end, back to the head
+      [0, 1, 2, 10, 5, 39, 0, 20].each do |i|
+        rgb = v[i][5, 5].to_a[0, 3]
+        assert_equal i % 3, rgb.index(rgb.max), "frame #{i}: #{rgb}"
+      end
+    end
+  end
+
+  def test_load_frame_is_readonly()
+    load_video [[1, 0, 0], [0, 1, 0]] do |v|
+      f = v[0]
+      assert_true  f.frozen?
+      assert_equal color(1, 0, 0, 1), f[5, 5]
+      assert_raise(FrozenError) {f.paint {}}
+      assert_raise(FrozenError) {f[5, 5] = color(0, 0, 1, 1)}
+
+      d = f.dup
+      assert_false d.frozen?
+      d[5, 5] = color(0, 0, 1, 1)
+      assert_equal color(0, 0, 1, 1), d[5, 5]
+      assert_equal color(1, 0, 0, 1), f[5, 5]
+    end
+  end
+
+  def test_load_frame_keeps_its_own_index()
+    load_video [[1, 0, 0], [0, 1, 0]] do |v|
+      a, b = v[0], v[1]
+      assert_equal color(1, 0, 0, 1), a[5, 5]
+      assert_equal color(0, 1, 0, 1), b[5, 5]
+      assert_equal color(1, 0, 0, 1), a[5, 5]
+
+      v.pos = 1
+      assert_equal color(0, 1, 0, 1), v.to_image[5, 5]
+      assert_equal color(1, 0, 0, 1), a[5, 5]
+    end
+  end
+
+  def test_load_transparent_frame_replaces_previous_pixels()
+    load_video [[1, 0, 0], [0, 0, 0, 0]] do |v|
+      assert_equal color(1, 0, 0, 1), v[0][5, 5]
+      assert_equal color(0, 0, 0, 0), v[1][5, 5]
+      assert_equal color(1, 0, 0, 1), v[0][5, 5]
+    end
+  end
+
+  def test_load_frames_appended_to_another_video()
+    load_video [[1, 0, 0], [0, 1, 0]] do |v|
+      w = video
+      w.append v[1], v[0]
+      assert_true  w[0].frozen?
+      assert_equal color(0, 1, 0, 1), w[0][5, 5]
+      assert_equal color(1, 0, 0, 1), w[1][5, 5]
+      assert_equal color(1, 0, 0, 1), v[0][5, 5]
+    end
+  end
+
+  def test_load_dup_plays_independently()
+    load_video [[1, 0, 0], [0, 1, 0]] do |v|
+      w = v.dup
+      v.pos, w.pos = 0, 1
+      assert_equal color(1, 0, 0, 1), v.to_image[5, 5]
+      assert_equal color(0, 1, 0, 1), w.to_image[5, 5]
+      assert_equal color(1, 0, 0, 1), v.to_image[5, 5]
     end
   end
 
