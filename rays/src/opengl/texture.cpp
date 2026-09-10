@@ -203,7 +203,7 @@ namespace Rays
 			glTexImage2D(
 				GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, type,
 				bitmap ? bitmap->pixels() : NULL);
-			npot = OpenGL_has_error();
+			npot = !OpenGL_has_error();
 		}
 
 		if (!npot)
@@ -213,7 +213,7 @@ namespace Rays
 			int height_pow2 = min_pow2(height);
 
 			glTexImage2D(
-				GL_TEXTURE_2D, 0, format, width_pow2, height_pow2, 0, format, type,
+				GL_TEXTURE_2D, 0, internalformat, width_pow2, height_pow2, 0, format, type,
 				bitmap ? resize_bitmap(*bitmap, width_pow2, height_pow2)->pixels() : NULL);
 			OpenGL_check_error(__FILE__, __LINE__);
 

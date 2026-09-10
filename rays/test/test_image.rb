@@ -46,6 +46,13 @@ class TestImage < Test::Unit::TestCase
     assert_equal 10, image(20, 10).bitmap.height
   end
 
+  def test_draw_bgra_image()
+    img = Rays::Image.new Rays::Bitmap.new(1, 1, Rays::ColorSpace.new(:BGRA))
+    img[0, 0] = color 1, 0, 0, 1
+    assert_equal color(1, 0, 0, 1), img[0, 0]
+    assert_equal [0xffff0000], image(1, 1).paint {image img}.pixels
+  end
+
   def test_bitmap_with_modify_flag()
     img1 = image 1, 1
     update_texture img1
