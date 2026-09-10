@@ -1,6 +1,7 @@
 #include "video.h"
 
 
+#include <cmath>
 #include <memory>
 #include <map>
 #include <beeps/sound.h>
@@ -125,6 +126,29 @@ namespace Rays
 		{
 			index_error(
 				__FILE__, __LINE__, "index %zu is out of range (0..%zu)", index, video.size() - 1);
+		}
+	}
+
+	static void
+	check_frame (const Video& video, const Image& image)
+	{
+		if (!image)
+			argument_error(__FILE__, __LINE__, "image is empty");
+
+		long   w = std::lround(image.width());
+		long   h = std::lround(image.height());
+		long  pw = std::lround(image.width()  * image.pixel_density());
+		long  ph = std::lround(image.height() * image.pixel_density());
+		long  vw = std::lround(video.width());
+		long  vh = std::lround(video.height());
+		long vpw = std::lround(video.width()  * video.pixel_density());
+		long vph = std::lround(video.height() * video.pixel_density());
+		if (w != vw || h != vh || pw != vpw || ph != vph)
+		{
+			argument_error(
+				__FILE__, __LINE__,
+				"frame size %ldx%ld (%ldx%ld px) does not match the video size %ldx%ld (%ldx%ld px)",
+				w, h, pw, ph, vw, vh, vpw, vph);
 		}
 	}
 
@@ -280,6 +304,7 @@ namespace Rays
 			index_error(
 				__FILE__, __LINE__, "index %zu is out of range (0..%zu)", index, size());
 		}
+		check_frame(*this, image);
 
 		self->images.insert(self->images.begin() + index, self->to_frame(image));
 	}
@@ -301,6 +326,7 @@ namespace Rays
 	Video::set (size_t index, const Image& image)
 	{
 		check_index(*this, index);
+		check_frame(*this, image);
 
 		self->images[index] = self->to_frame(image);
 	}

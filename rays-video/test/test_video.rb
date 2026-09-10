@@ -72,7 +72,19 @@ class TestVideo < Test::Unit::TestCase
     v.insert 2, image(40), image(50); assert_equal [10, 30, 40, 50, 20],     grays(v)
     v.insert 5, image(60);            assert_equal [10, 30, 40, 50, 20, 60], grays(v)
 
-    assert_raise(IndexError) {v.insert 7, image}
+    assert_raise(IndexError)    {v.insert 7, image}
+    assert_raise(ArgumentError) {v.insert 0, Rays::Image.new(10, 5)}
+    assert_raise(ArgumentError) {v.insert 0, Rays::Image.new(5,  10)}
+    assert_raise(ArgumentError) {v.insert 0, Rays::Image.new(10, 10, pixel_density: 2)}
+  end
+
+  def test_insert_with_pixel_density()
+    v = video 10, 10, 30, 2
+    v.append Rays::Image.new(10, 10, pixel_density: 2)
+    assert_equal 1, v.size
+
+    assert_raise(ArgumentError) {v.append Rays::Image.new(10, 10, pixel_density: 1)}
+    assert_raise(ArgumentError) {v.append Rays::Image.new(20, 20, pixel_density: 2)}
   end
 
   def test_append()
@@ -96,9 +108,10 @@ class TestVideo < Test::Unit::TestCase
     v[0] = image(50); assert_equal [50, 40, 30], grays(v)
     v[2] = image(60); assert_equal [50, 40, 60], grays(v)
 
-    assert_raise(IndexError) {v[3]  = image}
-    assert_raise(RangeError) {v[-1] = image}
-    assert_raise(IndexError) {video[0] = image}
+    assert_raise(IndexError)    {v[3]  = image}
+    assert_raise(RangeError)    {v[-1] = image}
+    assert_raise(IndexError)    {video[0] = image}
+    assert_raise(ArgumentError) {v[0] = Rays::Image.new(5, 5)}
   end
 
   def test_size()

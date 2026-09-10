@@ -79,6 +79,8 @@ A finite sequence of `Rays::Image` frames with a fixed `width`, `height`, `fps`,
 | `video.save(path)`                         | Encode the video to a file                                         |
 | `video.to_image` (`Image()` cast)          | Get the frame at the current `pos` as a `Rays::Image`              |
 
+Every frame must have the video's `width`, `height` and `pixel_density`.
+
 Frames of a loaded video are read-only views: each source keeps a single
 decoded frame, and a frame's pixels are decoded into it on access. Such
 frames are frozen, so `paint` and `[]=` raise `FrozenError`. `dup` a frame
