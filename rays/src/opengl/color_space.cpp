@@ -30,7 +30,10 @@ namespace Rays
 		if (format)
 		{
 			     if (cs.is_rgb())   *format = cs.has_alpha() ? GL_RGBA  : GL_RGB;
-		#ifndef IOS
+		#ifdef IOS
+			else if (cs.is_bgr() && cs.has_alpha())
+			                        *format = GL_BGRA_EXT;
+		#else
 			else if (cs.is_bgr())   *format = cs.has_alpha() ? GL_BGRA  : GL_BGR;
 		#endif
 			else if (cs.is_gray())  *format = GL_LUMINANCE;
