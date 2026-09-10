@@ -10,8 +10,16 @@ class TestVideo < Test::Unit::TestCase
     Rays::Video.new(w, h, fps: fps, pixel_density: pd)
   end
 
-  def image(w = 10, h = 10)
-    Rays::Image.new(w, h)
+  def image(gray = 0)
+    Rays::Image.new(10, 10).paint {fill gray / 255.0; rect 0, 0, 10, 10}
+  end
+
+  def gray(image)
+    (image[5, 5].red * 255).round
+  end
+
+  def grays(video)
+    video.map {|image| gray image}
   end
 
   def color(*args)
@@ -21,7 +29,9 @@ class TestVideo < Test::Unit::TestCase
   def load_video(colors, ext = 'gif', &block)
     tmpdir do |dir|
       v = video
-      v.append(*colors.map {|c| image.paint {fill(*c); rect 0, 0, 10, 10}})
+      v.append(*colors.map {|c|
+        Rays::Image.new(10, 10).paint {fill(*c); rect 0, 0, 10, 10}
+      })
       path = File.join dir, "test.#{ext}"
       v.save path
       block.call Rays::Video.load(path)
@@ -56,36 +66,35 @@ class TestVideo < Test::Unit::TestCase
   end
 
   def test_insert()
-    v = video;                      assert_equal [],                 v.map(&:width)
-    v.append image(1), image(2);    assert_equal [1, 2],             v.map(&:width)
-    v.insert 1, image(3);           assert_equal [1, 3, 2],          v.map(&:width)
-    v.insert 2, image(4), image(5); assert_equal [1, 3, 4, 5, 2],    v.map(&:width)
-    v.insert 5, image(6);           assert_equal [1, 3, 4, 5, 2, 6], v.map(&:width)
+    v = video;                        assert_equal [],                       grays(v)
+    v.append image(10), image(20);    assert_equal [10, 20],                 grays(v)
+    v.insert 1, image(30);            assert_equal [10, 30, 20],             grays(v)
+    v.insert 2, image(40), image(50); assert_equal [10, 30, 40, 50, 20],     grays(v)
+    v.insert 5, image(60);            assert_equal [10, 30, 40, 50, 20, 60], grays(v)
 
     assert_raise(IndexError) {v.insert 7, image}
   end
 
   def test_append()
-    v = video;                   assert_equal [],        v.map(&:width)
-    v.append image(1);           assert_equal [1],       v.map(&:width)
-    v.append image(2), image(3); assert_equal [1, 2, 3], v.map(&:width)
-    
+    v = video;                     assert_equal [],           grays(v)
+    v.append image(10);            assert_equal [10],         grays(v)
+    v.append image(20), image(30); assert_equal [10, 20, 30], grays(v)
   end
 
   def test_remove()
-    v = video;                             assert_equal [],        v.map(&:width)
-    v.append image(1), image(2), image(3); assert_equal [1, 2, 3], v.map(&:width)
-    v.remove 1;                            assert_equal [1, 3],    v.map(&:width)
+    v = video;                                assert_equal [],           grays(v)
+    v.append image(10), image(20), image(30); assert_equal [10, 20, 30], grays(v)
+    v.remove 1;                               assert_equal [10, 30],     grays(v)
 
     assert_raise(NotImplementedError) {v.remove 1..}
   end
 
   def test_set_at()
     v = video
-    v.append image(1), image(2), image(3)
-    v[1] = image(4); assert_equal [1, 4, 3], v.map(&:width)
-    v[0] = image(5); assert_equal [5, 4, 3], v.map(&:width)
-    v[2] = image(6); assert_equal [5, 4, 6], v.map(&:width)
+    v.append image(10), image(20), image(30)
+    v[1] = image(40); assert_equal [10, 40, 30], grays(v)
+    v[0] = image(50); assert_equal [50, 40, 30], grays(v)
+    v[2] = image(60); assert_equal [50, 40, 60], grays(v)
 
     assert_raise(IndexError) {v[3]  = image}
     assert_raise(RangeError) {v[-1] = image}
@@ -113,27 +122,27 @@ class TestVideo < Test::Unit::TestCase
 
   def test_each()
     v = video
-    v.append image(1), image(2), image(3)
+    v.append image(10), image(20), image(30)
 
     assert_equal(
-      [[0, 1], [1, 2], [2, 3]],
-      v.map.with_index {|image, index| [index, image.width]})
+      [[0, 10], [1, 20], [2, 30]],
+      v.map.with_index {|image, index| [index, gray(image)]})
   end
 
   def test_to_image()
-    v = video.tap {_1.append image(1), image(2), image(3)}
-               assert_equal 1, v.to_image.width
-    v.pos = 1; assert_equal 2, v.to_image.width
-    v.pos = 2; assert_equal 3, v.to_image.width
-    v.pos = 3; assert_equal 3, v.to_image.width
-    v.pos = 9; assert_equal 3, v.to_image.width
+    v = video.tap {_1.append image(10), image(20), image(30)}
+               assert_equal 10, gray(v.to_image)
+    v.pos = 1; assert_equal 20, gray(v.to_image)
+    v.pos = 2; assert_equal 30, gray(v.to_image)
+    v.pos = 3; assert_equal 30, gray(v.to_image)
+    v.pos = 9; assert_equal 30, gray(v.to_image)
   end
 
   def test_at()
     v = video
-    v.append image(1), image(2), image(3)
-    assert_equal 1, v[0].width
-    assert_equal 3, v[2].width
+    v.append image(10), image(20), image(30)
+    assert_equal 10, gray(v[0])
+    assert_equal 30, gray(v[2])
 
     assert_raise(RangeError) {v[-1]}
     assert_raise(IndexError) {v[3]}
