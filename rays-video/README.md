@@ -69,6 +69,7 @@ A finite sequence of `Rays::Image` frames with a fixed `width`, `height`, `fps`,
 | `video.remove(index)`                      | Remove the frame at the given index                                |
 | `video.each { \|image\| ... }`             | Iterate frames (also includes `Enumerable`)                        |
 | `video[i]`                                 | Get the frame at index *i* as a `Rays::Image`                      |
+| `video[i] = image`                         | Replace the frame at index *i*                                     |
 | `video.pos` / `video.pos =`                | Current playback position (index)                                  |
 | `video.play` / `video.pause` / `video.stop`| Playback controls                                                  |
 | `video.time_scale` / `video.time_scale =`  | Speed multiplier for playback                                      |
@@ -81,7 +82,7 @@ A finite sequence of `Rays::Image` frames with a fixed `width`, `height`, `fps`,
 Frames of a loaded video are read-only views: each source keeps a single
 decoded frame, and a frame's pixels are decoded into it on access. Such
 frames are frozen, so `paint` and `[]=` raise `FrozenError`. `dup` a frame
-to keep or edit it.
+to keep or edit it, and put it back with `video[i] = image`.
 
 ## 💡 Usage
 
@@ -132,6 +133,20 @@ end
 
 video.pos = video.size / 2     # mid-point
 mid = video.to_image
+```
+
+### Edit a frame of a loaded video
+
+```ruby
+video = Rays::Video.load 'clip.mp4'
+
+frame = video[30].dup # loaded frames are frozen, so copy first
+frame.paint do |p|
+  p.fill 1, 0, 0
+  p.ellipse 10, 10, 50, 50
+end
+video[30] = frame
+video.save 'edited.mp4'
 ```
 
 ## 🛠️ Development

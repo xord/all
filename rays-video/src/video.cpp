@@ -113,6 +113,21 @@ namespace Rays
 	};// Video::Data
 
 
+	static void
+	check_index (const Video& video, size_t index)
+	{
+		if (video.empty())
+		{
+			index_error(
+				__FILE__, __LINE__, "index %zu is out of range (empty)", index);
+		}
+		if (index >= video.size())
+		{
+			index_error(
+				__FILE__, __LINE__, "index %zu is out of range (0..%zu)", index, video.size() - 1);
+		}
+	}
+
 	Video
 	load_video (const char* path)
 	{
@@ -183,6 +198,11 @@ namespace Rays
 	{
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__, "video is not initialized");
+		if (index > size())
+		{
+			index_error(
+				__FILE__, __LINE__, "index %zu is out of range (0..%zu)", index, size());
+		}
 
 		self->images.insert(self->images.begin() + index, self->to_frame(image));
 	}
@@ -198,6 +218,22 @@ namespace Rays
 	{
 		if (index >= size()) return;
 		self->images.erase(self->images.begin() + index);
+	}
+
+	void
+	Video::set (size_t index, const Image& image)
+	{
+		check_index(*this, index);
+
+		self->images[index] = self->to_frame(image);
+	}
+
+	Image
+	Video::get (size_t index) const
+	{
+		check_index(*this, index);
+
+		return self->images[index];
 	}
 
 	void
@@ -304,19 +340,7 @@ namespace Rays
 	Image
 	Video::operator [] (size_t index) const
 	{
-		if (empty())
-		{
-			index_error(
-				__FILE__, __LINE__, "index %zu is out of range (empty)",
-				index);
-		}
-		if (index >= size())
-		{
-			index_error(
-				__FILE__, __LINE__, "index %zu is out of range (0..%zu)",
-				index, size() - 1);
-		}
-		return self->images[index];
+		return get(index);
 	}
 
 	Video::operator Image () const

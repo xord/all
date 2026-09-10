@@ -163,10 +163,19 @@ RUCY_DEF0(to_image)
 RUCY_END
 
 static
-RUCY_DEF1(at, index)
+RUCY_DEF2(set_at, index, image)
 {
 	CHECK;
-	return value((*THIS)[(size_t) to<int>(index)]);
+	THIS->set(to<size_t>(index), to<const Rays::Image&>(image));
+	return image;
+}
+RUCY_END
+
+static
+RUCY_DEF1(get_at, index)
+{
+	CHECK;
+	return value(THIS->get(to<size_t>(index)));
 }
 RUCY_END
 
@@ -262,7 +271,8 @@ Init_rays_video ()
 	cVideo.define_method("time_scale",  get_time_scale);
 	cVideo.define_method("each!", each);
 	cVideo.define_method("to_image", to_image);
-	cVideo.define_method("[]", at);
+	cVideo.define_method("[]=", set_at);
+	cVideo.define_method("[]",  get_at);
 	cVideo.define_module_function("load", load);
 	cVideo.define_module_function("exts", exts);
 }

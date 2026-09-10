@@ -56,11 +56,13 @@ class TestVideo < Test::Unit::TestCase
   end
 
   def test_insert()
-    v = video;                      assert_equal [],              v.map(&:width)
-    v.append image(1), image(2);    assert_equal [1, 2],          v.map(&:width)
-    v.insert 1, image(3);           assert_equal [1, 3, 2],       v.map(&:width)
-    v.insert 2, image(4), image(5); assert_equal [1, 3, 4, 5, 2], v.map(&:width)
-    
+    v = video;                      assert_equal [],                 v.map(&:width)
+    v.append image(1), image(2);    assert_equal [1, 2],             v.map(&:width)
+    v.insert 1, image(3);           assert_equal [1, 3, 2],          v.map(&:width)
+    v.insert 2, image(4), image(5); assert_equal [1, 3, 4, 5, 2],    v.map(&:width)
+    v.insert 5, image(6);           assert_equal [1, 3, 4, 5, 2, 6], v.map(&:width)
+
+    assert_raise(IndexError) {v.insert 7, image}
   end
 
   def test_append()
@@ -76,6 +78,18 @@ class TestVideo < Test::Unit::TestCase
     v.remove 1;                            assert_equal [1, 3],    v.map(&:width)
 
     assert_raise(NotImplementedError) {v.remove 1..}
+  end
+
+  def test_set_at()
+    v = video
+    v.append image(1), image(2), image(3)
+    v[1] = image(4); assert_equal [1, 4, 3], v.map(&:width)
+    v[0] = image(5); assert_equal [5, 4, 3], v.map(&:width)
+    v[2] = image(6); assert_equal [5, 4, 6], v.map(&:width)
+
+    assert_raise(IndexError) {v[3]  = image}
+    assert_raise(RangeError) {v[-1] = image}
+    assert_raise(IndexError) {video[0] = image}
   end
 
   def test_size()
@@ -121,7 +135,7 @@ class TestVideo < Test::Unit::TestCase
     assert_equal 1, v[0].width
     assert_equal 3, v[2].width
 
-    assert_raise(IndexError) {v[-1]}
+    assert_raise(RangeError) {v[-1]}
     assert_raise(IndexError) {v[3]}
   end
 
@@ -215,6 +229,18 @@ class TestVideo < Test::Unit::TestCase
     load_video [[1, 0, 0], [0, 0, 0, 0]] do |v|
       assert_equal color(1, 0, 0, 1), v[0][5, 5]
       assert_equal color(0, 0, 0, 0), v[1][5, 5]
+      assert_equal color(1, 0, 0, 1), v[0][5, 5]
+    end
+  end
+
+  def test_load_frame_replaced_by_dup_is_writable()
+    load_video [[1, 0, 0], [0, 1, 0]] do |v|
+      v[1] = v[1].dup
+      assert_false v[1].frozen?
+
+      v[1].paint {fill 0, 0, 1; rect 0, 0, 10, 10}
+      v.pos = 1
+      assert_equal color(0, 0, 1, 1), v.to_image[5, 5]
       assert_equal color(1, 0, 0, 1), v[0][5, 5]
     end
   end

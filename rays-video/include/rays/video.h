@@ -44,6 +44,10 @@ namespace Rays
 
 			void remove (size_t index);
 
+			void  set   (size_t index, const Image& image);
+
+			Image get   (size_t index) const;
+
 			void play ();
 
 			void pause ();
