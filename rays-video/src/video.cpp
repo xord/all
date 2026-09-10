@@ -194,6 +194,83 @@ namespace Rays
 	}
 
 	void
+	Video::play ()
+	{
+		if (empty())
+			invalid_state_error(__FILE__, __LINE__, "video is empty");
+
+		if (self->audio_tracks.empty())
+			invalid_state_error(__FILE__, __LINE__, "playing video without audio is not yet supported");
+
+		VideoAudioIn* in = self->audio_tracks[0].get();
+		self->player = Beeps::Sound(in, 0, in->nchannels(), in->sample_rate()).play();
+	}
+
+	void
+	Video::pause ()
+	{
+		if (self->player) self->player.pause();
+	}
+
+	void
+	Video::stop ()
+	{
+		if (self->player) self->player.stop();
+	}
+
+	coord
+	Video::width () const
+	{
+		return self->width;
+	}
+
+	coord
+	Video::height () const
+	{
+		return self->height;
+	}
+
+	float
+	Video::pixel_density () const
+	{
+		return self->pixel_density;
+	}
+
+	float
+	Video::fps () const
+	{
+		return self->fps;
+	}
+
+	void
+	Video::set_position (size_t index)
+	{
+		     if (empty())         index = 0;
+		else if (index >= size()) index = size() - 1;
+		self->position = index;
+	}
+
+	size_t
+	Video::position () const
+	{
+		     if (empty())                  self->position = 0;
+		else if (self->position >= size()) self->position = size() - 1;
+		return self->position;
+	}
+
+	void
+	Video::set_time_scale (float scale)
+	{
+		if (self->player) self->player.set_time_scale(scale);
+	}
+
+	float
+	Video::time_scale () const
+	{
+		return self->player ? self->player.time_scale() : 1;
+	}
+
+	void
 	Video::insert (size_t index, const Image& image)
 	{
 		if (!*this)
@@ -236,67 +313,6 @@ namespace Rays
 		return self->images[index];
 	}
 
-	void
-	Video::play ()
-	{
-		if (empty())
-			invalid_state_error(__FILE__, __LINE__, "video is empty");
-
-		if (self->audio_tracks.empty())
-			invalid_state_error(__FILE__, __LINE__, "playing video without audio is not yet supported");
-
-		VideoAudioIn* in = self->audio_tracks[0].get();
-		self->player = Beeps::Sound(in, 0, in->nchannels(), in->sample_rate()).play();
-	}
-
-	void
-	Video::pause ()
-	{
-		if (self->player) self->player.pause();
-	}
-
-	void
-	Video::stop ()
-	{
-		if (self->player) self->player.stop();
-	}
-
-	void
-	Video::set_time_scale (float scale)
-	{
-		if (self->player) self->player.set_time_scale(scale);
-	}
-
-	float
-	Video::time_scale () const
-	{
-		return self->player ? self->player.time_scale() : 1;
-	}
-
-	coord
-	Video::width () const
-	{
-		return self->width;
-	}
-
-	coord
-	Video::height () const
-	{
-		return self->height;
-	}
-
-	float
-	Video::fps () const
-	{
-		return self->fps;
-	}
-
-	float
-	Video::pixel_density () const
-	{
-		return self->pixel_density;
-	}
-
 	size_t
 	Video::size () const
 	{
@@ -307,22 +323,6 @@ namespace Rays
 	Video::empty () const
 	{
 		return self->images.empty();
-	}
-
-	void
-	Video::set_position (size_t index)
-	{
-		     if (empty())         index = 0;
-		else if (index >= size()) index = size() - 1;
-		self->position = index;
-	}
-
-	size_t
-	Video::position () const
-	{
-		     if (empty())                  self->position = 0;
-		else if (self->position >= size()) self->position = size() - 1;
-		return self->position;
 	}
 
 	Video::const_iterator

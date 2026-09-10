@@ -43,28 +43,28 @@ RUCY_DEF1(initialize_copy, obj)
 RUCY_END
 
 static
-RUCY_DEF2(insert, index, image)
+RUCY_DEF0(play)
 {
 	CHECK;
-	THIS->insert(to<size_t>(index), to<const Rays::Image&>(image));
+	THIS->play();
 	return self;
 }
 RUCY_END
 
 static
-RUCY_DEF1(append, image)
+RUCY_DEF0(pause)
 {
 	CHECK;
-	THIS->append(to<const Rays::Image&>(image));
+	THIS->pause();
 	return self;
 }
 RUCY_END
 
 static
-RUCY_DEF1(remove, index)
+RUCY_DEF0(stop)
 {
 	CHECK;
-	THIS->remove(to<size_t>(index));
+	THIS->stop();
 	return self;
 }
 RUCY_END
@@ -95,14 +95,6 @@ RUCY_DEF0(height)
 RUCY_END
 
 static
-RUCY_DEF0(fps)
-{
-	CHECK;
-	return value(THIS->fps());
-}
-RUCY_END
-
-static
 RUCY_DEF0(pixel_density)
 {
 	CHECK;
@@ -111,18 +103,10 @@ RUCY_DEF0(pixel_density)
 RUCY_END
 
 static
-RUCY_DEF0(size)
+RUCY_DEF0(fps)
 {
 	CHECK;
-	return value(THIS->size());
-}
-RUCY_END
-
-static
-RUCY_DEF0(empty)
-{
-	CHECK;
-	return value(THIS->empty());
+	return value(THIS->fps());
 }
 RUCY_END
 
@@ -144,21 +128,46 @@ RUCY_DEF0(get_position)
 RUCY_END
 
 static
-RUCY_DEF0(each)
+RUCY_DEF1(set_time_scale, scale)
 {
 	CHECK;
-	Value ret;
-	for (auto it = THIS->begin(), end = THIS->end(); it != end; ++it)
-		ret = yield(value(*it));
-	return ret;
+	THIS->set_time_scale(to<float>(scale));
+	return scale;
 }
 RUCY_END
 
 static
-RUCY_DEF0(to_image)
+RUCY_DEF0(get_time_scale)
 {
 	CHECK;
-	return value((Rays::Image) *THIS);
+	return value(THIS->time_scale());
+}
+RUCY_END
+
+static
+RUCY_DEF2(insert, index, image)
+{
+	CHECK;
+	THIS->insert(to<size_t>(index), to<const Rays::Image&>(image));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(append, image)
+{
+	CHECK;
+	THIS->append(to<const Rays::Image&>(image));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF1(remove, index)
+{
+	CHECK;
+	THIS->remove(to<size_t>(index));
+	return self;
 }
 RUCY_END
 
@@ -180,46 +189,37 @@ RUCY_DEF1(get_at, index)
 RUCY_END
 
 static
-RUCY_DEF0(play)
+RUCY_DEF0(size)
 {
 	CHECK;
-	THIS->play();
-	return self;
+	return value(THIS->size());
 }
 RUCY_END
 
 static
-RUCY_DEF0(pause)
+RUCY_DEF0(empty)
 {
 	CHECK;
-	THIS->pause();
-	return self;
+	return value(THIS->empty());
 }
 RUCY_END
 
 static
-RUCY_DEF0(stop)
+RUCY_DEF0(each)
 {
 	CHECK;
-	THIS->stop();
-	return self;
+	Value ret;
+	for (auto it = THIS->begin(), end = THIS->end(); it != end; ++it)
+		ret = yield(value(*it));
+	return ret;
 }
 RUCY_END
 
 static
-RUCY_DEF1(set_time_scale, scale)
+RUCY_DEF0(to_image)
 {
 	CHECK;
-	THIS->set_time_scale(to<float>(scale));
-	return scale;
-}
-RUCY_END
-
-static
-RUCY_DEF0(get_time_scale)
-{
-	CHECK;
-	return value(THIS->time_scale());
+	return value((Rays::Image) *THIS);
 }
 RUCY_END
 
@@ -252,27 +252,27 @@ Init_rays_video ()
 	cVideo.define_alloc_func(alloc);
 	cVideo.define_private_method("initialize!",     initialize);
 	cVideo.define_private_method("initialize_copy", initialize_copy);
-	cVideo.define_method("insert!", insert);
-	cVideo.define_method("append!", append);
-	cVideo.define_method("remove!", remove);
-	cVideo.define_method("save", save);
-	cVideo.define_method("width",         width);
-	cVideo.define_method("height",        height);
-	cVideo.define_method("fps",           fps);
-	cVideo.define_method("pixel_density", pixel_density);
-	cVideo.define_method("size",          size);
-	cVideo.define_method("empty?",        empty);
-	cVideo.define_method("position=", set_position);
-	cVideo.define_method("position",  get_position);
 	cVideo.define_method("play",  play);
 	cVideo.define_method("pause", pause);
 	cVideo.define_method("stop",  stop);
+	cVideo.define_method("save",  save);
+	cVideo.define_method("width",         width);
+	cVideo.define_method("height",        height);
+	cVideo.define_method("pixel_density", pixel_density);
+	cVideo.define_method("fps",           fps);
+	cVideo.define_method("position=",   set_position);
+	cVideo.define_method("position",    get_position);
 	cVideo.define_method("time_scale=", set_time_scale);
 	cVideo.define_method("time_scale",  get_time_scale);
+	cVideo.define_method("insert!", insert);
+	cVideo.define_method("append!", append);
+	cVideo.define_method("remove!", remove);
+	cVideo.define_method("[]=",     set_at);
+	cVideo.define_method("[]",      get_at);
+	cVideo.define_method("size",    size);
+	cVideo.define_method("empty?",  empty);
 	cVideo.define_method("each!", each);
 	cVideo.define_method("to_image", to_image);
-	cVideo.define_method("[]=", set_at);
-	cVideo.define_method("[]",  get_at);
 	cVideo.define_module_function("load", load);
 	cVideo.define_module_function("exts", exts);
 }

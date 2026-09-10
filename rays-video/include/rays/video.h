@@ -38,6 +38,30 @@ namespace Rays
 
 			This dup () const;
 
+			void play ();
+
+			void pause ();
+
+			void stop ();
+
+			void save (const char* path);
+
+			coord width () const;
+
+			coord height () const;
+
+			float pixel_density () const;
+
+			float fps () const;
+
+			void set_position (size_t index);
+
+			size_t   position () const;
+
+			void set_time_scale (float scale);
+
+			float    time_scale () const;
+
 			void insert (size_t index, const Image& image);
 
 			void append (const Image& image);
@@ -48,33 +72,9 @@ namespace Rays
 
 			Image get   (size_t index) const;
 
-			void play ();
-
-			void pause ();
-
-			void stop ();
-
-			void set_time_scale (float scale);
-
-			float    time_scale () const;
-
-			void save (const char* path);
-
-			coord width () const;
-
-			coord height () const;
-
-			float fps () const;
-
-			float pixel_density () const;
-
 			size_t size () const;
 
 			bool empty () const;
-
-			void set_position (size_t index);
-
-			size_t   position () const;
 
 			const_iterator begin () const;
 
