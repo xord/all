@@ -29,6 +29,11 @@ namespace Reflex
 	}
 
 	void
+	Application_stop (Application* app)
+	{
+	}
+
+	void
 	Application_set_menu (Application* app, Menu* menu)
 	{
 	}
