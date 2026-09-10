@@ -19,22 +19,24 @@ namespace Rays
 	struct VideoDecoder::Data
 	{
 
+		String path;
+
 		virtual ~Data () {}
 
-		virtual void get_bitmap (Bitmap* bitmap, size_t index) const = 0;
+		virtual void get_bitmap (Bitmap* bitmap, size_t index) = 0;
 
 		virtual VideoAudioInList get_audio_tracks () const
 		{
 			return {};
 		}
 
-		virtual coord width () const   = 0;
+		virtual coord width () const = 0;
 
-		virtual coord height () const  = 0;
+		virtual coord height () const = 0;
 
-		virtual float fps () const     = 0;
+		virtual float fps () const = 0;
 
-		virtual size_t size () const   = 0;
+		virtual size_t size () const = 0;
 
 		virtual operator bool () const = 0;
 
@@ -42,7 +44,54 @@ namespace Rays
 
 
 	static void
-	decode_bitmap (Bitmap* bitmap, CGImageRef cgimage)
+	copy_pixels (Bitmap* bitmap, CMSampleBufferRef sample)
+	{
+		if (!bitmap)
+			argument_error(__FILE__, __LINE__);
+		if (!*bitmap)
+			argument_error(__FILE__, __LINE__, "bitmap is empty");
+		if (!sample)
+			argument_error(__FILE__, __LINE__);
+
+		CVImageBufferRef pixel_buffer = CMSampleBufferGetImageBuffer(sample);
+		if (!pixel_buffer)
+			rays_error(__FILE__, __LINE__, "sample has no image buffer");
+
+		int w = (int) CVPixelBufferGetWidth(pixel_buffer);
+		int h = (int) CVPixelBufferGetHeight(pixel_buffer);
+		if (bitmap->width() != w || bitmap->height() != h)
+		{
+			rays_error(
+				__FILE__, __LINE__,
+				"frame size %dx%d does not match the video size %dx%d",
+				w, h, bitmap->width(), bitmap->height());
+		}
+		if (bitmap->color_space().type() != RGBA)
+			argument_error(__FILE__, __LINE__, "bitmap must be RGBA");
+
+		CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
+		{
+			// the reader hands out BGRA, the bitmap is RGBA
+			const uint8_t* src = (const uint8_t*) CVPixelBufferGetBaseAddress(pixel_buffer);
+			size_t src_pitch   = CVPixelBufferGetBytesPerRow(pixel_buffer);
+			for (int y = 0; y < h; ++y)
+			{
+				const uint8_t* s = src + y * src_pitch;
+				uint8_t*       d = bitmap->at<uint8_t>(0, y);
+				for (int x = 0; x < w; ++x, s += 4, d += 4)
+				{
+					d[0] = s[2];
+					d[1] = s[1];
+					d[2] = s[0];
+					d[3] = s[3];
+				}
+			}
+		}
+		CVPixelBufferUnlockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
+	}
+
+	static void
+	copy_pixels (Bitmap* bitmap, CGImageRef cgimage)
 	{
 		if (!bitmap)
 			argument_error(__FILE__, __LINE__);
@@ -76,12 +125,23 @@ namespace Rays
 	}
 
 
+	typedef std::shared_ptr<opaqueCMSampleBuffer> CMSampleBufferPtr;
+
+
 	struct VideoFileDecoder : VideoDecoder::Data
 	{
 
-		AVAsset* asset = nil;
+		enum {SKIP_MAX = 10};
 
-		AVAssetTrack* video_track = nil;
+		AVAsset* asset              = nil;
+
+		AVAssetTrack* video_track   = nil;
+
+		AVAssetReader* reader       = nil;
+
+		AVAssetReaderOutput* output = nil;
+
+		ssize_t next_index          = -1;
 
 		VideoFileDecoder (const char* path)
 		{
@@ -109,31 +169,165 @@ namespace Rays
 
 		~VideoFileDecoder ()
 		{
+			stop_reading();
 			[video_track release];
 			[asset       release];
 		}
 
-		void get_bitmap (Bitmap* bitmap, size_t index) const override
+		void get_bitmap (Bitmap* bitmap, size_t index) override
 		{
-			AVAssetImageGenerator* generator =
-				[[[AVAssetImageGenerator alloc] initWithAsset: asset] autorelease];
-			generator.appliesPreferredTrackTransform = YES;
-			generator.requestedTimeToleranceBefore   = kCMTimeZero;
-			generator.requestedTimeToleranceAfter    = kCMTimeZero;
+			ssize_t sindex = (ssize_t) index;
+			if (next_index < 0 || sindex < next_index || sindex - next_index > SKIP_MAX)
+				start_reading(frame_time(index));
 
-			CMTime time    = CMTimeMakeWithSeconds((double) index / fps(), 600);
-			NSError* error = nil;
-			std::shared_ptr<CGImage> cgimage(
-				[generator copyCGImageAtTime: time actualTime: nil error: &error],
-				CGImageRelease);
-			if (!cgimage || error)
+			CMSampleBufferPtr sample = read_sample(sindex);
+			if (!sample && reader.status == AVAssetReaderStatusFailed)
+			{
+				// a failed reader can not be reused, so try once more from scratch
+				start_reading(frame_time(index));
+				sample = read_sample(sindex);
+			}
+			if (!sample && reader.status == AVAssetReaderStatusCompleted)
+			{
+				// size() is an estimate, so an index past the end shows the last frame
+				start_reading(last_frame_time());
+				sample = read_sample(sindex);
+			}
+			if (!sample)
 			{
 				rays_error(
 					__FILE__, __LINE__, "failed to decode frame %zu: %s",
-					index, error ? error.localizedDescription.UTF8String : "unknown");
+					index, reader_error());
 			}
 
-			decode_bitmap(bitmap, cgimage.get());
+			copy_pixels(bitmap, sample.get());
+		}
+
+		void start_reading (CMTime time)
+		{
+			stop_reading();
+
+			NSError* error         = nil;
+			AVAssetReader* reader_ =
+				[[[AVAssetReader alloc] initWithAsset: asset error: &error] autorelease];
+			if (!reader_ || error)
+			{
+				rays_error(
+					__FILE__, __LINE__, "failed to create AVAssetReader: %s",
+					error ? error.localizedDescription.UTF8String : "unknown");
+			}
+
+			NSDictionary* settings =
+			@{
+				(NSString*) kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA)
+			};
+			AVAssetReaderOutput* output_ = nil;
+			if (CGAffineTransformIsIdentity(video_track.preferredTransform))
+			{
+				AVAssetReaderTrackOutput* track_output = [AVAssetReaderTrackOutput
+					assetReaderTrackOutputWithTrack: video_track outputSettings: settings];
+				track_output.alwaysCopiesSampleData = NO;
+				output_ = track_output;
+			}
+			else
+			{
+				// let a composition apply the track's rotation to each frame
+				AVAssetReaderVideoCompositionOutput* composition_output =
+					[AVAssetReaderVideoCompositionOutput
+						assetReaderVideoCompositionOutputWithVideoTracks: @[video_track]
+						videoSettings: settings];
+				composition_output.videoComposition =
+					[AVMutableVideoComposition videoCompositionWithPropertiesOfAsset: asset];
+				composition_output.alwaysCopiesSampleData = NO;
+				output_ = composition_output;
+			}
+			if (![reader_ canAddOutput: output_])
+				rays_error(__FILE__, __LINE__, "cannot add output to AVAssetReader");
+			[reader_ addOutput: output_];
+
+			reader_.timeRange = CMTimeRangeMake(time, kCMTimePositiveInfinity);
+			if (![reader_ startReading])
+			{
+				NSString* desc = reader_.error.localizedDescription;
+				rays_error(
+					__FILE__, __LINE__, "failed to start reading: %s",
+					desc ? desc.UTF8String : "unknown");
+			}
+
+			reader     = [reader_ retain];
+			output     = [output_ retain];
+			next_index = frame_index(time);
+		}
+
+		void stop_reading ()
+		{
+			if (reader) [reader cancelReading];
+			[output release];
+			[reader release];
+			output     = nil;
+			reader     = nil;
+			next_index = -1;
+		}
+
+		CMSampleBufferPtr read_sample (ssize_t index)
+		{
+			// Reads on until the sample shown at 'index', or the last one when the
+			// stream ends before that. NULL on failure.
+
+			CMSampleBufferPtr last;
+			while (true)
+			{
+				CMSampleBufferPtr sample([output copyNextSampleBuffer], Xot::safe_cfrelease);
+				if (!sample)
+					return reader.status == AVAssetReaderStatusCompleted ? last : NULL;
+
+				if (!CMSampleBufferGetImageBuffer(sample.get()))
+					continue;
+
+				ssize_t sample_index =
+					frame_index(CMSampleBufferGetPresentationTimeStamp(sample.get()));
+				next_index           = sample_index + 1;
+				if (sample_index >= index) return sample;
+
+				last = sample;
+			}
+		}
+
+		CMTime frame_duration () const
+		{
+			CMTime duration = video_track.minFrameDuration;
+			if (CMTIME_IS_VALID(duration) && duration.value > 0)
+				return duration;
+
+			return CMTimeMakeWithSeconds(1 / fps(), 600);
+		}
+
+		CMTime frame_time (size_t index) const
+		{
+			return CMTimeMultiply(frame_duration(), (int32_t) index);
+		}
+
+		CMTime last_frame_time () const
+		{
+			CMTime end = CMTimeRangeGetEnd(video_track.timeRange);
+			return CMTimeMaximum(CMTimeSubtract(end, frame_duration()), kCMTimeZero);
+		}
+
+		ssize_t frame_index (CMTime time) const
+		{
+			// A frame that straddles the start of the time range comes out with its
+			// time clipped to the start, so truncate rather than round
+
+			CMTime duration = frame_duration();
+			CMTime t        = CMTimeConvertScale(
+				time, duration.timescale, kCMTimeRoundingMethod_RoundTowardZero);
+			return (ssize_t) (t.value / duration.value);
+		}
+
+		const char* reader_error () const
+		{
+			NSString* desc = reader ? reader.error.localizedDescription : nil;
+			return desc ? desc.UTF8String : "unknown";
 		}
 
 		VideoAudioInList get_audio_tracks () const override
@@ -150,14 +344,22 @@ namespace Rays
 			return list;
 		}
 
+		CGSize frame_size () const
+		{
+			// the size after the track's rotation is applied
+			CGSize size = CGSizeApplyAffineTransform(
+				video_track.naturalSize, video_track.preferredTransform);
+			return CGSizeMake(fabs(size.width), fabs(size.height));
+		}
+
 		coord width () const override
 		{
-			return (int) video_track.naturalSize.width;
+			return (int) std::round(frame_size().width);
 		}
 
 		coord height () const override
 		{
-			return (int) video_track.naturalSize.height;
+			return (int) std::round(frame_size().height);
 		}
 
 		float fps () const override
@@ -219,7 +421,7 @@ namespace Rays
 			this->fps_   = delay > 0 ? std::round(1 / delay) : DEFAULT_FPS;
 		}
 
-		void get_bitmap (Bitmap* bitmap, size_t index) const override
+		void get_bitmap (Bitmap* bitmap, size_t index) override
 		{
 			std::shared_ptr<CGImage> cgimage(
 				CGImageSourceCreateImageAtIndex(source.get(), index, NULL),
@@ -230,7 +432,7 @@ namespace Rays
 					__FILE__, __LINE__, "failed to decode GIF frame %zu", index);
 			}
 
-			decode_bitmap(bitmap, cgimage.get());
+			copy_pixels(bitmap, cgimage.get());
 		}
 
 		coord width () const override
@@ -317,10 +519,12 @@ namespace Rays
 			self.reset(new GIFFileDecoder(path));
 		else
 			self.reset(new VideoFileDecoder(path));
+
+		self->path = path;
 	}
 
 	void
-	VideoDecoder::get_bitmap (Bitmap* bitmap, size_t index) const
+	VideoDecoder::get_bitmap (Bitmap* bitmap, size_t index)
 	{
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
@@ -333,6 +537,13 @@ namespace Rays
 	{
 		if (!*this) return {};
 		return self->get_audio_tracks();
+	}
+
+	const char*
+	VideoDecoder::path () const
+	{
+		if (!*this) return "";
+		return self->path.c_str();
 	}
 
 	coord

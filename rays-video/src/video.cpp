@@ -81,7 +81,7 @@ namespace Rays
 
 		std::vector<Image> images;
 
-		std::map<const VideoDecoder::Data*, VideoReader::WeakPtr> readers;
+		std::map<String, VideoReader::WeakPtr> readers;
 
 		VideoAudioInList audio_tracks;
 
@@ -89,11 +89,14 @@ namespace Rays
 
 		VideoReader::Ptr get_reader (const VideoDecoder& decoder)
 		{
-			VideoReader::WeakPtr& weak = readers[decoder.self.get()];
+			if (!decoder)
+				argument_error(__FILE__, __LINE__, "invalid decoder");
+
+			VideoReader::WeakPtr& weak = readers[decoder.path()];
 			VideoReader::Ptr reader    = weak.lock();
 			if (!reader)
 			{
-				reader.reset(new VideoReader(decoder, pixel_density));
+				reader.reset(new VideoReader(VideoDecoder(decoder.path()), pixel_density));
 				weak = reader;
 			}
 			return reader;

@@ -21,9 +21,11 @@ namespace Rays
 
 			VideoDecoder (const char* path);
 
-			void get_bitmap (Bitmap* bitmap, size_t index) const;
+			void get_bitmap (Bitmap* bitmap, size_t index);
 
 			VideoAudioInList get_audio_tracks () const;
+
+			const char* path () const;
 
 			coord width () const;
 

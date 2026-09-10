@@ -171,6 +171,17 @@ class TestVideo < Test::Unit::TestCase
     end
   end
 
+  def test_load_mp4_frames_in_any_order()
+    colors = 40.times.map {|i| [0, 0, 0].tap {_1[i % 3] = 1}}
+    load_video colors, 'mp4' do |v|
+      # sequential, skip forward, seek back, jump to the end, back to the head
+      [0, 1, 2, 10, 5, 39, 0, 20].each do |i|
+        rgb = v[i][5, 5].to_a[0, 3]
+        assert_equal i % 3, rgb.index(rgb.max), "frame #{i}: #{rgb}"
+      end
+    end
+  end
+
   def test_load_frame_is_readonly()
     load_video [[1, 0, 0], [0, 1, 0]] do |v|
       f = v[0]

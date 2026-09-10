@@ -23,7 +23,7 @@ namespace Rays
 	}
 
 	void
-	VideoDecoder::get_bitmap (Bitmap*, size_t) const
+	VideoDecoder::get_bitmap (Bitmap*, size_t)
 	{
 		not_implemented_error(__FILE__, __LINE__);
 	}
@@ -32,6 +32,12 @@ namespace Rays
 	VideoDecoder::get_audio_tracks () const
 	{
 		return {};
+	}
+
+	const char*
+	VideoDecoder::path () const
+	{
+		not_implemented_error(__FILE__, __LINE__);
 	}
 
 	coord
