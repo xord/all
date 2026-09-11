@@ -5,7 +5,6 @@
 
 
 #include <stdint.h>
-#include <sys/types.h>
 #include <math.h>
 #include <assert.h>
 #include <xot/defs.h>
@@ -123,13 +122,6 @@ namespace Xot
 		const uintptr_t& intval = *(uintptr_t*) &pointer;
 		return intval & POINTER_FLAG;
 	}
-
-
-	typedef void (*HintMemoryUsageFun)(ssize_t);
-
-	void set_hint_memory_usage_fun (HintMemoryUsageFun fun);
-
-	void     hint_memory_usage (ssize_t size);
 
 
 #if defined(OSX) || defined(IOS)
