@@ -6,6 +6,9 @@
 #import <AVFoundation/AVFoundation.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#ifdef IOS
+#import <MobileCoreServices/UTCoreTypes.h>
+#endif
 #include <xot/util.h>
 #include "rays/bitmap.h"
 #include "rays/exception.h"
