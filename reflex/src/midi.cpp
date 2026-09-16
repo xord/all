@@ -40,23 +40,24 @@ namespace Reflex
 
 		enum Type {UNKNOWN, MESSAGE, ERROR};
 
-		Type type = UNKNOWN;
+		Type type  = UNKNOWN;
 
-		MIDI::Ref midi;
+		MIDI* midi = NULL;
 
 		Message message;
 
 		RtMidiError error;
 
-		double time = 0;
+		double time = 0, delta_time = 0;
 
 		RtMidiEvent ()
 		:	error("")
 		{
 		}
 
-		RtMidiEvent (MIDI* midi, const Message& message, double time)
-		:	type(MESSAGE), midi(midi), message(message), error(""), time(time)
+		RtMidiEvent (MIDI* midi, const Message& message, double time, double delta_time)
+		:	type(MESSAGE), midi(midi), message(message), error(""),
+			time(time), delta_time(delta_time)
 		{
 		}
 
@@ -111,7 +112,27 @@ namespace Reflex
 		}
 	}
 
-	static Queue<RtMidiEvent> queue;
+	static MIDI::List midis;
+
+	static MIDI::Ref
+	find_midi (MIDI* midi)
+	{
+		auto it = std::find_if(
+			midis.begin(), midis.end(),
+			[=](const MIDI::Ref& ref) {return ref.get() == midi;});
+		return it == midis.end() ? MIDI::Ref() : *it;
+	}
+
+	static double
+	apply_time (MIDI* midi, const RtMidiEvent& event)
+	{
+		MIDI::Data* self = midi->self.get();
+		if (self->time == 0)
+			self->time  = event.time;
+		else
+			self->time += event.delta_time;
+		return self->time;
+	}
 
 	static void
 	dispatch_midi_event (RtMidiEvent* event)
@@ -119,8 +140,12 @@ namespace Reflex
 		switch (event->type)
 		{
 			case RtMidiEvent::MESSAGE:
-				call_events(event->midi, &event->message[0], event->time);
+			{
+				MIDI::Ref midi = find_midi(event->midi);
+				if (midi)
+					call_events(midi, event->message.data(), apply_time(midi, *event));
 				break;
+			}
 
 			case RtMidiEvent::ERROR:
 				system_error(
@@ -133,6 +158,8 @@ namespace Reflex
 		}
 	}
 
+	static Queue<RtMidiEvent> queue;
+
 	static void
 	process_midi_events ()
 	{
@@ -144,23 +171,13 @@ namespace Reflex
 	static void
 	event_callback (double dt, RtMidiEvent::Message* message, void* data)
 	{
-		MIDI* midi       = (MIDI*) data;
-		MIDI::Data* self = midi->self.get();
-
-		if (self->time == 0)
-			self->time = Xot::time();
-		else
-			self->time += dt;
-
-		queue.push(RtMidiEvent(midi, *message, self->time));
+		queue.push(RtMidiEvent((MIDI*) data, *message, Xot::time(), dt));
 	}
 
 	static void
 	error_callback (RtMidiError::Type type, const std::string& message, void* data)
 	{
-		MIDI* midi = (MIDI*) data;
-
-		queue.push(RtMidiEvent(midi, RtMidiError(message, type)));
+		queue.push(RtMidiEvent((MIDI*) data, RtMidiError(message, type)));
 	}
 
 	static MIDI_CreateFun midi_create_fun = NULL;
@@ -191,8 +208,6 @@ namespace Reflex
 		self->input.ignoreTypes(false, false, false);
 		self->name = name;
 	}
-
-	static MIDI::List midis;
 
 	static void
 	add_midi (MIDI* midi)
