@@ -110,23 +110,23 @@ module Reflex
 
     private
 
-      SYM2FLOW = {
-        none:  FLOW_NONE,
-        down:  FLOW_DOWN,
-        right: FLOW_RIGHT,
-        up:    FLOW_UP,
-        left:  FLOW_LEFT,
-      }
+    SYM2FLOW = {
+      none:  FLOW_NONE,
+      down:  FLOW_DOWN,
+      right: FLOW_RIGHT,
+      up:    FLOW_UP,
+      left:  FLOW_LEFT,
+    }
 
-      FLOW2SYM = SYM2FLOW.inject({}) {|h, (k, v)| h[v] = k; h}
+    FLOW2SYM = SYM2FLOW.inject({}) {|h, (k, v)| h[v] = k; h}
 
-      def sym2flow(sym)
-        SYM2FLOW[sym] || FLOW_NONE
-      end
+    def sym2flow(sym)
+      SYM2FLOW[sym] || FLOW_NONE
+    end
 
-      def flow2sym(flow)
-        FLOW2SYM[flow] || :none
-      end
+    def flow2sym(flow)
+      FLOW2SYM[flow] || :none
+    end
 
   end# Style
 

@@ -33,11 +33,11 @@ module Reflex
 
     private
 
-      def call_start_block()
-        return unless @start_block
-        Xot::BlockUtil.instance_eval_or_block_call self, &@start_block
-        @start_block = nil
-      end
+    def call_start_block()
+      return unless @start_block
+      Xot::BlockUtil.instance_eval_or_block_call self, &@start_block
+      @start_block = nil
+    end
 
   end# Application
 

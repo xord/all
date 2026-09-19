@@ -23,44 +23,44 @@ module Xot
 
     private
 
-      def define_bit_flag(name, bit_flag, flags, block)
-        bit_flag ||= Xot::BitFlag.new(**flags)
-        Xot::BlockUtil.instance_eval_or_block_call bit_flag, &block if block
+    def define_bit_flag(name, bit_flag, flags, block)
+      bit_flag ||= Xot::BitFlag.new(**flags)
+      Xot::BlockUtil.instance_eval_or_block_call bit_flag, &block if block
 
-        define_singleton_method "#{name}_flag".intern do
-          bit_flag
-        end
-
+      define_singleton_method "#{name}_flag".intern do
         bit_flag
       end
 
-      def define_bit_flag_writer(name, bit_flag)
-        writer = "#{name}=".intern
-        setter = "bf_set_#{name}__".intern
+      bit_flag
+    end
 
-        alias_method setter, writer
-        private setter
+    def define_bit_flag_writer(name, bit_flag)
+      writer = "#{name}=".intern
+      setter = "bf_set_#{name}__".intern
 
-        define_method writer do |*symbols|
-          __send__ setter, bit_flag.symbols2bits(symbols)
-        end
+      alias_method setter, writer
+      private setter
 
-        name
+      define_method writer do |*symbols|
+        __send__ setter, bit_flag.symbols2bits(symbols)
       end
 
-      def define_bit_flag_reader(name, bit_flag)
-        reader = name.intern
-        getter = "bf_get_#{name}__".intern
+      name
+    end
 
-        alias_method getter, reader
-        private getter
+    def define_bit_flag_reader(name, bit_flag)
+      reader = name.intern
+      getter = "bf_get_#{name}__".intern
 
-        define_method reader do
-          bit_flag.bits2symbols __send__(getter)
-        end
+      alias_method getter, reader
+      private getter
 
-        name
+      define_method reader do
+        bit_flag.bits2symbols __send__(getter)
       end
+
+      name
+    end
 
   end# BitFlagAccessor
 

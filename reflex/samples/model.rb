@@ -41,9 +41,9 @@ class SliderView < View
 
   private
 
-    def knob_x_max ()
-      width - @knob.width
-    end
+  def knob_x_max ()
+    width - @knob.width
+  end
 
 end# SliderView
 

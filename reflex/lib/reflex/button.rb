@@ -63,9 +63,9 @@ module Reflex
 
     private
 
-      def pressing?()
-        capturing? :pointer
-      end
+    def pressing?()
+      capturing? :pointer
+    end
 
   end# Button
 

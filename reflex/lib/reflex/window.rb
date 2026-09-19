@@ -101,11 +101,11 @@ module Reflex
 
     private
 
-      def call_show_block()
-        return unless @show_block
-        Xot::BlockUtil.instance_eval_or_block_call self, &@show_block
-        @show_block = nil
-      end
+    def call_show_block()
+      return unless @show_block
+      Xot::BlockUtil.instance_eval_or_block_call self, &@show_block
+      @show_block = nil
+    end
 
   end# Window
 

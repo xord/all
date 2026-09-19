@@ -110,35 +110,35 @@ module Reflex
 
     private
 
-      INT_SYMS       = [:to_i, :to_int]
+    INT_SYMS       = [:to_i, :to_int]
 
-      FLOAT_SYMS     = [:to_f, :to_float]
+    FLOAT_SYMS     = [:to_f, :to_float]
 
-      STRING_SYMS    = [:to_s, :to_str, :to_string]
+    STRING_SYMS    = [:to_s, :to_str, :to_string]
 
-      ARRAY_GET_SYMS = [:[], :at]
+    ARRAY_GET_SYMS = [:[], :at]
 
-      ARRAY_SET_SYMS = [:[]=, :set_at]
+    ARRAY_SET_SYMS = [:[]=, :set_at]
 
-      ARRAY_SIZE_SYMS = [:size, :length]
+    ARRAY_SIZE_SYMS = [:size, :length]
 
-      def apply_filters(data)
-        return data unless @filters
-        @filters.each do |filter|
-          break if data.nil?
-          data = filter.call data
-        end
-        data
+    def apply_filters(data)
+      return data unless @filters
+      @filters.each do |filter|
+        break if data.nil?
+        data = filter.call data
       end
+      data
+    end
 
-      def call_symbols(symbols, *args)
-        if dat = data
-          symbols.each do |symbol|
-            return dat.send symbol, *args if dat.respond_to? symbol
-          end
+    def call_symbols(symbols, *args)
+      if dat = data
+        symbols.each do |symbol|
+          return dat.send symbol, *args if dat.respond_to? symbol
         end
-        nil
       end
+      nil
+    end
 
   end# Model
 

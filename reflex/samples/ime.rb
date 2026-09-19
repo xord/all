@@ -64,23 +64,23 @@ class InputView < View
 
   private
 
-    def font()
-      window.painter.font
-    end
+  def font()
+    window.painter.font
+  end
 
-    # the caret follows the clause being converted, or the end of the preedit.
-    def caret_x(font, preedit_x)
-      return preedit_x if @preedit.empty?
+  # the caret follows the clause being converted, or the end of the preedit.
+  def caret_x(font, preedit_x)
+    return preedit_x if @preedit.empty?
 
-      count = @selection ? @selection.end : @preedit.size
-      preedit_x + font.width(@preedit[0...count] || '')
-    end
+    count = @selection ? @selection.end : @preedit.size
+    preedit_x + font.width(@preedit[0...count] || '')
+  end
 
-    def underline(painter, x, y, width)
-      painter.push stroke: 1 do
-        painter.line x, y, x + width, y
-      end
+  def underline(painter, x, y, width)
+    painter.push stroke: 1 do
+      painter.line x, y, x + width, y
     end
+  end
 
 end# InputView
 

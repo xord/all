@@ -135,11 +135,11 @@ module Rays
 
     private
 
-      def each_type(types, reverse: false, &block)
-        types = [:state, :matrix] if types.empty? || types.include?(:all)
-        types = types.reverse if reverse
-        types.each(&block)
-      end
+    def each_type(types, reverse: false, &block)
+      types = [:state, :matrix] if types.empty? || types.include?(:all)
+      types = types.reverse if reverse
+      types.each(&block)
+    end
 
   end# Painter
 

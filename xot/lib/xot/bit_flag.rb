@@ -49,12 +49,12 @@ module Xot
 
     private
 
-      def sym2bit(symbol)
-        bit = @sym2bit[symbol]
-        bit = flag symbol if !bit && @auto
-        raise ArgumentError, "unknown symbol #{symbol.inspect} for flag." unless bit
-        bit
-      end
+    def sym2bit(symbol)
+      bit = @sym2bit[symbol]
+      bit = flag symbol if !bit && @auto
+      raise ArgumentError, "unknown symbol #{symbol.inspect} for flag." unless bit
+      bit
+    end
 
   end# BitFlag
 

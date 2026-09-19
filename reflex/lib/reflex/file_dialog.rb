@@ -51,18 +51,18 @@ module Reflex
 
     private
 
-      def expand(dir)
-        dir ? File.expand_path(dir.to_s) : nil
-      end
+    def expand(dir)
+      dir ? File.expand_path(dir.to_s) : nil
+    end
 
-      def call_file_block(e)
-        block, @file_block = @file_block, nil
-        block&.call e
-      end
+    def call_file_block(e)
+      block, @file_block = @file_block, nil
+      block&.call e
+    end
 
-      def call_cancel_block()
-        @file_block = nil
-      end
+    def call_cancel_block()
+      @file_block = nil
+    end
 
   end# FileDialog
 

@@ -17,9 +17,9 @@ module Reflex
 
     private
 
-      def call_timer_block()
-        @block.call self if @block
-      end
+    def call_timer_block()
+      @block.call self if @block
+    end
 
   end# Timer
 

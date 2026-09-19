@@ -217,20 +217,20 @@ module Reflex
 
     private
 
-      def on_contact!(*args)
-        call_contact!(*args)
-        delay {on_contact(*args)}# delay to avoid physics world lock
-      end
+    def on_contact!(*args)
+      call_contact!(*args)
+      delay {on_contact(*args)}# delay to avoid physics world lock
+    end
 
-      def on_contact_begin!(*args)
-        call_contact_begin!(*args)
-        delay {on_contact_begin(*args)}
-      end
+    def on_contact_begin!(*args)
+      call_contact_begin!(*args)
+      delay {on_contact_begin(*args)}
+    end
 
-      def on_contact_end!(*args)
-        call_contact_end!(*args)
-        delay {on_contact_end(*args)}
-      end
+    def on_contact_end!(*args)
+      call_contact_end!(*args)
+      delay {on_contact_end(*args)}
+    end
 
   end# View
 
