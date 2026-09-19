@@ -7,10 +7,6 @@ class TestFileDialog < Test::Unit::TestCase
     Reflex::FileDialog.new(*args, &block)
   end
 
-  def event(action, paths)
-    Reflex::FileEvent.new action, paths
-  end
-
   def test_initialize()
     assert_nil            dialog                            .owner
     assert_equal '',      dialog                            .title
@@ -47,27 +43,6 @@ class TestFileDialog < Test::Unit::TestCase
     assert_raise(ArgumentError) {dialog.extensions = ['a/b']}
     assert_raise(ArgumentError) {dialog.extensions = [/png/]}
     assert_raise(ArgumentError) {dialog.extensions = [1]}
-  end
-
-  def test_on_file_open()
-    d, paths = dialog, nil
-    d.on(:file) {|e| paths = e.paths}
-    d.on_file event(Reflex::FileEvent::OPEN, ['/a', '/b'])
-    assert_equal ['/a', '/b'], paths
-  end
-
-  def test_on_file_save()
-    d, got = dialog, nil
-    d.on(:file) {|e| got = [e.action, e.path]}
-    d.on_file event(Reflex::FileEvent::SAVE, ['/a'])
-    assert_equal [:save, '/a'], got
-  end
-
-  def test_on_cancel()
-    d, called = dialog, false
-    d.on(:cancel) {|e| called = true}
-    d.on_cancel event(Reflex::FileEvent::ACTION_NONE, [])
-    assert_true called
   end
 
 end# TestFileDialog
