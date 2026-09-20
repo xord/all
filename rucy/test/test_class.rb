@@ -38,6 +38,11 @@ class TestClass < Test::Unit::TestCase
     Sub.new_raw(*args)
   end
 
+  def temp_raw_ref()
+    # the temp object is held by the c++ side only after this returns
+    Base.set_raw_ref Temp.new
+  end
+
   def last_log(pattern = nil)
     logs = Rucy::Tester.all_logs
     logs.select! {|o| o =~ pattern} if pattern
@@ -128,6 +133,14 @@ class TestClass < Test::Unit::TestCase
     SimpleObj.clear_refs
     gc
     assert_equal '~SimpleObj(2)', last_log(/2/)
+  end
+
+  def test_freed_ruby_object_is_not_called()
+    temp_raw_ref
+    GC.start
+    assert_equal "Sub::name_overridable", Base.call_raw_ref_name_overridable
+  ensure
+    Base.clear_raw_ref
   end
 
 end# TestClass

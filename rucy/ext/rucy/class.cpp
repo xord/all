@@ -103,6 +103,41 @@ RUCY_DEF0(base_new_raw)
 }
 RUCY_END
 
+static Base* base_raw_ref = NULL;
+
+static
+RUCY_DEF1(base_set_raw_ref, obj)
+{
+	if (base_raw_ref)
+		invalid_state_error(__FILE__, __LINE__);
+
+	// holds the c++ object without holding the ruby one, like a native handle
+	// that retains before the wrapper is set up
+	base_raw_ref = to<Base*>(obj);
+	base_raw_ref->Xot::RefCountable<>::retain();
+	return obj;
+}
+RUCY_END
+
+static
+RUCY_DEF0(base_clear_raw_ref)
+{
+	if (base_raw_ref)
+		base_raw_ref->Xot::RefCountable<>::release();
+	base_raw_ref = NULL;
+}
+RUCY_END
+
+static
+RUCY_DEF0(base_call_raw_ref_name_overridable)
+{
+	if (!base_raw_ref)
+		invalid_state_error(__FILE__, __LINE__);
+
+	return value(base_raw_ref->name_overridable());
+}
+RUCY_END
+
 
 /*
 	alloc function.
@@ -181,6 +216,10 @@ Init_class ()
 	cBase.define_method("call_name",             call_name);
 	cBase.define_method("call_name_overridable", call_name_overridable);
 	cBase.define_singleton_method("new_raw", base_new_raw);
+	cBase.define_singleton_method("set_raw_ref",   base_set_raw_ref);
+	cBase.define_singleton_method("clear_raw_ref", base_clear_raw_ref);
+	cBase.define_singleton_method(
+		"call_raw_ref_name_overridable", base_call_raw_ref_name_overridable);
 
 	cSub = mTester.define_class("Sub", cBase);
 	cSub.define_alloc_func(sub_alloc);

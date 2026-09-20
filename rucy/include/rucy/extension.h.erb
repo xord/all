@@ -339,7 +339,7 @@ namespace Rucy
 
 		public:
 
-			GlobalValue value;
+			mutable GlobalValue value;
 
 			ClassWrapper ()
 			:	value(nil(), true), overridable(true)
@@ -354,7 +354,10 @@ namespace Rucy
 
 			void release (intptr_t by_ruby) const override
 			{
-				if (!by_ruby) value.enable_gc();
+				if (by_ruby)
+					value = nil();
+				else
+					value.enable_gc();
 				RucyWrapped::release();
 			}
 
