@@ -1219,6 +1219,41 @@ namespace Reflex
 	}
 
 
+	struct ColorEvent::Data
+	{
+
+		Color color;
+
+	};// ColorEvent::Data
+
+
+	ColorEvent::ColorEvent ()
+	{
+	}
+
+	ColorEvent::ColorEvent (const Color& color)
+	{
+		self->color = color;
+	}
+
+	ColorEvent::ColorEvent (const ColorEvent* src)
+	:	Event(src), self(new Data(*src->self))
+	{
+	}
+
+	ColorEvent
+	ColorEvent::dup () const
+	{
+		return ColorEvent(this);
+	}
+
+	const Color&
+	ColorEvent::color () const
+	{
+		return self->color;
+	}
+
+
 	struct MIDIEvent::Data
 	{
 
@@ -1228,7 +1263,7 @@ namespace Reflex
 
 		bool captured  = false;
 
-	};// MIDIEvent
+	};// MIDIEvent::Data
 
 
 	bool

@@ -41,6 +41,8 @@ RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MotionEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::FileEvent)
 
+RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::ColorEvent)
+
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDIEvent)
 
 RUCY_DECLARE_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::NoteEvent)
@@ -99,6 +101,9 @@ namespace Reflex
 
 	REFLEX_EXPORT Rucy::Class file_event_class ();
 	// class Reflex::FileEvent
+
+	REFLEX_EXPORT Rucy::Class color_event_class ();
+	// class Reflex::ColorEvent
 
 	REFLEX_EXPORT Rucy::Class midi_event_class ();
 	// class Reflex::MIDIEvent
@@ -211,6 +216,12 @@ namespace Rucy
 	get_ruby_class<Reflex::FileEvent> ()
 	{
 		return Reflex::file_event_class();
+	}
+
+	template <> inline Class
+	get_ruby_class<Reflex::ColorEvent> ()
+	{
+		return Reflex::color_event_class();
 	}
 
 	template <> inline Class

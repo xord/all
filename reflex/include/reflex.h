@@ -26,6 +26,7 @@
 #include <reflex/screen.h>
 #include <reflex/clipboard.h>
 #include <reflex/file_dialog.h>
+#include <reflex/color_picker.h>
 
 #include <reflex/device.h>
 #include <reflex/midi.h>

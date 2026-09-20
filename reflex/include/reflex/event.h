@@ -537,6 +537,30 @@ namespace Reflex
 	};// FileEvent
 
 
+	class ColorEvent : public Event
+	{
+
+		public:
+
+			ColorEvent ();
+
+			ColorEvent (const Color& color);
+
+			ColorEvent dup () const;
+
+			const Color& color () const;
+
+			struct Data;
+
+			Xot::PSharedImpl<Data> self;
+
+		private:
+
+			ColorEvent (const ColorEvent* src);
+
+	};// ColorEvent
+
+
 	class MIDIEvent : public Event
 	{
 
