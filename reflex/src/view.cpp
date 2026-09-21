@@ -40,29 +40,23 @@ namespace Reflex
 		enum Flag
 		{
 
-			UPDATING               = Xot::bit(1, FLAG_LAST),
+			NO_SHAPE             = Xot::bit(1, FLAG_LAST),
 
-			NO_SHAPE               = Xot::bit(2, FLAG_LAST),
+			HAS_VARIABLE_LENGTHS = Xot::bit(2, FLAG_LAST),
 
-			HAS_VARIABLE_LENGTHS   = Xot::bit(3, FLAG_LAST),
+			REDRAW               = Xot::bit(3, FLAG_LAST),
 
-			HAS_CHILDREN_TO_REMOVE = Xot::bit(4, FLAG_LAST),
+			APPLY_STYLE          = Xot::bit(4, FLAG_LAST),
 
-			REMOVE_FROM_PARENT     = Xot::bit(5, FLAG_LAST),
+			UPDATE_STYLE         = Xot::bit(5, FLAG_LAST),
 
-			REDRAW                 = Xot::bit(6, FLAG_LAST),
+			UPDATE_SHAPES        = Xot::bit(6, FLAG_LAST),
 
-			APPLY_STYLE            = Xot::bit(7, FLAG_LAST),
+			UPDATE_LAYOUT        = Xot::bit(7, FLAG_LAST),
 
-			UPDATE_STYLE           = Xot::bit(8, FLAG_LAST),
+			SORT_CHILDREN        = Xot::bit(8, FLAG_LAST),
 
-			UPDATE_SHAPES          = Xot::bit(9, FLAG_LAST),
-
-			UPDATE_LAYOUT          = Xot::bit(10, FLAG_LAST),
-
-			SORT_CHILDREN          = Xot::bit(11, FLAG_LAST),
-
-			FIT_TO_CONTENT         = Xot::bit(12, FLAG_LAST),
+			FIT_TO_CONTENT       = Xot::bit(9, FLAG_LAST),
 
 		};// Flag
 
@@ -81,6 +75,8 @@ namespace Reflex
 		short hide_count   = 0;
 
 		ushort child_index = 0;
+
+		int loop_depth     = 0;
 
 		uint flags         =
 			FLAG_CLIP | FLAG_RESIZE_TO_FIT | REDRAW | UPDATE_LAYOUT | UPDATE_STYLE;
@@ -115,7 +111,7 @@ namespace Reflex
 
 		std::unique_ptr<ChildList>      pchildren;
 
-		std::unique_ptr<ChildList>      pchildren_sorted;
+		std::unique_ptr<ChildList>      pchildren_for_loop;
 
 		Point& pivot ()
 		{
@@ -364,24 +360,27 @@ namespace Reflex
 				view->remove_child(wall.get());
 		}
 
-		ChildList* children (bool create = false, bool sort = false)
+		ChildList* children (bool create = false)
 		{
-			if (!pchildren)
-			{
-				if (!create) return NULL;
-				pchildren.reset(new ChildList);
-			}
-
-			if (sort && check_and_remove_flag(SORT_CHILDREN))
-				do_sort_children();
-
-			return sort && pchildren_sorted ? pchildren_sorted.get() : pchildren.get();
+			if (!pchildren && create) pchildren.reset(new ChildList);
+			return pchildren.get();
 		}
 
-		void sort_children (bool order_only = false)
+		ChildList* children_for_loop ()
+		{
+			if (pchildren && !pchildren_for_loop) do_sort_children();
+			return pchildren_for_loop.get();
+		}
+
+		void sort_children ()
 		{
 			add_flag(SORT_CHILDREN);
-			if (!order_only && pchildren_sorted) pchildren_sorted.reset();
+		}
+
+		void update_children_for_loop ()
+		{
+			if (has_flag(SORT_CHILDREN) && loop_depth == 0)
+				do_sort_children();
 		}
 
 		void add_flag (uint flag)
@@ -408,7 +407,19 @@ namespace Reflex
 
 			void do_sort_children ()
 			{
-				auto& children = *pchildren;
+				remove_flag(SORT_CHILDREN);
+
+				if (!pchildren || pchildren->empty())
+				{
+					pchildren_for_loop.reset();
+					return;
+				}
+
+				if (!pchildren_for_loop)
+					pchildren_for_loop.reset(new ChildList);
+
+				auto& children      = *pchildren;
+				*pchildren_for_loop = children;
 
 				size_t size = children.size();
 				if (size >= USHRT_MAX)
@@ -422,20 +433,10 @@ namespace Reflex
 					have_z                  |= child->frame().z != 0;
 				}
 
-				if (!have_z)
-				{
-					pchildren_sorted.reset();
-					return;
-				}
-
-				if (!pchildren_sorted)
-				{
-					pchildren_sorted.reset(
-						new ChildList(children.begin(), children.end()));
-				}
+				if (!have_z) return;
 
 				std::sort(
-					pchildren_sorted->begin(), pchildren_sorted->end(),
+					pchildren_for_loop->begin(), pchildren_for_loop->end(),
 					[](const auto& a, const auto& b)
 					{
 						auto *aa = a->self.get(), *bb = b->self.get();
@@ -739,15 +740,58 @@ namespace Reflex
 	};// LayoutContext
 
 
-	static void
-	call_children (View* parent, std::function<bool(View*)> fun, bool sort = true)
+	struct LoopDepthGuard
 	{
-		auto* children = parent->self->children(false, sort);
+
+		View::Data* self;
+
+		LoopDepthGuard (View::Data* self)
+		:	self(self)
+		{
+			++self->loop_depth;
+		}
+
+		~LoopDepthGuard ()
+		{
+			--self->loop_depth;
+		}
+
+	};// LoopDepthGuard
+
+
+	static void
+	call_children (View* parent, std::function<bool(View*)> fun)
+	{
+		auto* children = parent->self->children_for_loop();
 		if (!children) return;
+
+		LoopDepthGuard depth_guard(parent->self.get());
 
 		for (auto it = children->rbegin(), end = children->rend(); it != end; ++it)
 		{
-			if (!fun(it->get()))
+			View::Ref child = *it;
+			if (!child) continue;// removed since the last frame
+
+			if (!fun(child.get()))
+				break;
+		}
+	}
+
+	static void
+	call_children_unsafe (View* parent, std::function<bool(View*)> fun)
+	{
+		auto* children = parent->self->children();
+		if (!children) return;
+
+		LoopDepthGuard depth_guard(parent->self.get());
+
+		for (size_t i = children->size(); i-- > 0;)
+		{
+			if (i >= children->size())
+				continue;// a handler shrank the list
+
+			View::Ref child = (*children)[i];
+			if (!fun(child.get()))
 				break;
 		}
 	}
@@ -865,7 +909,7 @@ namespace Reflex
 			self->update_body_frame();
 
 		if (moved && event.dz() != 0 && self->parent)
-			self->parent->self->sort_children(true);
+			self->parent->self->sort_children();
 
 		if ((moved || resized) && self->parent)
 			self->parent->self->add_flag(View::Data::FIT_TO_CONTENT);
@@ -967,10 +1011,10 @@ namespace Reflex
 		view->on_activate(&e);
 		if (e.is_blocked()) return;
 
-		call_children(view, [&](View* child) {
+		call_children_unsafe(view, [&](View* child) {
 			View_activate_tree(child, &e);
 			return !e.is_blocked();
-		}, false);
+		});
 	}
 
 	void
@@ -981,10 +1025,10 @@ namespace Reflex
 
 		Event e = event->dup();
 
-		call_children(view, [&](View* child) {
+		call_children_unsafe(view, [&](View* child) {
 			View_deactivate_tree(child, &e);
 			return !e.is_blocked();
-		}, false);
+		});
 
 		if (e.is_blocked()) return;
 
@@ -1205,20 +1249,6 @@ namespace Reflex
 		}
 	}
 
-	static void
-	remove_children (View* view, View::ChildList* children)
-	{
-		assert(children);
-
-		int size = (int) children->size();
-		for (int i = size - 1; i >= 0; --i)
-		{
-			View* child = (*children)[i].get();
-			if (child->self->check_and_remove_flag(View::Data::REMOVE_FROM_PARENT))
-				view->remove_child(child);
-		}
-	}
-
 	void
 	View_update_tree (View* view, const UpdateEvent& event)
 	{
@@ -1227,16 +1257,20 @@ namespace Reflex
 
 		View::Data* self = view->self.get();
 
-		self->add_flag(View::Data::UPDATING);
+		self->update_children_for_loop();
 
 		fire_timers(view, event.now());
 
-		View::ChildList* children = self->children();
+		View::ChildList* children = self->children_for_loop();
 		if (children)
 		{
-			size_t size = children->size();
-			for (size_t i = 0; i < size; ++i)
-				View_update_tree((*children)[i].get(), event);
+			LoopDepthGuard depth_guard(self);
+
+			for (View::Ref child : *children)
+			{
+				if (!child) continue;// removed since the last frame
+				View_update_tree(child.get(), event);
+			}
 		}
 
 		update_view_shapes(view);
@@ -1259,10 +1293,6 @@ namespace Reflex
 		if (self->check_and_remove_flag(View::Data::FIT_TO_CONTENT))
 			fit_view_to_content(view);
 
-		self->remove_flag(View::Data::UPDATING);
-
-		if (self->check_and_remove_flag(View::Data::HAS_CHILDREN_TO_REMOVE))
-			remove_children(view, children);
 	}
 
 	static bool
@@ -1365,11 +1395,15 @@ namespace Reflex
 
 		if (event->is_blocked()) return;
 
-		View::ChildList* children = self->children(false, true);
+		View::ChildList* children = self->children_for_loop();
 		if (children)
 		{
-			for (auto& child : *children)
+			LoopDepthGuard depth_guard(self);
+
+			for (View::Ref child : *children)
 			{
+				if (!child) continue;
+
 				if (event->bounds() & child->self->frame)
 					View_draw_tree(child.get(), event, offset, clip, scale);
 			}
@@ -2057,11 +2091,17 @@ namespace Reflex
 		assert(it != end);
 
 		children->erase(it);
-		if (children->empty())
+
+		View::ChildList* children_for_loop = parent->self->pchildren_for_loop.get();
+		if (children_for_loop)
 		{
-			parent->self->pchildren.reset();
-			parent->self->pchildren_sorted.reset();
+			auto loop_end = children_for_loop->end();
+			auto loop_it  = std::find(children_for_loop->begin(), loop_end, child);
+			if (loop_it != loop_end) loop_it->reset();
 		}
+
+		if (children->empty())
+			parent->self->pchildren.reset();
 	}
 
 	void
@@ -2071,6 +2111,9 @@ namespace Reflex
 			argument_error(__FILE__, __LINE__);
 		if (child == this)
 			argument_error(__FILE__, __LINE__);
+
+		if (World_is_stepping(self->pchild_world.get()))
+			physics_error(__FILE__, __LINE__, "world is stepping now");
 
 		bool found  = std::find(child_begin(), child_end(), child) != child_end();
 		bool belong = child->parent() == this;
@@ -2087,10 +2130,8 @@ namespace Reflex
 
 		View* prev_parent = child->parent();
 		set_parent(child, this);
-
 		if (prev_parent)
 			erase_child_from_children(prev_parent, child);
-
 		self->sort_children();
 
 		update_view_layout(this);
@@ -2104,6 +2145,9 @@ namespace Reflex
 		if (child == this)
 			argument_error(__FILE__, __LINE__);
 
+		if (World_is_stepping(self->pchild_world.get()))
+			physics_error(__FILE__, __LINE__, "world is stepping now");
+
 		bool found  = std::find(child_begin(), child_end(), child) != child_end();
 		bool belong = child->parent() == this;
 		if (!found && !belong)
@@ -2111,19 +2155,11 @@ namespace Reflex
 		else if (found != belong)
 			invalid_state_error(__FILE__, __LINE__);
 
-		if (self->has_flag(Data::UPDATING))
-		{
-			// delay removing child to avoid breaking child list looped on View_update_tree()
-			self->add_flag(Data::HAS_CHILDREN_TO_REMOVE);
-			child->self->add_flag(Data::REMOVE_FROM_PARENT);
-		}
-		else
-		{
-			set_parent(child, NULL);
-			erase_child_from_children(this, child);
-			self->sort_children();
-			update_view_layout(this);
-		}
+		set_parent(child, NULL);
+		erase_child_from_children(this, child);
+		self->sort_children();
+
+		update_view_layout(this);
 	}
 
 	void

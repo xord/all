@@ -220,7 +220,7 @@ namespace Reflex
 	static Shape*
 	get_shape (b2ShapeId b2shape)
 	{
-		if (B2_IS_NULL(b2shape)) return NULL;
+		if (!b2Shape_IsValid(b2shape)) return NULL;
 		return (Shape*) b2Shape_GetUserData(b2shape);
 	}
 
@@ -258,6 +258,11 @@ namespace Reflex
 		View* v2 = s2->owner();
 		if (!v1 || !v2 || !View_is_active(*v1) || !View_is_active(*v2))
 			return;
+
+		// the first handler is free to remove either view, so hold everything
+		// the second one needs until both have run
+		Shape::Ref sref1 = s1, sref2 = s2;
+		View::Ref  vref1 = v1, vref2 = v2;
 
 		ContactEvent e1(action, s2), e2(action, s1);
 		Shape_call_contact_event(s1, &e1);
@@ -321,6 +326,9 @@ namespace Reflex
 
 			ShapePair pair = it->second;
 			touching_pairs.erase(it);
+
+			if (!b2Shape_IsValid(id1) || !b2Shape_IsValid(id2))
+				return;
 
 			call_contact_events(pair.first, pair.second, ContactEvent::END);
 		}

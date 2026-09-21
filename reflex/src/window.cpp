@@ -353,6 +353,39 @@ namespace Reflex
 			(view->capture() & type) == type;
 	}
 
+	static void
+	each_capture (Window* window, auto&& fun)
+	{
+		assert(window);
+
+		auto& captures = window->self->captures;
+
+		ViewList views;
+		views.reserve(captures.size());
+		for (const auto& [view, targets] : captures)
+			views.emplace_back(view);
+
+		for (auto& view : views)
+		{
+			if (!view->window()) continue;
+
+			auto it = captures.find(view);
+			if (it == captures.end() || it->second.empty()) continue;
+
+			fun(const_cast<View*>(view.get()), it->second);
+		}
+	}
+
+	static void
+	each_capturing_view (Window* window, View::Capture type, auto&& fun)
+	{
+		each_capture(window, [&](View* view, const CaptureTargetIDList& targets)
+		{
+			if (is_capturing(view, targets, type))
+				fun(view);
+		});
+	}
+
 	void
 	Window_call_key_event (Window* window, KeyEvent* event, bool capture)
 	{
@@ -377,21 +410,14 @@ namespace Reflex
 
 			if (capture && !event->is_blocked())
 			{
-				for (auto& [view, targets] : window->self->captures)
+				each_capturing_view(window, View::CAPTURE_KEY, [&](View* view)
 				{
-					if (
-						!view->window() ||
-						!is_capturing(view.get(), targets, View::CAPTURE_KEY))
-					{
-						continue;
-					}
-
 					KeyEvent e = event->dup();
 					KeyEvent_set_captured(&e, true);
-					View_call_key_event(const_cast<View*>(view.get()), &e);
+					View_call_key_event(view, &e);
 
 					if (e.is_blocked()) event->block();
-				}
+				});
 			}
 
 			if (!event->is_blocked() && window->self->focus)
@@ -646,20 +672,18 @@ namespace Reflex
 		ExtractedPointerIDSet* extracteds, bool* blocked,
 		Window* window, const PointerMap& pointers)
 	{
-		for (auto& [view, targets] : window->self->captures)
+		each_capture(window, [&](View* view, const CaptureTargetIDList& targets)
 		{
-			if (!view->window() || targets.empty()) continue;
-
 			PointerEvent event;
 			PointerEvent_set_captured(&event, true);
 			extract_targeted_pointers(&event, extracteds, targets, pointers);
-			if (event.empty()) continue;
+			if (event.empty()) return;
 
 			PointerEvent_to_view_coord(&event, view);
-			View_call_pointer_event(const_cast<View*>(view.get()), &event);
+			View_call_pointer_event(view, &event);
 
 			if (event.is_blocked()) *blocked = true;
-		}
+		});
 	}
 
 	static void
@@ -1048,19 +1072,12 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		for (auto& [view, targets] : window->self->captures)
+		each_capturing_view(window, View::CAPTURE_MIDI, [&](View* view)
 		{
-			if (
-				!view->window() ||
-				!is_capturing(view.get(), targets, View::CAPTURE_MIDI))
-			{
-				continue;
-			}
-
 			NoteEvent e = event->dup();
 			NoteEvent_set_captured(&e, true);
-			View_call_note_event(const_cast<View*>(view.get()), &e);
-		}
+			View_call_note_event(view, &e);
+		});
 
 		if (!event->is_blocked())
 			window->on_note(event);
@@ -1087,19 +1104,12 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		for (auto& [view, targets] : window->self->captures)
+		each_capturing_view(window, View::CAPTURE_MIDI, [&](View* view)
 		{
-			if (
-				!view->window() ||
-				!is_capturing(view.get(), targets, View::CAPTURE_MIDI))
-			{
-				continue;
-			}
-
 			ControlChangeEvent e = event->dup();
 			ControlChangeEvent_set_captured(&e, true);
-			View_call_control_change_event(const_cast<View*>(view.get()), &e);
-		}
+			View_call_control_change_event(view, &e);
+		});
 
 		if (!event->is_blocked())
 			window->on_control_change(event);
@@ -1118,19 +1128,12 @@ namespace Reflex
 
 		Application_guard([&]()
 		{
-			for (auto& [view, targets] : window->self->captures)
+			each_capturing_view(window, View::CAPTURE_MIDI, [&](View* view)
 			{
-				if (
-					!view->window() ||
-					!is_capturing(view.get(), targets, View::CAPTURE_MIDI))
-				{
-					continue;
-				}
-
 				MIDIEvent e = event->dup();
 				MIDIEvent_set_captured(&e, true);
-				View_call_midi_event(const_cast<View*>(view.get()), &e);
-			}
+				View_call_midi_event(view, &e);
+			});
 
 			if (!event->is_blocked())
 				window->on_midi(event);
