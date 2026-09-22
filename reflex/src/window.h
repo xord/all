@@ -49,6 +49,8 @@ namespace Reflex
 
 		bool redraw    = true;
 
+		uint flags;
+
 		Painter painter;
 
 		View::Ref root, focus;
@@ -64,8 +66,6 @@ namespace Reflex
 		Pointer prev_mouse_pointer;
 
 		PointerList prev_pointers;
-
-		uint flags;
 
 		CaptureMap captures;
 
@@ -90,7 +90,9 @@ namespace Reflex
 	};// Window::Data
 
 
-	Window::Data* Window_create_data ();
+	typedef View* (*Window_CreateRootViewFun) ();
+
+	void Window_set_create_root_view_fun (Window_CreateRootViewFun fun);
 
 	void Window_register   (Window* win);
 
@@ -99,34 +101,6 @@ namespace Reflex
 	Application::WindowList& Window_all ();
 
 	Window* Window_get_active ();
-
-
-	uint Window_default_flags ();
-
-	void Window_initialize (Window* window);
-
-	void Window_show (Window* window);
-
-	void Window_hide (Window* window);
-
-	void Window_close (Window* window);
-
-	void        Window_set_title (      Window* window, const char* title);
-
-	const char* Window_get_title (const Window& window);
-
-	void   Window_set_frame (
-		Window* window, coord x, coord y, coord width, coord height);
-
-	Bounds Window_get_frame (const Window& window);
-
-	void Window_set_menu (Window* window, Menu* menu);
-
-	Screen Window_get_screen (const Window& window);
-
-	void Window_set_flags (Window* window, uint flags);
-
-	float Window_get_pixel_density (const Window& window);
 
 	void Window_set_focus (Window* window, View* view);
 
@@ -165,9 +139,34 @@ namespace Reflex
 	void Window_call_midi_event       (Window* window, MIDIEvent* event);
 
 
-	typedef View* (*Window_CreateRootViewFun) ();
+	Window::Data* Window_create_data ();
 
-	void Window_set_create_root_view_fun (Window_CreateRootViewFun fun);
+	uint Window_default_flags ();
+
+	void Window_initialize (Window* window);
+
+	void Window_show (Window* window);
+
+	void Window_hide (Window* window);
+
+	void Window_close (Window* window);
+
+	void        Window_set_title (      Window* window, const char* title);
+
+	const char* Window_get_title (const Window& window);
+
+	void   Window_set_frame (
+		Window* window, coord x, coord y, coord width, coord height);
+
+	Bounds Window_get_frame (const Window& window);
+
+	void Window_set_menu (Window* window, Menu* menu);
+
+	Screen Window_get_screen (const Window& window);
+
+	void Window_set_flags (Window* window, uint flags);
+
+	float Window_get_pixel_density (const Window& window);
 
 
 }// Reflex

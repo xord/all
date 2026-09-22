@@ -25,6 +25,31 @@ namespace Reflex
 	using WeakViewList          = Window::Data::WeakViewList;
 
 
+	Window::Data::Data ()
+	:	flags(Window_default_flags())
+	{
+		prev_time_update = prev_time_draw = Xot::time();
+	}
+
+	Window::Data::~Data ()
+	{
+	}
+
+
+	static Window_CreateRootViewFun create_root_view_fun = NULL;
+
+	void
+	Window_set_create_root_view_fun (Window_CreateRootViewFun fun)
+	{
+		create_root_view_fun = fun;
+	}
+
+	static View*
+	create_root_view ()
+	{
+		return create_root_view_fun ? create_root_view_fun() : new View();
+	}
+
 	void
 	Window_register (Window* win)
 	{
@@ -66,18 +91,6 @@ namespace Reflex
 		return NULL;
 	}
 
-
-	Window::Data::Data ()
-	:	flags(Window_default_flags())
-	{
-		prev_time_update = prev_time_draw = Xot::time();
-	}
-
-	Window::Data::~Data ()
-	{
-	}
-
-
 	void
 	Window_set_focus (Window* window, View* view)
 	{
@@ -104,20 +117,6 @@ namespace Reflex
 			view->on_focus(&e);
 			view->redraw();
 		}
-	}
-
-	static Window_CreateRootViewFun create_root_view_fun = NULL;
-
-	void
-	Window_set_create_root_view_fun (Window_CreateRootViewFun fun)
-	{
-		create_root_view_fun = fun;
-	}
-
-	static View*
-	create_root_view ()
-	{
-		return create_root_view_fun ? create_root_view_fun() : new View();
 	}
 
 	void
@@ -341,7 +340,6 @@ namespace Reflex
 			}
 		});
 	}
-
 
 	static bool
 	is_capturing (

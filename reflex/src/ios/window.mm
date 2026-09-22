@@ -224,19 +224,13 @@ namespace Reflex
 		}
 	}
 
-	void
-	Window_set_orientation_mask (UIViewController* vc, UIInterfaceOrientationMask mask)
+	static void
+	set_orientation_mask (UIViewController* vc, UIInterfaceOrientationMask mask)
 	{
 		if (mask == g_orientation_mask) return;
 
 		g_orientation_mask = mask;
 		update_orientation_mask(vc, mask);
-	}
-
-	UIInterfaceOrientationMask
-	Window_get_orientation_mask ()
-	{
-		return g_orientation_mask;
 	}
 
 	static UIInterfaceOrientationMask
@@ -290,7 +284,7 @@ namespace Reflex
 		if (Xot::has_flag(flags, Window::FLAG_POINTER_THROUGH))
 			argument_error(__FILE__, __LINE__, "FLAG_POINTER_THROUGH is not supported");
 
-		Window_set_orientation_mask(
+		set_orientation_mask(
 			get_vc(window),
 			flags_to_orientation_mask(flags & (Window::FLAG_PORTRAIT | Window::FLAG_LANDSCAPE)));
 	}
