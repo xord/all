@@ -9,6 +9,7 @@
 #include <map>
 #include <xot/time.h>
 #include <rays/point.h>
+#include <rays/image.h>
 #include <rays/painter.h>
 #include "reflex/window.h"
 #include "reflex/view.h"
@@ -52,6 +53,10 @@ namespace Reflex
 		uint flags;
 
 		Painter painter;
+
+		Image draw_cache;
+
+		Painter draw_cache_painter;
 
 		View::Ref root, focus;
 
