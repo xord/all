@@ -2,6 +2,7 @@
 
 
 #include <assert.h>
+#include <math.h>
 #include <algorithm>
 #include <set>
 #include "reflex/exception.h"
@@ -276,6 +277,57 @@ namespace Reflex
 		});
 	}
 
+	static bool
+	use_draw_cache (const Window::Data& self)
+	{
+		return false;
+	}
+
+	static void
+	setup_draw_cache (Window::Data* self, const Bounds& bounds, float density)
+	{
+		int w = (int) ceil(bounds.width);
+		int h = (int) ceil(bounds.height);
+		if (w == 0 || h == 0 || !use_draw_cache(*self))
+		{
+			if (self->draw_cache)
+			{
+				self->draw_cache         = Image();
+				self->draw_cache_painter = Painter();
+			}
+			return;
+		}
+
+		Image& cache = self->draw_cache;
+		if (
+			!cache ||
+			cache.width()         != w ||
+			cache.height()        != h ||
+			cache.pixel_density() != density)
+		{
+			self->draw_cache         = Image(w, h, Rays::RGBA, density);
+			self->draw_cache_painter = self->draw_cache.painter();
+		}
+	}
+
+	static void
+	draw_window (Window* window, DrawEvent* event)
+	{
+		Painter* painter = event->painter();
+
+		painter->begin();
+		painter->push_state();
+		{
+			painter->clear();
+
+			window->on_draw(event);
+			if (!event->is_blocked())
+				View_draw_tree(window->root(), event, 0, event->bounds());
+		}
+		painter->pop_state();
+		painter->end();
+	}
+
 	void
 	Window_call_draw_event (Window* window, DrawEvent* event)
 	{
@@ -286,25 +338,38 @@ namespace Reflex
 
 		Application_guard([&]()
 		{
+			Window::Data* self = window->self.get();
+
 			Painter* painter = window->painter();
 			if (!painter)
 				Xot::invalid_state_error(__FILE__, __LINE__);
 
-			Rays::Bounds frame = window->frame();
+			Bounds bounds = window->frame().move_to(0);
+			setup_draw_cache(self, bounds, painter->pixel_density());
 
 			DrawEvent_set_painter(event, painter);
-			DrawEvent_set_bounds(event, Bounds(0, 0, frame.width, frame.height));
+			DrawEvent_set_bounds(event, bounds);
 
-			painter->begin();
-			painter->push_state();
-			painter->clear();
+			if (self->draw_cache)
+			{
+				painter->bind(self->draw_cache);
+				draw_window(window, event);
+				painter->unbind();
 
-			window->on_draw(event);
-			if (!event->is_blocked())
-				View_draw_tree(window->root(), event, 0, frame.move_to(0));
-
-			painter->pop_state();
-			painter->end();
+				painter->begin();
+				painter->push_state();
+				{
+					painter->clear();
+					painter->set_fill(1);
+					painter->no_stroke();
+					painter->no_shader();
+					painter->image(self->draw_cache, 0, 0);
+				}
+				painter->pop_state();
+				painter->end();
+			}
+			else
+				draw_window(window, event);
 		});
 	}
 
