@@ -287,6 +287,22 @@ class TestWindow < Test::Unit::TestCase
     assert_true window(pointer_through: true).pointer_through?
   end
 
+  def test_pointer_through_alpha()
+    w = window
+    assert_equal 1, w.pointer_through_alpha
+
+    w.pointer_through_alpha = 0.5
+    assert_equal 0.5, w.pointer_through_alpha
+
+    w.pointer_through_alpha 0
+    assert_equal 0, w.pointer_through_alpha
+
+    assert_raise(ArgumentError) {w.pointer_through_alpha = -0.1}
+    assert_raise(ArgumentError) {w.pointer_through_alpha =  1.1}
+
+    assert_equal 0.5, window(pointer_through_alpha: 0.5).pointer_through_alpha
+  end
+
   def test_orientations()
     w = window
     assert_equal [], w.orientations

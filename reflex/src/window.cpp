@@ -5,12 +5,14 @@
 #include <math.h>
 #include <algorithm>
 #include <set>
+#include <rays/rays.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "application.h"
 #include "view.h"
 #include "event.h"
 #include "midi.h"
+#include "rays.h"
 
 
 namespace Reflex
@@ -258,6 +260,104 @@ namespace Reflex
 		});
 	}
 
+	static bool
+	is_pointer_through_by_alpha (const Window::Data& self)
+	{
+		return
+			Xot::has_flag(self.flags, Window::FLAG_POINTER_THROUGH) &&
+			self.pointer_through_alpha < 1;
+	}
+
+	static bool
+	has_pressed_pointer (const Window::Data& self)
+	{
+		if (Pointer_mask_flag(self.prev_mouse_pointer, MOUSE_BUTTONS) != 0)
+			return true;
+
+		for (const auto& p : self.prev_pointers)
+		{
+			if (p.down())
+				return true;
+		}
+		return false;
+	}
+
+	static float
+	get_cache_alpha (Window::Data* self, const Point& position)
+	{
+		if (!self->draw_cache)
+			return 0;
+
+		Rays::activate_offscreen_context();
+
+		Color color;
+		bool ret = Rays::Painter_get_pixel(
+			&color, &self->draw_cache_painter, position.x, position.y);
+		return ret ? color.alpha : 0;
+	}
+
+	static void
+	apply_pointer_through (Window* window)
+	{
+		using Data = Window::Data;
+
+		Data* self = window->self.get();
+
+		if (!is_pointer_through_by_alpha(*self))
+		{
+			Xot::remove_flag(
+				&self->flags,
+				Data::POINTER_THROUGH_PAUSED | Data::POINTER_THROUGH_ENTERED);
+		}
+
+		Window_set_pointer_through(
+			window,
+			Xot::has_flag(self->flags, Window::FLAG_POINTER_THROUGH) &&
+			!Xot::has_flag(self->flags, Data::POINTER_THROUGH_PAUSED));
+	}
+
+	static bool is_inside_window (Window* window, const Point& position);
+
+	static void call_pointer_event (Window* window, PointerEvent* event);
+
+	static void
+	update_pointer_through (Window* window)
+	{
+		using Data = Window::Data;
+
+		Data* self = window->self.get();
+		if (!is_pointer_through_by_alpha(*self))
+			return;
+		if (has_pressed_pointer(*self))
+			return;
+
+		Point pos;
+		bool over_and_uncov = Window_is_pointer_over_and_uncovered(&pos, *window);
+		bool inside         = over_and_uncov && is_inside_window(window, pos);
+		bool opaque         =
+			over_and_uncov &&
+			(!inside || get_cache_alpha(self, pos) > self->pointer_through_alpha);
+		if (opaque != Xot::has_flag(self->flags, Data::POINTER_THROUGH_PAUSED))
+		{
+			Xot::update_flag(&self->flags, Data::POINTER_THROUGH_PAUSED, opaque);
+			apply_pointer_through(window);
+		}
+
+		bool entered = opaque && inside;
+		if (entered == Xot::has_flag(self->flags, Data::POINTER_THROUGH_ENTERED))
+			return;
+
+		Xot::update_flag(&self->flags, Data::POINTER_THROUGH_ENTERED, entered);
+
+		PointerEvent event;
+		PointerEvent_add_pointer(&event, Pointer(
+			0, Pointer::MOUSE,
+			entered ? Pointer::ENTER : Pointer::LEAVE,
+			entered ? pos            : self->prev_mouse_pointer.position(),
+			0, 0, false, Xot::time()));
+		call_pointer_event(window, &event);
+	}
+
 	void
 	Window_call_update_event (Window* window)
 	{
@@ -266,6 +366,8 @@ namespace Reflex
 			Window::Data* self = window->self.get();
 
 			MIDI_process_events();
+
+			update_pointer_through(window);
 
 			double now = Xot::time();
 			UpdateEvent e(now, now - self->prev_time_update);
@@ -280,7 +382,7 @@ namespace Reflex
 	static bool
 	use_draw_cache (const Window::Data& self)
 	{
-		return false;
+		return is_pointer_through_by_alpha(self);
 	}
 
 	static void
@@ -1028,13 +1130,16 @@ namespace Reflex
 	}
 
 	static void
-	call_pointer_event (Window* window, PointerEvent* event)
+	do_call_pointer_event (Window* window, PointerEvent* event)
 	{
 		auto action   = (*event)[0].action();
 		bool boundary = action == Pointer::ENTER || action == Pointer::LEAVE;
 
 		std::vector<Pointer> pointers;
-		PointerEvent_each_pointer(event, [&](const auto& p) {pointers.emplace_back(p);});
+		PointerEvent_each_pointer(event, [&](const auto& p)
+		{
+			pointers.emplace_back(p);
+		});
 
 		call_pointer_window_boundary_events(window, pointers, Pointer::ENTER);
 		call_pointer_enter_events(window, pointers);
@@ -1069,6 +1174,19 @@ namespace Reflex
 		call_pointer_window_boundary_events(window, pointers, Pointer::LEAVE);
 	}
 
+	static void
+	call_pointer_event (Window* window, PointerEvent* event)
+	{
+		Application_guard([&]()
+		{
+			setup_pointer_event(window, event);
+			if (!event->empty())
+				do_call_pointer_event(window, event);
+
+			cleanup_captures(window);
+		});
+	}
+
 	void
 	Window_call_pointer_event (Window* window, PointerEvent* event)
 	{
@@ -1077,14 +1195,32 @@ namespace Reflex
 		if (!event)
 			argument_error(__FILE__, __LINE__);
 
-		Application_guard([&]()
-		{
-			setup_pointer_event(window, event);
-			if (!event->empty())
-				call_pointer_event(window, event);
+		const Window::Data& self = *window->self;
 
-			cleanup_captures(window);
-		});
+		if (is_pointer_through_by_alpha(self) && !event->empty())
+		{
+			// with pointers going through by alpha, update_pointer_through()
+			// decides when the pointer is in the content area, so the native
+			// enter and leave at the edge are dropped, and so is any event in
+			// the content area before it says the pointer is there: macos moves
+			// the key window's pointer wherever it is, ignored or not, and a
+			// move from the titlebar lands a frame before the pixel under it
+			// is judged
+
+			const auto& pointer0 = (*event)[0];
+			auto action          = pointer0.action();
+			if (action == Pointer::ENTER || action == Pointer::LEAVE)
+				return;
+
+			if (
+				!Xot::has_flag(self.flags, Window::Data::POINTER_THROUGH_ENTERED) &&
+				is_inside_window(window, pointer0.position()))
+			{
+				return;
+			}
+		}
+
+		call_pointer_event(window, event);
 	}
 
 	void
@@ -1365,11 +1501,34 @@ namespace Reflex
 	}
 
 	void
-	Window::set_flag (uint flags)
+	Window::set_pointer_through_alpha (float alpha)
 	{
-		Window_set_flags(this, flags);
+		if (alpha < 0 || 1 < alpha)
+			argument_error(__FILE__, __LINE__);
 
+		if (alpha == self->pointer_through_alpha)
+			return;
+
+		self->pointer_through_alpha = alpha;
+		apply_pointer_through(this);
+	}
+
+	float
+	Window::pointer_through_alpha () const
+	{
+		return self->pointer_through_alpha;
+	}
+
+	void
+	Window::set_flags (uint flags)
+	{
+		if (flags == self->flags)
+			return;
+
+		Window_set_flags(this, flags);
 		self->flags = flags;
+
+		apply_pointer_through(this);
 	}
 
 	uint
@@ -1383,10 +1542,7 @@ namespace Reflex
 	{
 		uint value = self->flags;
 		Xot::add_flag(&value, flags);
-
-		Window_set_flags(this, value);
-
-		self->flags = value;
+		set_flags(value);
 	}
 
 	void
@@ -1394,10 +1550,7 @@ namespace Reflex
 	{
 		uint value = self->flags;
 		Xot::remove_flag(&value, flags);
-
-		Window_set_flags(this, value);
-
-		self->flags = value;
+		set_flags(value);
 	}
 
 	bool

@@ -4,9 +4,11 @@
 #define __REFLEX_SRC_RAYS_H__
 
 
+#include <rays/color.h>
 #include <rays/bitmap.h>
+#include <rays/painter.h>
 
-#if defined(OSX)
+#if defined(OSX) && defined(__OBJC__)
 	@class NSImage;
 #elif defined(WIN32)
 	#include <xot/windows.h>
@@ -17,7 +19,10 @@ namespace Rays
 {
 
 
-#ifdef OSX
+	bool Painter_get_pixel (Color* color, Painter* painter, coord x, coord y);
+
+
+#if defined(OSX) && defined(__OBJC__)
 
 	NSImage* Bitmap_get_nsimage (const Bitmap& bitmap);
 
