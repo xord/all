@@ -239,6 +239,8 @@ namespace Rays
 		Painter* painter, const Font& font, const char* line, coord x, coord y,
 		coord width = 0, coord height = 0);
 
+	bool Painter_get_pixel (Color* color, Painter* painter, coord x, coord y);
+
 
 }// Rays
 

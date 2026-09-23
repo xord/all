@@ -1271,24 +1271,6 @@ namespace Reflex
 	}
 
 	static void
-	set_pointer_through (HWND hwnd, bool through)
-	{
-		static const DWORD THROUGH = WS_EX_TRANSPARENT | WS_EX_LAYERED;
-
-		DWORD current = (DWORD) GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
-		DWORD exstyle = through ? current | THROUGH : current & ~THROUGH;
-		if (exstyle == current) return;
-
-		SetLastError(0);
-		SetWindowLongPtrW(hwnd, GWL_EXSTYLE, exstyle);
-		if (GetLastError() != 0)
-			system_error(__FILE__, __LINE__);
-
-		if (through && !SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA))
-			system_error(__FILE__, __LINE__);
-	}
-
-	static void
 	set_closable (HWND hwnd, bool closable)
 	{
 		// the close button follows the state of the close menu item
@@ -1370,15 +1352,73 @@ namespace Reflex
 		{
 			system_error(__FILE__, __LINE__);
 		}
-
-		set_pointer_through(
-			self->hwnd, Xot::has_flag(flags, Window::FLAG_POINTER_THROUGH));
 	}
 
 	float
 	Window_get_pixel_density (const Window& window)
 	{
 		return 1;
+	}
+
+	void
+	Window_set_pointer_through (Window* window, bool through)
+	{
+		static const DWORD THROUGH = WS_EX_TRANSPARENT | WS_EX_LAYERED;
+
+		HWND hwnd     = get_data(window)->hwnd;
+		DWORD current = (DWORD) GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+		DWORD exstyle = through ? current | THROUGH : current & ~THROUGH;
+		if (exstyle == current) return;
+
+		SetLastError(0);
+		SetWindowLongPtrW(hwnd, GWL_EXSTYLE, exstyle);
+		if (GetLastError() != 0)
+			system_error(__FILE__, __LINE__);
+
+		if (through && !SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA))
+			system_error(__FILE__, __LINE__);
+	}
+
+	static bool
+	is_covered_by_another_window (HWND hwnd, POINT pos)
+	{
+		// only a window that takes mouse events counts as covering. the hit
+		// test skips a window letting pointers through, so the hit can be one
+		// below hwnd itself; it covers hwnd when it is among the windows above
+
+		HWND hit = WindowFromPoint(pos);
+		if (hit) hit = GetAncestor(hit, GA_ROOT);
+		if (!hit || hit == hwnd)
+			return false;
+
+		for (HWND h = GetWindow(hwnd, GW_HWNDPREV); h; h = GetWindow(h, GW_HWNDPREV))
+		{
+			if (h == hit)
+				return true;
+		}
+		return false;
+	}
+
+	bool
+	Window_is_pointer_over_and_uncovered (Point* position, const Window& window)
+	{
+		POINT pos;
+		if (!GetCursorPos(&pos))
+			return false;
+
+		HWND hwnd = get_data(&window)->hwnd;
+		RECT rect;
+		if (!GetWindowRect(hwnd, &rect))
+			return false;
+		if (!PtInRect(&rect, pos))
+			return false;
+		if (is_covered_by_another_window(hwnd, pos))
+			return false;
+		if (!ScreenToClient(hwnd, &pos))
+			return false;
+
+		position->reset(pos.x, pos.y);
+		return true;
 	}
 
 

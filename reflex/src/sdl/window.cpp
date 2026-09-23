@@ -417,6 +417,17 @@ namespace Reflex
 		return (float) draw_w / (float) win_w;
 	}
 
+	void
+	Window_set_pointer_through (Window* window, bool through)
+	{
+	}
+
+	bool
+	Window_is_pointer_over_and_uncovered (Point* position, const Window& window)
+	{
+		return false;
+	}
+
 	Window*
 	Window_from (SDL_Window* native)
 	{

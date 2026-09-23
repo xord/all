@@ -991,6 +991,39 @@ namespace Rays
 		debug_draw_text_line(painter, font, x, y, str_w / density, str_h / density);
 	}
 
+	bool
+	Painter_get_pixel (Color* color, Painter* painter, coord x, coord y)
+	{
+		if (!color)
+			argument_error(__FILE__, __LINE__);
+		if (!painter)
+			argument_error(__FILE__, __LINE__);
+
+		PainterData* self = get_data(painter);
+
+		const Bounds& vp = self->viewport;
+		if (!vp.is_include(x, y))
+			return false;
+
+		if (self->is_painting())
+			draw_batch(self);
+
+		float density = self->pixel_density;
+		GLint px      = (GLint) ((x - vp.x) * density);
+		GLint py      = (GLint) ((y - vp.y) * density);
+		if (!self->frame_buffer)
+			py = (GLint) (vp.height * density) - 1 - py;
+
+		FrameBufferBinder binder(self->frame_buffer ? self->frame_buffer.id() : 0);
+
+		GLubyte rgba[4] = {0, 0, 0, 0};
+		glReadPixels(px, py, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+		OpenGL_check_error(__FILE__, __LINE__);
+
+		color->reset8(rgba[0], rgba[1], rgba[2], rgba[3]);
+		return true;
+	}
+
 
 	Painter::Painter ()
 	:	self(new PainterData())

@@ -42,7 +42,11 @@ namespace Reflex
 		enum Flag
 		{
 
-			ACTIVE = Xot::bit(1, FLAG_LAST),
+			ACTIVE                  = Xot::bit(1, FLAG_LAST),
+
+			POINTER_THROUGH_PAUSED  = Xot::bit(2, FLAG_LAST),
+
+			POINTER_THROUGH_ENTERED = Xot::bit(3, FLAG_LAST),
 
 		};// Flag
 
@@ -71,6 +75,8 @@ namespace Reflex
 		Pointer prev_mouse_pointer;
 
 		PointerList prev_pointers;
+
+		float pointer_through_alpha = 1;
 
 		CaptureMap captures;
 
@@ -172,6 +178,10 @@ namespace Reflex
 	void Window_set_flags (Window* window, uint flags);
 
 	float Window_get_pixel_density (const Window& window);
+
+	void Window_set_pointer_through (Window* window, bool through);
+
+	bool Window_is_pointer_over_and_uncovered (Point* position, const Window& window);
 
 
 }// Reflex

@@ -295,5 +295,16 @@ namespace Reflex
 		return UIScreen.mainScreen.nativeScale;
 	}
 
+	void
+	Window_set_pointer_through (Window* window, bool through)
+	{
+	}
+
+	bool
+	Window_is_pointer_over_and_uncovered (Point* position, const Window& window)
+	{
+		return false;
+	}
+
 
 }// Reflex

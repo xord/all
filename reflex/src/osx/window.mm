@@ -225,14 +225,57 @@ namespace Reflex
 			native.level = NSNormalWindowLevel - 1;
 		else
 			native.level = NSNormalWindowLevel;
-
-		native.ignoresMouseEvents = Xot::has_flag(flags, Window::FLAG_POINTER_THROUGH);
 	}
 
 	float
 	Window_get_pixel_density (const Window& window)
 	{
 		return get_native(&window).backingScaleFactor;
+	}
+
+	void
+	Window_set_pointer_through (Window* window, bool through)
+	{
+		get_native(window).ignoresMouseEvents = through ? YES : NO;
+	}
+
+	static bool
+	is_covered_by_another_window (NativeWindow* native, NSPoint screen_pos)
+	{
+		// only a window that takes mouse events counts as covering. when
+		// the frontmost window at the point is also the frontmost behind
+		// this window, nothing sits between them, so nothing is in front
+		// of this window. this holds while the window ignores mouse events
+		// too, since the hit test then skips the window itself
+
+		NSInteger hit = [NSWindow
+			windowNumberAtPoint: screen_pos
+			belowWindowWithWindowNumber: 0];
+		if (hit == 0 || hit == native.windowNumber)
+			return false;
+
+		NSInteger behind = [NSWindow
+			windowNumberAtPoint: screen_pos
+			belowWindowWithWindowNumber: native.windowNumber];
+		return hit != behind;
+	}
+
+	bool
+	Window_is_pointer_over_and_uncovered (Point* position, const Window& window)
+	{
+		NativeWindow* native = get_native(&window);
+		NSPoint screen_pos   = [NSEvent mouseLocation];
+		if (!NSPointInRect(screen_pos, native.frame))
+			return false;
+		if (is_covered_by_another_window(native, screen_pos))
+			return false;
+
+		NSRect screen_rect = NSMakeRect(screen_pos.x, screen_pos.y, 0, 0);
+		NSRect window_rect = [native convertRectFromScreen: screen_rect];
+		NSView* view       = native.contentView;
+		NSPoint view_pos   = [view convertPoint: window_rect.origin fromView: nil];
+		position->reset(view_pos.x, view.bounds.size.height - view_pos.y);
+		return true;
 	}
 
 

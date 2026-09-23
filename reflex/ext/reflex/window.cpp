@@ -221,7 +221,7 @@ RUCY_DEF1(set_titlebar, titlebar)
 	CHECK;
 
 	uint flags = to<uint>(titlebar);
-	THIS->set_flag((flags & TITLEBAR_MASK) | (THIS->flags() & ~TITLEBAR_MASK));
+	THIS->set_flags((flags & TITLEBAR_MASK) | (THIS->flags() & ~TITLEBAR_MASK));
 }
 RUCY_END
 
@@ -381,6 +381,22 @@ RUCY_DEF0(is_pointer_through)
 }
 RUCY_END
 
+static
+RUCY_DEF1(set_pointer_through_alpha, alpha)
+{
+	CHECK;
+	THIS->set_pointer_through_alpha(to<float>(alpha));
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_pointer_through_alpha)
+{
+	CHECK;
+	return value(THIS->pointer_through_alpha());
+}
+RUCY_END
+
 static const uint ORIENTATION_MASK =
 	Reflex::Window::FLAG_PORTRAIT | Reflex::Window::FLAG_LANDSCAPE;
 
@@ -390,7 +406,7 @@ RUCY_DEF1(set_orientations, orientations)
 	CHECK;
 
 	uint flags = to<uint>(orientations);
-	THIS->set_flag(
+	THIS->set_flags(
 		(      flags   &  ORIENTATION_MASK) |
 		(THIS->flags() & ~ORIENTATION_MASK));
 }
@@ -709,30 +725,32 @@ Init_reflex_window ()
 	cWindow.define_method("frame",  get_frame);
 	cWindow.define_method("menu=",  set_menu);
 	cWindow.define_method("menu",   get_menu);
-	cWindow.define_method("closable=",         set_closable);
-	cWindow.define_method("closable?",          is_closable);
-	cWindow.define_method("minimizable=",      set_minimizable);
-	cWindow.define_method("minimizable?",       is_minimizable);
-	cWindow.define_method("resizable=",        set_resizable);
-	cWindow.define_method("resizable?",         is_resizable);
-	cWindow.define_method("titlebar=",         set_titlebar);
-	cWindow.define_method("titlebar",          get_titlebar);
-	cWindow.define_method("unlisted=",         set_unlisted);
-	cWindow.define_method("unlisted?",          is_unlisted);
-	cWindow.define_method("shadow=",           set_shadow);
-	cWindow.define_method("shadow?",           has_shadow);
-	cWindow.define_method("transparent=",      set_transparent);
-	cWindow.define_method("transparent?",       is_transparent);
-	cWindow.define_method("fullscreen=",       set_fullscreen);
-	cWindow.define_method("fullscreen?",        is_fullscreen);
-	cWindow.define_method("always_on_top=",    set_always_on_top);
-	cWindow.define_method("always_on_top?",     is_always_on_top);
-	cWindow.define_method("always_on_bottom=", set_always_on_bottom);
-	cWindow.define_method("always_on_bottom?",  is_always_on_bottom);
-	cWindow.define_method("pointer_through=",  set_pointer_through);
-	cWindow.define_method("pointer_through?",   is_pointer_through);
-	cWindow.define_method("orientations=",     set_orientations);
-	cWindow.define_method("orientations",      get_orientations);
+	cWindow.define_method("closable=",              set_closable);
+	cWindow.define_method("closable?",               is_closable);
+	cWindow.define_method("minimizable=",           set_minimizable);
+	cWindow.define_method("minimizable?",            is_minimizable);
+	cWindow.define_method("resizable=",             set_resizable);
+	cWindow.define_method("resizable?",              is_resizable);
+	cWindow.define_method("titlebar=",              set_titlebar);
+	cWindow.define_method("titlebar",               get_titlebar);
+	cWindow.define_method("unlisted=",              set_unlisted);
+	cWindow.define_method("unlisted?",               is_unlisted);
+	cWindow.define_method("shadow=",                set_shadow);
+	cWindow.define_method("shadow?",                has_shadow);
+	cWindow.define_method("transparent=",           set_transparent);
+	cWindow.define_method("transparent?",            is_transparent);
+	cWindow.define_method("fullscreen=",            set_fullscreen);
+	cWindow.define_method("fullscreen?",             is_fullscreen);
+	cWindow.define_method("always_on_top=",         set_always_on_top);
+	cWindow.define_method("always_on_top?",          is_always_on_top);
+	cWindow.define_method("always_on_bottom=",      set_always_on_bottom);
+	cWindow.define_method("always_on_bottom?",       is_always_on_bottom);
+	cWindow.define_method("pointer_through=",       set_pointer_through);
+	cWindow.define_method("pointer_through?",        is_pointer_through);
+	cWindow.define_method("pointer_through_alpha=", set_pointer_through_alpha);
+	cWindow.define_method("pointer_through_alpha",  get_pointer_through_alpha);
+	cWindow.define_method("orientations=",          set_orientations);
+	cWindow.define_method("orientations",           get_orientations);
 	cWindow.define_method("screen",  get_screen);
 	cWindow.define_method("root",    get_root);
 	cWindow.define_method("focus",   get_focus);
