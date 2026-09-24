@@ -128,6 +128,10 @@ namespace Rays
 	activate_offscreen_context ()
 	{
 		const auto* c = get_opengl_offscreen_context();
+
+		if (wglGetCurrentContext() == c->hrc)
+			return;
+
 		if (!wglMakeCurrent(c->hdc, c->hrc))
 			system_error(__FILE__, __LINE__);
 	}
