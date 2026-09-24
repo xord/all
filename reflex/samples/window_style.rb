@@ -25,6 +25,12 @@ require 'reflex'
 # the counter says which one got it. Only one window at a time can do it, so
 # there is always another one left to click on.
 #
+# Pressing 9 again keeps the pointer going through only where the window
+# drew little: with pointer_through_alpha at 0.5, the see-through window takes
+# a click on its circles and passes one on its empty background, and the
+# translucent window passes clicks through its 0.3 background too. The
+# titlebar always takes the pointer. A third press turns it off.
+#
 # An unlisted window is still there on screen, but it leaves the window
 # overviews: Mission Control on macOS, the taskbar and alt-tab on Windows.
 # Toggle it and open the overview to watch the window drop out of the list
@@ -66,13 +72,17 @@ class StyledWindow < Reflex::Window
       p.ellipse x - 20, y - 20, 40, 40
     end
 
+    # something that stays put, to aim a click at
+    p.fill 1, 0.8, 0.2
+    p.ellipse 150, 150, 60, 60
+
     p.fill 1
     p.text "titlebar: #{titlebar.inspect}", 10, 10
     p.text "shadow: #{shadow?}, transparent: #{transparent?}, " \
            "unlisted: #{unlisted?}", 10, 30
     p.text "closable: #{closable?}, minimizable: #{minimizable?}, " \
            "resizable: #{resizable?}", 10, 50
-    p.text "pointer through: #{pointer_through?}, clicks: #{@clicks}", 10, 70
+    p.text "pointer through: #{pointer_through_state}, clicks: #{@clicks}", 10, 70
     p.text "#{e.fps.to_i} FPS", 10, 90
     p.text '1: buttons, 2: background, 3: both', 10, 110
     p.text '4: shadow, 5: transparent', 10, 130
@@ -101,7 +111,7 @@ class StyledWindow < Reflex::Window
     when '6' then change {|w| w.closable    = !w.closable?}
     when '7' then change {|w| w.minimizable = !w.minimizable?}
     when '8' then change {|w| w.resizable   = !w.resizable?}
-    when '9' then change {|w| w.pointer_through = w.equal?(self) && !pointer_through?}
+    when '9' then change {|w| w.cycle_pointer_through w.equal?(self)}
     when '0' then change {|w| w.unlisted    = !w.unlisted?}
     end
     Reflex.quit if e.key == :escape
@@ -110,6 +120,24 @@ class StyledWindow < Reflex::Window
   def toggle_titlebar (part)
     parts         = titlebar
     self.titlebar = parts.include?(part) ? parts - [part] : parts + [part]
+  end
+
+  # off -> everything through -> only the pixels at alpha 0.5 or less -> off
+  def cycle_pointer_through (mine)
+    if !mine || (pointer_through? && pointer_through_alpha < 1)
+      self.pointer_through = false
+    elsif !pointer_through?
+      self.pointer_through       = true
+      self.pointer_through_alpha = 1
+    else
+      self.pointer_through_alpha = 0.5
+    end
+  end
+
+  def pointer_through_state ()
+    return 'false'                                if !pointer_through?
+    return 'all'                                  if pointer_through_alpha >= 1
+    return "alpha <= #{pointer_through_alpha}"
   end
 
   def change (&block)
