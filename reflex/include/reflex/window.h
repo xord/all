@@ -100,7 +100,11 @@ namespace Reflex
 
 			virtual const Menu* menu () const;
 
-			virtual void    set_flag (uint flags);
+			virtual void set_pointer_through_alpha (float alpha);
+
+			virtual float    pointer_through_alpha () const;
+
+			virtual void    set_flags (uint flags);
 
 			virtual uint        flags () const;
 
