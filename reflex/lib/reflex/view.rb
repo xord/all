@@ -192,7 +192,7 @@ module Reflex
       :linear_velocity, :angular_velocity, :gravity_scale,
       :gravity, :time_scale,
       clip:          {reader: :clip?},
-      cache:         {reader: :cache?},
+      draw_cache:    {reader: :draw_cache?},
       resize_to_fit: {reader: :resize_to_fit?},
       scroll_to_fit: {reader: :scroll_to_fit?},
       fix_angle:     {reader: :fix_angle?},

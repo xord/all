@@ -653,24 +653,24 @@ RUCY_DEF0(get_clip)
 RUCY_END
 
 static
-RUCY_DEF1(set_cache, cache)
+RUCY_DEF1(set_draw_cache, state)
 {
 	CHECK;
 
-	if (cache)
-		THIS->   add_flag(Reflex::View::FLAG_CACHE);
+	if (state)
+		THIS->   add_flag(Reflex::View::FLAG_DRAW_CACHE);
 	else
-		THIS->remove_flag(Reflex::View::FLAG_CACHE);
+		THIS->remove_flag(Reflex::View::FLAG_DRAW_CACHE);
 
-	return cache;
+	return state;
 }
 RUCY_END
 
 static
-RUCY_DEF0(get_cache)
+RUCY_DEF0(has_draw_cache)
 {
 	CHECK;
-	return value(THIS->has_flag(Reflex::View::FLAG_CACHE));
+	return value(THIS->has_flag(Reflex::View::FLAG_DRAW_CACHE));
 }
 RUCY_END
 
@@ -1440,8 +1440,8 @@ Init_reflex_view ()
 	cView.define_method("capture",  get_capture);
 	cView.define_method("clip=", set_clip);
 	cView.define_method("clip?", get_clip);
-	cView.define_method("cache=", set_cache);
-	cView.define_method("cache?", get_cache);
+	cView.define_method("draw_cache=", set_draw_cache);
+	cView.define_method("draw_cache?", has_draw_cache);
 	cView.define_method("resize_to_fit=", set_resize_to_fit);
 	cView.define_method("resize_to_fit?", get_resize_to_fit);
 	cView.define_method("scroll_to_fit=", set_scroll_to_fit);

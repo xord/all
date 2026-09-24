@@ -40,11 +40,11 @@ module Reflex
       :timeout, :delay, :interval,
       :meter2pixel, :meter, :wall,
       :zoom=,       :zoom,
-      :clip=,       :clip,  :clip?,
-      :cache=,      :cache, :cache?,
+      :clip=,       :clip,       :clip?,
+      :draw_cache=, :draw_cache, :draw_cache?,
       :gravity=,    :gravity,
       :time_scale=, :time_scale,
-      :debug=,      :debug, :debug?
+      :debug=,      :debug,      :debug?
 
     def_delegators :style,
       :flow=,                    :flow,

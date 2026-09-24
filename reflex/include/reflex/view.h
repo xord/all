@@ -68,7 +68,7 @@ namespace Reflex
 
 				FLAG_CLIP          = Xot::bit(0),
 
-				FLAG_CACHE         = Xot::bit(1),
+				FLAG_DRAW_CACHE    = Xot::bit(1),
 
 				FLAG_RESIZE_TO_FIT = Xot::bit(2),
 

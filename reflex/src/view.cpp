@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 #include <memory>
 #include <algorithm>
 #include <rays/matrix.h>
@@ -89,7 +90,7 @@ namespace Reflex
 
 		std::unique_ptr<SelectorSet>    pselectors_for_update;
 
-		std::unique_ptr<Image>          pcache_image;
+		std::unique_ptr<Image>          pdraw_cache;
 
 		std::unique_ptr<Timers>         ptimers;
 
@@ -1299,35 +1300,33 @@ namespace Reflex
 	}
 
 	static bool
-	use_cache (View* view)
+	use_draw_cache (const View::Data& self)
 	{
-		View::Data* self = view->self.get();
-
-		return
-			self->has_flag(View::FLAG_CACHE) ||
-			(self->pfilter && *self->pfilter);
+		return self.has_flag(View::FLAG_DRAW_CACHE) || (self.pfilter && *self.pfilter);
 	}
 
 	static bool
-	reset_cache_image (View* view, const Painter& painter)
+	setup_draw_cache (View::Data* self, float density)
 	{
-		assert(use_cache(view));
-		View::Data* self = view->self.get();
+		int w = (int) ceil(self->frame.width);
+		int h = (int) ceil(self->frame.height);
+		if (w == 0 || h == 0 || !use_draw_cache(*self))
+		{
+			self->pdraw_cache.reset();
+			return false;
+		}
 
-		Image* image = self->pcache_image.get();
-		int w        = ceil(self->frame.width);
-		int h        = ceil(self->frame.height);
+		Image* image = self->pdraw_cache.get();
 		if (
 			image &&
 			image->width()         == w &&
 			image->height()        == h &&
-			image->pixel_density() == painter.pixel_density())
+			image->pixel_density() == density)
 		{
 			return false;
 		}
 
-		self->pcache_image.reset(
-			new Image(w, h, Rays::RGBA, painter.pixel_density()));
+		self->pdraw_cache.reset(new Image(w, h, Rays::RGBA, density));
 		return true;
 	}
 
@@ -1425,7 +1424,7 @@ namespace Reflex
 	draw_view_to_cache (View* view, DrawEvent* event)
 	{
 		Painter* view_painter = event->painter();
-		Painter cache_painter = view->self->pcache_image->painter();
+		Painter cache_painter = view->self->pdraw_cache->painter();
 
 		DrawEvent_set_painter(event, &cache_painter);
 
@@ -1441,34 +1440,26 @@ namespace Reflex
 	{
 		View::Data* self = view->self.get();
 
-		if (!use_cache(view))
-		{
-			self->pcache_image.reset();
-			return false;
-		}
-
 		Painter* painter = event->painter();
+		bool created     = setup_draw_cache(self, painter->pixel_density());
+		if (!self->pdraw_cache)
+			return false;
 
-		if (reset_cache_image(view, *painter) || redraw)
-		{
-			if (!self->pcache_image)
-				return false;
-
+		if (created || redraw)
 			draw_view_to_cache(view, event);
-		}
 
 		painter->push_state();
-		painter->set_fill(1);
-		painter->no_stroke();
-		painter->no_shader();
+		{
+			painter->set_fill(1);
+			painter->no_stroke();
+			painter->no_shader();
 
-		if (self->pfilter && *self->pfilter)
-			self->pfilter->apply(painter, *self->pcache_image);
-		else
-			painter->image(*self->pcache_image, event->bounds());
-
+			if (self->pfilter && *self->pfilter)
+				self->pfilter->apply(painter, *self->pdraw_cache);
+			else
+				painter->image(*self->pdraw_cache, event->bounds());
+		}
 		painter->pop_state();
-
 		return true;
 	}
 
