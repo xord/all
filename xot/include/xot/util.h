@@ -63,7 +63,17 @@ namespace Xot
 	{
 		assert(pvalue);
 
-		*pvalue &= ~flag;
+		*pvalue &= ~(T) flag;
+	}
+
+	template <typename T>
+	inline void
+	update_flag (T* pvalue, uint flag, bool add)
+	{
+		if (add)
+			add_flag(pvalue, flag);
+		else
+			remove_flag(pvalue, flag);
 	}
 
 	template <typename T>

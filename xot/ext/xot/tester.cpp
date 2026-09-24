@@ -111,6 +111,18 @@ test_util ()
 	if ( Xot::has_flag(flags, F0 | F1))      return false;
 	if ( Xot::has_flag(flags, F0 | F1 | F2)) return false;
 
+	Xot::  update_flag(&flags, F1, true);
+	if (!Xot::has_flag(flags, F0))           return false;
+	if (!Xot::has_flag(flags, F1))           return false;
+	if (!Xot::has_flag(flags, F0 | F1))      return false;
+	if ( Xot::has_flag(flags, F0 | F1 | F2)) return false;
+
+	Xot::  update_flag(&flags, F1, false);
+	if (!Xot::has_flag(flags, F0))           return false;
+	if ( Xot::has_flag(flags, F1))           return false;
+	if ( Xot::has_flag(flags, F0 | F1))      return false;
+	if ( Xot::has_flag(flags, F0 | F1 | F2)) return false;
+
 	int value;
 	int* p = &value;
 	if (!(Xot::get_pointer_flag(p) == false)) return false;

@@ -1200,36 +1200,21 @@ namespace Reflex
 	static DWORD
 	make_window_style (uint flags, DWORD style)
 	{
-		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS))
-			style |=  WS_SYSMENU;
-		else
-			style &= ~WS_SYSMENU;
+		using namespace Xot;
 
-		bool caption = Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND);
-		if (caption)
-			style |=  WS_CAPTION;
-		else
-			style &= ~WS_CAPTION;
-
-		if (Xot::has_flag(flags, Window::FLAG_MINIMIZABLE))
-			style |=  WS_MINIMIZEBOX;
-		else
-			style &= ~WS_MINIMIZEBOX;
-
-		if (Xot::has_flag(flags, Window::FLAG_RESIZABLE))
-			style |=  WS_MAXIMIZEBOX;
-		else
-			style &= ~WS_MAXIMIZEBOX;
+		bool caption = has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND);
 
 		// the sizing border follows resizable, but a captionless window keeps
 		// it for the shadow and leaves the resizing to the hit test
 		bool sizing_border = caption
-			?	Xot::has_flag(flags, Window::FLAG_RESIZABLE)
-			:	Xot::has_flag(flags, Window::FLAG_SHADOW);
-		if (sizing_border)
-			style |=  WS_THICKFRAME;
-		else
-			style &= ~WS_THICKFRAME;
+			?	has_flag(flags, Window::FLAG_RESIZABLE)
+			:	has_flag(flags, Window::FLAG_SHADOW);
+
+		update_flag(&style, WS_SYSMENU,     has_flag(flags, Window::FLAG_TITLEBAR_BUTTONS));
+		update_flag(&style, WS_CAPTION,     caption);
+		update_flag(&style, WS_MINIMIZEBOX, has_flag(flags, Window::FLAG_MINIMIZABLE));
+		update_flag(&style, WS_MAXIMIZEBOX, has_flag(flags, Window::FLAG_RESIZABLE));
+		update_flag(&style, WS_THICKFRAME,  sizing_border);
 
 		return style;
 	}

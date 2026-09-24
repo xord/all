@@ -107,10 +107,7 @@ namespace Reflex
 	void
 	Pointer_set_floatable (Pointer* it, bool floatable)
 	{
-		if (floatable)
-			Xot::add_flag(&it->self->flags, Pointer::Data::FLOATABLE);
-		else
-			Xot::remove_flag(&it->self->flags, Pointer::Data::FLOATABLE);
+		Xot::update_flag(&it->self->flags, Pointer::Data::FLOATABLE, floatable);
 	}
 
 	bool

@@ -36,25 +36,18 @@ namespace Reflex
 	NSWindowStyleMask
 	Window_make_style_mask (uint flags, NSWindowStyleMask styleMask)
 	{
-		if (Xot::has_flag(flags, Window::FLAG_CLOSABLE))
-			styleMask |=  NSWindowStyleMaskClosable;
-		else
-			styleMask &= ~NSWindowStyleMaskClosable;
-
-		if (Xot::has_flag(flags, Window::FLAG_MINIMIZABLE))
-			styleMask |=  NSWindowStyleMaskMiniaturizable;
-		else
-			styleMask &= ~NSWindowStyleMaskMiniaturizable;
-
-		if (Xot::has_flag(flags, Window::FLAG_RESIZABLE))
-			styleMask |=  NSWindowStyleMaskResizable;
-		else
-			styleMask &= ~NSWindowStyleMaskResizable;
-
-		if (Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND))
-			styleMask &= ~NSWindowStyleMaskFullSizeContentView;
-		else
-			styleMask |=  NSWindowStyleMaskFullSizeContentView;
+		Xot::update_flag(
+			&styleMask, NSWindowStyleMaskClosable,
+			Xot::has_flag(flags, Window::FLAG_CLOSABLE));
+		Xot::update_flag(
+			&styleMask, NSWindowStyleMaskMiniaturizable,
+			Xot::has_flag(flags, Window::FLAG_MINIMIZABLE));
+		Xot::update_flag(
+			&styleMask, NSWindowStyleMaskResizable,
+			Xot::has_flag(flags, Window::FLAG_RESIZABLE));
+		Xot::update_flag(
+			&styleMask, NSWindowStyleMaskFullSizeContentView,
+			!Xot::has_flag(flags, Window::FLAG_TITLEBAR_BACKGROUND));
 
 		return styleMask;
 	}

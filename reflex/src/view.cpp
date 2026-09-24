@@ -393,6 +393,11 @@ namespace Reflex
 			Xot::remove_flag(&flags, flag);
 		}
 
+		void update_flag (uint flag, bool add)
+		{
+			Xot::update_flag(&flags, flag, add);
+		}
+
 		bool has_flag (uint flag) const
 		{
 			return Xot::has_flag(flags, flag);
@@ -1216,11 +1221,9 @@ namespace Reflex
 				Style_override(pstyle, st);
 		}
 
-		const Style& style = View_get_style(view);
-		if (Style_has_variable_lengths(style))
-			self->add_flag(View::Data::HAS_VARIABLE_LENGTHS);
-		else
-			self->remove_flag(View::Data::HAS_VARIABLE_LENGTHS);
+		self->update_flag(
+			View::Data::HAS_VARIABLE_LENGTHS,
+			Style_has_variable_lengths(View_get_style(view)));
 
 		self->add_flag(View::Data::APPLY_STYLE);
 	}
@@ -2334,10 +2337,7 @@ namespace Reflex
 	void
 	View::set_shape (Shape* shape)
 	{
-		if (!shape)
-			self->add_flag(Data::NO_SHAPE);
-		else
-			self->remove_flag(Data::NO_SHAPE);
+		self->update_flag(Data::NO_SHAPE, !shape);
 
 		Shape::Ref& pshape = self->pshape;
 		if (shape == pshape.get()) return;
