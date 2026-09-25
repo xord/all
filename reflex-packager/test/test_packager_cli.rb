@@ -65,7 +65,7 @@ class TestPackagerCLI < Test::Unit::TestCase
       capture {cli.create ['myapp']}
       cli.package ['--generate-only', 'myapp']
       %w[project.yml Podfile src/main.mm app/main.rb].each do |f|
-        assert File.exist?("myapp/build/macos/#{f}"), "missing #{f}"
+        assert File.exist?("myapp/.build/macos/#{f}"), "missing #{f}"
       end
     end
 

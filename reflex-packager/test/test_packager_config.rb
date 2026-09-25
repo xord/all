@@ -162,8 +162,8 @@ class TestPackagerConfig < Test::Unit::TestCase
     end
 
     tmpdir yaml: "files: ['*']" do |dir|
-      %w[build dist].each {Dir.mkdir _1}
-      touch 'build/1.rb'
+      %w[.build dist].each {Dir.mkdir _1}
+      touch '.build/1.rb'
       touch 'dist/2.rb'
       assert_equal %w[main.rb],      load_config(dir).app_files
     end

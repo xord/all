@@ -38,7 +38,34 @@ module Reflex
         build unless generate_only
       end
 
+      def build_dir()
+        File.join config.dir, '.build', platform_name
+      end
+
+      def dist_dir()
+        File.join config.dir, 'dist'
+      end
+
       private
+
+      def copy_app_files()
+        dir = File.join build_dir, 'app'
+        FileUtils.rm_rf dir
+        FileUtils.mkdir_p dir
+        config.app_files.each do |file|
+          dest = File.join dir, file
+          FileUtils.mkdir_p File.dirname(dest)
+          FileUtils.cp_r File.join(config.dir, file), dest
+        end
+        File.write File.join(dir, profile.boot_main), profile.boot if
+          profile.boot_main && profile.boot
+      end
+
+      def write(path, content)
+        path = File.join build_dir, path
+        FileUtils.mkdir_p File.dirname(path)
+        File.write path, content
+      end
 
       def render(template)
         path = File.join TEMPLATES_DIR, platform_name, template
