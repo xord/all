@@ -51,14 +51,6 @@ module Reflex
         config.name.gsub(/[^A-Za-z0-9_\-]+/, '').then {_1.empty? ? 'App' : _1}
       end
 
-      def build_dir()
-        File.join config.dir, 'build', platform_name
-      end
-
-      def dist_dir()
-        File.join config.dir, 'dist'
-      end
-
       # Native extensions registered with CRuby (Init_<name> symbols).
       #
       def extensions()
@@ -121,19 +113,6 @@ module Reflex
         "pod '#{name}', #{args}"
       end
 
-      def copy_app_files()
-        dir = File.join build_dir, 'app'
-        FileUtils.rm_rf dir
-        FileUtils.mkdir_p dir
-        config.app_files.each do |file|
-          dest = File.join dir, file
-          FileUtils.mkdir_p File.dirname(dest)
-          FileUtils.cp_r File.join(config.dir, file), dest
-        end
-        File.write File.join(dir, profile.boot_main), profile.boot if
-          profile.boot_main && profile.boot
-      end
-
       def generate_icon()
         iconset = File.join build_dir, 'AppIcon.iconset'
         FileUtils.rm_rf iconset
@@ -175,12 +154,6 @@ module Reflex
         FileUtils.mkdir_p dist_dir
         FileUtils.cp_r app, dist
         puts "Created #{dist}"
-      end
-
-      def write(path, content)
-        path = File.join build_dir, path
-        FileUtils.mkdir_p File.dirname(path)
-        File.write path, content
       end
 
     end# MacOS

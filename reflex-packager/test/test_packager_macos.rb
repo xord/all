@@ -31,7 +31,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
   end
 
   def read(dir, path)
-    File.read File.join(dir, 'build', 'macos', path)
+    File.read File.join(dir, '.build', 'macos', path)
   end
 
   # --- generate ----------------------------------------------------------
@@ -40,7 +40,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager do |pkg, dir|
       pkg.generate
       %w[project.yml Podfile src/main.mm app/main.rb].each do |f|
-        assert File.exist?(File.join dir, 'build/macos', f), "missing #{f}"
+        assert File.exist?(File.join dir, '.build/macos', f), "missing #{f}"
       end
     end
   end
@@ -48,10 +48,10 @@ class TestPackagerMacOS < Test::Unit::TestCase
   def test_app_dir_includes_files_and_excludes_build()
     packager "files: [data]", files: %w[main.rb data/x.png] do |pkg, dir|
       pkg.generate
-      pkg.generate # regenerating must not nest a previous build/ into app/
-      app = File.join dir, 'build/macos/app'
+      pkg.generate # regenerating must not nest a previous .build/ into app/
+      app = File.join dir, '.build/macos/app'
       assert  File.exist?(File.join app, 'data/x.png')
-      assert !File.exist?(File.join app, 'build')
+      assert !File.exist?(File.join app, '.build')
     end
   end
 

@@ -84,7 +84,7 @@ module Reflex
           .sort
       end
 
-      EXCLUDES = %w[build dist]
+      EXCLUDES = %w[dist]
 
       private
 
