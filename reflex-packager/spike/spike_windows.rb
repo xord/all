@@ -13,6 +13,7 @@
 require 'rbconfig'
 require 'fileutils'
 require 'tmpdir'
+require 'shellwords'
 
 C = RbConfig::CONFIG
 
@@ -78,7 +79,7 @@ File.write 'spike.cpp', <<~CPP
 CPP
 
 rays = dirs['rays']
-sh C['CXX'], 'spike.cpp', '-o', 'spike.exe',
+sh *C['CXX'].shellsplit, 'spike.cpp', '-o', 'spike.exe',
   "-I#{C['rubyhdrdir']}", "-I#{C['rubyarchhdrdir']}",
   *Dir.glob("#{rays}/ext/rays/*.o"),
   '-Wl,--whole-archive',
