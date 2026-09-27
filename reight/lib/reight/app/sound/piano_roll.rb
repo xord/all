@@ -79,7 +79,7 @@ class Reight::SoundEditor::PianoRoll
   def mouse_clicked(x, y, button)
     return unless @sound
     piano_roll_clicked! x, y, button
-    note_clicked!(*p(note_pos_at__(x, y)), button)
+    note_clicked!(*note_pos_at__(x, y), button)
   end
 
   def mouse_wheel(dx, dy)

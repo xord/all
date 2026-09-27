@@ -38,7 +38,7 @@ class Reight::ScriptEditor::KeyMap
 
   command :search, once: true do |cursor:, text:, **|
     @searching = '' unless @searching
-    search cursor, text, @searching, next: p(@searching.size > 0)
+    search cursor, text, @searching, next: @searching.size > 0
   end
 
   command :search_forward, once: true do |cursor:, text:, **|
@@ -172,7 +172,6 @@ class Reight::ScriptEditor::KeyMap
 
   command :clear_cursor, once: true do |cursor:, **|
     @text_editor.each_cursor.to_a.each {@text_editor.remove_cursor _1}
-    p @text_editor.each_cursor.map {_1.object_id}
     @text_editor.add_cursor cursor
   end
 
