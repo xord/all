@@ -12,13 +12,7 @@ end# Reight
 begin
   w = Reight::WINDOW__
 
-  reight_classes = %i[Sprite Sound]
-  w.context.class.constants
-    .reject {_1 =~ /__$/}
-    .reject {reight_classes.include? _1}
-    .each   {self.class.const_set _1, w.context.class.const_get(_1)}
-  reight_classes
-    .each {self.class.const_set _1, Reight.const_get(_1)}
+  Reight.import_context_constants__ w.context.class
 
   w.__send__ :begin_draw
   at_exit do

@@ -46,14 +46,20 @@ class Reight::ViewController
   end
 
   def widget(name, factory = nil)
-    return @widgets__[name] if @widgets__.key? name
-    raise ArgumentError, "widget '#{name}' is not created yet" unless factory
-    raise "widget '#{name}' must be created in the first compose" if @composed__
-    @widgets__[name] = factory.is_a?(Symbol) ? __send__(factory) : factory.call
+    if factory && !@composed__
+      raise "widget '#{name}' is already created" if @widgets__.key? name
+      @widgets__[name] = create_widget__ name, factory
+    end
+    @widgets__[name] || raise("widget '#{name}' not found")
+  end
+
+  def menu(name, &block)
+    return widget name unless block
+    widget name, -> {Reight::Menu.new Reight::MenuBuilder.new(self).build(&block)}
   end
 
   def layout(**kwargs, &block)
-    layout_into world, **kwargs, &block
+    layout_into__ world, **kwargs, &block
   end
 
   def compose()
@@ -73,23 +79,19 @@ class Reight::ViewController
 
   private
 
-  def respond_to_missing?(name, include_private = false)
-    @widgets__.key?(name) || super
-  end
-
-  def method_missing(name, *args, **kwargs, &block)
-    return super unless @widgets__.key?(name)
-    raise ArgumentError, "widget accessor '#{name}' takes no arguments" unless
-      args.empty? && kwargs.empty? && !block
-    @widgets__[name]
-  end
-
-  def layout_into(world, **kwargs, &block)
+  def layout_into__(world, **kwargs, &block)
     Reight::Layout
       .apply(width, height, delegate: self, **kwargs, &block)
       .tap do |widgets|
         widgets.map(&:sprite).each {world.add_sprite _1 unless _1.getWorld__}
       end
+  end
+
+  def create_widget__(name, factory)
+    raise ArgumentError, "widget '#{name}' conflicts" if respond_to? name, true
+    widget = factory.is_a?(Symbol) ? __send__(factory) : factory.call
+    define_singleton_method(name) {widget}
+    widget
   end
 
 end# ViewController

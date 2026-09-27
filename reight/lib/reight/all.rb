@@ -6,6 +6,18 @@ require 'rubysketch/all'
 
 
 module Reight
+
+  # @private
+  def self.import_context_constants__(context_class)
+    reight_classes = %i[Sprite Sound]
+    context_class.constants
+      .reject {_1 =~ /__$/}
+      .reject {reight_classes.include? _1}
+      .each   {Object.const_set _1, context_class.const_get(_1)}
+    reight_classes
+      .each {Object.const_set _1, Reight.const_get(_1)}
+  end
+
   Processing.alias_snake_case_methods__ Processing, RubySketch
 
   refine Object do
@@ -16,6 +28,7 @@ module Reight
       end
     end
   end
+
 end# Reight
 
 
@@ -26,6 +39,7 @@ require 'reight/editable'
 require 'reight/history'
 require 'reight/button'
 require 'reight/label'
+require 'reight/menu'
 
 require 'reight/reight'
 require 'reight/context'

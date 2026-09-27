@@ -22,6 +22,7 @@ class Reight::SpriteEditor::AnimImageList
 
   hook :selected
   hook :add_image
+  hook :open_menu
 
   def select(image)
     return if image == @image
@@ -57,18 +58,27 @@ class Reight::SpriteEditor::AnimImageList
     end
   end
 
+  def mouse_pressed(x, y, button)
+    image, = image_at__ x, y
+    return unless image
+    selected! image
+    open_menu! x, y, image if button == RIGHT
+  end
+
   def mouse_clicked(x, y, button)
-    index, image, = image_frames
-      .map.with_index {|a, i| [i, *a]}
-      .find {|i, _, xx, yy, w, h| (xx..(xx + w)).include?(x) && (yy..(yy + h)).include?(y)}
-    if image
-      selected! image
-    elsif index
-      add_image! index
-    end
+    return unless button == LEFT
+    image, index = image_at__ x, y
+    add_image! index if !image && index
   end
 
   private
+
+  def image_at__(x, y)
+    index, image, = image_frames
+      .map.with_index {|a, i| [i, *a]}
+      .find {|i, _, xx, yy, w, h| (xx..(xx + w)).include?(x) && (yy..(yy + h)).include?(y)}
+    return image, index
+  end
 
   def image_frames()
     return [] unless @anim

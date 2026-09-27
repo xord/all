@@ -6,6 +6,8 @@ require 'xot/test'
 require 'rubysketch/all'
 require 'reight/all'
 
+Reight.import_context_constants__ RubySketch::Context
+
 require 'test/unit'
 require 'tmpdir'
 

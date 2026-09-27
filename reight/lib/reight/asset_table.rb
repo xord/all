@@ -31,6 +31,7 @@ class Reight::AssetTable
   hook :selected
   hook :add_asset
   hook :page_changed
+  hook :open_menu
 
   attr_reader :page, :npages, :size_for_new_asset
 
@@ -99,15 +100,28 @@ class Reight::AssetTable
     end
   end
 
+  def mouse_pressed(x, y, button)
+    gx, gy = to_grid__ x, y
+    asset  = @assets&.find {|a| a.hit? gx, gy}
+    return unless asset
+    select asset
+    open_menu! x, y, asset if button == RIGHT
+  end
+
   def mouse_clicked(x, y, button)
-    if asset = @assets&.find {|a| a.hit? x, y}
-      select asset
-    elsif bounds = bounds_for_new_asset__(x, y)
-      add_asset!(*bounds)
-    end
+    return unless button == LEFT
+    gx, gy = to_grid__ x, y
+    return if @assets&.any? {|a| a.hit? gx, gy}
+    bounds = bounds_for_new_asset__ x, y
+    add_asset!(*bounds) if bounds
   end
 
   private
+
+  # @private
+  def to_grid__(x, y)
+    [x - PADDING + @offset.x, y - PADDING + @offset.y]
+  end
 
   # @private
   def assets_on_page__(page)
@@ -132,8 +146,8 @@ class Reight::AssetTable
   def bounds_for_new_asset__(x, y)
     w, h = @size_for_new_asset
     return nil unless w && h
-    x, y = ((x + @offset.x) / w).to_i * w, ((y + @offset.y) / h).to_i * h
-    [x, y, w, h]
+    x, y = to_grid__ x, y
+    [(x / w).to_i * w, (y / h).to_i * h, w, h]
   end
 
 =begin

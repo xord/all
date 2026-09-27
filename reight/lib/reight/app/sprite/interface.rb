@@ -19,8 +19,6 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
             put :sprite_table_page,      Label(0, align: CENTER),  w: button
             put :sprite_table_page_next, Button(label: '>'),       w: button
             spacer
-            put :sprite_remove, Button(label: '-'),                w: button
-            space_l(-2)
             put :sprite_size,   Button(label: editor.sprite_size), w: button
           end
           space_m
@@ -41,8 +39,7 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
             put :anim_index, Button(label: 0),          w: button
             put :anim_next,  Button(label: '>'),        w: button
             space_m
-            put :anim_name,         Label(editable: true, regexp: /^\w+$/)
-            put :anim_image_remove, Button(label: '-'), w: button
+            put :anim_name, Label(editable: true, regexp: /^\w+$/)
           end
           space_m
           put :anim_images, -> {
@@ -88,6 +85,14 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
         Reight::AssetTable.new page, page, page, page
       }, at: [base.x, base.bottom + app::SPACE / 2], w: table_w, h: table_w
     end
+
+    menu :sprite_menu do
+      item :delete_sprite, 'Delete Sprite'
+    end
+
+    menu :anim_image_menu do
+      item :delete_frame, 'Delete Frame'
+    end
   end
 
   def sprite_sizes() = SPRITE_SIZES.map {widget :"sprite_size_#{_1}"}
@@ -119,10 +124,15 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
     sprite_table_page_prev.clicked  {sprite_table.page -= 1}
     sprite_table_page_next.enabled? {sprite_table.page  < sprite_table.npages - 1}
     sprite_table_page_next.clicked  {sprite_table.page += 1}
-    sprite_remove.enabled?          {e.sprites.size > 1}
-    sprite_remove.clicked           {e.remove_sprite}
     sprite_size.clicked             {select_sprite_size}
     sprite_name.changed             {e.set_sprite_name _1}
+
+    sprite_table.open_menu {|x, y| sprite_menu.popup sprite_table.sprite, x, y}
+    delete_sprite.enabled? {e.sprites.size > 1}
+    delete_sprite.clicked  {e.remove_sprite}
+
+    anim_images.open_menu {|x, y| anim_image_menu.popup anim_images.sprite, x, y}
+    delete_frame.clicked  {e.remove_anim_image}
 
     anim_prev.enabled?  {e.anim_index&.then {_1 > 0}}
     anim_prev.clicked   {e.anim_index -= 1}
@@ -134,10 +144,9 @@ class Reight::SpriteEditorInterface < Reight::AppInterface
     anim_table.selected  {e.anim = _1; close_popup}
     anim_table.add_asset {|x, y, w, h| e.add_anim x, y, w, h; close_popup}
 
-    anim_name.changed         {e.set_anim_name _1}
-    anim_image_remove.clicked {e.remove_anim_image}
-    anim_images.selected      {e.anim_image = _1}
-    anim_images.add_image     {e.add_anim_image _1}
+    anim_name.changed     {e.set_anim_name _1}
+    anim_images.selected  {e.anim_image = _1}
+    anim_images.add_image {e.add_anim_image _1}
 
     canvas.canvas_pressed  {|*a| e.tool&.canvas_pressed(*a)}
     canvas.canvas_released {|*a| e.tool&.canvas_released(*a)}

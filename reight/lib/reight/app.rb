@@ -189,7 +189,7 @@ class Reight::AppInterface < Reight::ViewController
   def apply_layout_popup__(name)
     block   = @layout_popup_blocks__[name] || (return [])
     bd      = backdrop__
-    widgets = layout_into @popup_world__ do
+    widgets = layout_into__ @popup_world__ do
       stack h: :fill do
         put bd
         instance_exec(&block)
