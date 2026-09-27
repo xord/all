@@ -66,7 +66,7 @@ static
 RUCY_DEF0(s_get_all)
 {
 	auto list = Reflex::MIDI::all() |
-		std::views::transform([](auto& ref) {return value(ref);});
+		std::views::transform([](Reflex::MIDI::Ref ref) {return value(ref);});
 	return array(list.begin(), list.end());
 }
 RUCY_END
