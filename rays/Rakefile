@@ -37,7 +37,7 @@ use_external_library 'https://github.com/andrewwillmott/splines-lib',
   commit:   '11e7240d57b0d22871aec3308186a5fcf915ba77',
   excludes: 'Test\.cpp',
   &proc {
-    filter_file('Splines.cpp') do |cpp|
+    filter_file 'Splines.cpp' do |cpp|
       <<~EOS + cpp
         #include <cstdint>
       EOS

@@ -35,7 +35,18 @@ use_external_library 'https://github.com/thestk/rtmidi',
     when linux? then '__LINUX_ALSA__'
     end
   }.call,
-  &proc {sh %( mkdir rtmidi && cp RtMidi.* rtmidi )}
+  &proc {
+    sh %( mkdir rtmidi && cp RtMidi.* rtmidi )
+
+    # the event loop of the app already takes in the port changes, and running
+    # it from inside RtMidi calls the timers and events of the app too early
+    spin = /^[ \t]*CFRunLoopRunInMode\([^)]*\);\n/
+    filter_file 'rtmidi/RtMidi.cpp' do |src|
+      count = src.scan(spin).size
+      raise "expected 6 run loop calls in RtMidi.cpp, found #{count}" if count != 6
+      src.gsub spin, ''
+    end
+  }
 
 default_tasks :ext
 use_bundler
