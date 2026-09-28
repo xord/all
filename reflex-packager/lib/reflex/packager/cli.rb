@@ -63,10 +63,11 @@ module Reflex
       def package(argv)
         profile      = @profile
         argv, params = parse argv, "Usage: #{profile.command} package [options] [DIR]" do
-          on '--platform PLATFORM', 'target platform (default: macos)'
-          on '--config PATH',       "config file path (default: DIR/#{profile.config_files.first})"
-          on '--generate-only',     'generate project files but do not build'
-          on '--verbose',           'verbose output'
+          on '--platform PLATFORM',
+            "target platform: #{PLATFORMS.keys.join ' or '} (default: macos)"
+          on '--config PATH',   "config file path (default: DIR/#{profile.config_files.first})"
+          on '--generate-only', 'generate project files but do not build'
+          on '--verbose',       'verbose output'
         end
 
         dir      = argv.shift || '.'

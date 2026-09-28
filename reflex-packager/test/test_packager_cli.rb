@@ -71,6 +71,14 @@ class TestPackagerCLI < Test::Unit::TestCase
 
     tmpdir do
       capture {cli.create ['myapp']}
+      cli.package ['--generate-only', '--platform', 'windows', 'myapp']
+      %w[src/main.cpp boot.rb app/main.rb libs/Reflex/lib/reflex.rb].each do |f|
+        assert File.exist?("myapp/.build/windows/#{f}"), "missing #{f}"
+      end
+    end
+
+    tmpdir do
+      capture {cli.create ['myapp']}
       assert_raise(RP::Error) do
         cli.package ['--generate-only', '--platform', 'unknown', 'myapp']
       end

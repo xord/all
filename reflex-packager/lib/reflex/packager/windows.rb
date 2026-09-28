@@ -40,10 +40,13 @@ module Reflex
         'reflex' => %w[glew32.dll]
       }
 
-      # Bundled gems the libraries require. Unlike default gems they are not
+      # Bundled gems each library requires. Unlike default gems they are not
       # in the standard library directory, so they are shipped as libraries.
       #
-      BUNDLED_GEMS = %w[ostruct rexml]
+      BUNDLED_GEMS = {
+        'xot'        => %w[ostruct],
+        'processing' => %w[rexml]
+      }
 
       # Left out when copying a library: a gem build leaves its binaries in
       # lib/, and the extension must not be there in particular, since Ruby
@@ -122,6 +125,10 @@ module Reflex
         native_libraries.flat_map {SYSTEM_DLLS[_1.downcase] || []}.uniq
       end
 
+      def bundled_gems()
+        profile.libraries.flat_map {BUNDLED_GEMS[_1.downcase] || []}.uniq
+      end
+
       def compiler(rbconfig = RbConfig::CONFIG)
         # may carry flags, e.g. 'g++ -std=gnu++11'
         rbconfig['CXX'].shellsplit
@@ -193,7 +200,7 @@ module Reflex
       # default gems in this Ruby, which are in the standard library already.
       #
       def bundled_gem_dirs()
-        @bundled_gem_dirs ||= BUNDLED_GEMS.each.with_object({}) do |name, dirs|
+        @bundled_gem_dirs ||= bundled_gems.each.with_object({}) do |name, dirs|
           spec = Gem::Specification.find_by_name name
           dirs[name] = spec.full_require_paths.first unless spec.default_gem?
         rescue Gem::MissingSpecError
