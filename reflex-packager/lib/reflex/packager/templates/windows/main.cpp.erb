@@ -1,0 +1,47 @@
+// -*- mode: c++ -*-
+#include <ruby.h>
+#include <windows.h>
+#include <string>
+#include <vector>
+
+
+extern "C"
+{
+	void ruby_init_ext (const char* name, void (*init)(void));
+<%- extensions.each do |ext| -%>
+	void Init_<%= ext %> ();
+<%- end -%>
+}
+
+
+static std::string
+boot_script ()
+{
+	std::wstring path(32768, L'\0');
+	path.resize(GetModuleFileNameW(NULL, &path[0], (DWORD) path.size()));
+	path.erase(path.find_last_of(L"\\/") + 1);
+	path += L"boot.rb";
+
+	int size = WideCharToMultiByte(CP_UTF8, 0, path.c_str(), -1, NULL, 0, NULL, NULL);
+	std::string utf8(size, '\0');
+	WideCharToMultiByte(CP_UTF8, 0, path.c_str(), -1, &utf8[0], size, NULL, NULL);
+	utf8.resize(size - 1);
+	return utf8;
+}
+
+int
+main (int argc, char** argv)
+{
+	ruby_sysinit(&argc, &argv);
+	RUBY_INIT_STACK;
+	ruby_init();
+
+<%- extensions.each do |ext| -%>
+	ruby_init_ext("<%= ext %>.so", Init_<%= ext %>);
+<%- end -%>
+
+	std::string boot = boot_script();
+	std::vector<char*> args = {argv[0], &boot[0]};
+	args.insert(args.end(), argv + 1, argv + argc);
+	return ruby_run_node(ruby_options((int) args.size(), args.data()));
+}
