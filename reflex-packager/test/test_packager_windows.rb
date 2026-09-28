@@ -255,7 +255,7 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
-  def test_system_libs_and_dlls()
+  def test_system_libs_dlls_and_bundled_gems()
     packager profile: profile(libraries: [], extensions: []) do |pkg, _|
       pkg.define_singleton_method(:native_libraries) {%w[Xot Rucy Beeps Rays Reflex]}
       libs = pkg.system_libs
@@ -263,6 +263,14 @@ class TestPackagerWindows < Test::Unit::TestCase
       assert_include libs, 'xinput1_4'
       assert_equal 1, libs.count('glew32')
       assert_equal %w[libopenal-1.dll glew32.dll], pkg.system_dlls
+    end
+
+    reflex = %w[Xot Rucy Rays Reflex]
+    packager profile: profile(libraries: reflex, extensions: []) do |pkg, _|
+      assert_equal %w[ostruct],       pkg.bundled_gems
+    end
+    packager profile: profile(libraries: reflex + %w[Processing], extensions: []) do |pkg, _|
+      assert_equal %w[ostruct rexml], pkg.bundled_gems
     end
   end
 
