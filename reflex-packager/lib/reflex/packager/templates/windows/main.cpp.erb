@@ -20,7 +20,7 @@ boot_script ()
 	std::wstring path(32768, L'\0');
 	path.resize(GetModuleFileNameW(NULL, &path[0], (DWORD) path.size()));
 	path.erase(path.find_last_of(L"\\/") + 1);
-	path += L"boot.rb";
+	path += L"lib\\boot.rb";
 
 	int size = WideCharToMultiByte(CP_UTF8, 0, path.c_str(), -1, NULL, 0, NULL, NULL);
 	std::string utf8(size, '\0');
