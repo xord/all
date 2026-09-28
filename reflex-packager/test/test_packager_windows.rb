@@ -171,12 +171,30 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include str, '<activeCodePage '
         assert_include str, '>UTF-8<'
 
-        assert_include read(dir, 'src/app.rc'), %(1 24 "app.manifest")
+        rc = read dir, 'src/app.rc'
+        assert_include     rc, %(1 24 "app.manifest")
+        assert_not_include rc, 'ICON'
+        assert !File.exist?(build_path dir, 'src/app.ico')
       end
       packager do |pkg, _|
         assert_equal '0.1.0.0', pkg.manifest_version
         # templates see the packager and what render is given, nothing else
         assert_empty pkg.__send__(:template_binding).local_variables
+      end
+
+      # the icon: drawn by rays at each size, so fake the pngs here
+      pngs = [[16, "\x89PNG16".b], [256, "éPNG256"]]
+      packager "icon: icon.png", files: {'main.rb' => '', 'icon.png' => ''} do |pkg, dir|
+        pkg.define_singleton_method(:icon_pngs) {pngs}
+        pkg.generate
+        assert_include read(dir, 'src/app.rc'), %(1 ICON "app.ico")
+
+        ico  = File.binread build_path(dir, 'src/app.ico')
+        a, b = pngs.map {_1.last.bytesize}
+        assert_equal [0, 1, 2],                         ico[0,  6].unpack('v3')
+        assert_equal [16, 16, 0, 0, 1, 32, a, 38],      ico[6,  16].unpack('C4v2V2')
+        assert_equal [0,  0,  0, 0, 1, 32, b, 38 + a],  ico[22, 16].unpack('C4v2V2')
+        assert_equal pngs.map {_1.last.b}.join,         ico[38..]
       end
     end
   end

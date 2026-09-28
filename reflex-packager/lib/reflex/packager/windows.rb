@@ -62,6 +62,10 @@ module Reflex
       #
       BINARY_EXTS = %w[.so .dll .a .o .bundle]
 
+      # Sizes of the icon of the executable, one image each in the ICO.
+      #
+      ICON_SIZES = [16, 32, 48, 256]
+
       def generate()
         copy_app_files
         copy_libraries
@@ -69,6 +73,37 @@ module Reflex
         write 'src/app.manifest', render('app.manifest.erb')
         write 'src/app.rc',       render('app.rc.erb')
         write 'lib/boot.rb',      render('boot.rb.erb')
+        generate_icon if config.icon
+      end
+
+      def generate_icon()
+        File.binwrite File.join(build_dir, 'src', 'app.ico'), Windows.ico(icon_pngs)
+      end
+
+      # [[size, png], ...] of the icon drawn at each size with Rays.
+      #
+      def icon_pngs()
+        require 'rays'
+        icon = Rays::Image.load File.join(config.dir, config.icon), smooth: true
+        ICON_SIZES.map do |size|
+          path = File.join build_dir, 'src', "icon_#{size}.png"
+          Rays::Image.new(size, size).paint {|p| p.image icon, 0, 0, size, size}.save path
+          [size, File.binread(path)]
+        end
+      end
+
+      # An ICO of the PNGs: ICONDIR, an ICONDIRENTRY per image, then the
+      # images. Windows takes PNG images in an ICO since Vista, and a size of
+      # 256 is written as 0.
+      #
+      def self.ico(pngs)
+        offset  = 6 + 16 * pngs.size
+        entries = pngs.map do |size, png|
+          entry   = [size % 256, size % 256, 0, 0, 1, 32, png.bytesize, offset].pack 'C4v2V2'
+          offset += png.bytesize
+          entry
+        end
+        [[0, 1, pngs.size].pack('v3'), *entries, *pngs.map {_1.last.b}].join
       end
 
       def build()
