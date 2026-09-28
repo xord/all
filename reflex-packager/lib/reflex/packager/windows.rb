@@ -22,6 +22,14 @@ module Reflex
 
       TOOLCHAIN_HINT = 'install RubyInstaller with the MSYS2 DevKit (ridk install)'
 
+      # The dlls the executable loads go in this directory, which is a
+      # private assembly of the same name that the manifest embedded in the
+      # executable depends on. Having the ruby dll in bin/ also makes the
+      # parent directory the prefix, where Ruby looks for lib/ruby.
+      #
+      RUNTIME_DIR     = 'bin'
+      RUNTIME_VERSION = '1.0.0.0'
+
       # System libraries each native library links, as its extconf has them.
       #
       SYSTEM_LIBS = {
@@ -57,15 +65,22 @@ module Reflex
       def generate()
         copy_app_files
         copy_libraries
-        write 'src/main.cpp', render('main.cpp.erb')
-        write 'boot.rb',      render('boot.rb.erb')
+        write 'src/main.cpp',     render('main.cpp.erb')
+        write 'src/app.manifest', render('app.manifest.erb')
+        write 'src/app.rc',       render('app.rc.erb')
+        write 'lib/boot.rb',      render('boot.rb.erb')
       end
 
       def build()
         enable_toolchain
-        check_tools compiler.first => TOOLCHAIN_HINT
+        check_tools tools
+        run 'windres', 'app.rc', '-o', 'app.res.o', chdir: File.join(build_dir, 'src')
         run(*link_command, chdir: build_dir)
         copy_dist
+      end
+
+      def tools()
+        {compiler.first => TOOLCHAIN_HINT, 'windres' => TOOLCHAIN_HINT}
       end
 
       # Native extensions registered with ruby_init_ext (Init_<name> symbols).
@@ -78,10 +93,11 @@ module Reflex
         profile.boot_main || config.main
       end
 
-      # Directory names under libs/ put on the load path by boot.rb.
+      # Directory names under lib/ put on the load path by boot.rb: the
+      # libraries by their repository names, then the bundled gems.
       #
       def lib_names()
-        [*library_roots.keys, *bundled_gem_dirs.keys]
+        [*library_roots.keys.map(&:downcase), *bundled_gem_dirs.keys]
       end
 
       # Root directories of the libraries in the profile, by library name.
@@ -125,8 +141,20 @@ module Reflex
         native_libraries.flat_map {SYSTEM_DLLS[_1.downcase] || []}.uniq
       end
 
+      # DLLs the executable loads from bin/, listed in its manifest.
+      #
+      def runtime_dlls(rbconfig = RbConfig::CONFIG)
+        [rbconfig['LIBRUBY_SO'], *system_dlls]
+      end
+
       def bundled_gems()
         profile.libraries.flat_map {BUNDLED_GEMS[_1.downcase] || []}.uniq
+      end
+
+      # The app version as the four numbers an assembly version has to be.
+      #
+      def manifest_version()
+        (config.version.split('.').first(4) + %w[0 0 0 0]).first(4).join '.'
       end
 
       def compiler(rbconfig = RbConfig::CONFIG)
@@ -139,7 +167,7 @@ module Reflex
       #
       def link_command(rbconfig = RbConfig::CONFIG)
         [
-          *compiler(rbconfig), 'src/main.cpp', '-o', "#{target}.exe",
+          *compiler(rbconfig), 'src/main.cpp', 'src/app.res.o', '-o', "#{target}.exe",
           "-I#{rbconfig['rubyhdrdir']}", "-I#{rbconfig['rubyarchhdrdir']}",
           *ext_objects,
           '-Wl,--whole-archive', *static_archives, '-Wl,--no-whole-archive',
@@ -154,26 +182,30 @@ module Reflex
         ]
       end
 
-      # Copies what the executable needs from the Ruby it was built with.
+      # Copies what the executable needs from the Ruby it was built with:
+      # the dlls into bin/, the standard library into lib/ruby.
       #
       def copy_runtime(dest, rbconfig = RbConfig::CONFIG)
+        bin    = File.join dest, RUNTIME_DIR
         bindir = rbconfig['bindir']
-        FileUtils.cp File.join(bindir, rbconfig['LIBRUBY_SO']), dest
+        FileUtils.mkdir_p bin
+        FileUtils.cp File.join(bindir, rbconfig['LIBRUBY_SO']), bin
 
         # the ruby dll finds these through the manifest in the directory, so
         # the directory has to come along as it is
         builtin = File.join bindir, 'ruby_builtin_dlls'
-        FileUtils.cp_r builtin, dest if File.directory? builtin
-
-        # found relative to the ruby dll, which becomes the prefix
-        stdlib = File.join dest, 'lib', 'ruby'
-        FileUtils.mkdir_p stdlib
-        FileUtils.cp_r File.join(rbconfig['rubylibprefix'], rbconfig['ruby_version']), stdlib
+        FileUtils.cp_r builtin, bin if File.directory? builtin
 
         system_dlls.each do |dll|
           path = find_in_path(dll) or raise Error, "'#{dll}' not found in PATH"
-          FileUtils.cp path, dest
+          FileUtils.cp path, bin
         end
+        File.write File.join(bin, "#{RUNTIME_DIR}.manifest"),
+          render('bin.manifest.erb', dlls: runtime_dlls(rbconfig))
+
+        stdlib = File.join dest, 'lib', 'ruby'
+        FileUtils.mkdir_p stdlib
+        FileUtils.cp_r File.join(rbconfig['rubylibprefix'], rbconfig['ruby_version']), stdlib
       end
 
       private
@@ -209,10 +241,10 @@ module Reflex
       end
 
       def copy_libraries()
-        dir = File.join build_dir, 'libs'
+        dir = File.join build_dir, 'lib'
         FileUtils.rm_rf dir
         library_roots.each do |name, root|
-          dest = File.join dir, name
+          dest = File.join dir, name.downcase
           copy_tree File.join(root, 'lib'), File.join(dest, 'lib')
           %w[VERSION res].map {File.join root, _1}.select {File.exist? _1}.each do |path|
             FileUtils.mkdir_p dest
@@ -238,7 +270,7 @@ module Reflex
         dist = File.join dist_dir, target
         FileUtils.rm_rf dist
         FileUtils.mkdir_p dist
-        %W[#{target}.exe boot.rb app libs].each do |path|
+        %W[#{target}.exe app lib].each do |path|
           FileUtils.cp_r File.join(build_dir, path), dist
         end
         copy_runtime dist

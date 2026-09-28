@@ -102,10 +102,10 @@ class TestPackagerWindows < Test::Unit::TestCase
       packager do |pkg, dir|
         pkg.generate
         %w[
-          src/main.cpp boot.rb app/main.rb
-          libs/FakeBase/lib/fakebase.rb
-          libs/FakeNative/lib/fakenative.rb libs/FakeNative/lib/fakenative/sub.rb
-          libs/FakePure/lib/fakepure.rb
+          src/main.cpp src/app.manifest src/app.rc lib/boot.rb app/main.rb
+          lib/fakebase/lib/fakebase.rb
+          lib/fakenative/lib/fakenative.rb lib/fakenative/lib/fakenative/sub.rb
+          lib/fakepure/lib/fakepure.rb
         ].each do |path|
           assert File.exist?(build_path dir, path), "missing #{path}"
         end
@@ -118,9 +118,9 @@ class TestPackagerWindows < Test::Unit::TestCase
       packager do |pkg, dir|
         pkg.generate
         # a rays_ext.so on the load path would win over the one linked in
-        files = Dir.glob('**/*', base: build_path(dir, 'libs'))
+        files = Dir.glob('**/*', base: build_path(dir, 'lib'))
         assert_empty files.grep(/\.(so|a|o)\z/)
-        assert_not_include files, 'FakeNative/ext'
+        assert_not_include files, 'fakenative/ext'
       end
     end
   end
@@ -130,8 +130,8 @@ class TestPackagerWindows < Test::Unit::TestCase
       packager do |pkg, dir|
         pkg.generate
         # Extension.version reads VERSION and reight finds res/ from lib/
-        assert File.exist?(build_path dir, 'libs/FakeNative/VERSION')
-        assert File.exist?(build_path dir, 'libs/FakePure/res/icon.png')
+        assert File.exist?(build_path dir, 'lib/fakenative/VERSION')
+        assert File.exist?(build_path dir, 'lib/fakepure/res/icon.png')
       end
     end
   end
@@ -141,8 +141,8 @@ class TestPackagerWindows < Test::Unit::TestCase
       gems = {'fakegem' => File.join(root, 'FakePure', 'lib')}
       packager bundled_gems: gems do |pkg, dir|
         pkg.generate
-        assert File.exist?(build_path dir, 'libs/fakegem/lib/fakepure.rb')
-        assert_equal %w[FakeBase FakeNative FakePure fakegem], pkg.lib_names
+        assert File.exist?(build_path dir, 'lib/fakegem/lib/fakepure.rb')
+        assert_equal %w[fakebase fakenative fakepure fakegem], pkg.lib_names
       end
     end
   end
@@ -154,14 +154,29 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
-  def test_main_cpp()
+  def test_main_cpp_manifest_and_rc()
     fake_libs do
-      packager do |pkg, dir|
+      packager "version: 1.2.3.4.5" do |pkg, dir|
         pkg.generate
         str = read dir, 'src/main.cpp'
         assert_include str, 'void Init_fakenative_ext ();'
         assert_include str, 'ruby_init_ext("fakenative_ext.so", Init_fakenative_ext);'
-        assert_include str, 'L"boot.rb"'
+        assert_include str, 'L"lib\\\\boot.rb"'
+
+        str = read dir, 'src/app.manifest'
+        assert_include str, %(name="#{pkg.target}" version="1.2.3.4")
+        assert_include str, '<dependentAssembly>'
+        assert_include str, %(name="bin" version="1.0.0.0")
+        assert_include str, '<supportedOS '
+        assert_include str, '<activeCodePage '
+        assert_include str, '>UTF-8<'
+
+        assert_include read(dir, 'src/app.rc'), %(1 24 "app.manifest")
+      end
+      packager do |pkg, _|
+        assert_equal '0.1.0.0', pkg.manifest_version
+        # templates see the packager and what render is given, nothing else
+        assert_empty pkg.__send__(:template_binding).local_variables
       end
     end
   end
@@ -174,13 +189,13 @@ class TestPackagerWindows < Test::Unit::TestCase
     fake_libs do
       packager files: {'main.rb' => main} do |pkg, dir|
         pkg.generate
-        assert system(RbConfig.ruby, build_path(dir, 'boot.rb'))
+        assert system(RbConfig.ruby, build_path(dir, 'lib/boot.rb'))
 
         pwd, *paths = read(dir, 'result').lines chomp: true
         assert_equal File.realpath(build_path dir, 'app'), File.realpath(pwd)
         assert_equal pwd, paths.first
-        assert_equal %w[FakeBase FakeNative FakePure],
-          paths[1..].map {File.basename File.dirname(_1)}
+        assert_equal %w[lib/fakebase/lib lib/fakenative/lib lib/fakepure/lib],
+          paths[1..].map {_1.split('/').last(3).join '/'}
       end
     end
   end
@@ -189,7 +204,7 @@ class TestPackagerWindows < Test::Unit::TestCase
     fake_libs do
       packager profile: profile(boot: "puts 1\n") do |pkg, dir|
         pkg.generate
-        assert_include read(dir, 'boot.rb'), '"__reflex_main__.rb"'
+        assert_include read(dir, 'lib/boot.rb'), '"__reflex_main__.rb"'
         assert_equal "puts 1\n", read(dir, 'app/__reflex_main__.rb')
       end
     end
@@ -209,11 +224,11 @@ class TestPackagerWindows < Test::Unit::TestCase
     fake_libs do |root|
       packager do |pkg, _|
         cmd = pkg.link_command RBCONFIG
-        assert_equal %w[g++ -std=gnu++11 src/main.cpp -o], cmd.first(4)
-        assert_equal "#{pkg.target}.exe", cmd[4]
+        assert_equal %w[g++ -std=gnu++11 src/main.cpp src/app.res.o -o], cmd.first(5)
+        assert_equal "#{pkg.target}.exe", cmd[5]
 
         objs = %w[a.o b.o].map {File.join root, 'FakeNative/ext/fakenative', _1}
-        assert_equal objs, cmd.select {_1.end_with? '.o'}
+        assert_equal objs, cmd.grep(/\.o\z/) - %w[src/app.res.o]
 
         # every object of the archives, the ones depending on others first
         from, to = cmd.index('-Wl,--whole-archive'), cmd.index('-Wl,--no-whole-archive')
@@ -274,10 +289,16 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
-  def test_compiler_splits_flags()
+  def test_compiler_and_tools()
     packager profile: profile(libraries: [], extensions: []) do |pkg, _|
       assert_equal %w[g++ -std=gnu++11], pkg.compiler(RBCONFIG)
       assert_equal %w[g++],              pkg.compiler('CXX' => 'g++')
+
+      with_env 'PATH' => '' do
+        error = assert_raise(RP::Error) {pkg.__send__ :check_tools, pkg.tools}
+        assert_include error.message, 'windres'
+        assert_include error.message, Windows::TOOLCHAIN_HINT
+      end
     end
   end
 
@@ -315,17 +336,23 @@ class TestPackagerWindows < Test::Unit::TestCase
           pkg.copy_runtime dir, rbconfig
         end
         %w[
-          x64-ucrt-ruby400.dll
-          ruby_builtin_dlls/ruby_builtin_dlls.manifest
-          ruby_builtin_dlls/libgmp-10.dll
+          bin/x64-ucrt-ruby400.dll
+          bin/ruby_builtin_dlls/ruby_builtin_dlls.manifest
+          bin/ruby_builtin_dlls/libgmp-10.dll
+          bin/glew32.dll
+          bin/bin.manifest
           lib/ruby/4.0.0/json.rb
           lib/ruby/4.0.0/x64-mingw-ucrt/json/ext/parser.so
-          glew32.dll
         ].each do |path|
           assert File.exist?(File.join dir, path), "missing #{path}"
         end
         # the ruby dll resolves them through the manifest in the directory
-        assert !File.exist?(File.join dir, 'libgmp-10.dll')
+        assert !File.exist?(File.join dir, 'bin/libgmp-10.dll')
+
+        manifest = File.read File.join(dir, 'bin/bin.manifest')
+        assert_include manifest, %(name="bin" version="1.0.0.0")
+        assert_equal %w[x64-ucrt-ruby400.dll glew32.dll],
+          manifest.scan(/<file name="(.+?)"/).flatten
       end
     end
   end

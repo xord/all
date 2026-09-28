@@ -74,9 +74,21 @@ module Reflex
         File.write path, content
       end
 
-      def render(template)
+      # Renders the template with the packager's methods, and +vars+ as
+      # local variables.
+      #
+      def render(template, **vars)
         path = File.join TEMPLATES_DIR, platform_name, template
-        ERB.new(File.read(path), trim_mode: '-').result binding
+        b    = template_binding
+        vars.each {|name, value| b.local_variable_set name, value}
+        ERB.new(File.read(path), trim_mode: '-').result b
+      end
+
+      # A binding with the packager's methods and nothing else: a template
+      # sees every local variable of the method its binding is made in.
+      #
+      def template_binding()
+        binding
       end
 
       def run(*cmd, chdir:, env: {})

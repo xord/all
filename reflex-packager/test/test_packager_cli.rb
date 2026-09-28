@@ -72,7 +72,7 @@ class TestPackagerCLI < Test::Unit::TestCase
     tmpdir do
       capture {cli.create ['myapp']}
       cli.package ['--generate-only', '--platform', 'windows', 'myapp']
-      %w[src/main.cpp boot.rb app/main.rb libs/Reflex/lib/reflex.rb].each do |f|
+      %w[src/main.cpp src/app.manifest lib/boot.rb app/main.rb lib/reflex/lib/reflex.rb].each do |f|
         assert File.exist?("myapp/.build/windows/#{f}"), "missing #{f}"
       end
     end
