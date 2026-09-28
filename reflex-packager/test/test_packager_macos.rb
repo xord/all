@@ -99,6 +99,23 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_executable_tries_pathext()
+    packager do |pkg, _|
+      Dir.mktmpdir do |bin|
+        FileUtils.touch File.join(bin, 'tool.EXE')
+        File.chmod 0755, File.join(bin, 'tool.EXE')
+        with_env 'PATH' => bin, 'PATHEXT' => nil do
+          assert !pkg.__send__(:executable?, 'tool')
+        end
+        with_env 'PATH' => bin, 'PATHEXT' => '.COM;.EXE' do
+          assert  pkg.__send__(:executable?, 'tool')
+          assert  pkg.__send__(:executable?, :tool)
+          assert !pkg.__send__(:executable?, 'other')
+        end
+      end
+    end
+  end
+
   # Runs the block with a packager whose CRuby / Reflex pods resolve to
   # local directories under +repos+ (via REFLEX_PODS_PATH).
   def with_pods(repos, &block)
