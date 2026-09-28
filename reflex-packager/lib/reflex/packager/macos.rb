@@ -44,13 +44,6 @@ module Reflex
         copy_app
       end
 
-      # Returns the Xcode target name: the app name without characters
-      # unsafe for target/scheme/file names.
-      #
-      def target()
-        config.name.gsub(/[^A-Za-z0-9_\-]+/, '').then {_1.empty? ? 'App' : _1}
-      end
-
       # Native extensions registered with CRuby (Init_<name> symbols).
       #
       def extensions()

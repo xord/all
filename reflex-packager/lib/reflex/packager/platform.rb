@@ -46,6 +46,13 @@ module Reflex
         File.join config.dir, 'dist'
       end
 
+      # Returns the app name without characters unsafe for target, scheme or
+      # file names.
+      #
+      def target()
+        config.name.gsub(/[^A-Za-z0-9_\-]+/, '').then {_1.empty? ? 'App' : _1}
+      end
+
       private
 
       def copy_app_files()
@@ -86,9 +93,14 @@ module Reflex
         raise Error, "required tools not found:\n#{list.join "\n"}"
       end
 
+      # Windows finds 'g++' as 'g++.exe' through PATHEXT, which is separated
+      # by ';' whatever the platform.
+      #
       def executable?(name)
-        ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
-          .any? {|dir| File.executable? File.join(dir, name.to_s)}
+        exts = ['', *ENV['PATHEXT'].to_s.split(';')]
+        ENV['PATH'].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+          exts.any? {|ext| File.executable? File.join(dir, "#{name}#{ext}")}
+        end
       end
 
     end# Platform
