@@ -4,8 +4,10 @@
 #include <xot/windows.h>
 #include <imm.h>
 #include <dwmapi.h>
+#include <shellapi.h>
 
 #include <assert.h>
+#include <limits.h>
 #include <map>
 #include <memory>
 #include <xot/time.h>
@@ -926,6 +928,22 @@ namespace Reflex
 	}
 
 	static void
+	load_app_icons (HICON* large, HICON* small)
+	{
+		// the icons Explorer shows for the host executable, if it has any;
+		// NULL leaves the window with the default icon
+		*large = *small = NULL;
+
+		wchar_t path[32768];
+		if (GetModuleFileNameW(NULL, path, sizeof(path) / sizeof(path[0])) == 0)
+			return;
+
+		UINT n = ExtractIconExW(path, 0, large, small, 1);
+		if (n == 0 || n == UINT_MAX)
+			*large = *small = NULL;
+	}
+
+	static void
 	register_windowclass ()
 	{
 		static bool registered = false;
@@ -933,18 +951,17 @@ namespace Reflex
 
 		WNDCLASSEXW wc;
 		memset(&wc, 0, sizeof(wc));
-
 		wc.cbSize        = sizeof(wc);
 		wc.lpszClassName = WINDOWCLASS;
 		wc.lpfnWndProc   = (WNDPROC) wndproc;
 		wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
 		wc.hInstance     = GetModuleHandleW(NULL);
-		//wc.hIcon         = LoadIconW(wc.hInstance, IDI_APP_LARGE);
-		//wc.hIconSm       = LoadIconW(wc.hInstance, IDI_APP_SMALL);
 		wc.hCursor       = LoadCursorW(NULL, (LPCWSTR) IDC_ARROW);
 		wc.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
 		wc.lpszMenuName  = NULL;
 		wc.cbWndExtra    = sizeof(Window*);
+
+		load_app_icons(&wc.hIcon, &wc.hIconSm);
 
 		if (!RegisterClassExW(&wc))
 			system_error(__FILE__, __LINE__);
