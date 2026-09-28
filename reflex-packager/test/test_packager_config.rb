@@ -219,6 +219,18 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config(macos: {codesign: {team_id: {}}})}
   end
 
+  def test_windows_console()
+    assert_equal false,      config()                         .windows.console?
+    assert_equal false,      config(windows: {})              .windows.console?
+    assert_equal false,      config(windows: nil)             .windows.console?
+    assert_equal false,      config(windows: {console: nil})  .windows.console?
+    assert_equal true,       config(windows: {console: true}) .windows.console?
+    assert_equal false,      config(windows: {console: false}).windows.console?
+    assert_raise(RP::Error) {config(windows: 1)}
+    assert_raise(RP::Error) {config(windows: {console: 'yes'})}
+    assert_raise(RP::Error) {config(windows: {console: {}})}
+  end
+
   def test_warn_unknown_key()
     e = stderr
 
