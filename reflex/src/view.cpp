@@ -378,10 +378,13 @@ namespace Reflex
 			add_flag(SORT_CHILDREN);
 		}
 
-		void update_children_for_loop ()
+		void update_children_for_loop (View* view)
 		{
-			if (has_flag(SORT_CHILDREN) && loop_depth == 0)
-				do_sort_children();
+			if (!has_flag(SORT_CHILDREN) || loop_depth != 0)
+				return;
+
+			do_sort_children();
+			view->redraw();
 		}
 
 		void add_flag (uint flag)
@@ -1261,7 +1264,7 @@ namespace Reflex
 
 		View::Data* self = view->self.get();
 
-		self->update_children_for_loop();
+		self->update_children_for_loop(view);
 
 		fire_timers(view, event.now());
 
@@ -1865,13 +1868,14 @@ namespace Reflex
 	void
 	View::redraw ()
 	{
-		if (self->has_flag(Data::REDRAW))
+		View* parent = self->parent;
+		if (self->has_flag(Data::REDRAW) && (!parent || parent->self->has_flag(Data::REDRAW)))
 			return;
 
 		self->add_flag(Data::REDRAW);
 
-		if (self->parent)
-			self->parent->redraw();
+		if (parent)
+			parent->redraw();
 		else if (self->window)
 			self->window->redraw();
 	}
