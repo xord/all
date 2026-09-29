@@ -428,11 +428,8 @@ ReflexViewController_get_show_fun ()
 
 		Window_call_update_event(win);
 
-		if (win->self->redraw)
-		{
+		if (Xot::check_and_remove_flag(&win->self->flags, Reflex::Window::Data::REDRAW))
 			[self.reflexView setNeedsDisplay];
-			win->self->redraw = false;
-		}
 	}
 
 	- (void) glkView: (GLKView*) view drawInRect: (CGRect) rect

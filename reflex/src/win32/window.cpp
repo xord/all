@@ -390,7 +390,7 @@ namespace Reflex
 
 		Window_call_update_event(win);
 
-		if (self->redraw)
+		if (Xot::check_and_remove_flag(&self->flags, Window::Data::REDRAW))
 		{
 			#if 1
 				InvalidateRect(self->hwnd, NULL, FALSE);
@@ -398,8 +398,6 @@ namespace Reflex
 				RedrawWindow(
 					self->hwnd, NULL, NULL, RDW_ERASE |  RDW_INVALIDATE | EDW_ALLCHILDREN);
 			#endif
-
-			self->redraw = false;
 		}
 	}
 

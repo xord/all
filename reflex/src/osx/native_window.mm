@@ -252,11 +252,8 @@ move_to_main_screen_origin (NativeWindow* window)
 
 		Window_call_update_event(win);
 
-		if (win->self->redraw)
-		{
+		if (Xot::check_and_remove_flag(&win->self->flags, Reflex::Window::Data::REDRAW))
 			view.needsDisplay = YES;
-			win->self->redraw = false;
-		}
 	}
 
 	- (void) draw

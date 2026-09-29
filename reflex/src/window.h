@@ -44,15 +44,15 @@ namespace Reflex
 
 			ACTIVE                  = Xot::bit(1, FLAG_LAST),
 
-			POINTER_THROUGH_PAUSED  = Xot::bit(2, FLAG_LAST),
+			REDRAW                  = Xot::bit(2, FLAG_LAST),
 
-			POINTER_THROUGH_ENTERED = Xot::bit(3, FLAG_LAST),
+			POINTER_THROUGH_PAUSED  = Xot::bit(3, FLAG_LAST),
+
+			POINTER_THROUGH_ENTERED = Xot::bit(4, FLAG_LAST),
 
 		};// Flag
 
 		int hide_count = 1;
-
-		bool redraw    = true;
 
 		uint flags;
 

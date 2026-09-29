@@ -29,7 +29,7 @@ namespace Reflex
 
 
 	Window::Data::Data ()
-	:	flags(Window_default_flags())
+	:	flags(Window_default_flags() | REDRAW)
 	{
 		prev_time_update = prev_time_draw = Xot::time();
 	}
@@ -1430,7 +1430,7 @@ namespace Reflex
 	void
 	Window::redraw ()
 	{
-		self->redraw = true;
+		Xot::add_flag(&self->flags, Data::REDRAW);
 	}
 
 	Point
@@ -1519,9 +1519,13 @@ namespace Reflex
 		return self->pointer_through_alpha;
 	}
 
+	static const uint PUBLIC_FLAGS = (Window::FLAG_LAST << 1) - 1;
+
 	void
 	Window::set_flags (uint flags)
 	{
+		flags &= PUBLIC_FLAGS;
+		flags |= self->flags & ~PUBLIC_FLAGS;
 		if (flags == self->flags)
 			return;
 
@@ -1534,7 +1538,7 @@ namespace Reflex
 	uint
 	Window::flags () const
 	{
-		return self->flags;
+		return self->flags & PUBLIC_FLAGS;
 	}
 
 	void
@@ -1556,7 +1560,7 @@ namespace Reflex
 	bool
 	Window::has_flag (uint flags) const
 	{
-		return Xot::has_flag(self->flags, flags);
+		return Xot::has_flag(this->flags(), flags);
 	}
 
 	Screen
