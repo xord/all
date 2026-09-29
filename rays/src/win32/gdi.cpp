@@ -2,6 +2,7 @@
 
 
 #include <assert.h>
+#include <math.h>
 #include <string>
 #include <vector>
 
@@ -237,15 +238,8 @@ namespace Rays
 				logfont.lfFaceName[LF_FACESIZE - 1] = L'\0';
 			}
 
-			if (size == 0)
-				logfont.lfHeight = 0;
-			else
-			{
-				logfont.lfHeight = -MulDiv(
-					size,
-					GetDeviceCaps(screen_dc().handle(), LOGPIXELSY),
-					72);
-			}
+			logfont.lfHeight = size == 0 ? 0 : -(LONG) fmax(1, round(size));
+
 			if (weight == 0) weight = 1;// 0 == FW_DONTCARE
 			if (weight >= 0) logfont.lfWeight = weight;
 			if (italic)      logfont.lfItalic = TRUE;
@@ -343,17 +337,7 @@ namespace Rays
 			if (GetObjectW(self->handle.handle(), size, &logfont) != size)
 				return 0;
 
-			if (logfont.lfHeight >= 0)
-				return logfont.lfHeight;
-
-			if (logfont.lfHeight < 0)
-			{
-				return -MulDiv(
-					logfont.lfHeight, 72,
-					GetDeviceCaps(screen_dc().handle(), LOGPIXELSY));
-			}
-			else
-				return logfont.lfHeight;
+			return logfont.lfHeight >= 0 ? logfont.lfHeight : -logfont.lfHeight;
 		}
 
 		HFONT
