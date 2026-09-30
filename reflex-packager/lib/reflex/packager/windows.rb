@@ -67,8 +67,8 @@ module Reflex
       ICON_SIZES = [16, 32, 48, 256]
 
       def generate()
-        copy_app_files
         copy_libraries
+        copy_app_files 'lib/app'
         write 'src/main.cpp',     render('main.cpp.erb')
         write 'src/app.manifest', render('app.manifest.erb')
         write 'src/app.rc',       render('app.rc.erb')
@@ -305,7 +305,7 @@ module Reflex
         dist = File.join dist_dir, target
         FileUtils.rm_rf dist
         FileUtils.mkdir_p dist
-        %W[#{target}.exe app lib].each do |path|
+        %W[#{target}.exe lib].each do |path|
           FileUtils.cp_r File.join(build_dir, path), dist
         end
         copy_runtime dist

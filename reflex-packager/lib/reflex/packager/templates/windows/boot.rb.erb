@@ -1,9 +1,7 @@
-root = File.expand_path '..', __dir__
-
 %w[<%= lib_names.join ' ' %>].reverse_each do |name|
-  $LOAD_PATH.unshift File.join(root, 'lib', name, 'lib')
+  $LOAD_PATH.unshift File.join(__dir__, name, 'lib')
 end
 
-Dir.chdir File.join(root, 'app')
+Dir.chdir File.join(__dir__, 'app')
 $LOAD_PATH.unshift Dir.pwd
 load File.join(Dir.pwd, <%= start_script.dump %>)

@@ -55,8 +55,8 @@ module Reflex
 
       private
 
-      def copy_app_files()
-        dir = File.join build_dir, 'app'
+      def copy_app_files(dir = 'app')
+        dir = File.join build_dir, dir
         FileUtils.rm_rf dir
         FileUtils.mkdir_p dir
         config.app_files.each do |file|
