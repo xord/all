@@ -102,7 +102,7 @@ class TestPackagerWindows < Test::Unit::TestCase
       packager do |pkg, dir|
         pkg.generate
         %w[
-          src/main.cpp src/app.manifest src/app.rc lib/boot.rb app/main.rb
+          src/main.cpp src/app.manifest src/app.rc lib/boot.rb lib/app/main.rb
           lib/fakebase/lib/fakebase.rb
           lib/fakenative/lib/fakenative.rb lib/fakenative/lib/fakenative/sub.rb
           lib/fakepure/lib/fakepure.rb
@@ -115,12 +115,15 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_libs_leave_out_binaries()
     fake_libs do
-      packager do |pkg, dir|
+      packager "files: [native.so]", files: {'main.rb' => '', 'native.so' => ''} do |pkg, dir|
         pkg.generate
         # a rays_ext.so on the load path would win over the one linked in
-        files = Dir.glob('**/*', base: build_path(dir, 'lib'))
+        lib   = build_path dir, 'lib'
+        files = pkg.lib_names.flat_map {Dir.glob "#{_1}/**/*", base: lib}
         assert_empty files.grep(/\.(so|a|o)\z/)
         assert_not_include files, 'fakenative/ext'
+        # the app itself ships what it likes
+        assert File.exist?(File.join lib, 'app/native.so')
       end
     end
   end
@@ -209,8 +212,8 @@ class TestPackagerWindows < Test::Unit::TestCase
         pkg.generate
         assert system(RbConfig.ruby, build_path(dir, 'lib/boot.rb'))
 
-        pwd, *paths = read(dir, 'result').lines chomp: true
-        assert_equal File.realpath(build_path dir, 'app'), File.realpath(pwd)
+        pwd, *paths = read(dir, 'lib/result').lines chomp: true
+        assert_equal File.realpath(build_path dir, 'lib/app'), File.realpath(pwd)
         assert_equal pwd, paths.first
         assert_equal %w[lib/fakebase/lib lib/fakenative/lib lib/fakepure/lib],
           paths[1..].map {_1.split('/').last(3).join '/'}
@@ -223,7 +226,7 @@ class TestPackagerWindows < Test::Unit::TestCase
       packager profile: profile(boot: "puts 1\n") do |pkg, dir|
         pkg.generate
         assert_include read(dir, 'lib/boot.rb'), '"__reflex_main__.rb"'
-        assert_equal "puts 1\n", read(dir, 'app/__reflex_main__.rb')
+        assert_equal "puts 1\n", read(dir, 'lib/app/__reflex_main__.rb')
       end
     end
   end
