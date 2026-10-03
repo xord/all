@@ -28,6 +28,8 @@ namespace Reflex
 
 	const ApplicationData& Application_get_data (const Application* app);
 
+	void Application_activate ();
+
 
 }// Reflex
 

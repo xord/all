@@ -43,5 +43,17 @@ namespace Reflex
 		global::initialized = false;
 	}
 
+	void
+	alert (const char* message, const char* title)
+	{
+		if (!message)
+			argument_error(__FILE__, __LINE__);
+
+		int ret = SDL_ShowSimpleMessageBox(
+			SDL_MESSAGEBOX_INFORMATION, title ? title : "", message, NULL);
+		if (ret < 0)
+			reflex_error(__FILE__, __LINE__, SDL_GetError());
+	}
+
 
 }// Reflex

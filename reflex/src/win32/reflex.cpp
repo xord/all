@@ -44,5 +44,18 @@ namespace Reflex
 		}
 	}
 
+	void
+	alert (const char* message, const char* title)
+	{
+		if (!message)
+			argument_error(__FILE__, __LINE__);
+
+		MessageBoxW(
+			GetActiveWindow(),
+			String(message)           .to_wstr().c_str(),
+			String(title ? title : "").to_wstr().c_str(),
+			MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
+	}
+
 
 }// Reflex
