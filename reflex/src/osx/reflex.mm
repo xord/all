@@ -57,6 +57,12 @@ namespace Reflex
 		else
 			alert.messageText = text;
 
+		// in front of the other apps once runModal shows it, as macOS 14 or
+		// later lets no app launched from a terminal take the focus from it
+		[alert.window
+			performSelector: @selector(orderFrontRegardless)
+			withObject: nil afterDelay: 0 inModes: @[NSModalPanelRunLoopMode]];
+
 		[alert runModal];
 	}
 
