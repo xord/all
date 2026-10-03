@@ -37,5 +37,12 @@ namespace Reflex
 		global::pool = nil;
 	}
 
+	void
+	alert (const char* message, const char* title)
+	{
+		// UIAlertController only presents asynchronously
+		not_implemented_error(__FILE__, __LINE__);
+	}
+
 
 }// Reflex

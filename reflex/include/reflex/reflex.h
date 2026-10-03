@@ -18,6 +18,8 @@ namespace Reflex
 
 	void process_events ();
 
+	void alert (const char* message, const char* title = NULL);
+
 
 }// Reflex
 

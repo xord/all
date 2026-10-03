@@ -389,6 +389,15 @@ RUCY_DEF0(process_events)
 }
 RUCY_END
 
+static
+RUCY_DEF2(alert, message, title)
+{
+	Reflex::alert(message.c_str(), title.is_nil() ? NULL : title.c_str());
+
+	return nil();
+}
+RUCY_END
+
 
 static Module mReflex;
 
@@ -400,6 +409,7 @@ Init_reflex ()
 	mReflex.define_singleton_method("fin!", fin);
 	mReflex.define_singleton_method("get_key_symbol!", get_key_symbol);
 	mReflex.define_singleton_method("process_events!", process_events);
+	mReflex.define_singleton_method("alert!", alert);
 
 	using namespace Reflex;
 
