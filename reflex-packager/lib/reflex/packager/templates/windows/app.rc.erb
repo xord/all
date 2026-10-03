@@ -5,3 +5,30 @@
 // icon of the executable, and of its windows through this id
 1 ICON "app.ico"
 <%- end -%>
+
+<%- version = manifest_version.tr '.', ',' -%>
+// shown in the properties of the executable, and as the name of the
+// process in the task manager
+1 VERSIONINFO
+FILEVERSION    <%= version %>
+PRODUCTVERSION <%= version %>
+FILEOS         0x40004// VOS_NT_WINDOWS32
+FILETYPE       0x1// VFT_APP
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"// U.S. English, Unicode
+    BEGIN
+      VALUE "FileDescription",  <%= rc_string config.name %>
+      VALUE "FileVersion",      <%= rc_string config.version %>
+      VALUE "InternalName",     <%= rc_string target %>
+      VALUE "OriginalFilename", <%= rc_string "#{target}.exe" %>
+      VALUE "ProductName",      <%= rc_string config.name %>
+      VALUE "ProductVersion",   <%= rc_string config.version %>
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

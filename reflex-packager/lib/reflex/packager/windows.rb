@@ -109,7 +109,9 @@ module Reflex
       def build()
         enable_toolchain
         check_tools tools
-        run 'windres', 'app.rc', '-o', 'app.res.o', chdir: File.join(build_dir, 'src')
+        # the strings of the app name are in utf-8
+        run 'windres', '--codepage=65001', 'app.rc', '-o', 'app.res.o',
+          chdir: File.join(build_dir, 'src')
         run(*link_command, chdir: build_dir)
         copy_dist
       end
@@ -190,6 +192,13 @@ module Reflex
       #
       def manifest_version()
         (config.version.split('.').first(4) + %w[0 0 0 0]).first(4).join '.'
+      end
+
+      # +str+ as a string literal of a resource script, which doubles a quote
+      # rather than escaping it.
+      #
+      def rc_string(str)
+        %("#{str.gsub('\\', '\\\\\\\\').gsub('"', '""')}")
       end
 
       def compiler(rbconfig = RbConfig::CONFIG)

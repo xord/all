@@ -178,6 +178,15 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include     rc, %(1 24 "app.manifest")
         assert_not_include rc, 'ICON'
         assert !File.exist?(build_path dir, 'src/app.ico')
+        assert_include     rc, 'FILEVERSION    1,2,3,4'
+        assert_include     rc, %(VALUE "FileVersion",      "1.2.3.4.5")
+        assert_include     rc, %(VALUE "OriginalFilename", "#{pkg.target}.exe")
+      end
+      packager %(name: 'ア"プ\\リ'\nbundle_id: com.example.app) do |pkg, dir|
+        pkg.generate
+        rc = read dir, 'src/app.rc'
+        assert_include rc, %(VALUE "FileDescription",  "ア""プ\\\\リ")
+        assert_include rc, %(VALUE "ProductName",      "ア""プ\\\\リ")
       end
       packager do |pkg, _|
         assert_equal '0.1.0.0', pkg.manifest_version
