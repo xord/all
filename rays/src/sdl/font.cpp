@@ -103,8 +103,9 @@ namespace Rays
 				rays_error(__FILE__, __LINE__, "TTF_RenderUTF8_Blended failed: %s", TTF_GetError());
 
 			SDL_Rect dst = {(int) x, (int) y, surface->w, surface->h};
+			// blending onto zeros premultiplies the straight alpha of SDL_ttf
 			SDL_FillRect(target, &dst, 0);
-			SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
+			SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
 			SDL_BlitSurface(surface, NULL, target, &dst);
 			SDL_FreeSurface(surface);
 		}
@@ -275,8 +276,9 @@ namespace Rays
 				rays_error(__FILE__, __LINE__, "SDL_CreateRGBSurfaceFrom failed: %s", SDL_GetError());
 
 			SDL_Rect dest = {(int) x, (int) y, w, h};
+			// blending onto zeros premultiplies the straight alpha of the canvas
 			SDL_FillRect(target, &dest, 0);
-			SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
+			SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
 			SDL_BlitSurface(surface, NULL, target, &dest);
 			SDL_FreeSurface(surface);
 		}
