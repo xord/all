@@ -231,6 +231,35 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
+  def test_boot_rb_shows_the_error()
+    # app/reflex.rb stands in for reflex, found first on the load path
+    reflex = <<~RUBY
+      module Reflex
+        def self.alert(message, title:) = File.write('../alert', "\#{title}\\n\#{message}")
+      end
+    RUBY
+    boot = -> (main, yaml = '') {
+      files = {'main.rb' => main, 'reflex.rb' => reflex}
+      fake_libs do
+        packager "name: My App\nfiles: [reflex.rb]\n#{yaml}", files: files do |pkg, dir|
+          pkg.generate
+          ok    = system RbConfig.ruby, build_path(dir, 'lib/boot.rb'), err: File::NULL
+          alert = File.exist?(build_path dir, 'lib/alert') ? read(dir, 'lib/alert') : nil
+          return [ok, $?.exitstatus, alert]
+        end
+      end
+    }
+
+    ok, status, alert = boot["raise 'boom'"]
+    assert_equal [false, 1], [ok, status]
+    assert_equal 'My App',   alert.lines.first.chomp
+    assert_include alert,    'boom (RuntimeError)'
+
+    assert_equal [false, 3, nil], boot['exit 3']
+    assert_equal [true,  0, nil], boot['']
+    assert_equal [false, 1, nil], boot["raise 'boom'", 'windows: {console: true}']
+  end
+
   # --- link --------------------------------------------------------------
 
   def test_native_libraries()
