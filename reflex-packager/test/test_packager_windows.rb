@@ -62,7 +62,7 @@ class TestPackagerWindows < Test::Unit::TestCase
   end
 
   def packager(
-    yaml = nil, profile: self.profile, files: {'main.rb' => ''}, bundled_gems: {},
+    yaml = nil, profile: self.profile, files: {'main.rb' => ''}, standard_gems: {},
     &block)
 
     Dir.mktmpdir do |dir|
@@ -74,7 +74,7 @@ class TestPackagerWindows < Test::Unit::TestCase
       File.write File.join(dir, 'reflex.yml'), yaml if yaml
       pkg = Windows.new RP::Config.load(profile, dir)
       # keep the tests off the gems of the Ruby running them
-      pkg.define_singleton_method(:bundled_gem_dirs) {bundled_gems}
+      pkg.define_singleton_method(:standard_gem_dirs) {standard_gems}
       block.call pkg, dir
     end
   end
@@ -139,13 +139,85 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
-  def test_libs_carry_bundled_gems()
+  def test_libs_carry_standard_gems()
     fake_libs do |root|
-      gems = {'fakegem' => File.join(root, 'FakePure', 'lib')}
-      packager bundled_gems: gems do |pkg, dir|
+      gems = {'fakegem' => [File.join(root, 'FakePure', 'lib')]}
+      packager standard_gems: gems do |pkg, dir|
         pkg.generate
         assert File.exist?(build_path dir, 'lib/fakegem/lib/fakepure.rb')
         assert_equal %w[fakebase fakenative fakepure fakegem], pkg.lib_names
+
+        # the ones this ruby has, looked for out of any bundle, with what they
+        # depend on: rexml has been a bundled gem since ruby 3.0, and rss
+        # depends on it
+        names = pkg.__send__(:standard_specs).map {_1['name']}
+        assert_include names, 'rexml'
+        assert_equal 1, names.count('rexml')
+        # but none of the tools for development
+        assert_empty names & Windows::DEVELOPMENT_GEMS
+      end
+    end
+  end
+
+  def test_libs_carry_the_gems_of_the_gemfile()
+    # resolved by bundler: the default group, with what it depends on
+    gemfile = <<~RUBY
+      source 'https://rubygems.org'
+      gem 'test-unit'
+      group :test do
+        gem 'rake'
+      end
+    RUBY
+    fake_libs do
+      packager files: {'main.rb' => '', 'Gemfile' => gemfile} do |pkg, dir|
+        pkg.generate
+        assert File.exist?(build_path dir, 'lib/test-unit/lib/test/unit.rb')
+        assert File.exist?(build_path dir, 'lib/power_assert/lib/power_assert.rb')
+        assert !File.exist?(build_path dir, 'lib/rake')
+        assert_include pkg.lib_names, 'test-unit'
+      end
+    end
+
+    # what is left out, and what goes as it is
+    fake_libs do |root|
+      Dir.mktmpdir do |gems|
+        files = %w[
+          native/lib/native.rb ext/native/native.so
+          rexml/lib/rexml.rb   fakebase/lib/fakebase/extension.rb
+        ]
+        files.each do |file|
+          path = File.join gems, file
+          FileUtils.mkdir_p File.dirname(path)
+          File.write path, ''
+        end
+        spec = -> (name, *paths, default: false) {
+          {'name' => name, 'default_gem' => default,
+           'require_paths' => paths.map {File.join gems, _1}}
+        }
+        specs = [
+          spec['native',   'native/lib', 'ext/native'],
+          spec['rexml',    'rexml/lib'],
+          spec['fakebase', 'fakebase/lib'],# a library, as it has extension.rb
+          spec['bundler',  'bundler/lib'],
+          spec['json',     'json/lib', default: true]
+        ]
+        standard = {'rexml' => ['standard/rexml/lib'], 'ostruct' => [File.join(root, 'FakePure/lib')]}
+        packager standard_gems: standard do |pkg, dir|
+          pkg.define_singleton_method(:gemfile_specs) {specs}
+          pkg.generate
+          assert_equal %w[native rexml ostruct], pkg.gem_dirs.keys
+          assert_equal [File.join(gems, 'rexml/lib')], pkg.gem_dirs['rexml']
+          # an extension comes along, unlike the ones of the libraries
+          assert File.exist?(build_path dir, 'lib/native/lib/native.so')
+          assert File.exist?(build_path dir, 'lib/native/lib/native.rb')
+        end
+        # where a native extension is not supported
+        packager standard_gems: standard do |pkg, _|
+          pkg.define_singleton_method(:gemfile_specs) {specs}
+          pkg.define_singleton_method(:native_gems?)  {false}
+          error = assert_raise(RP::Error) {pkg.gem_dirs}
+          assert_include error.message, "'native'"
+        end
       end
     end
   end
@@ -330,7 +402,7 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
-  def test_system_libs_dlls_and_bundled_gems()
+  def test_system_libs_and_dlls()
     packager profile: profile(libraries: [], extensions: []) do |pkg, _|
       pkg.define_singleton_method(:native_libraries) {%w[Xot Rucy Beeps Rays Reflex]}
       libs = pkg.system_libs
@@ -338,14 +410,6 @@ class TestPackagerWindows < Test::Unit::TestCase
       assert_include libs, 'xinput1_4'
       assert_equal 1, libs.count('glew32')
       assert_equal [*Windows::TOOLCHAIN_DLLS, 'libopenal-1.dll', 'glew32.dll'], pkg.system_dlls
-    end
-
-    reflex = %w[Xot Rucy Rays Reflex]
-    packager profile: profile(libraries: reflex, extensions: []) do |pkg, _|
-      assert_equal %w[ostruct],       pkg.bundled_gems
-    end
-    packager profile: profile(libraries: reflex + %w[Processing], extensions: []) do |pkg, _|
-      assert_equal %w[ostruct rexml], pkg.bundled_gems
     end
   end
 

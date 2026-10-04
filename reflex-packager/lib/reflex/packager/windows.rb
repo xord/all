@@ -1,6 +1,7 @@
 require 'rbconfig'
 require 'shellwords'
 require 'reflex/packager/platform'
+require 'reflex/packager/gems'
 
 
 module Reflex
@@ -19,6 +20,8 @@ module Reflex
     # linked in, as --with-static-linked-ext does.
     #
     class Windows < Platform
+
+      include Gems
 
       TOOLCHAIN_HINT = 'install RubyInstaller with the MSYS2 DevKit (ridk install)'
 
@@ -52,14 +55,6 @@ module Reflex
         'beeps'  => %w[libopenal-1.dll],
         'rays'   => %w[glew32.dll],
         'reflex' => %w[glew32.dll]
-      }
-
-      # Bundled gems each library requires. Unlike default gems they are not
-      # in the standard library directory, so they are shipped as libraries.
-      #
-      BUNDLED_GEMS = {
-        'xot'        => %w[ostruct],
-        'processing' => %w[rexml]
       }
 
       # Left out when copying a library: a gem build leaves its binaries in
@@ -137,10 +132,10 @@ module Reflex
       end
 
       # Directory names under lib/ put on the load path by boot.rb: the
-      # libraries by their repository names, then the bundled gems.
+      # libraries by their repository names, then the gems.
       #
       def lib_names()
-        [*library_roots.keys.map(&:downcase), *bundled_gem_dirs.keys]
+        [*library_names, *gem_dirs.keys]
       end
 
       # Root directories of the libraries in the profile, by library name.
@@ -188,10 +183,6 @@ module Reflex
       #
       def runtime_dlls(rbconfig = RbConfig::CONFIG)
         [rbconfig['LIBRUBY_SO'], *system_dlls]
-      end
-
-      def bundled_gems()
-        profile.libraries.flat_map {BUNDLED_GEMS[_1.downcase] || []}.uniq
       end
 
       # The app version as the four numbers an assembly version has to be.
@@ -259,6 +250,12 @@ module Reflex
         'windows'
       end
 
+      # The ruby dll the executable links is the one the gems are built for.
+      #
+      def native_gems?()
+        true
+      end
+
       def library_root(name)
         begin
           require "#{name.downcase}/extension"
@@ -273,18 +270,6 @@ module Reflex
         File.join root, 'lib', "lib#{name.downcase}.a"
       end
 
-      # Library directories of the bundled gems, leaving out the ones still
-      # default gems in this Ruby, which are in the standard library already.
-      #
-      def bundled_gem_dirs()
-        @bundled_gem_dirs ||= bundled_gems.each.with_object({}) do |name, dirs|
-          spec = Gem::Specification.find_by_name name
-          dirs[name] = spec.full_require_paths.first unless spec.default_gem?
-        rescue Gem::MissingSpecError
-          raise Error, "gem '#{name}' not installed"
-        end
-      end
-
       def copy_libraries()
         dir = File.join build_dir, 'lib'
         FileUtils.rm_rf dir
@@ -296,9 +281,7 @@ module Reflex
             FileUtils.cp_r path, dest
           end
         end
-        bundled_gem_dirs.each do |name, libdir|
-          copy_tree libdir, File.join(dir, name, 'lib')
-        end
+        copy_gems dir
       end
 
       def copy_tree(src, dest)
