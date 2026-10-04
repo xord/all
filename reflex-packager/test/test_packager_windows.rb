@@ -296,7 +296,8 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_operator cmd.index(objs.last), :<, from
 
         assert_include cmd, '-lx64-ucrt-ruby400'
-        assert_equal '-Wl,-Bstatic,--whole-archive', cmd[cmd.index('-lwinpthread') - 1]
+        # the c++ runtime is shipped as dlls, not linked in
+        assert_empty cmd.grep(/static|winpthread/)
         assert_equal '-mwindows', cmd.last
       end
     end
@@ -336,7 +337,7 @@ class TestPackagerWindows < Test::Unit::TestCase
       assert_include libs, 'openal'
       assert_include libs, 'xinput1_4'
       assert_equal 1, libs.count('glew32')
-      assert_equal %w[libopenal-1.dll glew32.dll], pkg.system_dlls
+      assert_equal [*Windows::TOOLCHAIN_DLLS, 'libopenal-1.dll', 'glew32.dll'], pkg.system_dlls
     end
 
     reflex = %w[Xot Rucy Rays Reflex]
@@ -368,16 +369,25 @@ class TestPackagerWindows < Test::Unit::TestCase
       %w[
         bin/x64-ucrt-ruby400.dll
         bin/ruby_builtin_dlls/libgmp-10.dll
+        bin/ruby_builtin_dlls/libwinpthread-1.dll
         bin/ruby_builtin_dlls/ruby_builtin_dlls.manifest
         lib/ruby/4.0.0/json.rb
         lib/ruby/4.0.0/x64-mingw-ucrt/json/ext/parser.so
         msys64/ucrt64/bin/glew32.dll
+        msys64/ucrt64/bin/libstdc++-6.dll
+        msys64/ucrt64/bin/libgcc_s_seh-1.dll
+        msys64/ucrt64/bin/libwinpthread-1.dll
       ].each do |path|
         path = File.join ruby, path
         FileUtils.mkdir_p File.dirname(path)
-        FileUtils.touch path
+        File.write path, path
       end
+      # the compiler, which the dlls of the toolchain are beside
+      compiler = File.join ruby, 'msys64/ucrt64/bin/fake-g++'
+      File.write compiler, ''
+      File.chmod 0755, compiler
       rbconfig = {
+        'CXX'           => 'fake-g++ -std=gnu++11',
         'bindir'        => File.join(ruby, 'bin'),
         'LIBRUBY_SO'    => 'x64-ucrt-ruby400.dll',
         'rubylibprefix' => File.join(ruby, 'lib/ruby'),
@@ -391,9 +401,24 @@ class TestPackagerWindows < Test::Unit::TestCase
     with_ruby do |rbconfig, msys_bin|
       packager profile: profile(libraries: [], extensions: []) do |pkg, dir|
         pkg.define_singleton_method(:native_libraries) {%w[Rays]}
-        with_env 'PATH' => msys_bin do
+        # another toolchain earlier in PATH, as the one of git
+        other = File.join dir, 'other/bin'
+        FileUtils.mkdir_p other
+        File.write File.join(other, 'libstdc++-6.dll'), 'other'
+        with_env 'PATH' => [other, msys_bin].join(File::PATH_SEPARATOR) do
           pkg.copy_runtime dir, rbconfig
         end
+        # the one beside the compiler
+        assert_equal File.join(msys_bin, 'libstdc++-6.dll'),
+          File.read(File.join dir, 'bin/libstdc++-6.dll')
+
+        # a compiler given by its path, wherever PATH points
+        abs = rbconfig.merge 'CXX' => File.join(msys_bin, 'fake-g++')
+        with_env 'PATH' => other do
+          assert_equal File.join(msys_bin, 'libstdc++-6.dll'),
+            pkg.__send__(:find_dll, 'libstdc++-6.dll', abs)
+        end
+
         %w[
           bin/x64-ucrt-ruby400.dll
           bin/ruby_builtin_dlls/ruby_builtin_dlls.manifest
@@ -410,17 +435,21 @@ class TestPackagerWindows < Test::Unit::TestCase
 
         manifest = File.read File.join(dir, 'bin/bin.manifest')
         assert_include manifest, %(name="bin" version="1.0.0.0")
-        assert_equal %w[x64-ucrt-ruby400.dll glew32.dll],
+        assert_equal ['x64-ucrt-ruby400.dll', *Windows::TOOLCHAIN_DLLS, 'glew32.dll'],
           manifest.scan(/<file name="(.+?)"/).flatten
+        # the one of the toolchain for the executable, besides the one of ruby
+        assert File.exist?(File.join dir, 'bin/libwinpthread-1.dll')
+        assert File.exist?(File.join dir, 'bin/ruby_builtin_dlls/libwinpthread-1.dll')
       end
     end
   end
 
   def test_copy_runtime_without_system_dll()
-    with_ruby do |rbconfig, _|
+    with_ruby do |rbconfig, msys_bin|
       packager profile: profile(libraries: [], extensions: []) do |pkg, dir|
         pkg.define_singleton_method(:native_libraries) {%w[Beeps]}
-        with_env 'PATH' => '' do
+        # the toolchain without openal installed
+        with_env 'PATH' => msys_bin do
           error = assert_raise(RP::Error) {pkg.copy_runtime dir, rbconfig}
           assert_include error.message, 'libopenal-1.dll'
         end

@@ -40,6 +40,12 @@ module Reflex
           xinput1_4]
       }
 
+      # The C++ runtime of the toolchain, which the executable and some DLLs
+      # load. The ones in ruby_builtin_dlls are reachable only from the ruby
+      # dll, and may be older than the toolchain needs.
+      #
+      TOOLCHAIN_DLLS = %w[libstdc++-6.dll libgcc_s_seh-1.dll libwinpthread-1.dll]
+
       # DLLs from MSYS2 the native libraries load, shipped with the executable.
       #
       SYSTEM_DLLS = {
@@ -175,7 +181,7 @@ module Reflex
       end
 
       def system_dlls()
-        native_libraries.flat_map {SYSTEM_DLLS[_1.downcase] || []}.uniq
+        [*TOOLCHAIN_DLLS, *native_libraries.flat_map {SYSTEM_DLLS[_1.downcase] || []}].uniq
       end
 
       # DLLs the executable loads from bin/, listed in its manifest.
@@ -217,11 +223,6 @@ module Reflex
           '-Wl,--whole-archive', *static_archives, '-Wl,--no-whole-archive',
           "-L#{rbconfig['libdir']}", *rbconfig['LIBRUBYARG_SHARED'].shellsplit,
           *system_libs.map {"-l#{_1}"},
-          '-static-libgcc', '-static-libstdc++',
-          # the winpthread in ruby_builtin_dlls is reachable only from the
-          # ruby dll, and may be older than the toolchain needs anyway
-          '-Wl,-Bstatic,--whole-archive', '-lwinpthread',
-          '-Wl,--no-whole-archive,-Bdynamic',
           *('-mwindows' unless config.windows.console?)
         ]
       end
@@ -241,7 +242,7 @@ module Reflex
         FileUtils.cp_r builtin, bin if File.directory? builtin
 
         system_dlls.each do |dll|
-          path = find_in_path(dll) or raise Error, "'#{dll}' not found in PATH"
+          path = find_dll(dll, rbconfig) or raise Error, "'#{dll}' not found"
           FileUtils.cp path, bin
         end
         File.write File.join(bin, "#{RUNTIME_DIR}.manifest"),
@@ -330,10 +331,16 @@ module Reflex
       rescue LoadError
       end
 
-      def find_in_path(file)
-        ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
-          .map {File.join _1, file}
-          .find {File.file? _1}
+      # Looks beside the compiler first, where MSYS2 keeps the dlls of the
+      # toolchain and its packages, so that another toolchain earlier in
+      # PATH, as the one of git, does not give its own.
+      #
+      def find_dll(dll, rbconfig = RbConfig::CONFIG)
+        cxx      = rbconfig['CXX']&.shellsplit&.first
+        compiler = cxx && (File.absolute_path?(cxx) ? cxx : find_executable(cxx))
+        dirs     = ENV['PATH'].to_s.split File::PATH_SEPARATOR
+        dirs.unshift File.dirname(compiler) if compiler
+        dirs.map {File.join _1, dll}.find {File.file? _1}
       end
 
     end# Windows

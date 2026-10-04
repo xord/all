@@ -105,14 +105,22 @@ module Reflex
         raise Error, "required tools not found:\n#{list.join "\n"}"
       end
 
+      def executable?(name)
+        !!find_executable(name)
+      end
+
       # Windows finds 'g++' as 'g++.exe' through PATHEXT, which is separated
       # by ';' whatever the platform.
       #
-      def executable?(name)
+      def find_executable(name)
         exts = ['', *ENV['PATHEXT'].to_s.split(';')]
-        ENV['PATH'].to_s.split(File::PATH_SEPARATOR).any? do |dir|
-          exts.any? {|ext| File.executable? File.join(dir, "#{name}#{ext}")}
+        ENV['PATH'].to_s.split(File::PATH_SEPARATOR).each do |dir|
+          exts.each do |ext|
+            path = File.join dir, "#{name}#{ext}"
+            return path if File.file?(path) && File.executable?(path)
+          end
         end
+        nil
       end
 
     end# Platform
