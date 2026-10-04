@@ -59,6 +59,8 @@ void Init_reflex_midi ();
 
 void Init_reflex_image_view ();
 
+void Init_reflex_ai ();
+
 
 extern "C" void
 Init_reflex_ext ()
@@ -124,6 +126,8 @@ Init_reflex_ext ()
 	Init_reflex_midi();
 
 	Init_reflex_image_view();
+
+	Init_reflex_ai();
 
 	RUCY_CATCH
 }
