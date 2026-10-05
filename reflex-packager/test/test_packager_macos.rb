@@ -15,9 +15,11 @@ class TestPackagerMacOS < Test::Unit::TestCase
         FileUtils.touch path
       end
       File.write File.join(dir, 'reflex.yml'), yaml if yaml
-      with_env({'REFLEX_PODS_PATH' => nil}.merge(env)) do
-        config = RP::Config.load TEST_PROFILE, dir
-        block.call MacOS.new(config), dir
+      Dir.mktmpdir do |cruby|
+        with_env({'CRUBY_PATH' => fake_cruby(cruby)}.merge(env)) do
+          config = RP::Config.load TEST_PROFILE, dir
+          block.call MacOS.new(config), dir
+        end
       end
     end
   end
@@ -39,9 +41,16 @@ class TestPackagerMacOS < Test::Unit::TestCase
   def test_generate_creates_files()
     packager do |pkg, dir|
       pkg.generate
-      %w[project.yml Podfile src/main.mm app/main.rb].each do |f|
+      %w[
+        project.yml src/main.mm app/main.rb
+        Bundles/Reflex.bundle/Contents/Resources/lib/reflex.rb
+        Bundles/Reflex.bundle/Contents/Resources/VERSION
+        Bundles/CRuby.bundle/Contents/Resources/lib/ruby/4.0.0/set.rb
+      ].each do |f|
         assert File.exist?(File.join dir, '.build/macos', f), "missing #{f}"
       end
+      assert_empty Dir.glob('*.bundle/**/lib/**/*.{bundle,so,o,a}',
+        base: File.join(dir, '.build/macos/Bundles'))
     end
   end
 
@@ -69,6 +78,29 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal '11.0', yml.dig('options', 'deploymentTarget', 'macOS')
       assert_not_include str, 'CFBundleIconFile'
       assert_not_include str, 'DEVELOPMENT_TEAM'
+
+      roots, cruby = pkg.library_roots, ENV['CRUBY_PATH']
+      assert_include base['HEADER_SEARCH_PATHS'],        "#{roots['Reflex']}/include"
+      assert_include base['SYSTEM_HEADER_SEARCH_PATHS'], "#{roots['Reflex']}/vendor/box2d/include"
+      assert_include base['SYSTEM_HEADER_SEARCH_PATHS'], "#{cruby}/CRuby/include"
+
+      target  = yml.dig 'targets', 'MyApp'
+      sources = target['sources'].to_h {[_1['name'] || _1['path'], _1]}
+      assert_equal "#{cruby}/src",                  sources['CRuby']['path']
+      assert_include sources['Reflex']['includes'], 'src/osx/window.mm'
+      assert_include sources['Reflex']['includes'], 'ext/reflex/reflex.cpp'
+      assert_empty   sources['Reflex']['includes'].grep(%r{/(win32|sdl|ios)/})
+      assert_empty   sources['Xot']   ['includes'].grep(%r{^ext/}) # only for its tests
+      assert_match(/-DOSX\b.*/,                     sources['Reflex']['compilerFlags'])
+      assert_match(/-DB2_MAX_WORLDS=256 .*-w\z/,    sources['ReflexVendor']['compilerFlags'])
+      assert_include sources['ReflexVendor']['includes'], 'box2d/src/world.c'
+      assert_include sources, 'Bundles/CRuby.bundle'
+      assert_include sources, 'Bundles/Reflex.bundle'
+
+      deps = target['dependencies']
+      assert_include deps, {'framework' => "#{cruby}/CRuby/CRuby.xcframework", 'embed' => false}
+      assert_include deps, {'sdk' => 'AppKit.framework'}
+      assert_include deps, {'sdk' => 'CoreMIDI.framework'}
     end
   end
 
@@ -87,7 +119,87 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
-  # --- build (checked before shelling out to xcodegen / pod / xcodebuild) -
+  def test_frameworks()
+    assert_equal %w[Cocoa CoreMIDI], MacOS.makefile_frameworks(<<~MAKEFILE)
+      LIBS = $(LIBRUBYARG_SHARED)  -lpthread
+      ldflags  = -L. -fstack-protector-strong -framework Cocoa -framework CoreMIDI
+    MAKEFILE
+    assert_equal [], MacOS.makefile_frameworks("ldflags  = -L.\n")
+    assert_equal [], MacOS.makefile_frameworks('')
+
+    # libraries whose gems are not built: no Makefiles next to the extconf.rbs
+    packager do |pkg, dir|
+      %w[xot reflex].each do |name|
+        FileUtils.mkdir_p File.join(dir, name, 'ext', name)
+        FileUtils.touch   File.join(dir, name, 'ext', name, 'extconf.rb')
+      end
+      roots = {'Xot' => File.join(dir, 'xot'), 'Reflex' => File.join(dir, 'reflex')}
+
+      pkg.define_singleton_method(:library_roots) {roots.slice 'Xot'}
+      assert_equal [], pkg.frameworks # xot builds its extension only for its tests
+
+      pkg.define_singleton_method(:library_roots) {roots}
+      error = assert_raise(RP::Error) {pkg.frameworks}
+      assert_include error.message, 'Reflex'
+      assert_include error.message, 'was the gem built?'
+    end
+  end
+
+  # --- cruby_dir ---------------------------------------------------------
+
+  # Runs the block with a packager whose run records the commands instead of
+  # running them, and makes the clone a built one on 'rake'.
+  def fetching(yaml = nil, &block)
+    packager yaml, env: {'CRUBY_PATH' => nil} do |pkg, dir|
+      cmds = []
+      pkg.define_singleton_method :run do |*cmd, chdir:, env: {}|
+        cmds << cmd
+        FileUtils.mkdir_p File.join(chdir, 'CRuby', 'include') if cmd.first == 'rake'
+      end
+      block.call pkg, dir, cmds
+    end
+  end
+
+  def test_cruby_dir()
+    packager do |pkg, _|
+      assert_equal ENV['CRUBY_PATH'], pkg.cruby_dir
+    end
+
+    Dir.mktmpdir do |cruby|
+      packager "macos: {cruby: #{fake_cruby cruby}}" do |pkg, _|
+        assert_equal ENV['CRUBY_PATH'], pkg.cruby_dir # CRUBY_PATH overrides the config
+      end
+      packager "macos: {cruby: 1.2.3}" do |pkg, _|
+        assert_equal ENV['CRUBY_PATH'], pkg.cruby_dir
+      end
+      packager "macos: {cruby: #{cruby}}", env: {'CRUBY_PATH' => nil} do |pkg, _|
+        assert_equal cruby, pkg.cruby_dir
+      end
+    end
+
+    packager "macos: {cruby: not_built}", env: {'CRUBY_PATH' => nil} do |pkg, dir|
+      FileUtils.mkdir_p File.join(dir, 'not_built') # relative to the app
+      error = assert_raise(RP::Error) {pkg.cruby_dir}
+      assert_include error.message, "#{dir}/not_built"
+      assert_include error.message, 'download_or_build'
+    end
+
+    fetching do |pkg, dir, cmds|
+      cruby = File.join dir, ".build/macos/cruby/#{MacOS::CRUBY_VERSION}"
+      assert_equal cruby, pkg.cruby_dir
+      assert_include cmds.first, "v#{MacOS::CRUBY_VERSION}"
+      assert_equal cruby,        cmds.first.last
+      assert_equal %w[rake download_or_build], cmds.last
+    end
+
+    fetching "macos: {cruby: 1.2.3}" do |pkg, dir, cmds|
+      FileUtils.mkdir_p File.join(dir, '.build/macos/cruby/1.2.3/CRuby/include')
+      assert_equal File.join(dir, '.build/macos/cruby/1.2.3'), pkg.cruby_dir
+      assert_empty cmds # fetched already
+    end
+  end
+
+  # --- build (checked before shelling out to xcodegen / xcodebuild) ------
 
   def test_check_tools_reports_missing()
     packager do |pkg, _|
@@ -112,44 +224,6 @@ class TestPackagerMacOS < Test::Unit::TestCase
           assert  pkg.__send__(:executable?, :tool)
           assert !pkg.__send__(:executable?, 'other')
         end
-      end
-    end
-  end
-
-  # Runs the block with a packager whose CRuby / Reflex pods resolve to
-  # local directories under +repos+ (via REFLEX_PODS_PATH).
-  def with_pods(repos, &block)
-    packager(nil, env: {'REFLEX_PODS_PATH' => repos}) {|pkg, _| block.call pkg}
-  end
-
-  def test_check_dev_pods_missing_dir()
-    Dir.mktmpdir do |repos|
-      with_pods repos do |pkg|             # neither repos/cruby nor repos/reflex exists
-        error = assert_raise(RP::Error) {pkg.__send__ :check_dev_pods}
-        assert_include error.message, 'pod directory not found'
-      end
-    end
-  end
-
-  def test_check_dev_pods_cruby_not_built()
-    Dir.mktmpdir do |repos|
-      FileUtils.mkdir_p File.join(repos, 'cruby')   # exists but has no CRuby/include
-      with_pods repos do |pkg|
-        error = assert_raise(RP::Error) {pkg.__send__ :check_dev_pods}
-        assert_include error.message, 'no CRuby binary'
-        assert_include error.message, 'download_or_build'
-      end
-    end
-  end
-
-  def test_check_dev_pods_reflex_not_set_up()
-    Dir.mktmpdir do |repos|
-      FileUtils.mkdir_p File.join(repos, 'cruby', 'CRuby', 'include')  # CRuby is OK
-      FileUtils.mkdir_p File.join(repos, 'reflex')                     # exists but has no xot
-      with_pods repos do |pkg|
-        error = assert_raise(RP::Error) {pkg.__send__ :check_dev_pods}
-        assert_include error.message, 'not set up for CocoaPods'
-        assert_include error.message, 'pod.rake setup'
       end
     end
   end
@@ -183,45 +257,6 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include str, '@"Reflex"'                  # library bundle added
       assert_include str, 'changeCurrentDirectoryPath' # cwd set to app dir
       assert_include str, '@"app.rb"'                  # the entry script
-    end
-  end
-
-  # --- pod_refs / dev_pod_paths (rendered into the Podfile) --------------
-
-  def test_podfile_defaults_to_git_pods()
-    packager do |pkg, dir|
-      pkg.generate
-      str = read dir, 'Podfile'
-      assert_include str, "pod 'CRuby', git: 'https://github.com/xord/cruby'"
-      assert_include str,
-        "pod 'Reflex', git: 'https://github.com/xord/reflex', " +
-        "tag: 'v#{Reflex::Extension.version}'"
-      assert_not_include str, 'PODS_ROOT'
-    end
-  end
-
-  def test_podfile_with_pods_path_env()
-    packager nil, env: {'REFLEX_PODS_PATH' => '/repos'} do |pkg, dir|
-      pkg.generate
-      str = read dir, 'Podfile'
-      assert_include str, "pod 'CRuby', path: '/repos/cruby'"
-      assert_include str, "pod 'Reflex', path: '/repos/reflex'"
-      # development pods need the ${PODS_ROOT} rewrite block
-      assert_include str, "s.gsub! '${PODS_ROOT}/CRuby', '/repos/cruby'"
-      assert_include str, "s.gsub! '${PODS_ROOT}/Reflex', '/repos/reflex'"
-    end
-  end
-
-  def test_podfile_with_pods_config()
-    yaml = <<~YML
-      pods:
-        cruby: {git: https://example.com/cruby, branch: dev}
-    YML
-    packager yaml do |pkg, dir|
-      pkg.generate
-      line = read(dir, 'Podfile').lines.grep(/pod 'CRuby'/).first
-      assert_match %r{git: 'https://example.com/cruby'}, line
-      assert_match %r{branch: 'dev'},                    line
     end
   end
 

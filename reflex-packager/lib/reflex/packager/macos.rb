@@ -1,3 +1,6 @@
+require 'json'
+require 'open3'
+require 'rbconfig'
 require 'reflex/packager/platform'
 
 
@@ -9,35 +12,41 @@ module Reflex
 
     # Packages a Reflex application as a macOS application bundle.
     #
+    # The native libraries (xot, rucy, rays, ...) are compiled from the
+    # sources in their installed gems, as their Rakefiles build them, into an
+    # executable that embeds CRuby, which comes as a prebuilt xcframework
+    # from a checkout of the cruby repository.
+    #
     class MacOS < Platform
 
-      GIT_CRUBY = 'https://github.com/xord/cruby'
+      CRUBY_GIT = 'https://github.com/xord/cruby'
+
+      # The CRuby used unless the config or CRUBY_PATH names another one.
+      #
+      CRUBY_VERSION = '4.0.600'
 
       TOOLS = {
+        git:        'install Xcode command line tools: xcode-select --install',
         xcodegen:   'install with: brew install xcodegen',
-        pod:        'install with: brew install cocoapods (or gem install cocoapods)',
         xcodebuild: 'install Xcode and run: sudo xcode-select --switch /Applications/Xcode.app'
       }
 
       def generate()
         copy_app_files
+        copy_bundles
         generate_icon if config.icon
         write 'project.yml', render('project.yml.erb')
-        write 'Podfile',     render('Podfile.erb')
         write 'src/main.mm', render('main.mm.erb')
       end
 
       def build()
         check_tools TOOLS
-        check_dev_pods
-        run 'xcodegen', 'generate',                       chdir: build_dir
-        run 'pod', 'install', *('--verbose' if verbose?), chdir: build_dir,
-          env: {'os' => 'macos'}
+        run 'xcodegen', 'generate', chdir: build_dir
         run 'xcodebuild',
-          '-workspace',       "#{target}.xcworkspace",
+          '-project',         "#{target}.xcodeproj",
           '-scheme',          target,
           '-configuration',   'Release',
-          '-destination',     'platform=macOS',
+          '-destination',     'generic/platform=macOS',
           '-derivedDataPath', 'DerivedData',
           'build',
           chdir: build_dir
@@ -56,25 +65,79 @@ module Reflex
         profile.libraries
       end
 
-      # Returns {'CRuby' => {...}, '<pod>' => {...}} resolved from the config,
-      # the <POD>_PODS_PATH env var, or the defaults.
+      # Libraries built from native code: the ones whose gem has an
+      # extension to build, even if only for its tests as xot and rucy.
       #
-      def pod_refs()
-        p = profile
-        {
-          'CRuby' => pod_ref(:cruby,    {git: GIT_CRUBY}),
-          p.pod   => pod_ref(p.pod_key, {git: p.git, tag: "v#{p.version}"})
-        }
+      def native_libraries()
+        library_roots.select {|name, root|
+          File.file? File.join(root, 'ext', name.downcase, 'extconf.rb')
+        }.keys
       end
 
-      # Returns local directories of pods referenced by path, which need
-      # special handling because CocoaPods does not place development
-      # pods under PODS_ROOT and does not run their prepare_command.
+      # Returns {name => {srcs:, vendor_srcs:, incdirs:, defs:}} of the native
+      # libraries, with absolute paths, as their Rakefiles have them.
       #
-      def dev_pod_paths()
-        pod_refs
-          .filter_map {|name, ref| [name, ref[:path]] if ref[:path]}
-          .to_h
+      def build_infos()
+        @build_infos ||= native_libraries.to_h do |name|
+          root = library_roots[name]
+          info = rake_build_info root
+          ext  = File.join root, 'ext', name.downcase
+          info[:srcs] += Dir.glob(File.join ext, '*.{c,cpp,m,mm}').sort if
+            extensions.include? "#{name.downcase}_ext"
+          [name, info]
+        end
+      end
+
+      # Frameworks the extensions link, as the Makefiles their gem builds
+      # leave have them.
+      #
+      def frameworks()
+        native_libraries.flat_map do |name|
+          root     = library_roots[name]
+          makefile = File.join root, 'ext', name.downcase, 'Makefile'
+          next MacOS.makefile_frameworks File.read(makefile) if File.file? makefile
+
+          # xot and rucy build their extensions only for their tests
+          raise Error, "no Makefile of '#{name}' in '#{root}' (was the gem built?)" if
+            extensions.include? "#{name.downcase}_ext"
+          []
+        end.uniq
+      end
+
+      # The names in the -framework options of the ldflags of a Makefile mkmf
+      # writes.
+      #
+      def self.makefile_frameworks(makefile)
+        line = makefile.lines.find {_1.start_with? 'ldflags'} or return []
+        line.scan(/-framework\s+(\S+)/).flatten
+      end
+
+      def header_search_paths()
+        build_infos.values.flat_map {_1[:incdirs]}.uniq.reject {vendor? _1}
+      end
+
+      def system_header_search_paths()
+        [
+          *build_infos.values.flat_map {_1[:incdirs]}.uniq.select {vendor? _1},
+          File.join(cruby_dir, 'CRuby', 'include')
+        ]
+      end
+
+      # The checkout of the cruby repository with the CRuby it built or
+      # downloaded: CRUBY_PATH, which overrides the config while working on
+      # CRuby, or the path in the config, or else the version in the config
+      # or the default one, fetched into the build directory.
+      #
+      def cruby_dir()
+        @cruby_dir ||= begin
+          env, cruby = ENV['CRUBY_PATH'], config.macos.cruby
+          case
+          when env             then check_cruby File.expand_path(env)
+          when !cruby          then fetch_cruby CRUBY_VERSION
+          when version?(cruby) then fetch_cruby cruby
+          else                      check_cruby File.expand_path(cruby, config.dir)
+          end
+        end
       end
 
       # Returns sips command lines to resize the icon into an iconset.
@@ -89,21 +152,81 @@ module Reflex
 
       private
 
+      # Prints what the Rakefile in the current directory builds with.
+      #
+      RAKE_BUILD_INFO = <<~RUBY
+        require 'json'
+        require 'rake'
+        Rake.application.init 'rake', []
+        load 'Rakefile'
+        puts JSON.generate(
+          srcs:        srcs_map.keys,
+          vendor_srcs: vendor_srcs_map.keys,
+          incdirs:     inc_dirs,
+          defs:        make_cppflags_defs(defs))
+      RUBY
+
       def platform_name()
         'macos'
       end
 
-      def pod_ref(name, default)
-        ref = config.pods[name]
-        return ref unless ref.nil? || ref.empty?
-
-        root = ENV["#{profile.pod_key.to_s.upcase}_PODS_PATH"]
-        root ? {path: File.expand_path(name.to_s, root)} : default
+      def rake_build_info(root)
+        out, err, status = Open3.capture3 RbConfig.ruby, '-e', RAKE_BUILD_INFO, chdir: root
+        raise Error, "failed to read the Rakefile in '#{root}': #{err.strip}" unless
+          status.success?
+        # the last line, as the Rakefile may print something when loaded
+        JSON.parse(out.lines.last.to_s, symbolize_names: true).to_h do |key, value|
+          [key, key == :defs ? value : value.map {File.expand_path _1, root}]
+        end
       end
 
-      def pod_line(name, ref)
-        args = ref.map {|key, value| "#{key}: '#{value}'"}.join ', '
-        "pod '#{name}', #{args}"
+      def vendor?(dir)
+        dir.include? '/vendor/'
+      end
+
+      def version?(str)
+        str.match?(/\A\d+(\.\d+)*\z/)
+      end
+
+      def check_cruby(path)
+        unless File.directory? File.join(path, 'CRuby', 'include')
+          raise Error,
+            "'#{path}' has no CRuby binary, " +
+            "run: cd #{path} && rake download_or_build os=macos"
+        end
+        path
+      end
+
+      def fetch_cruby(version)
+        dir = File.join build_dir, 'cruby', version
+        return dir if File.directory? File.join(dir, 'CRuby', 'include')
+
+        FileUtils.rm_rf dir
+        FileUtils.mkdir_p File.dirname(dir)
+        run 'git', 'clone', '-q', '-c', 'advice.detachedHead=false',
+          '--depth', '1', '--branch', "v#{version}", CRUBY_GIT, dir,
+          chdir: build_dir
+        # cruby has a Gemfile of its own, the one of the app must not be used
+        bundler = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}
+        run 'rake', 'download_or_build',
+          chdir: dir, env: {**bundler, 'RUBYOPT' => nil, 'os' => 'macos'}
+        check_cruby dir
+      end
+
+      # Writes the bundles CRuby adds to the load path: <name>.bundle with
+      # lib/ in its resources, as the resource bundles of a pod are.
+      #
+      def copy_bundles()
+        dir = File.join build_dir, 'Bundles'
+        FileUtils.rm_rf dir
+        library_roots.each {|name, root| copy_library root, bundle_resources(dir, name)}
+        res = bundle_resources dir, 'CRuby'
+        FileUtils.mkdir_p res
+        FileUtils.cp_r File.join(cruby_dir, 'CRuby', 'lib'), res
+      end
+
+      def bundle_resources(dir, name)
+        File.join dir, "#{name}.bundle", 'Contents', 'Resources'
       end
 
       def generate_icon()
@@ -114,28 +237,6 @@ module Reflex
           .each {|cmd| run(*cmd, chdir: build_dir)}
         run 'iconutil', '-c', 'icns', 'AppIcon.iconset', '-o', 'AppIcon.icns',
           chdir: build_dir
-      end
-
-      # Development pods skip prepare_command on pod install, so ensure
-      # that the manual setups have been done.
-      #
-      def check_dev_pods()
-        dev_pod_paths.each do |name, path|
-          raise Error, "pod directory not found: '#{path}'" unless File.directory? path
-          if name == 'CRuby'
-            unless File.directory? File.join(path, 'CRuby', 'include')
-              raise Error,
-                "'#{path}' has no CRuby binary, " +
-                "run: cd #{path} && rake download_or_build os=macos"
-            end
-          else # the umbrella pod (Reflex / RubySketch / ...)
-            unless File.directory? File.join(path, 'xot')
-              raise Error,
-                "'#{path}' is not set up for CocoaPods, " +
-                "run: cd #{path} && rake -f pod.rake setup"
-            end
-          end
-        end
       end
 
       def copy_app()

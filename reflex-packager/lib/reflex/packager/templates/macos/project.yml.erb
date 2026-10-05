@@ -14,6 +14,11 @@ settings:
 <%- if config.macos.codesign_team_id -%>
     DEVELOPMENT_TEAM: <%= config.macos.codesign_team_id %>
 <%- end -%>
+    CLANG_CXX_LANGUAGE_STANDARD: c++20
+    CLANG_ENABLE_OBJC_ARC: NO
+    HEADER_SEARCH_PATHS: <%= header_search_paths.to_json %>
+    SYSTEM_HEADER_SEARCH_PATHS: <%= system_header_search_paths.to_json %>
+    OTHER_LDFLAGS: [-lz, -lffi]
 
 targets:
   <%= target %>:
@@ -24,9 +29,37 @@ targets:
       - path: app
         type: folder
         buildPhase: resources
+<%- Dir.glob('*.bundle', base: File.join(build_dir, 'Bundles')).sort.each do |bundle| -%>
+      - path: Bundles/<%= bundle %>
+        buildPhase: resources
+<%- end -%>
 <%- if config.icon -%>
       - path: AppIcon.icns
         buildPhase: resources
+<%- end -%>
+      - path: <%= File.join(cruby_dir, 'src').to_json %>
+        name: CRuby
+<%- build_infos.each do |name, info| -%>
+<%-   root  = library_roots[name] -%>
+<%-   flags = info[:defs].map {"-D#{_1}"}.join ' ' -%>
+<%-   unless info[:srcs].empty? -%>
+      - path: <%= root.to_json %>
+        name: <%= name %>
+        includes: <%= info[:srcs].map {_1.delete_prefix "#{root}/"}.to_json %>
+        compilerFlags: <%= flags.to_json %>
+<%-   end -%>
+<%-   unless info[:vendor_srcs].empty? -%>
+      - path: <%= File.join(root, 'vendor').to_json %>
+        name: <%= name %>Vendor
+        includes: <%= info[:vendor_srcs].map {_1.delete_prefix "#{root}/vendor/"}.to_json %>
+        compilerFlags: <%= "#{flags} -w".to_json %>
+<%-   end -%>
+<%- end -%>
+    dependencies:
+      - framework: <%= File.join(cruby_dir, 'CRuby', 'CRuby.xcframework').to_json %>
+        embed: false
+<%- frameworks.each do |framework| -%>
+      - sdk: <%= framework %>.framework
 <%- end -%>
     info:
       path: src/Info.plist

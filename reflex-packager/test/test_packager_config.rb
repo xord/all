@@ -73,11 +73,10 @@ class TestPackagerConfig < Test::Unit::TestCase
       main:      app.rb
       icon:      icon.png
       files:     ['*.rb', data]
-      pods:
-        reflex: {git: https://example.com/reflex, tag: v1}
       macos:
         deployment_target: '12.0'
         archs: [arm64, x86_64]
+        cruby: 4.0.600
         codesign: {identity: Developer ID, team_id: ABCDE12345}
     YAML
       touch 'icon.png'
@@ -91,9 +90,9 @@ class TestPackagerConfig < Test::Unit::TestCase
       assert_equal 'icon.png',                                     c.icon
       assert_equal %w[*.rb data],                                  c.files
       assert_equal %w[1.rb app.rb data],                           c.app_files
-      assert_equal({git: 'https://example.com/reflex', tag: 'v1'}, c.pods[:reflex])
       assert_equal '12.0',                                         c.macos.deployment_target
       assert_equal %w[arm64 x86_64],                               c.macos.archs
+      assert_equal '4.0.600',                                      c.macos.cruby
       assert_equal 'Developer ID',                                 c.macos.codesign_identity
       assert_equal 'ABCDE12345',                                   c.macos.codesign_team_id
     end
@@ -142,14 +141,6 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal %w[a b],       config(files: %w[a b])    .files
   end
 
-  def test_pods()
-    assert_equal({cruby: {}, reflex: {}}, config()                            .pods)
-    assert_equal({tag:    '6'},           config(pods: {cruby: {tag:    '6'}}).pods[:cruby])
-    assert_equal({branch: '7'},           config(pods: {cruby: {branch: '7'}}).pods[:cruby])
-    assert_equal({git:    '8'},           config(pods: {cruby: {git:    '8'}}).pods[:cruby])
-    assert_equal({path:   '9'},           config(pods: {cruby: {path:   '9'}}).pods[:cruby])
-  end
-
   def test_app_files()
     tmpdir                      do |dir|
       touch 'x.rb'
@@ -195,6 +186,14 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal ['arm64'],  config(macos: {archs: nil})   .macos.archs
     assert_raise(RP::Error) {config(macos: {archs: []})}
     assert_raise(RP::Error) {config(macos: {archs: {}})}
+  end
+
+  def test_macos_cruby()
+    assert_nil               config()                           .macos.cruby
+    assert_nil               config(macos: {})                  .macos.cruby
+    assert_equal '4.0.600',  config(macos: {cruby: '4.0.600'})  .macos.cruby
+    assert_equal '../cruby', config(macos: {cruby: '../cruby'}) .macos.cruby
+    assert_raise(RP::Error) {config(macos: {cruby: {}})}
   end
 
   def test_macos_codesign_identity()
@@ -246,7 +245,6 @@ class TestPackagerConfig < Test::Unit::TestCase
 
   def test_invalid_value_type()
     assert_raise(RP::Error) {config macos: 'arm64'}
-    assert_raise(RP::Error) {config pods:  ['cruby']}
   end
 
 end# TestPackagerConfig

@@ -24,10 +24,6 @@ module Reflex
           main:      profile.main,
           icon:      nil,
           files:     nil,
-          pods: {
-            :cruby          => {tag: nil, branch: nil, git: nil, path: nil},
-            profile.pod_key => {tag: nil, branch: nil, git: nil, path: nil}
-          },
           macos:   MacOSConfig.defaults,
           windows: WindowsConfig.defaults
         }
@@ -63,14 +59,13 @@ module Reflex
         @main      = hash[:main]     .to_s
         @icon      = hash[:icon]    &.to_s
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
-        @pods      = hash[:pods].transform_values &:compact
         @macos     = MacOSConfig.new   hash[:macos]
         @windows   = WindowsConfig.new hash[:windows]
         validate
       end
 
       attr_reader :profile, :dir, :name, :bundle_id, :version, :main, :icon,
-        :files, :macos, :windows, :pods
+        :files, :macos, :windows
 
       # Returns paths to be bundled into the application, relative to the
       # project directory.
@@ -154,6 +149,7 @@ module Reflex
         {
           deployment_target: '11.0',
           archs:             'arm64',
+          cruby:             nil,
           codesign: {
             identity: '-',
             team_id:  nil
@@ -164,10 +160,16 @@ module Reflex
       def initialize(hash)
         @deployment_target = hash[:deployment_target]  .to_s
         @archs             = Array(hash[:archs]).map  &:to_s
+        @cruby             = hash[:cruby]            &.to_s
         @codesign_identity = hash[:codesign][:identity].to_s
         @codesign_team_id  = hash[:codesign][:team_id]&.to_s
         validate
       end
+
+      # The version of CRuby, or the path of a checkout of the cruby
+      # repository, to embed.
+      #
+      attr_reader :cruby
 
       attr_reader :deployment_target, :archs, :codesign_identity, :codesign_team_id
 

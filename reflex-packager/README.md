@@ -17,7 +17,7 @@ For more details, check out our [Contribution Guidelines](./CONTRIBUTING.md).
 
 ## :rocket: About
 
-**Reflex Packager** is a CLI tool that packages [Reflex](https://github.com/xord/reflex) applications as native macOS `.app` bundles. It generates an Xcode project, fetches [CRuby](https://github.com/xord/cruby) and Reflex via CocoaPods, and builds a self-contained application that embeds the Ruby runtime.
+**Reflex Packager** is a CLI tool that packages [Reflex](https://github.com/xord/reflex) applications as native macOS `.app` bundles. It generates an Xcode project that compiles Reflex from the sources of its installed gems together with [CRuby](https://github.com/xord/cruby), and builds a self-contained application that embeds the Ruby runtime.
 
 The packager is runtime-agnostic — each gem (Reflex, [RubySketch](https://github.com/xord/rubysketch), ...) supplies its own profile and reuses this packager as the engine.
 
@@ -25,7 +25,6 @@ The packager is runtime-agnostic — each gem (Reflex, [RubySketch](https://gith
 
 - Ruby **3.0.0** or later
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
-- [CocoaPods](https://cocoapods.org/) (`brew install cocoapods`)
 - Xcode (with command line tools)
 - The dependent gems are installed automatically: `xot`, `rucy`, `rays`, `reflexion`
 
@@ -111,12 +110,6 @@ icon: icon.png
 #   codesign:
 #     identity: "-"
 #     team_id: XXXXXXXXXX
-
-# pods:
-#   cruby:
-#     path: /path/to/cruby
-#   reflex:
-#     path: /path/to/reflex
 ```
 
 | Key | Default | Description |
@@ -129,23 +122,26 @@ icon: icon.png
 | `files` | none | Additional files to bundle (glob patterns) |
 | `macos.deployment_target` | `11.0` | Minimum macOS version |
 | `macos.archs` | `arm64` | Target architectures |
+| `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |
 | `macos.codesign.identity` | `-` | Code signing identity |
 | `macos.codesign.team_id` | none | Development team ID |
 
-### Pod overrides
+### CRuby
 
-By default the packager fetches CRuby and Reflex pods from their git repositories. To use local checkouts instead, set paths in the config or via the `REFLEX_PODS_PATH` environment variable:
+By default the packager clones the [cruby](https://github.com/xord/cruby) repository at the tag of its CRuby version into `.build/macos/cruby/<version>`, and downloads the prebuilt CRuby there. To use a local checkout instead, set its path as `macos.cruby` in the config, or via the `CRUBY_PATH` environment variable, which overrides the config:
 
 ```bash
-$ export REFLEX_PODS_PATH=/path/to/pods
+$ export CRUBY_PATH=/path/to/cruby
 $ reflex package .
 ```
+
+The libraries (xot, rucy, rays, reflex, ...) are compiled from the gems installed for the Ruby running the packager. To package with local checkouts of them, put their `lib` directories on `RUBYLIB`.
 
 ## :wrench: How it works
 
 1. Copies application files into a build directory
-2. Generates an Xcode project (via XcodeGen) and a Podfile
-3. Runs `pod install` to fetch CRuby and Reflex pods
+2. Fetches CRuby unless it is there already
+3. Generates an Xcode project (via XcodeGen) with the sources the Rakefiles of the libraries build
 4. Builds the `.app` bundle with `xcodebuild`
 5. Copies the result to `dist/`
 

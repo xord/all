@@ -63,8 +63,13 @@ class TestPackagerCLI < Test::Unit::TestCase
   def test_package()
     tmpdir do
       capture {cli.create ['myapp']}
-      cli.package ['--generate-only', 'myapp']
-      %w[project.yml Podfile src/main.mm app/main.rb].each do |f|
+      Dir.mktmpdir do |cruby|
+        saved, ENV['CRUBY_PATH'] = ENV['CRUBY_PATH'], fake_cruby(cruby)
+        cli.package ['--generate-only', 'myapp']
+      ensure
+        ENV['CRUBY_PATH'] = saved
+      end
+      %w[project.yml src/main.mm app/main.rb].each do |f|
         assert File.exist?("myapp/.build/macos/#{f}"), "missing #{f}"
       end
     end

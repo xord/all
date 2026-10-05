@@ -12,6 +12,19 @@ require 'tmpdir'
 include Xot::Test
 
 
+# Makes +dir+ a checkout of the cruby repository with what packaging for macOS
+# reads of it, so that the tests do not fetch the real one.
+#
+def fake_cruby(dir)
+  %w[CRuby/include/ruby.h CRuby/lib/ruby/4.0.0/set.rb src/CRuby.m].each do |path|
+    path = File.join dir, path
+    FileUtils.mkdir_p File.dirname(path)
+    FileUtils.touch path
+  end
+  dir
+end
+
+
 TEST_PROFILE = Reflex::Packager::Profile.new(
   pod:          'Reflex',
   git:          'https://github.com/xord/reflex',
