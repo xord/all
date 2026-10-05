@@ -4,3 +4,5 @@
 .yardoc
 .DS_Store
 doc
+examples/*/.build
+examples/*/dist

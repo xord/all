@@ -156,7 +156,10 @@ The generated native wrapper embeds CRuby, registers the Reflex extensions, and 
 ```bash
 $ rake test         # run the test suite
 $ rake              # default task
+$ rake example      # package examples/hello with the libraries in this repository
 ```
+
+`rake example` takes `name=` to package another app under `examples/`, and `platform=` to package for another platform.
 
 In the [`xord/all`](https://github.com/xord/all) monorepo you can scope by module.
 
