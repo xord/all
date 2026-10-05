@@ -259,7 +259,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include str, 'L"lib\\\\boot.rb"'
 
         str = read dir, 'src/app.manifest'
-        assert_include str, %(name="#{pkg.target}" version="1.2.3.4")
+        assert_include str, %(name="#{pkg.target}" version="1.2.3.0")
         assert_include str, '<dependentAssembly>'
         assert_include str, %(name="bin" version="1.0.0.0")
         assert_include str, '<supportedOS '
@@ -271,7 +271,9 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_not_include rc, 'ICON'
         assert !File.exist?(build_path dir, 'src/app.ico')
         assert_include     rc, 'FILEVERSION    1,2,3,4'
+        assert_include     rc, 'PRODUCTVERSION 1,2,3,0'
         assert_include     rc, %(VALUE "FileVersion",      "1.2.3.4.5")
+        assert_include     rc, %(VALUE "ProductVersion",   "1.2.3")
         assert_include     rc, %(VALUE "OriginalFilename", "#{pkg.target}.exe")
       end
       packager %(name: 'ア"プ\\リ'\nbundle_id: com.example.app) do |pkg, dir|
@@ -280,8 +282,19 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include rc, %(VALUE "FileDescription",  "ア""プ\\\\リ")
         assert_include rc, %(VALUE "ProductName",      "ア""プ\\\\リ")
       end
+      packager "version: 2.3\nbuild: 20" do |pkg, dir|
+        pkg.generate
+        rc = read dir, 'src/app.rc'
+        assert_include rc, 'FILEVERSION    20,0,0,0'
+        assert_include rc, 'PRODUCTVERSION 2,3,0,0'
+        assert_include rc, %(VALUE "FileVersion",      "20")
+        assert_include rc, %(VALUE "ProductVersion",   "2.3")
+      end
+      packager "build: 65536" do |pkg, _|
+        assert_raise(RP::Error) {pkg.file_version}
+      end
+      assert_equal '1.2.3.4', RP::Windows.four_numbers('1.2.3.4.65536') # the fifth is not used
       packager do |pkg, _|
-        assert_equal '0.1.0.0', pkg.manifest_version
         # templates see the packager and what render is given, nothing else
         assert_empty pkg.__send__(:template_binding).local_variables
       end

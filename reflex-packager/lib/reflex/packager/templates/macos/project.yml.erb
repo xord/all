@@ -7,7 +7,8 @@ options:
 settings:
   base:
     PRODUCT_BUNDLE_IDENTIFIER: <%= config.bundle_id %>
-    MARKETING_VERSION: "<%= config.version %>"
+    MARKETING_VERSION: <%= config.display_version.to_json %>
+    CURRENT_PROJECT_VERSION: <%= config.build_version.to_json %>
     ARCHS: <%= config.macos.archs.join ' ' %>
     ONLY_ACTIVE_ARCH: NO
     CODE_SIGN_IDENTITY: <%= config.macos.codesign_identity.inspect %>
@@ -68,7 +69,8 @@ targets:
       properties:
         CFBundleName: <%= config.name.inspect %>
         CFBundleDisplayName: <%= config.name.inspect %>
-        CFBundleShortVersionString: "<%= config.version %>"
+        CFBundleShortVersionString: <%= config.display_version.to_json %>
+        CFBundleVersion: <%= config.build_version.to_json %>
         NSHighResolutionCapable: true
 <%- if config.icon -%>
         CFBundleIconFile: AppIcon

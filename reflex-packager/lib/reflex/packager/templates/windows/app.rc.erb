@@ -6,12 +6,11 @@
 1 ICON "app.ico"
 <%- end -%>
 
-<%- version = manifest_version.tr '.', ',' -%>
 // shown in the properties of the executable, and as the name of the
 // process in the task manager
 1 VERSIONINFO
-FILEVERSION    <%= version %>
-PRODUCTVERSION <%= version %>
+FILEVERSION    <%= file_version   .tr '.', ',' %>
+PRODUCTVERSION <%= product_version.tr '.', ',' %>
 FILEOS         0x40004// VOS_NT_WINDOWS32
 FILETYPE       0x1// VFT_APP
 BEGIN
@@ -20,11 +19,11 @@ BEGIN
     BLOCK "040904B0"// U.S. English, Unicode
     BEGIN
       VALUE "FileDescription",  <%= rc_string config.name %>
-      VALUE "FileVersion",      <%= rc_string config.version %>
+      VALUE "FileVersion",      <%= rc_string config.build_version %>
       VALUE "InternalName",     <%= rc_string target %>
       VALUE "OriginalFilename", <%= rc_string "#{target}.exe" %>
       VALUE "ProductName",      <%= rc_string config.name %>
-      VALUE "ProductVersion",   <%= rc_string config.version %>
+      VALUE "ProductVersion",   <%= rc_string config.display_version %>
     END
   END
   BLOCK "VarFileInfo"

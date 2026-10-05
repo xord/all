@@ -21,6 +21,7 @@ module Reflex
           name:      name,
           bundle_id: hash[:bundle_id] || default_bundle_id(profile, name),
           version:   '0.1.0',
+          build:     nil,
           main:      profile.main,
           icon:      nil,
           files:     nil,
@@ -56,6 +57,7 @@ module Reflex
         @name      = hash[:name]     .to_s
         @bundle_id = hash[:bundle_id].to_s
         @version   = hash[:version]  .to_s
+        @build     = hash[:build]    &.to_s
         @main      = hash[:main]     .to_s
         @icon      = hash[:icon]    &.to_s
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
@@ -64,8 +66,22 @@ module Reflex
         validate
       end
 
-      attr_reader :profile, :dir, :name, :bundle_id, :version, :main, :icon,
+      attr_reader :profile, :dir, :name, :bundle_id, :version, :build, :main, :icon,
         :files, :macos, :windows
+
+      # The version to show: the numbers of the version, up to three.
+      #
+      def display_version()
+        @version.split('.').first(3).join('.')
+      end
+
+      # The version to tell builds apart with: the build, or else the
+      # version, a fourth number of which tells a build apart from another of
+      # the same version.
+      #
+      def build_version()
+        @build || @version
+      end
 
       # Returns paths to be bundled into the application, relative to the
       # project directory.
@@ -124,12 +140,16 @@ module Reflex
         end
       end
 
+      # Numbers only, which macOS and Windows compare versions by.
+      #
+      VERSION_FORMAT = /\A\d+(\.\d+)*\z/
+
       def validate()
         raise Error, "invalid bundle_id: '#{@bundle_id}'" if
           @bundle_id !~ /\A[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+\z/
 
-        raise Error, "invalid version: '#{@version}'" if
-          @version !~ /\A\d+(\.\d+)*\z/
+        raise Error, "invalid version: '#{@version}'" if @version !~ VERSION_FORMAT
+        raise Error, "invalid build: '#{@build}'"     if @build && @build !~ VERSION_FORMAT
 
         raise Error, "main script not found: '#{@main}'" if
           !File.file?(File.join @dir, @main)

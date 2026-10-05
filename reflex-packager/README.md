@@ -108,6 +108,7 @@ The project is configured via `reflex.yml` (or `reflex.yaml`) in the project dir
 name: MyApp
 bundle_id: com.example.myapp
 version: 1.0.0
+# build: 1.0.0
 icon: icon.png
 # main: main.rb
 # files:
@@ -129,6 +130,7 @@ icon: icon.png
 | `name` | directory name | Application name |
 | `bundle_id` | `org.xord.reflex.<name>` | macOS bundle identifier |
 | `version` | `0.1.0` | Application version |
+| `build` | `version` | Build version |
 | `main` | `main.rb` | Entry point script |
 | `icon` | none | Path to an icon image (PNG) |
 | `files` | none | Additional files to bundle (glob patterns) |
@@ -138,6 +140,18 @@ icon: icon.png
 | `macos.codesign.identity` | `-` | Code signing identity |
 | `macos.codesign.team_id` | none | Development team ID |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
+
+### Versions
+
+`version` is the version to show, and `build` the one to tell builds apart with. Both are numbers separated by dots:
+
+| | Shown (`CFBundleShortVersionString`, `ProductVersion`) | Build (`CFBundleVersion`, `FileVersion`) |
+|-----|-----|-----|
+| `version: 1.2.3` | `1.2.3` | `1.2.3` |
+| `version: 1.2.3.4` | `1.2.3` | `1.2.3.4` |
+| `version: 1.2.3` and `build: 456` | `1.2.3` | `456` |
+
+A fourth number of `version` tells a build apart from another of the same version, as one uploaded again for a review. On Windows, each number has to be 65535 or less.
 
 ### CRuby
 

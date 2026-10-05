@@ -65,14 +65,15 @@ class TestPackagerMacOS < Test::Unit::TestCase
   end
 
   def test_project_yml()
-    packager "name: My App\nbundle_id: com.example.myapp" do |pkg, dir|
+    packager "name: My App\nbundle_id: com.example.myapp\nversion: 1.2.3.4" do |pkg, dir|
       pkg.generate
       str  = read dir, 'project.yml'
       yml  = YAML.safe_load str
       base = yml.dig 'settings', 'base'
       assert_equal 'MyApp',                 yml['name']
       assert_equal 'com.example.myapp',     base['PRODUCT_BUNDLE_IDENTIFIER']
-      assert_equal '0.1.0',                 base['MARKETING_VERSION']
+      assert_equal '1.2.3',                 base['MARKETING_VERSION']
+      assert_equal '1.2.3.4',               base['CURRENT_PROJECT_VERSION']
       assert_equal 'arm64 x86_64',          base['ARCHS']
       assert_equal '-',                     base['CODE_SIGN_IDENTITY']
       assert_equal '11.0', yml.dig('options', 'deploymentTarget', 'macOS')
@@ -96,6 +97,10 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include sources['reflex-vendor']['includes'], 'box2d/src/world.c'
       assert_include sources, 'Bundles/CRuby.bundle'
       assert_include sources, 'Bundles/reflex.bundle'
+
+      info = target.dig 'info', 'properties'
+      assert_equal '1.2.3',   info['CFBundleShortVersionString']
+      assert_equal '1.2.3.4', info['CFBundleVersion']
 
       deps = target['dependencies']
       assert_include deps, {'framework' => "#{cruby}/CRuby/CRuby.xcframework", 'embed' => false}

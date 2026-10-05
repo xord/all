@@ -167,10 +167,25 @@ module Reflex
         [rbconfig['LIBRUBY_SO'], *toolchain_dlls(rbconfig).map {File.basename _1}]
       end
 
-      # The app version as the four numbers an assembly version has to be.
+      # The versions of the product and of the build, as the four numbers of
+      # the version resource and the assembly version.
       #
-      def manifest_version()
-        (config.version.split('.').first(4) + %w[0 0 0 0]).first(4).join '.'
+      def product_version()
+        Windows.four_numbers config.display_version
+      end
+
+      def file_version()
+        Windows.four_numbers config.build_version
+      end
+
+      # The first four numbers of +version+, filled up to four, which have to
+      # be in 0..65535.
+      #
+      def self.four_numbers(version)
+        numbers = version.split('.').first(4).map(&:to_i)
+        raise Error, "a number in the version '#{version}' is over 65535" if
+          numbers.any? {_1 > 65535}
+        (numbers + [0] * 4).first(4).join '.'
       end
 
       # +str+ as a string literal of a resource script, which doubles a quote

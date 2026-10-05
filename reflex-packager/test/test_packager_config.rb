@@ -121,6 +121,27 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal '2.3',      config(version: '2.3').version
     assert_equal '0.1.0',    config(version: nil)  .version
     assert_raise(RP::Error) {config version: '4.'}
+    assert_raise(RP::Error) {config version: '2.3beta'}
+  end
+
+  def test_build()
+    assert_nil               config()                .build
+    assert_equal '20',       config(build: 20)       .build
+    assert_equal '1.2.3.4',  config(build: '1.2.3.4').build
+    assert_raise(RP::Error) {config build: '1.2b'}
+    assert_raise(RP::Error) {config build: '4.'}
+  end
+
+  def test_display_and_build_versions()
+    [
+      [{version: '1.2.3'},                 '1.2.3', '1.2.3'],
+      [{version: '1.2.3.4'},               '1.2.3', '1.2.3.4'],
+      [{version: '1.2.3',   build: '456'}, '1.2.3', '456'],
+      [{version: '2.3',     build: '7.8'}, '2.3',   '7.8'],
+    ].each do |hash, display, build|
+      c = config(**hash)
+      assert_equal [display, build], [c.display_version, c.build_version], hash.inspect
+    end
   end
 
   def test_main()
