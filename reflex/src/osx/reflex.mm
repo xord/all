@@ -5,7 +5,6 @@
 #import <Cocoa/Cocoa.h>
 #include "reflex/exception.h"
 #include "../vk.h"
-#include "application.h"
 
 
 namespace Reflex
@@ -39,13 +38,23 @@ namespace Reflex
 		global::pool = nil;
 	}
 
+	static void
+	activate_app ()
+	{
+		NSApplication* app = NSApplication.sharedApplication;
+		if (app.activationPolicy == NSApplicationActivationPolicyProhibited)
+			[app setActivationPolicy: NSApplicationActivationPolicyRegular];
+
+		[app activateIgnoringOtherApps: YES];
+	}
+
 	void
 	alert (const char* message, const char* title)
 	{
 		if (!message)
 			argument_error(__FILE__, __LINE__);
 
-		Application_activate();
+		activate_app();
 
 		NSAlert* alert = [[[NSAlert alloc] init] autorelease];
 		NSString* text = [NSString stringWithUTF8String: message];

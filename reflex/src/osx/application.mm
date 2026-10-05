@@ -36,16 +36,6 @@ namespace Reflex
 		return Application_get_data(const_cast<Application*>(app));
 	}
 
-	void
-	Application_activate ()
-	{
-		NSApplication* app = NSApplication.sharedApplication;
-		if (app.activationPolicy == NSApplicationActivationPolicyProhibited)
-			[app setActivationPolicy: NSApplicationActivationPolicyRegular];
-
-		[app activateIgnoringOtherApps: YES];
-	}
-
 
 	static void
 	update_status_item (Application* app)
@@ -89,7 +79,7 @@ namespace Reflex
 			:	NSApplicationActivationPolicyRegular];
 
 		if (!state)
-			Application_activate();
+			[NSApp activateIgnoringOtherApps: YES];
 
 		update_status_item(app);
 	}
