@@ -65,7 +65,7 @@ class TestPackagerCLI < Test::Unit::TestCase
       capture {cli.create ['myapp']}
       Dir.mktmpdir do |cruby|
         saved, ENV['CRUBY_PATH'] = ENV['CRUBY_PATH'], fake_cruby(cruby)
-        cli.package ['--generate-only', 'myapp']
+        cli.package ['--generate-only', '--platform', 'macos', 'myapp']
       ensure
         ENV['CRUBY_PATH'] = saved
       end
@@ -88,6 +88,11 @@ class TestPackagerCLI < Test::Unit::TestCase
         cli.package ['--generate-only', '--platform', 'unknown', 'myapp']
       end
     end
+  end
+
+  def test_default_platform()
+    stub(Gem, :win_platform?, true)  {assert_equal 'windows', cli.default_platform}
+    stub(Gem, :win_platform?, false) {assert_equal 'macos',   cli.default_platform}
   end
 
 end# TestPackagerCLI

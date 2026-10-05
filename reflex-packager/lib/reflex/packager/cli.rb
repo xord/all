@@ -61,21 +61,27 @@ module Reflex
       end
 
       def package(argv)
-        profile      = @profile
-        argv, params = parse argv, "Usage: #{profile.command} package [options] [DIR]" do
+        profile, platform = @profile, default_platform
+        argv, params      = parse argv, "Usage: #{profile.command} package [options] [DIR]" do
           on '--platform PLATFORM',
-            "target platform: #{PLATFORMS.keys.join ' or '} (default: macos)"
+            "target platform: #{PLATFORMS.keys.join ' or '} (default: #{platform})"
           on '--config PATH',   "config file path (default: DIR/#{profile.config_files.first})"
           on '--generate-only', 'generate project files but do not build'
           on '--verbose',       'verbose output'
         end
 
         dir      = argv.shift || '.'
-        platform = (params[:platform] || 'macos').to_sym
+        platform = (params[:platform] || platform).to_sym
         klass    = PLATFORMS[platform] || raise(Error, "unknown platform: '#{platform}'")
         config   = Config.load profile, dir, params[:config]
         klass.new(config, verbose: params[:verbose])
           .package generate_only: params[:'generate-only']
+      end
+
+      # The platform the packager runs on, the only one it can build for.
+      #
+      def default_platform()
+        Gem.win_platform? ? 'windows' : 'macos'
       end
 
       private

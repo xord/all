@@ -85,7 +85,7 @@ Package command options:
 ```
 reflex package [options] [DIR]
 
-  --platform PLATFORM   target platform (default: macos)
+  --platform PLATFORM   target platform (default: the one it runs on)
   --config PATH         config file path (default: DIR/reflex.yml)
   --generate-only       generate project files but do not build
   --verbose             verbose output

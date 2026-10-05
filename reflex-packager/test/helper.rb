@@ -24,6 +24,22 @@ def fake_cruby(dir)
   dir
 end
 
+# Runs the block with the method +name+ of +obj+ returning +value+.
+#
+def stub(obj, name, value, &block)
+  # removed before defined again, which warns on overwriting
+  klass  = obj.singleton_class
+  hidden = klass.private_method_defined? name, false
+  saved  = klass.instance_method name if hidden || klass.method_defined?(name, false)
+  klass.remove_method name if saved
+  klass.define_method(name) {|*| value}
+  block.call
+ensure
+  klass.remove_method name
+  klass.define_method name, saved if saved
+  klass.send :private, name       if hidden
+end
+
 
 TEST_PROFILE = Reflex::Packager::Profile.new(
   pod:          'Reflex',

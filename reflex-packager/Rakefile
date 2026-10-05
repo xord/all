@@ -25,7 +25,7 @@ generate_documents
 build_ruby_gem
 
 
-desc 'package an example app with the libraries in this repository (name=hello platform=macos)'
+desc 'package an example app with the libraries in this repository (name=hello platform=macos|windows)'
 task :example do
   dir  = File.expand_path "examples/#{ENV['name'] || 'hello'}", __dir__
   libs = %w[xot rucy rays reflex reflex-packager].map {File.expand_path "../#{_1}/lib", __dir__}
