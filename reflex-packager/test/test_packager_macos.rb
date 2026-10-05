@@ -135,13 +135,15 @@ class TestPackagerMacOS < Test::Unit::TestCase
       end
       roots = {'Xot' => File.join(dir, 'xot'), 'Reflex' => File.join(dir, 'reflex')}
 
-      pkg.define_singleton_method(:library_roots) {roots.slice 'Xot'}
-      assert_equal [], pkg.frameworks # xot builds its extension only for its tests
+      stub pkg, :library_roots, roots.slice('Xot') do
+        assert_equal [], pkg.frameworks # xot builds its extension only for its tests
+      end
 
-      pkg.define_singleton_method(:library_roots) {roots}
-      error = assert_raise(RP::Error) {pkg.frameworks}
-      assert_include error.message, 'Reflex'
-      assert_include error.message, 'was the gem built?'
+      stub pkg, :library_roots, roots do
+        error = assert_raise(RP::Error) {pkg.frameworks}
+        assert_include error.message, 'Reflex'
+        assert_include error.message, 'was the gem built?'
+      end
     end
   end
 
