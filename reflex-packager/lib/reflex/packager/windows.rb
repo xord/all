@@ -34,12 +34,6 @@ module Reflex
       RUNTIME_DIR     = 'bin'
       RUNTIME_VERSION = '1.0.0.0'
 
-      # Left out when copying a library: a gem build leaves its binaries in
-      # lib/, and the extension must not be there in particular, since Ruby
-      # prefers a rays_ext.so on the load path to the one linked in.
-      #
-      BINARY_EXTS = %w[.so .dll .a .o .bundle]
-
       # Sizes of the icon of the executable, one image each in the ICO.
       #
       ICON_SIZES = [16, 32, 48, 256]
@@ -113,12 +107,6 @@ module Reflex
       #
       def lib_names()
         [*library_names, *gem_names]
-      end
-
-      # Root directories of the libraries in the profile, by library name.
-      #
-      def library_roots()
-        @library_roots ||= profile.libraries.to_h {[_1, library_root(_1)]}
       end
 
       # Libraries built from native code: the ones whose gem has the static
@@ -268,16 +256,6 @@ module Reflex
         true
       end
 
-      def library_root(name)
-        begin
-          require "#{name.downcase}/extension"
-        rescue LoadError
-        end
-        ext = Object.const_get("#{name}::Extension") rescue nil
-        raise Error, "library '#{name}' not found (gem not installed?)" unless ext
-        ext.root_dir
-      end
-
       def static_archive(name, root)
         File.join root, 'lib', "lib#{name.downcase}.a"
       end
@@ -285,25 +263,8 @@ module Reflex
       def copy_libraries()
         dir = File.join build_dir, 'lib'
         FileUtils.rm_rf dir
-        library_roots.each do |name, root|
-          dest = File.join dir, name.downcase
-          copy_tree File.join(root, 'lib'), File.join(dest, 'lib')
-          %w[VERSION res].map {File.join root, _1}.select {File.exist? _1}.each do |path|
-            FileUtils.mkdir_p dest
-            FileUtils.cp_r path, dest
-          end
-        end
+        library_roots.each {|name, root| copy_library root, File.join(dir, name.downcase)}
         copy_gems dir
-      end
-
-      def copy_tree(src, dest)
-        Dir.glob('**/*', base: src).each do |path|
-          from = File.join src, path
-          next if File.directory?(from) || BINARY_EXTS.include?(File.extname path)
-          to = File.join dest, path
-          FileUtils.mkdir_p File.dirname(to)
-          FileUtils.cp from, to
-        end
       end
 
       def copy_dist()
