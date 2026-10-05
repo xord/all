@@ -1,3 +1,4 @@
+require 'weakref'
 require_relative 'helper'
 
 
@@ -36,11 +37,6 @@ class TestClass < Test::Unit::TestCase
 
   def sub_raw(*args)
     Sub.new_raw(*args)
-  end
-
-  def temp_raw_ref()
-    # the temp object is held by the c++ side only after this returns
-    Base.set_raw_ref Temp.new
   end
 
   def last_log(pattern = nil)
@@ -136,8 +132,12 @@ class TestClass < Test::Unit::TestCase
   end
 
   def test_freed_ruby_object_is_not_called()
-    temp_raw_ref
-    GC.start
+    # made on another thread, whose stack is gone with no stale value left
+    ref = Thread.new {WeakRef.new Base.set_raw_ref(Temp.new)}.value
+    3.times {GC.start; break unless ref.weakref_alive?}
+    # the gc scans the stack conservatively, so a stale value can keep it alive
+    omit 'the ruby object was not freed by the gc' if ref.weakref_alive?
+
     assert_equal "Sub::name_overridable", Base.call_raw_ref_name_overridable
   ensure
     Base.clear_raw_ref
