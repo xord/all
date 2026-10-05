@@ -257,6 +257,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include str, 'Init_rays_ext'
       assert_include str, '@"Reflex"'                  # library bundle added
       assert_include str, '@"boot.rb"'                 # started with boot.rb
+      assert_include str, 'return [CRuby start:'       # ends with its exit status
       assert_include read(dir, 'boot.rb'), '"app.rb"'  # the entry script
     end
   end

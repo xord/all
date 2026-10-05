@@ -24,7 +24,6 @@ main (int argc, const char* argv[])
 			[CRuby addLibrary:lib bundle:NSBundle.mainBundle];
 
 		NSString* boot = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"boot.rb"];
-		[CRuby start:boot rescue:^(CRBValue* exception) {}];
+		return [CRuby start:boot rescue:^(CRBValue* exception) {}];
 	}
-	return 0;
 }
