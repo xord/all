@@ -12,11 +12,12 @@ require 'rays/extension'
 Xot::ExtConf.new Xot, Rucy, Rays do
   setup do
     headers    << 'ruby.h'
-    libs.unshift 'gdi32', 'opengl32', 'glew32'           if win32?
-    libs.unshift 'SDL2', 'SDL2_ttf', 'GLEW', 'GL'        if linux? || wasm?
-    frameworks << 'AppKit' << 'OpenGL' << 'AVFoundation' if osx?
-    $CPPFLAGS << ' -DRAYS_32BIT_PIXELS_STRING'           if RUBY_PLATFORM == 'x64-mingw-ucrt'
-    $LDFLAGS  << ' -Wl,--out-implib=librays.dll.a'       if mingw? || cygwin?
+    libs.unshift 'gdi32', 'opengl32', 'glew32'     if win32?
+    libs.unshift 'SDL2', 'SDL2_ttf', 'GLEW', 'GL'  if linux? || wasm?
+    frameworks.concat %w[AppKit OpenGL
+      AVFoundation CoreMedia CoreImage CoreVideo]  if osx?
+    $CPPFLAGS << ' -DRAYS_32BIT_PIXELS_STRING'     if RUBY_PLATFORM == 'x64-mingw-ucrt'
+    $LDFLAGS  << ' -Wl,--out-implib=librays.dll.a' if mingw? || cygwin?
   end
 
   create_makefile 'rays_ext'
