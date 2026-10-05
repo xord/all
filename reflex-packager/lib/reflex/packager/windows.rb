@@ -98,10 +98,6 @@ module Reflex
         profile.extensions
       end
 
-      def start_script()
-        profile.boot_main || config.main
-      end
-
       # Directory names under lib/ put on the load path by boot.rb: the
       # libraries by their repository names, then the gems.
       #

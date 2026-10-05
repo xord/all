@@ -253,13 +253,46 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager "main: app.rb", files: %w[app.rb] do |pkg, dir|
       pkg.generate
       str = read dir, 'src/main.mm'
-      assert_include str, '@"app"'                     # the bundled app dir
       assert_include str, 'Init_reflex_ext'            # native ext registered
       assert_include str, 'Init_rays_ext'
       assert_include str, '@"Reflex"'                  # library bundle added
-      assert_include str, 'changeCurrentDirectoryPath' # cwd set to app dir
-      assert_include str, '@"app.rb"'                  # the entry script
+      assert_include str, '@"boot.rb"'                 # started with boot.rb
+      assert_include read(dir, 'boot.rb'), '"app.rb"'  # the entry script
     end
+  end
+
+  def test_boot_rb()
+    # app/reflex.rb stands in for reflex, found first on the load path
+    reflex = <<~RUBY
+      module Reflex
+        def self.alert(message, title:) = File.write('../alert', "\#{title}\\n\#{message}")
+      end
+    RUBY
+    boot = -> (main, tty: false) {
+      packager "name: My App\nfiles: [reflex.rb]", files: %w[main.rb reflex.rb] do |pkg, dir|
+        File.write File.join(dir, 'main.rb'),   main
+        File.write File.join(dir, 'reflex.rb'), reflex
+        pkg.generate
+        # boot.rb is beside app/ in the resources of the app, as here
+        tty = "$stderr.define_singleton_method(:tty?) {#{tty}}"
+        _, err, status = Open3.capture3 RbConfig.ruby, '-e', "#{tty}; load ARGV[0]",
+          File.join(dir, '.build/macos/boot.rb')
+        alert = File.exist?(File.join dir, '.build/macos/alert') ? read(dir, 'alert') : nil
+        return [status.exitstatus, alert, err]
+      end
+    }
+
+    status, alert, = boot["raise 'boom'"]
+    assert_equal 1,        status
+    assert_equal 'My App', alert.lines.first.chomp
+    assert_include alert,  'boom (RuntimeError)'
+
+    status, alert, err = boot["raise 'boom'", tty: true] # shown in the terminal
+    assert_equal [1, nil], [status, alert]
+    assert_include err,    'boom (RuntimeError)'
+
+    assert_equal [3, nil], boot['exit 3'].first(2)
+    assert_equal [0, nil], boot['']     .first(2)
   end
 
   # --- icon_commands -----------------------------------------------------

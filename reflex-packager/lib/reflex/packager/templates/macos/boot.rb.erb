@@ -1,0 +1,20 @@
+begin
+  Dir.chdir File.join(__dir__, 'app')
+  $LOAD_PATH.unshift Dir.pwd
+  load File.join(Dir.pwd, <%= start_script.dump %>)
+rescue SystemExit, SignalException
+  raise
+rescue Exception => e
+  if $stderr.tty?
+    # started from a terminal, which shows it
+    $stderr.puts e.full_message
+  else
+    begin
+      require 'reflex'
+      Reflex.alert e.full_message(highlight: false), title: <%= config.name.dump %>
+    rescue Exception => alert_error
+      $stderr.puts "failed to alert: #{alert_error.message} (#{alert_error.class})"
+    end
+  end
+  raise
+end

@@ -53,6 +53,13 @@ module Reflex
         config.name.gsub(/[^A-Za-z0-9_\-]+/, '').then {_1.empty? ? 'App' : _1}
       end
 
+      # The script the app starts with, in the app directory: the boot script
+      # of the profile, or the main script of the app.
+      #
+      def start_script()
+        profile.boot_main || config.main
+      end
+
       # Root directories of the libraries in the profile, by library name:
       # the installed gems, or the directories RUBYLIB points to.
       #

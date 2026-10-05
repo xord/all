@@ -37,6 +37,7 @@ module Reflex
         generate_icon if config.icon
         write 'project.yml', render('project.yml.erb')
         write 'src/main.mm', render('main.mm.erb')
+        write 'boot.rb',     render('boot.rb.erb')
       end
 
       def build()
