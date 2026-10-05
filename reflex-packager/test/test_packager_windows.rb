@@ -424,14 +424,21 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
-  def test_system_libs_and_dlls()
-    packager profile: profile(libraries: [], extensions: []) do |pkg, _|
-      pkg.define_singleton_method(:native_libraries) {%w[Xot Rucy Beeps Rays Reflex]}
-      libs = pkg.system_libs
-      assert_include libs, 'openal'
-      assert_include libs, 'xinput1_4'
-      assert_equal 1, libs.count('glew32')
-      assert_equal [*Windows::TOOLCHAIN_DLLS, 'libopenal-1.dll', 'glew32.dll'], pkg.system_dlls
+  def test_system_libs()
+    makefile = <<~MAKEFILE
+      LOCAL_LIBS =  -lrays.dll -lrucy -lxot -lstdc++
+      LIBS = $(LIBRUBYARG_SHARED) -lglew32 -lopengl32 -lgdi32 -lshell32 -lws2_32
+      DLDFLAGS = -L. -Wl,--out-implib=libfakenative.dll.a
+    MAKEFILE
+    assert_equal %w[glew32 opengl32 gdi32 shell32 ws2_32], Windows.makefile_libs(makefile)
+    assert_equal [],                                       Windows.makefile_libs('')
+
+    # from the Makefiles the gem builds of the native libraries leave
+    fake_libs do |root|
+      File.write File.join(root, 'FakeNative/ext/fakenative/Makefile'), makefile
+      packager do |pkg, _|
+        assert_equal %w[glew32 opengl32 gdi32 shell32 ws2_32], pkg.system_libs
+      end
     end
   end
 
@@ -443,6 +450,7 @@ class TestPackagerWindows < Test::Unit::TestCase
       with_env 'PATH' => '' do
         error = assert_raise(RP::Error) {pkg.__send__ :check_tools, pkg.tools}
         assert_include error.message, 'windres'
+        assert_include error.message, 'objdump'
         assert_include error.message, Windows::TOOLCHAIN_HINT
       end
     end
@@ -463,6 +471,8 @@ class TestPackagerWindows < Test::Unit::TestCase
         msys64/ucrt64/bin/libstdc++-6.dll
         msys64/ucrt64/bin/libgcc_s_seh-1.dll
         msys64/ucrt64/bin/libwinpthread-1.dll
+        windows/System32/KERNEL32.dll
+        windows/System32/OPENGL32.dll
       ].each do |path|
         path = File.join ruby, path
         FileUtils.mkdir_p File.dirname(path)
@@ -479,14 +489,33 @@ class TestPackagerWindows < Test::Unit::TestCase
         'rubylibprefix' => File.join(ruby, 'lib/ruby'),
         'ruby_version'  => '4.0.0'
       }
-      block.call rbconfig, File.join(ruby, 'msys64/ucrt64/bin')
+      with_env 'SystemRoot' => File.join(ruby, 'windows') do
+        block.call rbconfig, File.join(ruby, 'msys64/ucrt64/bin')
+      end
+    end
+  end
+
+  # What objdump would find in the import tables, by file name.
+  IMPORTS = {
+    'exe' => %w[
+      x64-ucrt-ruby400.dll glew32.dll libstdc++-6.dll KERNEL32.dll
+      api-ms-win-crt-heap-l1-1-0.dll],
+    'glew32.dll'          => %w[OPENGL32.dll KERNEL32.dll],
+    'libstdc++-6.dll'     => %w[libgcc_s_seh-1.dll libwinpthread-1.dll KERNEL32.dll],
+    'libgcc_s_seh-1.dll'  => %w[libwinpthread-1.dll],
+    'libwinpthread-1.dll' => %w[KERNEL32.dll]
+  }
+
+  def fake_imports(pkg, imports = IMPORTS)
+    pkg.define_singleton_method(:dll_imports) do |path|
+      imports[path.end_with?('.exe') ? 'exe' : File.basename(path)] || []
     end
   end
 
   def test_copy_runtime()
     with_ruby do |rbconfig, msys_bin|
       packager profile: profile(libraries: [], extensions: []) do |pkg, dir|
-        pkg.define_singleton_method(:native_libraries) {%w[Rays]}
+        fake_imports pkg
         # another toolchain earlier in PATH, as the one of git
         other = File.join dir, 'other/bin'
         FileUtils.mkdir_p other
@@ -501,8 +530,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         # a compiler given by its path, wherever PATH points
         abs = rbconfig.merge 'CXX' => File.join(msys_bin, 'fake-g++')
         with_env 'PATH' => other do
-          assert_equal File.join(msys_bin, 'libstdc++-6.dll'),
-            pkg.__send__(:find_dll, 'libstdc++-6.dll', abs)
+          assert_equal msys_bin, pkg.__send__(:toolchain_dir, abs)
         end
 
         %w[
@@ -521,8 +549,12 @@ class TestPackagerWindows < Test::Unit::TestCase
 
         manifest = File.read File.join(dir, 'bin/bin.manifest')
         assert_include manifest, %(name="bin" version="1.0.0.0")
-        assert_equal ['x64-ucrt-ruby400.dll', *Windows::TOOLCHAIN_DLLS, 'glew32.dll'],
-          manifest.scan(/<file name="(.+?)"/).flatten
+        # the ones of the toolchain the executable loads, directly or through
+        # another one, but none of windows
+        assert_equal %w[
+          x64-ucrt-ruby400.dll
+          glew32.dll libstdc++-6.dll libgcc_s_seh-1.dll libwinpthread-1.dll
+        ], manifest.scan(/<file name="(.+?)"/).flatten
         # the one of the toolchain for the executable, besides the one of ruby
         assert File.exist?(File.join dir, 'bin/libwinpthread-1.dll')
         assert File.exist?(File.join dir, 'bin/ruby_builtin_dlls/libwinpthread-1.dll')
@@ -533,11 +565,19 @@ class TestPackagerWindows < Test::Unit::TestCase
   def test_copy_runtime_without_system_dll()
     with_ruby do |rbconfig, msys_bin|
       packager profile: profile(libraries: [], extensions: []) do |pkg, dir|
-        pkg.define_singleton_method(:native_libraries) {%w[Beeps]}
         # the toolchain without openal installed
+        fake_imports pkg, IMPORTS.merge('exe' => [*IMPORTS['exe'], 'libopenal-1.dll'])
         with_env 'PATH' => msys_bin do
           error = assert_raise(RP::Error) {pkg.copy_runtime dir, rbconfig}
-          assert_include error.message, 'libopenal-1.dll'
+          assert_include error.message, "'libopenal-1.dll' needed by #{pkg.target}.exe"
+        end
+      end
+      # one a dll of the toolchain needs
+      packager profile: profile(libraries: [], extensions: []) do |pkg, dir|
+        fake_imports pkg, IMPORTS.merge('libgcc_s_seh-1.dll' => %w[libnone-1.dll])
+        with_env 'PATH' => msys_bin do
+          error = assert_raise(RP::Error) {pkg.copy_runtime dir, rbconfig}
+          assert_include error.message, "'libnone-1.dll' needed by libgcc_s_seh-1.dll"
         end
       end
     end

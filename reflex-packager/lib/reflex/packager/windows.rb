@@ -1,3 +1,4 @@
+require 'open3'
 require 'rbconfig'
 require 'shellwords'
 require 'reflex/packager/platform'
@@ -32,30 +33,6 @@ module Reflex
       #
       RUNTIME_DIR     = 'bin'
       RUNTIME_VERSION = '1.0.0.0'
-
-      # System libraries each native library links, as its extconf has them.
-      #
-      SYSTEM_LIBS = {
-        'beeps'  => %w[openal ole32 mf mfplat mfreadwrite mfuuid],
-        'rays'   => %w[gdi32 opengl32 glew32],
-        'reflex' => %w[
-          gdi32 ole32 imm32 shell32 comdlg32 winmm opengl32 glew32 dwmapi uuid
-          xinput1_4]
-      }
-
-      # The C++ runtime of the toolchain, which the executable and some DLLs
-      # load. The ones in ruby_builtin_dlls are reachable only from the ruby
-      # dll, and may be older than the toolchain needs.
-      #
-      TOOLCHAIN_DLLS = %w[libstdc++-6.dll libgcc_s_seh-1.dll libwinpthread-1.dll]
-
-      # DLLs from MSYS2 the native libraries load, shipped with the executable.
-      #
-      SYSTEM_DLLS = {
-        'beeps'  => %w[libopenal-1.dll],
-        'rays'   => %w[glew32.dll],
-        'reflex' => %w[glew32.dll]
-      }
 
       # Left out when copying a library: a gem build leaves its binaries in
       # lib/, and the extension must not be there in particular, since Ruby
@@ -118,7 +95,7 @@ module Reflex
       end
 
       def tools()
-        {compiler.first => TOOLCHAIN_HINT, 'windres' => TOOLCHAIN_HINT}
+        {compiler.first => TOOLCHAIN_HINT, 'windres' => TOOLCHAIN_HINT, 'objdump' => TOOLCHAIN_HINT}
       end
 
       # Native extensions registered with ruby_init_ext (Init_<name> symbols).
@@ -171,18 +148,56 @@ module Reflex
         native_libraries.reverse.map {static_archive _1, library_roots[_1]}
       end
 
+      # System libraries the extensions link, as the Makefiles their gem builds
+      # leave have them.
+      #
       def system_libs()
-        native_libraries.flat_map {SYSTEM_LIBS[_1.downcase] || []}.uniq
+        native_libraries.flat_map do |name|
+          makefile = File.join library_roots[name], 'ext', name.downcase, 'Makefile'
+          File.file?(makefile) ? Windows.makefile_libs(File.read makefile) : []
+        end.uniq
       end
 
-      def system_dlls()
-        [*TOOLCHAIN_DLLS, *native_libraries.flat_map {SYSTEM_DLLS[_1.downcase] || []}].uniq
+      # The names in the -l options of the LIBS of a Makefile mkmf writes.
+      #
+      def self.makefile_libs(makefile)
+        line = makefile.lines.find {_1.start_with? 'LIBS ='} or return []
+        line.split.filter_map {_1[/\A-l(.+)\z/, 1]}
+      end
+
+      # Paths of the DLLs of the toolchain the executable loads, directly or
+      # through another one: the import tables are followed from the
+      # executable as far as the DLLs beside the compiler go. The ones of
+      # Windows and the ruby dll end it, and any other is not to be found.
+      #
+      def toolchain_dlls(rbconfig = RbConfig::CONFIG)
+        @toolchain_dlls ||= begin
+          dir = toolchain_dir(rbconfig) or
+            raise Error, "compiler not found: #{TOOLCHAIN_HINT}"
+          found = {}
+          exe   = File.join build_dir, "#{target}.exe"
+          queue = dll_imports(exe).map {[_1, exe]}
+          until queue.empty?
+            dll, by = queue.shift
+            next if found.key? dll.downcase
+            path = File.join dir, dll
+            if File.file? path
+              found[dll.downcase] = path
+              queue.concat dll_imports(path).map {[_1, path]}
+            else
+              raise Error, "'#{dll}' needed by #{File.basename by} not found" unless
+                system_dll? dll, rbconfig
+              found[dll.downcase] = nil
+            end
+          end
+          found.values.compact
+        end
       end
 
       # DLLs the executable loads from bin/, listed in its manifest.
       #
       def runtime_dlls(rbconfig = RbConfig::CONFIG)
-        [rbconfig['LIBRUBY_SO'], *system_dlls]
+        [rbconfig['LIBRUBY_SO'], *toolchain_dlls(rbconfig).map {File.basename _1}]
       end
 
       # The app version as the four numbers an assembly version has to be.
@@ -232,10 +247,7 @@ module Reflex
         builtin = File.join bindir, 'ruby_builtin_dlls'
         FileUtils.cp_r builtin, bin if File.directory? builtin
 
-        system_dlls.each do |dll|
-          path = find_dll(dll, rbconfig) or raise Error, "'#{dll}' not found"
-          FileUtils.cp path, bin
-        end
+        toolchain_dlls(rbconfig).each {FileUtils.cp _1, bin}
         File.write File.join(bin, "#{RUNTIME_DIR}.manifest"),
           render('bin.manifest.erb', dlls: runtime_dlls(rbconfig))
 
@@ -314,16 +326,26 @@ module Reflex
       rescue LoadError
       end
 
-      # Looks beside the compiler first, where MSYS2 keeps the dlls of the
-      # toolchain and its packages, so that another toolchain earlier in
-      # PATH, as the one of git, does not give its own.
+      # The directory of the compiler, where MSYS2 keeps the DLLs of the
+      # toolchain and its packages, rather than PATH, where another toolchain,
+      # as the one of git, may come first with its own.
       #
-      def find_dll(dll, rbconfig = RbConfig::CONFIG)
+      def toolchain_dir(rbconfig = RbConfig::CONFIG)
         cxx      = rbconfig['CXX']&.shellsplit&.first
         compiler = cxx && (File.absolute_path?(cxx) ? cxx : find_executable(cxx))
-        dirs     = ENV['PATH'].to_s.split File::PATH_SEPARATOR
-        dirs.unshift File.dirname(compiler) if compiler
-        dirs.map {File.join _1, dll}.find {File.file? _1}
+        compiler && File.dirname(compiler)
+      end
+
+      def system_dll?(dll, rbconfig)
+        dll.casecmp?(rbconfig['LIBRUBY_SO']) ||
+          dll.match?(/\A(api|ext)-ms-/i) ||# api sets, which windows resolves
+          File.file?(File.join ENV['SystemRoot'].to_s, 'System32', dll)
+      end
+
+      def dll_imports(path)
+        out, status = Open3.capture2 'objdump', '-p', path
+        raise Error, "objdump failed: #{path}" unless status.success?
+        out.scan(/DLL Name: (\S+)/).flatten
       end
 
     end# Windows
