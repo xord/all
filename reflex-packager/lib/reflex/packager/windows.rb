@@ -135,7 +135,7 @@ module Reflex
       # libraries by their repository names, then the gems.
       #
       def lib_names()
-        [*library_names, *gem_dirs.keys]
+        [*library_names, *gem_names]
       end
 
       # Root directories of the libraries in the profile, by library name.
