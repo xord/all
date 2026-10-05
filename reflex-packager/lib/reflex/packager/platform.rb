@@ -46,10 +46,17 @@ module Reflex
         File.join config.dir, 'dist'
       end
 
+      # Returns the app name without characters unsafe for target, scheme or
+      # file names.
+      #
+      def target()
+        config.name.gsub(/[^A-Za-z0-9_\-]+/, '').then {_1.empty? ? 'App' : _1}
+      end
+
       private
 
-      def copy_app_files()
-        dir = File.join build_dir, 'app'
+      def copy_app_files(dir = 'app')
+        dir = File.join build_dir, dir
         FileUtils.rm_rf dir
         FileUtils.mkdir_p dir
         config.app_files.each do |file|
@@ -67,9 +74,21 @@ module Reflex
         File.write path, content
       end
 
-      def render(template)
+      # Renders the template with the packager's methods, and +vars+ as
+      # local variables.
+      #
+      def render(template, **vars)
         path = File.join TEMPLATES_DIR, platform_name, template
-        ERB.new(File.read(path), trim_mode: '-').result binding
+        b    = template_binding
+        vars.each {|name, value| b.local_variable_set name, value}
+        ERB.new(File.read(path), trim_mode: '-').result b
+      end
+
+      # A binding with the packager's methods and nothing else: a template
+      # sees every local variable of the method its binding is made in.
+      #
+      def template_binding()
+        binding
       end
 
       def run(*cmd, chdir:, env: {})
@@ -87,8 +106,21 @@ module Reflex
       end
 
       def executable?(name)
-        ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
-          .any? {|dir| File.executable? File.join(dir, name.to_s)}
+        !!find_executable(name)
+      end
+
+      # Windows finds 'g++' as 'g++.exe' through PATHEXT, which is separated
+      # by ';' whatever the platform.
+      #
+      def find_executable(name)
+        exts = ['', *ENV['PATHEXT'].to_s.split(';')]
+        ENV['PATH'].to_s.split(File::PATH_SEPARATOR).each do |dir|
+          exts.each do |ext|
+            path = File.join dir, "#{name}#{ext}"
+            return path if File.file?(path) && File.executable?(path)
+          end
+        end
+        nil
       end
 
     end# Platform

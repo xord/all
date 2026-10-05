@@ -28,7 +28,8 @@ module Reflex
             :cruby          => {tag: nil, branch: nil, git: nil, path: nil},
             profile.pod_key => {tag: nil, branch: nil, git: nil, path: nil}
           },
-          macos: MacOSConfig.defaults
+          macos:   MacOSConfig.defaults,
+          windows: WindowsConfig.defaults
         }
       end
 
@@ -63,12 +64,13 @@ module Reflex
         @icon      = hash[:icon]    &.to_s
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
         @pods      = hash[:pods].transform_values &:compact
-        @macos     = MacOSConfig.new hash[:macos]
+        @macos     = MacOSConfig.new   hash[:macos]
+        @windows   = WindowsConfig.new hash[:windows]
         validate
       end
 
       attr_reader :profile, :dir, :name, :bundle_id, :version, :main, :icon,
-        :files, :macos, :pods
+        :files, :macos, :windows, :pods
 
       # Returns paths to be bundled into the application, relative to the
       # project directory.
@@ -174,6 +176,36 @@ module Reflex
       end
 
     end# MacOSConfig
+
+
+    # Windows specific configuration.
+    #
+    class WindowsConfig
+
+      def self.defaults()
+        {
+          console: false
+        }
+      end
+
+      def initialize(hash)
+        @console = hash[:console]
+        validate
+      end
+
+      # Whether the executable keeps a console window, which shows what an app
+      # prints and the errors it dies of while it is being worked on.
+      #
+      def console?()
+        @console
+      end
+
+      def validate()
+        raise Error, "invalid console: '#{@console}'" unless
+          [true, false].include? @console
+      end
+
+    end# WindowsConfig
 
 
     # Raised on invalid configuration or packaging failure.

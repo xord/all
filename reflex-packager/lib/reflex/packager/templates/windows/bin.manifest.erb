@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity type="win32" name="<%= Windows::RUNTIME_DIR %>" version="<%= Windows::RUNTIME_VERSION %>"/>
+<%- dlls.each do |dll| -%>
+  <file name="<%= dll %>"/>
+<%- end -%>
+</assembly>
