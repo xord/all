@@ -168,13 +168,35 @@ class TestPackagerWindows < Test::Unit::TestCase
         gem 'rake'
       end
     RUBY
+    # bundler/setup, which apps with a Gemfile often require, does nothing
+    main = <<~RUBY
+      require 'bundler/setup'
+      require 'test/unit'
+      File.write '../result', $LOADED_FEATURES.grep(%r{bundler/setup}).join
+    RUBY
     fake_libs do
-      packager files: {'main.rb' => '', 'Gemfile' => gemfile} do |pkg, dir|
+      packager files: {'main.rb' => main, 'Gemfile' => gemfile} do |pkg, dir|
         pkg.generate
         assert File.exist?(build_path dir, 'lib/test-unit/lib/test/unit.rb')
         assert File.exist?(build_path dir, 'lib/power_assert/lib/power_assert.rb')
         assert !File.exist?(build_path dir, 'lib/rake')
         assert_include pkg.lib_names, 'test-unit'
+        assert_equal 'bundler', pkg.lib_names[pkg.library_names.size]
+
+        # out of the bundle the tests may run under
+        env = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}.merge 'RUBYOPT' => nil
+        assert system(env, RbConfig.ruby, build_path(dir, 'lib/boot.rb'))
+        assert_equal File.realpath(build_path dir, 'lib/bundler/lib/bundler/setup.rb'),
+          File.realpath(read dir, 'lib/result')
+      end
+    end
+
+    # no bundler/setup of its own for an app with no Gemfile
+    fake_libs do
+      packager do |pkg, dir|
+        pkg.generate
+        assert !File.exist?(build_path dir, 'lib/bundler')
+        assert_not_include pkg.lib_names, 'bundler'
       end
     end
 

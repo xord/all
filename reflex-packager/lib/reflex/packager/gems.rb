@@ -42,6 +42,13 @@ module Reflex
       #
       NATIVE_EXTS = %w[.so .bundle .dll]
 
+      # Names of the directories copy_gems makes, put on the load path in this
+      # order.
+      #
+      def gem_names()
+        [*('bundler' if gemfile), *gem_dirs.keys]
+      end
+
       # Require paths of the gems by name: the ones of the Gemfile of the app,
       # then the standard gems.
       #
@@ -113,6 +120,23 @@ module Reflex
           FileUtils.mkdir_p dest
           paths.each {FileUtils.cp_r File.join(_1, '.'), dest}
         end
+        write_bundler_setup File.join(dir, 'bundler', 'lib') if gemfile
+      end
+
+      # An app with a Gemfile may require bundler/setup, which would find the
+      # bundler of the standard library, and no Gemfile to set up with. The
+      # gems are on the load path already, so the one found first does
+      # nothing.
+      #
+      def write_bundler_setup(dir)
+        path = File.join dir, 'bundler', 'setup.rb'
+        FileUtils.mkdir_p File.dirname(path)
+        File.write path, "# the gems of the Gemfile are on the load path already\n"
+      end
+
+      def gemfile()
+        path = File.join config.dir, 'Gemfile'
+        File.file?(path) ? path : nil
       end
 
       SPECS_TO_JSON = <<~RUBY
@@ -165,8 +189,7 @@ module Reflex
       # The gems of the default group of the Gemfile of the app.
       #
       def gemfile_specs()
-        gemfile = File.join config.dir, 'Gemfile'
-        return [] unless File.file? gemfile
+        return [] unless gemfile
         run_ruby GEMFILE_SPECS, env: {'BUNDLE_GEMFILE' => gemfile},
           error: 'failed to resolve the Gemfile (bundle install?)'
       end
