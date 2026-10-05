@@ -54,6 +54,12 @@ module Reflex
         hash = symbolize_keys hash || {}
         hash = validate_input hash, Config.defaults(profile, @dir, hash), stderr: stderr
 
+        # YAML reads 1.10 as a number, the same as 1.1
+        %i[version build].each do |key|
+          raise Error, "#{key} #{hash[key]} is read as a number, quote it" if
+            hash[key].is_a? Float
+        end
+
         @name      = hash[:name]     .to_s
         @bundle_id = hash[:bundle_id].to_s
         @version   = hash[:version]  .to_s

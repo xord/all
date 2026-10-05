@@ -282,7 +282,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include rc, %(VALUE "FileDescription",  "ア""プ\\\\リ")
         assert_include rc, %(VALUE "ProductName",      "ア""プ\\\\リ")
       end
-      packager "version: 2.3\nbuild: 20" do |pkg, dir|
+      packager "version: '2.3'\nbuild: 20" do |pkg, dir|
         pkg.generate
         rc = read dir, 'src/app.rc'
         assert_include rc, 'FILEVERSION    20,0,0,0'

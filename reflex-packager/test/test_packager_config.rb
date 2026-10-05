@@ -120,8 +120,10 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal '1',        config(version: '1')  .version
     assert_equal '2.3',      config(version: '2.3').version
     assert_equal '0.1.0',    config(version: nil)  .version
+    assert_equal '1',        config(version: 1)    .version
     assert_raise(RP::Error) {config version: '4.'}
     assert_raise(RP::Error) {config version: '2.3beta'}
+    assert_raise(RP::Error) {config version: 1.10} # read as 1.1
   end
 
   def test_build()
@@ -130,6 +132,7 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal '1.2.3.4',  config(build: '1.2.3.4').build
     assert_raise(RP::Error) {config build: '1.2b'}
     assert_raise(RP::Error) {config build: '4.'}
+    assert_raise(RP::Error) {config build: 1.10} # read as 1.1
   end
 
   def test_display_and_build_versions()

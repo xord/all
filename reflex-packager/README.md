@@ -151,7 +151,7 @@ icon: icon.png
 | `version: 1.2.3.4` | `1.2.3` | `1.2.3.4` |
 | `version: 1.2.3` and `build: 456` | `1.2.3` | `456` |
 
-A fourth number of `version` tells a build apart from another of the same version, as one uploaded again for a review. On Windows, each number has to be 65535 or less.
+A fourth number of `version` tells a build apart from another of the same version, as one uploaded again for a review. On Windows, each number has to be 65535 or less. Quote a version or a build of two numbers, as `'1.10'`, which YAML reads as the number 1.1 otherwise.
 
 ### CRuby
 
