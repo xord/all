@@ -120,7 +120,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         pkg.generate
         # a rays_ext.so on the load path would win over the one linked in
         lib   = build_path dir, 'lib'
-        files = pkg.lib_names.flat_map {Dir.glob "#{_1}/**/*", base: lib}
+        files = pkg.load_dirs.flat_map {Dir.glob "#{_1}/**/*", base: lib}
         assert_empty files.grep(/\.(so|a|o)\z/)
         assert_not_include files, 'fakenative/ext'
         # the app itself ships what it likes
@@ -145,8 +145,9 @@ class TestPackagerWindows < Test::Unit::TestCase
       gems = {'fakegem' => [File.join(root, 'fakepure', 'lib')]}
       packager standard_gems: gems do |pkg, dir|
         pkg.generate
-        assert File.exist?(build_path dir, 'lib/fakegem/lib/fakepure.rb')
+        assert File.exist?(build_path dir, 'lib/gems/fakegem/lib/fakepure.rb')
         assert_equal %w[fakepure fakenative fakebase fakegem], pkg.lib_names
+        assert_equal %w[fakepure fakenative fakebase gems/fakegem], pkg.load_dirs
 
         # the ones this ruby has, looked for out of any bundle, with what they
         # depend on: rexml has been a bundled gem since ruby 3.0, and rss
@@ -178,16 +179,16 @@ class TestPackagerWindows < Test::Unit::TestCase
     fake_libs do
       packager files: {'main.rb' => main, 'Gemfile' => gemfile} do |pkg, dir|
         pkg.generate
-        assert File.exist?(build_path dir, 'lib/test-unit/lib/test/unit.rb')
-        assert File.exist?(build_path dir, 'lib/power_assert/lib/power_assert.rb')
-        assert !File.exist?(build_path dir, 'lib/rake')
+        assert File.exist?(build_path dir, 'lib/gems/test-unit/lib/test/unit.rb')
+        assert File.exist?(build_path dir, 'lib/gems/power_assert/lib/power_assert.rb')
+        assert !File.exist?(build_path dir, 'lib/gems/rake')
         assert_include pkg.lib_names, 'test-unit'
         assert_equal 'bundler', pkg.lib_names[pkg.library_names.size]
 
         # out of the bundle the tests may run under
         env = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}.merge 'RUBYOPT' => nil
         assert system(env, RbConfig.ruby, build_path(dir, 'lib/boot.rb'))
-        assert_equal File.realpath(build_path dir, 'lib/bundler/lib/bundler/setup.rb'),
+        assert_equal File.realpath(build_path dir, 'lib/gems/bundler/lib/bundler/setup.rb'),
           File.realpath(read dir, 'lib/result')
       end
     end
@@ -196,7 +197,7 @@ class TestPackagerWindows < Test::Unit::TestCase
     fake_libs do
       packager do |pkg, dir|
         pkg.generate
-        assert !File.exist?(build_path dir, 'lib/bundler')
+        assert !File.exist?(build_path dir, 'lib/gems/bundler')
         assert_not_include pkg.lib_names, 'bundler'
       end
     end
@@ -235,8 +236,8 @@ class TestPackagerWindows < Test::Unit::TestCase
           assert_equal %w[native rexml ostruct], pkg.gem_dirs.keys
           assert_equal [File.join(gems, 'rexml/lib')], pkg.gem_dirs['rexml']
           # an extension comes along, unlike the ones of the libraries
-          assert File.exist?(build_path dir, 'lib/native/lib/native.so')
-          assert File.exist?(build_path dir, 'lib/native/lib/native.rb')
+          assert File.exist?(build_path dir, 'lib/gems/native/lib/native.so')
+          assert File.exist?(build_path dir, 'lib/gems/native/lib/native.rb')
         end
         # where a native extension is not supported
         packager standard_gems: standard do |pkg, _|

@@ -92,6 +92,15 @@ module Reflex
         {compiler.first => TOOLCHAIN_HINT, 'windres' => TOOLCHAIN_HINT, 'objdump' => TOOLCHAIN_HINT}
       end
 
+      # Directories under lib/ boot.rb puts on the load path, in the order of
+      # lib_names: the libraries, and the gems under gems/, apart from what
+      # else lib/ has, as ruby/ and app/.
+      #
+      def load_dirs()
+        gems = gem_names
+        lib_names.map {gems.include?(_1) ? File.join('gems', _1) : _1}
+      end
+
       # Libraries built from native code: the ones whose gem has the static
       # archive the extension was linked from.
       #
@@ -258,7 +267,7 @@ module Reflex
         dir = File.join build_dir, 'lib'
         FileUtils.rm_rf dir
         libraries.each {copy_library _1.root, File.join(dir, _1.name)}
-        copy_gems {File.join dir, _1, 'lib'}
+        copy_gems {File.join dir, 'gems', _1, 'lib'}
       end
 
       def copy_dist()

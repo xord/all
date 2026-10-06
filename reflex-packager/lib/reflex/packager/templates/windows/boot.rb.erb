@@ -1,5 +1,5 @@
-%w[<%= lib_names.join ' ' %>].reverse_each do |name|
-  $LOAD_PATH.unshift File.join(__dir__, name, 'lib')
+%w[<%= load_dirs.join ' ' %>].reverse_each do |dir|
+  $LOAD_PATH.unshift File.join(__dir__, dir, 'lib')
 end
 
 Dir.chdir File.join(__dir__, 'app')
