@@ -42,8 +42,16 @@ module Reflex
       #
       NATIVE_EXTS = %w[.so .bundle .dll]
 
-      # Names of the directories copy_gems makes, put on the load path in this
-      # order.
+      # Names of the libraries and the gems, put on the load path in this
+      # order: a library before the ones it depends on, as bundler puts them,
+      # and the libraries before the gems, which the runtime is not to be
+      # hidden by.
+      #
+      def lib_names()
+        [*library_names.reverse, *gem_names]
+      end
+
+      # Names of the gems copy_gems copies, put on the load path in this order.
       #
       def gem_names()
         [*('bundler' if gemfile), *gem_dirs.keys]
@@ -75,6 +83,7 @@ module Reflex
       # ones with a native extension where it is not supported.
       #
       def standard_gem_dirs()
+        return {} unless standard_gems?
         @standard_gem_dirs ||= standard_specs.each.with_object({}) do |spec, dirs|
           name, paths = spec.values_at 'name', 'require_paths'
           next unless shipped? spec
@@ -88,6 +97,13 @@ module Reflex
       end
 
       private
+
+      # Whether to ship the standard gems, which the Ruby a platform embeds may
+      # have in its standard library already.
+      #
+      def standard_gems?()
+        true
+      end
 
       # Whether a gem with a native extension can be shipped.
       #
@@ -112,15 +128,16 @@ module Reflex
         end
       end
 
-      # Copies the gems into <dir>/<name>/lib as they are.
+      # Copies the gems as they are into the directories the block returns for
+      # their names, which the platform puts on the load path.
       #
-      def copy_gems(dir)
+      def copy_gems(&lib_dir)
         gem_dirs.each do |name, paths|
-          dest = File.join dir, name, 'lib'
+          dest = lib_dir.call name
           FileUtils.mkdir_p dest
           paths.each {FileUtils.cp_r File.join(_1, '.'), dest}
         end
-        write_bundler_setup File.join(dir, 'bundler', 'lib') if gemfile
+        write_bundler_setup lib_dir.call('bundler') if gemfile
       end
 
       # An app with a Gemfile may require bundler/setup, which would find the

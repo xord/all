@@ -2,6 +2,7 @@ require 'json'
 require 'open3'
 require 'rbconfig'
 require 'reflex/packager/platform'
+require 'reflex/packager/gems'
 
 
 module Reflex
@@ -18,6 +19,8 @@ module Reflex
     # from a checkout of the cruby repository.
     #
     class MacOS < Platform
+
+      include Gems
 
       CRUBY_GIT = 'https://github.com/xord/cruby'
 
@@ -160,6 +163,12 @@ module Reflex
         'macos'
       end
 
+      # CRuby has the bundled gems in its standard library.
+      #
+      def standard_gems?()
+        false
+      end
+
       def rake_build_info(root)
         out, err, status = Open3.capture3 RbConfig.ruby, '-e', RAKE_BUILD_INFO, chdir: root
         raise Error, "failed to read the Rakefile in '#{root}': #{err.strip}" unless
@@ -210,6 +219,7 @@ module Reflex
         dir = File.join build_dir, 'Bundles'
         FileUtils.rm_rf dir
         libraries.each {copy_library _1.root, bundle_resources(dir, _1.name)}
+        copy_gems {File.join bundle_resources(dir, _1), 'lib'}
         res = bundle_resources dir, 'CRuby'
         FileUtils.mkdir_p res
         FileUtils.cp_r File.join(cruby_dir, 'CRuby', 'lib'), res

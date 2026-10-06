@@ -20,7 +20,7 @@ main (int argc, const char* argv[])
 		[CRuby addExtension:@"<%= ext %>" init:^{Init_<%= ext %>();}];
 <%- end -%>
 
-		for (NSString* lib in @[<%= libraries.map {"@\"#{_1}\""}.join ', ' %>])
+		for (NSString* lib in @[<%= lib_names.reverse.map {"@\"#{_1}\""}.join ', ' %>])
 			[CRuby addLibrary:lib bundle:NSBundle.mainBundle];
 
 		NSString* boot = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"boot.rb"];

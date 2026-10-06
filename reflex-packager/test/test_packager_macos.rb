@@ -104,6 +104,46 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_bundles_carry_the_gems_of_the_gemfile()
+    # resolved by bundler: the default group, with what it depends on
+    gemfile = <<~RUBY
+      source 'https://rubygems.org'
+      gem 'test-unit'
+      group :test do
+        gem 'rake'
+      end
+    RUBY
+    packager files: %w[main.rb Gemfile] do |pkg, dir|
+      File.write File.join(dir, 'Gemfile'), gemfile
+      pkg.generate
+      bundles = File.join dir, '.build/macos/Bundles'
+      assert File.exist?(File.join bundles, 'test-unit.bundle/Contents/Resources/lib/test/unit.rb')
+      assert File.exist?(File.join bundles, 'power_assert.bundle/Contents/Resources/lib/power_assert.rb')
+      assert !File.exist?(File.join bundles, 'rake.bundle')
+      # bundler/setup, which apps with a Gemfile often require, does nothing
+      assert File.exist?(File.join bundles, 'bundler.bundle/Contents/Resources/lib/bundler/setup.rb')
+      # CRuby has the standard gems
+      assert_equal %w[power_assert test-unit], pkg.gem_dirs.keys.sort
+      str = read dir, 'src/main.mm'
+      assert_include str, '@"test-unit"'
+      assert_include str, '@"bundler"'
+    end
+
+    # where a native extension is not supported
+    packager do |pkg, _|
+      Dir.mktmpdir do |gems|
+        FileUtils.mkdir_p File.join(gems, 'native/lib')
+        FileUtils.touch   File.join(gems, 'native/lib/native.bundle')
+        specs = [{'name' => 'native', 'default_gem' => false,
+                  'require_paths' => [File.join(gems, 'native/lib')]}]
+        stub pkg, :gemfile_specs, specs do
+          error = assert_raise(RP::Error) {pkg.gem_dirs}
+          assert_include error.message, "'native'"
+        end
+      end
+    end
+  end
+
   def test_project_yml_with_icon_and_team()
     yaml = <<~YML
       icon: icon.png

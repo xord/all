@@ -98,13 +98,6 @@ module Reflex
         profile.extensions
       end
 
-      # Directory names under lib/ put on the load path by boot.rb: the
-      # libraries, then the gems.
-      #
-      def lib_names()
-        [*library_names, *gem_names]
-      end
-
       # Libraries built from native code: the ones whose gem has the static
       # archive the extension was linked from.
       #
@@ -256,7 +249,7 @@ module Reflex
         dir = File.join build_dir, 'lib'
         FileUtils.rm_rf dir
         libraries.each {copy_library _1.root, File.join(dir, _1.name)}
-        copy_gems dir
+        copy_gems {File.join dir, _1, 'lib'}
       end
 
       def copy_dist()

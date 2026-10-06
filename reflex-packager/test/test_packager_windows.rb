@@ -146,7 +146,7 @@ class TestPackagerWindows < Test::Unit::TestCase
       packager standard_gems: gems do |pkg, dir|
         pkg.generate
         assert File.exist?(build_path dir, 'lib/fakegem/lib/fakepure.rb')
-        assert_equal %w[fakebase fakenative fakepure fakegem], pkg.lib_names
+        assert_equal %w[fakepure fakenative fakebase fakegem], pkg.lib_names
 
         # the ones this ruby has, looked for out of any bundle, with what they
         # depend on: rexml has been a bundled gem since ruby 3.0, and rss
@@ -312,7 +312,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         pwd, *paths = read(dir, 'lib/result').lines chomp: true
         assert_equal File.realpath(build_path dir, 'lib/app'), File.realpath(pwd)
         assert_equal pwd, paths.first
-        assert_equal %w[lib/fakebase/lib lib/fakenative/lib lib/fakepure/lib],
+        assert_equal %w[lib/fakepure/lib lib/fakenative/lib lib/fakebase/lib],
           paths[1..].map {_1.split('/').last(3).join '/'}
       end
     end
