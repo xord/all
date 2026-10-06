@@ -88,6 +88,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal '-',                     base['CODE_SIGN_IDENTITY']
       assert_equal '11.0', yml.dig('options', 'deploymentTarget', 'macOS')
       assert_not_include str, 'CFBundleIconFile'
+      assert_include     str, 'GCC_WARN_INHIBIT_ALL_WARNINGS: YES'
       assert_not_include str, 'DEVELOPMENT_TEAM'
 
       reflex, cruby = pkg.libraries.find {_1.name == 'reflex'}.root, ENV['CRUBY_PATH']
@@ -187,6 +188,34 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include     str, 'DEVELOPMENT_TEAM: ABCDE12345'
       assert_not_include str, 'NSHumanReadableCopyright'
       assert_not_include str, 'LSHasLocalizedDisplayName'
+
+      str = MacOS.new(pkg.config, verbose: true).__send__ :render, 'project.yml.erb'
+      assert_not_include str, 'GCC_WARN_INHIBIT_ALL_WARNINGS'
+    end
+  end
+
+  def test_run()
+    stdout = -> &block {
+      Tempfile.create do |file|
+        saved = $stdout.dup
+        $stdout.reopen file
+        block.call
+        $stdout.flush
+        File.read file.path
+      ensure
+        $stdout.reopen saved
+        saved.close
+      end
+    }
+    packager do |pkg, dir|
+      cmd = [RbConfig.ruby, '-e', 'puts 1 + 1']
+      assert_match     (/^2$/),   stdout.call {pkg.__send__ :run, *cmd, chdir: dir}
+      assert_not_match (/^2$/),   stdout.call {pkg.__send__ :run, *cmd, chdir: dir, quiet: true}
+      assert_match     (/^==> /), stdout.call {pkg.__send__ :run, *cmd, chdir: dir, quiet: true}
+
+      verbose = MacOS.new pkg.config, verbose: true
+      assert_match     (/^2$/), stdout.call {verbose.__send__ :run, *cmd, chdir: dir, quiet: true}
+      assert_raise(RP::Error) {stdout.call {pkg.__send__ :run, RbConfig.ruby, '-e', 'exit 1', chdir: dir}}
     end
   end
 

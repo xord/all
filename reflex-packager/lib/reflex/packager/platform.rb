@@ -126,9 +126,13 @@ module Reflex
         binding
       end
 
-      def run(*cmd, chdir:, env: {})
+      # Runs +cmd+, dropping what it prints if +quiet+ unless verbose, though
+      # not the errors it tells.
+      #
+      def run(*cmd, chdir:, env: {}, quiet: false)
         puts "==> #{cmd.join ' '}"
-        return if system env, *cmd, chdir: chdir
+        out = quiet && !verbose? ? {out: File::NULL} : {}
+        return if system env, *cmd, chdir: chdir, **out
         raise Error, "command failed: #{cmd.join ' '}"
       end
 

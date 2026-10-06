@@ -46,8 +46,8 @@ module Reflex
 
       def build()
         check_tools TOOLS
-        run 'xcodegen', 'generate', chdir: build_dir
-        run 'xcodebuild',
+        run 'xcodegen', 'generate', *('--quiet' unless verbose?), chdir: build_dir
+        run 'xcodebuild',           *( '-quiet' unless verbose?),
           '-project',         "#{target}.xcodeproj",
           '-scheme',          target,
           '-configuration',   'Release',
@@ -240,7 +240,7 @@ module Reflex
         FileUtils.rm_rf iconset
         FileUtils.mkdir_p iconset
         icon_commands(File.join(config.dir, config.icon), iconset)
-          .each {|cmd| run(*cmd, chdir: build_dir)}
+          .each {|cmd| run(*cmd, chdir: build_dir, quiet: true)}
         run 'iconutil', '-c', 'icns', 'AppIcon.iconset', '-o', 'AppIcon.icns',
           chdir: build_dir
       end

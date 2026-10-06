@@ -17,6 +17,9 @@ settings:
 <%- end -%>
     CLANG_CXX_LANGUAGE_STANDARD: c++20
     CLANG_ENABLE_OBJC_ARC: NO
+<%- unless verbose? -%>
+    GCC_WARN_INHIBIT_ALL_WARNINGS: YES
+<%- end -%>
     HEADER_SEARCH_PATHS: <%= header_search_paths.to_json %>
     SYSTEM_HEADER_SEARCH_PATHS: <%= system_header_search_paths.to_json %>
     OTHER_LDFLAGS: [-lz, -lffi]

@@ -7,6 +7,7 @@ require 'reflex/extension'
 require 'reflex/packager'
 
 require 'test/unit'
+require 'tempfile'
 require 'tmpdir'
 
 include Xot::Test
