@@ -521,7 +521,8 @@ class TestPackagerWindows < Test::Unit::TestCase
         File.write path, path
       end
       # the compiler, which the dlls of the toolchain are beside
-      compiler = File.join ruby, 'msys64/ucrt64/bin/fake-g++'
+      # with .exe on windows, which takes nothing else as executable
+      compiler = File.join ruby, "msys64/ucrt64/bin/fake-g++#{'.exe' if Gem.win_platform?}"
       File.write compiler, ''
       File.chmod 0755, compiler
       rbconfig = {

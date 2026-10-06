@@ -99,11 +99,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
       target  = yml.dig 'targets', 'MyApp'
       sources = target['sources'].to_h {[_1['name'] || _1['path'], _1]}
       assert_equal "#{cruby}/src",                  sources['CRuby']['path']
-      assert_include sources['reflex']['includes'], 'src/osx/window.mm'
       assert_include sources['reflex']['includes'], 'ext/reflex/reflex.cpp'
-      assert_empty   sources['reflex']['includes'].grep(%r{/(win32|sdl|ios)/})
       assert_empty   sources['xot']   ['includes'].grep(%r{^ext/}) # only for its tests
-      assert_match(/-DOSX\b.*/,                     sources['reflex']['compilerFlags'])
       assert_match(/-DB2_MAX_WORLDS=256 .*-w\z/,    sources['reflex-vendor']['compilerFlags'])
       assert_include sources['reflex-vendor']['includes'], 'box2d/src/world.c'
       assert_include sources, 'Bundles/CRuby.bundle'
@@ -125,8 +122,16 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
       deps = target['dependencies']
       assert_include deps, {'framework' => "#{cruby}/CRuby/CRuby.xcframework", 'embed' => false}
-      assert_include deps, {'sdk' => 'AppKit.framework'}
-      assert_include deps, {'sdk' => 'CoreMIDI.framework'}
+
+      # the sources, the macros and the frameworks of the builds of the
+      # libraries, which are the ones for the platform they are read on
+      if RUBY_PLATFORM.include? 'darwin'
+        assert_include sources['reflex']['includes'], 'src/osx/window.mm'
+        assert_empty   sources['reflex']['includes'].grep(%r{/(win32|sdl|ios)/})
+        assert_match(/-DOSX\b.*/,                     sources['reflex']['compilerFlags'])
+        assert_include deps, {'sdk' => 'AppKit.framework'}
+        assert_include deps, {'sdk' => 'CoreMIDI.framework'}
+      end
     end
   end
 
