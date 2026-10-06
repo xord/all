@@ -172,7 +172,7 @@ localizations:
     name: マイアプリ
 ```
 
-On macOS, the name in the language of the system is shown in the Finder, the Dock and the menu bar, and the copyright in the About panel. On Windows, they are shown in the properties of the executable, the name of which stays as it is, in the languages Windows knows.
+On macOS, the name in the language of the system is shown in the Finder, the Dock, the menu bar and the application menu, and the copyright in the About panel. On Windows, they are in the version resource of the executable, in the languages Windows knows, and the name in the language of the user is the one the app has by default (`Reflex::Application#name`), which a tray shows. The properties of the executable show the English ones, though, and its file name stays as it is.
 
 ### CRuby
 
