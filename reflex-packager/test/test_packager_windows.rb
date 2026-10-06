@@ -252,8 +252,8 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_main_cpp_manifest_and_rc()
     fake_libs do
-      packager "version: 1.2.3.4.5\ncopyright: © 2026 Me" do |pkg, dir|
-        pkg.generate
+      packager "version: 1.2.3.4.5\ncopyright: © 2026 Me\nlocalizations: {ja: {name: アプリ}}" do |pkg, dir|
+        stub(RP::Windows, :lcid, 0x0411) {pkg.generate}
         str = read dir, 'src/main.cpp'
         assert_include str, 'void Init_fakenative_ext ();'
         assert_include str, 'ruby_init_ext("fakenative_ext.so", Init_fakenative_ext);'
@@ -277,6 +277,10 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include     rc, %(VALUE "ProductVersion",   "1.2.3")
         assert_include     rc, %(VALUE "OriginalFilename", "#{pkg.target}.exe")
         assert_include     rc, %(VALUE "LegalCopyright",   "© 2026 Me")
+        assert_include     rc, %(BLOCK "041104B0")
+        assert_include     rc, %(VALUE "ProductName",      "アプリ")
+        assert_include     rc, %(VALUE "Translation", 0x409, 1200, 0x411, 1200)
+        assert_equal 2, rc.scan(%(VALUE "LegalCopyright",   "© 2026 Me")).size # in both of the languages
       end
       packager %(name: 'ア"プ\\リ'\nbundle_id: com.example.app) do |pkg, dir|
         pkg.generate
@@ -292,10 +296,17 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include     rc, %(VALUE "FileVersion",      "20")
         assert_include     rc, %(VALUE "ProductVersion",   "2.3")
         assert_not_include rc, 'LegalCopyright'
+        assert_include     rc, %(BLOCK "040904B0")
+        assert_include     rc, %(VALUE "Translation", 0x409, 1200)
       end
       packager "build: 65536" do |pkg, _|
         assert_raise(RP::Error) {pkg.file_version}
       end
+      packager do |pkg, _|
+        assert_equal 0x0411, pkg.langid('ja')
+        assert_equal 0x0804, pkg.langid('zh-Hans')
+        assert_raise(RP::Error) {pkg.langid 'x-y'}
+      end if Gem.win_platform? # asks windows
       assert_equal '1.2.3.4', RP::Windows.four_numbers('1.2.3.4.65536') # the fifth is not used
       packager do |pkg, _|
         # templates see the packager and what render is given, nothing else

@@ -16,21 +16,23 @@ FILETYPE       0x1// VFT_APP
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
-    BLOCK "040904B0"// U.S. English, Unicode
+<%- config.localizations.each do |lang, values| -%>
+    BLOCK "<%= "%04X04B0" % langid(lang) %>"// <%= lang %>, Unicode
     BEGIN
-      VALUE "FileDescription",  <%= rc_string config.name %>
+      VALUE "FileDescription",  <%= rc_string values[:name] %>
       VALUE "FileVersion",      <%= rc_string config.build_version %>
       VALUE "InternalName",     <%= rc_string target %>
-<%- if config.copyright -%>
-      VALUE "LegalCopyright",   <%= rc_string config.copyright %>
-<%- end -%>
+<%-   if values[:copyright] -%>
+      VALUE "LegalCopyright",   <%= rc_string values[:copyright] %>
+<%-   end -%>
       VALUE "OriginalFilename", <%= rc_string "#{target}.exe" %>
-      VALUE "ProductName",      <%= rc_string config.name %>
+      VALUE "ProductName",      <%= rc_string values[:name] %>
       VALUE "ProductVersion",   <%= rc_string config.display_version %>
     END
+<%- end -%>
   END
   BLOCK "VarFileInfo"
   BEGIN
-    VALUE "Translation", 0x409, 1200
+    VALUE "Translation", <%= config.localizations.keys.map {"0x%x, 1200" % langid(_1)}.join ", " %>
   END
 END

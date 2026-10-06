@@ -50,10 +50,11 @@ module Reflex
       def initialize(profile, dir, hash = nil, stderr: $stderr)
         raise Error, "no such directory: '#{dir}'" unless File.directory? dir
 
-        @profile = profile
-        @dir     = File.expand_path dir
-        hash = symbolize_keys hash || {}
-        hash = validate_input hash, Config.defaults(profile, @dir, hash), stderr: stderr
+        @profile      = profile
+        @dir          = File.expand_path dir
+        hash          = symbolize_keys hash || {}
+        localizations = hash.delete :localizations
+        hash          = validate_input hash, Config.defaults(profile, @dir, hash), stderr: stderr
 
         # YAML reads 1.10 as a number, the same as 1.1
         %i[version build].each do |key|
@@ -71,11 +72,21 @@ module Reflex
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
         @macos     = MacOSConfig.new   hash[:macos]
         @windows   = WindowsConfig.new hash[:windows]
+
+        @localizations = localize localizations, stderr: stderr
         validate
       end
 
       attr_reader :profile, :dir, :name, :bundle_id, :version, :build, :copyright,
         :main, :icon, :files, :macos, :windows
+
+      # The values that differ by language, in English, the language of the
+      # ones out of localizations, and in each language of the localizations
+      # with the English ones for what they leave out.
+      #
+      # @return [Hash<String, Hash>] {language => {name:, copyright:}}
+      #
+      attr_reader :localizations
 
       # The version to show: the numbers of the version, up to three.
       #
@@ -129,6 +140,26 @@ module Reflex
             v.is_a?(Hash) ? symbolize_keys(v) : v
           ]
         }.to_h
+      end
+
+      # A language tag, as ja or zh-Hans.
+      #
+      LANGUAGE_FORMAT = /\A[a-z]{2,3}(-[A-Za-z0-9]{2,8})*\z/
+
+      def localize(localizations, stderr: nil)
+        english = {name: @name, copyright: @copyright}
+        raise Error, "not a Hash: '/localizations'" unless
+          localizations.nil? || localizations.is_a?(Hash)
+
+        (localizations || {}).each.with_object({'en' => english}) do |(lang, hash), result|
+          lang = lang.to_s
+          raise Error, "invalid language: '#{lang}'" if lang !~ LANGUAGE_FORMAT
+          raise Error, "'en' is the language of the values out of localizations" if
+            lang == 'en'
+          result[lang] = validate_input(
+            hash, english, parent: "/localizations/#{lang}", stderr: stderr
+          ).transform_values {_1&.to_s}
+        end
       end
 
       def validate_input(hash, defaults, parent: '', stderr: nil)

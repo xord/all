@@ -41,6 +41,7 @@ module Reflex
         write 'project.yml', render('project.yml.erb')
         write 'src/main.mm', render('main.mm.erb')
         write 'boot.rb',     render('boot.rb.erb')
+        write_localizations
       end
 
       def build()
@@ -217,6 +218,17 @@ module Reflex
         res = bundle_resources dir, 'CRuby'
         FileUtils.mkdir_p res
         FileUtils.cp_r File.join(cruby_dir, 'CRuby', 'lib'), res
+      end
+
+      # InfoPlist.strings of each language in its .lproj, which xcodegen
+      # finds in src/, unless the app is in English only.
+      #
+      def write_localizations()
+        FileUtils.rm_rf Dir.glob(File.join build_dir, 'src', '*.lproj')
+        return if config.localizations.size <= 1
+        config.localizations.each do |lang, values|
+          write "src/#{lang}.lproj/InfoPlist.strings", render('InfoPlist.strings.erb', **values)
+        end
       end
 
       def bundle_resources(dir, name)

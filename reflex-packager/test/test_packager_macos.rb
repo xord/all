@@ -51,6 +51,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       end
       assert_empty Dir.glob('*.bundle/**/lib/**/*.{bundle,so,o,a}',
         base: File.join(dir, '.build/macos/Bundles'))
+      assert_empty Dir.glob('src/*.lproj', base: File.join(dir, '.build/macos')) # in english only
     end
   end
 
@@ -65,7 +66,16 @@ class TestPackagerMacOS < Test::Unit::TestCase
   end
 
   def test_project_yml()
-    packager "name: My App\nbundle_id: com.example.myapp\nversion: 1.2.3.4\ncopyright: © 2026 Me" do |pkg, dir|
+    yaml = <<~YML
+      name: My App
+      bundle_id: com.example.myapp
+      version: 1.2.3.4
+      copyright: © 2026 Me
+      localizations:
+        ja: {name: 'マイ"アプリ'}
+    YML
+    packager yaml do |pkg, dir|
+      FileUtils.mkdir_p File.join(dir, '.build/macos/src/fr.lproj') # of a previous build
       pkg.generate
       str  = read dir, 'project.yml'
       yml  = YAML.safe_load str
@@ -102,6 +112,15 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal '1.2.3',     info['CFBundleShortVersionString']
       assert_equal '1.2.3.4',   info['CFBundleVersion']
       assert_equal '© 2026 Me', info['NSHumanReadableCopyright']
+      assert_equal true,        info['LSHasLocalizedDisplayName']
+
+      assert_equal <<~'STRINGS', read(dir, 'src/ja.lproj/InfoPlist.strings')
+        "CFBundleName"             = "マイ\"アプリ";
+        "CFBundleDisplayName"      = "マイ\"アプリ";
+        "NSHumanReadableCopyright" = "© 2026 Me";
+      STRINGS
+      assert_include read(dir, 'src/en.lproj/InfoPlist.strings'), '"CFBundleName"             = "My App";'
+      assert !File.exist?(File.join dir, '.build/macos/src/fr.lproj')
 
       deps = target['dependencies']
       assert_include deps, {'framework' => "#{cruby}/CRuby/CRuby.xcframework", 'embed' => false}
@@ -167,6 +186,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include     str, 'path: AppIcon.icns'
       assert_include     str, 'DEVELOPMENT_TEAM: ABCDE12345'
       assert_not_include str, 'NSHumanReadableCopyright'
+      assert_not_include str, 'LSHasLocalizedDisplayName'
     end
   end
 

@@ -141,6 +141,23 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal '2026',      config(copyright: 2026)       .copyright
   end
 
+  def test_localizations()
+    assert_equal({'en' => {name: 'test', copyright: nil}}, config.localizations)
+
+    l10n = config(copyright: 'C', localizations: {ja: {name: 'Tesuto'}, 'zh-Hans': nil}).localizations
+    assert_equal %w[en ja zh-Hans],                l10n.keys
+    assert_equal({name: 'test',   copyright: 'C'}, l10n['en'])
+    assert_equal({name: 'Tesuto', copyright: 'C'}, l10n['ja'])
+    assert_equal({name: 'test',   copyright: 'C'}, l10n['zh-Hans'])
+    assert_equal({name: '1',      copyright: nil}, config(localizations: {ja: {name: 1}}).localizations['ja'])
+
+    assert_raise(RP::Error) {config localizations: 1}
+    assert_raise(RP::Error) {config localizations: {ja: 1}}
+    assert_raise(RP::Error) {config localizations: {ja: {name: {}}}}
+    assert_raise(RP::Error) {config localizations: {en: {name: 'Test'}}} # the values out of it
+    assert_raise(RP::Error) {config localizations: {Japanese: {name: 'Tesuto'}}}
+  end
+
   def test_display_and_build_versions()
     [
       [{version: '1.2.3'},                 '1.2.3', '1.2.3'],
@@ -264,14 +281,17 @@ class TestPackagerConfig < Test::Unit::TestCase
   def test_warn_unknown_key()
     e = stderr
 
-    config stderr: e,                                k1: 1
-    assert_equal "unknown key '/k1'",                e.shift
+    config stderr: e,                                  k1: 1
+    assert_equal "unknown key '/k1'",                  e.shift
 
-    config stderr: e,                                macos: {k2: 2}
-    assert_equal "unknown key '/macos/k2'",          e.shift
+    config stderr: e,                                  macos: {k2: 2}
+    assert_equal "unknown key '/macos/k2'",            e.shift
 
-    config stderr: e,                                macos: {codesign: {k3: 3}}
-    assert_equal "unknown key '/macos/codesign/k3'", e.shift
+    config stderr: e,                                  macos: {codesign: {k3: 3}}
+    assert_equal "unknown key '/macos/codesign/k3'",   e.shift
+
+    config stderr: e,                                  localizations: {ja: {k4: 4}}
+    assert_equal "unknown key '/localizations/ja/k4'", e.shift
   end
 
   def test_invalid_value_type()

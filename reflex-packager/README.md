@@ -124,6 +124,10 @@ icon: icon.png
 
 # windows:
 #   console: false
+
+# localizations:
+#   ja:
+#     name: マイアプリ
 ```
 
 | Key | Default | Description |
@@ -142,6 +146,7 @@ icon: icon.png
 | `macos.codesign.identity` | `-` | Code signing identity |
 | `macos.codesign.team_id` | none | Development team ID |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
+| `localizations` | none | `name` and `copyright` in other languages than English |
 
 ### Versions
 
@@ -154,6 +159,20 @@ icon: icon.png
 | `version: 1.2.3` and `build: 456` | `1.2.3` | `456` |
 
 A fourth number of `version` tells a build apart from another of the same version, as one uploaded again for a review. On Windows, each number has to be 65535 or less. Quote a version or a build of two numbers, as `'1.10'`, which YAML reads as the number 1.1 otherwise.
+
+### Localizations
+
+`name` and `copyright` are in English, and `localizations` has them in other languages, by language tags as `ja` and `zh-Hans`; what a language leaves out is the English one:
+
+```yaml
+name: My App
+copyright: © 2026 Example
+localizations:
+  ja:
+    name: マイアプリ
+```
+
+On macOS, the name in the language of the system is shown in the Finder, the Dock and the menu bar, and the copyright in the About panel. On Windows, they are shown in the properties of the executable, the name of which stays as it is, in the languages Windows knows.
 
 ### CRuby
 

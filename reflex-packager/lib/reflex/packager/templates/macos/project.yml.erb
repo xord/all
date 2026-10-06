@@ -75,6 +75,9 @@ targets:
         NSHumanReadableCopyright: <%= config.copyright.to_json %>
 <%- end -%>
         NSHighResolutionCapable: true
+<%- if config.localizations.size > 1 -%>
+        LSHasLocalizedDisplayName: true
+<%- end -%>
 <%- if config.icon -%>
         CFBundleIconFile: AppIcon
 <%- end -%>

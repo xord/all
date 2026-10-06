@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
   s.platform              = Gem::Platform::RUBY
   s.required_ruby_version = '>= 3.0.0'
 
+  s.add_dependency 'fiddle'
   s.add_dependency 'xot',       '~> 0.4.0'
   s.add_dependency 'rucy',      '~> 0.4.0'
   s.add_dependency 'rays',      '~> 0.4.0'

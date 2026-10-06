@@ -197,6 +197,29 @@ module Reflex
         (numbers + [0] * 4).first(4).join '.'
       end
 
+      # The language id of a block of the version resource, for +lang+ of the
+      # localizations, as Windows has it.
+      #
+      def langid(lang)
+        return 0x0409 if lang == 'en' # U.S. English, the one of the values out of them
+        id = Windows.lcid(lang) & 0xffff
+        raise Error, "unknown language on windows: '#{lang}'" if
+          id == 0 || id == LOCALE_CUSTOM_UNSPECIFIED
+        id
+      end
+
+      LOCALE_CUSTOM_UNSPECIFIED = 0x1000
+
+      # The locale id Windows has for the locale +name+, or 0.
+      #
+      def self.lcid(name)
+        require 'fiddle'
+        @locale_name_to_lcid ||= Fiddle::Function.new(
+          Fiddle.dlopen('kernel32')['LocaleNameToLCID'],
+          [Fiddle::TYPE_VOIDP, Fiddle::TYPE_INT], Fiddle::TYPE_INT)
+        @locale_name_to_lcid.call "#{name}\0".encode('UTF-16LE'), 0
+      end
+
       # +str+ as a string literal of a resource script, which doubles a quote
       # rather than escaping it.
       #
