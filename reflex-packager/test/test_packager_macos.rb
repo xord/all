@@ -335,7 +335,9 @@ class TestPackagerMacOS < Test::Unit::TestCase
     status, alert, = boot["raise 'boom'"]
     assert_equal 1,        status
     assert_equal 'My App', alert.lines.first.chomp
-    assert_include alert,  'boom (RuntimeError)'
+    assert_include     alert, 'boom (RuntimeError)'
+    assert_not_include alert, 'boot.rb'
+    assert_match(/^app\/main\.rb:1:/, alert) # from the directory of boot.rb
 
     status, alert, err = boot["raise 'boom'", tty: true] # shown in the terminal
     assert_equal [1, nil], [status, alert]

@@ -11,7 +11,13 @@ rescue Exception => e
   else
     begin
       require 'reflex'
-      Reflex.alert e.full_message(highlight: false), title: <%= config.name.dump %>
+      # the paths from here, without the lines of this script and of what loads it
+      dirs    = Regexp.union [File.dirname(__FILE__), __dir__].map {"#{_1}/"}
+      message = e.full_message(highlight: false).lines
+        .reject {_1.match? %r{^\s+from (eval|#{Regexp.escape __FILE__}):}}
+        .join
+        .gsub(dirs, '')
+      Reflex.alert message, title: <%= config.name.dump %>
     rescue Exception => alert_error
       $stderr.puts "failed to alert: #{alert_error.message} (#{alert_error.class})"
     end

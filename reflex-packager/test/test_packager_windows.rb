@@ -368,7 +368,9 @@ class TestPackagerWindows < Test::Unit::TestCase
     ok, status, alert = boot["raise 'boom'"]
     assert_equal [false, 1], [ok, status]
     assert_equal 'My App',   alert.lines.first.chomp
-    assert_include alert,    'boom (RuntimeError)'
+    assert_include     alert, 'boom (RuntimeError)'
+    assert_not_include alert, 'boot.rb'
+    assert_match(/^app\/main\.rb:1:/, alert) # from the directory of boot.rb
 
     assert_equal [false, 3, nil], boot['exit 3']
     assert_equal [true,  0, nil], boot['']
