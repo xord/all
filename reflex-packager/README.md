@@ -1,4 +1,4 @@
-# Reflex Packager - Package Reflex apps as native macOS bundles
+# Reflex Packager - Package Reflex apps as native macOS and Windows apps
 
 ![License](https://img.shields.io/github/license/xord/reflex-packager)
 ![Gem Version](https://badge.fury.io/rb/reflex-packager.svg)
@@ -17,15 +17,21 @@ For more details, check out our [Contribution Guidelines](./CONTRIBUTING.md).
 
 ## :rocket: About
 
-**Reflex Packager** is a CLI tool that packages [Reflex](https://github.com/xord/reflex) applications as native macOS `.app` bundles. It generates an Xcode project that compiles Reflex from the sources of its installed gems together with [CRuby](https://github.com/xord/cruby), and builds a self-contained application that embeds the Ruby runtime.
+**Reflex Packager** is a CLI tool that packages [Reflex](https://github.com/xord/reflex) applications as native apps, which carry the Ruby runtime they run on and run where Ruby is not installed:
+
+- On macOS, a `.app` bundle: it generates an Xcode project that compiles the libraries from the sources of their installed gems together with [CRuby](https://github.com/xord/cruby).
+- On Windows, a folder with an `.exe`: it links what the installed gems of the libraries built into an executable, which runs on the Ruby DLL of [RubyInstaller](https://rubyinstaller.org/) shipped beside it.
 
 The packager is runtime-agnostic — each gem (Reflex, [RubySketch](https://github.com/xord/rubysketch), ...) supplies its own profile and reuses this packager as the engine.
 
 ## :clipboard: Requirements
 
 - Ruby **3.0.0** or later
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
-- Xcode (with command line tools)
+- On macOS
+  - [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
+  - Xcode (with command line tools)
+- On Windows
+  - [RubyInstaller](https://rubyinstaller.org/) with the MSYS2 DevKit (`ridk install`), which the gems are built with too
 - The dependent gems are installed automatically: `xot`, `rucy`, `rays`, `reflexion`
 
 ## :package: Installation
@@ -57,14 +63,17 @@ $ ruby main.rb          # run the application directly
 
 This generates a project directory with `main.rb` and `reflex.yml`.
 
-### Package as a macOS app
+### Package as an app
 
 ```bash
 $ cd myapp
 $ reflex package .
 ```
 
-The built `.app` bundle is placed in `dist/`.
+The app is packaged for the platform the packager runs on, as each one builds only on itself, and placed in `dist/`:
+
+- macOS: `dist/<name>.app`
+- Windows: `dist/<name>/`, with `<name>.exe`, the DLLs it loads in `bin/`, and the standard library, the libraries, the gems and the app in `lib/`
 
 ### CLI options
 
@@ -110,6 +119,9 @@ icon: icon.png
 #   codesign:
 #     identity: "-"
 #     team_id: XXXXXXXXXX
+
+# windows:
+#   console: false
 ```
 
 | Key | Default | Description |
@@ -125,6 +137,7 @@ icon: icon.png
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |
 | `macos.codesign.identity` | `-` | Code signing identity |
 | `macos.codesign.team_id` | none | Development team ID |
+| `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
 
 ### CRuby
 
@@ -135,17 +148,35 @@ $ export CRUBY_PATH=/path/to/cruby
 $ reflex package .
 ```
 
-The libraries (xot, rucy, rays, reflex, ...) are compiled from the gems installed for the Ruby running the packager. To package with local checkouts of them, put their `lib` directories on `RUBYLIB`.
+### Libraries
+
+The libraries the app runs on (xot, rucy, rays, reflex, ...) are the gems with `lib/<name>/extension.rb` the gemspec of the profile depends on, taken from the gems installed for the Ruby running the packager: macOS compiles their sources, and Windows links what their gem builds left. To package with local checkouts of them, put their `lib` directories on `RUBYLIB`.
+
+### Gems
+
+The gems in the default group of the `Gemfile` of the app are shipped with it, with what they depend on, and `require 'bundler/setup'` does nothing in the package.
+
+- A library in the `Gemfile`, as `rays-video`, is built in or linked as the ones of the profile.
+- On macOS, a gem with a native extension is refused, as the extension is built for the Ruby running the packager rather than for CRuby.
+- On Windows, the standard gems which were default gems once, as `csv` and `fiddle`, are shipped too; CRuby has them in its standard library on macOS.
 
 ## :wrench: How it works
 
-1. Copies application files into a build directory
+On macOS:
+
+1. Copies the application files, the libraries and the gems into a build directory
 2. Fetches CRuby unless it is there already
 3. Generates an Xcode project (via XcodeGen) with the sources the Rakefiles of the libraries build
 4. Builds the `.app` bundle with `xcodebuild`
 5. Copies the result to `dist/`
 
-The generated native wrapper embeds CRuby, registers the Reflex extensions, and runs the application's `main.rb` at launch.
+On Windows:
+
+1. Copies the application files, the libraries and the gems into a build directory
+2. Compiles the executable and links the extensions and the archives the gem builds of the libraries left into it, with the Ruby DLL
+3. Copies the executable, the DLLs it loads, found through their import tables, and the standard library to `dist/`
+
+The executable registers the extensions of the libraries and runs `boot.rb`, which loads the application's `main.rb` and shows an error it dies of with `Reflex.alert`, unless a terminal or a console shows it.
 
 ## :hammer_and_wrench: Development
 
