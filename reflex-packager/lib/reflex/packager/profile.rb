@@ -48,7 +48,7 @@ module Reflex
       # @return [Array<Library>] libraries
       #
       def libraries()
-        @libraries ||= Library.collect extension
+        @libraries ||= Library.collect extension.root_dir
       end
 
       # Native extensions to register (Init_<name>).

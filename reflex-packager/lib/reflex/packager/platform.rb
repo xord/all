@@ -60,13 +60,6 @@ module Reflex
         profile.boot_main || config.main
       end
 
-      # The libraries the app runs on, in the installed gems or in the
-      # directories RUBYLIB points to.
-      #
-      def libraries()
-        profile.libraries
-      end
-
       private
 
       # Left out when copying a library: a gem build leaves its binaries in

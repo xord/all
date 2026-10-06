@@ -134,8 +134,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
       Dir.mktmpdir do |gems|
         FileUtils.mkdir_p File.join(gems, 'native/lib')
         FileUtils.touch   File.join(gems, 'native/lib/native.bundle')
-        specs = [{'name' => 'native', 'default_gem' => false,
-                  'require_paths' => [File.join(gems, 'native/lib')]}]
+        specs = [{
+          'name'          => 'native',
+          'root'          => File.join(gems, 'native'),
+          'default_gem'   => false,
+          'require_paths' => [File.join(gems, 'native/lib')]
+        }]
         stub pkg, :gemfile_specs, specs do
           error = assert_raise(RP::Error) {pkg.gem_dirs}
           assert_include error.message, "'native'"

@@ -2,6 +2,7 @@ require 'fileutils'
 require 'json'
 require 'open3'
 require 'rbconfig'
+require 'reflex/packager/library'
 
 
 module Reflex
@@ -92,8 +93,22 @@ module Reflex
         end
       end
 
+      # The libraries the app runs on: the ones of the profile, and the ones in
+      # the Gemfile of the app, with what they depend on.
+      #
+      def libraries()
+        @libraries ||= Library.collect(*gemfile_library_roots, known: profile.libraries)
+          .then {profile.libraries + _1}
+      end
+
+      # Native extensions to register (Init_<name>).
+      #
+      def extensions()
+        libraries.filter_map(&:extension)
+      end
+
       def library_names()
-        profile.libraries.map(&:name)
+        libraries.map(&:name)
       end
 
       private
@@ -151,6 +166,19 @@ module Reflex
         File.write path, "# the gems of the Gemfile are on the load path already\n"
       end
 
+      # Directories of the gems in the Gemfile which are libraries, known by
+      # their extension.rb, and not the ones of the profile; the ones RUBYLIB
+      # points to come first, as for the libraries of the profile.
+      #
+      def gemfile_library_roots()
+        names = profile.libraries.map(&:name)
+        gemfile_specs.filter_map do |spec|
+          name = Library.library_name spec['root']
+          next if !name || names.include?(name)
+          Library.source_root(spec['name']) || spec['root']
+        end
+      end
+
       def gemfile()
         path = File.join config.dir, 'Gemfile'
         File.file?(path) ? path : nil
@@ -159,7 +187,12 @@ module Reflex
       SPECS_TO_JSON = <<~RUBY
         def specs_to_json(specs)
           $stdout.write JSON.generate(specs.map {|s|
-            {name: s.name, default_gem: s.default_gem?, require_paths: s.full_require_paths}
+            {
+              name:          s.name,
+              root:          s.full_gem_path,
+              default_gem:   s.default_gem?,
+              require_paths: s.full_require_paths
+            }
           })
         end
       RUBY

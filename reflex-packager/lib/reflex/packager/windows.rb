@@ -92,12 +92,6 @@ module Reflex
         {compiler.first => TOOLCHAIN_HINT, 'windres' => TOOLCHAIN_HINT, 'objdump' => TOOLCHAIN_HINT}
       end
 
-      # Native extensions registered with ruby_init_ext (Init_<name> symbols).
-      #
-      def extensions()
-        profile.extensions
-      end
-
       # Libraries built from native code: the ones whose gem has the static
       # archive the extension was linked from.
       #

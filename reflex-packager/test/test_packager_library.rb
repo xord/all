@@ -35,10 +35,6 @@ class TestPackagerLibrary < Test::Unit::TestCase
     end
   end
 
-  def extension(root)
-    Module.new.tap {|ext| ext.define_singleton_method(:root_dir) {|path = ''| File.join root, path}}
-  end
-
   def test_collect()
     gems = {
       'fakebase'   => [
@@ -65,10 +61,14 @@ class TestPackagerLibrary < Test::Unit::TestCase
       ]
     }
     fake_gems gems do |root|
-      libs = RP::Library.collect extension(File.join root, 'fakeapp')
+      libs = RP::Library.collect File.join(root, 'fakeapp')
       assert_equal %w[fakebase fakenative fakeapp],    libs.map(&:name)
       assert_equal [nil, 'fakenative_ext', nil],       libs.map(&:extension)
       assert_equal libs.map {File.join root, _1.name}, libs.map(&:root)
+
+      # leaving out the ones collected already
+      libs = RP::Library.collect File.join(root, 'fakeapp'), known: libs.first(1)
+      assert_equal %w[fakenative fakeapp], libs.map(&:name)
     end
   end
 

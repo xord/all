@@ -33,19 +33,21 @@ module Reflex
         name
       end
 
-      # Returns the libraries the gem of +extension+ depends on, as its gemspec
-      # has them, and itself last, each after the ones it depends on.
+      # Returns the libraries the gems at +roots+ depend on, as their gemspecs
+      # have them, and the gems themselves, each after the ones it depends on,
+      # leaving out the +known+ ones.
       #
       # A gem is looked for in the directories on the load path first, as
       # RUBYLIB points to the ones of a repository being worked on, and then in
       # the installed gems.
       #
-      # @param [Module] extension the Extension of the gem, which has root_dir
+      # @param [Array<String>]  roots the directories of the gems
+      # @param [Array<Library>] known the libraries collected already
       #
       # @return [Array<Library>] libraries
       #
-      def self.collect(extension)
-        libraries, visited, sources = [], {}, source_roots
+      def self.collect(*roots, known: [])
+        libraries, visited, sources = [], known.to_h {[_1.root, true]}, source_roots
         visit = -> (root, spec) do
           name = library_name root
           next if !name || visited[root]
@@ -53,9 +55,15 @@ module Reflex
           spec.runtime_dependencies.each {|dep| find_gem(dep, sources)&.then {visit.call(*_1)}}
           libraries << new(name, root)
         end
-        root = File.expand_path extension.root_dir
-        visit.call root, spec_of(root)
+        roots.map {File.expand_path _1}.each {visit.call _1, spec_of(_1)}
         libraries
+      end
+
+      # The directory of the gem +name+ on the load path, which is not an
+      # installed one, as RUBYLIB points to, or nil.
+      #
+      def self.source_root(name)
+        source_roots[name]
       end
 
       # The directory under lib/ with extension.rb, or nil.
@@ -101,7 +109,7 @@ module Reflex
         Gem.path.any? {root.start_with? File.join(_1, 'gems', '')}
       end
 
-      private_class_method :library_name, :find_gem, :source_roots, :spec_of, :installed?
+      private_class_method :find_gem, :source_roots, :spec_of, :installed?
 
     end# Library
 

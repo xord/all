@@ -214,8 +214,12 @@ class TestPackagerWindows < Test::Unit::TestCase
           File.write path, ''
         end
         spec = -> (name, *paths, default: false) {
-          {'name' => name, 'default_gem' => default,
-           'require_paths' => paths.map {File.join gems, _1}}
+          {
+            'name'          => name,
+            'root'          => File.join(gems, name),
+            'default_gem'   => default,
+            'require_paths' => paths.map {File.join gems, _1}
+          }
         }
         specs = [
           spec['native',   'native/lib', 'ext/native'],
@@ -355,6 +359,30 @@ class TestPackagerWindows < Test::Unit::TestCase
     assert_equal [false, 3, nil], boot['exit 3']
     assert_equal [true,  0, nil], boot['']
     assert_equal [false, 1, nil], boot["raise 'boom'", 'windows: {console: true}']
+  end
+
+  def test_libraries_of_the_gemfile()
+    fake_libs do |root|
+      # a library the app lists in its Gemfile, as rays-video
+      video = File.join root, 'fakevideo'
+      %w[lib/fakevideo/extension.rb lib/fakevideo/ext.rb lib/libfakevideo.a ext/fakevideo/a.o]
+        .each {FileUtils.mkdir_p File.dirname(File.join video, _1); FileUtils.touch File.join(video, _1)}
+      File.write File.join(video, 'fakevideo.gemspec'),
+        "Gem::Specification.new {|s| s.name = 'fakevideo'; s.version = '1.0'}"
+      specs = [{
+        'name'          => 'fakevideo',
+        'root'          => video,
+        'default_gem'   => false,
+        'require_paths' => [File.join(video, 'lib')]
+      }]
+      packager do |pkg, _|
+        stub pkg, :gemfile_specs, specs do
+          assert_equal %w[fakebase fakenative fakepure fakevideo], pkg.libraries.map(&:name)
+          assert_equal %w[fakenative_ext fakevideo_ext],           pkg.extensions
+          assert_empty pkg.gem_dirs # linked as a library, not shipped as a gem
+        end
+      end
+    end
   end
 
   # --- link --------------------------------------------------------------

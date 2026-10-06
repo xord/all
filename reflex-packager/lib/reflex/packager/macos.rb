@@ -57,12 +57,6 @@ module Reflex
         copy_app
       end
 
-      # Native extensions registered with CRuby (Init_<name> symbols).
-      #
-      def extensions()
-        profile.extensions
-      end
-
       # Libraries built from native code: the ones whose gem has an
       # extension to build, even if only for its tests as xot and rucy.
       #
