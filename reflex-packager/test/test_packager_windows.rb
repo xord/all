@@ -252,7 +252,7 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_main_cpp_manifest_and_rc()
     fake_libs do
-      packager "version: 1.2.3.4.5" do |pkg, dir|
+      packager "version: 1.2.3.4.5\ncopyright: © 2026 Me" do |pkg, dir|
         pkg.generate
         str = read dir, 'src/main.cpp'
         assert_include str, 'void Init_fakenative_ext ();'
@@ -276,6 +276,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include     rc, %(VALUE "FileVersion",      "1.2.3.4.5")
         assert_include     rc, %(VALUE "ProductVersion",   "1.2.3")
         assert_include     rc, %(VALUE "OriginalFilename", "#{pkg.target}.exe")
+        assert_include     rc, %(VALUE "LegalCopyright",   "© 2026 Me")
       end
       packager %(name: 'ア"プ\\リ'\nbundle_id: com.example.app) do |pkg, dir|
         pkg.generate
@@ -286,10 +287,11 @@ class TestPackagerWindows < Test::Unit::TestCase
       packager "version: '2.3'\nbuild: 20" do |pkg, dir|
         pkg.generate
         rc = read dir, 'src/app.rc'
-        assert_include rc, 'FILEVERSION    20,0,0,0'
-        assert_include rc, 'PRODUCTVERSION 2,3,0,0'
-        assert_include rc, %(VALUE "FileVersion",      "20")
-        assert_include rc, %(VALUE "ProductVersion",   "2.3")
+        assert_include     rc, 'FILEVERSION    20,0,0,0'
+        assert_include     rc, 'PRODUCTVERSION 2,3,0,0'
+        assert_include     rc, %(VALUE "FileVersion",      "20")
+        assert_include     rc, %(VALUE "ProductVersion",   "2.3")
+        assert_not_include rc, 'LegalCopyright'
       end
       packager "build: 65536" do |pkg, _|
         assert_raise(RP::Error) {pkg.file_version}

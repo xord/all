@@ -71,6 +71,9 @@ targets:
         CFBundleDisplayName: <%= config.name.inspect %>
         CFBundleShortVersionString: <%= config.display_version.to_json %>
         CFBundleVersion: <%= config.build_version.to_json %>
+<%- if config.copyright -%>
+        NSHumanReadableCopyright: <%= config.copyright.to_json %>
+<%- end -%>
         NSHighResolutionCapable: true
 <%- if config.icon -%>
         CFBundleIconFile: AppIcon

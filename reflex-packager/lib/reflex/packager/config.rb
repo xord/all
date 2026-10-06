@@ -22,6 +22,7 @@ module Reflex
           bundle_id: hash[:bundle_id] || default_bundle_id(profile, name),
           version:   '0.1.0',
           build:     nil,
+          copyright: nil,
           main:      profile.main,
           icon:      nil,
           files:     nil,
@@ -64,6 +65,7 @@ module Reflex
         @bundle_id = hash[:bundle_id].to_s
         @version   = hash[:version]  .to_s
         @build     = hash[:build]    &.to_s
+        @copyright = hash[:copyright]&.to_s
         @main      = hash[:main]     .to_s
         @icon      = hash[:icon]    &.to_s
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
@@ -72,8 +74,8 @@ module Reflex
         validate
       end
 
-      attr_reader :profile, :dir, :name, :bundle_id, :version, :build, :main, :icon,
-        :files, :macos, :windows
+      attr_reader :profile, :dir, :name, :bundle_id, :version, :build, :copyright,
+        :main, :icon, :files, :macos, :windows
 
       # The version to show: the numbers of the version, up to three.
       #

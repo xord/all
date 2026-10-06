@@ -135,6 +135,12 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config build: 1.10} # read as 1.1
   end
 
+  def test_copyright()
+    assert_nil                config()                       .copyright
+    assert_equal '© 2026 Me', config(copyright: '© 2026 Me').copyright
+    assert_equal '2026',      config(copyright: 2026)       .copyright
+  end
+
   def test_display_and_build_versions()
     [
       [{version: '1.2.3'},                 '1.2.3', '1.2.3'],

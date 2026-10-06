@@ -21,6 +21,9 @@ BEGIN
       VALUE "FileDescription",  <%= rc_string config.name %>
       VALUE "FileVersion",      <%= rc_string config.build_version %>
       VALUE "InternalName",     <%= rc_string target %>
+<%- if config.copyright -%>
+      VALUE "LegalCopyright",   <%= rc_string config.copyright %>
+<%- end -%>
       VALUE "OriginalFilename", <%= rc_string "#{target}.exe" %>
       VALUE "ProductName",      <%= rc_string config.name %>
       VALUE "ProductVersion",   <%= rc_string config.display_version %>

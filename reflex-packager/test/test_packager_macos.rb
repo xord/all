@@ -65,7 +65,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
   end
 
   def test_project_yml()
-    packager "name: My App\nbundle_id: com.example.myapp\nversion: 1.2.3.4" do |pkg, dir|
+    packager "name: My App\nbundle_id: com.example.myapp\nversion: 1.2.3.4\ncopyright: © 2026 Me" do |pkg, dir|
       pkg.generate
       str  = read dir, 'project.yml'
       yml  = YAML.safe_load str
@@ -99,8 +99,9 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include sources, 'Bundles/reflex.bundle'
 
       info = target.dig 'info', 'properties'
-      assert_equal '1.2.3',   info['CFBundleShortVersionString']
-      assert_equal '1.2.3.4', info['CFBundleVersion']
+      assert_equal '1.2.3',     info['CFBundleShortVersionString']
+      assert_equal '1.2.3.4',   info['CFBundleVersion']
+      assert_equal '© 2026 Me', info['NSHumanReadableCopyright']
 
       deps = target['dependencies']
       assert_include deps, {'framework' => "#{cruby}/CRuby/CRuby.xcframework", 'embed' => false}
@@ -162,9 +163,10 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager yaml, files: %w[main.rb icon.png] do |pkg, dir|
       # render only: a full generate would shell out to sips / iconutil
       str = pkg.__send__ :render, 'project.yml.erb'
-      assert_include str, 'CFBundleIconFile: AppIcon'
-      assert_include str, 'path: AppIcon.icns'
-      assert_include str, 'DEVELOPMENT_TEAM: ABCDE12345'
+      assert_include     str, 'CFBundleIconFile: AppIcon'
+      assert_include     str, 'path: AppIcon.icns'
+      assert_include     str, 'DEVELOPMENT_TEAM: ABCDE12345'
+      assert_not_include str, 'NSHumanReadableCopyright'
     end
   end
 

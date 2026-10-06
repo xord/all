@@ -109,6 +109,7 @@ name: MyApp
 bundle_id: com.example.myapp
 version: 1.0.0
 # build: 1.0.0
+# copyright: © 2026 Example
 icon: icon.png
 # main: main.rb
 # files:
@@ -131,6 +132,7 @@ icon: icon.png
 | `bundle_id` | `org.xord.reflex.<name>` | macOS bundle identifier |
 | `version` | `0.1.0` | Application version |
 | `build` | `version` | Build version |
+| `copyright` | none | Copyright notice, shown in the About panel on macOS and in the properties of the executable on Windows |
 | `main` | `main.rb` | Entry point script |
 | `icon` | none | Path to an icon image (PNG) |
 | `files` | none | Additional files to bundle (glob patterns) |
