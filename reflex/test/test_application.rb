@@ -75,7 +75,8 @@ class TestApplication < Test::Unit::TestCase
   end
 
   def test_name()
-    assert_equal '', @@app.name
+    assert_not_empty @@app.name
+
     @@app.name = 'AppName'
     assert_equal 'AppName', @@app.name
   end

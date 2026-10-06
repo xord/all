@@ -1,6 +1,7 @@
 #include "application.h"
 
 
+#include <vector>
 #include <xot/windows.h>
 #include "reflex/exception.h"
 #include "window.h"
@@ -29,6 +30,91 @@ namespace Reflex
 	Application_create_data ()
 	{
 		return new ApplicationData();
+	}
+
+	static std::wstring
+	get_app_executable_path ()
+	{
+		std::wstring path(MAX_PATH, L'\0');
+		while (true)
+		{
+			DWORD len = GetModuleFileNameW(NULL, &path[0], (DWORD) path.size());
+			if (len < path.size())
+			{
+				path.resize(len);
+				break;
+			}
+			path.resize(path.size() * 2);
+		}
+		return path;
+	}
+
+	static String
+	get_product_name (const wchar_t* path)
+	{
+		DWORD size = GetFileVersionInfoSizeW(path, NULL);
+		if (size == 0) return "";
+
+		std::vector<BYTE> info(size);
+		if (!GetFileVersionInfoW(path, 0, size, &info[0]))
+			return "";
+
+		struct Translation {WORD lang, codepage;};
+		Translation* translations = NULL;
+		UINT bytes                = 0;
+		if (
+			!VerQueryValueW(
+				&info[0], L"\\VarFileInfo\\Translation", (void**) &translations, &bytes) ||
+			bytes < sizeof(Translation))
+		{
+			return "";
+		}
+
+		LANGID deflang           = GetUserDefaultUILanguage();
+		const Translation* found = &translations[0];
+		for (size_t i = 0; i < bytes / sizeof(Translation); ++i)
+		{
+			const Translation& t = translations[i];
+			if (t.lang == deflang)
+			{
+				found = &t;
+				break;
+			}
+			if (
+				PRIMARYLANGID(t.lang) == PRIMARYLANGID(deflang) &&
+				found == &translations[0])
+			{
+				found = &t;
+			}
+		}
+
+		wchar_t key[64];
+		swprintf(
+			key, 64, L"\\StringFileInfo\\%04x%04x\\ProductName",
+			found->lang, found->codepage);
+
+		wchar_t* name = NULL;
+		if (!VerQueryValueW(&info[0], key, (void**) &name, &bytes) || bytes <= 1)
+			return "";
+
+		return String(name, wcslen(name));
+	}
+
+	String
+	Application_get_default_name ()
+	{
+		std::wstring path = get_app_executable_path();
+		if (path.empty())
+			return "";
+
+		String name = get_product_name(path.c_str());
+		if (!name.empty())
+			return name;
+
+		std::wstring file = path.substr(path.find_last_of(L"\\/") + 1);
+		size_t dot        = file.find_last_of(L'.');
+		if (dot != std::wstring::npos) file.resize(dot);
+		return String(file.c_str(), file.size());
 	}
 
 	void

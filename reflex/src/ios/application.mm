@@ -28,6 +28,15 @@ namespace Reflex
 		return new ApplicationData();
 	}
 
+	String
+	Application_get_default_name ()
+	{
+		NSBundle* bundle = NSBundle.mainBundle;
+		NSString* name   = [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"];
+		if (!name) name  = [bundle objectForInfoDictionaryKey: @"CFBundleName"];
+		return name ? name.UTF8String : "";
+	}
+
 	void
 	Application_stop (Application* app)
 	{

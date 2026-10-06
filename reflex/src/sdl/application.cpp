@@ -5,6 +5,11 @@
 #ifdef WASM
 	#include <emscripten.h>
 #endif
+#ifdef LINUX
+	#include <limits.h>
+	#include <string.h>
+	#include <unistd.h>
+#endif
 #include <xot/time.h>
 #include "reflex/exception.h"
 #include "reflex/debug.h"
@@ -39,6 +44,22 @@ namespace Reflex
 	Application_create_data ()
 	{
 		return new ApplicationData();
+	}
+
+	String
+	Application_get_default_name ()
+	{
+#ifdef LINUX
+		char path[PATH_MAX];
+		ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+		if (len > 0)
+		{
+			path[len]   = '\0';
+			char* slash = strrchr(path, '/');
+			return slash ? slash + 1 : path;
+		}
+#endif
+		return "";
 	}
 
 	void

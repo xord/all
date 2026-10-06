@@ -14,8 +14,8 @@ Xot::ExtConf.new Xot, Rucy, Rays, Reflex do
   setup do
     headers    << 'ruby.h'
     libs.unshift(
-      'gdi32', 'ole32', 'imm32', 'shell32', 'comdlg32', 'winmm',
-      'opengl32', 'glew32', 'dwmapi', 'uuid', 'xinput1_4')        if win32?
+      'gdi32', 'ole32', 'imm32', 'shell32', 'comdlg32', 'opengl32', 'glew32',
+      'version', 'dwmapi', 'uuid', 'winmm', 'xinput1_4')          if win32?
     frameworks.concat %w[Cocoa GameController CoreAudio CoreMIDI] if osx?
     $LDFLAGS   << ' -Wl,--out-implib=libreflex.dll.a'             if mingw? || cygwin?
   end

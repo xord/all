@@ -176,6 +176,12 @@ namespace Reflex
 	}
 
 
+	Application::Data::Data ()
+	:	name(Application_get_default_name())
+	{
+	}
+
+
 	Application::Application ()
 	:	self(Application_create_data())
 	{

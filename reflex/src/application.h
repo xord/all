@@ -32,6 +32,8 @@ namespace Reflex
 
 		std::exception_ptr exception;
 
+		Data ();
+
 	};// Application::Data
 
 
@@ -63,6 +65,8 @@ namespace Reflex
 
 
 	Application::Data* Application_create_data ();
+
+	String Application_get_default_name ();
 
 	void Application_stop (Application* app);
 
