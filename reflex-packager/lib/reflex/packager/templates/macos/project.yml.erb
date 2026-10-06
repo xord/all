@@ -41,18 +41,18 @@ targets:
 <%- end -%>
       - path: <%= File.join(cruby_dir, 'src').to_json %>
         name: CRuby
-<%- build_infos.each do |name, info| -%>
-<%-   root  = library_roots[name] -%>
+<%- build_infos.each do |lib, info| -%>
+<%-   root  = lib.root -%>
 <%-   flags = info[:defs].map {"-D#{_1}"}.join ' ' -%>
 <%-   unless info[:srcs].empty? -%>
       - path: <%= root.to_json %>
-        name: <%= name %>
+        name: <%= lib %>
         includes: <%= info[:srcs].map {_1.delete_prefix "#{root}/"}.to_json %>
         compilerFlags: <%= flags.to_json %>
 <%-   end -%>
 <%-   unless info[:vendor_srcs].empty? -%>
       - path: <%= File.join(root, 'vendor').to_json %>
-        name: <%= name %>Vendor
+        name: <%= lib %>-vendor
         includes: <%= info[:vendor_srcs].map {_1.delete_prefix "#{root}/vendor/"}.to_json %>
         compilerFlags: <%= "#{flags} -w".to_json %>
 <%-   end -%>

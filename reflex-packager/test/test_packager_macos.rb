@@ -43,8 +43,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
       pkg.generate
       %w[
         project.yml src/main.mm app/main.rb
-        Bundles/Reflex.bundle/Contents/Resources/lib/reflex.rb
-        Bundles/Reflex.bundle/Contents/Resources/VERSION
+        Bundles/reflex.bundle/Contents/Resources/lib/reflex.rb
+        Bundles/reflex.bundle/Contents/Resources/VERSION
         Bundles/CRuby.bundle/Contents/Resources/lib/ruby/4.0.0/set.rb
       ].each do |f|
         assert File.exist?(File.join dir, '.build/macos', f), "missing #{f}"
@@ -79,23 +79,23 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_not_include str, 'CFBundleIconFile'
       assert_not_include str, 'DEVELOPMENT_TEAM'
 
-      roots, cruby = pkg.library_roots, ENV['CRUBY_PATH']
-      assert_include base['HEADER_SEARCH_PATHS'],        "#{roots['Reflex']}/include"
-      assert_include base['SYSTEM_HEADER_SEARCH_PATHS'], "#{roots['Reflex']}/vendor/box2d/include"
+      reflex, cruby = pkg.libraries.find {_1.name == 'reflex'}.root, ENV['CRUBY_PATH']
+      assert_include base['HEADER_SEARCH_PATHS'],        "#{reflex}/include"
+      assert_include base['SYSTEM_HEADER_SEARCH_PATHS'], "#{reflex}/vendor/box2d/include"
       assert_include base['SYSTEM_HEADER_SEARCH_PATHS'], "#{cruby}/CRuby/include"
 
       target  = yml.dig 'targets', 'MyApp'
       sources = target['sources'].to_h {[_1['name'] || _1['path'], _1]}
       assert_equal "#{cruby}/src",                  sources['CRuby']['path']
-      assert_include sources['Reflex']['includes'], 'src/osx/window.mm'
-      assert_include sources['Reflex']['includes'], 'ext/reflex/reflex.cpp'
-      assert_empty   sources['Reflex']['includes'].grep(%r{/(win32|sdl|ios)/})
-      assert_empty   sources['Xot']   ['includes'].grep(%r{^ext/}) # only for its tests
-      assert_match(/-DOSX\b.*/,                     sources['Reflex']['compilerFlags'])
-      assert_match(/-DB2_MAX_WORLDS=256 .*-w\z/,    sources['ReflexVendor']['compilerFlags'])
-      assert_include sources['ReflexVendor']['includes'], 'box2d/src/world.c'
+      assert_include sources['reflex']['includes'], 'src/osx/window.mm'
+      assert_include sources['reflex']['includes'], 'ext/reflex/reflex.cpp'
+      assert_empty   sources['reflex']['includes'].grep(%r{/(win32|sdl|ios)/})
+      assert_empty   sources['xot']   ['includes'].grep(%r{^ext/}) # only for its tests
+      assert_match(/-DOSX\b.*/,                     sources['reflex']['compilerFlags'])
+      assert_match(/-DB2_MAX_WORLDS=256 .*-w\z/,    sources['reflex-vendor']['compilerFlags'])
+      assert_include sources['reflex-vendor']['includes'], 'box2d/src/world.c'
       assert_include sources, 'Bundles/CRuby.bundle'
-      assert_include sources, 'Bundles/Reflex.bundle'
+      assert_include sources, 'Bundles/reflex.bundle'
 
       deps = target['dependencies']
       assert_include deps, {'framework' => "#{cruby}/CRuby/CRuby.xcframework", 'embed' => false}
@@ -129,19 +129,19 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
     # libraries whose gems are not built: no Makefiles next to the extconf.rbs
     packager do |pkg, dir|
-      %w[xot reflex].each do |name|
-        FileUtils.mkdir_p File.join(dir, name, 'ext', name)
-        FileUtils.touch   File.join(dir, name, 'ext', name, 'extconf.rb')
+      %w[xot/ext/xot/extconf.rb reflex/ext/reflex/extconf.rb reflex/lib/reflex/ext.rb].each do |path|
+        FileUtils.mkdir_p File.dirname(File.join dir, path)
+        FileUtils.touch   File.join(dir, path)
       end
-      roots = {'Xot' => File.join(dir, 'xot'), 'Reflex' => File.join(dir, 'reflex')}
+      xot, reflex = %w[xot reflex].map {RP::Library.new _1, File.join(dir, _1)}
 
-      stub pkg, :library_roots, roots.slice('Xot') do
+      stub pkg, :libraries, [xot] do
         assert_equal [], pkg.frameworks # xot builds its extension only for its tests
       end
 
-      stub pkg, :library_roots, roots do
+      stub pkg, :libraries, [xot, reflex] do
         error = assert_raise(RP::Error) {pkg.frameworks}
-        assert_include error.message, 'Reflex'
+        assert_include error.message, "'reflex'"
         assert_include error.message, 'was the gem built?'
       end
     end
@@ -255,7 +255,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       str = read dir, 'src/main.mm'
       assert_include str, 'Init_reflex_ext'            # native ext registered
       assert_include str, 'Init_rays_ext'
-      assert_include str, '@"Reflex"'                  # library bundle added
+      assert_include str, '@"reflex"'                  # library bundle added
       assert_include str, '@"boot.rb"'                 # started with boot.rb
       assert_include str, 'return [CRuby start:'       # ends with its exit status
       assert_include read(dir, 'boot.rb'), '"app.rb"'  # the entry script

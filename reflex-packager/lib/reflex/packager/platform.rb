@@ -60,11 +60,11 @@ module Reflex
         profile.boot_main || config.main
       end
 
-      # Root directories of the libraries in the profile, by library name:
-      # the installed gems, or the directories RUBYLIB points to.
+      # The libraries the app runs on, in the installed gems or in the
+      # directories RUBYLIB points to.
       #
-      def library_roots()
-        @library_roots ||= profile.libraries.to_h {[_1, library_root(_1)]}
+      def libraries()
+        profile.libraries
       end
 
       private
@@ -75,16 +75,6 @@ module Reflex
       # the one linked in.
       #
       BINARY_EXTS = %w[.so .dll .a .o .bundle]
-
-      def library_root(name)
-        begin
-          require "#{name.downcase}/extension"
-        rescue LoadError
-        end
-        ext = Object.const_get("#{name}::Extension") rescue nil
-        raise Error, "library '#{name}' not found (gem not installed?)" unless ext
-        ext.root_dir
-      end
 
       # Copies the Ruby code of a library and what it reads at run time into
       # +dest+: lib/ without the binaries, VERSION and res/.

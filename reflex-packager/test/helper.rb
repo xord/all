@@ -42,11 +42,7 @@ end
 
 
 TEST_PROFILE = Reflex::Packager::Profile.new(
-  pod:          'Reflex',
-  git:          'https://github.com/xord/reflex',
-  version:      Reflex::Extension.version,
-  libraries:    %w[Xot Rucy Rays Reflex],
-  extensions:   %w[rays_ext reflex_ext],
+  extension:    Reflex::Extension,
   config_files: %w[reflex.yml reflex.yaml],
   templates:    {'main.rb': <<~MAIN, 'reflex.yml': <<~CONFIG})
     require 'reflex'

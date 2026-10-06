@@ -1,48 +1,64 @@
+require 'reflex/packager/library'
+
+
 module Reflex
 
 
   module Packager
 
 
-    # Describes the runtime a packaged app embeds: the umbrella pod that
-    # provides the native build, the extensions and libraries registered with
-    # CRuby, and the scaffold for the 'new' command.
+    # Describes the runtime a packaged app embeds: the gem it is made of, the
+    # libraries and extensions the gem depends on, and the scaffold for the
+    # 'new' command.
     #
     # The packager itself is runtime-agnostic; each gem (reflex, rubysketch,
     # ...) supplies its own profile and reuses this packager as the engine.
     #
     class Profile
 
-      # @param [String]               pod          umbrella pod name (e.g. 'Reflex')
-      # @param [String]               git          umbrella pod git repository
-      # @param [String]               version      umbrella pod version (for the tag)
-      # @param [Array<String>]        libraries    ruby lib bundles to add to load path
-      # @param [Array<String>]        extensions   native exts to register (Init_<name>)
+      # @param [Module]               extension    Extension of the gem (e.g. Reflex::Extension)
       # @param [Array<String>]        config_files config file names, preferred first
       # @param [Hash{String=>String}] templates    'new' scaffold files ({filename => content})
-      # @param [String, nil]          command      CLI command name (default: pod_key)
+      # @param [String, nil]          command      CLI command name (default: the name in lower case)
       # @param [String, nil]          boot         boot script overrides config main (default: nil)
       #
-      def initialize(
-        pod:, git:, version:, libraries:, extensions:, config_files:, templates:,
-        command: nil, boot: nil)
-
-        @pod          = pod
-        @git          = git
-        @version      = version
-        @libraries    = libraries
-        @extensions   = extensions
+      def initialize(extension:, config_files:, templates:, command: nil, boot: nil)
+        @extension    = extension
         @config_files = config_files
         @templates    = templates
         @command      = command
         @boot         = boot
       end
 
-      attr_reader :pod, :git, :version, :libraries, :extensions, :config_files,
-        :templates, :boot
+      attr_reader :extension, :config_files, :templates, :boot
+
+      # The name of the gem (e.g. 'Reflex').
+      #
+      def name()
+        extension.name
+      end
+
+      def version()
+        extension.version
+      end
+
+      # The libraries the gem depends on, and the gem itself, each after the
+      # ones it depends on.
+      #
+      # @return [Array<Library>] libraries
+      #
+      def libraries()
+        @libraries ||= Library.collect extension
+      end
+
+      # Native extensions to register (Init_<name>).
+      #
+      def extensions()
+        libraries.filter_map(&:extension)
+      end
 
       def command()
-        @command || pod_key
+        @command || name.downcase
       end
 
       def main()
@@ -53,12 +69,8 @@ module Reflex
         @boot ? '__reflex_main__.rb' : nil
       end
 
-      def pod_key()
-        pod.downcase.to_sym
-      end
-
       def bundle_id_prefix()
-        "org.xord.#{pod_key}"
+        "org.xord.#{name.downcase}"
       end
 
     end# Profile

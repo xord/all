@@ -84,7 +84,7 @@ module Reflex
       end
 
       def library_names()
-        profile.libraries.map(&:downcase)
+        profile.libraries.map(&:name)
       end
 
       private

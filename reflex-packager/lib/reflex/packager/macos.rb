@@ -60,32 +60,22 @@ module Reflex
         profile.extensions
       end
 
-      # Ruby library bundles added to the load path.
-      #
-      def libraries()
-        profile.libraries
-      end
-
       # Libraries built from native code: the ones whose gem has an
       # extension to build, even if only for its tests as xot and rucy.
       #
       def native_libraries()
-        library_roots.select {|name, root|
-          File.file? File.join(root, 'ext', name.downcase, 'extconf.rb')
-        }.keys
+        libraries.select {File.file? File.join(_1.root, 'ext', _1.name, 'extconf.rb')}
       end
 
-      # Returns {name => {srcs:, vendor_srcs:, incdirs:, defs:}} of the native
+      # Returns {library => {srcs:, vendor_srcs:, incdirs:, defs:}} of the native
       # libraries, with absolute paths, as their Rakefiles have them.
       #
       def build_infos()
-        @build_infos ||= native_libraries.to_h do |name|
-          root = library_roots[name]
-          info = rake_build_info root
-          ext  = File.join root, 'ext', name.downcase
-          info[:srcs] += Dir.glob(File.join ext, '*.{c,cpp,m,mm}').sort if
-            extensions.include? "#{name.downcase}_ext"
-          [name, info]
+        @build_infos ||= native_libraries.to_h do |lib|
+          info         = rake_build_info lib.root
+          ext          = File.join lib.root, 'ext', lib.name
+          info[:srcs] += Dir.glob(File.join ext, '*.{c,cpp,m,mm}').sort if lib.extension
+          [lib, info]
         end
       end
 
@@ -93,15 +83,14 @@ module Reflex
       # leave have them.
       #
       def frameworks()
-        native_libraries.flat_map do |name|
-          root     = library_roots[name]
-          makefile = File.join root, 'ext', name.downcase, 'Makefile'
-          next MacOS.makefile_frameworks File.read(makefile) if File.file? makefile
-
-          # xot and rucy build their extensions only for their tests
-          raise Error, "no Makefile of '#{name}' in '#{root}' (was the gem built?)" if
-            extensions.include? "#{name.downcase}_ext"
-          []
+        native_libraries.flat_map do |lib|
+          makefile = File.join lib.root, 'ext', lib.name, 'Makefile'
+          unless File.file? makefile
+            raise Error, "no Makefile of '#{lib}' in '#{lib.root}' (was the gem built?)" if
+              lib.extension
+            next [] # xot and rucy build their extensions only for their tests
+          end
+          MacOS.makefile_frameworks File.read(makefile)
         end.uniq
       end
 
@@ -220,7 +209,7 @@ module Reflex
       def copy_bundles()
         dir = File.join build_dir, 'Bundles'
         FileUtils.rm_rf dir
-        library_roots.each {|name, root| copy_library root, bundle_resources(dir, name)}
+        libraries.each {copy_library _1.root, bundle_resources(dir, _1.name)}
         res = bundle_resources dir, 'CRuby'
         FileUtils.mkdir_p res
         FileUtils.cp_r File.join(cruby_dir, 'CRuby', 'lib'), res

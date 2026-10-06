@@ -99,7 +99,7 @@ module Reflex
       end
 
       # Directory names under lib/ put on the load path by boot.rb: the
-      # libraries by their repository names, then the gems.
+      # libraries, then the gems.
       #
       def lib_names()
         [*library_names, *gem_names]
@@ -109,17 +109,13 @@ module Reflex
       # archive the extension was linked from.
       #
       def native_libraries()
-        library_roots.select {|name, root| File.file? static_archive(name, root)}.keys
+        libraries.select {File.file? static_archive(_1)}
       end
 
       def ext_objects()
-        extensions.flat_map do |ext|
-          name    = ext.delete_suffix '_ext'
-          _, root = library_roots.find {|lib, _| lib.downcase == name}
-          raise Error, "no library for the extension '#{ext}'" unless root
-
-          objs = Dir.glob(File.join root, 'ext', name, '*.o').sort
-          raise Error, "no objects of '#{ext}' in '#{root}' (was the gem built?)" if
+        libraries.select(&:extension).flat_map do |lib|
+          objs = Dir.glob(File.join lib.root, 'ext', lib.name, '*.o').sort
+          raise Error, "no objects of '#{lib.extension}' in '#{lib.root}' (was the gem built?)" if
             objs.empty?
           objs
         end
@@ -129,15 +125,15 @@ module Reflex
       # others first.
       #
       def static_archives()
-        native_libraries.reverse.map {static_archive _1, library_roots[_1]}
+        native_libraries.reverse.map {static_archive _1}
       end
 
       # System libraries the extensions link, as the Makefiles their gem builds
       # leave have them.
       #
       def system_libs()
-        native_libraries.flat_map do |name|
-          makefile = File.join library_roots[name], 'ext', name.downcase, 'Makefile'
+        native_libraries.flat_map do |lib|
+          makefile = File.join lib.root, 'ext', lib.name, 'Makefile'
           File.file?(makefile) ? Windows.makefile_libs(File.read makefile) : []
         end.uniq
       end
@@ -252,14 +248,14 @@ module Reflex
         true
       end
 
-      def static_archive(name, root)
-        File.join root, 'lib', "lib#{name.downcase}.a"
+      def static_archive(lib)
+        File.join lib.root, 'lib', "lib#{lib.name}.a"
       end
 
       def copy_libraries()
         dir = File.join build_dir, 'lib'
         FileUtils.rm_rf dir
-        library_roots.each {|name, root| copy_library root, File.join(dir, name.downcase)}
+        libraries.each {copy_library _1.root, File.join(dir, _1.name)}
         copy_gems dir
       end
 
