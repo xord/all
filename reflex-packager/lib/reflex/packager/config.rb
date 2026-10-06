@@ -148,7 +148,7 @@ module Reflex
       def self.defaults()
         {
           deployment_target: '11.0',
-          archs:             'arm64',
+          archs:             %w[arm64 x86_64],
           cruby:             nil,
           codesign: {
             identity: '-',

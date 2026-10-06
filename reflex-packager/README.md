@@ -115,7 +115,7 @@ icon: icon.png
 
 # macos:
 #   deployment_target: "11.0"
-#   archs: arm64
+#   archs: [arm64, x86_64]
 #   codesign:
 #     identity: "-"
 #     team_id: XXXXXXXXXX
@@ -133,7 +133,7 @@ icon: icon.png
 | `icon` | none | Path to an icon image (PNG) |
 | `files` | none | Additional files to bundle (glob patterns) |
 | `macos.deployment_target` | `11.0` | Minimum macOS version |
-| `macos.archs` | `arm64` | Target architectures |
+| `macos.archs` | `[arm64, x86_64]` | Target architectures |
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |
 | `macos.codesign.identity` | `-` | Code signing identity |
 | `macos.codesign.team_id` | none | Development team ID |

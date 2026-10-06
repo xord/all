@@ -179,11 +179,12 @@ class TestPackagerConfig < Test::Unit::TestCase
   end
 
   def test_macos_archs()
-    assert_equal ['arm64'],  config()                      .macos.archs
-    assert_equal ['arm64'],  config(macos: {})             .macos.archs
-    assert_equal ['1'],      config(macos: {archs: 1})     .macos.archs
-    assert_equal ['2', '3'], config(macos: {archs: [2, 3]}).macos.archs
-    assert_equal ['arm64'],  config(macos: {archs: nil})   .macos.archs
+    assert_equal %w[arm64 x86_64], config()                       .macos.archs
+    assert_equal %w[arm64 x86_64], config(macos: {})              .macos.archs
+    assert_equal ['arm64'],        config(macos: {archs: 'arm64'}).macos.archs
+    assert_equal ['1'],            config(macos: {archs: 1})      .macos.archs
+    assert_equal ['2', '3'],       config(macos: {archs: [2, 3]}) .macos.archs
+    assert_equal %w[arm64 x86_64], config(macos: {archs: nil})    .macos.archs
     assert_raise(RP::Error) {config(macos: {archs: []})}
     assert_raise(RP::Error) {config(macos: {archs: {}})}
   end

@@ -73,7 +73,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal 'MyApp',                 yml['name']
       assert_equal 'com.example.myapp',     base['PRODUCT_BUNDLE_IDENTIFIER']
       assert_equal '0.1.0',                 base['MARKETING_VERSION']
-      assert_equal 'arm64',                 base['ARCHS']
+      assert_equal 'arm64 x86_64',          base['ARCHS']
       assert_equal '-',                     base['CODE_SIGN_IDENTITY']
       assert_equal '11.0', yml.dig('options', 'deploymentTarget', 'macOS')
       assert_not_include str, 'CFBundleIconFile'
