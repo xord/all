@@ -16,8 +16,8 @@ Gem::Specification.new do |s|
   s.name        = name
   s.version     = ext.version
   s.license     = 'MIT'
-  s.summary     = 'Package Reflex applications as native app bundles.'
-  s.description = 'CLI tool to package Reflex applications as native macOS application bundles.'
+  s.summary     = 'Package Reflex applications as native apps.'
+  s.description = 'CLI tool to package Reflex applications as native macOS and Windows applications.'
   s.authors     = %w[xordog]
   s.email       = 'xordog@gmail.com'
   s.homepage    = "https://github.com/xord/reflex-packager"

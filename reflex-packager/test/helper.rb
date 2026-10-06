@@ -12,12 +12,37 @@ require 'tmpdir'
 include Xot::Test
 
 
+# Makes +dir+ a checkout of the cruby repository with what packaging for macOS
+# reads of it, so that the tests do not fetch the real one.
+#
+def fake_cruby(dir)
+  %w[CRuby/include/ruby.h CRuby/lib/ruby/4.0.0/set.rb src/CRuby.m].each do |path|
+    path = File.join dir, path
+    FileUtils.mkdir_p File.dirname(path)
+    FileUtils.touch path
+  end
+  dir
+end
+
+# Runs the block with the method +name+ of +obj+ returning +value+.
+#
+def stub(obj, name, value, &block)
+  # removed before defined again, which warns on overwriting
+  klass  = obj.singleton_class
+  hidden = klass.private_method_defined? name, false
+  saved  = klass.instance_method name if hidden || klass.method_defined?(name, false)
+  klass.remove_method name if saved
+  klass.define_method(name) {|*| value}
+  block.call
+ensure
+  klass.remove_method name
+  klass.define_method name, saved if saved
+  klass.send :private, name       if hidden
+end
+
+
 TEST_PROFILE = Reflex::Packager::Profile.new(
-  pod:          'Reflex',
-  git:          'https://github.com/xord/reflex',
-  version:      Reflex::Extension.version,
-  libraries:    %w[Xot Rucy Rays Reflex],
-  extensions:   %w[rays_ext reflex_ext],
+  extension:    Reflex::Extension,
   config_files: %w[reflex.yml reflex.yaml],
   templates:    {'main.rb': <<~MAIN, 'reflex.yml': <<~CONFIG})
     require 'reflex'

@@ -16,18 +16,14 @@ main (int argc, const char* argv[])
 {
 	@autoreleasepool
 	{
-		NSString* appDir = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"app"];
-		[NSFileManager.defaultManager changeCurrentDirectoryPath:appDir];
-
 <%- extensions.each do |ext| -%>
 		[CRuby addExtension:@"<%= ext %>" init:^{Init_<%= ext %>();}];
 <%- end -%>
 
-		for (NSString* lib in @[<%= libraries.map {"@\"#{_1}\""}.join ', ' %>])
+		for (NSString* lib in @[<%= lib_names.reverse.map {"@\"#{_1}\""}.join ', ' %>])
 			[CRuby addLibrary:lib bundle:NSBundle.mainBundle];
 
-		[CRuby evaluate:[NSString stringWithFormat:@"$LOAD_PATH.unshift '%@'", appDir]];
-		[CRuby start:[appDir stringByAppendingPathComponent:@"<%= profile.boot_main || config.main %>"]];
+		NSString* boot = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"boot.rb"];
+		return [CRuby start:boot rescue:^(CRBValue* exception) {}];
 	}
-	return 0;
 }

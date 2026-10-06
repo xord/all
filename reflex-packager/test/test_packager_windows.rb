@@ -11,12 +11,12 @@ class TestPackagerWindows < Test::Unit::TestCase
   # Files of the fake libraries, laid out as an installed gem is after a
   # gem build on Windows: the extension and the archives are left in lib/.
   LIBS = {
-    'FakeBase'   => %w[lib/fakebase.rb lib/libfakebase.a VERSION],
-    'FakeNative' => %w[
-      lib/fakenative.rb lib/fakenative/sub.rb
+    'fakebase'   => %w[lib/fakebase.rb lib/libfakebase.a VERSION],
+    'fakenative' => %w[
+      lib/fakenative.rb lib/fakenative/sub.rb lib/fakenative/ext.rb
       lib/fakenative_ext.so lib/libfakenative.a lib/libfakenative.dll.a
       ext/fakenative/b.o ext/fakenative/a.o ext/fakenative/Makefile VERSION],
-    'FakePure'   => %w[lib/fakepure.rb res/icon.png VERSION]
+    'fakepure'   => %w[lib/fakepure.rb res/icon.png VERSION]
   }
 
   RBCONFIG = {
@@ -27,38 +27,39 @@ class TestPackagerWindows < Test::Unit::TestCase
     'LIBRUBYARG_SHARED' => '-lx64-ucrt-ruby400'
   }
 
-  # Defines <Name>::Extension for each library, its root_dir pointing at a
-  # directory made of the files.
+  # Makes a directory of the files for each library, as its gem.
   def fake_libs(libs = LIBS, &block)
     Dir.mktmpdir do |root|
       libs.each do |name, files|
-        dir = File.join root, name
-        FileUtils.mkdir_p dir
         files.each do |file|
-          path = File.join dir, file
+          path = File.join root, name, file
           FileUtils.mkdir_p File.dirname(path)
           File.write path, "# #{file}\n"
         end
-        ext = Module.new
-        ext.define_singleton_method(:root_dir) {|path = ''| File.expand_path path, dir}
-        Object.const_set name, Module.new.tap {_1.const_set :Extension, ext}
       end
+      @fake_root = root
       block.call root
     ensure
-      libs.each_key {Object.__send__ :remove_const, _1 if Object.const_defined? _1}
+      @fake_root = nil
     end
   end
 
-  def profile(libraries: LIBS.keys, extensions: %w[fakenative_ext], boot: nil)
+  module FakeExtension
+    module_function
+    def name()    = 'Fake'
+    def version() = '1.0'
+  end
+
+  # A profile of the fake libraries, which the gemspecs of real gems would
+  # tell otherwise.
+  def profile(libraries: LIBS.keys, boot: nil)
+    libs = libraries.map {RP::Library.new _1, File.join(@fake_root.to_s, _1)}
     RP::Profile.new(
-      pod:          'Fake',
-      git:          'https://github.com/xord/fake',
-      version:      '1.0',
-      libraries:    libraries,
-      extensions:   extensions,
+      extension:    FakeExtension,
       config_files: %w[reflex.yml],
       templates:    {'main.rb': ''},
-      boot:         boot)
+      boot:         boot
+    ).tap {|profile| profile.define_singleton_method(:libraries) {libs}}
   end
 
   def packager(
@@ -141,11 +142,11 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_libs_carry_standard_gems()
     fake_libs do |root|
-      gems = {'fakegem' => [File.join(root, 'FakePure', 'lib')]}
+      gems = {'fakegem' => [File.join(root, 'fakepure', 'lib')]}
       packager standard_gems: gems do |pkg, dir|
         pkg.generate
         assert File.exist?(build_path dir, 'lib/fakegem/lib/fakepure.rb')
-        assert_equal %w[fakebase fakenative fakepure fakegem], pkg.lib_names
+        assert_equal %w[fakepure fakenative fakebase fakegem], pkg.lib_names
 
         # the ones this ruby has, looked for out of any bundle, with what they
         # depend on: rexml has been a bundled gem since ruby 3.0, and rss
@@ -213,8 +214,12 @@ class TestPackagerWindows < Test::Unit::TestCase
           File.write path, ''
         end
         spec = -> (name, *paths, default: false) {
-          {'name' => name, 'default_gem' => default,
-           'require_paths' => paths.map {File.join gems, _1}}
+          {
+            'name'          => name,
+            'root'          => File.join(gems, name),
+            'default_gem'   => default,
+            'require_paths' => paths.map {File.join gems, _1}
+          }
         }
         specs = [
           spec['native',   'native/lib', 'ext/native'],
@@ -223,7 +228,7 @@ class TestPackagerWindows < Test::Unit::TestCase
           spec['bundler',  'bundler/lib'],
           spec['json',     'json/lib', default: true]
         ]
-        standard = {'rexml' => ['standard/rexml/lib'], 'ostruct' => [File.join(root, 'FakePure/lib')]}
+        standard = {'rexml' => ['standard/rexml/lib'], 'ostruct' => [File.join(root, 'fakepure/lib')]}
         packager standard_gems: standard do |pkg, dir|
           pkg.define_singleton_method(:gemfile_specs) {specs}
           pkg.generate
@@ -241,13 +246,6 @@ class TestPackagerWindows < Test::Unit::TestCase
           assert_include error.message, "'native'"
         end
       end
-    end
-  end
-
-  def test_missing_library()
-    packager profile: profile(libraries: %w[NoSuchLib], extensions: []) do |pkg, _|
-      error = assert_raise(RP::Error) {pkg.generate}
-      assert_include error.message, 'NoSuchLib'
     end
   end
 
@@ -318,7 +316,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         pwd, *paths = read(dir, 'lib/result').lines chomp: true
         assert_equal File.realpath(build_path dir, 'lib/app'), File.realpath(pwd)
         assert_equal pwd, paths.first
-        assert_equal %w[lib/fakebase/lib lib/fakenative/lib lib/fakepure/lib],
+        assert_equal %w[lib/fakepure/lib lib/fakenative/lib lib/fakebase/lib],
           paths[1..].map {_1.split('/').last(3).join '/'}
       end
     end
@@ -363,12 +361,36 @@ class TestPackagerWindows < Test::Unit::TestCase
     assert_equal [false, 1, nil], boot["raise 'boom'", 'windows: {console: true}']
   end
 
+  def test_libraries_of_the_gemfile()
+    fake_libs do |root|
+      # a library the app lists in its Gemfile, as rays-video
+      video = File.join root, 'fakevideo'
+      %w[lib/fakevideo/extension.rb lib/fakevideo/ext.rb lib/libfakevideo.a ext/fakevideo/a.o]
+        .each {FileUtils.mkdir_p File.dirname(File.join video, _1); FileUtils.touch File.join(video, _1)}
+      File.write File.join(video, 'fakevideo.gemspec'),
+        "Gem::Specification.new {|s| s.name = 'fakevideo'; s.version = '1.0'}"
+      specs = [{
+        'name'          => 'fakevideo',
+        'root'          => video,
+        'default_gem'   => false,
+        'require_paths' => [File.join(video, 'lib')]
+      }]
+      packager do |pkg, _|
+        stub pkg, :gemfile_specs, specs do
+          assert_equal %w[fakebase fakenative fakepure fakevideo], pkg.libraries.map(&:name)
+          assert_equal %w[fakenative_ext fakevideo_ext],           pkg.extensions
+          assert_empty pkg.gem_dirs # linked as a library, not shipped as a gem
+        end
+      end
+    end
+  end
+
   # --- link --------------------------------------------------------------
 
   def test_native_libraries()
     fake_libs do
       packager do |pkg, _|
-        assert_equal %w[FakeBase FakeNative], pkg.native_libraries
+        assert_equal %w[fakebase fakenative], pkg.native_libraries.map(&:name)
       end
     end
   end
@@ -380,12 +402,12 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_equal %w[g++ -std=gnu++11 src/main.cpp src/app.res.o -o], cmd.first(5)
         assert_equal "#{pkg.target}.exe", cmd[5]
 
-        objs = %w[a.o b.o].map {File.join root, 'FakeNative/ext/fakenative', _1}
+        objs = %w[a.o b.o].map {File.join root, 'fakenative/ext/fakenative', _1}
         assert_equal objs, cmd.grep(/\.o\z/) - %w[src/app.res.o]
 
         # every object of the archives, the ones depending on others first
         from, to = cmd.index('-Wl,--whole-archive'), cmd.index('-Wl,--no-whole-archive')
-        assert_equal %w[FakeNative/lib/libfakenative.a FakeBase/lib/libfakebase.a]
+        assert_equal %w[fakenative/lib/libfakenative.a fakebase/lib/libfakebase.a]
           .map {File.join root, _1}, cmd[(from + 1)...to]
         assert_operator cmd.index(objs.last), :<, from
 
@@ -406,20 +428,11 @@ class TestPackagerWindows < Test::Unit::TestCase
   end
 
   def test_ext_objects_missing()
-    libs = LIBS.merge 'FakeNative' => %w[lib/fakenative.rb lib/libfakenative.a]
+    libs = LIBS.merge 'fakenative' => %w[lib/fakenative.rb lib/fakenative/ext.rb lib/libfakenative.a]
     fake_libs libs do
       packager do |pkg, _|
         error = assert_raise(RP::Error) {pkg.ext_objects}
         assert_include error.message, 'fakenative_ext'
-      end
-    end
-  end
-
-  def test_ext_without_library()
-    fake_libs do
-      packager profile: profile(extensions: %w[nothing_ext]) do |pkg, _|
-        error = assert_raise(RP::Error) {pkg.ext_objects}
-        assert_include error.message, 'nothing_ext'
       end
     end
   end
@@ -435,7 +448,7 @@ class TestPackagerWindows < Test::Unit::TestCase
 
     # from the Makefiles the gem builds of the native libraries leave
     fake_libs do |root|
-      File.write File.join(root, 'FakeNative/ext/fakenative/Makefile'), makefile
+      File.write File.join(root, 'fakenative/ext/fakenative/Makefile'), makefile
       packager do |pkg, _|
         assert_equal %w[glew32 opengl32 gdi32 shell32 ws2_32], pkg.system_libs
       end
@@ -443,7 +456,7 @@ class TestPackagerWindows < Test::Unit::TestCase
   end
 
   def test_compiler_and_tools()
-    packager profile: profile(libraries: [], extensions: []) do |pkg, _|
+    packager profile: profile(libraries: []) do |pkg, _|
       assert_equal %w[g++ -std=gnu++11], pkg.compiler(RBCONFIG)
       assert_equal %w[g++],              pkg.compiler('CXX' => 'g++')
 
@@ -514,7 +527,7 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_copy_runtime()
     with_ruby do |rbconfig, msys_bin|
-      packager profile: profile(libraries: [], extensions: []) do |pkg, dir|
+      packager profile: profile(libraries: []) do |pkg, dir|
         fake_imports pkg
         # another toolchain earlier in PATH, as the one of git
         other = File.join dir, 'other/bin'
@@ -564,7 +577,7 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_copy_runtime_without_system_dll()
     with_ruby do |rbconfig, msys_bin|
-      packager profile: profile(libraries: [], extensions: []) do |pkg, dir|
+      packager profile: profile(libraries: []) do |pkg, dir|
         # the toolchain without openal installed
         fake_imports pkg, IMPORTS.merge('exe' => [*IMPORTS['exe'], 'libopenal-1.dll'])
         with_env 'PATH' => msys_bin do
@@ -573,7 +586,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         end
       end
       # one a dll of the toolchain needs
-      packager profile: profile(libraries: [], extensions: []) do |pkg, dir|
+      packager profile: profile(libraries: []) do |pkg, dir|
         fake_imports pkg, IMPORTS.merge('libgcc_s_seh-1.dll' => %w[libnone-1.dll])
         with_env 'PATH' => msys_bin do
           error = assert_raise(RP::Error) {pkg.copy_runtime dir, rbconfig}

@@ -2,6 +2,7 @@ require 'fileutils'
 require 'json'
 require 'open3'
 require 'rbconfig'
+require 'reflex/packager/library'
 
 
 module Reflex
@@ -42,8 +43,16 @@ module Reflex
       #
       NATIVE_EXTS = %w[.so .bundle .dll]
 
-      # Names of the directories copy_gems makes, put on the load path in this
-      # order.
+      # Names of the libraries and the gems, put on the load path in this
+      # order: a library before the ones it depends on, as bundler puts them,
+      # and the libraries before the gems, which the runtime is not to be
+      # hidden by.
+      #
+      def lib_names()
+        [*library_names.reverse, *gem_names]
+      end
+
+      # Names of the gems copy_gems copies, put on the load path in this order.
       #
       def gem_names()
         [*('bundler' if gemfile), *gem_dirs.keys]
@@ -75,6 +84,7 @@ module Reflex
       # ones with a native extension where it is not supported.
       #
       def standard_gem_dirs()
+        return {} unless standard_gems?
         @standard_gem_dirs ||= standard_specs.each.with_object({}) do |spec, dirs|
           name, paths = spec.values_at 'name', 'require_paths'
           next unless shipped? spec
@@ -83,11 +93,32 @@ module Reflex
         end
       end
 
+      # The libraries the app runs on: the ones of the profile, and the ones in
+      # the Gemfile of the app, with what they depend on.
+      #
+      def libraries()
+        @libraries ||= Library.collect(*gemfile_library_roots, known: profile.libraries)
+          .then {profile.libraries + _1}
+      end
+
+      # Native extensions to register (Init_<name>).
+      #
+      def extensions()
+        libraries.filter_map(&:extension)
+      end
+
       def library_names()
-        profile.libraries.map(&:downcase)
+        libraries.map(&:name)
       end
 
       private
+
+      # Whether to ship the standard gems, which the Ruby a platform embeds may
+      # have in its standard library already.
+      #
+      def standard_gems?()
+        true
+      end
 
       # Whether a gem with a native extension can be shipped.
       #
@@ -112,15 +143,16 @@ module Reflex
         end
       end
 
-      # Copies the gems into <dir>/<name>/lib as they are.
+      # Copies the gems as they are into the directories the block returns for
+      # their names, which the platform puts on the load path.
       #
-      def copy_gems(dir)
+      def copy_gems(&lib_dir)
         gem_dirs.each do |name, paths|
-          dest = File.join dir, name, 'lib'
+          dest = lib_dir.call name
           FileUtils.mkdir_p dest
           paths.each {FileUtils.cp_r File.join(_1, '.'), dest}
         end
-        write_bundler_setup File.join(dir, 'bundler', 'lib') if gemfile
+        write_bundler_setup lib_dir.call('bundler') if gemfile
       end
 
       # An app with a Gemfile may require bundler/setup, which would find the
@@ -134,6 +166,19 @@ module Reflex
         File.write path, "# the gems of the Gemfile are on the load path already\n"
       end
 
+      # Directories of the gems in the Gemfile which are libraries, known by
+      # their extension.rb, and not the ones of the profile; the ones RUBYLIB
+      # points to come first, as for the libraries of the profile.
+      #
+      def gemfile_library_roots()
+        names = profile.libraries.map(&:name)
+        gemfile_specs.filter_map do |spec|
+          name = Library.library_name spec['root']
+          next if !name || names.include?(name)
+          Library.source_root(spec['name']) || spec['root']
+        end
+      end
+
       def gemfile()
         path = File.join config.dir, 'Gemfile'
         File.file?(path) ? path : nil
@@ -142,7 +187,12 @@ module Reflex
       SPECS_TO_JSON = <<~RUBY
         def specs_to_json(specs)
           $stdout.write JSON.generate(specs.map {|s|
-            {name: s.name, default_gem: s.default_gem?, require_paths: s.full_require_paths}
+            {
+              name:          s.name,
+              root:          s.full_gem_path,
+              default_gem:   s.default_gem?,
+              require_paths: s.full_require_paths
+            }
           })
         end
       RUBY

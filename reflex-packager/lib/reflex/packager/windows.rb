@@ -34,12 +34,6 @@ module Reflex
       RUNTIME_DIR     = 'bin'
       RUNTIME_VERSION = '1.0.0.0'
 
-      # Left out when copying a library: a gem build leaves its binaries in
-      # lib/, and the extension must not be there in particular, since Ruby
-      # prefers a rays_ext.so on the load path to the one linked in.
-      #
-      BINARY_EXTS = %w[.so .dll .a .o .bundle]
-
       # Sizes of the icon of the executable, one image each in the ICO.
       #
       ICON_SIZES = [16, 32, 48, 256]
@@ -98,44 +92,17 @@ module Reflex
         {compiler.first => TOOLCHAIN_HINT, 'windres' => TOOLCHAIN_HINT, 'objdump' => TOOLCHAIN_HINT}
       end
 
-      # Native extensions registered with ruby_init_ext (Init_<name> symbols).
-      #
-      def extensions()
-        profile.extensions
-      end
-
-      def start_script()
-        profile.boot_main || config.main
-      end
-
-      # Directory names under lib/ put on the load path by boot.rb: the
-      # libraries by their repository names, then the gems.
-      #
-      def lib_names()
-        [*library_names, *gem_names]
-      end
-
-      # Root directories of the libraries in the profile, by library name.
-      #
-      def library_roots()
-        @library_roots ||= profile.libraries.to_h {[_1, library_root(_1)]}
-      end
-
       # Libraries built from native code: the ones whose gem has the static
       # archive the extension was linked from.
       #
       def native_libraries()
-        library_roots.select {|name, root| File.file? static_archive(name, root)}.keys
+        libraries.select {File.file? static_archive(_1)}
       end
 
       def ext_objects()
-        extensions.flat_map do |ext|
-          name    = ext.delete_suffix '_ext'
-          _, root = library_roots.find {|lib, _| lib.downcase == name}
-          raise Error, "no library for the extension '#{ext}'" unless root
-
-          objs = Dir.glob(File.join root, 'ext', name, '*.o').sort
-          raise Error, "no objects of '#{ext}' in '#{root}' (was the gem built?)" if
+        libraries.select(&:extension).flat_map do |lib|
+          objs = Dir.glob(File.join lib.root, 'ext', lib.name, '*.o').sort
+          raise Error, "no objects of '#{lib.extension}' in '#{lib.root}' (was the gem built?)" if
             objs.empty?
           objs
         end
@@ -145,15 +112,15 @@ module Reflex
       # others first.
       #
       def static_archives()
-        native_libraries.reverse.map {static_archive _1, library_roots[_1]}
+        native_libraries.reverse.map {static_archive _1}
       end
 
       # System libraries the extensions link, as the Makefiles their gem builds
       # leave have them.
       #
       def system_libs()
-        native_libraries.flat_map do |name|
-          makefile = File.join library_roots[name], 'ext', name.downcase, 'Makefile'
+        native_libraries.flat_map do |lib|
+          makefile = File.join lib.root, 'ext', lib.name, 'Makefile'
           File.file?(makefile) ? Windows.makefile_libs(File.read makefile) : []
         end.uniq
       end
@@ -268,42 +235,15 @@ module Reflex
         true
       end
 
-      def library_root(name)
-        begin
-          require "#{name.downcase}/extension"
-        rescue LoadError
-        end
-        ext = Object.const_get("#{name}::Extension") rescue nil
-        raise Error, "library '#{name}' not found (gem not installed?)" unless ext
-        ext.root_dir
-      end
-
-      def static_archive(name, root)
-        File.join root, 'lib', "lib#{name.downcase}.a"
+      def static_archive(lib)
+        File.join lib.root, 'lib', "lib#{lib.name}.a"
       end
 
       def copy_libraries()
         dir = File.join build_dir, 'lib'
         FileUtils.rm_rf dir
-        library_roots.each do |name, root|
-          dest = File.join dir, name.downcase
-          copy_tree File.join(root, 'lib'), File.join(dest, 'lib')
-          %w[VERSION res].map {File.join root, _1}.select {File.exist? _1}.each do |path|
-            FileUtils.mkdir_p dest
-            FileUtils.cp_r path, dest
-          end
-        end
-        copy_gems dir
-      end
-
-      def copy_tree(src, dest)
-        Dir.glob('**/*', base: src).each do |path|
-          from = File.join src, path
-          next if File.directory?(from) || BINARY_EXTS.include?(File.extname path)
-          to = File.join dest, path
-          FileUtils.mkdir_p File.dirname(to)
-          FileUtils.cp from, to
-        end
+        libraries.each {copy_library _1.root, File.join(dir, _1.name)}
+        copy_gems {File.join dir, _1, 'lib'}
       end
 
       def copy_dist()
