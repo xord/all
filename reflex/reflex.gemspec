@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
 
   ext   = Reflex::Extension
   name  = ext.name true
-  rdocs = glob.call *%w[README .doc/ext/**/*.cpp]
+  rdocs = glob.call(*%w[README .doc/ext/**/*.cpp])
 
   s.name        = "#{name}ion"
   s.version     = ext.version
