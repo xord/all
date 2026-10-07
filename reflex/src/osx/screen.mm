@@ -2,6 +2,7 @@
 #include "screen.h"
 
 
+#import <AppKit/AppKit.h>
 #include "reflex/exception.h"
 
 
@@ -43,6 +44,19 @@ namespace Reflex
 	{
 	}
 
+	String
+	Screen::name () const
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		const char* name = NULL;
+		if (@available(macOS 10.15, *))
+			name = self->screen.localizedName.UTF8String;
+
+		return name ? name : "";
+	}
+
 	Bounds
 	Screen::frame () const
 	{
@@ -57,6 +71,15 @@ namespace Reflex
 			f.size.height);
 	}
 
+	float
+	Screen::pixel_density () const
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		return self->screen.backingScaleFactor;
+	}
+
 	Screen::operator bool () const
 	{
 		return self->screen;
@@ -66,6 +89,19 @@ namespace Reflex
 	Screen::operator ! () const
 	{
 		return !operator bool();
+	}
+
+	Screen::List
+	Screen::all ()
+	{
+		List list;
+		for (NSScreen* screen in NSScreen.screens)
+		{
+			Screen s;
+			Screen_initialize(&s, screen);
+			list.emplace_back(s);
+		}
+		return list;
 	}
 
 

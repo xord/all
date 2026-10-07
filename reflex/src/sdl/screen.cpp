@@ -35,6 +35,16 @@ namespace Reflex
 	{
 	}
 
+	String
+	Screen::name () const
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		const char* name = SDL_GetDisplayName(self->display_index);
+		return name ? name : "";
+	}
+
 	Bounds
 	Screen::frame () const
 	{
@@ -48,6 +58,15 @@ namespace Reflex
 		return Bounds(rect.x, rect.y, rect.w, rect.h);
 	}
 
+	float
+	Screen::pixel_density () const
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		return 1;
+	}
+
 	Screen::operator bool () const
 	{
 		return self->display_index >= 0;
@@ -57,6 +76,23 @@ namespace Reflex
 	Screen::operator ! () const
 	{
 		return !operator bool();
+	}
+
+	Screen::List
+	Screen::all ()
+	{
+		int count = SDL_GetNumVideoDisplays();
+		if (count < 0)
+			reflex_error(__FILE__, __LINE__, SDL_GetError());
+
+		List list;
+		for (int i = 0; i < count; ++i)
+		{
+			Screen s;
+			Screen_initialize(&s, i);
+			list.emplace_back(s);
+		}
+		return list;
 	}
 
 

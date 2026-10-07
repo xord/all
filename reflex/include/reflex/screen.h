@@ -4,6 +4,7 @@
 #define __REFLEX_SCREEN_H__
 
 
+#include <vector>
 #include <xot/pimpl.h>
 #include <rays/bounds.h>
 #include <reflex/defs.h>
@@ -20,15 +21,23 @@ namespace Reflex
 
 		public:
 
+			typedef std::vector<Screen> List;
+
 			Screen ();
 
-			virtual ~Screen ();
+			~Screen ();
 
-			virtual Bounds frame () const;
+			String name () const;
+
+			Bounds frame () const;
+
+			float pixel_density () const;
 
 			operator bool () const;
 
 			bool operator ! () const;
+
+			static List all ();
 
 			struct Data;
 

@@ -37,6 +37,15 @@ namespace Reflex
 	{
 	}
 
+	String
+	Screen::name () const
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		return "";
+	}
+
 	Bounds
 	Screen::frame () const
 	{
@@ -45,6 +54,15 @@ namespace Reflex
 
 		CGRect b = self->screen.bounds;
 		return Bounds(b.origin.x, b.origin.y, b.size.width, b.size.height);
+	}
+
+	float
+	Screen::pixel_density () const
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		return self->screen.nativeScale;
 	}
 
 	Screen::operator bool () const
@@ -56,6 +74,14 @@ namespace Reflex
 	Screen::operator ! () const
 	{
 		return !operator bool();
+	}
+
+	Screen::List
+	Screen::all ()
+	{
+		Screen s;
+		Screen_initialize(&s, UIScreen.mainScreen);
+		return {s};
 	}
 
 
