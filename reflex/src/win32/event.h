@@ -34,16 +34,21 @@ namespace Reflex
 	};// NativeTextEvent
 
 
+	class Window;
+
+
 	class NativePointerEvent : public PointerEvent
 	{
 
 		public:
 
-			NativePointerEvent (UINT msg, WPARAM wp, LPARAM lp);
+			NativePointerEvent (const Window& window, UINT msg, WPARAM wp, LPARAM lp);
 
-			NativePointerEvent (UINT msg, WPARAM wp, LPARAM lp, Pointer::Action action);
+			NativePointerEvent (
+				const Window& window, UINT msg, WPARAM wp, LPARAM lp, Pointer::Action action);
 
-			NativePointerEvent (HWND hwnd, const TOUCHINPUT* touches, size_t size);
+			NativePointerEvent (
+				const Window& window, const TOUCHINPUT* touches, size_t size);
 
 	};// NativePointerEvent
 
@@ -53,7 +58,7 @@ namespace Reflex
 
 		public:
 
-			NativeWheelEvent (WPARAM wp_x, WPARAM wp_y, LPARAM lp);
+			NativeWheelEvent (const Window& window, WPARAM wp_x, WPARAM wp_y, LPARAM lp);
 
 	};// NativeWheelEvent
 

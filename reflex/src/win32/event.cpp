@@ -217,19 +217,20 @@ namespace Reflex
 		}
 	}
 
-	NativePointerEvent::NativePointerEvent (UINT msg, WPARAM wp, LPARAM lp)
-	:	NativePointerEvent(msg, wp, lp, get_mouse_action(msg))
+	NativePointerEvent::NativePointerEvent (
+		const Window& window, UINT msg, WPARAM wp, LPARAM lp)
+	:	NativePointerEvent(window, msg, wp, lp, get_mouse_action(msg))
 	{
 	}
 
 	NativePointerEvent::NativePointerEvent (
-		UINT msg, WPARAM wp, LPARAM lp, Pointer::Action action)
+		const Window& window, UINT msg, WPARAM wp, LPARAM lp, Pointer::Action action)
 	{
 		PointerEvent_add_pointer(this, Pointer(
 			0,
 			get_mouse_type(msg, wp),
 			action,
-			Point(GET_X_LPARAM(lp), GET_Y_LPARAM(lp)),
+			Window_from_native_coord(window, GET_X_LPARAM(lp), GET_Y_LPARAM(lp)),
 			KeyEvent_get_modifiers(),
 			get_mouse_click_count(msg),
 			is_mouse_dragging(msg, wp),
@@ -254,19 +255,19 @@ namespace Reflex
 	}
 
 	static Point
-	get_touch_position (HWND hwnd, const TOUCHINPUT& touch)
+	get_touch_position (const Window& window, const TOUCHINPUT& touch)
 	{
 		coord x = (coord) touch.x / 100;
 		coord y = (coord) touch.y / 100;
 
 		POINT point = {0, 0};
-		if (ClientToScreen(hwnd, &point))
+		if (ClientToScreen(Window_get_hwnd(&window), &point))
 		{
 			x -= point.x;
 			y -= point.y;
 		}
 
-		return Point(x, y);
+		return Window_from_native_coord(window, x, y);
 	}
 
 	static double
@@ -279,7 +280,7 @@ namespace Reflex
 	}
 
 	NativePointerEvent::NativePointerEvent (
-		HWND hwnd, const TOUCHINPUT* touches, size_t size)
+		const Window& window, const TOUCHINPUT* touches, size_t size)
 	{
 		for (size_t i = 0; i < size; ++i)
 		{
@@ -290,7 +291,7 @@ namespace Reflex
 				0,
 				get_touch_type(touch),
 				action,
-				get_touch_position(hwnd, touch),
+				get_touch_position(window, touch),
 				KeyEvent_get_modifiers(),
 				action == Pointer::DOWN ? 1 : 0,
 				action == Pointer::MOVE,
@@ -303,16 +304,25 @@ namespace Reflex
 	}
 
 
+	static Point
+	get_pointer_position (const Window& window, LPARAM lp)
+	{
+		POINT pos = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+		ScreenToClient(Window_get_hwnd(&window), &pos);
+		return Window_from_native_coord(window, pos.x, pos.y);
+	}
+
 	static coord
 	to_wheel_pixels (WPARAM wp)
 	{
 		return (coord) GET_WHEEL_DELTA_WPARAM(wp) / WHEEL_DELTA * WHEEL_PIXELS_PER_NOTCH;
 	}
 
-	NativeWheelEvent::NativeWheelEvent (WPARAM wp_x, WPARAM wp_y, LPARAM lp)
+	NativeWheelEvent::NativeWheelEvent (
+		const Window& window, WPARAM wp_x, WPARAM wp_y, LPARAM lp)
 	:	WheelEvent(
-			GET_X_LPARAM(lp),       GET_Y_LPARAM(lp),      0,
-			to_wheel_pixels(wp_x), -to_wheel_pixels(wp_y), 0,
+			get_pointer_position(window, lp),
+			Point(to_wheel_pixels(wp_x), -to_wheel_pixels(wp_y), 0),
 			KeyEvent_get_modifiers())
 	{
 	}

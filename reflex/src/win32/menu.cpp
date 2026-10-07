@@ -8,6 +8,7 @@
 #include "reflex/view.h"
 #include "../rays.h"
 #include "window.h"
+#include "screen.h"
 
 
 namespace Reflex
@@ -260,7 +261,7 @@ namespace Reflex
 			invalid_state_error(__FILE__, __LINE__);
 
 		HWND hwnd = NULL;
-		POINT pos = {(int) x, (int) y};
+		POINT pos = Screen_to_native_coord(x, y);
 
 		if (view)
 		{
@@ -272,9 +273,7 @@ namespace Reflex
 			if (!hwnd)
 				invalid_state_error(__FILE__, __LINE__);
 
-			Point p = view->to_window(Point(x, y));
-			pos.x   = (int) p.x;
-			pos.y   = (int) p.y;
+			pos = Window_to_native_coord(*win, view->to_window(Point(x, y)));
 			ClientToScreen(hwnd, &pos);
 		}
 		else

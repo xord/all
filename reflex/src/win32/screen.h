@@ -14,6 +14,14 @@ namespace Reflex
 
 	void Screen_initialize (Screen* pthis, HMONITOR hmonitor);
 
+	float Screen_get_pixel_density (HMONITOR hmonitor);
+
+	Bounds Screen_from_native_coord (const RECT& rect);
+
+	POINT    Screen_to_native_coord (coord x, coord y);
+
+	RECT     Screen_to_native_coord (coord x, coord y, coord width, coord height);
+
 
 }// Reflex
 

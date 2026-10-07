@@ -368,6 +368,10 @@ namespace Reflex
 				coord x, coord y, coord z, coord dx, coord dy, coord dz,
 				uint modifiers = 0);
 
+			WheelEvent (
+				const Point& position, const Point& dposition,
+				uint modifiers = 0);
+
 			WheelEvent dup () const;
 
 			      Point& position ();

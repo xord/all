@@ -31,6 +31,8 @@ namespace Rays
 
 #ifdef WIN32
 
+	void Rays_set_pre_init_fun (void (*)());
+
 	HBITMAP Bitmap_get_hbitmap (const Bitmap& bitmap);
 
 	const PIXELFORMATDESCRIPTOR* OpenGL_get_pixel_format_descriptor ();

@@ -903,6 +903,12 @@ namespace Reflex
 	{
 	}
 
+	WheelEvent::WheelEvent (
+		const Point& position, const Point& dposition, uint modifiers)
+	:	self(new Data(position, dposition, modifiers))
+	{
+	}
+
 	WheelEvent::WheelEvent (const WheelEvent* src)
 	:	Event(src), self(new Data(*src->self))
 	{

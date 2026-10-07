@@ -1,8 +1,10 @@
 #include "screen.h"
 
 
+#include <math.h>
 #include <wchar.h>
 #include <algorithm>
+#include <memory>
 #include <vector>
 #include "reflex/exception.h"
 
@@ -23,6 +25,56 @@ namespace Reflex
 	Screen_initialize (Screen* pthis, HMONITOR hmonitor)
 	{
 		pthis->self->handle = hmonitor;
+	}
+
+	float
+	Screen_get_pixel_density (HMONITOR hmonitor)
+	{
+		static float density = 0;
+		if (density <= 0)
+		{
+			std::shared_ptr<HDC__> dc(GetDC(NULL), [](HDC dc) {if (dc) ReleaseDC(NULL, dc);});
+			int dpi = dc ? GetDeviceCaps(dc.get(), LOGPIXELSX) : 0;
+			density = dpi > 0 ? dpi / (float) USER_DEFAULT_SCREEN_DPI : 1;
+		}
+		return density;
+	}
+
+	Bounds
+	Screen_from_native_coord (const RECT& rect)
+	{
+		float density = Screen_get_pixel_density(
+			MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST));
+		return Bounds(
+			 rect.left                / density,
+			 rect.top                 / density,
+			(rect.right  - rect.left) / density,
+			(rect.bottom - rect.top)  / density);
+	}
+
+	POINT
+	Screen_to_native_coord (coord x, coord y)
+	{
+		// NULL: the monitor is unknown from points, but every monitor has the
+		// same system density for now
+		float density = Screen_get_pixel_density(NULL);
+
+		return {
+			(LONG) lround(x * density),
+			(LONG) lround(y * density)
+		};
+	}
+
+	RECT
+	Screen_to_native_coord (coord x, coord y, coord width, coord height)
+	{
+		float density = Screen_get_pixel_density(NULL);
+		return {
+			(LONG) lround( x           * density),
+			(LONG) lround( y           * density),
+			(LONG) lround((x + width)  * density),
+			(LONG) lround((y + height) * density)
+		};
 	}
 
 
@@ -112,8 +164,7 @@ namespace Reflex
 		if (!GetMonitorInfoW(self->handle, &mi))
 			system_error(__FILE__, __LINE__);
 
-		const auto& r = mi.rcMonitor;
-		return Bounds(r.left, r.top, r.right - r.left, r.bottom - r.top);
+		return Screen_from_native_coord(mi.rcMonitor);
 	}
 
 	float
@@ -122,7 +173,7 @@ namespace Reflex
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
-		return 1;
+		return Screen_get_pixel_density(self->handle);
 	}
 
 	Screen::operator bool () const

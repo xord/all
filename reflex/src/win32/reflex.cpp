@@ -3,10 +3,28 @@
 
 #include <xot/windows.h>
 #include "reflex/exception.h"
+#include "../rays.h"
 
 
 namespace Reflex
 {
+
+
+	static struct ReflexLoaded
+	{
+		ReflexLoaded ()
+		{
+			Rays::Rays_set_pre_init_fun(pre_init);
+		}
+
+		static void pre_init ()
+		{
+			// enable High DPI: before Rays makes the hidden window for its OpenGL
+			// context, as Windows takes no declaration after a window
+			SetProcessDPIAware();
+		}
+
+	} reflex_loaded;
 
 
 	namespace global

@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <math.h>
 #include <map>
 #include <memory>
 #include <xot/time.h>
@@ -568,8 +569,8 @@ namespace Reflex
 		if (!himc) return;
 
 		Bounds b = focus->text_input_bounds();
-		Point p1 = focus->to_window(b.position());
-		Point p2 = focus->to_window(b.position() + b.size());
+		POINT p1 = Window_to_native_coord(*win, focus->to_window(b.position()));
+		POINT p2 = Window_to_native_coord(*win, focus->to_window(b.position() + b.size()));
 
 		CANDIDATEFORM form = {0};
 		form.dwIndex       = 0;
@@ -633,7 +634,7 @@ namespace Reflex
 
 			// Win32 has no mouse-enter message; the first move after (re)arming
 			// the leave tracking is when the mouse entered the window.
-			NativePointerEvent e(msg, wp, lp, Pointer::ENTER);
+			NativePointerEvent e(*win, msg, wp, lp, Pointer::ENTER);
 			Window_call_pointer_event(win, &e);
 		}
 		else if (msg == WM_MOUSELEAVE)
@@ -645,7 +646,7 @@ namespace Reflex
 				lp = MAKELPARAM(pt.x, pt.y);
 		}
 
-		NativePointerEvent e(msg, wp, lp);
+		NativePointerEvent e(*win, msg, wp, lp);
 		Window_call_pointer_event(win, &e);
 
 		capture_mouse_events_outside_window(self->hwnd, msg, wp);
@@ -674,7 +675,7 @@ namespace Reflex
 				wp_y = m.wParam;
 		}
 
-		NativeWheelEvent e(wp_x, wp_y, lp);
+		NativeWheelEvent e(*win, wp_x, wp_y, lp);
 		Window_call_wheel_event(win, &e);
 	}
 
@@ -692,7 +693,7 @@ namespace Reflex
 		if (!GetTouchInputInfo(handle, size, &touches[0], sizeof(TOUCHINPUT)))
 			return;
 
-		NativePointerEvent e(self->hwnd, &touches[0], size);
+		NativePointerEvent e(*win, &touches[0], size);
 		Window_call_pointer_event(win, &e);
 
 		CloseTouchInputHandle(handle);
@@ -1090,12 +1091,9 @@ namespace Reflex
 		return self->title_tmp.c_str();
 	}
 
-	static void
-	get_client_bounds (HWND hwnd, coord* x, coord* y, coord* w, coord* h)
+	static RECT
+	get_client_rect (HWND hwnd)
 	{
-		if (!x && !y && !w && !h)
-			argument_error(__FILE__, __LINE__);
-
 		RECT client;
 		if (!GetClientRect(hwnd, &client))
 			system_error(__FILE__, __LINE__);
@@ -1104,10 +1102,12 @@ namespace Reflex
 		if (!ClientToScreen(hwnd, &pos))
 			system_error(__FILE__, __LINE__);
 
-		if (x) *x = pos.x;
-		if (y) *y = pos.y;
-		if (w) *w = client.right  - client.left;
-		if (h) *h = client.bottom - client.top;
+		return {
+			pos.x,
+			pos.y,
+			pos.x + (client.right  - client.left),
+			pos.y + (client.bottom - client.top)
+		};
 	}
 
 	static void
@@ -1132,17 +1132,23 @@ namespace Reflex
 
 		HWND hwnd = get_data(window)->hwnd;
 
-		coord xx, yy, ww, hh;
-		get_client_bounds(hwnd, &xx, &yy, &ww, &hh);
-
+		RECT now   = get_client_rect(hwnd);
+		RECT rect  = Screen_to_native_coord(x, y, w, h);
 		UINT flags = 0;
-		if (x == xx && y == yy) flags |= SWP_NOMOVE;
-		if (w == ww && h == hh) flags |= SWP_NOSIZE;
+
+		if (rect.left == now.left && rect.top == now.top)
+			flags |= SWP_NOMOVE;
+
+		if (
+			rect.right  - rect.left == now.right  - now.left &&
+			rect.bottom - rect.top  == now.bottom - now.top)
+		{
+			flags |= SWP_NOSIZE;
+		}
 
 		if (flags == (SWP_NOMOVE | SWP_NOSIZE))
 			return;
 
-		RECT rect = {(int) x, (int) y, (int) (x + w), (int) (y + h)};
 		client_to_window_rect(hwnd, &rect);
 
 		if (!SetWindowPos(
@@ -1160,9 +1166,7 @@ namespace Reflex
 		if (!window)
 			invalid_state_error(__FILE__, __LINE__);
 
-		coord x, y, w, h;
-		get_client_bounds(get_data(&window)->hwnd, &x, &y, &w, &h);
-		return Bounds(x, y, w, h);
+		return Screen_from_native_coord(get_client_rect(get_data(&window)->hwnd));
 	}
 
 	void
@@ -1357,7 +1361,26 @@ namespace Reflex
 	float
 	Window_get_pixel_density (const Window& window)
 	{
-		return 1;
+		HWND hwnd = get_data(&window)->hwnd;
+		return Screen_get_pixel_density(
+			hwnd ? MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) : NULL);
+	}
+
+	Point
+	Window_from_native_coord (const Window& window, coord x, coord y)
+	{
+		float density = Window_get_pixel_density(window);
+		return Point(x / density, y / density);
+	}
+
+	POINT
+	Window_to_native_coord (const Window& window, const Point& point)
+	{
+		float density = Window_get_pixel_density(window);
+		return {
+			(LONG) lround(point.x * density),
+			(LONG) lround(point.y * density)
+		};
 	}
 
 	void
@@ -1417,7 +1440,7 @@ namespace Reflex
 		if (!ScreenToClient(hwnd, &pos))
 			return false;
 
-		position->reset(pos.x, pos.y);
+		*position = Window_from_native_coord(window, pos.x, pos.y);
 		return true;
 	}
 
