@@ -26,7 +26,7 @@ module Reflex
 
       # The CRuby used unless the config or CRUBY_PATH names another one.
       #
-      CRUBY_VERSION = '4.0.601'
+      CRUBY_VERSION = '4.0.700'
 
       TOOLS = {
         git:        'install Xcode command line tools: xcode-select --install',
