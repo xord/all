@@ -7,6 +7,7 @@ $LOAD_PATH.unshift Dir.pwd
 
 begin
 <%- if pack? -%>
+  # the scripts of the app in its data file, in place of them
   require_relative 'data_file'
   require_relative 'data_loader'
   Reflex::Packager::DataLoader.setup Dir.pwd

@@ -16,24 +16,32 @@ module Reflex
 
       class << self
 
-        # Puts the files of the app in +dir+ together in the data file at
-        # +path+, with the Ruby scripts compiled into instruction sequences by
-        # the Ruby running this, the one a package runs them on.
+        # Copies the app in +dir+ to +dest+, with the Ruby scripts in its data
+        # file in place of them, compiled into instruction sequences by the
+        # Ruby running this, the one a package runs them on, and the other
+        # files as they are.
         #
         # They are compiled with their paths relative to +dir+, as the app
         # directory the package runs in has them, and DataLoader reads them.
         #
-        def pack_app(dir, path)
-          files = Dir.glob('**/*', base: dir).select {File.file? File.join(dir, _1)}.sort
-          data  = files.to_h do |name|
-            file = File.join dir, name
-            next [name, File.binread(file)] unless name.end_with? '.rb'
-            source = File.read file, encoding: Encoding::UTF_8
+        def pack_app(dir, dest)
+          files   = Dir.glob('**/*', base: dir).select {File.file? File.join(dir, _1)}.sort
+          scripts = files.select {_1.end_with? '.rb'}
+
+          data = scripts.to_h do |name|
+            source = File.read File.join(dir, name), encoding: Encoding::UTF_8
             iseq   = RubyVM::InstructionSequence.compile source, name, name
             [name.sub(/\.rb\z/, '.rbc'), iseq.to_binary]
           end
           data['.ruby-version'] = RUBY_VERSION
-          DataFile.write path, data
+          FileUtils.mkdir_p dest
+          DataFile.write File.join(dest, DataLoader::DATA_FILE), data
+
+          (files - scripts).each do |name|
+            path = File.join dest, name
+            FileUtils.mkdir_p File.dirname(path)
+            FileUtils.cp File.join(dir, name), path
+          end
         end
 
       end# self
@@ -128,8 +136,8 @@ module Reflex
       end
 
       # Copies the files of the app to app_dir, and to +dir+ in the build
-      # directory as they are, or put together in its data file with what
-      # reads it beside +dir+, if the app is to be packed.
+      # directory, as they are, or packed with what reads its data file beside
+      # +dir+, if the app is to be packed.
       #
       def copy_app_files(dir = 'app')
         FileUtils.rm_rf app_dir
@@ -146,7 +154,7 @@ module Reflex
         FileUtils.rm_rf dir
         FileUtils.mkdir_p dir
         if pack?
-          Platform.pack_app app_dir, File.join(dir, DataLoader::DATA_FILE)
+          Platform.pack_app app_dir, dir
           %w[data_file.rb data_loader.rb]
             .each {FileUtils.cp File.join(__dir__, _1), File.dirname(dir)}
         else

@@ -353,19 +353,19 @@ class TestPackagerWindows < Test::Unit::TestCase
     main = <<~RUBY
       require 'fakepure'
       require_relative 'sub'
-      File.write '../result', [__FILE__, $sub, File.read('data.txt'), *Dir.children('.')].join("\\n")
+      File.write ENV['RESULT'], [__FILE__, $sub, File.read('data.txt'), *Dir.children('.').sort].join("\\n")
     RUBY
     files = {'main.rb' => main, 'sub.rb' => '$sub = :sub', 'data.txt' => 'data'}
     fake_libs do
       packager "files: [sub.rb, data.txt]", files: files, pack: true do |pkg, dir|
         pkg.generate
-        assert_equal %w[data.bin], Dir.children(build_path dir, 'lib/app')
+        assert_equal %w[data.bin data.txt], Dir.children(build_path dir, 'lib/app').sort # but the scripts as they are
         assert_equal %w[data.txt main.rb sub.rb], Dir.children(File.join dir, '.build/app').sort # as they are
         assert File.exist?(build_path dir, 'lib/data_file.rb')
         assert File.exist?(build_path dir, 'lib/data_loader.rb')
 
-        assert system(RbConfig.ruby, build_path(dir, 'lib/boot.rb'))
-        assert_equal %w[main.rb sub data data.bin], read(dir, 'lib/result').lines(chomp: true)
+        assert system({'RESULT' => build_path(dir, 'lib/result')}, RbConfig.ruby, build_path(dir, 'lib/boot.rb'))
+        assert_equal %w[main.rb sub data data.bin data.txt], read(dir, 'lib/result').lines(chomp: true)
       end
       packager do |pkg, dir|
         pkg.generate
@@ -389,7 +389,7 @@ class TestPackagerWindows < Test::Unit::TestCase
     # app/reflex.rb stands in for reflex, found first on the load path
     reflex = <<~RUBY
       module Reflex
-        def self.alert(message, title:) = File.write('../alert', "\#{title}\\n\#{message}")
+        def self.alert(message, title:) = File.write(ENV['ALERT'], "\#{title}\\n\#{message}")
       end
     RUBY
     boot = -> (main, yaml = '', pack: false) {
@@ -397,7 +397,8 @@ class TestPackagerWindows < Test::Unit::TestCase
       fake_libs do
         packager "name: My App\nfiles: [reflex.rb]\n#{yaml}", files: files, pack: pack do |pkg, dir|
           pkg.generate
-          ok    = system RbConfig.ruby, build_path(dir, 'lib/boot.rb'), err: File::NULL
+          env   = {'ALERT' => build_path(dir, 'lib/alert')}
+          ok    = system env, RbConfig.ruby, build_path(dir, 'lib/boot.rb'), err: File::NULL
           alert = File.exist?(build_path dir, 'lib/alert') ? read(dir, 'lib/alert') : nil
           return [ok, $?.exitstatus, alert]
         end
