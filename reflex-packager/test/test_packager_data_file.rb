@@ -49,6 +49,9 @@ class TestPackagerDataFile < Test::Unit::TestCase
 
     assert_raise(ArgumentError) {data_file("a\tb" => '') {}}
     assert_raise(ArgumentError) {data_file("a\nb" => '') {}}
+    assert_raise(ArgumentError) {data_file('../a' => '') {}}
+    assert_raise(ArgumentError) {data_file('a/../../b' => '') {}}
+    assert_raise(ArgumentError) {data_file('/a' => '') {}}
 
     Dir.mktmpdir do |dir|
       path = File.join dir, 'data.bin'
