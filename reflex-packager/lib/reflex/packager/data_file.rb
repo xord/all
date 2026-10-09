@@ -41,7 +41,8 @@ module Reflex
 
           index, offset = [], HEADER_SIZE
           files.each do |name, bytes|
-            raise ArgumentError, "invalid name: #{name.inspect}" if name =~ /[\t\n]/
+            raise ArgumentError, "invalid name: #{name.inspect}" if
+              name =~ /[\t\n]/ || name.start_with?('/') || name.split('/').include?('..')
             index << "#{name}\t#{offset}\t#{bytes.bytesize}\n"
             offset += bytes.bytesize
           end
