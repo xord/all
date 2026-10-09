@@ -2,7 +2,7 @@
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
   <assemblyIdentity type="win32" name="<%= target %>" version="<%= product_version %>"/>
 
-  <!-- the dlls in bin/, a private assembly listed in bin/bin.manifest -->
+  <!-- the dlls in lib/, a private assembly listed in lib/lib.manifest -->
   <dependency>
     <dependentAssembly>
       <assemblyIdentity type="win32" name="<%= Windows::RUNTIME_DIR %>" version="<%= Windows::RUNTIME_VERSION %>"/>

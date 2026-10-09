@@ -73,7 +73,7 @@ $ reflex package .
 The app is packaged for the platform the packager runs on, as each one builds only on itself, and placed in `dist/`:
 
 - macOS: `dist/<name>.app`
-- Windows: `dist/<name>/`, with `<name>.exe`, the DLLs it loads in `bin/`, and the standard library, the libraries, the gems and the app in `lib/`
+- Windows: `dist/<name>/`, with `<name>.exe`, and the DLLs it loads, the standard library, the libraries, the gems and the app in `lib/`
 
 ### CLI options
 
