@@ -262,7 +262,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         str = read dir, 'src/app.manifest'
         assert_include str, %(name="#{pkg.target}" version="1.2.3.0")
         assert_include str, '<dependentAssembly>'
-        assert_include str, %(name="bin" version="1.0.0.0")
+        assert_include str, %(name="lib" version="1.0.0.0")
         assert_include str, '<supportedOS '
         assert_include str, '<activeCodePage '
         assert_include str, '>UTF-8<'
@@ -568,7 +568,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         end
         # the one beside the compiler
         assert_equal File.join(msys_bin, 'libstdc++-6.dll'),
-          File.read(File.join dir, 'bin/libstdc++-6.dll')
+          File.read(File.join dir, 'lib/libstdc++-6.dll')
 
         # a compiler given by its path, wherever PATH points
         abs = rbconfig.merge 'CXX' => File.join(msys_bin, 'fake-g++')
@@ -577,21 +577,21 @@ class TestPackagerWindows < Test::Unit::TestCase
         end
 
         %w[
-          bin/x64-ucrt-ruby400.dll
-          bin/ruby_builtin_dlls/ruby_builtin_dlls.manifest
-          bin/ruby_builtin_dlls/libgmp-10.dll
-          bin/glew32.dll
-          bin/bin.manifest
+          lib/x64-ucrt-ruby400.dll
+          lib/ruby_builtin_dlls/ruby_builtin_dlls.manifest
+          lib/ruby_builtin_dlls/libgmp-10.dll
+          lib/glew32.dll
+          lib/lib.manifest
           lib/ruby/4.0.0/json.rb
           lib/ruby/4.0.0/x64-mingw-ucrt/json/ext/parser.so
         ].each do |path|
           assert File.exist?(File.join dir, path), "missing #{path}"
         end
         # the ruby dll resolves them through the manifest in the directory
-        assert !File.exist?(File.join dir, 'bin/libgmp-10.dll')
+        assert !File.exist?(File.join dir, 'lib/libgmp-10.dll')
 
-        manifest = File.read File.join(dir, 'bin/bin.manifest')
-        assert_include manifest, %(name="bin" version="1.0.0.0")
+        manifest = File.read File.join(dir, 'lib/lib.manifest')
+        assert_include manifest, %(name="lib" version="1.0.0.0")
         # the ones of the toolchain the executable loads, directly or through
         # another one, but none of windows
         assert_equal %w[
@@ -599,8 +599,8 @@ class TestPackagerWindows < Test::Unit::TestCase
           glew32.dll libstdc++-6.dll libgcc_s_seh-1.dll libwinpthread-1.dll
         ], manifest.scan(/<file name="(.+?)"/).flatten
         # the one of the toolchain for the executable, besides the one of ruby
-        assert File.exist?(File.join dir, 'bin/libwinpthread-1.dll')
-        assert File.exist?(File.join dir, 'bin/ruby_builtin_dlls/libwinpthread-1.dll')
+        assert File.exist?(File.join dir, 'lib/libwinpthread-1.dll')
+        assert File.exist?(File.join dir, 'lib/ruby_builtin_dlls/libwinpthread-1.dll')
       end
     end
   end

@@ -28,10 +28,10 @@ module Reflex
 
       # The dlls the executable loads go in this directory, which is a
       # private assembly of the same name that the manifest embedded in the
-      # executable depends on. Having the ruby dll in bin/ also makes the
-      # parent directory the prefix, where Ruby looks for lib/ruby.
+      # executable depends on. Having the ruby dll in lib/ (or bin/) also
+      # makes the parent directory the prefix, where Ruby looks for lib/ruby.
       #
-      RUNTIME_DIR     = 'bin'
+      RUNTIME_DIR     = 'lib'
       RUNTIME_VERSION = '1.0.0.0'
 
       # Sizes of the icon of the executable, one image each in the ICO.
@@ -170,7 +170,7 @@ module Reflex
         end
       end
 
-      # DLLs the executable loads from bin/, listed in its manifest.
+      # DLLs the executable loads from lib/, listed in its manifest.
       #
       def runtime_dlls(rbconfig = RbConfig::CONFIG)
         [rbconfig['LIBRUBY_SO'], *toolchain_dlls(rbconfig).map {File.basename _1}]
@@ -248,22 +248,22 @@ module Reflex
       end
 
       # Copies what the executable needs from the Ruby it was built with:
-      # the dlls into bin/, the standard library into lib/ruby.
+      # the dlls into lib/, the standard library into lib/ruby.
       #
       def copy_runtime(dest, rbconfig = RbConfig::CONFIG)
-        bin    = File.join dest, RUNTIME_DIR
-        bindir = rbconfig['bindir']
-        FileUtils.mkdir_p bin
-        FileUtils.cp File.join(bindir, rbconfig['LIBRUBY_SO']), bin
+        runtime = File.join dest, RUNTIME_DIR
+        bindir  = rbconfig['bindir']
+        FileUtils.mkdir_p runtime
+        FileUtils.cp File.join(bindir, rbconfig['LIBRUBY_SO']), runtime
 
         # the ruby dll finds these through the manifest in the directory, so
         # the directory has to come along as it is
         builtin = File.join bindir, 'ruby_builtin_dlls'
-        FileUtils.cp_r builtin, bin if File.directory? builtin
+        FileUtils.cp_r builtin, runtime if File.directory? builtin
 
-        toolchain_dlls(rbconfig).each {FileUtils.cp _1, bin}
-        File.write File.join(bin, "#{RUNTIME_DIR}.manifest"),
-          render('bin.manifest.erb', dlls: runtime_dlls(rbconfig))
+        toolchain_dlls(rbconfig).each {FileUtils.cp _1, runtime}
+        File.write File.join(runtime, "#{RUNTIME_DIR}.manifest"),
+          render('runtime.manifest.erb', dlls: runtime_dlls(rbconfig))
 
         stdlib = File.join dest, 'lib', 'ruby'
         FileUtils.mkdir_p stdlib
