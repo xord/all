@@ -49,8 +49,7 @@ class TestPackagerDataLoader < Test::Unit::TestCase
       end
 
       script = <<~RUBY
-        load #{File.join(LIB_DIR, 'data_file.rb').dump}
-        load #{File.join(LIB_DIR, 'data_loader.rb').dump}
+        require #{File.join(LIB_DIR, 'data_loader.rb').dump} # with data_file.rb beside
         Dir.chdir #{dir.dump}
         $LOAD_PATH.unshift Dir.pwd
         Reflex::Packager::DataLoader.setup Dir.pwd

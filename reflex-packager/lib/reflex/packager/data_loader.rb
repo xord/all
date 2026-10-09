@@ -1,3 +1,6 @@
+require_relative 'data_file'
+
+
 module Reflex
 
 
@@ -14,7 +17,8 @@ module Reflex
     # which a package runs in, so that __FILE__ and __dir__ have them as they
     # are, and the others, as the libraries, are required as they are.
     #
-    # A package carries this file, which requires nothing but DataFile.
+    # A package carries this file in the reflex library of it, with DataFile
+    # beside, which is all it requires.
     #
     module DataLoader
 

@@ -286,6 +286,12 @@ module Reflex
         File.join lib.root, 'lib', "lib#{lib.name}.a"
       end
 
+      # The lib directory of the library +name+ in the package.
+      #
+      def library_lib_dir(name)
+        File.join build_dir, 'lib', name, 'lib'
+      end
+
       def copy_libraries()
         dir = File.join build_dir, 'lib'
         FileUtils.rm_rf dir
