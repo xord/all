@@ -136,8 +136,8 @@ module Reflex
       end
 
       # Copies the files of the app to app_dir, and to +dir+ in the build
-      # directory, as they are, or packed with what reads its data file beside
-      # +dir+, if the app is to be packed.
+      # directory, as they are, or packed with what reads its data file in
+      # the reflex library of the package, if the app is to be packed.
       #
       def copy_app_files(dir = 'app')
         FileUtils.rm_rf app_dir
@@ -154,9 +154,12 @@ module Reflex
         FileUtils.rm_rf dir
         FileUtils.mkdir_p dir
         if pack?
+          raise Error, 'a packed app needs reflex in its libraries' unless
+            libraries.any? {_1.name == 'reflex'}
           Platform.pack_app app_dir, dir
-          %w[data_file.rb data_loader.rb]
-            .each {FileUtils.cp File.join(__dir__, _1), File.dirname(dir)}
+          loader = File.join library_lib_dir('reflex'), 'reflex', 'packager'
+          FileUtils.mkdir_p loader
+          %w[data_file.rb data_loader.rb].each {FileUtils.cp File.join(__dir__, _1), loader}
         else
           FileUtils.cp_r File.join(app_dir, '.'), dir
         end

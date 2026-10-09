@@ -8,8 +8,7 @@ $LOAD_PATH.unshift Dir.pwd
 begin
 <%- if pack? -%>
   # the scripts of the app in its data file, in place of them
-  require_relative 'data_file'
-  require_relative 'data_loader'
+  require 'reflex/packager/data_loader'
   Reflex::Packager::DataLoader.setup Dir.pwd
 
 <%- end -%>
@@ -22,7 +21,7 @@ rescue Exception => e
     require 'reflex'
     dirs    = Regexp.union [File.dirname(__FILE__), __dir__].map {"#{_1}/"}
     message = e.full_message(highlight: false).lines
-      .reject {_1.match? %r{^\s+from (eval|#{Regexp.escape __FILE__}|(#{dirs})data_loader\.rb):}}
+      .reject {_1.match? %r{^\s+from (eval|#{Regexp.escape __FILE__}|(#{dirs})reflex/lib/reflex/packager/data_loader\.rb):}}
       .join
       .gsub(dirs, '')
     Reflex.alert message, title: <%= config.name.dump %>

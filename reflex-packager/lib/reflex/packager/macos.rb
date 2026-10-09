@@ -232,6 +232,12 @@ module Reflex
         end
       end
 
+      # The lib directory of the library +name+ in the package.
+      #
+      def library_lib_dir(name)
+        File.join bundle_resources(File.join(build_dir, 'Bundles'), name), 'lib'
+      end
+
       def bundle_resources(dir, name)
         File.join dir, "#{name}.bundle", 'Contents', 'Resources'
       end

@@ -19,6 +19,9 @@ class TestPackagerWindows < Test::Unit::TestCase
     'fakepure'   => %w[lib/fakepure.rb res/icon.png VERSION]
   }
 
+  # With reflex, which a packed app needs to carry what reads its data file.
+  LIBS_WITH_REFLEX = LIBS.merge('reflex' => %w[lib/reflex.rb VERSION])
+
   RBCONFIG = {
     'CXX'               => 'g++ -std=gnu++11',
     'rubyhdrdir'        => '/ruby/include/ruby-4.0.0',
@@ -356,21 +359,26 @@ class TestPackagerWindows < Test::Unit::TestCase
       File.write ENV['RESULT'], [__FILE__, $sub, File.read('data.txt'), *Dir.children('.').sort].join("\\n")
     RUBY
     files = {'main.rb' => main, 'sub.rb' => '$sub = :sub', 'data.txt' => 'data'}
-    fake_libs do
-      packager "files: [sub.rb, data.txt]", files: files, pack: true do |pkg, dir|
+    fake_libs LIBS_WITH_REFLEX do
+      packager "files: [sub.rb, data.txt]", files: files, pack: true,
+        profile: profile(libraries: LIBS_WITH_REFLEX.keys) do |pkg, dir|
+
         pkg.generate
         assert_equal %w[data.bin data.txt], Dir.children(build_path dir, 'lib/app').sort # but the scripts as they are
         assert_equal %w[data.txt main.rb sub.rb], Dir.children(File.join dir, '.build/app').sort # as they are
-        assert File.exist?(build_path dir, 'lib/data_file.rb')
-        assert File.exist?(build_path dir, 'lib/data_loader.rb')
+        assert File.exist?(build_path dir, 'lib/reflex/lib/reflex/packager/data_file.rb')
+        assert File.exist?(build_path dir, 'lib/reflex/lib/reflex/packager/data_loader.rb')
 
         assert system({'RESULT' => build_path(dir, 'lib/result')}, RbConfig.ruby, build_path(dir, 'lib/boot.rb'))
         assert_equal %w[main.rb sub data data.bin data.txt], read(dir, 'lib/result').lines(chomp: true)
       end
-      packager do |pkg, dir|
+      packager profile: profile(libraries: LIBS_WITH_REFLEX.keys) do |pkg, dir|
         pkg.generate
         assert_not_include read(dir, 'lib/boot.rb'), 'DataLoader'
-        assert !File.exist?(build_path dir, 'lib/data_loader.rb')
+        assert !File.exist?(build_path dir, 'lib/reflex/lib/reflex/packager')
+      end
+      packager pack: true do |pkg, _| # with no reflex
+        assert_raise(RP::Error) {pkg.generate}
       end
     end
   end
@@ -394,8 +402,10 @@ class TestPackagerWindows < Test::Unit::TestCase
     RUBY
     boot = -> (main, yaml = '', pack: false) {
       files = {'main.rb' => main, 'reflex.rb' => reflex}
-      fake_libs do
-        packager "name: My App\nfiles: [reflex.rb]\n#{yaml}", files: files, pack: pack do |pkg, dir|
+      fake_libs LIBS_WITH_REFLEX do
+        packager "name: My App\nfiles: [reflex.rb]\n#{yaml}", files: files, pack: pack,
+          profile: profile(libraries: LIBS_WITH_REFLEX.keys) do |pkg, dir|
+
           pkg.generate
           env   = {'ALERT' => build_path(dir, 'lib/alert')}
           ok    = system env, RbConfig.ruby, build_path(dir, 'lib/boot.rb'), err: File::NULL
