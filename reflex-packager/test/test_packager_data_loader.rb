@@ -34,15 +34,17 @@ class TestPackagerDataLoader < Test::Unit::TestCase
     Dir.mktmpdir do |dir|
       File.write File.join(dir, 'outside.txt'), 'outside' # beside the app
       lib = File.join dir, 'lib'
+      src = File.join dir, 'src'
       dir = File.join dir, 'app'
       libs.each {|name, content| FileUtils.mkdir_p lib; File.write File.join(lib, name), content}
       files.each do |name, content|
-        path = File.join dir, name
+        path = File.join src, name
         FileUtils.mkdir_p File.dirname(path)
         File.binwrite path, content
       end
-      RP::Platform.pack_app dir
-      yield dir if block_given?
+      FileUtils.mkdir_p dir
+      RP::Platform.pack_app src, File.join(dir, 'data.bin')
+      yield src, dir if block_given?
       if ruby_version
         RP::DataFile.open(File.join dir, 'data.bin') do |data|
           RP::DataFile.write data.path, data.names.to_h {[_1, data.read(_1)]}
@@ -63,7 +65,8 @@ class TestPackagerDataLoader < Test::Unit::TestCase
   end
 
   def test_pack_app()
-    run_app do |dir|
+    run_app do |src, dir|
+      assert_equal APP.keys.sort,  Dir.glob('**/*.*', base: src).sort # as they are
       assert_equal ['data.bin'], Dir.children(dir)
       RP::DataFile.open File.join(dir, 'data.bin') do |data|
         assert_equal %w[.ruby-version foo.rbc image.png lib/bar.rbc lib/baz.rbc main.rbc once.rbc],

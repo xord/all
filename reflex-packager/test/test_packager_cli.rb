@@ -80,6 +80,9 @@ class TestPackagerCLI < Test::Unit::TestCase
       %w[src/main.cpp src/app.manifest lib/boot.rb lib/app/main.rb lib/reflex/lib/reflex.rb].each do |f|
         assert File.exist?("myapp/.build/windows/#{f}"), "missing #{f}"
       end
+
+      cli.package ['--generate-only', '--platform', 'windows', '--pack', 'myapp']
+      assert_equal %w[data.bin], Dir.children('myapp/.build/windows/lib/app')
     end
 
     tmpdir do

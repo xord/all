@@ -35,6 +35,7 @@ module Reflex
       }
 
       def generate()
+        raise Error, '--pack is not supported on macos yet' if pack?
         copy_app_files
         copy_bundles
         generate_icon if config.icon
