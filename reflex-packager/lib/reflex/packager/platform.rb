@@ -14,6 +14,32 @@ module Reflex
     #
     class Platform
 
+      class << self
+
+        # Puts the files of the app in +dir+ together in its data file, in
+        # place of them, with the Ruby scripts compiled into instruction
+        # sequences by the Ruby running this, the one a package runs them on.
+        #
+        # They are compiled with their paths relative to +dir+, which the app
+        # runs in, as the package has it elsewhere, and DataLoader reads them.
+        #
+        def pack_app(dir)
+          files = Dir.glob('**/*', base: dir).select {File.file? File.join(dir, _1)}.sort
+          data  = files.to_h do |name|
+            path = File.join dir, name
+            next [name, File.binread(path)] unless name.end_with? '.rb'
+            source = File.read path, encoding: Encoding::UTF_8
+            iseq   = RubyVM::InstructionSequence.compile source, name, name
+            [name.sub(/\.rb\z/, '.rbc'), iseq.to_binary]
+          end
+          data['.ruby-version'] = RUBY_VERSION
+
+          Dir.children(dir).each {FileUtils.rm_rf File.join(dir, _1)}
+          DataFile.write File.join(dir, 'data.bin'), data
+        end
+
+      end# self
+
       def initialize(config, verbose: false)
         @config, @verbose = config, verbose
       end
