@@ -82,7 +82,8 @@ class TestPackagerCLI < Test::Unit::TestCase
       end
 
       cli.package ['--generate-only', '--platform', 'windows', '--pack', 'myapp']
-      assert_equal %w[data.bin], Dir.children('myapp/.build/windows/lib/app')
+      assert_include Dir.children('myapp/.build/windows/lib/app'), 'data.bin'
+      assert_not_include Dir.children('myapp/.build/windows/lib/app'), 'main.rb'
     end
 
     tmpdir do

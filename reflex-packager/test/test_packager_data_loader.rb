@@ -28,22 +28,18 @@ class TestPackagerDataLoader < Test::Unit::TestCase
   }
 
   # Packs +files+ as an app, and runs the main script of it in another Ruby,
-  # as a package does, with +libs+ on the load path.
+  # as a package does.
   #
-  def run_app(files = APP, libs: {}, ruby_version: nil)
+  def run_app(files = APP, ruby_version: nil)
     Dir.mktmpdir do |dir|
-      File.write File.join(dir, 'outside.txt'), 'outside' # beside the app
-      lib = File.join dir, 'lib'
       src = File.join dir, 'src'
       dir = File.join dir, 'app'
-      libs.each {|name, content| FileUtils.mkdir_p lib; File.write File.join(lib, name), content}
       files.each do |name, content|
         path = File.join src, name
         FileUtils.mkdir_p File.dirname(path)
         File.binwrite path, content
       end
-      FileUtils.mkdir_p dir
-      RP::Platform.pack_app src, File.join(dir, 'data.bin')
+      RP::Platform.pack_app src, dir
       yield src, dir if block_given?
       if ruby_version
         RP::DataFile.open(File.join dir, 'data.bin') do |data|
@@ -56,7 +52,7 @@ class TestPackagerDataLoader < Test::Unit::TestCase
         load #{File.join(LIB_DIR, 'data_file.rb').dump}
         load #{File.join(LIB_DIR, 'data_loader.rb').dump}
         Dir.chdir #{dir.dump}
-        $LOAD_PATH.unshift Dir.pwd, #{lib.dump}
+        $LOAD_PATH.unshift Dir.pwd
         Reflex::Packager::DataLoader.setup Dir.pwd
         load 'main.rb'
       RUBY
@@ -67,12 +63,12 @@ class TestPackagerDataLoader < Test::Unit::TestCase
   def test_pack_app()
     run_app do |src, dir|
       assert_equal APP.keys.sort,  Dir.glob('**/*.*', base: src).sort # as they are
-      assert_equal ['data.bin'], Dir.children(dir)
+      assert_equal %w[data.bin image.png], Dir.children(dir).sort # the others as they are
+      assert_equal "\x89PNG".b, File.binread(File.join dir, 'image.png')
       RP::DataFile.open File.join(dir, 'data.bin') do |data|
-        assert_equal %w[.ruby-version foo.rbc image.png lib/bar.rbc lib/baz.rbc main.rbc once.rbc],
+        assert_equal %w[.ruby-version foo.rbc lib/bar.rbc lib/baz.rbc main.rbc once.rbc],
           data.names.sort
         assert_equal RUBY_VERSION, data.read('.ruby-version')
-        assert_equal "\x89PNG".b,  data.read('image.png')
         assert_not_include data.read('main.rbc'), '$log << require' # compiled
       end
     end
@@ -95,64 +91,20 @@ class TestPackagerDataLoader < Test::Unit::TestCase
       'main.rb' => <<~RUBY,
         r = []
         r << File.read('data/a.txt')
-        r << File.read('data/a.txt').encoding.to_s
-        r << File.read('data/a.txt', 2, 1)
-        r << File.read('data/a.txt', mode: 'rb').encoding.to_s
-        r << File.binread('data/a.txt').encoding.to_s
-        r << [File.exist?('data/a.txt'), File.file?('data/a.txt'), File.exist?('data'), File.directory?('data'), Dir.exist?('data')]
-        r << [File.exist?('main.rb'), File.exist?('none.txt'), File.file?('data'), File.directory?('data/a.txt')]
-        r << File.open('data/a.txt') {_1.read}
-        r << File.open('data/a.txt', 'rb').read.encoding.to_s
-        r << File.open('data/a.txt', mode: 'rb').read.encoding.to_s
-        r << File.open(__FILE__.sub('main.rb', '../outside.txt'), mode: 'rb') {_1.read}
-        File.write 'out.txt', 'written'
-        r << File.read('out.txt')
-        r << Dir.glob('*')
-        r << Dir.glob('**/*.txt')
-        r << Dir['data/*']
-        r << Dir.glob('*', base: 'data')
-        r << Dir.glob(File.expand_path 'data/*.txt').map {_1.delete_prefix Dir.pwd}
-        require 'rays'
-        path, bytes, smooth = Rays::Image.load 'data/b.png', smooth: true
-        r << [path.start_with?(Dir.pwd), bytes.unpack1('H*'), smooth, Rays::Image.load('data/b.png').first == path]
-        require 'beeps'
-        path = Beeps::FileIn.new('data/b.png').path
-        r << [path.start_with?(Dir.pwd), File.binread(path).unpack1('H*')]
+        r << Dir.glob('**/*').sort # with none of the scripts
+        r << [File.exist?('main.rb'), File.exist?('sub.rb')]
+        r << require_relative('sub')
         p r
       RUBY
-      'data/a.txt' => 'abc',
-      'data/b.png' => "\x89PNG".b
+      'sub.rb'     => '',
+      'data/a.txt' => 'abc'
     }
-    rays = <<~RUBY
-      module Rays
-        class Image
-          def self.load(path, smooth: false) = [path, File.binread(path), smooth]
-        end
-      end
-    RUBY
-    beeps = <<~RUBY
-      module Beeps
-        class FileIn
-          attr_accessor :path
-          def initialize(path) = self.path = path
-        end
-      end
-    RUBY
     assert_equal [
-      'abc', 'UTF-8', 'bc', 'ASCII-8BIT', 'ASCII-8BIT',
-      [true,  true,  true,  true,  true],
-      [false, false, false, false],
-      'abc', 'ASCII-8BIT', 'ASCII-8BIT',
-      'outside', # out of the app directory as it is
-      'written',
-      %w[data out.txt],
-      %w[data/a.txt out.txt],
-      %w[data/a.txt data/b.png],
-      %w[a.txt b.png],
-      %w[/data/a.txt], # as absolute as the pattern
-      [false, '89504e47', true, true], # extracted to a temporary file once
-      [false, '89504e47']
-    ], eval(run_app files, libs: {'rays.rb' => rays, 'beeps.rb' => beeps})
+      'abc',
+      %w[data data.bin data/a.txt],
+      [false, false],
+      true
+    ], eval(run_app files)
   end
 
   def test_ruby_version()
