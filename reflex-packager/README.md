@@ -97,6 +97,7 @@ reflex package [options] [DIR]
   --platform PLATFORM   target platform (default: the one it runs on)
   --config PATH         config file path (default: DIR/reflex.yml)
   --generate-only       generate project files but do not build
+  --pack                put the files of the app together in a data file, for a release
   --verbose             verbose output
 ```
 
@@ -173,6 +174,16 @@ localizations:
 ```
 
 On macOS, the name in the language of the system is shown in the Finder, the Dock, the menu bar and the application menu, and the copyright in the About panel. On Windows, they are in the version resource of the executable, in the languages Windows knows, and the name in the language of the user is the one the app has by default (`Reflex::Application#name`), which a tray shows. The properties of the executable show the English ones, though, and its file name stays as it is.
+
+### Packing for a release
+
+With `--pack`, the files of the app are put together in `app/data.bin`, which the package reads them from as they are, not extracting them:
+
+- The Ruby scripts are compiled into instruction sequences, which the package runs in place of the scripts, so it carries none of them.
+- `require`, `require_relative` and `load`, `File` and `Dir` (`read`, `binread`, `exist?`, `file?`, `directory?`, `open` to read, `glob`), and the loading of the images, the fonts and the sounds read the files in the data file, as they are in the app directory. A file loaded from its path only, as an image, is extracted to a temporary file for it.
+- The bytes of the data file are substituted with others, which keeps the files from being read as they are, though it is no encryption.
+
+It is supported on Windows only for now.
 
 ### CRuby
 

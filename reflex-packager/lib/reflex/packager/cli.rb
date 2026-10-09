@@ -67,6 +67,7 @@ module Reflex
             "target platform: #{PLATFORMS.keys.join ' or '} (default: #{platform})"
           on '--config PATH',   "config file path (default: DIR/#{profile.config_files.first})"
           on '--generate-only', 'generate project files but do not build'
+          on '--pack',          'put the files of the app together in a data file, for a release'
           on '--verbose',       'verbose output'
         end
 
@@ -74,7 +75,7 @@ module Reflex
         platform = (params[:platform] || platform).to_sym
         klass    = PLATFORMS[platform] || raise(Error, "unknown platform: '#{platform}'")
         config   = Config.load profile, dir, params[:config]
-        klass.new(config, verbose: params[:verbose])
+        klass.new(config, verbose: params[:verbose], pack: params[:pack])
           .package generate_only: params[:'generate-only']
       end
 

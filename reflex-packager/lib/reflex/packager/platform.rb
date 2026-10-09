@@ -16,32 +16,30 @@ module Reflex
 
       class << self
 
-        # Puts the files of the app in +dir+ together in its data file, in
-        # place of them, with the Ruby scripts compiled into instruction
-        # sequences by the Ruby running this, the one a package runs them on.
+        # Puts the files of the app in +dir+ together in the data file at
+        # +path+, with the Ruby scripts compiled into instruction sequences by
+        # the Ruby running this, the one a package runs them on.
         #
-        # They are compiled with their paths relative to +dir+, which the app
-        # runs in, as the package has it elsewhere, and DataLoader reads them.
+        # They are compiled with their paths relative to +dir+, as the app
+        # directory the package runs in has them, and DataLoader reads them.
         #
-        def pack_app(dir)
+        def pack_app(dir, path)
           files = Dir.glob('**/*', base: dir).select {File.file? File.join(dir, _1)}.sort
           data  = files.to_h do |name|
-            path = File.join dir, name
-            next [name, File.binread(path)] unless name.end_with? '.rb'
-            source = File.read path, encoding: Encoding::UTF_8
+            file = File.join dir, name
+            next [name, File.binread(file)] unless name.end_with? '.rb'
+            source = File.read file, encoding: Encoding::UTF_8
             iseq   = RubyVM::InstructionSequence.compile source, name, name
             [name.sub(/\.rb\z/, '.rbc'), iseq.to_binary]
           end
           data['.ruby-version'] = RUBY_VERSION
-
-          Dir.children(dir).each {FileUtils.rm_rf File.join(dir, _1)}
-          DataFile.write File.join(dir, 'data.bin'), data
+          DataFile.write path, data
         end
 
       end# self
 
-      def initialize(config, verbose: false)
-        @config, @verbose = config, verbose
+      def initialize(config, verbose: false, pack: false)
+        @config, @verbose, @pack = config, verbose, pack
       end
 
       attr_reader :config
@@ -52,6 +50,13 @@ module Reflex
 
       def verbose?()
         @verbose
+      end
+
+      # Whether to put the files of the app together in a data file, which
+      # the package reads them from, as for a release.
+      #
+      def pack?()
+        @pack
       end
 
       # Package the application as a distributable bundle.
@@ -116,17 +121,37 @@ module Reflex
         end
       end
 
+      # The files of the app, as they are, for any platform.
+      #
+      def app_dir()
+        File.join config.dir, '.build', 'app'
+      end
+
+      # Copies the files of the app to app_dir, and to +dir+ in the build
+      # directory as they are, or put together in its data file with what
+      # reads it beside +dir+, if the app is to be packed.
+      #
       def copy_app_files(dir = 'app')
-        dir = File.join build_dir, dir
-        FileUtils.rm_rf dir
-        FileUtils.mkdir_p dir
+        FileUtils.rm_rf app_dir
+        FileUtils.mkdir_p app_dir
         config.app_files.each do |file|
-          dest = File.join dir, file
+          dest = File.join app_dir, file
           FileUtils.mkdir_p File.dirname(dest)
           FileUtils.cp_r File.join(config.dir, file), dest
         end
-        File.write File.join(dir, profile.boot_main), profile.boot if
+        File.write File.join(app_dir, profile.boot_main), profile.boot if
           profile.boot_main && profile.boot
+
+        dir = File.join build_dir, dir
+        FileUtils.rm_rf dir
+        FileUtils.mkdir_p dir
+        if pack?
+          Platform.pack_app app_dir, File.join(dir, DataLoader::DATA_FILE)
+          %w[data_file.rb data_loader.rb]
+            .each {FileUtils.cp File.join(__dir__, _1), File.dirname(dir)}
+        else
+          FileUtils.cp_r File.join(app_dir, '.'), dir
+        end
       end
 
       def write(path, content)

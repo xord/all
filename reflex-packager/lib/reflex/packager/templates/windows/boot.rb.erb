@@ -6,18 +6,22 @@ Dir.chdir File.join(__dir__, 'app')
 $LOAD_PATH.unshift Dir.pwd
 
 begin
+<%- if pack? -%>
+  require_relative 'data_file'
+  require_relative 'data_loader'
+  Reflex::Packager::DataLoader.setup Dir.pwd
+
+<%- end -%>
   load File.join(Dir.pwd, <%= start_script.dump %>)
 <%- unless config.windows.console? -%>
 rescue SystemExit, SignalException
   raise
 rescue Exception => e
-  # no console to print it to
   begin
     require 'reflex'
-    # the paths from here, without the lines of this script and of what loads it
     dirs    = Regexp.union [File.dirname(__FILE__), __dir__].map {"#{_1}/"}
     message = e.full_message(highlight: false).lines
-      .reject {_1.match? %r{^\s+from (eval|#{Regexp.escape __FILE__}):}}
+      .reject {_1.match? %r{^\s+from (eval|#{Regexp.escape __FILE__}|(#{dirs})data_loader\.rb):}}
       .join
       .gsub(dirs, '')
     Reflex.alert message, title: <%= config.name.dump %>
