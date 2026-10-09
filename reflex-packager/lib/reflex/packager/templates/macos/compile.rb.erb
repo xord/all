@@ -1,0 +1,7 @@
+begin
+  require <%= compiler.dump %>
+  Reflex::Packager::DataCompiler.write <%= app_dir.dump %>, <%= path.dump %>
+rescue Exception => e
+  $stderr.puts e.full_message
+  exit 1
+end

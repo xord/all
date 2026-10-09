@@ -55,9 +55,41 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
-  def test_pack_is_not_supported_yet()
-    packager do |pkg, _|
-      assert_raise(RP::Error) {MacOS.new(pkg.config, pack: true).generate}
+  # Has the app write its data file as the build does, with the ruby here
+  # running the boot script in place of the app built with CRuby.
+  def compile_scripts(pkg)
+    pkg.define_singleton_method(:xcodebuild) {}
+    pkg.define_singleton_method :run do |*, chdir:|
+      system RbConfig.ruby, File.join(chdir, 'boot.rb'), err: File::NULL or
+        raise RP::Error, 'failed to compile'
+    end
+    pkg.__send__ :compile_scripts
+  end
+
+  def test_pack()
+    packager "files: [sub.rb, data.txt]", files: %w[main.rb sub.rb data.txt] do |pkg, dir|
+      pkg = MacOS.new pkg.config, pack: true
+      assert_raise(RP::Error) {pkg.package generate_only: true} # it has to be built
+
+      pkg.generate
+      app = File.join dir, '.build/macos/app'
+      assert_equal %w[data.txt], Dir.children(app) # the data file is written when built
+      loader = File.join dir, '.build/macos/Bundles/reflex.bundle/Contents/Resources/lib/reflex/packager'
+      assert_equal %w[data_file.rb data_loader.rb], Dir.children(loader).sort
+      boot = read dir, 'boot.rb'
+      assert_include boot, 'DataLoader.setup'
+
+      compile_scripts pkg
+      RP::DataFile.open File.join(app, 'data.bin') do |data|
+        assert_equal %w[.ruby-version main.rbc sub.rbc], data.names.sort
+      end
+      assert_equal boot, read(dir, 'boot.rb') # as it was
+
+      File.write File.join(dir, 'main.rb'), 'def'
+      pkg.generate
+      assert_raise(RP::Error) {compile_scripts pkg}
+      assert !File.exist?(File.join app, 'data.bin')
+      assert_equal boot, read(dir, 'boot.rb')
     end
   end
 
@@ -380,14 +412,19 @@ class TestPackagerMacOS < Test::Unit::TestCase
         def self.alert(message, title:) = File.write('../alert', "\#{title}\\n\#{message}")
       end
     RUBY
-    boot = -> (main, tty: false) {
+    boot = -> (main, tty: false, pack: false) {
       packager "name: My App\nfiles: [reflex.rb]", files: %w[main.rb reflex.rb] do |pkg, dir|
         File.write File.join(dir, 'main.rb'),   main
         File.write File.join(dir, 'reflex.rb'), reflex
+        pkg = MacOS.new pkg.config, pack: pack
         pkg.generate
-        # boot.rb is beside app/ in the resources of the app, as here
+        compile_scripts pkg if pack
+        # boot.rb is beside app/ and the bundles in the resources of the app,
+        # as here, and CRuby has the lib of each bundle on the load path
+        FileUtils.cp_r File.join(dir, '.build/macos/Bundles/reflex.bundle'), File.join(dir, '.build/macos')
+        lib = File.join dir, '.build/macos/reflex.bundle/Contents/Resources/lib'
         tty = "$stderr.define_singleton_method(:tty?) {#{tty}}"
-        _, err, status = Open3.capture3 RbConfig.ruby, '-e', "#{tty}; load ARGV[0]",
+        _, err, status = Open3.capture3 RbConfig.ruby, '-I', lib, '-e', "#{tty}; load ARGV[0]",
           File.join(dir, '.build/macos/boot.rb')
         alert = File.exist?(File.join dir, '.build/macos/alert') ? read(dir, 'alert') : nil
         return [status.exitstatus, alert, err]
@@ -400,6 +437,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
     assert_include     alert, 'boom (RuntimeError)'
     assert_not_include alert, 'boot.rb'
     assert_match(/^app\/main\.rb:1:/, alert) # from the directory of boot.rb
+
+    status, alert, = boot["raise 'boom'", pack: true]
+    assert_equal 1, status
+    assert_include     alert, 'boom (RuntimeError)'
+    assert_not_include alert, 'data_loader.rb'
+    assert_match(/^main\.rb:1:/, alert) # compiled with the path relative to app/
 
     status, alert, err = boot["raise 'boom'", tty: true] # shown in the terminal
     assert_equal [1, nil], [status, alert]

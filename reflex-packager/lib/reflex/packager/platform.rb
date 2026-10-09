@@ -17,25 +17,18 @@ module Reflex
       class << self
 
         # Copies the app in +dir+ to +dest+, with the Ruby scripts in its data
-        # file in place of them, compiled into instruction sequences by the
-        # Ruby running this, the one a package runs them on, and the other
-        # files as they are.
+        # file in place of them, compiled by DataCompiler with the Ruby running
+        # this, and the other files as they are.
         #
-        # They are compiled with their paths relative to +dir+, as the app
-        # directory the package runs in has them, and DataLoader reads them.
+        # Unless +compile+, the data file is left out, for the package to
+        # have it written by the Ruby in it.
         #
-        def pack_app(dir, dest)
+        def pack_app(dir, dest, compile: true)
           files   = Dir.glob('**/*', base: dir).select {File.file? File.join(dir, _1)}.sort
-          scripts = files.select {_1.end_with? '.rb'}
+          scripts = DataCompiler.scripts dir
 
-          data = scripts.to_h do |name|
-            source = File.read File.join(dir, name), encoding: Encoding::UTF_8
-            iseq   = RubyVM::InstructionSequence.compile source, name, name
-            [name.sub(/\.rb\z/, '.rbc'), iseq.to_binary]
-          end
-          data['.ruby-version'] = RUBY_VERSION
           FileUtils.mkdir_p dest
-          DataFile.write File.join(dest, DataLoader::DATA_FILE), data
+          DataCompiler.write dir, File.join(dest, DataLoader::DATA_FILE) if compile
 
           (files - scripts).each do |name|
             path = File.join dest, name
@@ -156,13 +149,20 @@ module Reflex
         if pack?
           raise Error, 'a packed app needs reflex in its libraries' unless
             libraries.any? {_1.name == 'reflex'}
-          Platform.pack_app app_dir, dir
+          Platform.pack_app app_dir, dir, compile: compile_on_generate?
           loader = File.join library_lib_dir('reflex'), 'reflex', 'packager'
           FileUtils.mkdir_p loader
           %w[data_file.rb data_loader.rb].each {FileUtils.cp File.join(__dir__, _1), loader}
         else
           FileUtils.cp_r File.join(app_dir, '.'), dir
         end
+      end
+
+      # Whether the scripts of a packed app are compiled when generating, by
+      # the Ruby running this, which is the one the package runs them on.
+      #
+      def compile_on_generate?()
+        true
       end
 
       def write(path, content)

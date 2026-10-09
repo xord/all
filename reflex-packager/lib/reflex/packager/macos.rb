@@ -34,10 +34,17 @@ module Reflex
         xcodebuild: 'install Xcode and run: sudo xcode-select --switch /Applications/Xcode.app'
       }
 
+      # A packed app compiles its scripts when built, so it has to be built.
+      #
+      def package(generate_only: false)
+        raise Error, 'a packed app has to be built on macos' if pack? && generate_only
+        super
+      end
+
       def generate()
-        raise Error, '--pack is not supported on macos yet' if pack?
-        copy_app_files
+        # the bundles first, which what reads the data file is copied into
         copy_bundles
+        copy_app_files
         generate_icon if config.icon
         write 'project.yml', render('project.yml.erb')
         write 'src/main.mm', render('main.mm.erb')
@@ -48,14 +55,8 @@ module Reflex
       def build()
         check_tools TOOLS
         run 'xcodegen', 'generate', *('--quiet' unless verbose?), chdir: build_dir
-        run 'xcodebuild',           *( '-quiet' unless verbose?),
-          '-project',         "#{target}.xcodeproj",
-          '-scheme',          target,
-          '-configuration',   'Release',
-          '-destination',     'generic/platform=macOS',
-          '-derivedDataPath', 'DerivedData',
-          'build',
-          chdir: build_dir
+        compile_scripts if pack?
+        xcodebuild
         copy_app
       end
 
@@ -159,6 +160,44 @@ module Reflex
         'macos'
       end
 
+      # The app compiles its scripts with the CRuby in it, when built.
+      #
+      def compile_on_generate?()
+        false
+      end
+
+      def xcodebuild()
+        run 'xcodebuild', *('-quiet' unless verbose?),
+          '-project',         "#{target}.xcodeproj",
+          '-scheme',          target,
+          '-configuration',   'Release',
+          '-destination',     'generic/platform=macOS',
+          '-derivedDataPath', 'DerivedData',
+          'build',
+          chdir: build_dir
+      end
+
+      # Has the app write its data file with its scripts compiled by the
+      # CRuby in it, which runs them: the app is built and run once with a
+      # boot script that does only that, in place of the one it has.
+      #
+      def compile_scripts()
+        boot = File.join build_dir, 'boot.rb'
+        orig = File.read boot
+        File.write boot, render('compile.rb.erb',
+          compiler: File.expand_path('data_compiler.rb', __dir__),
+          app_dir:  app_dir,
+          path:     File.join(build_dir, 'app', DataLoader::DATA_FILE))
+        xcodebuild
+        run File.join(built_app, 'Contents', 'MacOS', target), chdir: build_dir
+      ensure
+        File.write boot, orig if orig
+      end
+
+      def built_app()
+        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
+      end
+
       # CRuby has the bundled gems in its standard library.
       #
       def standard_gems?()
@@ -253,7 +292,7 @@ module Reflex
       end
 
       def copy_app()
-        app = File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
+        app = built_app
         raise Error, "application not found: '#{app}'" unless File.directory? app
 
         dist = File.join dist_dir, "#{target}.app"

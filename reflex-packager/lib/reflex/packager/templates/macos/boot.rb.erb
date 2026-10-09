@@ -1,20 +1,23 @@
 begin
   Dir.chdir File.join(__dir__, 'app')
   $LOAD_PATH.unshift Dir.pwd
+<%- if pack? -%>
+  require 'reflex/packager/data_loader'
+  Reflex::Packager::DataLoader.setup Dir.pwd
+
+<%- end -%>
   load File.join(Dir.pwd, <%= start_script.dump %>)
 rescue SystemExit, SignalException
   raise
 rescue Exception => e
   if $stderr.tty?
-    # started from a terminal, which shows it
     $stderr.puts e.full_message
   else
     begin
       require 'reflex'
-      # the paths from here, without the lines of this script and of what loads it
       dirs    = Regexp.union [File.dirname(__FILE__), __dir__].map {"#{_1}/"}
       message = e.full_message(highlight: false).lines
-        .reject {_1.match? %r{^\s+from (eval|#{Regexp.escape __FILE__}):}}
+        .reject {_1.match? %r{^\s+from (eval|#{Regexp.escape __FILE__}|(#{dirs})reflex\.bundle/Contents/Resources/lib/reflex/packager/data_loader\.rb):}}
         .join
         .gsub(dirs, '')
       Reflex.alert message, title: <%= config.name.dump %>

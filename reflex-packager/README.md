@@ -181,7 +181,7 @@ With `--pack`, the Ruby scripts of the app are compiled into instruction sequenc
 
 The bytes of the data file are substituted with others, which keeps the scripts from being read as they are, though it is no encryption.
 
-It is supported on Windows only for now.
+The scripts are compiled by the Ruby the package runs them on: on Windows, the one running the packager, and on macOS, the CRuby in the app. On macOS, the app is built and run once to compile them, then built again, so a packed app has to be built, not only generated.
 
 ### CRuby
 
