@@ -55,6 +55,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_pack_is_not_supported_yet()
+    packager do |pkg, _|
+      assert_raise(RP::Error) {MacOS.new(pkg.config, pack: true).generate}
+    end
+  end
+
   def test_app_dir_includes_files_and_excludes_build()
     packager "files: [data]", files: %w[main.rb data/x.png] do |pkg, dir|
       pkg.generate

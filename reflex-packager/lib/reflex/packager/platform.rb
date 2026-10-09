@@ -14,8 +14,40 @@ module Reflex
     #
     class Platform
 
-      def initialize(config, verbose: false)
-        @config, @verbose = config, verbose
+      class << self
+
+        # Copies the app in +dir+ to +dest+, with the Ruby scripts in its data
+        # file in place of them, compiled into instruction sequences by the
+        # Ruby running this, the one a package runs them on, and the other
+        # files as they are.
+        #
+        # They are compiled with their paths relative to +dir+, as the app
+        # directory the package runs in has them, and DataLoader reads them.
+        #
+        def pack_app(dir, dest)
+          files   = Dir.glob('**/*', base: dir).select {File.file? File.join(dir, _1)}.sort
+          scripts = files.select {_1.end_with? '.rb'}
+
+          data = scripts.to_h do |name|
+            source = File.read File.join(dir, name), encoding: Encoding::UTF_8
+            iseq   = RubyVM::InstructionSequence.compile source, name, name
+            [name.sub(/\.rb\z/, '.rbc'), iseq.to_binary]
+          end
+          data['.ruby-version'] = RUBY_VERSION
+          FileUtils.mkdir_p dest
+          DataFile.write File.join(dest, DataLoader::DATA_FILE), data
+
+          (files - scripts).each do |name|
+            path = File.join dest, name
+            FileUtils.mkdir_p File.dirname(path)
+            FileUtils.cp File.join(dir, name), path
+          end
+        end
+
+      end# self
+
+      def initialize(config, verbose: false, pack: false)
+        @config, @verbose, @pack = config, verbose, pack
       end
 
       attr_reader :config
@@ -26,6 +58,13 @@ module Reflex
 
       def verbose?()
         @verbose
+      end
+
+      # Whether to put the files of the app together in a data file, which
+      # the package reads them from, as for a release.
+      #
+      def pack?()
+        @pack
       end
 
       # Package the application as a distributable bundle.
@@ -90,17 +129,40 @@ module Reflex
         end
       end
 
+      # The files of the app, as they are, for any platform.
+      #
+      def app_dir()
+        File.join config.dir, '.build', 'app'
+      end
+
+      # Copies the files of the app to app_dir, and to +dir+ in the build
+      # directory, as they are, or packed with what reads its data file in
+      # the reflex library of the package, if the app is to be packed.
+      #
       def copy_app_files(dir = 'app')
-        dir = File.join build_dir, dir
-        FileUtils.rm_rf dir
-        FileUtils.mkdir_p dir
+        FileUtils.rm_rf app_dir
+        FileUtils.mkdir_p app_dir
         config.app_files.each do |file|
-          dest = File.join dir, file
+          dest = File.join app_dir, file
           FileUtils.mkdir_p File.dirname(dest)
           FileUtils.cp_r File.join(config.dir, file), dest
         end
-        File.write File.join(dir, profile.boot_main), profile.boot if
+        File.write File.join(app_dir, profile.boot_main), profile.boot if
           profile.boot_main && profile.boot
+
+        dir = File.join build_dir, dir
+        FileUtils.rm_rf dir
+        FileUtils.mkdir_p dir
+        if pack?
+          raise Error, 'a packed app needs reflex in its libraries' unless
+            libraries.any? {_1.name == 'reflex'}
+          Platform.pack_app app_dir, dir
+          loader = File.join library_lib_dir('reflex'), 'reflex', 'packager'
+          FileUtils.mkdir_p loader
+          %w[data_file.rb data_loader.rb].each {FileUtils.cp File.join(__dir__, _1), loader}
+        else
+          FileUtils.cp_r File.join(app_dir, '.'), dir
+        end
       end
 
       def write(path, content)

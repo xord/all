@@ -35,6 +35,7 @@ module Reflex
       }
 
       def generate()
+        raise Error, '--pack is not supported on macos yet' if pack?
         copy_app_files
         copy_bundles
         generate_icon if config.icon
@@ -229,6 +230,12 @@ module Reflex
         config.localizations.each do |lang, values|
           write "src/#{lang}.lproj/InfoPlist.strings", render('InfoPlist.strings.erb', **values)
         end
+      end
+
+      # The lib directory of the library +name+ in the package.
+      #
+      def library_lib_dir(name)
+        File.join bundle_resources(File.join(build_dir, 'Bundles'), name), 'lib'
       end
 
       def bundle_resources(dir, name)

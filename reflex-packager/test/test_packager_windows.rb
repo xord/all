@@ -19,6 +19,9 @@ class TestPackagerWindows < Test::Unit::TestCase
     'fakepure'   => %w[lib/fakepure.rb res/icon.png VERSION]
   }
 
+  # With reflex, which a packed app needs to carry what reads its data file.
+  LIBS_WITH_REFLEX = LIBS.merge('reflex' => %w[lib/reflex.rb VERSION])
+
   RBCONFIG = {
     'CXX'               => 'g++ -std=gnu++11',
     'rubyhdrdir'        => '/ruby/include/ruby-4.0.0',
@@ -63,7 +66,7 @@ class TestPackagerWindows < Test::Unit::TestCase
   end
 
   def packager(
-    yaml = nil, profile: self.profile, files: {'main.rb' => ''}, standard_gems: {},
+    yaml = nil, profile: self.profile, files: {'main.rb' => ''}, standard_gems: {}, pack: false,
     &block)
 
     Dir.mktmpdir do |dir|
@@ -73,7 +76,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         File.write path, content
       end
       File.write File.join(dir, 'reflex.yml'), yaml if yaml
-      pkg = Windows.new RP::Config.load(profile, dir)
+      pkg = Windows.new RP::Config.load(profile, dir), pack: pack
       # keep the tests off the gems of the Ruby running them
       pkg.define_singleton_method(:standard_gem_dirs) {standard_gems}
       block.call pkg, dir
@@ -349,6 +352,37 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
+  def test_boot_rb_reads_the_packed_app()
+    main = <<~RUBY
+      require 'fakepure'
+      require_relative 'sub'
+      File.write ENV['RESULT'], [__FILE__, $sub, File.read('data.txt'), *Dir.children('.').sort].join("\\n")
+    RUBY
+    files = {'main.rb' => main, 'sub.rb' => '$sub = :sub', 'data.txt' => 'data'}
+    fake_libs LIBS_WITH_REFLEX do
+      packager "files: [sub.rb, data.txt]", files: files, pack: true,
+        profile: profile(libraries: LIBS_WITH_REFLEX.keys) do |pkg, dir|
+
+        pkg.generate
+        assert_equal %w[data.bin data.txt], Dir.children(build_path dir, 'lib/app').sort # but the scripts as they are
+        assert_equal %w[data.txt main.rb sub.rb], Dir.children(File.join dir, '.build/app').sort # as they are
+        assert File.exist?(build_path dir, 'lib/reflex/lib/reflex/packager/data_file.rb')
+        assert File.exist?(build_path dir, 'lib/reflex/lib/reflex/packager/data_loader.rb')
+
+        assert system({'RESULT' => build_path(dir, 'lib/result')}, RbConfig.ruby, build_path(dir, 'lib/boot.rb'))
+        assert_equal %w[main.rb sub data data.bin data.txt], read(dir, 'lib/result').lines(chomp: true)
+      end
+      packager profile: profile(libraries: LIBS_WITH_REFLEX.keys) do |pkg, dir|
+        pkg.generate
+        assert_not_include read(dir, 'lib/boot.rb'), 'DataLoader'
+        assert !File.exist?(build_path dir, 'lib/reflex/lib/reflex/packager')
+      end
+      packager pack: true do |pkg, _| # with no reflex
+        assert_raise(RP::Error) {pkg.generate}
+      end
+    end
+  end
+
   def test_boot_rb_starts_boot_main()
     fake_libs do
       packager profile: profile(boot: "puts 1\n") do |pkg, dir|
@@ -363,15 +397,18 @@ class TestPackagerWindows < Test::Unit::TestCase
     # app/reflex.rb stands in for reflex, found first on the load path
     reflex = <<~RUBY
       module Reflex
-        def self.alert(message, title:) = File.write('../alert', "\#{title}\\n\#{message}")
+        def self.alert(message, title:) = File.write(ENV['ALERT'], "\#{title}\\n\#{message}")
       end
     RUBY
-    boot = -> (main, yaml = '') {
+    boot = -> (main, yaml = '', pack: false) {
       files = {'main.rb' => main, 'reflex.rb' => reflex}
-      fake_libs do
-        packager "name: My App\nfiles: [reflex.rb]\n#{yaml}", files: files do |pkg, dir|
+      fake_libs LIBS_WITH_REFLEX do
+        packager "name: My App\nfiles: [reflex.rb]\n#{yaml}", files: files, pack: pack,
+          profile: profile(libraries: LIBS_WITH_REFLEX.keys) do |pkg, dir|
+
           pkg.generate
-          ok    = system RbConfig.ruby, build_path(dir, 'lib/boot.rb'), err: File::NULL
+          env   = {'ALERT' => build_path(dir, 'lib/alert')}
+          ok    = system env, RbConfig.ruby, build_path(dir, 'lib/boot.rb'), err: File::NULL
           alert = File.exist?(build_path dir, 'lib/alert') ? read(dir, 'lib/alert') : nil
           return [ok, $?.exitstatus, alert]
         end
@@ -384,6 +421,12 @@ class TestPackagerWindows < Test::Unit::TestCase
     assert_include     alert, 'boom (RuntimeError)'
     assert_not_include alert, 'boot.rb'
     assert_match(/^app\/main\.rb:1:/, alert) # from the directory of boot.rb
+
+    ok, status, alert = boot.call "raise 'boom'", pack: true
+    assert_equal [false, 1], [ok, status]
+    assert_include     alert, 'boom (RuntimeError)'
+    assert_not_include alert, 'data_loader.rb'
+    assert_match(/^main\.rb:1:/, alert) # compiled with the paths in the app directory
 
     assert_equal [false, 3, nil], boot['exit 3']
     assert_equal [true,  0, nil], boot['']

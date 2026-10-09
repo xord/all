@@ -97,6 +97,7 @@ reflex package [options] [DIR]
   --platform PLATFORM   target platform (default: the one it runs on)
   --config PATH         config file path (default: DIR/reflex.yml)
   --generate-only       generate project files but do not build
+  --pack                put the files of the app together in a data file, for a release
   --verbose             verbose output
 ```
 
@@ -174,6 +175,14 @@ localizations:
 
 On macOS, the name in the language of the system is shown in the Finder, the Dock, the menu bar and the application menu, and the copyright in the About panel. On Windows, they are in the version resource of the executable, in the languages Windows knows, and the name in the language of the user is the one the app has by default (`Reflex::Application#name`), which a tray shows. The properties of the executable show the English ones, though, and its file name stays as it is.
 
+### Packing for a release
+
+With `--pack`, the Ruby scripts of the app are compiled into instruction sequences and put together in `app/data.bin`, so the package carries none of the scripts. `require`, `require_relative` and `load` read them from the data file. The other files of the app are in `app/` as they are.
+
+The bytes of the data file are substituted with others, which keeps the scripts from being read as they are, though it is no encryption.
+
+It is supported on Windows only for now.
+
 ### CRuby
 
 By default the packager clones the [cruby](https://github.com/xord/cruby) repository at the tag of its CRuby version into `.build/macos/cruby/<version>`, and downloads the prebuilt CRuby there. To use a local checkout instead, set its path as `macos.cruby` in the config, or via the `CRUBY_PATH` environment variable, which overrides the config:
@@ -221,7 +230,7 @@ $ rake              # default task
 $ rake example      # package examples/hello with the libraries in this repository
 ```
 
-`rake example` takes `name=` to package another app under `examples/`, and `platform=` to package for another platform.
+`rake example` takes `name=` to package another app under `examples/`, `platform=` to package for another platform, and `pack=1` to package with `--pack`.
 
 In the [`xord/all`](https://github.com/xord/all) monorepo you can scope by module.
 
