@@ -30,11 +30,12 @@ task :example => 'example:build'
 namespace :example do
   dir = File.expand_path "examples/#{ENV['name'] || 'hello'}", __dir__
 
-  desc 'package an example app with the libraries in this repository (name=hello platform=macos|windows)'
+  desc 'package an example app with the libraries in this repository (name=hello platform=macos|windows pack=1)'
   task :build do
-    libs = %w[xot rucy rays reflex reflex-packager].map {File.expand_path "../#{_1}/lib", __dir__}
-    envs = {'RUBYLIB' => libs.join(File::PATH_SEPARATOR)}
-    opts = ENV['platform']&.then {['--platform', _1]} || []
+    libs  = %w[xot rucy beeps rays reflex reflex-packager].map {File.expand_path "../#{_1}/lib", __dir__}
+    envs  = {'RUBYLIB' => libs.join(File::PATH_SEPARATOR)}
+    opts  = ENV['platform']&.then {['--platform', _1]} || []
+    opts << '--pack' if %w[1 true yes].include? ENV['pack']
     sh(envs, RbConfig.ruby, File.expand_path('bin/reflex', __dir__), 'package', *opts, dir)
   end
 

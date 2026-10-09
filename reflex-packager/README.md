@@ -232,7 +232,7 @@ $ rake              # default task
 $ rake example      # package examples/hello with the libraries in this repository
 ```
 
-`rake example` takes `name=` to package another app under `examples/`, and `platform=` to package for another platform.
+`rake example` takes `name=` to package another app under `examples/`, `platform=` to package for another platform, and `pack=1` to package with `--pack`.
 
 In the [`xord/all`](https://github.com/xord/all) monorepo you can scope by module.
 
