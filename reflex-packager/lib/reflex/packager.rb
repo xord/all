@@ -1,6 +1,7 @@
 require 'reflex/packager/extension'
 
 require 'reflex/packager/data_file'
+require 'reflex/packager/data_loader'
 
 require 'reflex/packager/profile'
 require 'reflex/packager/config'
