@@ -86,6 +86,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal boot, read(dir, 'boot.rb') # as it was
 
       File.write File.join(dir, 'main.rb'), 'def'
+      pkg = MacOS.new pkg.config, pack: true
       pkg.generate
       assert_raise(RP::Error) {compile_scripts pkg}
       assert !File.exist?(File.join app, 'data.bin')
@@ -201,17 +202,43 @@ class TestPackagerMacOS < Test::Unit::TestCase
     # where a native extension is not supported
     packager do |pkg, _|
       Dir.mktmpdir do |gems|
-        FileUtils.mkdir_p File.join(gems, 'native/lib')
-        FileUtils.touch   File.join(gems, 'native/lib/native.bundle')
-        specs = [{
-          'name'          => 'native',
-          'root'          => File.join(gems, 'native'),
-          'default_gem'   => false,
-          'require_paths' => [File.join(gems, 'native/lib')]
-        }]
+        gem_spec = -> name, ext = '.bundle' {
+          FileUtils.mkdir_p File.join(gems, name, 'lib')
+          FileUtils.touch   File.join(gems, name, 'lib', "#{name}#{ext}")
+          {
+            'name'          => name,
+            'root'          => File.join(gems, name),
+            'default_gem'   => false,
+            'require_paths' => [File.join(gems, name, 'lib')]
+          }
+        }
+        # CRuby has them in its standard library, as fiddle, which became a
+        # bundled gem
+        %w[fiddle.rb net/native.rb pure.rb].each do |path|
+          path = File.join ENV['CRUBY_PATH'], 'CRuby/lib/ruby/4.0.0', path
+          FileUtils.mkdir_p File.dirname(path)
+          FileUtils.touch path
+        end
+
+        specs = [gem_spec['fiddle'], gem_spec['net-native'], gem_spec['pure', '.rb']]
         stub pkg, :gemfile_specs, specs do
+          # CRuby has them, so the ones with a native extension are left out,
+          # but the others are shipped as the Gemfile has them
+          assert_equal %w[pure], pkg.app_gem_dirs.keys
+        end
+
+        pkg = MacOS.new pkg.config
+        stub pkg, :gemfile_specs, specs + [gem_spec['native']] do
           error = assert_raise(RP::Error) {pkg.gem_dirs}
           assert_include error.message, "'native'"
+        end
+
+        # a CRuby broken, with no standard library
+        FileUtils.rm_rf File.join(ENV['CRUBY_PATH'], 'CRuby/lib/ruby/4.0.0')
+        pkg = MacOS.new pkg.config
+        stub pkg, :gemfile_specs, specs do
+          error = assert_raise(RP::Error) {pkg.gem_dirs}
+          assert_include error.message, 'no standard library'
         end
       end
     end

@@ -68,14 +68,17 @@ module Reflex
       end
 
       # Require paths of the gems in the default group of the Gemfile of the
-      # app, by name.
+      # app, by name. A gem with a native extension, where it is not
+      # supported, is left out if the Ruby a platform embeds has it.
       #
       def app_gem_dirs()
         @app_gem_dirs ||= gemfile_specs.each.with_object({}) do |spec, dirs|
           name, paths = spec.values_at 'name', 'require_paths'
           next unless shipped? spec
-          raise Error, "gem '#{name}' has a native extension, which is not supported" if
-            !native_gems? && native_gem?(paths)
+          if !native_gems? && native_gem?(paths)
+            next if embedded_gem? name
+            raise Error, "gem '#{name}' has a native extension, which is not supported"
+          end
           dirs[name] = paths
         end
       end
@@ -118,6 +121,14 @@ module Reflex
       #
       def standard_gems?()
         true
+      end
+
+      # Whether the Ruby a platform embeds has the gem +name+ in its standard
+      # library, which the app runs with in place of the one of its Gemfile
+      # that cannot be shipped.
+      #
+      def embedded_gem?(name)
+        false
       end
 
       # Whether a gem with a native extension can be shipped.

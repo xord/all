@@ -204,6 +204,22 @@ module Reflex
         false
       end
 
+      # Whether CRuby has the gem in its standard library, where it has the
+      # bundled gems laid out flat, as fiddle, which was a default gem: the
+      # file the gem is required by, its name with '-' as '/', is there.
+      #
+      def embedded_gem?(name)
+        File.file? File.join(cruby_stdlib_dir, "#{name.tr '-', '/'}.rb")
+      end
+
+      # The directory of the standard library of CRuby, lib/ruby/<version>.
+      #
+      def cruby_stdlib_dir()
+        @cruby_stdlib_dir ||= Dir.glob(File.join cruby_dir, 'CRuby', 'lib', 'ruby', '*')
+          .find {File.basename(_1).match?(/\A\d+\.\d+\.\d+\z/)} ||
+          raise(Error, "no standard library in the CRuby of '#{cruby_dir}'")
+      end
+
       def rake_build_info(root)
         out, err, status = Open3.capture3 RbConfig.ruby, '-e', RAKE_BUILD_INFO, chdir: root
         raise Error, "failed to read the Rakefile in '#{root}': #{err.strip}" unless
