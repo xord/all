@@ -59,8 +59,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
   # running the boot script in place of the app built with CRuby.
   def compile_scripts(pkg)
     pkg.define_singleton_method(:xcodebuild) {}
-    pkg.define_singleton_method :run do |*, chdir:|
-      system RbConfig.ruby, File.join(chdir, 'boot.rb'), err: File::NULL or
+    pkg.define_singleton_method :run do |*, chdir:, env: {}|
+      system env, RbConfig.ruby, File.join(chdir, 'boot.rb'), err: File::NULL or
         raise RP::Error, 'failed to compile'
     end
     pkg.__send__ :compile_scripts
@@ -79,7 +79,10 @@ class TestPackagerMacOS < Test::Unit::TestCase
       boot = read dir, 'boot.rb'
       assert_include boot, 'DataLoader.setup'
 
-      compile_scripts pkg
+      # under bundle exec, whose RUBYOPT the app would fail with
+      with_env 'RUBYOPT' => '-rno_such_lib' do
+        compile_scripts pkg
+      end
       RP::DataFile.open File.join(app, 'data.bin') do |data|
         assert_equal %w[.ruby-version main.rbc sub.rbc], data.names.sort
       end
@@ -101,6 +104,14 @@ class TestPackagerMacOS < Test::Unit::TestCase
       app = File.join dir, '.build/macos/app'
       assert  File.exist?(File.join app, 'data/x.png')
       assert !File.exist?(File.join app, '.build')
+    end
+
+    # a glob has a directory and what is in it, which is not copied twice
+    files = %w[main.rb lib/a/x.rb lib/a/b/y.yml]
+    packager "files: ['lib/**/*']", files: files do |pkg, dir|
+      pkg.generate
+      assert_equal %w[lib/a lib/a/b lib/a/b/y.yml lib/a/x.rb],
+        Dir.glob('lib/**/*', base: File.join(dir, '.build/macos/app')).sort
     end
   end
 

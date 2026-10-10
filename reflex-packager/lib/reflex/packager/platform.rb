@@ -135,10 +135,16 @@ module Reflex
       def copy_app_files(dir = 'app')
         FileUtils.rm_rf app_dir
         FileUtils.mkdir_p app_dir
+        dirs = []
         config.app_files.each do |file|
+          # in a directory copied already, as a glob as 'lib/**/*' has both,
+          # which would go into the copy of itself if copied again
+          next if dirs.any? {file.start_with? "#{_1}/"}
+          src  = File.join config.dir, file
           dest = File.join app_dir, file
           FileUtils.mkdir_p File.dirname(dest)
-          FileUtils.cp_r File.join(config.dir, file), dest
+          FileUtils.cp_r src, dest
+          dirs << file if File.directory? src
         end
         File.write File.join(app_dir, profile.boot_main), profile.boot if
           profile.boot_main && profile.boot
