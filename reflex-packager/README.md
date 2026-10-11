@@ -135,7 +135,7 @@ icon: icon.png
 |-----|---------|-------------|
 | `name` | directory name | Application name |
 | `bundle_id` | `org.xord.reflex.<name>` | macOS bundle identifier |
-| `version` | `0.1.0` | Application version |
+| `version` | the `VERSION` file, or `0.1.0` | Application version |
 | `build` | `version` | Build version |
 | `copyright` | none | Copyright notice, shown in the About panel on macOS and in the properties of the executable on Windows |
 | `main` | `main.rb` | Entry point script |
@@ -158,6 +158,8 @@ icon: icon.png
 | `version: 1.2.3` | `1.2.3` | `1.2.3` |
 | `version: 1.2.3.4` | `1.2.3` | `1.2.3.4` |
 | `version: 1.2.3` and `build: 456` | `1.2.3` | `456` |
+
+Without `version`, the version is read from the `VERSION` file in the directory of the app, if there is one, so that the file can be the only place to keep it in, as the gems do.
 
 A fourth number of `version` tells a build apart from another of the same version, as one uploaded again for a review. On Windows, each number has to be 65535 or less. Quote a version or a build of two numbers, as `'1.10'`, which YAML reads as the number 1.1 otherwise.
 

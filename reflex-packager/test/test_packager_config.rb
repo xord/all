@@ -124,6 +124,25 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config version: '4.'}
     assert_raise(RP::Error) {config version: '2.3beta'}
     assert_raise(RP::Error) {config version: 1.10} # read as 1.1
+
+    # the VERSION file of the app, which the config comes before
+    tmpdir do |dir|
+      assert_equal '0.1.0', load_config(dir).version
+      File.write 'VERSION', "1.2.3\n"
+      assert_equal '1.2.3', load_config(dir).version
+      File.binwrite 'VERSION', "\xEF\xBB\xBF1.2.4\r\n" # with a BOM
+      assert_equal '1.2.4', load_config(dir).version
+      File.write 'reflex.yaml', "version: '4.5'"
+      assert_equal '4.5',   load_config(dir).version
+    end
+    tmpdir do |dir|
+      File.write 'VERSION', '1.2.3beta'
+      error = assert_raise(RP::Error) {load_config dir}
+      assert_include error.message, 'VERSION file'
+      File.write 'reflex.yaml', "version: '4.5'"
+      assert_equal '4.5', load_config(dir).version # the file not read
+    end
+    assert_not_include assert_raise(RP::Error) {config version: '2.3beta'}.message, 'VERSION file'
   end
 
   def test_build()

@@ -20,7 +20,7 @@ module Reflex
         {
           name:      name,
           bundle_id: hash[:bundle_id] || default_bundle_id(profile, name),
-          version:   '0.1.0',
+          version:   (hash[:version].nil? && version_file(dir)) || '0.1.0',
           build:     nil,
           copyright: nil,
           main:      profile.main,
@@ -131,6 +131,19 @@ module Reflex
             "set 'bundle_id' in #{profile.config_files.first}"
         end
         "#{profile.bundle_id_prefix}.#{id}"
+      end
+
+      # The version in the VERSION file of the app, which the config may leave
+      # it to, as the gems have theirs in one.
+      #
+      def self.version_file(dir)
+        path = File.join dir, 'VERSION'
+        return nil unless File.file? path
+        # without the BOM an editor on Windows may write
+        version = File.read(path, encoding: 'bom|utf-8').strip
+        raise Error, "invalid version in the VERSION file: '#{version}'" if
+          version !~ VERSION_FORMAT
+        version
       end
 
       def symbolize_keys(hash)
