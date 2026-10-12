@@ -5,30 +5,45 @@ on:
     branches: [master]
   pull_request:
 
+  workflow_call:
+    inputs:
+      ruby-version:
+        type: string
+      zig:
+        type: boolean
+
 jobs:
   test:
     runs-on: macos-latest
 
     steps:
-      - name: ruby 3.2
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.2
-
       - name: checkout
         uses: actions/checkout@v4
+
+      - name: setup ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version || '3.2' }}
+
+      # to see if job_workflow_sha tells the commit of this workflow in xot
+      - name: workflow sha
+        run: echo "${{ github.job_workflow_sha }} / ${{ github.workflow_sha }} / ${{ github.sha }}"
 
       - name: setup gems
         run: bundle install
 
       - name: setup dependencies
-        run: "ruby -I.github/workflows -rutils -e 'setup_dependencies'"
+        env:
+          RUBYLIB: ${{ runner.temp }}/xot/lib
+        run: |
+          git clone -q --depth 1 https://github.com/xord/xot.git "${{ runner.temp }}/xot"
+          ruby -rxot/rake -e 'setup_dependencies'
 
       - name: packages
         run: bundle exec rake verbose packages
 
       - name: setup zig
-        if: github.event.repository.name == 'reflex-terminal'
+        if: inputs.zig
         uses: mlugg/setup-zig@v2
         with:
           version: 0.16.0

@@ -1,6 +1,8 @@
 require 'erb'
+require 'fileutils'
 require 'rbconfig'
 require 'xot/util'
+require 'xot/rake/changelog'
 
 
 module Xot
@@ -125,37 +127,6 @@ module Xot
       excludes.any? {|s| path =~ %r{#{s}}}
     end
 
-    def glob(*patterns)
-      paths = []
-      patterns.each do |pattern|
-        paths.concat Dir.glob(pattern)
-      end
-      paths
-    end
-
-    def rake_puts(*args)
-      $stderr.puts(*args)
-    end
-
-    def verbose_puts(*args)
-      rake_puts(*args) if ::Rake.verbose
-    end
-
-    def noverbose_puts(*args)
-      rake_puts(*args) unless ::Rake.verbose
-    end
-
-    def filter_file(path, &block)
-      File.write path, block.call(File.read path)
-    end
-
-    def cd_sh(dir, cmd)
-      Dir.chdir dir do
-        rake_puts "(in #{Dir.pwd})"
-        sh cmd
-      end
-    end
-
     def compile_erb(path, out)
       open(path) do |input|
         open(out, 'w') do |output|
@@ -278,6 +249,51 @@ module Xot
       flags
     end
 
+    def install_hooks()
+      dir = git('rev-parse', '--git-path', 'hooks').strip
+      FileUtils.mkdir_p dir
+      Dir.glob(File.join __dir__, 'hooks', '*').each do |hook|
+        FileUtils.cp hook, dir
+        FileUtils.chmod 0755, File.join(dir, File.basename(hook))
+      end
+    end
+
+    def version_changes(dir = '.')
+      commit = git('log', '-1', '--format=%H', '--', File.join(dir, 'VERSION')).strip
+      range  = commit.empty? ? 'HEAD' : "#{commit}..HEAD"
+      git('log', '--first-parent', '--reverse', '--format=%x00%P%n%B', range, '--', dir)
+        .split("\0")
+        .drop(1)
+        .map do |log|
+          parents, *lines = log.lines(chomp: true)
+          lines = lines.reject {_1.strip.empty?}
+          merge = parents.split.size > 1 && lines.first&.start_with?('Merge branch ')
+          (merge && lines[1]) || lines.first
+        end
+    end
+
+    def next_version(dir = '.')
+      nums = File.read(File.join dir, 'VERSION')[/[\d\.]+/].split('.').map(&:to_i)
+      nums = (nums + [0, 0, 0]).first(3)
+      nums[2] += 1
+      nums.join '.'
+    end
+
+    def tag_versions()
+      changelog = ChangeLog.new
+      tags      = git('tag').lines chomp: true
+      versions  = git('log', '--format=%H', '--', 'VERSION').lines(chomp: true)
+        .map {[git('show', "#{_1}:VERSION")[/[\d\.]+/], _1]}
+        .select {|version, _| version}
+        .uniq   {|version, _| version} # the newest commit of a version
+
+      versions.each do |version, commit|
+        tag = "v#{version}"
+        break if tags.include? tag
+        sh 'git', 'tag', '-a', '-m', changelog.changes(version).to_s, tag, commit
+      end
+    end
+
     def default_tasks(default = nil)
       verbose? get_env(:VERBOSE, false)
 
@@ -294,6 +310,43 @@ module Xot
       task :debug do
         debug? true
       end
+    end
+
+    private
+
+    def glob(*patterns)
+      paths = []
+      patterns.each do |pattern|
+        paths.concat Dir.glob(pattern)
+      end
+      paths
+    end
+
+    def rake_puts(*args)
+      $stderr.puts(*args)
+    end
+
+    def verbose_puts(*args)
+      rake_puts(*args) if ::Rake.verbose
+    end
+
+    def noverbose_puts(*args)
+      rake_puts(*args) unless ::Rake.verbose
+    end
+
+    def filter_file(path, &block)
+      File.write path, block.call(File.read path)
+    end
+
+    def cd_sh(dir, cmd)
+      Dir.chdir dir do
+        rake_puts "(in #{Dir.pwd})"
+        sh cmd
+      end
+    end
+
+    def git(*args)
+      IO.popen ['git', *args], &:read
     end
 
 

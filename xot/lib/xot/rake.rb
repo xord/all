@@ -3,6 +3,7 @@ require 'rake'
 require 'rake/loaders/makefile'
 require 'rake/testtask'
 require 'xot/rake/alias_task'
+require 'xot/rake/github'
 require 'xot/rake/util'
 #require 'xot/rake/escalation'
 
@@ -254,6 +255,34 @@ module Xot
 
         task :clean do
           sh %( rm -rf #{tmps.join ' '} )
+        end
+      end
+    end
+
+    def automate_release()
+      desc 'install the git hooks'
+      task :hooks do
+        install_hooks
+      end
+
+      namespace :changelog do
+        desc 'show the commits for the next version'
+        task :check do
+          puts version_changes
+        end
+
+        desc 'add the section of the next version'
+        task :update do
+          changes = version_changes
+          next puts 'no changes since VERSION was changed, skipped' if changes.empty?
+          ChangeLog.new.add ENV['version'] || next_version, changes
+        end
+      end
+
+      namespace :version do
+        desc 'tag the new version'
+        task :tag do
+          tag_versions
         end
       end
     end
