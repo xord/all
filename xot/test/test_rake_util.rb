@@ -13,7 +13,8 @@ class TestRakeUtil < Test::Unit::TestCase
   def test_install_hooks()
     repo do
       install_hooks
-      assert File.executable?('.git/hooks/pre-commit')
+      assert File.file?(      '.git/hooks/pre-commit')
+      assert File.executable?('.git/hooks/pre-commit') unless win32?
 
       log = ChangeLog.new
       log.add '0.2.0', ['Add a'], date: Time.new(2026, 10, 12)
