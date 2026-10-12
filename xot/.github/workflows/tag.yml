@@ -6,36 +6,58 @@ on:
     types: [completed]
     branches: [master]
 
+  workflow_call:
+    inputs:
+      ruby-version:
+        type: string
+      git-user-name:
+        type: string
+      git-user-email:
+        type: string
+    secrets:
+      PAT:
+        required: true
+
 jobs:
   tag:
     runs-on: ubuntu-latest
 
-    if: github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' # a fork must not run this
+    # after the tests of a push, not of a fork, or as the caller tells
+    if: github.event_name != 'workflow_run' || (
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push')
 
     steps:
-      - name: ruby 3.2
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.2
-
       - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           token: ${{ secrets.PAT }}
 
-      - name: setup dependencies
-        run: "ruby -I.github/workflows -rutils -e 'setup_dependencies only: :xot'"
+      - name: setup ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version || '3.2' }}
 
       - name: setup user name and email
+        env:
+          NAME: ${{ inputs.git-user-name ||
+            (github.repository_owner == 'xord' && 'xord') ||
+            'github-actions[bot]' }}
+          EMAIL: ${{ inputs.git-user-email ||
+            (github.repository_owner == 'xord' && 'xordog@gmail.com') ||
+            '41898282+github-actions[bot]@users.noreply.github.com' }}
         run: |
-          git config --global user.email "xordog@gmail.com"
-          git config --global user.name "xord"
+          git config --global user.name  "$NAME"
+          git config --global user.email "$EMAIL"
 
       - name: tag versions
-        run: "ruby -I.github/workflows -rutils -e 'tag_versions'"
+        env:
+          RUBYLIB: ${{ runner.temp }}/xot/lib
+        run: |
+          git clone -q --depth 1 https://github.com/xord/xot.git "${{ runner.temp }}/xot"
+          ruby -rxot/rake -e 'tag_versions'
 
       - name: push tags
         run: git push origin --tags
