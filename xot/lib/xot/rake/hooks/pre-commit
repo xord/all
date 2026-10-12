@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+# Writes the version of the section added to a ChangeLog.md in the commit
+# into the VERSION beside it, and adds it to the commit.
+#
+# Copied into .git/hooks by 'rake hooks' of xot as it is, so that it runs
+# with any ruby, requiring nothing.
+
+
+def git(*args)
+  IO.popen ['git', *args], &:read
+end
+
+def added_version(changelog)
+  git('diff', '--cached', '--', changelog)
+    .slice(/^\+\s*##\s*\[\s*v(\d[\d\.]*)\s*\]\s*-\s*\d{4}-\d{2}-\d{2}\s*$/, 1)
+end
+
+git('ls-files').lines(chomp: true)
+  .grep(%r{(\A|/)VERSION\z})
+  .map    {[_1.sub(/VERSION\z/, 'ChangeLog.md'), _1]}
+  .select {|paths| paths.all? {File.file? _1}}
+  .each do |changelog, version|
+    ver = added_version changelog
+    next if !ver || ver == File.read(version)[/[\d\.]+/]
+
+    abort "pre-commit: #{version} has changes not to be overwritten" unless
+      git('diff', '--', version).empty?
+
+    File.write version, ver
+    system 'git', 'add', version, exception: true
+  end
