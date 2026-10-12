@@ -3,6 +3,7 @@ require 'rake'
 require 'rake/loaders/makefile'
 require 'rake/testtask'
 require 'xot/rake/alias_task'
+require 'xot/rake/github'
 require 'xot/rake/util'
 #require 'xot/rake/escalation'
 
