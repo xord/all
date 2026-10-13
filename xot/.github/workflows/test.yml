@@ -25,10 +25,6 @@ jobs:
         with:
           ruby-version: ${{ inputs.ruby-version || '3.2' }}
 
-      # to see if job_workflow_sha tells the commit of this workflow in xot
-      - name: workflow sha
-        run: echo "${{ github.job_workflow_sha }} / ${{ github.workflow_sha }} / ${{ github.sha }}"
-
       - name: setup gems
         run: bundle install
 
