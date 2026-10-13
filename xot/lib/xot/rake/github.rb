@@ -16,7 +16,8 @@ module Xot
       deps &= Array(only).map(&:to_s) if only
       return if deps.empty?
 
-      link_dependencies_to_monorepo deps
+      checkout_monorepo
+      deps.each {|dep| sh 'ln', '-snf', "#{File.basename MONOREPO_DIR}/#{dep}", "../#{dep}"}
       deps.each {|dep| sh %( cd ../#{dep} && rake ext )} if ext
     end
 
@@ -24,6 +25,15 @@ module Xot
       File.readlines('Rakefile')
         .filter_map {_1[%r{^\s*require\W+([\w\-]+)/extension\W+$}, 1]}
         .reject {File.file? "lib/#{_1}/extension.rb"} # of this repository
+    end
+
+    def checkout_monorepo()
+      uuid   = git('log', '-1', '--format=%B')[/^\[\[([0-9a-fA-F-]+)\]\]$/, 1] ||
+        raise('no UUID of the monorepo in the last commit')
+      commit = fetch_monorepo(uuid) ||
+        raise("no commit of the monorepo with the UUID #{uuid}")
+
+      Dir.chdir(MONOREPO_DIR) {sh 'git', 'checkout', '-q', commit}
     end
 
     def release_on_github(*paths, tag: ENV['GITHUB_REF_NAME'])
@@ -34,16 +44,6 @@ module Xot
     end
 
     private
-
-    def link_dependencies_to_monorepo(deps)
-      uuid   = git('log', '-1', '--format=%B')[/^\[\[([0-9a-fA-F-]+)\]\]$/, 1] ||
-        raise('no UUID of the monorepo in the last commit')
-      commit = fetch_monorepo(uuid) ||
-        raise("no commit of the monorepo with the UUID #{uuid}")
-
-      Dir.chdir(MONOREPO_DIR) {sh 'git', 'checkout', '-q', commit}
-      deps.each {|dep| sh 'ln', '-snf', "#{File.basename MONOREPO_DIR}/#{dep}", "../#{dep}"}
-    end
 
     def fetch_monorepo(uuid)
       unless File.directory? MONOREPO_DIR

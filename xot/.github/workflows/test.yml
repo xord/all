@@ -28,12 +28,13 @@ jobs:
       - name: setup gems
         run: bundle install
 
+      - name: setup xot
+        run: git clone -q --depth 1 https://github.com/xord/xot.git "${{ runner.temp }}/xot"
+
       - name: setup dependencies
         env:
           RUBYLIB: ${{ runner.temp }}/xot/lib
-        run: |
-          git clone -q --depth 1 https://github.com/xord/xot.git "${{ runner.temp }}/xot"
-          ruby -rxot/rake -e 'setup_dependencies'
+        run: ruby -rxot/rake -e 'setup_dependencies'
 
       - name: packages
         run: bundle exec rake verbose packages
