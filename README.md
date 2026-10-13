@@ -82,7 +82,7 @@ $ ruby rubysketch/examples/sprite.rb
 
 ### Update shared Git hooks and CI
 
-`.hooks/` and `.workflows/` at the repository root generate the Git hook scripts and CI workflow files that get distributed into each module. Edit the source under `.hooks/` / `.workflows/`, then re-run the generator (see the local scripts) to fan changes out.
+`.hooks/` at the repository root holds the Git hook scripts, which `rake scripts` copies into `.git/hooks/`. The CI workflows of the modules call the ones of xot in `xot/.github/workflows/`, so a change to them goes there.
 
 ## 🤝 Contributions
 

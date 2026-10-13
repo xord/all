@@ -157,7 +157,7 @@ end
 
 
 namespace :scripts do
-  task :build => ['hooks:build', 'workflows:build']
+  task :build => 'hooks:build'
 
   namespace :hooks do
     hooks = Dir.glob('.hooks/*')
@@ -169,25 +169,6 @@ namespace :scripts do
     hooks.each do |from, to|
       file to => from do
         sh %( cp #{from} #{to} )
-      end
-    end
-  end
-
-  namespace :workflows do
-    yamls = Dir.glob('.workflows/*.{yaml,yml,rb}')
-      .map {|path| [path, ".github/workflows/#{File.basename path}"]}
-      .to_h
-
-    REPOS.each do |repo|
-      yamls.each do |from, to|
-        path = "#{repo}/#{to}"
-        next unless File.exist?(path)
-
-        task :build => path
-
-        file path => from do
-          sh %( cp #{from} #{path} )
-        end
       end
     end
   end

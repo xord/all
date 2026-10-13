@@ -25,8 +25,8 @@ Each Ruby gem module follows this layout:
 the framework is built via `rake build` and consumed via `CRuby.podspec`.
 
 A shared Rakefile delegates build and test tasks per module.
-- `.hooks/` — Source Git hook scripts, distributed into each module's `.git/hooks/`
-- `.workflows/` — Source GitHub Actions workflow templates, distributed into each module's `.github/workflows/`
+- `.hooks/` — Source Git hook scripts, which `rake scripts` copies into `.git/hooks/`
+- `xot/.github/workflows/` — The GitHub Actions workflows of xot, which the workflows of the other modules call
 
 ## Build & Test
 
