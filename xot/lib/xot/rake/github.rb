@@ -36,9 +36,9 @@ module Xot
       Dir.chdir(MONOREPO_DIR) {sh 'git', 'checkout', '-q', commit}
     end
 
-    def release_on_github(*paths, tag: ENV['GITHUB_REF_NAME'])
+    def release_on_github(*paths, tag: ENV['GITHUB_REF_NAME'], notes: nil)
       raise 'no tag to release' unless tag
-      notes = ChangeLog.new.changes(tag).to_s
+      notes ||= ChangeLog.new.changes(tag).to_s
       sh('gh', 'release', 'create', tag, *paths, '--notes', notes) {|ok, _| ok} ||
         sh('gh', 'release', 'upload', tag, *paths, '--clobber')
     end
