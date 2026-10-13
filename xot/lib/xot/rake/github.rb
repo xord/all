@@ -11,13 +11,13 @@ module Xot
     MONOREPO_DIR         = '../all'
     MONOREPO_FETCH_DEPTH = 100
 
-    def setup_dependencies(only: nil)
+    def setup_dependencies(only: nil, ext: true)
       deps  = dependency_names
       deps &= Array(only).map(&:to_s) if only
       return if deps.empty?
 
       link_dependencies_to_monorepo deps
-      deps.each {|dep| sh %( cd ../#{dep} && rake ext )}
+      deps.each {|dep| sh %( cd ../#{dep} && rake ext )} if ext
     end
 
     def dependency_names()
