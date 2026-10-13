@@ -49,6 +49,7 @@ class TestRake < Test::Unit::TestCase
     update = -> {stdout {Rake::Task['changelog:update'].tap(&:reenable).invoke}}
     repo do
       assert_match(/no changes/, update.call)
+      assert File.file?('.git/hooks/pre-commit')
       assert_equal CHANGELOG, File.read('ChangeLog.md')
 
       commit 'Add a', 'a.rb' => ''

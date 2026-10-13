@@ -106,14 +106,14 @@ namespace :changelog do
     all_changes.reject {|_, changes| changes.empty?}
   end
 
-  task :check do
+  task :check => :scripts do
     get_all_changes.call.each do |target, changes|
       puts "# #{target}"
       puts changes.map {"- #{_1}"}
     end
   end
 
-  task :update do
+  task :update => :scripts do
     get_all_changes.call.each do |target, changes|
       Xot::ChangeLog.new("#{target}/ChangeLog.md").add next_version(target.to_s), changes
     end
