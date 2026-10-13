@@ -14,5 +14,13 @@ require 'reflex/packager/cli'
 
 
 module Reflex::Packager
+
   PLATFORMS = {macos: MacOS, windows: Windows}
+
+  # The platform the packager runs on, the only one it can build for.
+  #
+  def self.default_platform()
+    Gem.win_platform? ? :windows : :macos
+  end
+
 end

@@ -61,7 +61,7 @@ module Reflex
       end
 
       def package(argv)
-        profile, platform = @profile, default_platform
+        profile, platform = @profile, Packager.default_platform
         argv, params      = parse argv, "Usage: #{profile.command} package [options] [DIR]" do
           on '--platform PLATFORM',
             "target platform: #{PLATFORMS.keys.join ' or '} (default: #{platform})"
@@ -77,12 +77,6 @@ module Reflex
         config   = Config.load profile, dir, params[:config]
         klass.new(config, verbose: params[:verbose], pack: params[:pack])
           .package generate_only: params[:'generate-only']
-      end
-
-      # The platform the packager runs on, the only one it can build for.
-      #
-      def default_platform()
-        Gem.win_platform? ? 'windows' : 'macos'
       end
 
       private

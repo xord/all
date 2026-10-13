@@ -95,8 +95,8 @@ class TestPackagerCLI < Test::Unit::TestCase
   end
 
   def test_default_platform()
-    stub(Gem, :win_platform?, true)  {assert_equal 'windows', cli.default_platform}
-    stub(Gem, :win_platform?, false) {assert_equal 'macos',   cli.default_platform}
+    stub(Gem, :win_platform?, true)  {assert_equal :windows, RP.default_platform}
+    stub(Gem, :win_platform?, false) {assert_equal :macos,   RP.default_platform}
   end
 
 end# TestPackagerCLI

@@ -60,6 +60,15 @@ module Reflex
         copy_app
       end
 
+      def dist_path()
+        "#{super}.app"
+      end
+
+      def archive_platform()
+        archs = config.macos.archs
+        "macos-#{archs.size == 1 ? archs.first : 'universal'}"
+      end
+
       # Libraries built from native code: the ones whose gem has an
       # extension to build, even if only for its tests as xot and rucy.
       #
@@ -316,7 +325,7 @@ module Reflex
         app = built_app
         raise Error, "application not found: '#{app}'" unless File.directory? app
 
-        dist = File.join dist_dir, "#{target}.app"
+        dist = dist_path
         FileUtils.rm_rf dist
         FileUtils.mkdir_p dist_dir
         FileUtils.cp_r app, dist

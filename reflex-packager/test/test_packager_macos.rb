@@ -428,6 +428,15 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager("name: アプリ\nbundle_id: com.example.app") {|pkg, _| assert_equal 'App',   pkg.target}
   end
 
+  def test_dist_paths()
+    packager "name: My App\nversion: 1.2.3" do |pkg, dir|
+      dist = File.join dir, 'dist'
+      assert_equal "#{dist}/MyApp.app",                       pkg.dist_path
+      assert_equal "#{dist}/MyApp-1.2.3-macos-universal.zip", pkg.archive_path
+    end
+    packager("macos: {archs: [arm64]}") {|pkg, _| assert_equal 'macos-arm64', pkg.archive_platform}
+  end
+
   # --- extensions / libraries (registered with CRuby in main.mm) ---------
 
   def test_main_mm_registers_runtime_and_starts()

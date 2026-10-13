@@ -598,6 +598,16 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
+  def test_dist_paths()
+    packager "name: My App\nversion: 1.2.3" do |pkg, dir|
+      dist = File.join dir, 'dist'
+      assert_equal "#{dist}/MyApp", pkg.dist_path
+      assert_match %r{^#{dist}/MyApp-1\.2\.3-windows-(x64|arm64)\.zip$}, pkg.archive_path
+      assert_equal 'windows-x64',   pkg.archive_platform('host_cpu' => 'x86_64')
+      assert_equal 'windows-arm64', pkg.archive_platform('host_cpu' => 'aarch64')
+    end
+  end
+
   def test_copy_runtime()
     with_ruby do |rbconfig, msys_bin|
       packager profile: profile(libraries: []) do |pkg, dir|

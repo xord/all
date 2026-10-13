@@ -78,6 +78,25 @@ module Reflex
         File.join config.dir, 'dist'
       end
 
+      # The packaged app in dist_dir.
+      #
+      def dist_path()
+        File.join dist_dir, target
+      end
+
+      # The zip of the packaged app to hand out, in dist_dir.
+      #
+      def archive_path()
+        File.join dist_dir, "#{target}-#{config.version}-#{archive_platform}.zip"
+      end
+
+      # The platform and the architecture the packaged app runs on, as the
+      # name of its zip tells them.
+      #
+      def archive_platform()
+        platform_name
+      end
+
       # Returns the app name without characters unsafe for target, scheme or
       # file names.
       #

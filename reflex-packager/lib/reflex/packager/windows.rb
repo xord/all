@@ -88,6 +88,12 @@ module Reflex
         copy_dist
       end
 
+      # The architecture is the one of the ruby the executable is made with.
+      #
+      def archive_platform(rbconfig = RbConfig::CONFIG)
+        "windows-#{rbconfig['host_cpu'].match?(/arm|aarch64/) ? 'arm64' : 'x64'}"
+      end
+
       def tools()
         {compiler.first => TOOLCHAIN_HINT, 'windres' => TOOLCHAIN_HINT, 'objdump' => TOOLCHAIN_HINT}
       end
@@ -300,7 +306,7 @@ module Reflex
       end
 
       def copy_dist()
-        dist = File.join dist_dir, target
+        dist = dist_path
         FileUtils.rm_rf dist
         FileUtils.mkdir_p dist
         %W[#{target}.exe lib].each do |path|
