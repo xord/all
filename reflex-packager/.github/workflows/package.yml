@@ -1,0 +1,76 @@
+name: Package
+
+on:
+  workflow_call:
+    inputs:
+      ruby-version:
+        type: string
+        default: '4.0.7'
+      all-ref:
+        description: 'branch, tag or commit of xord/all'
+        type: string
+        default: master
+      libraries:
+        description: 'the libraries of xord/all the app is made of'
+        type: string
+        default: xot rucy beeps rays reflex reflex-packager
+      retention-days:
+        description: 'days to keep the zip of a run not of a tag'
+        type: number
+        default: 1
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: macos-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+
+      - name: setup xcodegen
+        run: brew install xcodegen
+
+      - name: setup monorepo
+        env:
+          REF:  ${{ inputs.all-ref }}
+          LIBS: ${{ inputs.libraries }}
+        run: |
+          git init -q ../all
+          git -C ../all fetch -q --depth 1 https://github.com/xord/all.git "$REF"
+          git -C ../all checkout -q FETCH_HEAD
+          for lib in $LIBS; do ln -snf "all/$lib" "../$lib"; done
+          cd ../all && rake $LIBS ext
+
+      - name: setup gems
+        run: bundle install
+
+      - name: package
+        run: bundle exec rake package
+
+      - name: archive
+        id: archive
+        run: |
+          bundle exec rake archive
+          echo "name=$(basename dist/*.zip .zip)" >> "$GITHUB_OUTPUT"
+
+      - name: upload
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.archive.outputs.name }}
+          path: dist/*.zip
+          retention-days: ${{ inputs.retention-days }}
+
+      - name: release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bundle exec rake release
