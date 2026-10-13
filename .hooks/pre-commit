@@ -1,4 +1,7 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
+
+load './xot/lib/xot/rake/hooks/pre-commit'
+
 
 RENAMES = {reflex: 'reflexion'}
 
@@ -10,29 +13,6 @@ end
 
 def get_version(path)
   File.read(path)[/[\d\.]+/]
-end
-
-def changelog_latest_version(path)
-  diff = `git diff --cached #{path}`
-  diff[/^\+\s*##\s*\[v(\d[\d\.]+\d)\]\s*-\s*\d{4}-\d{2}-\d{2}\s*$/, 1]
-end
-
-begin
-  changelog_and_version_paths = ls_files(%r|/VERSION$|)
-    .map    {|path| [path.sub(%r|/VERSION$|, '/ChangeLog.md'), path]}
-    .select {|paths| paths.all? {|path| File.exist? path}}
-    .to_h
-
-  changelog_and_version_paths.each do |changelog, version|
-    ver = changelog_latest_version changelog
-    if ver && ver != get_version(version)
-      raise "modified VERSION(s) exist" unless
-        changelog_and_version_paths.values.all? {|path| `git diff #{path}`.empty?}
-
-      File.write version, ver
-      `git add #{version}`
-    end
-  end
 end
 
 begin

@@ -81,14 +81,11 @@ task :scripts => 'scripts:build'
 
 namespace :changelog do
   get_changes = -> target do
-    version = "#{target}/VERSION"
-    return [] unless File.exist?(version)
-
-    hash = `git log -1 #{version}`.lines(chomp: true).first.split[1]
-    `git log #{hash}..HEAD #{target}/`
-      .split(/commit.*\nAuthor:.*\nDate:.*\n/)
-      .map    {|commit| commit.lines.find {_1 =~ /\w/}}
-      .compact
+    return [] unless File.exist?("#{target}/VERSION")
+    version_changes(target.to_s).map do |title|
+      names, rest = title.split(/(?<!:):(?!:)/, 2) # but by '::'
+      rest && names.split(',').all? {REPOS.include? _1.strip.to_sym} ? rest.strip : title
+    end
   end
 
   get_depends = -> target do
@@ -104,7 +101,7 @@ namespace :changelog do
     all_changes = targets_.map {[_1, get_changes.call(_1)]}.to_h
     all_changes.each do |target, changes|
       gems = all_deps[target].select {|gem| not all_changes[gem].empty?}
-      changes << "- Update dependencies" unless gems.empty?
+      changes << "Update dependencies" unless gems.empty?
     end
     all_changes.reject {|_, changes| changes.empty?}
   end
@@ -112,21 +109,13 @@ namespace :changelog do
   task :check do
     get_all_changes.call.each do |target, changes|
       puts "# #{target}"
-      puts changes
+      puts changes.map {"- #{_1}"}
     end
   end
 
   task :update do
     get_all_changes.call.each do |target, changes|
-      ver     = File.readlines("#{target}/VERSION", chomp: true)
-        .first
-        .sub(/(\d+)$/) {$1.to_i + 1}
-      date    = Time.now.strftime '%Y-%m-%d'
-      changes = changes.join.gsub(/^ {4}/, '- ').chomp
-
-      filter_file "#{target}/ChangeLog.md" do |body|
-        body.sub "##", "## [v#{ver}] - #{date}\n\n#{changes}\n\n\n##"
-      end
+      Xot::ChangeLog.new("#{target}/ChangeLog.md").add next_version(target.to_s), changes
     end
   end
 end
