@@ -15,9 +15,9 @@ on:
         type: string
         default: xot rucy beeps rays reflex reflex-packager
       retention-days:
-        description: 'days to keep the zip of a run not of a tag'
+        description: 'days to keep the zip of a run not of a tag, 0 to upload none'
         type: number
-        default: 1
+        default: 0
 
 permissions:
   contents: write
@@ -62,7 +62,7 @@ jobs:
           echo "name=$(basename dist/*.zip .zip)" >> "$GITHUB_OUTPUT"
 
       - name: upload
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && inputs.retention-days > 0
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.archive.outputs.name }}
