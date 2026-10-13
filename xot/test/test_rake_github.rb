@@ -25,4 +25,22 @@ class TestRakeGitHub < Test::Unit::TestCase
     end
   end
 
+  def test_setup_monorepo()
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p %W[#{dir}/app #{dir}/all]
+      Dir.chdir "#{dir}/app" do
+        commands = []
+        define_singleton_method(:sh) {|*args| commands << args}
+
+        setup_monorepo 'v1', 'xot', 'rays'
+        assert_include commands, ['git', 'fetch', '-q', '--depth', '1', 'https://github.com/xord/all.git', 'v1']
+        assert_include commands, ['ln', '-snf', 'all/rays', '../rays']
+        assert_equal   ['cd ../xot && rake ext', 'cd ../rays && rake ext'],
+          commands.map {_1.first.strip}.grep(/rake ext$/)
+
+        assert_raise(RuntimeError) {setup_monorepo 'master'}
+      end
+    end
+  end
+
 end# TestRakeGitHub

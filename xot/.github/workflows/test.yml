@@ -11,6 +11,12 @@ on:
         type: string
       zig:
         type: boolean
+      all-ref:
+        description: 'branch, tag or commit of xord/all for an app to take'
+        type: string
+      libraries:
+        description: 'the libraries of xord/all for all-ref, by the order to build'
+        type: string
 
 jobs:
   test:
@@ -23,13 +29,26 @@ jobs:
       - name: setup ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ inputs.ruby-version || '3.3' }}
-
-      - name: setup gems
-        run: bundle install
+          ruby-version: ${{ inputs.ruby-version ||
+            (hashFiles('.ruby-version') != '' && 'default') ||
+            '3.3' }}
 
       - name: setup xot
         run: git clone -q --depth 1 https://github.com/xord/xot.git "${{ runner.temp }}/xot"
+
+      - name: setup monorepo
+        if: inputs.all-ref
+        env:
+          RUBYLIB: ${{ runner.temp }}/xot/lib
+          REF:     ${{ inputs.all-ref }}
+          LIBS:    ${{ inputs.libraries }}
+        run: ruby -rxot/rake -e 'setup_monorepo(*ARGV)' "$REF" $LIBS
+
+      - name: setup gems
+        env:
+          # not for all-ref, as the Gemfile takes the gems of the monorepo then
+          BUNDLE_FROZEN: ${{ hashFiles('Gemfile.lock') != '' && !inputs.all-ref }}
+        run: bundle install
 
       - name: setup dependencies
         env:

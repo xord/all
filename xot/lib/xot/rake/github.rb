@@ -17,8 +17,17 @@ module Xot
       return if deps.empty?
 
       checkout_monorepo
-      deps.each {|dep| sh 'ln', '-snf', "#{File.basename MONOREPO_DIR}/#{dep}", "../#{dep}"}
-      deps.each {|dep| sh %( cd ../#{dep} && rake ext )} if ext
+      link_monorepo deps, ext: ext
+    end
+
+    def setup_monorepo(ref, *libraries)
+      raise 'no libraries of the monorepo to set up' if libraries.empty?
+      sh 'git', 'init', '-q', MONOREPO_DIR
+      Dir.chdir MONOREPO_DIR do
+        sh 'git', 'fetch', '-q', '--depth', '1', "https://github.com/#{MONOREPO}.git", ref
+        sh 'git', 'checkout', '-q', 'FETCH_HEAD'
+      end
+      link_monorepo libraries
     end
 
     def dependency_names()
@@ -44,6 +53,11 @@ module Xot
     end
 
     private
+
+    def link_monorepo(libraries, ext: true)
+      libraries.each {|lib| sh 'ln', '-snf', "#{File.basename MONOREPO_DIR}/#{lib}", "../#{lib}"}
+      libraries.each {|lib| sh %( cd ../#{lib} && rake ext )} if ext
+    end
 
     def fetch_monorepo(uuid)
       unless File.directory? MONOREPO_DIR

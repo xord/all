@@ -345,8 +345,8 @@ module Xot
       end
     end
 
-    def git(*args)
-      IO.popen ['git', *args], &:read
+    def git(*args, **opts)
+      IO.popen ['git', *args], **opts, &:read
     end
 
 

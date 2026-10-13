@@ -5,13 +5,11 @@ on:
     inputs:
       ruby-version:
         type: string
-        default: '4.0.7'
       all-ref:
-        description: 'branch, tag or commit of xord/all'
+        description: 'branch, tag or commit of xord/all for an app to take'
         type: string
-        default: master
       libraries:
-        description: 'the libraries of xord/all the app is made of'
+        description: 'the libraries of xord/all for all-ref, by the order to build'
         type: string
         default: xot rucy beeps rays reflex reflex-packager
       retention-days:
@@ -33,23 +31,28 @@ jobs:
       - name: setup ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ inputs.ruby-version }}
+          ruby-version: ${{ inputs.ruby-version ||
+            (hashFiles('.ruby-version') != '' && 'default') ||
+            '4.0.7' }}
 
       - name: setup xcodegen
         run: brew install xcodegen
 
+      - name: setup xot
+        run: git clone -q --depth 1 https://github.com/xord/xot.git "${{ runner.temp }}/xot"
+
       - name: setup monorepo
+        if: inputs.all-ref
         env:
-          REF:  ${{ inputs.all-ref }}
-          LIBS: ${{ inputs.libraries }}
-        run: |
-          git init -q ../all
-          git -C ../all fetch -q --depth 1 https://github.com/xord/all.git "$REF"
-          git -C ../all checkout -q FETCH_HEAD
-          for lib in $LIBS; do ln -snf "all/$lib" "../$lib"; done
-          cd ../all && rake $LIBS ext
+          RUBYLIB: ${{ runner.temp }}/xot/lib
+          REF:     ${{ inputs.all-ref }}
+          LIBS:    ${{ inputs.libraries }}
+        run: ruby -rxot/rake -e 'setup_monorepo(*ARGV)' "$REF" $LIBS
 
       - name: setup gems
+        env:
+          # not for all-ref, as the Gemfile takes the gems of the monorepo then
+          BUNDLE_FROZEN: ${{ hashFiles('Gemfile.lock') != '' && !inputs.all-ref }}
         run: bundle install
 
       - name: package

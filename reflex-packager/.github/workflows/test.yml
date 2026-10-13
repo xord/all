@@ -5,6 +5,21 @@ on:
     branches: [master]
   pull_request:
 
+  workflow_call:
+    inputs:
+      ruby-version:
+        type: string
+      all-ref:
+        description: 'branch, tag or commit of xord/all for an app to take'
+        type: string
+      libraries:
+        description: 'the libraries of xord/all for all-ref, by the order to build'
+        type: string
+
 jobs:
   test:
     uses: xord/xot/.github/workflows/test.yml@master
+    with:
+      ruby-version: ${{ inputs.ruby-version }}
+      all-ref:      ${{ inputs.all-ref }}
+      libraries:    ${{ inputs.libraries || 'xot rucy beeps rays reflex reflex-packager' }}
