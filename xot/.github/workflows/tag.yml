@@ -38,7 +38,7 @@ jobs:
       - name: setup ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ inputs.ruby-version || '3.2' }}
+          ruby-version: ${{ inputs.ruby-version || '3.3' }}
 
       - name: setup xot
         run: git clone -q --depth 1 https://github.com/xord/xot.git "${{ runner.temp }}/xot"

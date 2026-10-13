@@ -14,17 +14,17 @@ jobs:
       github.event.workflow_run.event == 'push' # a fork must not run this
 
     steps:
-      - name: ruby 3.2
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.2
-
       - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event.workflow_run.head_sha }}
           token: ${{ secrets.PAT }}
+
+      - name: setup ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3
 
       - name: subtree push
         run: rake all subtree:push

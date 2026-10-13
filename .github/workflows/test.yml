@@ -11,19 +11,19 @@ jobs:
     strategy:
       matrix:
         os:   [macos-latest, windows-latest, ubuntu-latest]
-        ruby: ['3.2', '3.3', '3.4', '4.0']
+        ruby: ['3.3', '3.4', '4.0']
       fail-fast: false
 
     runs-on: ${{matrix.os}}
 
     steps:
-      - name: ruby ${{matrix.ruby}}
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{matrix.ruby}}
-
-      - name: checkout
-        uses: actions/checkout@v4
 
       - name: packages
         run: rake verbose packages
