@@ -16,20 +16,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
       end
       File.write File.join(dir, 'reflex.yml'), yaml if yaml
       Dir.mktmpdir do |cruby|
-        with_env({'CRUBY_PATH' => fake_cruby(cruby)}.merge(env)) do
+        with_env({'CRUBY_PATH' => fake_cruby(cruby), **ENV_TO_SIGN}.merge(env)) do
           config = RP::Config.load TEST_PROFILE, dir
           block.call MacOS.new(config), dir
         end
       end
     end
-  end
-
-  def with_env(env, &block)
-    saved = env.map {|key, _| [key, ENV[key]]}
-    env.each {|key, value| value ? ENV[key] = value : ENV.delete(key)}
-    block.call
-  ensure
-    saved.each {|key, value| value ? ENV[key] = value : ENV.delete(key)}
   end
 
   def read(dir, path)

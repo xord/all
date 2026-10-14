@@ -233,8 +233,8 @@ module Reflex
         @deployment_target = hash[:deployment_target]  .to_s
         @archs             = Array(hash[:archs]).map  &:to_s
         @cruby             = hash[:cruby]            &.to_s
-        @codesign_identity = hash[:codesign][:identity].to_s
-        @codesign_team_id  = hash[:codesign][:team_id]&.to_s
+        @codesign_identity = (env('APPLE_CODESIGN_IDENTITY') || hash[:codesign][:identity]).to_s
+        @codesign_team_id  = (env('APPLE_TEAM_ID')           || hash[:codesign][:team_id])&.to_s
         validate
       end
 
@@ -243,10 +243,25 @@ module Reflex
       #
       attr_reader :cruby
 
-      attr_reader :deployment_target, :archs, :codesign_identity, :codesign_team_id
+      attr_reader :deployment_target, :archs
+
+      # The identity and the team to sign the app with, which
+      # APPLE_CODESIGN_IDENTITY and APPLE_TEAM_ID override, for the name of
+      # the developer in the identity not to be in the config.
+      #
+      attr_reader :codesign_identity, :codesign_team_id
 
       def validate()
         raise Error, "invalid archs: '#{@archs}'" if @archs.empty?
+      end
+
+      private
+
+      # The environment variable +name+, or nil if empty, as a secret of
+      # GitHub Actions not set is.
+      #
+      def env(name)
+        ENV[name].then {_1 unless _1.to_s.empty?}
       end
 
     end# MacOSConfig
