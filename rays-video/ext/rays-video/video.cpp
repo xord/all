@@ -233,10 +233,12 @@ RUCY_END
 static
 RUCY_DEF0(exts)
 {
-	std::vector<Value> list;
-	for (const auto& ext : Rays::get_video_exts())
-		list.emplace_back(ext.c_str());
-	return array(list.data(), list.size());
+	const auto& exts = Rays::get_video_exts();
+
+	Value list = array(NULL, exts.size());
+	for (const auto& ext : exts)
+		list.push(ext.c_str());
+	return list;
 }
 RUCY_END
 

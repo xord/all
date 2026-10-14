@@ -146,10 +146,10 @@ RUCY_DEF0(device_names)
 {
 	auto names = Rays::get_camera_device_names();
 
-	std::vector<Value> v;
+	Value v = array(NULL, names.size());
 	for (const auto& name : names)
-		v.emplace_back(name.c_str());
-	return array(v.data(), v.size());
+		v.push(name.c_str());
+	return v;
 }
 RUCY_END
 

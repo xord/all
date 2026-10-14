@@ -96,6 +96,14 @@ class TestFont < Test::Unit::TestCase
 
   def test_families()
     assert_not R::Font.families.empty?
+
+    families = begin
+      GC.stress = true
+      R::Font.families
+    ensure
+      GC.stress = false
+    end
+    assert families.values.flatten.all? {_1.is_a? String}
   end
 
 end# TestFont

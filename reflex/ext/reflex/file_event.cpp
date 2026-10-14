@@ -65,11 +65,11 @@ RUCY_DEF0(get_paths)
 
 	const Reflex::StringList& paths = THIS->paths();
 
-	std::vector<Value> values;
+	Value values = array(NULL, paths.size());
 	for (const auto& path : paths)
-		values.emplace_back(path.c_str());
+		values.push(path.c_str());
 
-	return array(values.data(), values.size());
+	return values;
 }
 RUCY_END
 

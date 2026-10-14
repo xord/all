@@ -127,11 +127,13 @@ RUCY_DEF0(get_extensions)
 {
 	CHECK;
 
-	std::vector<Value> values;
-	for (const auto& extension : THIS->extensions())
-		values.emplace_back(extension.c_str());
+	const auto& extensions = THIS->extensions();
 
-	return array(values.data(), values.size());
+	Value values = array(NULL, extensions.size());
+	for (const auto& extension : extensions)
+		values.push(extension.c_str());
+
+	return values;
 }
 RUCY_END
 

@@ -4,7 +4,8 @@
 #define __RUCY_VALUE_H__
 
 
-#include <vector>
+#include <iterator>
+#include <type_traits>
 #include <rucy/ruby.h>
 #include <rucy/symbol.h>
 
@@ -274,8 +275,13 @@ namespace Rucy
 			std::input_iterator_tag
 		>::value>::type* = nullptr)
 	{
-		std::vector<Value> v(begin, end);
-		return array(v.data(), v.size());
+		size_t size = 0;
+		if constexpr (std::sized_sentinel_for<T, T>)
+			size = end - begin;
+
+		Value ary = array(NULL, size);
+		for (T it = begin; it != end; ++it) ary.push(*it);
+		return ary;
 	}
 
 

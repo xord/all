@@ -205,10 +205,10 @@ RUCY_DEF0(families)
 	Hash hash;
 	for (const auto& family : Rays::get_font_families())
 	{
-		std::vector<Value> members;
+		Value members = array(NULL, family.second.size());
 		for (const auto& member : family.second)
-			members.emplace_back(member.c_str());
-		hash.set(family.first.c_str(), array(members.data(), members.size()));
+			members.push(member.c_str());
+		hash.set(family.first.c_str(), members);
 	}
 	return hash;
 }
