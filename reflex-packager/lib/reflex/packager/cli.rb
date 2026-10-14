@@ -68,6 +68,7 @@ module Reflex
           on '--config PATH',   "config file path (default: DIR/#{profile.config_files.first})"
           on '--generate-only', 'generate project files but do not build'
           on '--pack',          'put the files of the app together in a data file, for a release'
+          on '--notarize',      'have Apple check the app signed with Developer ID, for a release on macos'
           on '--verbose',       'verbose output'
         end
 
@@ -75,7 +76,7 @@ module Reflex
         platform = (params[:platform] || platform).to_sym
         klass    = PLATFORMS[platform] || raise(Error, "unknown platform: '#{platform}'")
         config   = Config.load profile, dir, params[:config]
-        klass.new(config, verbose: params[:verbose], pack: params[:pack])
+        klass.new(config, verbose: params[:verbose], pack: params[:pack], notarize: params[:notarize])
           .package generate_only: params[:'generate-only']
       end
 

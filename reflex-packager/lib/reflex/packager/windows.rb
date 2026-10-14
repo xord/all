@@ -38,6 +38,11 @@ module Reflex
       #
       ICON_SIZES = [16, 32, 48, 256]
 
+      def package(generate_only: false)
+        raise Error, 'notarizing is only for macos' if notarize?
+        super
+      end
+
       def generate()
         copy_libraries
         copy_app_files 'lib/app'

@@ -418,6 +418,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
     packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
       assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>ABCDE12345</string>'
+      assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>export</string>'
 
       commands, copied = build.call pkg
       assert_equal 1, commands.grep(/ archive -archivePath .*\/#{pkg.target}\.xcarchive$/).size
@@ -446,6 +447,47 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_empty commands.grep(/archive/i)
       assert_equal 1, commands.grep(/ build$/).size
       assert_equal [nil], copied # the one built
+    end
+  end
+
+  def test_build_notarized()
+    build = -> config, outs do
+      pkg              = MacOS.new config, notarize: true
+      captured, copied = [], []
+      pkg.define_singleton_method(:check_tools) {|*|}
+      pkg.define_singleton_method(:run)         {|*, **|}
+      pkg.define_singleton_method(:sleep)       {|*|}
+      pkg.define_singleton_method(:copy_app)    {|app = nil| copied << app}
+      pkg.define_singleton_method(:capture) {|*cmd, **| captured << cmd.join(' '); outs.shift}
+      pkg.build
+      [captured, copied]
+    end
+
+    packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
+      pkg = MacOS.new pkg.config, notarize: true
+      assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>upload</string>'
+
+      captured, copied = build.call pkg.config, [
+        ['error: Archive "a" is processing and not ready for distribution.', false],
+        ['error: Ticket not found.', false],
+        ['', true]
+      ]
+      assert_equal 3, captured.grep(/-exportNotarizedApp .* -exportPath .*\/Notarized$/).size
+      assert_equal [File.join(dir, ".build/macos/Notarized/#{pkg.target}.app")], copied
+
+      error = assert_raise(RP::Error) {build.call pkg.config, [['error: Invalid.', false]]}
+      assert_include error.message, 'error: Invalid.'
+
+      assert_raise(RP::Error) {pkg.package generate_only: true}
+    end
+
+    packager do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: true).package}
+      assert_include error.message, 'APPLE_TEAM_ID'
+    end
+    packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: true).package}
+      assert_include error.message, 'no identity to sign with'
     end
   end
 

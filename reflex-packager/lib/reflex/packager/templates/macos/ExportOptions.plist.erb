@@ -9,6 +9,6 @@
 	<key>teamID</key>
 	<string><%= config.macos.codesign_team_id %></string>
 	<key>destination</key>
-	<string>export</string>
+	<string><%= notarize? ? 'upload' : 'export' %></string>
 </dict>
 </plist>

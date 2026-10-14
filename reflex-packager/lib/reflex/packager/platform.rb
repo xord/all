@@ -39,8 +39,8 @@ module Reflex
 
       end# self
 
-      def initialize(config, verbose: false, pack: false)
-        @config, @verbose, @pack = config, verbose, pack
+      def initialize(config, verbose: false, pack: false, notarize: false)
+        @config, @verbose, @pack, @notarize = config, verbose, pack, notarize
       end
 
       attr_reader :config
@@ -58,6 +58,13 @@ module Reflex
       #
       def pack?()
         @pack
+      end
+
+      # Whether to have Apple check the app for the system to open it without
+      # warnings, when downloaded, as for a release.
+      #
+      def notarize?()
+        @notarize
       end
 
       # Package the application as a distributable bundle.
