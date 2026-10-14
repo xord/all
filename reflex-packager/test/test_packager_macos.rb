@@ -132,6 +132,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_not_include str, 'CFBundleIconFile'
       assert_include     str, 'GCC_WARN_INHIBIT_ALL_WARNINGS: YES'
       assert_not_include str, 'DEVELOPMENT_TEAM'
+      assert_not_include str, 'ENABLE_HARDENED_RUNTIME'
+      assert !File.exist?(File.join dir, '.build/macos/ExportOptions.plist')
 
       reflex, cruby = pkg.libraries.find {_1.name == 'reflex'}.root, ENV['CRUBY_PATH']
       assert_include base['HEADER_SEARCH_PATHS'],        "#{reflex}/include"
@@ -259,6 +261,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include     str, 'CFBundleIconFile: AppIcon'
       assert_include     str, 'path: AppIcon.icns'
       assert_include     str, 'DEVELOPMENT_TEAM: ABCDE12345'
+      assert_include     str, 'ENABLE_HARDENED_RUNTIME: YES'
       assert_not_include str, 'NSHumanReadableCopyright'
       assert_not_include str, 'LSHasLocalizedDisplayName'
 
@@ -400,6 +403,49 @@ class TestPackagerMacOS < Test::Unit::TestCase
           assert !pkg.__send__(:executable?, 'other')
         end
       end
+    end
+  end
+
+  def test_build_by_cloud_signing()
+    build = -> pkg do
+      commands, copied = [], []
+      pkg.define_singleton_method(:check_tools) {|*|}
+      pkg.define_singleton_method(:run)         {|*cmd, **| commands << cmd}
+      pkg.define_singleton_method(:copy_app)    {|app = nil| copied << app}
+      pkg.build
+      [commands.map {_1.join ' '}, copied]
+    end
+
+    packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
+      assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>ABCDE12345</string>'
+
+      commands, copied = build.call pkg
+      assert_equal 1, commands.grep(/ archive -archivePath .*\/#{pkg.target}\.xcarchive$/).size
+      assert_equal 1, commands.grep(/-exportArchive .*-allowProvisioningUpdates$/).size
+      assert_equal [File.join(dir, ".build/macos/Export/#{pkg.target}.app")], copied
+    end
+
+    env = {
+      'APPLE_API_KEY_PATH'  => '/key.p8',
+      'APPLE_API_KEY_ID'    => 'KEY',
+      'APPLE_API_ISSUER_ID' => 'ISSUER'
+    }
+    packager "macos: {codesign: {team_id: ABCDE12345}}", env: env do |pkg, _|
+      commands, _ = build.call pkg
+      assert_equal 1, commands.grep(
+        /-authenticationKeyPath \/key\.p8 -authenticationKeyID KEY -authenticationKeyIssuerID ISSUER$/).size
+    end
+    packager "macos: {codesign: {team_id: ABCDE12345}}", env: env.merge('APPLE_API_KEY_ID' => '') do |pkg, _|
+      error = assert_raise(RP::Error) {build.call pkg}
+      assert_include error.message, 'APPLE_API_KEY_ID'
+    end
+
+    # the identity to sign with in the keychain, not the one managed
+    packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, _|
+      commands, copied = build.call pkg
+      assert_empty commands.grep(/archive/i)
+      assert_equal 1, commands.grep(/ build$/).size
+      assert_equal [nil], copied # the one built
     end
   end
 

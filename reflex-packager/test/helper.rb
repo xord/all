@@ -68,4 +68,7 @@ TEST_PROFILE = Reflex::Packager::Profile.new(
 # The environment variables to sign with, to unset by with_env for the tests
 # not to take the ones of the developer.
 #
-ENV_TO_SIGN = {'APPLE_CODESIGN_IDENTITY' => nil, 'APPLE_TEAM_ID' => nil}
+ENV_TO_SIGN = [
+  *Reflex::Packager::MacOSConfig::CODESIGN_ENV_KEYS.values,
+  *Reflex::Packager::MacOS::AUTH_ENV_KEYS.values
+].to_h {[_1, nil]}

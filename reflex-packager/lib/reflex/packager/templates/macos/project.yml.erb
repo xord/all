@@ -14,6 +14,7 @@ settings:
     CODE_SIGN_IDENTITY: <%= config.macos.codesign_identity.inspect %>
 <%- if config.macos.codesign_team_id -%>
     DEVELOPMENT_TEAM: <%= config.macos.codesign_team_id %>
+    ENABLE_HARDENED_RUNTIME: YES
 <%- end -%>
     CLANG_CXX_LANGUAGE_STANDARD: c++20
     CLANG_ENABLE_OBJC_ARC: NO

@@ -28,6 +28,15 @@ module Reflex
       #
       CRUBY_VERSION = '4.0.700'
 
+      # The environment variables of the API key of App Store Connect, to
+      # sign the app on CI, where no account of Xcode is.
+      #
+      AUTH_ENV_KEYS = {
+        path:   'APPLE_API_KEY_PATH',
+        id:     'APPLE_API_KEY_ID',
+        issuer: 'APPLE_API_ISSUER_ID'
+      }
+
       TOOLS = {
         git:        'install Xcode command line tools: xcode-select --install',
         xcodegen:   'install with: brew install xcodegen',
@@ -46,9 +55,10 @@ module Reflex
         copy_bundles
         copy_app_files
         generate_icon if config.icon
-        write 'project.yml', render('project.yml.erb')
-        write 'src/main.mm', render('main.mm.erb')
-        write 'boot.rb',     render('boot.rb.erb')
+        write 'project.yml',         render('project.yml.erb')
+        write 'src/main.mm',         render('main.mm.erb')
+        write 'boot.rb',             render('boot.rb.erb')
+        write 'ExportOptions.plist', render('ExportOptions.plist.erb') if cloud_signing?
         write_localizations
       end
 
@@ -56,8 +66,13 @@ module Reflex
         check_tools TOOLS
         run 'xcodegen', 'generate', *('--quiet' unless verbose?), chdir: build_dir
         compile_scripts if pack?
-        xcodebuild
-        copy_app
+        if cloud_signing?
+          export_app
+          copy_app exported_app_path
+        else
+          xcodebuild
+          copy_app
+        end
       end
 
       def dist_path()
@@ -175,15 +190,69 @@ module Reflex
         false
       end
 
-      def xcodebuild()
+      def xcodebuild(action = 'build', *args)
         run 'xcodebuild', *('-quiet' unless verbose?),
           '-project',         "#{target}.xcodeproj",
           '-scheme',          target,
           '-configuration',   'Release',
           '-destination',     'generic/platform=macOS',
           '-derivedDataPath', 'DerivedData',
-          'build',
+          action, *args,
           chdir: build_dir
+      end
+
+      # Whether the app is signed by the certificate of the team that Apple
+      # manages for it, which needs no certificate in the keychain: the team
+      # without the identity to sign with. The certificate signs the app
+      # only when exported from its archive.
+      #
+      def cloud_signing?()
+        config.macos.codesign_team_id && config.macos.codesign_identity == '-'
+      end
+
+      # Archives the app and exports it signed with Developer ID, by the
+      # account of Xcode, or by the API key of App Store Connect that
+      # APPLE_API_KEY_PATH, APPLE_API_KEY_ID and APPLE_API_ISSUER_ID tell.
+      #
+      def export_app()
+        xcodebuild 'archive', '-archivePath', xcarchive_path
+        run 'xcodebuild', *('-quiet' unless verbose?),
+          '-exportArchive',
+          '-archivePath',        xcarchive_path,
+          '-exportOptionsPlist', 'ExportOptions.plist',
+          '-exportPath',         'Export',
+          '-allowProvisioningUpdates',
+          *auth_options,
+          chdir: build_dir
+      end
+
+      def auth_options()
+        names  = AUTH_ENV_KEYS.values_at :path, :id, :issuer
+        values = names.map {ENV[_1].then {|s| s unless s.to_s.empty?}}
+        return [] if values.none?
+
+        path, id, issuer = values
+        missing          = names.zip(values).filter_map {|name, value| name unless value}
+        raise Error, "no #{missing.join ' or '} with the others for the API key" unless
+          missing.empty?
+
+        [
+          '-authenticationKeyPath',     File.expand_path(path),
+          '-authenticationKeyID',       id,
+          '-authenticationKeyIssuerID', issuer
+        ]
+      end
+
+      def built_app_path()
+        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
+      end
+
+      def xcarchive_path()
+        File.join build_dir, "#{target}.xcarchive"
+      end
+
+      def exported_app_path()
+        File.join build_dir, 'Export', "#{target}.app"
       end
 
       # Has the app write its data file with its scripts compiled by the
@@ -203,13 +272,9 @@ module Reflex
         env = ENV.keys.grep(/\A(BUNDLER?_|GEM_)/)
           .then {[*_1, 'RUBYOPT', 'RUBYLIB']}
           .to_h {[_1, nil]}
-        run File.join(built_app, 'Contents', 'MacOS', target), chdir: build_dir, env: env
+        run File.join(built_app_path, 'Contents', 'MacOS', target), chdir: build_dir, env: env
       ensure
         File.write boot, orig if orig
-      end
-
-      def built_app()
-        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
       end
 
       # CRuby has the bundled gems in its standard library.
@@ -321,8 +386,7 @@ module Reflex
           chdir: build_dir
       end
 
-      def copy_app()
-        app = built_app
+      def copy_app(app = built_app_path)
         raise Error, "application not found: '#{app}'" unless File.directory? app
 
         dist = dist_path
