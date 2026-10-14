@@ -98,7 +98,7 @@ class TestRakeUtil < Test::Unit::TestCase
       commit 'Version 0.1.1', 'VERSION' => '0.1.1'
       commit 'Add b', 'b.rb' => ''
 
-      tag_versions
+      verbose(false) {tag_versions}
       assert_equal %w[v0.1.0 v0.1.1], IO.popen(%w[git tag], &:read).lines(chomp: true)
       assert_equal(
         "- Add a\n",
@@ -109,7 +109,7 @@ class TestRakeUtil < Test::Unit::TestCase
 
       # the versions back to the one tagged already, which is not tagged again
       commit 'Version 0.1.2', 'VERSION' => '0.1.2'
-      tag_versions
+      verbose(false) {tag_versions}
       assert_equal(
         %w[v0.1.0 v0.1.1 v0.1.2],
         IO.popen(%w[git tag], &:read).lines(chomp: true))
