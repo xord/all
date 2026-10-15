@@ -14,6 +14,15 @@ module Reflex
     #
     class CLI
 
+      # The options to notarize the app by, and the steps of the notarization
+      # they take.
+      #
+      NOTARIZE_OPTIONS = {
+        notarize:          %i[submit export],
+        'notarize-submit': %i[submit],
+        'notarize-export': %i[export]
+      }
+
       def initialize(profile)
         @profile = profile
       end
@@ -65,18 +74,24 @@ module Reflex
         argv, params      = parse argv, "Usage: #{profile.command} package [options] [DIR]" do
           on '--platform PLATFORM',
             "target platform: #{PLATFORMS.keys.join ' or '} (default: #{platform})"
-          on '--config PATH',   "config file path (default: DIR/#{profile.config_files.first})"
-          on '--generate-only', 'generate project files but do not build'
-          on '--pack',          'put the files of the app together in a data file, for a release'
-          on '--notarize',      'have Apple check the app signed with Developer ID, for a release on macos'
-          on '--verbose',       'verbose output'
+          on '--config PATH',     "config file path (default: DIR/#{profile.config_files.first})"
+          on '--generate-only',   'generate project files but do not build'
+          on '--pack',            'put the files of the app together in a data file, for a release'
+          on '--notarize',        'have Apple check the app with Developer ID, on macos'
+          on '--notarize-submit', 'only submit the app to be notarized, not waiting'
+          on '--notarize-export', 'only wait for the notarization submitted and export the app'
+          on '--verbose',         'verbose output'
         end
+
+        notarize = NOTARIZE_OPTIONS.filter_map {|key, value| value if params[key]}
+        raise Error, "only one of #{NOTARIZE_OPTIONS.keys.map {"--#{_1}"}.join ', '}" if
+          notarize.size > 1
 
         dir      = argv.shift || '.'
         platform = (params[:platform] || platform).to_sym
         klass    = PLATFORMS[platform] || raise(Error, "unknown platform: '#{platform}'")
         config   = Config.load profile, dir, params[:config]
-        klass.new(config, verbose: params[:verbose], pack: params[:pack], notarize: params[:notarize])
+        klass.new(config, verbose: params[:verbose], pack: params[:pack], notarize: notarize.first)
           .package generate_only: params[:'generate-only']
       end
 

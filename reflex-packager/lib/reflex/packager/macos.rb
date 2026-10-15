@@ -1,5 +1,4 @@
 require 'json'
-require 'open3'
 require 'rbconfig'
 require 'reflex/packager/platform'
 require 'reflex/packager/gems'
@@ -50,7 +49,9 @@ module Reflex
       }
 
       # A packed app compiles its scripts when built, and a notarized one is
-      # sent to Apple when exported, so they have to be built.
+      # sent to Apple when exported, so they have to be built; the app only
+      # exported after its notarization is not built, but taken from the
+      # archive sent.
       #
       def package(generate_only: false)
         case
@@ -58,14 +59,14 @@ module Reflex
           'a packed app has to be built on macos'
         when notarize? && generate_only
           'a notarized app has to be built on macos'
-        when notarize? && !config.macos.codesign_team_id
+        when notarize.include?(:submit) && !config.macos.codesign_team_id
           'notarizing needs the team to sign with, by macos.codesign.team_id' +
             " or #{MacOSConfig::CODESIGN_ENV_KEYS[:team_id]}"
-        when notarize? && !cloud_signing?
+        when notarize.include?(:submit) && !cloud_signing?
           'notarizing is only for the app signed by the certificate Apple manages,' +
             ' with no identity to sign with'
         end&.tap {raise Error, _1}
-        super
+        notarize == [:export] ? export_notarized_app : super
       end
 
       def generate()
@@ -84,12 +85,16 @@ module Reflex
         check_tools TOOLS
         run 'xcodegen', 'generate', *('--quiet' unless verbose?), chdir: build_dir
         compile_scripts if pack?
-        if cloud_signing?
-          export_app
-          copy_app notarize? ? notarized_app_path : exported_app_path
-        else
+        case
+        when !cloud_signing?
           xcodebuild
           copy_app
+        when !notarize?
+          export_app
+          copy_app exported_app_path
+        else
+          export_app
+          export_notarized_app if notarize.include? :export
         end
       end
 
@@ -242,14 +247,16 @@ module Reflex
           '-allowProvisioningUpdates',
           *auth_options,
           chdir: build_dir
-        export_notarized_app if notarize?
       end
 
-      # Exports the app stapled with the ticket of the notarization, waiting
-      # for Apple to check the app sent and to issue the ticket, which takes
-      # some minutes.
+      # Exports the app stapled with the ticket of the notarization into the
+      # dist directory, waiting for Apple to check the app sent and to issue
+      # the ticket, which takes some minutes.
       #
       def export_notarized_app()
+        raise Error, "no archive sent to be notarized: '#{xcarchive_path}'" unless
+          File.directory? xcarchive_path
+
         FileUtils.rm_rf File.dirname(notarized_app_path)
         cmd = [
           'xcodebuild', '-exportNotarizedApp',
@@ -267,11 +274,7 @@ module Reflex
           puts 'waiting for the notarization...'
           sleep NOTARIZATION_INTERVAL
         end
-      end
-
-      def capture(*cmd, chdir:)
-        out, status = Open3.capture2e(*cmd, chdir: chdir)
-        [out, status.success?]
+        copy_app notarized_app_path
       end
 
       def auth_options()

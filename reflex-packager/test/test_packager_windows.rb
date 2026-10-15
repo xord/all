@@ -106,7 +106,7 @@ class TestPackagerWindows < Test::Unit::TestCase
           assert File.exist?(build_path dir, path), "missing #{path}"
         end
 
-        error = assert_raise(RP::Error) {Windows.new(pkg.config, notarize: true).package}
+        error = assert_raise(RP::Error) {Windows.new(pkg.config, notarize: %i[submit]).package}
         assert_include error.message, 'only for macos'
       end
     end

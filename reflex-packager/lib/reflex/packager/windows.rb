@@ -1,4 +1,3 @@
-require 'open3'
 require 'rbconfig'
 require 'shellwords'
 require 'reflex/packager/platform'
