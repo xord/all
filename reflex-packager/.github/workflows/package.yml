@@ -16,19 +16,40 @@ on:
         description: 'days to keep the zip of a run not of a tag, 0 to upload none'
         type: number
         default: 0
+    secrets:
+      # to sign the app with Developer ID and to notarize it, none for neither
+      APPLE_TEAM_ID:
+        required: false
+      APPLE_API_KEY:
+        required: false
+      APPLE_API_KEY_ID:
+        required: false
+      APPLE_API_ISSUER_ID:
+        required: false
 
 permissions:
   contents: write
+
+env:
+  APPLE_TEAM_ID:       ${{ secrets.APPLE_TEAM_ID }}
+  APPLE_API_KEY_ID:    ${{ secrets.APPLE_API_KEY_ID }}
+  APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
 
 jobs:
   package:
     runs-on: macos-latest
 
+    outputs:
+      notarize:      ${{ steps.notarize.outputs.notarize }}
+      submission-id: ${{ steps.submit.outputs.id }}
+
     steps:
-      - name: checkout
+      - &checkout
+        name: checkout
         uses: actions/checkout@v4
 
-      - name: setup ruby
+      - &setup-ruby
+        name: setup ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ inputs.ruby-version ||
@@ -38,42 +59,139 @@ jobs:
       - name: setup xcodegen
         run: brew install xcodegen
 
-      - name: setup xot
-        run: git clone -q --depth 1 https://github.com/xord/xot.git "${{ runner.temp }}/xot"
-
-      - name: setup monorepo
+      - &setup-monorepo
+        name: setup monorepo
         if: inputs.all-ref
         env:
-          RUBYLIB: ${{ runner.temp }}/xot/lib
-          REF:     ${{ inputs.all-ref }}
-          LIBS:    ${{ inputs.libraries }}
-        run: ruby -rxot/rake -e 'setup_monorepo(*ARGV)' "$REF" $LIBS
+          REF:  ${{ inputs.all-ref }}
+          LIBS: ${{ inputs.libraries }}
+        run: |
+          git clone -q --depth 1 https://github.com/xord/xot.git "$RUNNER_TEMP/xot"
+          RUBYLIB="$RUNNER_TEMP/xot/lib" ruby -rxot/rake -e 'setup_monorepo(*ARGV)' "$REF" $LIBS
 
-      - name: setup gems
+      - &setup-gems
+        name: setup gems
         env:
           # not for all-ref, as the Gemfile takes the gems of the monorepo then
           BUNDLE_FROZEN: ${{ hashFiles('Gemfile.lock') != '' && !inputs.all-ref }}
         run: bundle install
 
+      - name: notarize?
+        id: notarize
+        run: echo "notarize=${{ env.APPLE_TEAM_ID != '' }}" >> "$GITHUB_OUTPUT"
+
       - name: package
+        if: steps.notarize.outputs.notarize != 'true'
         run: bundle exec rake package
 
-      - name: archive
+      - &archive
+        name: archive
         id: archive
+        if: steps.notarize.outputs.notarize != 'true' || github.job != 'package'
         run: |
           bundle exec rake archive
           echo "name=$(basename dist/*.zip .zip)" >> "$GITHUB_OUTPUT"
 
-      - name: upload
-        if: github.ref_type != 'tag' && inputs.retention-days > 0
+      - &upload
+        name: upload
+        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'package') &&
+          github.ref_type != 'tag' && inputs.retention-days > 0
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.archive.outputs.name }}
           path: dist/*.zip
           retention-days: ${{ inputs.retention-days }}
 
-      - name: release
-        if: github.ref_type == 'tag'
+      - &release
+        name: release
+        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'package') &&
+          github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bundle exec rake release
+
+      - &setup-api-key
+        name: setup API key
+        if: env.APPLE_TEAM_ID != ''
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          path="$RUNNER_TEMP/AuthKey.p8"
+          printf '%s' "$APPLE_API_KEY" > "$path"
+          chmod 600 "$path"
+          echo "APPLE_API_KEY_PATH=$path" >> "$GITHUB_ENV"
+
+      - name: submit for notarization
+        id: submit
+        if: steps.notarize.outputs.notarize == 'true'
+        shell: bash # with pipefail, not to let tee hide the failure
+        run: |
+          bundle exec reflex package --pack --notarize-submit . | tee "$RUNNER_TEMP/submit.log"
+          echo "id=$(sed -n 's/^Submitted for the notarization: //p' "$RUNNER_TEMP/submit.log")" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: tar xcarchive for notarization
+        if: steps.notarize.outputs.notarize == 'true'
+        # by tar, as an artifact keeps no permission of the files nor symlink
+        run: cd .build/macos && tar cf "$RUNNER_TEMP/xcarchive.tar" *.xcarchive
+
+      - name: upload xcarchive for notarization
+        if: steps.notarize.outputs.notarize == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcarchive
+          path: ${{ runner.temp }}/xcarchive.tar
+          retention-days: 1
+
+  wait:
+    name: wait until notarized
+    needs: package
+    if: needs.package.outputs.notarize == 'true'
+    runs-on: ubuntu-latest # cheaper than macos
+
+    steps:
+      - *checkout
+
+      - name: setup packages
+        # the ones of install_packages of beeps, rays and reflex, to build them
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y -qq libopenal-dev libglew-dev libsdl2-dev libsdl2-ttf-dev
+
+      - *setup-ruby
+      - *setup-monorepo
+      - *setup-gems
+      - *setup-api-key
+
+      - name: wait
+        env:
+          ID: ${{ needs.package.outputs.submission-id }}
+        run: bundle exec reflex package --notarize-wait "$ID"
+
+  export:
+    name: export notarized
+    needs: wait
+    runs-on: macos-latest
+
+    steps:
+      - *checkout
+      - *setup-ruby
+      - *setup-monorepo
+      - *setup-gems
+      - *setup-api-key
+
+      - name: download xcarchive
+        uses: actions/download-artifact@v4
+        with:
+          name: xcarchive
+          path: ${{ runner.temp }}
+
+      - name: untar xcarchive
+        run: mkdir -p .build/macos && tar xf "$RUNNER_TEMP/xcarchive.tar" -C .build/macos
+
+      - name: export
+        run: bundle exec reflex package --notarize-export .
+
+      - *archive
+      - *upload
+      - *release

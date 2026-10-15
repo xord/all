@@ -91,6 +91,10 @@ class TestPackagerCLI < Test::Unit::TestCase
       assert_raise(RP::Error) do
         cli.package ['--generate-only', '--platform', 'unknown', 'myapp']
       end
+      error = assert_raise(RP::Error) do
+        cli.package ['--notarize-submit', '--notarize-export', 'myapp']
+      end
+      assert_include error.message, 'only one of'
     end
   end
 

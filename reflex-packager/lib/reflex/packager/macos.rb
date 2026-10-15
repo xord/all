@@ -1,8 +1,8 @@
 require 'json'
-require 'open3'
 require 'rbconfig'
 require 'reflex/packager/platform'
 require 'reflex/packager/gems'
+require 'reflex/packager/app_store_connect'
 
 
 module Reflex
@@ -26,7 +26,7 @@ module Reflex
 
       # The CRuby used unless the config or CRUBY_PATH names another one.
       #
-      CRUBY_VERSION = '4.0.700'
+      CRUBY_VERSION = '4.0.701'
 
       TOOLS = {
         git:        'install Xcode command line tools: xcode-select --install',
@@ -34,11 +34,25 @@ module Reflex
         xcodebuild: 'install Xcode and run: sudo xcode-select --switch /Applications/Xcode.app'
       }
 
-      # A packed app compiles its scripts when built, so it has to be built.
+      # A packed app compiles its scripts when built, and a notarized one is
+      # sent to Apple when exported, so they have to be built; the app only
+      # exported after its notarization is not built, but taken from the
+      # archive sent.
       #
       def package(generate_only: false)
-        raise Error, 'a packed app has to be built on macos' if pack? && generate_only
-        super
+        case
+        when pack?     && generate_only
+          'a packed app has to be built on macos'
+        when notarize? && generate_only
+          'a notarized app has to be built on macos'
+        when notarize.include?(:submit) && !config.macos.codesign_team_id
+          'notarizing needs the team to sign with, by macos.codesign.team_id' +
+            " or #{MacOSConfig::CODESIGN_ENV_KEYS[:team_id]}"
+        when notarize.include?(:submit) && !cloud_signing?
+          'notarizing is only for the app signed by the certificate Apple manages,' +
+            ' with no identity to sign with'
+        end&.tap {raise Error, _1}
+        notarize == [:export] ? export_notarized_app : super
       end
 
       def generate()
@@ -46,9 +60,10 @@ module Reflex
         copy_bundles
         copy_app_files
         generate_icon if config.icon
-        write 'project.yml', render('project.yml.erb')
-        write 'src/main.mm', render('main.mm.erb')
-        write 'boot.rb',     render('boot.rb.erb')
+        write 'project.yml',         render('project.yml.erb')
+        write 'src/main.mm',         render('main.mm.erb')
+        write 'boot.rb',             render('boot.rb.erb')
+        write 'ExportOptions.plist', render('ExportOptions.plist.erb') if cloud_signing?
         write_localizations
       end
 
@@ -56,8 +71,18 @@ module Reflex
         check_tools TOOLS
         run 'xcodegen', 'generate', *('--quiet' unless verbose?), chdir: build_dir
         compile_scripts if pack?
-        xcodebuild
-        copy_app
+        case
+        when !cloud_signing?
+          xcodebuild
+          copy_app
+        when !notarize?
+          export_app
+          copy_app exported_app_path
+        else
+          export_app
+          puts "Submitted for the notarization: #{submission_id}"
+          export_notarized_app if notarize.include? :export
+        end
       end
 
       def dist_path()
@@ -175,15 +200,104 @@ module Reflex
         false
       end
 
-      def xcodebuild()
+      def xcodebuild(action = 'build', *args)
         run 'xcodebuild', *('-quiet' unless verbose?),
           '-project',         "#{target}.xcodeproj",
           '-scheme',          target,
           '-configuration',   'Release',
           '-destination',     'generic/platform=macOS',
           '-derivedDataPath', 'DerivedData',
-          'build',
+          action, *args,
           chdir: build_dir
+      end
+
+      # Whether the app is signed by the certificate of the team that Apple
+      # manages for it, which needs no certificate in the keychain: the team
+      # without the identity to sign with. The certificate signs the app
+      # only when exported from its archive.
+      #
+      def cloud_signing?()
+        config.macos.codesign_team_id && config.macos.codesign_identity == '-'
+      end
+
+      # Archives the app and exports it signed with Developer ID, by the
+      # account of Xcode, or by the API key of App Store Connect that
+      # APPLE_API_KEY_PATH, APPLE_API_KEY_ID and APPLE_API_ISSUER_ID tell.
+      #
+      def export_app()
+        xcodebuild 'archive', '-archivePath', xcarchive_path
+        run 'xcodebuild', *('-quiet' unless verbose?),
+          '-exportArchive',
+          '-archivePath',        xcarchive_path,
+          '-exportOptionsPlist', 'ExportOptions.plist',
+          '-exportPath',         'Export',
+          '-allowProvisioningUpdates',
+          *auth_options,
+          chdir: build_dir
+      end
+
+      # The ID of the notarization the archive was submitted for last, in
+      # lower case as the notary service takes it.
+      #
+      def submission_id()
+        dir = File.join xcarchive_path, 'Submissions'
+        id  = Dir.exist?(dir) && Dir.children(dir).max_by {File.mtime File.join(dir, _1)}
+        raise Error, "no submission for the notarization in '#{xcarchive_path}'" unless id
+        id.downcase
+      end
+
+      # Exports the app stapled with the ticket of the notarization into the
+      # dist directory, waiting for Apple to check the app sent and to issue
+      # the ticket, which takes some minutes.
+      #
+      def export_notarized_app()
+        raise Error, "no archive sent to be notarized: '#{xcarchive_path}'" unless
+          File.directory? xcarchive_path
+
+        FileUtils.rm_rf File.dirname(notarized_app_path)
+        cmd = [
+          'xcodebuild', '-exportNotarizedApp',
+          '-archivePath', xcarchive_path,
+          '-exportPath',  File.dirname(notarized_app_path),
+          *auth_options
+        ]
+        deadline = Time.now + AppStoreConnect::NOTARIZATION_TIMEOUT
+        loop do
+          out, ok = capture(*cmd, chdir: build_dir)
+          break if ok
+          raise Error, "failed to export the notarized app:\n#{out}" unless
+            out.match?(/processing and not ready|Ticket not found/)
+          raise Error, 'timed out waiting for the notarization' if Time.now > deadline
+          puts 'waiting for the notarization...'
+          sleep AppStoreConnect::NOTARIZATION_INTERVAL
+        end
+        copy_app notarized_app_path
+      end
+
+      def auth_options()
+        creds = AppStoreConnect.credentials
+        return [] unless creds
+        [
+          '-authenticationKeyPath',     File.expand_path(creds[:path]),
+          '-authenticationKeyID',       creds[:id],
+          '-authenticationKeyIssuerID', creds[:issuer]
+        ]
+      end
+
+      def built_app_path()
+        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
+      end
+
+      def xcarchive_path()
+        File.join build_dir, "#{target}.xcarchive"
+      end
+
+      def exported_app_path()
+        File.join build_dir, 'Export', "#{target}.app"
+      end
+
+      def notarized_app_path()
+        File.join build_dir, 'Notarized', "#{target}.app"
       end
 
       # Has the app write its data file with its scripts compiled by the
@@ -203,13 +317,9 @@ module Reflex
         env = ENV.keys.grep(/\A(BUNDLER?_|GEM_)/)
           .then {[*_1, 'RUBYOPT', 'RUBYLIB']}
           .to_h {[_1, nil]}
-        run File.join(built_app, 'Contents', 'MacOS', target), chdir: build_dir, env: env
+        run File.join(built_app_path, 'Contents', 'MacOS', target), chdir: build_dir, env: env
       ensure
         File.write boot, orig if orig
-      end
-
-      def built_app()
-        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
       end
 
       # CRuby has the bundled gems in its standard library.
@@ -271,8 +381,10 @@ module Reflex
           '--depth', '1', '--branch', "v#{version}", CRUBY_GIT, dir,
           chdir: build_dir
         # cruby has a Gemfile of its own, the one of the app must not be used
-        bundler = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}
-        run 'rake', 'download_or_build',
+        bundler       = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}
+        # the ones before 4.0.701 have no task to download only
+        download_only = Gem::Version.new(version) >= Gem::Version.new('4.0.701')
+        run 'rake', download_only ? 'download' : 'download_or_build',
           chdir: dir, env: {**bundler, 'RUBYOPT' => nil, 'os' => 'macos'}
         check_cruby dir
       end
@@ -321,8 +433,7 @@ module Reflex
           chdir: build_dir
       end
 
-      def copy_app()
-        app = built_app
+      def copy_app(app = built_app_path)
         raise Error, "application not found: '#{app}'" unless File.directory? app
 
         dist = dist_path

@@ -1,5 +1,6 @@
 require 'erb'
 require 'fileutils'
+require 'open3'
 
 
 module Reflex
@@ -39,8 +40,8 @@ module Reflex
 
       end# self
 
-      def initialize(config, verbose: false, pack: false)
-        @config, @verbose, @pack = config, verbose, pack
+      def initialize(config, verbose: false, pack: false, notarize: [])
+        @config, @verbose, @pack, @notarize = config, verbose, pack, notarize || []
       end
 
       attr_reader :config
@@ -58,6 +59,19 @@ module Reflex
       #
       def pack?()
         @pack
+      end
+
+      # The steps of the notarization, having Apple check the app for the
+      # system to open it without warnings when downloaded, as for a release:
+      # :submit to send the app, and :export to export the app notarized,
+      # waiting for it.
+      #
+      def notarize()
+        @notarize
+      end
+
+      def notarize?()
+        !@notarize.empty?
       end
 
       # Package the application as a distributable bundle.
@@ -221,6 +235,14 @@ module Reflex
         out = quiet && !verbose? ? {out: File::NULL} : {}
         return if system env, *cmd, chdir: chdir, **out
         raise Error, "command failed: #{cmd.join ' '}"
+      end
+
+      # Runs +cmd+, returning what it prints and whether it succeeded, for
+      # the caller to tell what failed.
+      #
+      def capture(*cmd, chdir:)
+        out, status = Open3.capture2e(*cmd, chdir: chdir)
+        [out, status.success?]
       end
 
       def check_tools(tools)

@@ -41,6 +41,16 @@ ensure
   klass.send :private, name       if hidden
 end
 
+# Runs the block with the environment variables of +env+, nil to unset.
+#
+def with_env(env, &block)
+  saved = env.map {|key, _| [key, ENV[key]]}
+  env.each {|key, value| value ? ENV[key] = value : ENV.delete(key)}
+  block.call
+ensure
+  saved.each {|key, value| value ? ENV[key] = value : ENV.delete(key)}
+end
+
 
 TEST_PROFILE = Reflex::Packager::Profile.new(
   extension:    Reflex::Extension,
@@ -54,3 +64,11 @@ TEST_PROFILE = Reflex::Packager::Profile.new(
   MAIN
     name: myapp
   CONFIG
+
+# The environment variables to sign with, to unset by with_env for the tests
+# not to take the ones of the developer.
+#
+ENV_TO_SIGN = [
+  *Reflex::Packager::MacOSConfig::CODESIGN_ENV_KEYS.values,
+  *Reflex::Packager::AppStoreConnect::AUTH_ENV_KEYS.values
+].to_h {[_1, nil]}

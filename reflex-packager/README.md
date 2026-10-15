@@ -98,6 +98,10 @@ reflex package [options] [DIR]
   --config PATH         config file path (default: DIR/reflex.yml)
   --generate-only       generate project files but do not build
   --pack                put the files of the app together in a data file, for a release
+  --notarize            have Apple check the app with Developer ID, on macos
+  --notarize-submit     only submit the app to be notarized, not waiting
+  --notarize-wait ID    only wait for the notarization ID, by the API key
+  --notarize-export     only wait for the notarization submitted and export the app
   --verbose             verbose output
 ```
 
@@ -144,8 +148,8 @@ icon: icon.png
 | `macos.deployment_target` | `11.0` | Minimum macOS version |
 | `macos.archs` | `[arm64, x86_64]` | Target architectures |
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |
-| `macos.codesign.identity` | `-` | Code signing identity |
-| `macos.codesign.team_id` | none | Development team ID |
+| `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`; `APPLE_CODESIGN_IDENTITY` overrides it |
+| `macos.codesign.team_id` | none | Development team ID; `APPLE_TEAM_ID` overrides it |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
 | `localizations` | none | `name` and `copyright` in other languages than English |
 
@@ -185,6 +189,50 @@ The bytes of the data file are substituted with others, which keeps the scripts 
 
 The scripts are compiled by the Ruby the package runs them on: on Windows, the one running the packager, and on macOS, the CRuby in the app. On macOS, the app is built and run once to compile them, then built again, so a packed app has to be built, not only generated.
 
+### Signing and notarizing on macOS
+
+By default, the app is signed ad hoc, which runs on the Mac it is built on, but which macOS warns of when the app is downloaded. To have the app opened with no warning, sign it with Developer ID and have Apple notarize it.
+
+With `team_id` and the identity `-`, the app is signed with Developer ID by the certificate Apple manages for the team, so no certificate is needed in the keychain: the app is archived and exported by `xcodebuild`, with the hardened runtime. `xcodebuild` asks Apple for the certificate by the account of Xcode, or by an API key of App Store Connect, which the environment variables tell:
+
+| Variable | Value |
+|-----|-----|
+| `APPLE_API_KEY_PATH` | Path to the private key file, `AuthKey_<ID>.p8` |
+| `APPLE_API_KEY_ID` | Key ID |
+| `APPLE_API_ISSUER_ID` | Issuer ID |
+
+The team ID can be given by `APPLE_TEAM_ID` in place of the config, as the identity by `APPLE_CODESIGN_IDENTITY`, to keep them out of the repository of the app.
+
+With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/` with the ticket of the notarization stapled, which macOS sees with no network:
+
+```bash
+$ export APPLE_TEAM_ID=XXXXXXXXXX
+$ reflex package --pack --notarize .
+```
+
+The notarization can be split into the steps, so as not to keep a Mac waiting, as on CI:
+
+1. `--notarize-submit` builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/<name>.xcarchive`
+2. `--notarize-wait <ID>` waits for Apple to check the app, by the API key, on any system
+3. `--notarize-export` exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
+
+### Packaging on GitHub Actions
+
+The workflow `.github/workflows/package.yml` of this repository packages the app on GitHub Actions, called by the workflow of the app, and releases it when run by a tag. With the secrets below, the app is notarized: a job on macOS submits it, one on Linux, which is cheaper, waits for it, and one on macOS again exports it.
+
+```yaml
+jobs:
+  release:
+    uses: xord/reflex-packager/.github/workflows/package.yml@master
+    secrets:
+      APPLE_TEAM_ID:       ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_API_KEY:       ${{ secrets.APPLE_API_KEY }}       # the content of the .p8 file
+      APPLE_API_KEY_ID:    ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+```
+
+Without the secrets, the app is packaged with no notarization, signed as the config tells.
+
 ### CRuby
 
 By default the packager clones the [cruby](https://github.com/xord/cruby) repository at the tag of its CRuby version into `.build/macos/cruby/<version>`, and downloads the prebuilt CRuby there. To use a local checkout instead, set its path as `macos.cruby` in the config, or via the `CRUBY_PATH` environment variable, which overrides the config:
@@ -213,7 +261,7 @@ On macOS:
 1. Copies the application files, the libraries and the gems into a build directory
 2. Fetches CRuby unless it is there already
 3. Generates an Xcode project (via XcodeGen) with the sources the Rakefiles of the libraries build
-4. Builds the `.app` bundle with `xcodebuild`
+4. Builds the `.app` bundle with `xcodebuild`, or archives and exports it signed with Developer ID, and notarized with `--notarize`
 5. Copies the result to `dist/`
 
 On Windows:

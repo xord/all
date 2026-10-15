@@ -62,13 +62,13 @@ module Reflex
             hash[key].is_a? Float
         end
 
-        @name      = hash[:name]     .to_s
-        @bundle_id = hash[:bundle_id].to_s
-        @version   = hash[:version]  .to_s
+        @name      = hash[:name]      .to_s
+        @bundle_id = hash[:bundle_id] .to_s
+        @version   = hash[:version]   .to_s
         @build     = hash[:build]    &.to_s
         @copyright = hash[:copyright]&.to_s
-        @main      = hash[:main]     .to_s
-        @icon      = hash[:icon]    &.to_s
+        @main      = hash[:main]      .to_s
+        @icon      = hash[:icon]     &.to_s
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
         @macos     = MacOSConfig.new   hash[:macos]
         @windows   = WindowsConfig.new hash[:windows]
@@ -217,6 +217,14 @@ module Reflex
     #
     class MacOSConfig
 
+      # The keys of codesign in the config, and the environment variables
+      # that override them.
+      #
+      CODESIGN_ENV_KEYS = {
+        identity: 'APPLE_CODESIGN_IDENTITY',
+        team_id:  'APPLE_TEAM_ID'
+      }
+
       def self.defaults()
         {
           deployment_target: '11.0',
@@ -230,11 +238,13 @@ module Reflex
       end
 
       def initialize(hash)
+        codesign = hash[:codesign].merge CODESIGN_ENV_KEYS.transform_values {env _1}.compact
+
         @deployment_target = hash[:deployment_target]  .to_s
         @archs             = Array(hash[:archs]).map  &:to_s
         @cruby             = hash[:cruby]            &.to_s
-        @codesign_identity = hash[:codesign][:identity].to_s
-        @codesign_team_id  = hash[:codesign][:team_id]&.to_s
+        @codesign_identity = codesign[:identity]       .to_s
+        @codesign_team_id  = codesign[:team_id]       &.to_s
         validate
       end
 
@@ -243,10 +253,25 @@ module Reflex
       #
       attr_reader :cruby
 
-      attr_reader :deployment_target, :archs, :codesign_identity, :codesign_team_id
+      attr_reader :deployment_target, :archs
+
+      # The identity and the team to sign the app with, which
+      # APPLE_CODESIGN_IDENTITY and APPLE_TEAM_ID override, for the name of
+      # the developer in the identity not to be in the config.
+      #
+      attr_reader :codesign_identity, :codesign_team_id
 
       def validate()
         raise Error, "invalid archs: '#{@archs}'" if @archs.empty?
+      end
+
+      private
+
+      # The environment variable +name+, or nil if empty, as a secret of
+      # GitHub Actions not set is.
+      #
+      def env(name)
+        ENV[name].then {_1 unless _1.to_s.empty?}
       end
 
     end# MacOSConfig

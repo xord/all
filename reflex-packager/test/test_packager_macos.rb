@@ -16,20 +16,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
       end
       File.write File.join(dir, 'reflex.yml'), yaml if yaml
       Dir.mktmpdir do |cruby|
-        with_env({'CRUBY_PATH' => fake_cruby(cruby)}.merge(env)) do
+        with_env({'CRUBY_PATH' => fake_cruby(cruby), **ENV_TO_SIGN}.merge(env)) do
           config = RP::Config.load TEST_PROFILE, dir
           block.call MacOS.new(config), dir
         end
       end
     end
-  end
-
-  def with_env(env, &block)
-    saved = env.map {|key, _| [key, ENV[key]]}
-    env.each {|key, value| value ? ENV[key] = value : ENV.delete(key)}
-    block.call
-  ensure
-    saved.each {|key, value| value ? ENV[key] = value : ENV.delete(key)}
   end
 
   def read(dir, path)
@@ -140,6 +132,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_not_include str, 'CFBundleIconFile'
       assert_include     str, 'GCC_WARN_INHIBIT_ALL_WARNINGS: YES'
       assert_not_include str, 'DEVELOPMENT_TEAM'
+      assert_not_include str, 'ENABLE_HARDENED_RUNTIME'
+      assert !File.exist?(File.join dir, '.build/macos/ExportOptions.plist')
 
       reflex, cruby = pkg.libraries.find {_1.name == 'reflex'}.root, ENV['CRUBY_PATH']
       assert_include base['HEADER_SEARCH_PATHS'],        "#{reflex}/include"
@@ -267,6 +261,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include     str, 'CFBundleIconFile: AppIcon'
       assert_include     str, 'path: AppIcon.icns'
       assert_include     str, 'DEVELOPMENT_TEAM: ABCDE12345'
+      assert_include     str, 'ENABLE_HARDENED_RUNTIME: YES'
       assert_not_include str, 'NSHumanReadableCopyright'
       assert_not_include str, 'LSHasLocalizedDisplayName'
 
@@ -372,7 +367,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal cruby, pkg.cruby_dir
       assert_include cmds.first, "v#{MacOS::CRUBY_VERSION}"
       assert_equal cruby,        cmds.first.last
-      assert_equal %w[rake download_or_build], cmds.last
+      assert_equal %w[rake download], cmds.last
+    end
+
+    fetching "macos: {cruby: 4.0.700}" do |pkg, _, cmds|
+      pkg.cruby_dir
+      assert_equal %w[rake download_or_build], cmds.last # with no task to download only
     end
 
     fetching "macos: {cruby: 1.2.3}" do |pkg, dir, cmds|
@@ -408,6 +408,121 @@ class TestPackagerMacOS < Test::Unit::TestCase
           assert !pkg.__send__(:executable?, 'other')
         end
       end
+    end
+  end
+
+  def test_build_by_cloud_signing()
+    build = -> pkg do
+      commands, copied = [], []
+      pkg.define_singleton_method(:check_tools) {|*|}
+      pkg.define_singleton_method(:run)         {|*cmd, **| commands << cmd}
+      pkg.define_singleton_method(:copy_app)    {|app = nil| copied << app}
+      pkg.build
+      [commands.map {_1.join ' '}, copied]
+    end
+
+    packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
+      assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>ABCDE12345</string>'
+      assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>export</string>'
+
+      commands, copied = build.call pkg
+      assert_equal 1, commands.grep(/ archive -archivePath .*\/#{pkg.target}\.xcarchive$/).size
+      assert_equal 1, commands.grep(/-exportArchive .*-allowProvisioningUpdates$/).size
+      assert_equal [File.join(dir, ".build/macos/Export/#{pkg.target}.app")], copied
+    end
+
+    env = {
+      'APPLE_API_KEY_PATH'  => '/key.p8',
+      'APPLE_API_KEY_ID'    => 'KEY',
+      'APPLE_API_ISSUER_ID' => 'ISSUER'
+    }
+    packager "macos: {codesign: {team_id: ABCDE12345}}", env: env do |pkg, _|
+      commands, _ = build.call pkg
+      assert_equal 1, commands.grep(
+        /-authenticationKeyPath \/key\.p8 -authenticationKeyID KEY -authenticationKeyIssuerID ISSUER$/).size
+    end
+    packager "macos: {codesign: {team_id: ABCDE12345}}", env: env.merge('APPLE_API_KEY_ID' => '') do |pkg, _|
+      error = assert_raise(RP::Error) {build.call pkg}
+      assert_include error.message, 'APPLE_API_KEY_ID'
+    end
+
+    # the identity to sign with in the keychain, not the one managed
+    packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, _|
+      commands, copied = build.call pkg
+      assert_empty commands.grep(/archive/i)
+      assert_equal 1, commands.grep(/ build$/).size
+      assert_equal [nil], copied # the one built
+    end
+  end
+
+  def test_build_notarized()
+    all = %i[submit export]
+
+    # builds or only exports, as --notarize-export does, with the outputs of
+    # the tries to export the app notarized
+    build = -> config, notarize, outs = [] do
+      pkg                       = MacOS.new config, notarize: notarize
+      commands, captured, copied, printed = [], [], [], []
+      pkg.define_singleton_method(:check_tools) {|*|}
+      pkg.define_singleton_method(:run)         {|*cmd, **| commands << cmd.join(' ')}
+      pkg.define_singleton_method(:sleep)       {|*|}
+      pkg.define_singleton_method(:puts)        {|str| printed << str}
+      pkg.define_singleton_method(:copy_app)    {|app = nil| copied << app}
+      pkg.define_singleton_method(:capture) {|*cmd, **| captured << cmd.join(' '); outs.shift}
+      notarize == %i[export] ? pkg.package : pkg.build
+      [commands, captured, copied, printed]
+    end
+
+    packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
+      notarized = File.join dir, ".build/macos/Notarized/#{pkg.target}.app"
+      outs      = -> {[
+        ['error: Archive "a" is processing and not ready for distribution.', false],
+        ['error: Ticket not found.', false],
+        ['', true]
+      ]}
+      [all, %i[submit]].each do |notarize|
+        mac = MacOS.new pkg.config, notarize: notarize
+        assert_include mac.__send__(:render, 'ExportOptions.plist.erb'), '<string>upload</string>'
+      end
+
+      # no archive sent yet
+      error = assert_raise(RP::Error) {build.call pkg.config, %i[export]}
+      assert_include error.message, 'no archive sent'
+      FileUtils.mkdir_p File.join(dir, ".build/macos/#{pkg.target}.xcarchive/Submissions/ABC-123")
+
+      commands, captured, copied = build.call pkg.config, all, outs.call
+      assert_equal 1, commands.grep(/-exportArchive/).size
+      assert_equal 3, captured.grep(/-exportNotarizedApp .* -exportPath .*\/Notarized$/).size
+      assert_equal [notarized], copied
+
+      commands, captured, copied, printed = build.call pkg.config, %i[submit]
+      assert_equal 1, commands.grep(/-exportArchive/).size
+      assert_empty captured
+      assert_empty copied
+      assert_include printed, 'Submitted for the notarization: abc-123' # in lower case
+
+      commands, captured, copied = build.call pkg.config, %i[export], outs.call
+      assert_empty commands # not built
+      assert_equal 3, captured.size
+      assert_equal [notarized], copied
+
+      error = assert_raise(RP::Error) {build.call pkg.config, all, [['error: Invalid.', false]]}
+      assert_include error.message, 'error: Invalid.'
+
+      assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: all).package generate_only: true}
+    end
+
+    packager do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: all).package}
+      assert_include error.message, 'APPLE_TEAM_ID'
+
+      # only exporting, which needs no team, but the archive sent
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: %i[export]).package}
+      assert_include error.message, 'no archive sent'
+    end
+    packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: all).package}
+      assert_include error.message, 'no identity to sign with'
     end
   end
 

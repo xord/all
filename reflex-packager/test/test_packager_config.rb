@@ -10,13 +10,15 @@ class TestPackagerConfig < Test::Unit::TestCase
 
   MAIN = File.basename(__FILE__)
 
-  def config(dir: __dir__, main: nil, parent: nil, stderr: nil, **hash)
+  def config(dir: __dir__, main: nil, parent: nil, stderr: nil, env: {}, **hash)
     main ||= MAIN
-    Config.new TEST_PROFILE, dir, {main: main, **hash}, stderr: stderr
+    with_env(ENV_TO_SIGN.merge env) do
+      Config.new TEST_PROFILE, dir, {main: main, **hash}, stderr: stderr
+    end
   end
 
   def load_config(dir, path = nil)
-    Config.load TEST_PROFILE, dir, path
+    with_env(ENV_TO_SIGN) {Config.load TEST_PROFILE, dir, path}
   end
 
   def stderr()
@@ -272,6 +274,9 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal '-',        config(macos: {codesign: {identity: nil}}).macos.codesign_identity
     assert_raise(RP::Error) {config(macos: {codesign: 2})}
     assert_raise(RP::Error) {config(macos: {codesign: {identity: {}}})}
+
+    assert_equal 'ID',       config(macos: {codesign: {identity: 1}}, env: {'APPLE_CODESIGN_IDENTITY' => 'ID'}).macos.codesign_identity
+    assert_equal '1',        config(macos: {codesign: {identity: 1}}, env: {'APPLE_CODESIGN_IDENTITY' => ''})  .macos.codesign_identity
   end
 
   def test_macos_codesign_team_id()
@@ -283,6 +288,9 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_nil               config(macos: {codesign: {team_id: nil}}).macos.codesign_team_id
     assert_raise(RP::Error) {config(macos: {codesign: 2})}
     assert_raise(RP::Error) {config(macos: {codesign: {team_id: {}}})}
+
+    assert_equal 'ID',       config(macos: {codesign: {team_id: 1}}, env: {'APPLE_TEAM_ID' => 'ID'}).macos.codesign_team_id
+    assert_equal '1',        config(macos: {codesign: {team_id: 1}}, env: {'APPLE_TEAM_ID' => ''})  .macos.codesign_team_id
   end
 
   def test_windows_console()

@@ -83,14 +83,6 @@ class TestPackagerWindows < Test::Unit::TestCase
     end
   end
 
-  def with_env(env, &block)
-    saved = env.map {|key, _| [key, ENV[key]]}
-    env.each {|key, value| value ? ENV[key] = value : ENV.delete(key)}
-    block.call
-  ensure
-    saved.each {|key, value| value ? ENV[key] = value : ENV.delete(key)}
-  end
-
   def build_path(dir, path = '')
     File.join dir, '.build', 'windows', path
   end
@@ -113,6 +105,9 @@ class TestPackagerWindows < Test::Unit::TestCase
         ].each do |path|
           assert File.exist?(build_path dir, path), "missing #{path}"
         end
+
+        error = assert_raise(RP::Error) {Windows.new(pkg.config, notarize: %i[submit]).package}
+        assert_include error.message, 'only for macos'
       end
     end
   end

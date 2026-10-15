@@ -1,4 +1,3 @@
-require 'open3'
 require 'rbconfig'
 require 'shellwords'
 require 'reflex/packager/platform'
@@ -37,6 +36,11 @@ module Reflex
       # Sizes of the icon of the executable, one image each in the ICO.
       #
       ICON_SIZES = [16, 32, 48, 256]
+
+      def package(generate_only: false)
+        raise Error, 'notarizing is only for macos' if notarize?
+        super
+      end
 
       def generate()
         copy_libraries
