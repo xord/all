@@ -367,7 +367,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal cruby, pkg.cruby_dir
       assert_include cmds.first, "v#{MacOS::CRUBY_VERSION}"
       assert_equal cruby,        cmds.first.last
-      assert_equal %w[rake download_or_build], cmds.last
+      assert_equal %w[rake download], cmds.last
+    end
+
+    fetching "macos: {cruby: 4.0.700}" do |pkg, _, cmds|
+      pkg.cruby_dir
+      assert_equal %w[rake download_or_build], cmds.last # with no task to download only
     end
 
     fetching "macos: {cruby: 1.2.3}" do |pkg, dir, cmds|

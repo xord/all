@@ -26,7 +26,7 @@ module Reflex
 
       # The CRuby used unless the config or CRUBY_PATH names another one.
       #
-      CRUBY_VERSION = '4.0.700'
+      CRUBY_VERSION = '4.0.701'
 
       TOOLS = {
         git:        'install Xcode command line tools: xcode-select --install',
@@ -381,8 +381,10 @@ module Reflex
           '--depth', '1', '--branch', "v#{version}", CRUBY_GIT, dir,
           chdir: build_dir
         # cruby has a Gemfile of its own, the one of the app must not be used
-        bundler = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}
-        run 'rake', 'download_or_build',
+        bundler       = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}
+        # the ones before 4.0.701 have no task to download only
+        download_only = Gem::Version.new(version) >= Gem::Version.new('4.0.701')
+        run 'rake', download_only ? 'download' : 'download_or_build',
           chdir: dir, env: {**bundler, 'RUBYOPT' => nil, 'os' => 'macos'}
         check_cruby dir
       end
