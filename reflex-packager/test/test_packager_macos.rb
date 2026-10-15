@@ -457,15 +457,15 @@ class TestPackagerMacOS < Test::Unit::TestCase
     # the tries to export the app notarized
     build = -> config, notarize, outs = [] do
       pkg                       = MacOS.new config, notarize: notarize
-      commands, captured, copied = [], [], []
+      commands, captured, copied, printed = [], [], [], []
       pkg.define_singleton_method(:check_tools) {|*|}
       pkg.define_singleton_method(:run)         {|*cmd, **| commands << cmd.join(' ')}
       pkg.define_singleton_method(:sleep)       {|*|}
-      pkg.define_singleton_method(:puts)        {|*|}
+      pkg.define_singleton_method(:puts)        {|str| printed << str}
       pkg.define_singleton_method(:copy_app)    {|app = nil| copied << app}
       pkg.define_singleton_method(:capture) {|*cmd, **| captured << cmd.join(' '); outs.shift}
       notarize == %i[export] ? pkg.package : pkg.build
-      [commands, captured, copied]
+      [commands, captured, copied, printed]
     end
 
     packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
@@ -483,17 +483,18 @@ class TestPackagerMacOS < Test::Unit::TestCase
       # no archive sent yet
       error = assert_raise(RP::Error) {build.call pkg.config, %i[export]}
       assert_include error.message, 'no archive sent'
-      FileUtils.mkdir_p File.join(dir, ".build/macos/#{pkg.target}.xcarchive")
+      FileUtils.mkdir_p File.join(dir, ".build/macos/#{pkg.target}.xcarchive/Submissions/ABC-123")
 
       commands, captured, copied = build.call pkg.config, all, outs.call
       assert_equal 1, commands.grep(/-exportArchive/).size
       assert_equal 3, captured.grep(/-exportNotarizedApp .* -exportPath .*\/Notarized$/).size
       assert_equal [notarized], copied
 
-      commands, captured, copied = build.call pkg.config, %i[submit]
+      commands, captured, copied, printed = build.call pkg.config, %i[submit]
       assert_equal 1, commands.grep(/-exportArchive/).size
       assert_empty captured
       assert_empty copied
+      assert_include printed, 'Submitted for the notarization: abc-123' # in lower case
 
       commands, captured, copied = build.call pkg.config, %i[export], outs.call
       assert_empty commands # not built

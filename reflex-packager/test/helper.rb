@@ -70,5 +70,5 @@ TEST_PROFILE = Reflex::Packager::Profile.new(
 #
 ENV_TO_SIGN = [
   *Reflex::Packager::MacOSConfig::CODESIGN_ENV_KEYS.values,
-  *Reflex::Packager::MacOS::AUTH_ENV_KEYS.values
+  *Reflex::Packager::AppStoreConnect::AUTH_ENV_KEYS.values
 ].to_h {[_1, nil]}

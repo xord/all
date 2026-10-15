@@ -2,6 +2,7 @@ require 'json'
 require 'rbconfig'
 require 'reflex/packager/platform'
 require 'reflex/packager/gems'
+require 'reflex/packager/app_store_connect'
 
 
 module Reflex
@@ -26,21 +27,6 @@ module Reflex
       # The CRuby used unless the config or CRUBY_PATH names another one.
       #
       CRUBY_VERSION = '4.0.700'
-
-      # The environment variables of the API key of App Store Connect, to
-      # sign the app on CI, where no account of Xcode is.
-      #
-      AUTH_ENV_KEYS = {
-        path:   'APPLE_API_KEY_PATH',
-        id:     'APPLE_API_KEY_ID',
-        issuer: 'APPLE_API_ISSUER_ID'
-      }
-
-      # Seconds to wait for the notarization in all, and between the tries
-      # to export the app notarized.
-      #
-      NOTARIZATION_TIMEOUT  = 60 * 60
-      NOTARIZATION_INTERVAL = 30
 
       TOOLS = {
         git:        'install Xcode command line tools: xcode-select --install',
@@ -94,6 +80,7 @@ module Reflex
           copy_app exported_app_path
         else
           export_app
+          puts "Submitted for the notarization: #{submission_id}"
           export_notarized_app if notarize.include? :export
         end
       end
@@ -249,6 +236,16 @@ module Reflex
           chdir: build_dir
       end
 
+      # The ID of the notarization the archive was submitted for last, in
+      # lower case as the notary service takes it.
+      #
+      def submission_id()
+        dir = File.join xcarchive_path, 'Submissions'
+        id  = Dir.exist?(dir) && Dir.children(dir).max_by {File.mtime File.join(dir, _1)}
+        raise Error, "no submission for the notarization in '#{xcarchive_path}'" unless id
+        id.downcase
+      end
+
       # Exports the app stapled with the ticket of the notarization into the
       # dist directory, waiting for Apple to check the app sent and to issue
       # the ticket, which takes some minutes.
@@ -264,7 +261,7 @@ module Reflex
           '-exportPath',  File.dirname(notarized_app_path),
           *auth_options
         ]
-        deadline = Time.now + NOTARIZATION_TIMEOUT
+        deadline = Time.now + AppStoreConnect::NOTARIZATION_TIMEOUT
         loop do
           out, ok = capture(*cmd, chdir: build_dir)
           break if ok
@@ -272,25 +269,18 @@ module Reflex
             out.match?(/processing and not ready|Ticket not found/)
           raise Error, 'timed out waiting for the notarization' if Time.now > deadline
           puts 'waiting for the notarization...'
-          sleep NOTARIZATION_INTERVAL
+          sleep AppStoreConnect::NOTARIZATION_INTERVAL
         end
         copy_app notarized_app_path
       end
 
       def auth_options()
-        names  = AUTH_ENV_KEYS.values_at :path, :id, :issuer
-        values = names.map {ENV[_1].then {|s| s unless s.to_s.empty?}}
-        return [] if values.none?
-
-        path, id, issuer = values
-        missing          = names.zip(values).filter_map {|name, value| name unless value}
-        raise Error, "no #{missing.join ' or '} with the others for the API key" unless
-          missing.empty?
-
+        creds = AppStoreConnect.credentials
+        return [] unless creds
         [
-          '-authenticationKeyPath',     File.expand_path(path),
-          '-authenticationKeyID',       id,
-          '-authenticationKeyIssuerID', issuer
+          '-authenticationKeyPath',     File.expand_path(creds[:path]),
+          '-authenticationKeyID',       creds[:id],
+          '-authenticationKeyIssuerID', creds[:issuer]
         ]
       end
 
