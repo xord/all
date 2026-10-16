@@ -278,7 +278,8 @@ module Reflex
 
       # Archives the app and exports it signed with Developer ID, by the
       # account of Xcode, or by the API key of App Store Connect that
-      # APPLE_API_KEY_PATH, APPLE_API_KEY_ID and APPLE_API_ISSUER_ID tell.
+      # APPLE_API_ISSUER_ID, APPLE_API_KEY_ID and APPLE_API_KEY_P8 or
+      # APPLE_API_KEY_PATH tell.
       #
       def export_app()
         xcodebuild 'archive', '-archivePath', xcarchive_path

@@ -20,15 +20,15 @@ on:
       # to sign the app with Developer ID and to notarize it, none for neither
       APPLE_TEAM_ID:
         required: false
+      APPLE_CODESIGN_P12: # the .p12 file of Developer ID in base64
+        required: false
+      APPLE_CODESIGN_P12_PASSWORD:
+        required: false
       APPLE_API_ISSUER_ID:
         required: false
       APPLE_API_KEY_ID:
         required: false
-      APPLE_API_KEY_P8:   # the .p8 file of App Store Connect as it is
-        required: false
-      APPLE_CODESIGN_P12: # the .p12 file of Developer ID in base64
-        required: false
-      APPLE_CODESIGN_P12_PASSWORD:
+      APPLE_API_KEY_P8: # the .p8 file of App Store Connect as it is
         required: false
 
 permissions:
@@ -118,9 +118,9 @@ jobs:
         id: submit
         if: steps.notarize.outputs.notarize == 'true'
         env:
-          APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}
           APPLE_CODESIGN_P12:          ${{ secrets.APPLE_CODESIGN_P12 }}
           APPLE_CODESIGN_P12_PASSWORD: ${{ secrets.APPLE_CODESIGN_P12_PASSWORD }}
+          APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}
         shell: bash # with pipefail, not to let tee hide the failure
         run: |
           bundle exec reflex package --pack --notarize-submit . | tee "$RUNNER_TEMP/submit.log"

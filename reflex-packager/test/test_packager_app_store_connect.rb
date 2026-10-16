@@ -36,7 +36,7 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     with_env ENV_TO_SIGN.merge(creds.to_h {[keys[_1], _2]}) do
       assert_equal creds, ASC.credentials
     end
-    with_env ENV_TO_SIGN.merge(keys[:key_path] => '/a.p8', keys[:key_id] => '') do
+    with_env ENV_TO_SIGN.merge(keys[:key_id] => '', keys[:key_path] => '/a.p8') do
       error = assert_raise(RP::Error) {ASC.credentials}
       assert_include error.message, keys[:key_id]
     end
@@ -46,7 +46,7 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     with_env ENV_TO_SIGN.merge(creds.to_h {[keys[_1], _2]}) do
       assert_equal creds, ASC.credentials
     end
-    with_env ENV_TO_SIGN.merge(keys[:key_id] => 'KEY', keys[:issuer_id] => 'ISSUER') do
+    with_env ENV_TO_SIGN.merge(keys[:issuer_id] => 'ISSUER', keys[:key_id] => 'KEY') do
       error = assert_raise(RP::Error) {ASC.credentials}
       assert_include error.message, "#{keys[:key_p8]} or #{keys[:key_path]}"
     end

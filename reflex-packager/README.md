@@ -239,11 +239,11 @@ jobs:
     uses: xord/reflex-packager/.github/workflows/package.yml@master
     secrets:
       APPLE_TEAM_ID:               ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_API_ISSUER_ID:         ${{ secrets.APPLE_API_ISSUER_ID }}
-      APPLE_API_KEY_ID:            ${{ secrets.APPLE_API_KEY_ID }}
-      APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}   # the .p8 file as it is
       APPLE_CODESIGN_P12:          ${{ secrets.APPLE_CODESIGN_P12 }} # the .p12 file in base64
       APPLE_CODESIGN_P12_PASSWORD: ${{ secrets.APPLE_CODESIGN_P12_PASSWORD }}
+      APPLE_API_ISSUER_ID:         ${{ secrets.APPLE_API_ISSUER_ID }}
+      APPLE_API_KEY_ID:            ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }} # the .p8 file as it is
 ```
 
 For `APPLE_CODESIGN_P12`, create the certificate of Developer ID in Xcode, by Settings → Accounts → Manage Certificates, export it by Keychain Access into a `.p12` file, and put it in base64 into the secret:

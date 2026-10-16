@@ -447,9 +447,9 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
 
     env = {
-      'APPLE_API_KEY_PATH'  => '/key.p8',
+      'APPLE_API_ISSUER_ID' => 'ISSUER',
       'APPLE_API_KEY_ID'    => 'KEY',
-      'APPLE_API_ISSUER_ID' => 'ISSUER'
+      'APPLE_API_KEY_PATH'  => '/key.p8'
     }
     packager "macos: {codesign: {team_id: ABCDE12345}}", env: env do |pkg, _|
       commands, _ = build.call pkg
