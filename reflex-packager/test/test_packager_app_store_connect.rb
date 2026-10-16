@@ -12,7 +12,7 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     Dir.mktmpdir do |dir|
       path = File.join dir, 'AuthKey.p8'
       File.write path, OpenSSL::PKey::EC.generate('prime256v1').to_pem
-      asc = ASC.new path: path, id: 'KEY', issuer: 'ISSUER'
+      asc = ASC.new issuer_id: 'ISSUER', key_id: 'KEY', key_path: path
       asc.define_singleton_method(:get) do |path|
         answers.fetch(path.delete_prefix '/notary/v2/').then {_1.is_a?(Proc) ? _1.call : _1}
       end
@@ -32,13 +32,23 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
       assert_nil ASC.credentials
       assert_raise(RP::Error) {ASC.new}
     end
-    creds = {path: '/a.p8', id: 'KEY', issuer: 'ISSUER'}
+    creds = {issuer_id: 'ISSUER', key_id: 'KEY', key_path: '/a.p8'}
     with_env ENV_TO_SIGN.merge(creds.to_h {[keys[_1], _2]}) do
       assert_equal creds, ASC.credentials
     end
-    with_env ENV_TO_SIGN.merge(keys[:path] => '/a.p8', keys[:id] => '') do
+    with_env ENV_TO_SIGN.merge(keys[:key_path] => '/a.p8', keys[:key_id] => '') do
       error = assert_raise(RP::Error) {ASC.credentials}
-      assert_include error.message, keys[:id]
+      assert_include error.message, keys[:key_id]
+    end
+
+    # by the content of the .p8 file, as a secret of CI
+    creds = {issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'}
+    with_env ENV_TO_SIGN.merge(creds.to_h {[keys[_1], _2]}) do
+      assert_equal creds, ASC.credentials
+    end
+    with_env ENV_TO_SIGN.merge(keys[:key_id] => 'KEY', keys[:issuer_id] => 'ISSUER') do
+      error = assert_raise(RP::Error) {ASC.credentials}
+      assert_include error.message, "#{keys[:key_p8]} or #{keys[:key_path]}"
     end
   end
 
@@ -53,6 +63,14 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
       r, s = decode[signature].unpack('a32a32').map {OpenSSL::BN.new _1, 2}
       der  = OpenSSL::ASN1::Sequence([OpenSSL::ASN1::Integer(r), OpenSSL::ASN1::Integer(s)]).to_der
       assert OpenSSL::PKey.read(File.read path).verify('SHA256', der, "#{header}.#{payload}")
+
+      # by the content of the .p8 file
+      p8 = File.read path
+      header, payload, signature = ASC.new(issuer_id: 'ISSUER', key_id: 'KEY', key_p8: p8)
+        .__send__(:token).split('.')
+      r, s = decode[signature].unpack('a32a32').map {OpenSSL::BN.new _1, 2}
+      der  = OpenSSL::ASN1::Sequence([OpenSSL::ASN1::Integer(r), OpenSSL::ASN1::Integer(s)]).to_der
+      assert OpenSSL::PKey.read(p8).verify('SHA256', der, "#{header}.#{payload}")
     end
   end
 

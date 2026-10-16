@@ -148,7 +148,7 @@ icon: icon.png
 | `macos.deployment_target` | `11.0` | Minimum macOS version |
 | `macos.archs` | `[arm64, x86_64]` | Target architectures |
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |
-| `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`; `APPLE_CODESIGN_IDENTITY` overrides it |
+| `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`, and `Developer ID Application` by the certificate in the keychain; `APPLE_CODESIGN_IDENTITY` overrides it |
 | `macos.codesign.team_id` | none | Development team ID; `APPLE_TEAM_ID` overrides it |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
 | `localizations` | none | `name` and `copyright` in other languages than English |
@@ -193,13 +193,26 @@ The scripts are compiled by the Ruby the package runs them on: on Windows, the o
 
 By default, the app is signed ad hoc, which runs on the Mac it is built on, but which macOS warns of when the app is downloaded. To have the app opened with no warning, sign it with Developer ID and have Apple notarize it.
 
-With `team_id` and the identity `-`, the app is signed with Developer ID by the certificate Apple manages for the team, so no certificate is needed in the keychain: the app is archived and exported by `xcodebuild`, with the hardened runtime. `xcodebuild` asks Apple for the certificate by the account of Xcode, or by an API key of App Store Connect, which the environment variables tell:
+With `team_id` and either of the identities below, the app is archived and exported by `xcodebuild`, signed with Developer ID and the hardened runtime:
+
+- With the identity `-`, by the certificate Apple manages for the team, by the account of Xcode, so no certificate is needed in the keychain
+- With the identity `Developer ID Application`, by the certificate in the keychain, as on CI
+
+The certificate can be given by the environment variables too, put into a keychain of its own only while the app is signed, as on CI, and the identity is `Developer ID Application` then:
 
 | Variable | Value |
 |-----|-----|
-| `APPLE_API_KEY_PATH` | Path to the private key file, `AuthKey_<ID>.p8` |
-| `APPLE_API_KEY_ID` | Key ID |
+| `APPLE_CODESIGN_P12` | The certificate with its private key, exported from the keychain into a `.p12` file, in base64 |
+| `APPLE_CODESIGN_P12_PASSWORD` | Password of the `.p12` file |
+
+Where no account of Xcode is, as on CI, Apple is asked by an API key of App Store Connect, which the environment variables tell:
+
+| Variable | Value |
+|-----|-----|
 | `APPLE_API_ISSUER_ID` | Issuer ID |
+| `APPLE_API_KEY_ID` | Key ID |
+| `APPLE_API_KEY_P8` | Content of the private key file, `AuthKey_<ID>.p8` |
+| `APPLE_API_KEY_PATH` | Path to the private key file, in place of `APPLE_API_KEY_P8` |
 
 The team ID can be given by `APPLE_TEAM_ID` in place of the config, as the identity by `APPLE_CODESIGN_IDENTITY`, to keep them out of the repository of the app.
 
@@ -225,13 +238,21 @@ jobs:
   release:
     uses: xord/reflex-packager/.github/workflows/package.yml@master
     secrets:
-      APPLE_TEAM_ID:       ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_API_KEY:       ${{ secrets.APPLE_API_KEY }}       # the content of the .p8 file
-      APPLE_API_KEY_ID:    ${{ secrets.APPLE_API_KEY_ID }}
-      APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+      APPLE_TEAM_ID:               ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_API_ISSUER_ID:         ${{ secrets.APPLE_API_ISSUER_ID }}
+      APPLE_API_KEY_ID:            ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}   # the .p8 file as it is
+      APPLE_CODESIGN_P12:          ${{ secrets.APPLE_CODESIGN_P12 }} # the .p12 file in base64
+      APPLE_CODESIGN_P12_PASSWORD: ${{ secrets.APPLE_CODESIGN_P12_PASSWORD }}
 ```
 
-Without the secrets, the app is packaged with no notarization, signed as the config tells.
+For `APPLE_CODESIGN_P12`, create the certificate of Developer ID in Xcode, by Settings → Accounts → Manage Certificates, export it by Keychain Access into a `.p12` file, and put it in base64 into the secret:
+
+```bash
+$ base64 -i DeveloperID.p12 | pbcopy
+```
+
+With `APPLE_TEAM_ID` but no `APPLE_CODESIGN_P12`, the workflow fails. Without the secrets, the app is packaged with no notarization, signed as the config tells.
 
 ### CRuby
 

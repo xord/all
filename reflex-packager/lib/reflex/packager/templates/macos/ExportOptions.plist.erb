@@ -5,7 +5,13 @@
 	<key>method</key>
 	<string>developer-id</string>
 	<key>signingStyle</key>
+<%- if cloud_signing? -%>
 	<string>automatic</string>
+<%- else -%>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string><%= codesign_identity.encode xml: :text %></string>
+<%- end -%>
 	<key>teamID</key>
 	<string><%= config.macos.codesign_team_id %></string>
 	<key>destination</key>

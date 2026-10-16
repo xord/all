@@ -11,7 +11,11 @@ settings:
     CURRENT_PROJECT_VERSION: <%= config.build_version.to_json %>
     ARCHS: <%= config.macos.archs.join ' ' %>
     ONLY_ACTIVE_ARCH: NO
-    CODE_SIGN_IDENTITY: <%= config.macos.codesign_identity.inspect %>
+<%- if signing_to_distribute? # Developer ID signs the app exported, not the archive -%>
+    CODE_SIGN_IDENTITY: "-"
+<%- else -%>
+    CODE_SIGN_IDENTITY: <%= codesign_identity.inspect %>
+<%- end -%>
 <%- if config.macos.codesign_team_id -%>
     DEVELOPMENT_TEAM: <%= config.macos.codesign_team_id %>
     ENABLE_HARDENED_RUNTIME: YES

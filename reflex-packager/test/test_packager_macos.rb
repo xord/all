@@ -412,13 +412,28 @@ class TestPackagerMacOS < Test::Unit::TestCase
   end
 
   def test_build_by_cloud_signing()
-    build = -> pkg do
-      commands, copied = [], []
+    # with the security commands captured, and the files the commands take
+    # while they run, which are temporary
+    build = -> pkg, fail: false do
+      commands, copied, securities, files = [], [], [], {}
       pkg.define_singleton_method(:check_tools) {|*|}
-      pkg.define_singleton_method(:run)         {|*cmd, **| commands << cmd}
       pkg.define_singleton_method(:copy_app)    {|app = nil| copied << app}
-      pkg.build
-      [commands.map {_1.join ' '}, copied]
+      pkg.define_singleton_method(:run) do |*cmd, **|
+        commands << cmd
+        cmd.each {files[_1] = File.read _1 if _1.end_with?('.p8') && File.file?(_1)}
+        raise RP::Error, 'failed' if fail && cmd.include?('-exportArchive')
+      end
+      pkg.define_singleton_method(:capture) do |*cmd, **|
+        securities << cmd.drop(1).join(' ')
+        files[cmd[2]] = File.binread cmd[2] if cmd[1] == 'import'
+        cmd.include?('list-keychains') && cmd.size == 4 ? ["  \"/login.keychain-db\"\n", true] : ['', true]
+      end
+      begin
+        pkg.build
+      rescue RP::Error
+        raise unless fail
+      end
+      [commands.map {_1.join ' '}, copied, securities, files]
     end
 
     packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
@@ -439,15 +454,63 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager "macos: {codesign: {team_id: ABCDE12345}}", env: env do |pkg, _|
       commands, _ = build.call pkg
       assert_equal 1, commands.grep(
-        /-authenticationKeyPath \/key\.p8 -authenticationKeyID KEY -authenticationKeyIssuerID ISSUER$/).size
+        /-authenticationKeyIssuerID ISSUER -authenticationKeyID KEY -authenticationKeyPath \/key\.p8$/).size
     end
     packager "macos: {codesign: {team_id: ABCDE12345}}", env: env.merge('APPLE_API_KEY_ID' => '') do |pkg, _|
       error = assert_raise(RP::Error) {build.call pkg}
       assert_include error.message, 'APPLE_API_KEY_ID'
     end
 
-    # the identity to sign with in the keychain, not the one managed
-    packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, _|
+    # Developer ID in the keychain, not the one managed, as CI needs
+    packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, dir|
+      options = pkg.__send__(:render, 'ExportOptions.plist.erb')
+      assert_include options, '<string>manual</string>'
+      assert_include options, "<key>signingCertificate</key>\n\t<string>Developer ID Application</string>"
+      assert_include pkg.__send__(:render, 'project.yml.erb'), 'CODE_SIGN_IDENTITY: "-"'
+
+      commands, copied = build.call pkg
+      assert_equal 1, commands.grep(/ archive -archivePath /).size
+      assert_equal 1, commands.grep(/-exportArchive /).size
+      assert_equal [File.join(dir, ".build/macos/Export/#{pkg.target}.app")], copied
+    end
+
+    # the certificate of Developer ID by the environment variables, as on CI,
+    # in a keychain only while exporting, even when failed to
+    p12 = {'APPLE_CODESIGN_P12' => ['P12'].pack('m0'), 'APPLE_CODESIGN_P12_PASSWORD' => 'PASS'}
+    packager "macos: {codesign: {team_id: ABCDE12345}}", env: p12 do |pkg, _|
+      assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>manual</string>'
+
+      [false, true].each do |fail|
+        commands, _, securities, files = build.call MacOS.new(pkg.config), fail: fail
+        assert_equal 1, commands.grep(/-exportArchive /).size
+        assert_equal [
+          'list-keychains -d user',
+          'create-keychain', 'set-keychain-settings', 'unlock-keychain', 'import',
+          'set-key-partition-list', 'list-keychains -d user -s',
+          'delete-keychain'
+        ], securities.map {_1[/^list-keychains -d user( -s)?|^\S+/]}
+        assert_match %r{^import .*/codesign\.p12 -k .*/codesign\.keychain-db -P PASS }, securities[4]
+        assert_match %r{^list-keychains -d user -s .*/codesign\.keychain-db /login\.keychain-db$},
+          securities[6] # with the others kept
+        assert_equal ['P12'], files.values
+        files.each_key {assert !File.exist?(_1)} # deleted
+      end
+    end
+
+    # the API key by the content of the .p8 file, as on CI, written only while
+    # exporting
+    p8 = {'APPLE_API_KEY_P8' => 'P8', 'APPLE_API_KEY_ID' => 'KEY', 'APPLE_API_ISSUER_ID' => 'ISSUER'}
+    packager "macos: {codesign: {team_id: ABCDE12345}}", env: p8 do |pkg, _|
+      commands, _, _, files = build.call pkg
+      assert_equal 1, commands.grep(%r{-authenticationKeyPath \S+/AuthKey_KEY\.p8$}).size
+      assert_equal ['P8'], files.values
+      files.each_key {assert !File.exist?(_1)}
+    end
+
+    # the other identities in the keychain, not archived
+    packager "macos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, _|
+      assert_include pkg.__send__(:render, 'project.yml.erb'), 'CODE_SIGN_IDENTITY: "Apple Development"'
+
       commands, copied = build.call pkg
       assert_empty commands.grep(/archive/i)
       assert_equal 1, commands.grep(/ build$/).size
@@ -520,9 +583,35 @@ class TestPackagerMacOS < Test::Unit::TestCase
       error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: %i[export]).package}
       assert_include error.message, 'no archive sent'
     end
-    packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, _|
+    packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, dir|
+      FileUtils.mkdir_p File.join(dir, ".build/macos/#{pkg.target}.xcarchive/Submissions/ABC-123")
+      commands, _, _, printed = build.call pkg.config, %i[submit]
+      assert_equal 1, commands.grep(/-exportArchive/).size
+      assert_include printed, 'Submitted for the notarization: abc-123'
+    end
+    packager "macos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, _|
       error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: all).package}
-      assert_include error.message, 'no identity to sign with'
+      assert_include error.message, 'Developer ID Application'
+    end
+
+    # the API key, which Apple refuses to sign with the certificate it manages
+    api = {'APPLE_API_ISSUER_ID' => 'ISSUER', 'APPLE_API_KEY_ID' => 'KEY', 'APPLE_API_KEY_P8' => 'P8'}
+    packager "macos: {codesign: {team_id: ABCDE12345}}", env: api do |pkg, _|
+      [[], all, %i[submit]].each do |notarize|
+        error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: notarize).package}
+        assert_include error.message, 'APPLE_CODESIGN_P12'
+      end
+
+      # only exporting, which signs nothing
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, notarize: %i[export]).package}
+      assert_include error.message, 'no archive sent'
+    end
+
+    # the certificate with no team
+    p12 = {'APPLE_CODESIGN_P12' => ['P12'].pack('m0')}
+    packager env: p12 do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config).package}
+      assert_include error.message, 'APPLE_TEAM_ID'
     end
   end
 

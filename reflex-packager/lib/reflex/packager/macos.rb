@@ -1,5 +1,7 @@
 require 'json'
 require 'rbconfig'
+require 'securerandom'
+require 'tmpdir'
 require 'reflex/packager/platform'
 require 'reflex/packager/gems'
 require 'reflex/packager/app_store_connect'
@@ -28,6 +30,20 @@ module Reflex
       #
       CRUBY_VERSION = '4.0.701'
 
+      # The identity of the certificate of Developer ID in the keychain, which
+      # the full name of the certificate starts with.
+      #
+      DEVELOPER_ID = 'Developer ID Application'
+
+      # The environment variables of the certificate of Developer ID to sign
+      # with, put into a keychain only while signing, as on CI: the .p12 file
+      # in base64, and the password of it.
+      #
+      CODESIGN_P12_ENV_KEYS = {
+        p12:      'APPLE_CODESIGN_P12',
+        password: 'APPLE_CODESIGN_P12_PASSWORD'
+      }
+
       TOOLS = {
         git:        'install Xcode command line tools: xcode-select --install',
         xcodegen:   'install with: brew install xcodegen',
@@ -48,9 +64,17 @@ module Reflex
         when notarize.include?(:submit) && !config.macos.codesign_team_id
           'notarizing needs the team to sign with, by macos.codesign.team_id' +
             " or #{MacOSConfig::CODESIGN_ENV_KEYS[:team_id]}"
-        when notarize.include?(:submit) && !cloud_signing?
-          'notarizing is only for the app signed by the certificate Apple manages,' +
-            ' with no identity to sign with'
+        when codesign_p12 && !config.macos.codesign_team_id
+          "signing by #{CODESIGN_P12_ENV_KEYS[:p12]} needs the team of the certificate," +
+            " by macos.codesign.team_id or #{MacOSConfig::CODESIGN_ENV_KEYS[:team_id]}"
+        when notarize.include?(:submit) && !signing_to_distribute?
+          'notarizing is only for the app signed with Developer ID, by the certificate' +
+            " Apple manages, with no identity to sign with, or by #{DEVELOPER_ID}"
+        when notarize != [:export] && !generate_only &&
+          cloud_signing? && AppStoreConnect.credentials
+          # FB16835802 of Apple, which may be fixed some day
+          'the API key is refused to sign with the certificate Apple manages,' +
+            " give the certificate by #{CODESIGN_P12_ENV_KEYS[:p12]}"
         end&.tap {raise Error, _1}
         notarize == [:export] ? export_notarized_app : super
       end
@@ -63,7 +87,7 @@ module Reflex
         write 'project.yml',         render('project.yml.erb')
         write 'src/main.mm',         render('main.mm.erb')
         write 'boot.rb',             render('boot.rb.erb')
-        write 'ExportOptions.plist', render('ExportOptions.plist.erb') if cloud_signing?
+        write 'ExportOptions.plist', render('ExportOptions.plist.erb') if signing_to_distribute?
         write_localizations
       end
 
@@ -72,7 +96,7 @@ module Reflex
         run 'xcodegen', 'generate', *('--quiet' unless verbose?), chdir: build_dir
         compile_scripts if pack?
         case
-        when !cloud_signing?
+        when !signing_to_distribute?
           xcodebuild
           copy_app
         when !notarize?
@@ -211,13 +235,45 @@ module Reflex
           chdir: build_dir
       end
 
+      # The identity to sign with, which is of Developer ID by the certificate
+      # APPLE_CODESIGN_P12 gives, with no other identity.
+      #
+      def codesign_identity()
+        identity = config.macos.codesign_identity
+        identity == '-' && codesign_p12 ? DEVELOPER_ID : identity
+      end
+
+      # The certificate APPLE_CODESIGN_P12 gives, as {data:, password:} with
+      # the data of the .p12 file decoded, or nil.
+      #
+      def codesign_p12()
+        p12, password = ENV.values_at(*CODESIGN_P12_ENV_KEYS.values)
+        return nil if p12.to_s.empty?
+        {data: p12.unpack1('m'), password: password.to_s}
+      end
+
+      # Whether the app is signed by the certificate of Developer ID in the
+      # keychain, as on CI, where Apple refuses the API key to sign with the
+      # one it manages.
+      #
+      def keychain_signing?()
+        config.macos.codesign_team_id && codesign_identity.start_with?(DEVELOPER_ID)
+      end
+
       # Whether the app is signed by the certificate of the team that Apple
       # manages for it, which needs no certificate in the keychain: the team
       # without the identity to sign with. The certificate signs the app
       # only when exported from its archive.
       #
       def cloud_signing?()
-        config.macos.codesign_team_id && config.macos.codesign_identity == '-'
+        config.macos.codesign_team_id && codesign_identity == '-'
+      end
+
+      # Whether the app is signed to be distributed, with Developer ID, which
+      # signs the app exported from its archive.
+      #
+      def signing_to_distribute?()
+        keychain_signing? || cloud_signing?
       end
 
       # Archives the app and exports it signed with Developer ID, by the
@@ -226,14 +282,18 @@ module Reflex
       #
       def export_app()
         xcodebuild 'archive', '-archivePath', xcarchive_path
-        run 'xcodebuild', *('-quiet' unless verbose?),
-          '-exportArchive',
-          '-archivePath',        xcarchive_path,
-          '-exportOptionsPlist', 'ExportOptions.plist',
-          '-exportPath',         'Export',
-          '-allowProvisioningUpdates',
-          *auth_options,
-          chdir: build_dir
+        with_codesign_keychain do
+          with_auth_options do |auth|
+            run 'xcodebuild', *('-quiet' unless verbose?),
+              '-exportArchive',
+              '-archivePath',        xcarchive_path,
+              '-exportOptionsPlist', 'ExportOptions.plist',
+              '-exportPath',         'Export',
+              '-allowProvisioningUpdates',
+              *auth,
+              chdir: build_dir
+          end
+        end
       end
 
       # The ID of the notarization the archive was submitted for last, in
@@ -255,33 +315,85 @@ module Reflex
           File.directory? xcarchive_path
 
         FileUtils.rm_rf File.dirname(notarized_app_path)
-        cmd = [
-          'xcodebuild', '-exportNotarizedApp',
-          '-archivePath', xcarchive_path,
-          '-exportPath',  File.dirname(notarized_app_path),
-          *auth_options
-        ]
-        deadline = Time.now + AppStoreConnect::NOTARIZATION_TIMEOUT
-        loop do
-          out, ok = capture(*cmd, chdir: build_dir)
-          break if ok
-          raise Error, "failed to export the notarized app:\n#{out}" unless
-            out.match?(/processing and not ready|Ticket not found/)
-          raise Error, 'timed out waiting for the notarization' if Time.now > deadline
-          puts 'waiting for the notarization...'
-          sleep AppStoreConnect::NOTARIZATION_INTERVAL
+        with_auth_options do |auth|
+          cmd = [
+            'xcodebuild', '-exportNotarizedApp',
+            '-archivePath', xcarchive_path,
+            '-exportPath',  File.dirname(notarized_app_path),
+            *auth
+          ]
+          deadline = Time.now + AppStoreConnect::NOTARIZATION_TIMEOUT
+          loop do
+            out, ok = capture(*cmd, chdir: build_dir)
+            break if ok
+            raise Error, "failed to export the notarized app:\n#{out}" unless
+              out.match?(/processing and not ready|Ticket not found/)
+            raise Error, 'timed out waiting for the notarization' if Time.now > deadline
+            puts 'waiting for the notarization...'
+            sleep AppStoreConnect::NOTARIZATION_INTERVAL
+          end
         end
         copy_app notarized_app_path
       end
 
-      def auth_options()
+      # Calls the block with the certificate APPLE_CODESIGN_P12 gives in a
+      # keychain of its own, which is deleted then, not to leave the private
+      # key on the machine, as a runner of CI of one's own.
+      #
+      def with_codesign_keychain(&block)
+        p12 = codesign_p12
+        return block.call unless p12
+
+        Dir.mktmpdir do |dir|
+          keychain_path = File.join dir, 'codesign.keychain-db'
+          p12_path      = File.join dir, 'codesign.p12'
+          secret        = SecureRandom.hex 16
+          others        = security('list-keychains', '-d', 'user').lines.map {_1.strip.delete '"'}
+          File.binwrite p12_path, p12[:data]
+          security 'create-keychain', '-p', secret, keychain_path
+          begin
+            security 'set-keychain-settings', '-lut', '21600', keychain_path
+            security 'unlock-keychain', '-p', secret, keychain_path
+            security 'import', p12_path, '-k', keychain_path, '-P', p12[:password],
+              '-T', '/usr/bin/codesign', '-T', '/usr/bin/security'
+            security 'set-key-partition-list', '-S', 'apple-tool:,apple:', '-s', '-k',
+              secret, keychain_path
+            security 'list-keychains', '-d', 'user', '-s', keychain_path, *others
+            block.call
+          ensure
+            # delete-keychain takes it out of the keychains to search too
+            security 'delete-keychain', keychain_path
+          end
+        end
+      end
+
+      # Runs the security command, not printing it with the passwords.
+      #
+      def security(*args)
+        out, ok = capture 'security', *args, chdir: config.dir
+        raise Error, "failed to run security #{args.first}:\n#{out}" unless ok
+        out
+      end
+
+      # Calls the block with the options of xcodebuild to authenticate by the
+      # API key, the .p8 file of which is written for the while when given
+      # by the content.
+      #
+      def with_auth_options(&block)
         creds = AppStoreConnect.credentials
-        return [] unless creds
-        [
-          '-authenticationKeyPath',     File.expand_path(creds[:path]),
-          '-authenticationKeyID',       creds[:id],
-          '-authenticationKeyIssuerID', creds[:issuer]
-        ]
+        return block.call [] unless creds
+
+        Dir.mktmpdir do |dir|
+          path = creds[:key_path]&.then {File.expand_path _1} ||
+            File.join(dir, "AuthKey_#{creds[:key_id]}.p8").tap {
+              File.write _1, creds[:key_p8], perm: 0600
+            }
+          block.call [
+            '-authenticationKeyIssuerID', creds[:issuer_id],
+            '-authenticationKeyID',       creds[:key_id],
+            '-authenticationKeyPath',     path
+          ]
+        end
       end
 
       def built_app_path()

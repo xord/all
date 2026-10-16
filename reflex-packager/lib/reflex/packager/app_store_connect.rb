@@ -17,12 +17,14 @@ module Reflex
     class AppStoreConnect
 
       # The environment variables of the API key of App Store Connect, for
-      # where no account of Xcode is, as on CI.
+      # where no account of Xcode is, as on CI: the private key by the .p8
+      # file, or by the content of it, as a secret of CI.
       #
       AUTH_ENV_KEYS = {
-        path:   'APPLE_API_KEY_PATH',
-        id:     'APPLE_API_KEY_ID',
-        issuer: 'APPLE_API_ISSUER_ID'
+        issuer_id: 'APPLE_API_ISSUER_ID',
+        key_id:    'APPLE_API_KEY_ID',
+        key_p8:    'APPLE_API_KEY_P8',
+        key_path:  'APPLE_API_KEY_PATH'
       }
 
       # Seconds to wait for the notarization in all, and between the tries
@@ -37,17 +39,20 @@ module Reflex
       HOST = 'https://appstoreconnect.apple.com'
 
       # The credentials of the API key the environment variables tell, as
-      # {path:, id:, issuer:}, or nil without any of them.
+      # {issuer_id:, key_id:, key_p8:, key_path:} with either of key_p8 and
+      # key_path, or nil without any of them.
       #
       def self.credentials()
         creds = AUTH_ENV_KEYS.transform_values {ENV[_1].then {|s| s unless s.to_s.empty?}}
         return nil if creds.values.none?
 
-        missing = AUTH_ENV_KEYS.filter_map {|name, env| env unless creds[name]}
-        raise Error, "no #{missing.join ' or '} with the others for the API key" unless
+        missing = %i[issuer_id key_id].filter_map {AUTH_ENV_KEYS[_1] unless creds[_1]}
+        missing << "#{AUTH_ENV_KEYS[:key_p8]} or #{AUTH_ENV_KEYS[:key_path]}" if
+          !creds[:key_p8] && !creds[:key_path]
+        raise Error, "no #{missing.join ', '} with the others for the API key" unless
           missing.empty?
 
-        creds
+        creds.compact
       end
 
       def initialize(credentials = self.class.credentials)
@@ -110,10 +115,10 @@ module Reflex
       #
       def token()
         creds   = @credentials
-        key     = OpenSSL::PKey.read File.read(File.expand_path creds[:path])
+        key     = OpenSSL::PKey.read(creds[:key_p8] || File.read(File.expand_path creds[:key_path]))
         now     = Time.now.to_i
-        header  = {alg: 'ES256', kid: creds[:id], typ: 'JWT'}
-        payload = {iss: creds[:issuer], iat: now, exp: now + 10 * 60, aud: 'appstoreconnect-v1'}
+        header  = {alg: 'ES256', kid: creds[:key_id], typ: 'JWT'}
+        payload = {iss: creds[:issuer_id], iat: now, exp: now + 10 * 60, aud: 'appstoreconnect-v1'}
         input   = [header, payload].map {base64url _1.to_json}.join '.'
         r, s    = OpenSSL::ASN1.decode(key.sign 'SHA256', input).value
           .map {_1.value.to_s(2).rjust 32, "\0"}

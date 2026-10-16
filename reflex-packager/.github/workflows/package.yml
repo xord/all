@@ -20,11 +20,15 @@ on:
       # to sign the app with Developer ID and to notarize it, none for neither
       APPLE_TEAM_ID:
         required: false
-      APPLE_API_KEY:
+      APPLE_API_ISSUER_ID:
         required: false
       APPLE_API_KEY_ID:
         required: false
-      APPLE_API_ISSUER_ID:
+      APPLE_API_KEY_P8:   # the .p8 file of App Store Connect as it is
+        required: false
+      APPLE_CODESIGN_P12: # the .p12 file of Developer ID in base64
+        required: false
+      APPLE_CODESIGN_P12_PASSWORD:
         required: false
 
 permissions:
@@ -32,8 +36,8 @@ permissions:
 
 env:
   APPLE_TEAM_ID:       ${{ secrets.APPLE_TEAM_ID }}
-  APPLE_API_KEY_ID:    ${{ secrets.APPLE_API_KEY_ID }}
   APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+  APPLE_API_KEY_ID:    ${{ secrets.APPLE_API_KEY_ID }}
 
 jobs:
   package:
@@ -110,20 +114,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bundle exec rake release
 
-      - &setup-api-key
-        name: setup API key
-        if: env.APPLE_TEAM_ID != ''
-        env:
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-        run: |
-          path="$RUNNER_TEMP/AuthKey.p8"
-          printf '%s' "$APPLE_API_KEY" > "$path"
-          chmod 600 "$path"
-          echo "APPLE_API_KEY_PATH=$path" >> "$GITHUB_ENV"
-
       - name: submit for notarization
         id: submit
         if: steps.notarize.outputs.notarize == 'true'
+        env:
+          APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_CODESIGN_P12:          ${{ secrets.APPLE_CODESIGN_P12 }}
+          APPLE_CODESIGN_P12_PASSWORD: ${{ secrets.APPLE_CODESIGN_P12_PASSWORD }}
         shell: bash # with pipefail, not to let tee hide the failure
         run: |
           bundle exec reflex package --pack --notarize-submit . | tee "$RUNNER_TEMP/submit.log"
@@ -161,11 +158,11 @@ jobs:
       - *setup-ruby
       - *setup-monorepo
       - *setup-gems
-      - *setup-api-key
 
       - name: wait
         env:
-          ID: ${{ needs.package.outputs.submission-id }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          ID:               ${{ needs.package.outputs.submission-id }}
         run: bundle exec reflex package --notarize-wait "$ID"
 
   export:
@@ -178,7 +175,6 @@ jobs:
       - *setup-ruby
       - *setup-monorepo
       - *setup-gems
-      - *setup-api-key
 
       - name: download xcarchive
         uses: actions/download-artifact@v4
@@ -190,6 +186,8 @@ jobs:
         run: mkdir -p .build/macos && tar xf "$RUNNER_TEMP/xcarchive.tar" -C .build/macos
 
       - name: export
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
         run: bundle exec reflex package --notarize-export .
 
       - *archive
