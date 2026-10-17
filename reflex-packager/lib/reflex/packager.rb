@@ -11,6 +11,7 @@ require 'reflex/packager/gems'
 require 'reflex/packager/app_store_connect'
 require 'reflex/packager/macos'
 require 'reflex/packager/windows'
+require 'reflex/packager/stores/itchio'
 require 'reflex/packager/cli'
 
 

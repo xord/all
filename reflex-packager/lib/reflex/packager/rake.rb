@@ -40,6 +40,16 @@ module Reflex
           release_on_github archive_path, tag: tag, notes: release_notes(tag)
         end
 
+        namespace :upload do
+          desc "upload #{relative[archive_path]} to itch.io"
+          task :itchio => archive_path do
+            project = config.upload.itchio_project ||
+              raise("no upload.itchio.project in #{REFLEX.config_files.first}")
+            Stores::Itchio.new(project).upload archive_path,
+              channel: Packager.default_platform.to_s, version: config.version
+          end
+        end
+
         task :clean do
           rm_rf platform.dist_dir
         end

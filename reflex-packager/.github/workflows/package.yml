@@ -30,6 +30,9 @@ on:
         required: false
       APPLE_API_KEY_P8: # the .p8 file of App Store Connect as it is
         required: false
+      # to upload the app to itch.io on a release, upload.itchio.project of the config
+      BUTLER_API_KEY:
+        required: false
 
 permissions:
   contents: write
@@ -141,6 +144,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bundle exec rake release
 
+      - &upload-itchio
+        name: upload to itch.io
+        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'package') &&
+          github.ref_type == 'tag'
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          [ -n "$BUTLER_API_KEY" ] || exit 0 # not to upload with no key
+          arch=$(uname -m | sed 's/x86_64/amd64/')
+          curl -sSfL -o "$RUNNER_TEMP/butler.zip" \
+            "https://broth.itch.zone/butler/darwin-$arch/LATEST/archive/default"
+          unzip -q "$RUNNER_TEMP/butler.zip" -d "$RUNNER_TEMP/butler"
+          PATH="$RUNNER_TEMP/butler:$PATH" bundle exec rake upload:itchio
+
       - name: submit for notarization
         id: submit
         if: steps.notarize.outputs.notarize == 'true'
@@ -224,3 +241,4 @@ jobs:
       - *archive
       - *upload
       - *release
+      - *upload-itchio

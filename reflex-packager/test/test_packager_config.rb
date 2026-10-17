@@ -305,6 +305,17 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config(windows: {console: {}})}
   end
 
+  def test_upload_itchio_project()
+    assert_nil               config()                                      .upload.itchio_project
+    assert_nil               config(upload: {})                            .upload.itchio_project
+    assert_nil               config(upload: {itchio: {}})                  .upload.itchio_project
+    assert_equal 'a/b-c_1',  config(upload: {itchio: {project: 'a/b-c_1'}}).upload.itchio_project
+    assert_raise(RP::Error) {config(upload: {itchio: 'a/b'})}
+    assert_raise(RP::Error) {config(upload: {itchio: {project: 'a'}})}
+    assert_raise(RP::Error) {config(upload: {itchio: {project: 'a/b/c'}})}
+    assert_raise(RP::Error) {config(upload: {itchio: {project: 'A/b'}})} # lower case only
+  end
+
   def test_warn_unknown_key()
     e = stderr
 

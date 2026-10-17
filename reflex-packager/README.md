@@ -130,6 +130,10 @@ icon: icon.png
 # windows:
 #   console: false
 
+# upload:
+#   itchio:
+#     project: user/game
+
 # localizations:
 #   ja:
 #     name: マイアプリ
@@ -151,6 +155,7 @@ icon: icon.png
 | `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`, and `Developer ID Application` by the certificate in the keychain; `APPLE_CODESIGN_IDENTITY` overrides it |
 | `macos.codesign.team_id` | none | Development team ID; `APPLE_TEAM_ID` overrides it |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
+| `upload.itchio.project` | none | Project of itch.io to upload the app to, as `user/game` of `https://user.itch.io/game` |
 | `localizations` | none | `name` and `copyright` in other languages than English |
 
 ### Versions
@@ -229,6 +234,14 @@ The notarization can be split into the steps, so as not to keep a Mac waiting, a
 2. `--notarize-wait <ID>` waits for Apple to check the app, by the API key, on any system
 3. `--notarize-export` exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
 
+### Uploading to itch.io
+
+With `upload.itchio.project` in the config, `rake upload:itchio` uploads the zip of the app, archived if not yet, by [butler](https://itch.io/docs/butler/), into the channel of the platform, as `macos` or `windows`, with the version of the app. butler uploads it as the user `butler login` logged in, or by the API key in `BUTLER_API_KEY`, made at https://itch.io/user/settings/api-keys, as on CI. Download butler of the platform from https://broth.itch.zone/butler, not by `brew install butler`, which is another app:
+
+```bash
+$ rake upload:itchio
+```
+
 ### Packaging on GitHub Actions
 
 The workflow `.github/workflows/package.yml` of this repository packages the app on GitHub Actions, called by the workflow of the app, and releases it when run by a tag. With the secrets below, the app is notarized: a job on macOS submits it, one on Linux, which is cheaper, waits for it, and one on macOS again exports it.
@@ -253,6 +266,8 @@ $ base64 -i DeveloperID.p12 | pbcopy
 ```
 
 With `APPLE_TEAM_ID` but no `APPLE_CODESIGN_P12`, the workflow fails. Without the secrets, the app is packaged with no notarization, signed as the config tells.
+
+With `BUTLER_API_KEY` in the secrets too, the app released by a tag is uploaded to itch.io by `rake upload:itchio`, after it is released on GitHub.
 
 ### CRuby
 

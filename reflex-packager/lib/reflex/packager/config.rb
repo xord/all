@@ -27,7 +27,8 @@ module Reflex
           icon:      nil,
           files:     nil,
           macos:   MacOSConfig.defaults,
-          windows: WindowsConfig.defaults
+          windows: WindowsConfig.defaults,
+          upload:  UploadConfig.defaults
         }
       end
 
@@ -72,13 +73,14 @@ module Reflex
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
         @macos     = MacOSConfig.new   hash[:macos]
         @windows   = WindowsConfig.new hash[:windows]
+        @upload    = UploadConfig.new  hash[:upload]
 
         @localizations = localize localizations, stderr: stderr
         validate
       end
 
       attr_reader :profile, :dir, :name, :bundle_id, :version, :build, :copyright,
-        :main, :icon, :files, :macos, :windows
+        :main, :icon, :files, :macos, :windows, :upload
 
       # The values that differ by language, in English, the language of the
       # ones out of localizations, and in each language of the localizations
@@ -305,6 +307,36 @@ module Reflex
       end
 
     end# WindowsConfig
+
+
+    # Configuration of the stores to upload the app to.
+    #
+    class UploadConfig
+
+      def self.defaults()
+        {
+          itchio: {
+            project: nil
+          }
+        }
+      end
+
+      def initialize(hash)
+        @itchio_project = hash[:itchio][:project]&.to_s
+        validate
+      end
+
+      # The project of itch.io to upload the app to, as user/game of
+      # https://user.itch.io/game, which butler takes.
+      #
+      attr_reader :itchio_project
+
+      def validate()
+        raise Error, "invalid upload.itchio.project: '#{@itchio_project}'" if
+          @itchio_project && @itchio_project !~ %r{\A[a-z0-9_\-]+/[a-z0-9_\-]+\z}
+      end
+
+    end# UploadConfig
 
 
     # Raised on invalid configuration or packaging failure.

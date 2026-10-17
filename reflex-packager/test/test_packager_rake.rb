@@ -48,6 +48,33 @@ class TestPackagerRake < Test::Unit::TestCase
     end
   end
 
+  def test_upload_itchio()
+    application do |dir|
+      archive = File.join dir, 'dist/MyGame-1.2.3-macos-universal.zip'
+      stub Gem, :win_platform?, false do
+        package_application
+      end
+      assert_equal [archive], ::Rake::Task['upload:itchio'].prerequisites
+      assert_include ::Rake::Task['upload:itchio'].comment, 'itch.io'
+      # only the actions of the task, not building the zip it takes
+      error = assert_raise(RuntimeError) {::Rake::Task['upload:itchio'].execute}
+      assert_include error.message, 'upload.itchio.project'
+
+      ::Rake::Task.clear
+      File.write 'reflex.yml', "name: My Game\nupload: {itchio: {project: user/game}}\n"
+      uploads  = []
+      uploader = Object.new
+      uploader.define_singleton_method(:upload) {|*args, **kwargs| uploads << [args, kwargs]}
+      stub Gem, :win_platform?, false do
+        package_application
+        stub Reflex::Packager::Stores::Itchio, :new, uploader do
+          ::Rake::Task['upload:itchio'].execute
+        end
+      end
+      assert_equal [[[archive], {channel: 'macos', version: '1.2.3'}]], uploads
+    end
+  end
+
   def test_release_notes()
     application do
       File.write 'ChangeLog.md', "# My Game ChangeLog\n\n\n## [v1.2.3] - 2026-10-13\n\n- Add a\n"
