@@ -44,7 +44,7 @@ jobs:
 
       - name: mesa
         if: runner.os == 'windows'
-        run: ruby -I.github/workflows -rutils -e 'setup_mesa'
+        run: ruby -Ixot/lib -rxot/rake -e 'setup_mesa'
 
       - name: test
         if: runner.os == 'macos'

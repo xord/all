@@ -37,7 +37,8 @@ class TestRakeGitHub < Test::Unit::TestCase
         define_singleton_method(:win32?) {win32} # whatever the platform running this
 
         setup_monorepo 'v1', 'xot', 'rays'
-        assert_include commands, ['git', 'fetch', '-q', '--depth', '1', 'https://github.com/xord/all.git', 'v1']
+        assert_include commands,
+          ['git', 'fetch', '-q', '--depth', '1', 'https://github.com/xord/all.git', 'v1']
         assert_include commands, ['ln', '-snf', 'all/rays', '../rays']
         assert_equal   ['cd ../all/xot && rake ext', 'cd ../all/rays && rake ext'],
           commands.map {_1.first.strip}.grep(/rake ext$/)
@@ -53,6 +54,25 @@ class TestRakeGitHub < Test::Unit::TestCase
 
         assert_raise(RuntimeError) {setup_monorepo 'master'}
       end
+    end
+  end
+
+  def test_setup_mesa()
+    Dir.mktmpdir do |dir|
+      commands = []
+      define_singleton_method(:sh) {|*args| commands << args}
+      env, ENV['GITHUB_ENV'] = ENV['GITHUB_ENV'], File.join(dir, 'env')
+
+      setup_mesa '1.2.3'
+      assert_equal [
+        ['curl', '-sSfL', '-o', 'mesa.7z',
+          'https://github.com/pal1000/mesa-dist-win/releases/download/1.2.3/mesa3d-1.2.3-release-msvc.7z'],
+        ['7z', 'x', 'mesa.7z'],
+        ['powershell.exe', '.\\systemwidedeploy.cmd', '1']
+      ], commands
+      assert_equal "GALLIUM_DRIVER=llvmpipe\n", File.read(ENV['GITHUB_ENV'])
+    ensure
+      ENV['GITHUB_ENV'] = env
     end
   end
 

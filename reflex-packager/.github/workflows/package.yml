@@ -285,6 +285,10 @@ jobs:
       - *cache-monorepo
       - *setup-monorepo
       - *setup-gems
+
+      - name: setup mesa
+        run: bundle exec ruby -rxot/rake -e 'setup_mesa'
+
       - *package
       - *archive
       - *upload
