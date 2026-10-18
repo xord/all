@@ -92,6 +92,15 @@ module Reflex
         copy_dist
       end
 
+      # The command to zip the packaged app into archive_path, with its
+      # folder, by the tar of Windows, which writes a zip by the extension.
+      # The tar of MSYS2 or git, which may come first on PATH, cannot.
+      #
+      def archive_command()
+        tar = File.join ENV['SystemRoot'] || 'C:/Windows', 'System32', 'tar.exe'
+        [tar, '-a', '-c', '-f', archive_path, '-C', dist_dir, File.basename(dist_path)]
+      end
+
       # The architecture is the one of the ruby the executable is made with.
       #
       def archive_platform(rbconfig = RbConfig::CONFIG)

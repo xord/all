@@ -55,8 +55,15 @@ module Xot
     private
 
     def link_monorepo(libraries, ext: true)
-      libraries.each {|lib| sh 'ln', '-snf', "#{File.basename MONOREPO_DIR}/#{lib}", "../#{lib}"}
-      libraries.each {|lib| sh %( cd ../#{lib} && rake ext )} if ext
+      libraries.each {|lib| sh %( cd #{MONOREPO_DIR}/#{lib} && rake ext )} if ext
+      libraries.each do |lib|
+        if win32?
+          rm_rf "../#{lib}"
+          cp_r "#{MONOREPO_DIR}/#{lib}", "../#{lib}"
+        else
+          sh 'ln', '-snf', "#{File.basename MONOREPO_DIR}/#{lib}", "../#{lib}"
+        end
+      end
     end
 
     def fetch_monorepo(uuid)

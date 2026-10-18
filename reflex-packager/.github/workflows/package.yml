@@ -3,6 +3,10 @@ name: Package
 on:
   workflow_call:
     inputs:
+      platforms:
+        description: 'the platforms to package the app for, of macos and windows'
+        type: string
+        default: macos windows
       ruby-version:
         type: string
       all-ref:
@@ -43,13 +47,31 @@ env:
   APPLE_API_KEY_ID:    ${{ secrets.APPLE_API_KEY_ID }}
 
 jobs:
-  package:
+  prepare:
+    runs-on: ubuntu-latest
+
+    outputs:
+      # for all the jobs to take the same commit, even if all-ref moves on
+      monorepo-commit: ${{ steps.monorepo-commit.outputs.commit }}
+
+    steps:
+      - name: monorepo commit
+        id: monorepo-commit
+        if: inputs.all-ref
+        env:
+          REF: ${{ inputs.all-ref }}
+        run: |
+          commit=$(git ls-remote https://github.com/xord/all.git "$REF" | tail -1 | cut -f1)
+          echo "commit=${commit:-$REF}" >> "$GITHUB_OUTPUT"
+
+  macos-package:
+    needs: prepare
+    if: contains(inputs.platforms, 'macos')
     runs-on: macos-latest
 
     outputs:
-      monorepo-commit: ${{ steps.prepare-monorepo.outputs.commit }}
-      notarize:        ${{ steps.notarize.outputs.notarize }}
-      submission-id:   ${{ steps.submit.outputs.id }}
+      notarize:      ${{ steps.notarize.outputs.notarize }}
+      submission-id: ${{ steps.submit.outputs.id }}
 
     steps:
       - &checkout
@@ -73,18 +95,15 @@ jobs:
         id: prepare-monorepo
         if: inputs.all-ref
         env:
-          REF:         ${{ needs.package.outputs.monorepo-commit || inputs.all-ref }}
+          COMMIT:      ${{ needs.prepare.outputs.monorepo-commit }}
           LIBS:        ${{ inputs.libraries }}
           RUBY_PREFIX: ${{ steps.ruby.outputs.ruby-prefix }}
           RUBYLIB:     ${{ runner.temp }}/xot/lib
         run: |
           git clone -q --depth 1 https://github.com/xord/xot.git "$RUNNER_TEMP/xot"
           dir=$(ruby -rxot/rake -e 'puts File.expand_path MONOREPO_DIR')
-          commit=$(git ls-remote https://github.com/xord/all.git "$REF" | tail -1 | cut -f1)
-          commit=${commit:-$REF}
           echo "dir=$dir"                                    >> "$GITHUB_OUTPUT"
-          echo "commit=$commit"                              >> "$GITHUB_OUTPUT"
-          echo "cache-key-suffix=$commit-$LIBS-$RUBY_PREFIX" >> "$GITHUB_OUTPUT"
+          echo "cache-key-suffix=$COMMIT-$LIBS-$RUBY_PREFIX" >> "$GITHUB_OUTPUT"
 
       - &cache-monorepo
         name: cache monorepo
@@ -98,7 +117,7 @@ jobs:
         name: setup monorepo
         if: inputs.all-ref
         env:
-          COMMIT:  ${{ steps.prepare-monorepo.outputs.commit }}
+          COMMIT:  ${{ needs.prepare.outputs.monorepo-commit }}
           LIBS:    ${{ inputs.libraries }}
           RUBYLIB: ${{ runner.temp }}/xot/lib
         run: ruby -rxot/rake -e 'setup_monorepo(*ARGV)' "$COMMIT" $LIBS
@@ -114,21 +133,22 @@ jobs:
         id: notarize
         run: echo "notarize=${{ env.APPLE_TEAM_ID != '' }}" >> "$GITHUB_OUTPUT"
 
-      - name: package
+      - &package
+        name: package
         if: steps.notarize.outputs.notarize != 'true'
         run: bundle exec rake package
 
       - &archive
         name: archive
         id: archive
-        if: steps.notarize.outputs.notarize != 'true' || github.job != 'package'
+        if: steps.notarize.outputs.notarize != 'true' || github.job != 'macos-package'
         run: |
           bundle exec rake archive
           echo "name=$(basename dist/*.zip .zip)" >> "$GITHUB_OUTPUT"
 
       - &upload
         name: upload
-        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'package') &&
+        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'macos-package') &&
           github.ref_type != 'tag' && inputs.retention-days > 0
         uses: actions/upload-artifact@v4
         with:
@@ -138,7 +158,7 @@ jobs:
 
       - &release
         name: release
-        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'package') &&
+        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'macos-package') &&
           github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -146,17 +166,19 @@ jobs:
 
       - &upload-itchio
         name: upload to itch.io
-        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'package') &&
+        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'macos-package') &&
           github.ref_type == 'tag'
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
           [ -n "$BUTLER_API_KEY" ] || exit 0 # not to upload with no key
+          os=$([ "$RUNNER_OS" = Windows ] && echo windows || echo darwin)
           arch=$(uname -m | sed 's/x86_64/amd64/')
-          curl -sSfL -o "$RUNNER_TEMP/butler.zip" \
-            "https://broth.itch.zone/butler/darwin-$arch/LATEST/archive/default"
-          unzip -q "$RUNNER_TEMP/butler.zip" -d "$RUNNER_TEMP/butler"
-          PATH="$RUNNER_TEMP/butler:$PATH" bundle exec rake upload:itchio
+          dir=$(cd "$RUNNER_TEMP" && pwd)/butler # as /d/a/_temp on Windows, for PATH
+          curl -sSfL -o "$dir.zip" \
+            "https://broth.itch.zone/butler/$os-$arch/LATEST/archive/default"
+          unzip -q "$dir.zip" -d "$dir"
+          PATH="$dir:$PATH" bundle exec rake upload:itchio
 
       - name: submit for notarization
         id: submit
@@ -184,10 +206,9 @@ jobs:
           path: ${{ runner.temp }}/xcarchive.tar
           retention-days: 1
 
-  wait:
-    name: wait until notarized
-    needs: package
-    if: needs.package.outputs.notarize == 'true'
+  macos-wait:
+    needs: [prepare, macos-package]
+    if: needs.macos-package.outputs.notarize == 'true'
     runs-on: ubuntu-latest # cheaper than macos
 
     steps:
@@ -208,12 +229,11 @@ jobs:
       - name: wait
         env:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
-          ID:               ${{ needs.package.outputs.submission-id }}
+          ID:               ${{ needs.macos-package.outputs.submission-id }}
         run: bundle exec reflex package --notarize-wait "$ID"
 
-  export:
-    name: export notarized
-    needs: [package, wait]
+  macos-export:
+    needs: [prepare, macos-package, macos-wait]
     runs-on: macos-latest
 
     steps:
@@ -238,6 +258,34 @@ jobs:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
         run: bundle exec reflex package --notarize-export .
 
+      - *archive
+      - *upload
+      - *release
+      - *upload-itchio
+
+  windows-package:
+    needs: prepare
+    if: contains(inputs.platforms, 'windows')
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash # as the steps shared with the jobs on macos are written
+
+    steps:
+      - *checkout
+      - *setup-ruby
+
+      - name: setup packages
+        run: |
+          pacman -S --noconfirm --needed \
+            "$MINGW_PACKAGE_PREFIX-glew" "$MINGW_PACKAGE_PREFIX-openal"
+
+      - *prepare-monorepo
+      - *cache-monorepo
+      - *setup-monorepo
+      - *setup-gems
+      - *package
       - *archive
       - *upload
       - *release

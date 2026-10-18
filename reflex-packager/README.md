@@ -244,7 +244,7 @@ $ rake upload:itchio
 
 ### Packaging on GitHub Actions
 
-The workflow `.github/workflows/package.yml` of this repository packages the app on GitHub Actions, called by the workflow of the app, and releases it when run by a tag. With the secrets below, the app is notarized: a job on macOS submits it, one on Linux, which is cheaper, waits for it, and one on macOS again exports it.
+The workflow `.github/workflows/package.yml` of this repository packages the app on GitHub Actions, called by the workflow of the app, and releases it when run by a tag. It packages the app for macOS and Windows, or the ones in its input `platforms`, as `platforms: macos`. With the secrets below, the app for macOS is notarized: a job on macOS submits it, one on Linux, which is cheaper, waits for it, and one on macOS again exports it. The app for Windows is not signed.
 
 ```yaml
 jobs:

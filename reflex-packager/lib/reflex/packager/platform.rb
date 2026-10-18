@@ -110,6 +110,12 @@ module Reflex
         File.join dist_dir, target
       end
 
+      # The command to zip the packaged app into archive_path.
+      #
+      def archive_command()
+        raise "#{self.class} must implement #{__method__}"
+      end
+
       # The zip of the packaged app to hand out, in dist_dir.
       #
       def archive_path()

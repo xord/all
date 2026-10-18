@@ -600,6 +600,12 @@ class TestPackagerWindows < Test::Unit::TestCase
       assert_match %r{^#{dist}/MyApp-1\.2\.3-windows-(x64|arm64)\.zip$}, pkg.archive_path
       assert_equal 'windows-x64',   pkg.archive_platform('host_cpu' => 'x86_64')
       assert_equal 'windows-arm64', pkg.archive_platform('host_cpu' => 'aarch64')
+
+      with_env 'SystemRoot' => 'C:\Windows' do
+        assert_equal [
+          'C:\Windows/System32/tar.exe', '-a', '-c', '-f', pkg.archive_path, '-C', dist, 'MyApp'
+        ], pkg.archive_command
+      end
     end
   end
 

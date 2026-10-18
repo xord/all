@@ -35,8 +35,19 @@ class TestRakeGitHub < Test::Unit::TestCase
         setup_monorepo 'v1', 'xot', 'rays'
         assert_include commands, ['git', 'fetch', '-q', '--depth', '1', 'https://github.com/xord/all.git', 'v1']
         assert_include commands, ['ln', '-snf', 'all/rays', '../rays']
-        assert_equal   ['cd ../xot && rake ext', 'cd ../rays && rake ext'],
+        assert_equal   ['cd ../all/xot && rake ext', 'cd ../all/rays && rake ext'],
           commands.map {_1.first.strip}.grep(/rake ext$/)
+
+        commands.clear
+        define_singleton_method(:win32?) {true}
+        define_singleton_method(:rm_rf)  {|*args| commands << [:rm_rf, *args]}
+        define_singleton_method(:cp_r)   {|*args| commands << [:cp_r,  *args]}
+        setup_monorepo 'v1', 'rays'
+        assert_equal [
+          'cd ../all/rays && rake ext',
+          [:rm_rf, '../rays'],
+          [:cp_r,  '../all/rays', '../rays']
+        ], commands.last(3).map {_1.first.is_a?(String) ? _1.first.strip : _1}
 
         assert_raise(RuntimeError) {setup_monorepo 'master'}
       end

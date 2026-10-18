@@ -64,8 +64,7 @@ module Reflex
         end
 
         file archive_path => app_path do
-          # ditto keeps the symlinks and the signature of the app
-          sh 'ditto', '-c', '-k', '--keepParent', app_path, archive_path
+          sh(*platform.archive_command)
         end
       end
 

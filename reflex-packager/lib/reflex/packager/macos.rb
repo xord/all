@@ -113,6 +113,13 @@ module Reflex
         "#{super}.app"
       end
 
+      # The command to zip the packaged app into archive_path, by ditto,
+      # which keeps the symlinks and the signature of the app.
+      #
+      def archive_command()
+        ['ditto', '-c', '-k', '--keepParent', dist_path, archive_path]
+      end
+
       def archive_platform()
         archs = config.macos.archs
         "macos-#{archs.size == 1 ? archs.first : 'universal'}"

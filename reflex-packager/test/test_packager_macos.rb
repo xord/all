@@ -637,6 +637,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
       dist = File.join dir, 'dist'
       assert_equal "#{dist}/MyApp.app",                       pkg.dist_path
       assert_equal "#{dist}/MyApp-1.2.3-macos-universal.zip", pkg.archive_path
+      assert_equal ['ditto', '-c', '-k', '--keepParent', pkg.dist_path, pkg.archive_path],
+        pkg.archive_command
     end
     packager("macos: {archs: [arm64]}") {|pkg, _| assert_equal 'macos-arm64', pkg.archive_platform}
   end
