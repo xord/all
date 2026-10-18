@@ -84,6 +84,18 @@ module Reflex
         build unless generate_only
       end
 
+      # Generates the files to build the app from, in build_dir.
+      #
+      def generate()
+        raise "#{self.class} must implement #{__method__}"
+      end
+
+      # Builds the app from the files generated, into dist_path.
+      #
+      def build()
+        raise "#{self.class} must implement #{__method__}"
+      end
+
       def build_dir()
         File.join config.dir, '.build', platform_name
       end
@@ -126,6 +138,13 @@ module Reflex
       end
 
       private
+
+      # The name of the platform, for the build directory, the templates and
+      # the zip of the app.
+      #
+      def platform_name()
+        raise "#{self.class} must implement #{__method__}"
+      end
 
       # Left out when copying a library: a gem build leaves its binaries in
       # lib/, while a package links the extensions in, and the Ruby of a
