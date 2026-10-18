@@ -30,7 +30,11 @@ class TestRakeGitHub < Test::Unit::TestCase
       FileUtils.mkdir_p %W[#{dir}/app #{dir}/all]
       Dir.chdir "#{dir}/app" do
         commands = []
-        define_singleton_method(:sh) {|*args| commands << args}
+        win32    = false
+        define_singleton_method(:sh)     {|*args| commands << args}
+        define_singleton_method(:rm_rf)  {|*args| commands << [:rm_rf, *args]}
+        define_singleton_method(:cp_r)   {|*args| commands << [:cp_r,  *args]}
+        define_singleton_method(:win32?) {win32} # whatever the platform running this
 
         setup_monorepo 'v1', 'xot', 'rays'
         assert_include commands, ['git', 'fetch', '-q', '--depth', '1', 'https://github.com/xord/all.git', 'v1']
@@ -39,9 +43,7 @@ class TestRakeGitHub < Test::Unit::TestCase
           commands.map {_1.first.strip}.grep(/rake ext$/)
 
         commands.clear
-        define_singleton_method(:win32?) {true}
-        define_singleton_method(:rm_rf)  {|*args| commands << [:rm_rf, *args]}
-        define_singleton_method(:cp_r)   {|*args| commands << [:cp_r,  *args]}
+        win32 = true
         setup_monorepo 'v1', 'rays'
         assert_equal [
           'cd ../all/rays && rake ext',
