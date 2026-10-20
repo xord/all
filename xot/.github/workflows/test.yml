@@ -38,11 +38,10 @@ jobs:
 
       - name: setup monorepo
         if: inputs.all-ref
-        env:
-          RUBYLIB: ${{ runner.temp }}/xot/lib
-          REF:     ${{ inputs.all-ref }}
-          LIBS:    ${{ inputs.libraries }}
-        run: ruby -rxot/rake -e 'setup_monorepo(*ARGV)' "$REF" $LIBS
+        uses: xord/xot/.github/actions/setup-monorepo@master
+        with:
+          ref:       ${{ inputs.all-ref }}
+          libraries: ${{ inputs.libraries }}
 
       - name: setup gems
         env:

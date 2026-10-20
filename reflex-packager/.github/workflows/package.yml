@@ -80,7 +80,6 @@ jobs:
 
       - &setup-ruby
         name: setup ruby
-        id: ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ inputs.ruby-version ||
@@ -90,37 +89,13 @@ jobs:
       - name: setup xcodegen
         run: brew install xcodegen
 
-      - &prepare-monorepo
-        name: prepare monorepo
-        id: prepare-monorepo
-        if: inputs.all-ref
-        env:
-          COMMIT:      ${{ needs.prepare.outputs.monorepo-commit }}
-          LIBS:        ${{ inputs.libraries }}
-          RUBY_PREFIX: ${{ steps.ruby.outputs.ruby-prefix }}
-          RUBYLIB:     ${{ runner.temp }}/xot/lib
-        run: |
-          git clone -q --depth 1 https://github.com/xord/xot.git "$RUNNER_TEMP/xot"
-          dir=$(ruby -rxot/rake -e 'puts File.expand_path MONOREPO_DIR')
-          echo "dir=$dir"                                    >> "$GITHUB_OUTPUT"
-          echo "cache-key-suffix=$COMMIT-$LIBS-$RUBY_PREFIX" >> "$GITHUB_OUTPUT"
-
-      - &cache-monorepo
-        name: cache monorepo
-        if: inputs.all-ref
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.prepare-monorepo.outputs.dir }}
-          key: monorepo-${{ steps.prepare-monorepo.outputs.cache-key-suffix }}
-
       - &setup-monorepo
         name: setup monorepo
         if: inputs.all-ref
-        env:
-          COMMIT:  ${{ needs.prepare.outputs.monorepo-commit }}
-          LIBS:    ${{ inputs.libraries }}
-          RUBYLIB: ${{ runner.temp }}/xot/lib
-        run: ruby -rxot/rake -e 'setup_monorepo(*ARGV)' "$COMMIT" $LIBS
+        uses: xord/xot/.github/actions/setup-monorepo@master
+        with:
+          ref:       ${{ needs.prepare.outputs.monorepo-commit }}
+          libraries: ${{ inputs.libraries }}
 
       - &setup-gems
         name: setup gems
@@ -221,8 +196,6 @@ jobs:
           sudo apt-get install -y -qq libopenal-dev libglew-dev libsdl2-dev libsdl2-ttf-dev
 
       - *setup-ruby
-      - *prepare-monorepo
-      - *cache-monorepo
       - *setup-monorepo
       - *setup-gems
 
@@ -239,8 +212,6 @@ jobs:
     steps:
       - *checkout
       - *setup-ruby
-      - *prepare-monorepo
-      - *cache-monorepo
       - *setup-monorepo
       - *setup-gems
 
@@ -281,8 +252,6 @@ jobs:
           pacman -S --noconfirm --needed \
             "$MINGW_PACKAGE_PREFIX-glew" "$MINGW_PACKAGE_PREFIX-openal"
 
-      - *prepare-monorepo
-      - *cache-monorepo
       - *setup-monorepo
       - *setup-gems
 

@@ -1,0 +1,44 @@
+name: setup monorepo
+description: 'check out xord/all next to the app, and build and link its libraries, with the cache'
+
+inputs:
+  ref:
+    description: 'branch, tag or commit of xord/all'
+    required: true
+  libraries:
+    description: 'the libraries of xord/all, by the order to build'
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: prepare monorepo
+      id: prepare
+      shell: bash
+      env:
+        REF:     ${{ inputs.ref }}
+        LIBS:    ${{ inputs.libraries }}
+        RUBYLIB: ${{ github.action_path }}/../../../lib
+      run: |
+        commit=$(git ls-remote https://github.com/xord/all.git "$REF" | tail -1 | cut -f1)
+        commit=${commit:-$REF}
+        dir=$(ruby -rxot/rake -e 'puts File.expand_path MONOREPO_DIR')
+        prefix=$(ruby -e 'puts RbConfig::CONFIG["prefix"]')
+        echo "commit=$commit"                           >> "$GITHUB_OUTPUT"
+        echo "dir=$dir"                                 >> "$GITHUB_OUTPUT"
+        echo "cache-key=monorepo-$commit-$LIBS-$prefix" >> "$GITHUB_OUTPUT"
+
+    - name: cache monorepo
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.prepare.outputs.dir }}
+        key:  ${{ steps.prepare.outputs.cache-key }}
+
+    - name: setup monorepo
+      shell: bash
+      env:
+        COMMIT:  ${{ steps.prepare.outputs.commit }}
+        LIBS:    ${{ inputs.libraries }}
+        RUBYLIB: ${{ github.action_path }}/../../../lib
+      run: ruby -rxot/rake -e 'setup_monorepo(*ARGV)' "$COMMIT" $LIBS
