@@ -95,6 +95,14 @@ namespace Reflex
 	}
 
 	void
+	Window_skip_update_time_of_all (double seconds)
+	{
+		for (auto& window : Window_all())
+			window->self->prev_time_update += seconds;
+	}
+
+
+	void
 	Window_set_focus (Window* window, View* view)
 	{
 		if (!window)
@@ -378,7 +386,7 @@ namespace Reflex
 			update_pointer_through(window);
 
 			double now = Xot::time();
-			UpdateEvent e(now, now - self->prev_time_update);
+			UpdateEvent e(now, std::max(now - self->prev_time_update, 0.0));
 			self->prev_time_update = now;
 
 			window->on_update(&e);

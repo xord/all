@@ -12,6 +12,8 @@ namespace Reflex
 {
 
 
+	void Menu_track_popup (HMENU hmenu, UINT flags, POINT pos, HWND owner);
+
 	HMENU Menu_get_hmenu (Menu* menu, bool menubar = false);
 
 	bool Menu_is_modified (Menu* menu);

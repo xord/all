@@ -33,15 +33,9 @@ namespace Reflex
 		POINT pos;
 		if (!GetCursorPos(&pos)) return;
 
-		// TrackPopupMenu needs the owner window in the foreground, and the
-		// trailing WM_NULL is the documented workaround for the menu not closing
-		// on the first outside click.
-		SetForegroundWindow(tray_hwnd);
-		TrackPopupMenu(
+		Menu_track_popup(
 			Menu_get_hmenu(tray_menu),
-			TPM_LEFTALIGN | TPM_BOTTOMALIGN | TPM_RIGHTBUTTON,
-			pos.x, pos.y, 0, tray_hwnd, NULL);
-		PostMessageW(tray_hwnd, WM_NULL, 0, 0);
+			TPM_LEFTALIGN | TPM_BOTTOMALIGN | TPM_RIGHTBUTTON, pos, tray_hwnd);
 	}
 
 	static LRESULT CALLBACK

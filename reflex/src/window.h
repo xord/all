@@ -115,6 +115,9 @@ namespace Reflex
 
 	Window* Window_get_active ();
 
+	void Window_skip_update_time_of_all (double seconds);
+
+
 	void Window_set_focus (Window* window, View* view);
 
 	void Window_register_capture (

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <xot/time.h>
 #include "reflex/exception.h"
 #include "reflex/event.h"
 #include "reflex/view.h"
@@ -281,14 +282,8 @@ namespace Reflex
 
 		if (!hwnd) return;
 
-		// TrackPopupMenu needs the owner window in the foreground, and the
-		// trailing WM_NULL is the documented workaround for the menu not closing
-		// on the first outside click.
-		SetForegroundWindow(hwnd);
-		TrackPopupMenu(
-			hmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-			pos.x, pos.y, 0, hwnd, NULL);
-		PostMessageW(hwnd, WM_NULL, 0, 0);
+		Menu_track_popup(
+			hmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON, pos, hwnd);
 	}
 
 	void
@@ -317,6 +312,24 @@ namespace Reflex
 		c.hparent = NULL;
 
 		set_modified(parent);
+	}
+
+
+	void
+	Menu_track_popup (HMENU hmenu, UINT flags, POINT pos, HWND owner)
+	{
+		double start = Xot::time();
+
+		// TrackPopupMenu needs the owner window in the foreground
+		SetForegroundWindow(owner);
+
+		TrackPopupMenu(hmenu, flags, pos.x, pos.y, 0, owner, NULL);
+
+		// the documented workaround for the menu not closing
+		// on the first outside click
+		PostMessageW(owner, WM_NULL, 0, 0);
+
+		Window_skip_update_time_of_all(Xot::time() - start);
 	}
 
 	HMENU
