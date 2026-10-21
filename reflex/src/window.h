@@ -70,13 +70,15 @@ namespace Reflex
 
 		double prev_time_update, prev_time_draw, prev_fps = 0;
 
-		int next_pointer_id = 1;
+		int next_pointer_id         = 1;
+
+		uint pointer_cancels        = 0;
+
+		float pointer_through_alpha = 1;
 
 		Pointer prev_mouse_pointer;
 
 		PointerList prev_pointers;
-
-		float pointer_through_alpha = 1;
 
 		CaptureMap captures;
 
@@ -122,6 +124,8 @@ namespace Reflex
 		Window* window, View* view, Pointer::ID target);
 
 	void Window_cancel_active_pointers (Window* window);
+
+	uint Window_get_pointer_cancels (const Window& window);
 
 	void Window_call_close (Window* window);
 
