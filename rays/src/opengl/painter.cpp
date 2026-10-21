@@ -982,6 +982,13 @@ namespace Rays
 		if (width  == 0) width  = str_w;
 		if (height == 0) height = str_h;
 
+		// the baseline where Font's ascent tells, of the font at density 1:
+		// the font drawn at density may round its ascent apart from it
+		coord ascent = 0, ascent_drawn = 0;
+		font.get_height(&ascent);
+		rawfont.get_height(&ascent_drawn);
+		y += ascent - ascent_drawn / density;
+
 		Painter_draw_image(
 			painter, self->text_image,
 			0, 0, str_w, str_h,

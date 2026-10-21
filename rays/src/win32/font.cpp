@@ -17,6 +17,8 @@ namespace Rays
 
 		Win32::Font font;
 
+		mutable coord height = -1, ascent = 0, descent = 0, leading = 0;
+
 	};// RawFont::Data
 
 
@@ -194,24 +196,30 @@ namespace Rays
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
-		if (ascent || descent || leading)
+		if (self->height < 0)
 		{
 			Win32::DC dc(GetDC(NULL), true, Win32::DC::RELEASE_DC);
 			dc.set_font(self->font);
 
 			TEXTMETRICW tm;
-			GetTextMetricsW(dc.handle(), &tm);
+			if (!GetTextMetricsW(dc.handle(), &tm))
+				rays_error(__FILE__, __LINE__, "failed to get font metrics");
 
-			if (ascent)  *ascent  = tm.tmAscent;
-			if (descent) *descent = tm.tmDescent;
-			if (leading) *leading = tm.tmExternalLeading;
+			coord height;
+			if (!self->font.get_extent(NULL, &height, L"X"))
+				rays_error(__FILE__, __LINE__, "failed to get font height");
+
+			self->height  = height;
+			self->ascent  = tm.tmAscent;
+			self->descent = tm.tmDescent;
+			self->leading = tm.tmExternalLeading;
 		}
 
-		coord height;
-		if (!self->font.get_extent(NULL, &height, L"X"))
-			rays_error(__FILE__, __LINE__, "failed to get font height");
+		if (ascent)  *ascent  = self->ascent;
+		if (descent) *descent = self->descent;
+		if (leading) *leading = self->leading;
 
-		return height;
+		return self->height;
 	}
 
 	RawFont::operator bool () const
