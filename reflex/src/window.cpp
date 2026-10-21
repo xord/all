@@ -211,8 +211,16 @@ namespace Reflex
 			PointerEvent_add_pointer(&event, pointer);
 		}
 
-		if (!event.empty())
-			Window_call_pointer_event(window, &event);
+		if (event.empty()) return;
+
+		++self->pointer_cancels;
+		Window_call_pointer_event(window, &event);
+	}
+
+	uint
+	Window_get_pointer_cancels (const Window& window)
+	{
+		return window.self->pointer_cancels;
 	}
 
 	void
@@ -1146,9 +1154,17 @@ namespace Reflex
 
 		if (!boundary)
 		{
+			uint cancels           = Window_get_pointer_cancels(*window);
+			auto block_if_canceled = [&]()
+			{
+				if (Window_get_pointer_cancels(*window) != cancels)
+					event->block();
+				return event->is_blocked();
+			};
+
 			window->on_pointer(event);
 
-			if (!event->is_blocked())
+			if (!block_if_canceled())
 			{
 				switch (action)
 				{
@@ -1160,10 +1176,10 @@ namespace Reflex
 				}
 			}
 
-			if (!event->is_blocked())
+			if (!block_if_canceled())
 				call_captured_pointer_events(window, event);
 
-			if (!event->is_blocked())
+			if (!block_if_canceled())
 			{
 				PointerEvent_update_for_child_view(event, window->root());
 				View_call_pointer_event(window->root(), event);

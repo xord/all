@@ -1638,8 +1638,17 @@ namespace Reflex
 		if (view->self->pbody)
 			view->self->pbody->awake();
 
+		Window* win            = view->window();
+		uint cancels           = Window_get_pointer_cancels(*win);
+		auto block_if_canceled = [&]()
+		{
+			if (Window_get_pointer_cancels(*win) != cancels)
+				event->block();
+			return event->is_blocked();
+		};
+
 		view->on_pointer(event);
-		if (event->is_blocked()) return;
+		if (block_if_canceled()) return;
 
 		switch ((*event)[0].action())
 		{
@@ -1651,6 +1660,8 @@ namespace Reflex
 			case Pointer::LEAVE:  view->on_pointer_leave(event);  break;
 			default: break;
 		}
+
+		block_if_canceled();
 	}
 
 	static void

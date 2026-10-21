@@ -593,7 +593,7 @@ namespace Reflex
 	}
 
 	static void
-	capture_mouse_events_outside_window (HWND hwnd, UINT msg, WPARAM wp)
+	capture_mouse_on_button_down (HWND hwnd, UINT msg)
 	{
 		switch (msg)
 		{
@@ -605,7 +605,14 @@ namespace Reflex
 			case WM_MBUTTONDBLCLK:
 				SetCapture(hwnd);
 				break;
+		}
+	}
 
+	static void
+	release_mouse_on_button_up (HWND hwnd, UINT msg, WPARAM wp)
+	{
+		switch (msg)
+		{
 			case WM_LBUTTONUP:
 			case WM_RBUTTONUP:
 			case WM_MBUTTONUP:
@@ -646,10 +653,15 @@ namespace Reflex
 				lp = MAKELPARAM(pt.x, pt.y);
 		}
 
+		// before the press is handled: a popup menu opened by it takes the
+		// capture away and eats the release, which would never come to let
+		// go of a capture taken after
+		capture_mouse_on_button_down(self->hwnd, msg);
+
 		NativePointerEvent e(*win, msg, wp, lp);
 		Window_call_pointer_event(win, &e);
 
-		capture_mouse_events_outside_window(self->hwnd, msg, wp);
+		release_mouse_on_button_up(self->hwnd, msg, wp);
 	}
 
 	static void
