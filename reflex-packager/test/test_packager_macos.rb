@@ -155,6 +155,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal '1.2.3.4',   info['CFBundleVersion']
       assert_equal '© 2026 Me', info['NSHumanReadableCopyright']
       assert_equal true,        info['LSHasLocalizedDisplayName']
+      assert_equal false,       info['ITSAppUsesNonExemptEncryption']
+      assert_not_include info, 'LSApplicationCategoryType'
 
       assert_equal <<~'STRINGS', read(dir, 'src/ja.lproj/InfoPlist.strings')
         "CFBundleName"             = "マイ\"アプリ";
@@ -253,6 +255,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
     yaml = <<~YML
       icon: icon.png
       macos:
+        category: public.app-category.games
         codesign: {team_id: ABCDE12345}
     YML
     packager yaml, files: %w[main.rb icon.png] do |pkg, dir|
@@ -260,6 +263,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       str = pkg.__send__ :render, 'project.yml.erb'
       assert_include     str, 'CFBundleIconFile: AppIcon'
       assert_include     str, 'path: AppIcon.icns'
+      assert_include     str, 'LSApplicationCategoryType: public.app-category.games'
       assert_include     str, 'DEVELOPMENT_TEAM: ABCDE12345'
       assert_include     str, 'ENABLE_HARDENED_RUNTIME: YES'
       assert_not_include str, 'NSHumanReadableCopyright'

@@ -79,6 +79,7 @@ class TestPackagerConfig < Test::Unit::TestCase
         deployment_target: '12.0'
         archs: [arm64, x86_64]
         cruby: 4.0.600
+        category: public.app-category.games
         codesign: {identity: Developer ID, team_id: ABCDE12345}
     YAML
       touch 'icon.png'
@@ -95,6 +96,7 @@ class TestPackagerConfig < Test::Unit::TestCase
       assert_equal '12.0',                                         c.macos.deployment_target
       assert_equal %w[arm64 x86_64],                               c.macos.archs
       assert_equal '4.0.600',                                      c.macos.cruby
+      assert_equal 'public.app-category.games',                    c.macos.category
       assert_equal 'Developer ID',                                 c.macos.codesign_identity
       assert_equal 'ABCDE12345',                                   c.macos.codesign_team_id
     end
@@ -263,6 +265,17 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal '4.0.600',  config(macos: {cruby: '4.0.600'})  .macos.cruby
     assert_equal '../cruby', config(macos: {cruby: '../cruby'}) .macos.cruby
     assert_raise(RP::Error) {config(macos: {cruby: {}})}
+  end
+
+  def test_macos_category()
+    assert_nil               config()                       .macos.category
+    assert_nil               config(macos: {})              .macos.category
+    assert_nil               config(macos: {category: nil}) .macos.category
+    assert_equal 'public.app-category.sports-games',
+      config(macos: {category: 'public.app-category.sports-games'}).macos.category
+    assert_raise(RP::Error) {config(macos: {category: 'games'})}
+    assert_raise(RP::Error) {config(macos: {category: 'public.app-category.Games'})}
+    assert_raise(RP::Error) {config(macos: {category: {}})}
   end
 
   def test_macos_codesign_identity()

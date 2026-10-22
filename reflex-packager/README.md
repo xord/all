@@ -123,6 +123,7 @@ icon: icon.png
 # macos:
 #   deployment_target: "11.0"
 #   archs: [arm64, x86_64]
+#   category: public.app-category.games
 #   codesign:
 #     identity: "-"
 #     team_id: XXXXXXXXXX
@@ -152,6 +153,7 @@ icon: icon.png
 | `macos.deployment_target` | `11.0` | Minimum macOS version |
 | `macos.archs` | `[arm64, x86_64]` | Target architectures |
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |
+| `macos.category` | none | [Category](https://developer.apple.com/documentation/bundleresources/information-property-list/lsapplicationcategorytype) of the app in Info.plist, as `public.app-category.games`, which the App Store requires |
 | `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`, and `Developer ID Application` by the certificate in the keychain; `APPLE_CODESIGN_IDENTITY` overrides it |
 | `macos.codesign.team_id` | none | Development team ID; `APPLE_TEAM_ID` overrides it |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
