@@ -20,7 +20,8 @@ class TestPackagerRake < Test::Unit::TestCase
           FileUtils.mkdir_p File.dirname(path)
           File.write path, text
         end
-        block.call File.realpath(dir)
+        # not signed, whatever this runs with
+        with_env(ENV_TO_SIGN) {block.call File.realpath(dir)}
       end
     end
   end
@@ -35,22 +36,22 @@ class TestPackagerRake < Test::Unit::TestCase
       stub Gem, :win_platform?, false do
         package_application
       end
-      app     = File.join dir, 'dist/MyGame.app'
-      archive = File.join dir, 'dist/MyGame-1.2.3-macos-universal.zip'
+      app     = File.join dir, 'dist/adhoc/MyGame.app'
+      archive = File.join dir, 'dist/adhoc/MyGame-1.2.3-macos-universal.zip'
       assert_equal [app],     ::Rake::Task['package'].prerequisites
       assert_equal [archive], ::Rake::Task['archive'].prerequisites
       assert_equal [app],     ::Rake::Task[archive].prerequisites
       assert_equal [archive], ::Rake::Task['release'].prerequisites
       assert_equal %w[lib/a/b.rb main.rb reflex.yml VERSION].sort,
         ::Rake::Task[app].prerequisites.sort # the files of the app, not lib/a
-      assert_include ::Rake::Task['package'].comment, 'dist/MyGame.app'
+      assert_include ::Rake::Task['package'].comment, 'dist/adhoc/MyGame.app'
       assert_include ::Rake::Task['release'].comment, 'v1.2.3'
     end
   end
 
   def test_upload_itchio()
     application do |dir|
-      archive = File.join dir, 'dist/MyGame-1.2.3-macos-universal.zip'
+      archive = File.join dir, 'dist/adhoc/MyGame-1.2.3-macos-universal.zip'
       stub Gem, :win_platform?, false do
         package_application
       end

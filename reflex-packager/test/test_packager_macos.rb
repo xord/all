@@ -640,11 +640,21 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
   def test_dist_paths()
     packager "name: My App\nversion: 1.2.3" do |pkg, dir|
-      dist = File.join dir, 'dist'
+      dist = File.join dir, 'dist/adhoc'
       assert_equal "#{dist}/MyApp.app",                       pkg.dist_path
       assert_equal "#{dist}/MyApp-1.2.3-macos-universal.zip", pkg.archive_path
       assert_equal ['ditto', '-c', '-k', '--keepParent', pkg.dist_path, pkg.archive_path],
         pkg.archive_command
+
+      # notarized, which needs no team to only be exported
+      assert_equal File.join(dir, 'dist/generic/MyApp.app'),
+        MacOS.new(pkg.config, notarize: %i[export]).dist_path
+    end
+    packager "name: My App\nmacos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
+      assert_equal File.join(dir, 'dist/generic/MyApp.app'), pkg.dist_path
+    end
+    packager "name: My App\nmacos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, dir|
+      assert_equal File.join(dir, 'dist/adhoc/MyApp.app'), pkg.dist_path
     end
     packager("macos: {archs: [arm64]}") {|pkg, _| assert_equal 'macos-arm64', pkg.archive_platform}
   end

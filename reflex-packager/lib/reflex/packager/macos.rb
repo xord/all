@@ -116,6 +116,13 @@ module Reflex
         File.join platform_dir, 'project'
       end
 
+      # The generic one is signed with Developer ID, to be handed out, and
+      # the one signed otherwise is adhoc, only to be run where it is built.
+      #
+      def variant()
+        signing_to_distribute? || notarize? ? super : 'adhoc'
+      end
+
       def dist_path()
         "#{super}.app"
       end

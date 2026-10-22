@@ -72,8 +72,10 @@ $ reflex package .
 
 The app is packaged for the platform the packager runs on, as each one builds only on itself, and placed in `dist/`:
 
-- macOS: `dist/<name>.app`
-- Windows: `dist/<name>/`, with `<name>.exe`, and the DLLs it loads, the standard library, the libraries, the gems and the app in `lib/`
+- macOS: `dist/generic/<name>.app` signed with Developer ID, or `dist/adhoc/<name>.app` signed otherwise, only to be run where it is built
+- Windows: `dist/generic/<name>/`, with `<name>.exe`, and the DLLs it loads, the standard library, the libraries, the gems and the app in `lib/`
+
+The zip of the app is put beside it.
 
 ### CLI options
 
@@ -223,7 +225,7 @@ Where no account of Xcode is, as on CI, Apple is asked by an API key of App Stor
 
 The team ID can be given by `APPLE_TEAM_ID` in place of the config, as the identity by `APPLE_CODESIGN_IDENTITY`, to keep them out of the repository of the app.
 
-With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/` with the ticket of the notarization stapled, which macOS sees with no network:
+With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/generic/` with the ticket of the notarization stapled, which macOS sees with no network:
 
 ```bash
 $ export APPLE_TEAM_ID=XXXXXXXXXX

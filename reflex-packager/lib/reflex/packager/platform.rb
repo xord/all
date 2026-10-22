@@ -108,8 +108,17 @@ module Reflex
         platform_dir
       end
 
+      # The variant of the package, which the directory of the package is
+      # named after: generic, for no store in particular.
+      #
+      def variant()
+        'generic'
+      end
+
+      # The directory of the package of the variant, in dist/.
+      #
       def dist_dir()
-        File.join config.dir, 'dist'
+        File.join config.dir, 'dist', variant
       end
 
       # The packaged app in dist_dir.
