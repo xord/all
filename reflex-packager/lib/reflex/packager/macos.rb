@@ -87,7 +87,7 @@ module Reflex
         write 'project.yml',         render('project.yml.erb')
         write 'src/main.mm',         render('main.mm.erb')
         write 'boot.rb',             render('boot.rb.erb')
-        write 'ExportOptions.plist', render('ExportOptions.plist.erb') if signing_to_distribute?
+        write export_options_path,   render('ExportOptions.plist.erb') if signing_to_distribute?
         write_localizations
       end
 
@@ -107,6 +107,13 @@ module Reflex
           puts "Submitted for the notarization: #{submission_id}"
           export_notarized_app if notarize.include? :export
         end
+      end
+
+      # The Xcode project, with what it is made of and what it builds, apart
+      # from the archives of the app in platform_dir.
+      #
+      def build_dir()
+        File.join platform_dir, 'project'
       end
 
       def dist_path()
@@ -295,8 +302,8 @@ module Reflex
             run 'xcodebuild', *('-quiet' unless verbose?),
               '-exportArchive',
               '-archivePath',        xcarchive_path,
-              '-exportOptionsPlist', 'ExportOptions.plist',
-              '-exportPath',         'Export',
+              '-exportOptionsPlist', export_options_path,
+              '-exportPath',         File.dirname(exported_app_path),
               '-allowProvisioningUpdates',
               *auth,
               chdir: build_dir
@@ -408,16 +415,27 @@ module Reflex
         File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
       end
 
+      # The directory of the app archived and exported for no store in
+      # particular, apart from the ones for a store.
+      #
+      def generic_dir()
+        File.join platform_dir, 'generic'
+      end
+
       def xcarchive_path()
-        File.join build_dir, "#{target}.xcarchive"
+        File.join generic_dir, "#{target}.xcarchive"
+      end
+
+      def export_options_path()
+        File.join generic_dir, 'ExportOptions.plist'
       end
 
       def exported_app_path()
-        File.join build_dir, 'Export', "#{target}.app"
+        File.join generic_dir, 'export', "#{target}.app"
       end
 
       def notarized_app_path()
-        File.join build_dir, 'Notarized', "#{target}.app"
+        File.join generic_dir, 'notarized', "#{target}.app"
       end
 
       # Has the app write its data file with its scripts compiled by the
@@ -492,14 +510,14 @@ module Reflex
       end
 
       def fetch_cruby(version)
-        dir = File.join build_dir, 'cruby', version
+        dir = File.join platform_dir, 'cruby', version
         return dir if File.directory? File.join(dir, 'CRuby', 'include')
 
         FileUtils.rm_rf dir
         FileUtils.mkdir_p File.dirname(dir)
         run 'git', 'clone', '-q', '-c', 'advice.detachedHead=false',
           '--depth', '1', '--branch', "v#{version}", CRUBY_GIT, dir,
-          chdir: build_dir
+          chdir: File.dirname(dir)
         # cruby has a Gemfile of its own, the one of the app must not be used
         bundler       = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}
         # the ones before 4.0.701 have no task to download only

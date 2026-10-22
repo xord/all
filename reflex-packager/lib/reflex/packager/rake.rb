@@ -55,7 +55,7 @@ module Reflex
         end
 
         task :clobber => :clean do
-          rm_rf File.dirname(platform.build_dir)
+          rm_rf File.dirname(platform.platform_dir)
         end
 
         file app_path => srcs do

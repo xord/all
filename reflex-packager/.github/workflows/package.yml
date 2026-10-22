@@ -171,7 +171,7 @@ jobs:
       - name: tar xcarchive for notarization
         if: steps.notarize.outputs.notarize == 'true'
         # by tar, as an artifact keeps no permission of the files nor symlink
-        run: cd .build/macos && tar cf "$RUNNER_TEMP/xcarchive.tar" *.xcarchive
+        run: cd .build/macos && tar cf "$RUNNER_TEMP/xcarchive.tar" generic/*.xcarchive
 
       - name: upload xcarchive for notarization
         if: steps.notarize.outputs.notarize == 'true'

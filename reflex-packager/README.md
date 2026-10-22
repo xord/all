@@ -232,7 +232,7 @@ $ reflex package --pack --notarize .
 
 The notarization can be split into the steps, so as not to keep a Mac waiting, as on CI:
 
-1. `--notarize-submit` builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/<name>.xcarchive`
+1. `--notarize-submit` builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/generic/<name>.xcarchive`
 2. `--notarize-wait <ID>` waits for Apple to check the app, by the API key, on any system
 3. `--notarize-export` exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
 

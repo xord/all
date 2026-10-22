@@ -70,7 +70,7 @@ class TestPackagerCLI < Test::Unit::TestCase
         ENV['CRUBY_PATH'] = saved
       end
       %w[project.yml src/main.mm app/main.rb].each do |f|
-        assert File.exist?("myapp/.build/macos/#{f}"), "missing #{f}"
+        assert File.exist?("myapp/.build/macos/project/#{f}"), "missing #{f}"
       end
     end
 

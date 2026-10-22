@@ -96,8 +96,16 @@ module Reflex
         raise "#{self.class} must implement #{__method__}"
       end
 
-      def build_dir()
+      # The directory of what the packager makes for the platform.
+      #
+      def platform_dir()
         File.join config.dir, '.build', platform_name
+      end
+
+      # The directory the app is generated and built in.
+      #
+      def build_dir()
+        platform_dir
       end
 
       def dist_dir()
@@ -230,7 +238,7 @@ module Reflex
       end
 
       def write(path, content)
-        path = File.join build_dir, path
+        path = File.expand_path path, build_dir
         FileUtils.mkdir_p File.dirname(path)
         File.write path, content
       end
