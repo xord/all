@@ -87,16 +87,17 @@ namespace Reflex
 		auto it = std::find(gamepads.begin(), gamepads.end(), gamepad);
 		if (it == gamepads.end()) return;
 
-		Application_call_device_disconnect_event(app, gamepad);
-
+		Gamepad::Ref ref = *it;
 		gamepads.erase(it);
+
+		Application_call_device_disconnect_event(app, ref);
 	}
 
 	void
 	Gamepad_remove_all (Application* app)
 	{
-		for (auto& gamepad : gamepads)
-			Gamepad_remove(app, gamepad);
+		while (!gamepads.empty())
+			Gamepad_remove(app, gamepads.back());
 	}
 
 	Gamepad*
