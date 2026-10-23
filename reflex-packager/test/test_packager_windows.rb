@@ -108,6 +108,8 @@ class TestPackagerWindows < Test::Unit::TestCase
 
         error = assert_raise(RP::Error) {Windows.new(pkg.config, notarize: %i[submit]).package}
         assert_include error.message, 'only for macos'
+        error = assert_raise(RP::Error) {Windows.new(pkg.config, appstore: true).package}
+        assert_include error.message, 'only for macos'
       end
     end
   end

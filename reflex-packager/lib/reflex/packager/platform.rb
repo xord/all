@@ -40,8 +40,11 @@ module Reflex
 
       end# self
 
-      def initialize(config, verbose: false, pack: false, notarize: [])
+      def initialize(
+        config, verbose: false, pack: false, notarize: [], generic: false, appstore: false)
+
         @config, @verbose, @pack, @notarize = config, verbose, pack, notarize || []
+        @generic, @appstore                 = generic, appstore
       end
 
       attr_reader :config
@@ -72,6 +75,20 @@ module Reflex
 
       def notarize?()
         !@notarize.empty?
+      end
+
+      # Whether to package the generic app, for no store in particular: when
+      # asked, or notarized, which only the generic one is, or when no store
+      # is asked for.
+      #
+      def generic?()
+        @generic || notarize? || !appstore?
+      end
+
+      # Whether to package the app for the Mac App Store.
+      #
+      def appstore?()
+        @appstore
       end
 
       # Package the application as a distributable bundle.
@@ -117,7 +134,7 @@ module Reflex
 
       # The directory of the package of the variant, in dist/.
       #
-      def dist_dir()
+      def dist_dir(variant = self.variant)
         File.join config.dir, 'dist', variant
       end
 
@@ -125,6 +142,13 @@ module Reflex
       #
       def dist_path()
         File.join dist_dir, target
+      end
+
+      # The packages of the app for the stores, as {store => path}, each of
+      # which --<store> packages, in the dist directory of the store.
+      #
+      def store_package_paths()
+        {}
       end
 
       # The command to zip the packaged app into archive_path.

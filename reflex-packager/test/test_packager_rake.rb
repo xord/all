@@ -46,6 +46,19 @@ class TestPackagerRake < Test::Unit::TestCase
         ::Rake::Task[app].prerequisites.sort # the files of the app, not lib/a
       assert_include ::Rake::Task['package'].comment, 'dist/adhoc/MyGame.app'
       assert_include ::Rake::Task['release'].comment, 'v1.2.3'
+
+      pkg = File.join dir, 'dist/appstore/MyGame-1.2.3-macos.pkg'
+      assert_equal [pkg], ::Rake::Task['package:appstore'].prerequisites
+      assert_equal ::Rake::Task[app].prerequisites, ::Rake::Task[pkg].prerequisites
+      assert_include ::Rake::Task['package:appstore'].comment, 'dist/appstore/MyGame-1.2.3-macos.pkg'
+    end
+
+    ::Rake::Task.clear
+    application do
+      stub Gem, :win_platform?, true do
+        package_application
+      end
+      assert_false ::Rake::Task.task_defined?('package:appstore') # only on macos
     end
   end
 

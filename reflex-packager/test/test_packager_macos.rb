@@ -621,6 +621,96 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_build_for_appstore()
+    # with the commands captured, and what is copied into dist/
+    build = -> config, **options do
+      mac              = MacOS.new config, **options
+      commands, copied = [], []
+      mac.define_singleton_method(:check_tools) {|*|}
+      mac.define_singleton_method(:run)         {|*cmd, **| commands << cmd.join(' ')}
+      mac.define_singleton_method(:puts)        {|*|}
+      mac.define_singleton_method(:copy_app)    {|app = nil| copied << app}
+      mac.define_singleton_method(:copy_pkg)    {|pkg, dist| copied << [pkg, dist]}
+      mac.build
+      [commands, copied]
+    end
+
+    yaml = 'macos: {category: public.app-category.games, codesign: {team_id: ABCDE12345}}'
+    packager yaml do |pkg, dir|
+      appstore = File.join dir, '.build/macos/appstore'
+      generic  = File.join dir, '.build/macos/generic'
+      mac      = MacOS.new pkg.config, appstore: true
+      mac.generate
+      assert_include File.read("#{appstore}/AppStore.entitlements"),
+        "<key>com.apple.security.app-sandbox</key>\n\t<true/>"
+      options = File.read "#{appstore}/ExportOptions.plist"
+      assert_include options, '<string>app-store-connect</string>'
+      assert_include options, '<string>automatic</string>'
+      assert_include options, '<string>ABCDE12345</string>'
+      assert_equal File.join(dir, "dist/appstore/#{pkg.target}-#{pkg.config.version}-macos.pkg"),
+        mac.appstore_pkg_path
+
+      # only the one for the App Store, archived in the sandbox
+      commands, copied = build.call pkg.config, appstore: true
+      assert_equal [
+        "#{appstore}/#{pkg.target}.xcarchive CODE_SIGN_ENTITLEMENTS=#{appstore}/AppStore.entitlements"
+      ], commands.grep(/ archive /).map {_1[/(?<=-archivePath ).*/]}
+      assert_equal 1, commands.grep(
+        %r{-exportArchive -archivePath #{appstore}/\S+ -exportOptionsPlist #{appstore}/ExportOptions\.plist -exportPath #{appstore}/export -allowProvisioningUpdates$}).size
+      assert_equal [["#{appstore}/export/#{pkg.target}.pkg", mac.appstore_pkg_path]], copied
+
+      # the generic one too, archived out of the sandbox, with nothing left of
+      # the exports before
+      stales = ["#{generic}/export/#{pkg.target}.app", "#{appstore}/export/#{pkg.target}.pkg"]
+      stales.each {FileUtils.mkdir_p _1}
+      commands, copied = build.call pkg.config, generic: true, appstore: true
+      stales.each {assert_false File.exist?(_1)}
+      assert_equal ["#{generic}/#{pkg.target}.xcarchive", "#{appstore}/#{pkg.target}.xcarchive"],
+        commands.grep(/ archive /).map {_1[/(?<=-archivePath )\S+/]}
+      assert_equal "#{generic}/export/#{pkg.target}.app", copied.first
+
+      # notarized, which only the generic one is
+      FileUtils.mkdir_p "#{generic}/#{pkg.target}.xcarchive/Submissions/ABC-123"
+      commands, copied = build.call pkg.config, notarize: %i[submit], appstore: true
+      assert_equal 2, commands.grep(/ archive /).size
+      assert_equal [["#{appstore}/export/#{pkg.target}.pkg", mac.appstore_pkg_path]], copied
+
+      [
+        [{appstore: true}, {generate_only: true}, 'built on macos'],
+        [{appstore: true, notarize: %i[export]}, {}, 'only exporting the notarized app']
+      ].each do |options, package_options, message|
+        error = assert_raise(RP::Error) {MacOS.new(pkg.config, **options).package(**package_options)}
+        assert_include error.message, message
+      end
+    end
+
+    packager do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, appstore: true).package}
+      assert_include error.message, 'APPLE_TEAM_ID'
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, generic: true).package}
+      assert_include error.message, 'Developer ID Application'
+    end
+    packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, appstore: true).package}
+      assert_include error.message, 'macos.category'
+    end
+    packager "macos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, generic: true).package}
+      assert_include error.message, 'Developer ID Application'
+    end
+
+    # the API key, refused to sign with Developer ID, but not the generic one
+    api = {'APPLE_API_ISSUER_ID' => 'ISSUER', 'APPLE_API_KEY_ID' => 'KEY', 'APPLE_API_KEY_P8' => 'P8'}
+    packager yaml, env: api do |pkg, _|
+      mac = MacOS.new pkg.config, appstore: true
+      mac.define_singleton_method(:generate) {}
+      mac.define_singleton_method(:build)    {}
+      assert_nothing_raised {mac.package}
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, generic: true, appstore: true).package}
+      assert_include error.message, 'APPLE_CODESIGN_P12'
+    end
+  end
+
   def test_copy_app_without_build_product_raises()
     packager do |pkg, _|
       # nothing was built, so the .app is not under DerivedData

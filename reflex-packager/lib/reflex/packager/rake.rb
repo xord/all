@@ -25,13 +25,24 @@ module Reflex
           'Gemfile.lock'
         ].select {File.file? _1}
 
-        relative = -> path {path.delete_prefix "#{config.dir}/"}
+        relative       = -> path {path.delete_prefix "#{config.dir}/"}
+        reflex_package = -> *args do
+          reflex = File.expand_path '../../../bin/reflex', __dir__
+          sh RbConfig.ruby, reflex, 'package', '--pack', *args, '.'
+        end
 
         desc "package the application into #{relative[app_path]}"
         alias_task :package => app_path
 
         desc "archive the application into #{relative[archive_path]}"
         alias_task :archive => archive_path
+
+        namespace :package do
+          platform.store_package_paths.each do |store, path|
+            desc "package the application for #{store} into #{relative[path]}"
+            alias_task store => path
+          end
+        end
 
         desc "release the application on GitHub, by the tag #{tag}"
         task :release => archive_path do
@@ -59,12 +70,17 @@ module Reflex
         end
 
         file app_path => srcs do
-          reflex = File.expand_path '../../../bin/reflex', __dir__
-          sh RbConfig.ruby, reflex, 'package', '--pack', '.'
+          reflex_package.call
         end
 
         file archive_path => app_path do
           sh(*platform.archive_command)
+        end
+
+        platform.store_package_paths.each do |store, path|
+          file path => srcs do
+            reflex_package.call "--#{store}"
+          end
         end
       end
 

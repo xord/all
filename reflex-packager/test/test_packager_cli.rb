@@ -95,6 +95,15 @@ class TestPackagerCLI < Test::Unit::TestCase
         cli.package ['--notarize-submit', '--notarize-export', 'myapp']
       end
       assert_include error.message, 'only one of'
+
+      error = assert_raise(RP::Error) do
+        cli.package ['--notarize-wait', 'ID', '--appstore', 'myapp']
+      end
+      assert_include error.message, '--notarize-wait'
+      error = assert_raise(RP::Error) do
+        cli.package ['--platform', 'windows', '--appstore', 'myapp']
+      end
+      assert_include error.message, 'only for macos'
     end
   end
 

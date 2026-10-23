@@ -72,7 +72,7 @@ $ reflex package .
 
 The app is packaged for the platform the packager runs on, as each one builds only on itself, and placed in `dist/`:
 
-- macOS: `dist/generic/<name>.app` signed with Developer ID, or `dist/adhoc/<name>.app` signed otherwise, only to be run where it is built
+- macOS: `dist/generic/<name>.app` signed with Developer ID, or `dist/adhoc/<name>.app` signed otherwise, only to be run where it is built, and `dist/appstore/<name>-<version>-macos.pkg` for the Mac App Store
 - Windows: `dist/generic/<name>/`, with `<name>.exe`, and the DLLs it loads, the standard library, the libraries, the gems and the app in `lib/`
 
 The zip of the app is put beside it.
@@ -100,6 +100,8 @@ reflex package [options] [DIR]
   --config PATH         config file path (default: DIR/reflex.yml)
   --generate-only       generate project files but do not build
   --pack                put the files of the app together in a data file, for a release
+  --generic             package the app signed with Developer ID, also with --appstore
+  --appstore            package the app for the Mac App Store, only it unless --generic
   --notarize            have Apple check the app with Developer ID, on macos
   --notarize-submit     only submit the app to be notarized, not waiting
   --notarize-wait ID    only wait for the notarization ID, by the API key
@@ -237,6 +239,20 @@ The notarization can be split into the steps, so as not to keep a Mac waiting, a
 1. `--notarize-submit` builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/generic/<name>.xcarchive`
 2. `--notarize-wait <ID>` waits for Apple to check the app, by the API key, on any system
 3. `--notarize-export` exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
+
+`--generic` makes sure the app is signed with Developer ID, failing if not, as with no team.
+
+### Packaging for the Mac App Store
+
+With `--appstore`, the app is archived in the sandbox, which the Mac App Store needs, and exported into `dist/appstore/<name>-<version>-macos.pkg` to upload to App Store Connect, signed by the certificates of the team that Apple manages, as the profile. It needs the team and `macos.category` in the config, and makes only the one for the App Store, unless `--generic` or `--notarize` asks for the generic one too, archived apart out of the sandbox. `rake package:appstore` packs and packages it so:
+
+```bash
+$ export APPLE_TEAM_ID=XXXXXXXXXX
+$ reflex package --pack --appstore .
+$ reflex package --pack --notarize --appstore . # the generic one too
+```
+
+The app in the sandbox keeps its data in a container of its own, `~/Library/Containers/<bundle_id>/`, apart from the generic one.
 
 ### Uploading to itch.io
 
