@@ -36,7 +36,7 @@ class TestPackagerRake < Test::Unit::TestCase
       stub Gem, :win_platform?, false do
         package_application
       end
-      app     = File.join dir, 'dist/adhoc/MyGame.app'
+      app     = File.join dir, 'dist/adhoc/My Game.app'
       archive = File.join dir, 'dist/adhoc/MyGame-1.2.3-macos-universal.zip'
       assert_equal [app],     ::Rake::Task['package'].prerequisites
       assert_equal [archive], ::Rake::Task['archive'].prerequisites
@@ -44,13 +44,13 @@ class TestPackagerRake < Test::Unit::TestCase
       assert_equal [archive], ::Rake::Task['release'].prerequisites
       assert_equal %w[lib/a/b.rb main.rb reflex.yml VERSION].sort,
         ::Rake::Task[app].prerequisites.sort # the files of the app, not lib/a
-      assert_include ::Rake::Task['package'].comment, 'dist/adhoc/MyGame.app'
+      assert_include ::Rake::Task['package'].comment, 'dist/adhoc/My Game.app'
       assert_include ::Rake::Task['release'].comment, 'v1.2.3'
 
-      pkg = File.join dir, 'dist/appstore/MyGame-1.2.3-macos.pkg'
+      pkg = File.join dir, 'dist/appstore/MyGame-1.2.3.pkg'
       assert_equal [pkg], ::Rake::Task['package:appstore'].prerequisites
       assert_equal ::Rake::Task[app].prerequisites, ::Rake::Task[pkg].prerequisites
-      assert_include ::Rake::Task['package:appstore'].comment, 'dist/appstore/MyGame-1.2.3-macos.pkg'
+      assert_include ::Rake::Task['package:appstore'].comment, 'dist/appstore/MyGame-1.2.3.pkg'
     end
 
     ::Rake::Task.clear

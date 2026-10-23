@@ -296,6 +296,11 @@ class TestPackagerMacOS < Test::Unit::TestCase
       verbose = MacOS.new pkg.config, verbose: true
       assert_match     (/^2$/), stdout.call {verbose.__send__ :run, *cmd, chdir: dir, quiet: true}
       assert_raise(RP::Error) {stdout.call {pkg.__send__ :run, RbConfig.ruby, '-e', 'exit 1', chdir: dir}}
+
+      script = File.join dir, 'My App'
+      File.write script, "#!/bin/sh\necho 3\n"
+      File.chmod 0755, script
+      assert_match     (/^3$/), stdout.call {pkg.__send__ :run, script, chdir: dir}
     end
   end
 
@@ -635,7 +640,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       [commands, copied]
     end
 
-    yaml = 'macos: {category: public.app-category.games, codesign: {team_id: ABCDE12345}}'
+    yaml = "name: My App\nmacos: {category: public.app-category.games, codesign: {team_id: ABCDE12345}}"
     packager yaml do |pkg, dir|
       appstore = File.join dir, '.build/macos/appstore'
       generic  = File.join dir, '.build/macos/generic'
@@ -647,33 +652,34 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include options, '<string>app-store-connect</string>'
       assert_include options, '<string>automatic</string>'
       assert_include options, '<string>ABCDE12345</string>'
-      assert_equal File.join(dir, "dist/appstore/#{pkg.target}-#{pkg.config.version}-macos.pkg"),
+      assert_equal File.join(dir, "dist/appstore/#{pkg.target}-#{pkg.config.version}.pkg"),
         mac.appstore_pkg_path
 
       # only the one for the App Store, archived in the sandbox
       commands, copied = build.call pkg.config, appstore: true
       assert_equal [
-        "#{appstore}/#{pkg.target}.xcarchive CODE_SIGN_ENTITLEMENTS=#{appstore}/AppStore.entitlements"
+        "#{appstore}/MyApp.xcarchive CODE_SIGN_ENTITLEMENTS=#{appstore}/AppStore.entitlements"
       ], commands.grep(/ archive /).map {_1[/(?<=-archivePath ).*/]}
       assert_equal 1, commands.grep(
         %r{-exportArchive -archivePath #{appstore}/\S+ -exportOptionsPlist #{appstore}/ExportOptions\.plist -exportPath #{appstore}/export -allowProvisioningUpdates$}).size
-      assert_equal [["#{appstore}/export/#{pkg.target}.pkg", mac.appstore_pkg_path]], copied
+      # the package named after the name of the app, not the target
+      assert_equal [["#{appstore}/export/My App.pkg", mac.appstore_pkg_path]], copied
 
       # the generic one too, archived out of the sandbox, with nothing left of
       # the exports before
-      stales = ["#{generic}/export/#{pkg.target}.app", "#{appstore}/export/#{pkg.target}.pkg"]
+      stales = ["#{generic}/export/My App.app", "#{appstore}/export/My App.pkg"]
       stales.each {FileUtils.mkdir_p _1}
       commands, copied = build.call pkg.config, generic: true, appstore: true
       stales.each {assert_false File.exist?(_1)}
       assert_equal ["#{generic}/#{pkg.target}.xcarchive", "#{appstore}/#{pkg.target}.xcarchive"],
         commands.grep(/ archive /).map {_1[/(?<=-archivePath )\S+/]}
-      assert_equal "#{generic}/export/#{pkg.target}.app", copied.first
+      assert_equal "#{generic}/export/My App.app", copied.first
 
       # notarized, which only the generic one is
       FileUtils.mkdir_p "#{generic}/#{pkg.target}.xcarchive/Submissions/ABC-123"
       commands, copied = build.call pkg.config, notarize: %i[submit], appstore: true
       assert_equal 2, commands.grep(/ archive /).size
-      assert_equal [["#{appstore}/export/#{pkg.target}.pkg", mac.appstore_pkg_path]], copied
+      assert_equal [["#{appstore}/export/My App.pkg", mac.appstore_pkg_path]], copied
 
       [
         [{appstore: true}, {generate_only: true}, 'built on macos'],
@@ -731,20 +737,21 @@ class TestPackagerMacOS < Test::Unit::TestCase
   def test_dist_paths()
     packager "name: My App\nversion: 1.2.3" do |pkg, dir|
       dist = File.join dir, 'dist/adhoc'
-      assert_equal "#{dist}/MyApp.app",                       pkg.dist_path
+      # the app by its name with the spaces, the zip by the target
+      assert_equal "#{dist}/My App.app",                      pkg.dist_path
       assert_equal "#{dist}/MyApp-1.2.3-macos-universal.zip", pkg.archive_path
       assert_equal ['ditto', '-c', '-k', '--keepParent', pkg.dist_path, pkg.archive_path],
         pkg.archive_command
 
       # notarized, which needs no team to only be exported
-      assert_equal File.join(dir, 'dist/generic/MyApp.app'),
+      assert_equal File.join(dir, 'dist/generic/My App.app'),
         MacOS.new(pkg.config, notarize: %i[export]).dist_path
     end
     packager "name: My App\nmacos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
-      assert_equal File.join(dir, 'dist/generic/MyApp.app'), pkg.dist_path
+      assert_equal File.join(dir, 'dist/generic/My App.app'), pkg.dist_path
     end
     packager "name: My App\nmacos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, dir|
-      assert_equal File.join(dir, 'dist/adhoc/MyApp.app'), pkg.dist_path
+      assert_equal File.join(dir, 'dist/adhoc/My App.app'), pkg.dist_path
     end
     packager("macos: {archs: [arm64]}") {|pkg, _| assert_equal 'macos-arm64', pkg.archive_platform}
   end

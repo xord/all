@@ -7,6 +7,7 @@ options:
 settings:
   base:
     PRODUCT_BUNDLE_IDENTIFIER: <%= config.bundle_id %>
+    PRODUCT_NAME: <%= app_name.to_json %>
     MARKETING_VERSION: <%= config.display_version.to_json %>
     CURRENT_PROJECT_VERSION: <%= config.build_version.to_json %>
     ARCHS: <%= config.macos.archs.join ' ' %>

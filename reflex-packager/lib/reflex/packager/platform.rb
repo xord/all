@@ -1,6 +1,7 @@
 require 'erb'
 require 'fileutils'
 require 'open3'
+require 'shellwords'
 
 
 module Reflex
@@ -294,13 +295,14 @@ module Reflex
       end
 
       # Runs +cmd+, dropping what it prints if +quiet+ unless verbose, though
-      # not the errors it tells.
+      # not the errors it tells. The command is run as it is, not split by
+      # spaces even if it is only a path, as of the app named with spaces.
       #
       def run(*cmd, chdir:, env: {}, quiet: false)
-        puts "==> #{cmd.join ' '}"
+        puts "==> #{cmd.shelljoin}"
         out = quiet && !verbose? ? {out: File::NULL} : {}
-        return if system env, *cmd, chdir: chdir, **out
-        raise Error, "command failed: #{cmd.join ' '}"
+        return if system env, [cmd.first, cmd.first], *cmd.drop(1), chdir: chdir, **out
+        raise Error, "command failed: #{cmd.shelljoin}"
       end
 
       # Runs +cmd+, returning what it prints and whether it succeeded, for

@@ -1,3 +1,6 @@
+require 'shellwords'
+
+
 module Reflex
 
 
@@ -31,12 +34,12 @@ module Reflex
           raise Error, "nothing to upload: '#{path}'" unless File.exist? path
 
           cmd = ['butler', 'push', path, "#{project}:#{channel}", '--userversion', version]
-          puts "==> #{cmd.join ' '}"
+          puts "==> #{cmd.shelljoin}"
           case system(*cmd)
           when nil
             raise Error, 'butler not found, see https://itch.io/docs/butler/installing.html'
           when false
-            raise Error, "failed to upload: #{cmd.join ' '}"
+            raise Error, "failed to upload: #{cmd.shelljoin}"
           end
         end
 

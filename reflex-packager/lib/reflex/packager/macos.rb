@@ -124,15 +124,23 @@ module Reflex
         signing_to_distribute? || notarize? ? super : 'adhoc'
       end
 
+      # The name of the .app and its executable, which Finder, the Dock and
+      # /Applications show: the name of the app as it is, with spaces, as Mac
+      # apps are named, unlike the target.
+      #
+      def app_name()
+        config.name
+      end
+
       def dist_path()
-        "#{super}.app"
+        File.join dist_dir, "#{app_name}.app"
       end
 
       # The installer package of the app for the Mac App Store, to upload to
       # App Store Connect.
       #
       def appstore_pkg_path()
-        File.join dist_dir('appstore'), "#{target}-#{config.version}-macos.pkg"
+        File.join dist_dir('appstore'), "#{target}-#{config.version}.pkg"
       end
 
       def store_package_paths()
@@ -474,7 +482,7 @@ module Reflex
       end
 
       def built_app_path()
-        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
+        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{app_name}.app"
       end
 
       # The directory of the app archived and exported for no store in
@@ -493,11 +501,11 @@ module Reflex
       end
 
       def exported_app_path()
-        File.join generic_dir, 'export', "#{target}.app"
+        File.join generic_dir, 'export', "#{app_name}.app"
       end
 
       def notarized_app_path()
-        File.join generic_dir, 'notarized', "#{target}.app"
+        File.join generic_dir, 'notarized', "#{app_name}.app"
       end
 
       # The directory of the app archived and exported for the Mac App Store.
@@ -519,7 +527,7 @@ module Reflex
       end
 
       def appstore_exported_pkg_path()
-        File.join appstore_dir, 'export', "#{target}.pkg"
+        File.join appstore_dir, 'export', "#{app_name}.pkg"
       end
 
       # Has the app write its data file with its scripts compiled by the
@@ -539,7 +547,7 @@ module Reflex
         env = ENV.keys.grep(/\A(BUNDLER?_|GEM_)/)
           .then {[*_1, 'RUBYOPT', 'RUBYLIB']}
           .to_h {[_1, nil]}
-        run File.join(built_app_path, 'Contents', 'MacOS', target), chdir: build_dir, env: env
+        run File.join(built_app_path, 'Contents', 'MacOS', app_name), chdir: build_dir, env: env
       ensure
         File.write boot, orig if orig
       end

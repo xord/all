@@ -199,6 +199,9 @@ module Reflex
       VERSION_FORMAT = /\A\d+(\.\d+)*\z/
 
       def validate()
+        # the name of the .app on macos, which can not have a path separator
+        raise Error, "invalid name: '#{@name}'" if @name.strip.empty? || @name =~ %r{[/:]}
+
         raise Error, "invalid bundle_id: '#{@bundle_id}'" if
           @bundle_id !~ /\A[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+\z/
 

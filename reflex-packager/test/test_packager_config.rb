@@ -106,6 +106,10 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal 'test', config()         .name
     assert_equal '1',    config(name: 1)  .name
     assert_equal 'test', config(name: nil).name
+    assert_raise(RP::Error) {config name: '',    bundle_id: 'a.b'}
+    assert_raise(RP::Error) {config name: ' ',   bundle_id: 'a.b'}
+    assert_raise(RP::Error) {config name: 'A/B', bundle_id: 'a.b'}
+    assert_raise(RP::Error) {config name: 'A:B', bundle_id: 'a.b'}
   end
 
   def test_bundle_id()

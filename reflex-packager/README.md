@@ -72,10 +72,10 @@ $ reflex package .
 
 The app is packaged for the platform the packager runs on, as each one builds only on itself, and placed in `dist/`:
 
-- macOS: `dist/generic/<name>.app` signed with Developer ID, or `dist/adhoc/<name>.app` signed otherwise, only to be run where it is built, and `dist/appstore/<name>-<version>-macos.pkg` for the Mac App Store
+- macOS: `dist/generic/<app name>.app` signed with Developer ID, or `dist/adhoc/<app name>.app` signed otherwise, only to be run where it is built, and `dist/appstore/<name>-<version>.pkg` for the Mac App Store
 - Windows: `dist/generic/<name>/`, with `<name>.exe`, and the DLLs it loads, the standard library, the libraries, the gems and the app in `lib/`
 
-The zip of the app is put beside it.
+The zip of the app is put beside it. `<name>` is the name of the app with no spaces or symbols, as `MyApp`, and `<app name>` is the name as it is, as `My App`, which Finder and the Dock show.
 
 ### CLI options
 
@@ -244,7 +244,7 @@ The notarization can be split into the steps, so as not to keep a Mac waiting, a
 
 ### Packaging for the Mac App Store
 
-With `--appstore`, the app is archived in the sandbox, which the Mac App Store needs, and exported into `dist/appstore/<name>-<version>-macos.pkg` to upload to App Store Connect, signed by the certificates of the team that Apple manages, as the profile. It needs the team and `macos.category` in the config, and makes only the one for the App Store, unless `--generic` or `--notarize` asks for the generic one too, archived apart out of the sandbox. `rake package:appstore` packs and packages it so:
+With `--appstore`, the app is archived in the sandbox, which the Mac App Store needs, and exported into `dist/appstore/<name>-<version>.pkg` to upload to App Store Connect, signed by the certificates of the team that Apple manages, as the profile. It needs the team and `macos.category` in the config, and makes only the one for the App Store, unless `--generic` or `--notarize` asks for the generic one too, archived apart out of the sandbox. `rake package:appstore` packs and packages it so:
 
 ```bash
 $ export APPLE_TEAM_ID=XXXXXXXXXX
