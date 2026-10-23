@@ -62,7 +62,7 @@ class TestPackagerRake < Test::Unit::TestCase
     end
   end
 
-  def test_upload_itchio()
+  def test_upload()
     application do |dir|
       archive = File.join dir, 'dist/adhoc/MyGame-1.2.3-macos-universal.zip'
       stub Gem, :win_platform?, false do
@@ -86,6 +86,33 @@ class TestPackagerRake < Test::Unit::TestCase
         end
       end
       assert_equal [[[archive], {channel: 'macos', version: '1.2.3'}]], uploads
+    end
+
+    ::Rake::Task.clear
+    application do |dir|
+      pkg = File.join dir, 'dist/appstore/MyGame-1.2.3.pkg'
+      stub Gem, :win_platform?, false do
+        package_application
+      end
+      assert_equal [pkg], ::Rake::Task['upload:appstore'].prerequisites
+      assert_include ::Rake::Task['upload:appstore'].comment, 'App Store Connect'
+      # only the actions of the task, not building the package it takes
+      error = assert_raise(Reflex::Packager::Error) {::Rake::Task['upload:appstore'].execute}
+      assert_include error.message, 'no API key'
+
+      uploads  = []
+      uploader = Object.new
+      uploader.define_singleton_method(:upload) {|*args, **kwargs| uploads << [args, kwargs]}
+      stub Reflex::Packager::Stores::AppStore, :new, uploader do
+        ::Rake::Task['upload:appstore'].execute
+      end
+      assert_equal [[[pkg], {platform: 'macos'}]], uploads
+
+      ::Rake::Task.clear
+      stub Gem, :win_platform?, true do
+        package_application
+      end
+      assert_false ::Rake::Task.task_defined?('upload:appstore') # only on macos
     end
   end
 

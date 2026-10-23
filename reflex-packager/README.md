@@ -254,6 +254,18 @@ $ reflex package --pack --notarize --appstore . # the generic one too
 
 The app in the sandbox keeps its data in a container of its own, `~/Library/Containers/<bundle_id>/`, apart from the generic one.
 
+### Uploading to App Store Connect
+
+`rake upload:appstore` uploads the package for the Mac App Store, packaged if not yet, to App Store Connect by `altool` of Xcode, by the API key of App Store Connect in the environment variables above, which App Store Connect tells the app and the build of by the package. The app has to be made in App Store Connect beforehand, by its bundle ID, and the build is chosen for a version there to submit it for review:
+
+```bash
+$ export APPLE_TEAM_ID=XXXXXXXXXX
+$ export APPLE_API_ISSUER_ID=... APPLE_API_KEY_ID=... APPLE_API_KEY_PATH=~/AuthKey_XXXXXXXXXX.p8
+$ rake upload:appstore
+```
+
+A build can not be uploaded twice by the same number, so raise the fourth number of `version` to upload it again by the same version.
+
 ### Uploading to itch.io
 
 With `upload.itchio.project` in the config, `rake upload:itchio` uploads the zip of the app, archived if not yet, by [butler](https://itch.io/docs/butler/), into the channel of the platform, as `macos` or `windows`, with the version of the app. butler uploads it as the user `butler login` logged in, or by the API key in `BUTLER_API_KEY`, made at https://itch.io/user/settings/api-keys, as on CI. Download butler of the platform from https://broth.itch.zone/butler, not by `brew install butler`, which is another app:

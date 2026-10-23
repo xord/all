@@ -7,8 +7,6 @@ module Reflex
   module Packager
 
 
-    # The stores to hand out the app at.
-    #
     module Stores
 
 

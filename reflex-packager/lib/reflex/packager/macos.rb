@@ -468,11 +468,7 @@ module Reflex
         creds = AppStoreConnect.credentials
         return block.call [] unless creds
 
-        Dir.mktmpdir do |dir|
-          path = creds[:key_path]&.then {File.expand_path _1} ||
-            File.join(dir, "AuthKey_#{creds[:key_id]}.p8").tap {
-              File.write _1, creds[:key_p8], perm: 0600
-            }
+        AppStoreConnect.new(creds).with_key_path do |path|
           block.call [
             '-authenticationKeyIssuerID', creds[:issuer_id],
             '-authenticationKeyID',       creds[:key_id],

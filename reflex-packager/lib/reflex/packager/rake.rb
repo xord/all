@@ -59,6 +59,13 @@ module Reflex
             Stores::Itchio.new(project).upload archive_path,
               channel: Packager.default_platform.to_s, version: config.version
           end
+
+          platform.store_package_paths[:appstore]&.then do |pkg_path|
+            desc "upload #{relative[pkg_path]} to App Store Connect"
+            task :appstore => pkg_path do
+              Stores::AppStore.new.upload pkg_path, platform: Packager.default_platform.to_s
+            end
+          end
         end
 
         task :clean do
