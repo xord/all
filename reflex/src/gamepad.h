@@ -69,6 +69,10 @@ namespace Reflex
 
 	Gamepad* Gamepad_create ();
 
+	void Gamepad_init_native (Application* app);
+
+	void Gamepad_fin_native  (Application* app);
+
 
 }// Reflex
 

@@ -71,6 +71,13 @@ RUCY_DEF0(s_get_all)
 }
 RUCY_END
 
+static
+RUCY_DEF0(s_enable)
+{
+	Reflex::enable_midi();
+}
+RUCY_END
+
 
 static Class cMIDI;
 
@@ -86,7 +93,8 @@ Init_reflex_midi ()
 	cMIDI.define_method("on_note_on",        on_note_on);
 	cMIDI.define_method("on_note_off",       on_note_off);
 	cMIDI.define_method("on_control_change", on_control_change);
-	cMIDI.define_singleton_method("all", s_get_all);
+	cMIDI.define_singleton_method("all",    s_get_all);
+	cMIDI.define_singleton_method("enable", s_enable);
 
 	define_wrapper_equality_methods<Reflex::MIDI>(cMIDI);
 }

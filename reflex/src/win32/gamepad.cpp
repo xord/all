@@ -72,20 +72,27 @@ namespace Reflex
 		handle_gamepad_trigger_event(win, state.Gamepad.bRightTrigger, prev_state.Gamepad.bRightTrigger, KEY_GAMEPAD_RTRIGGER);
 	}
 
+	static bool polling = false;
+
 	void
-	Gamepad_init (Application* app)
+	Gamepad_init_native (Application* app)
 	{
+		polling = true;
 	}
 
 	void
-	Gamepad_fin (Application* app)
+	Gamepad_fin_native (Application* app)
 	{
+		polling = false;
+
 		Gamepad_remove_all(app);
 	}
 
 	void
 	Gamepad_poll ()
 	{
+		if (!polling) return;
+
 		static XINPUT_STATE prev_state;
 		static bool prev_detected = false;
 

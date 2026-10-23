@@ -21,14 +21,14 @@ namespace Reflex
 
 
 	void
-	Gamepad_init (Application* app)
+	Gamepad_init_native (Application* app)
 	{
 		init_gc_gamepads(app);
 		init_hid_gamepads(app);
 	}
 
 	void
-	Gamepad_fin (Application* app)
+	Gamepad_fin_native (Application* app)
 	{
 		fin_gc_gamepads(app);
 		fin_hid_gamepads(app);

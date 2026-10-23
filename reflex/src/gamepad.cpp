@@ -40,6 +40,32 @@ namespace Reflex
 	}
 
 
+	static bool initialized = false;
+
+	void
+	Gamepad_init (Application* app)
+	{
+		if (!app)
+			argument_error(__FILE__, __LINE__);
+
+		if (initialized) return;
+
+		initialized = true;
+		Gamepad_init_native(app);
+	}
+
+	void
+	Gamepad_fin (Application* app)
+	{
+		if (!app)
+			argument_error(__FILE__, __LINE__);
+
+		if (!initialized) return;
+
+		Gamepad_fin_native(app);
+		initialized = false;
+	}
+
 	static Gamepad::List gamepads;
 
 	void
@@ -121,6 +147,16 @@ namespace Reflex
 	Gamepad_create ()
 	{
 		return gamepad_create_fun ? gamepad_create_fun() : new Gamepad();
+	}
+
+	void
+	enable_gamepad ()
+	{
+		Application* app_ = app();
+		if (!app_)
+			invalid_state_error(__FILE__, __LINE__);
+
+		Gamepad_init(app_);
 	}
 
 

@@ -4,8 +4,8 @@
 #include "reflex/exception.h"
 #include "reflex/debug.h"
 #include "window.h"
-#include "gamepad.h"
 #include "midi.h"
+#include "gamepad.h"
 
 
 namespace Reflex
@@ -58,11 +58,7 @@ namespace Reflex
 
 		Application_guard([&]()
 		{
-			Gamepad_init(app);
-			MIDI_init(app);
-
 			app->on_start(e);
-
 			app->self->started = true;
 		});
 	}

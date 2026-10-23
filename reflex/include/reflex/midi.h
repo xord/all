@@ -51,6 +51,9 @@ namespace Reflex
 	};// MIDI
 
 
+	void enable_midi ();
+
+
 }// Reflex
 
 

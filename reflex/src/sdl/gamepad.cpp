@@ -9,17 +9,13 @@ namespace Reflex
 
 
 	void
-	Gamepad_init (Application* app)
+	Gamepad_init_native (Application* app)
 	{
+		not_implemented_error(__FILE__, __LINE__);
 	}
 
 	void
-	Gamepad_fin (Application* app)
-	{
-	}
-
-	void
-	Gamepad_poll ()
+	Gamepad_fin_native (Application* app)
 	{
 	}
 

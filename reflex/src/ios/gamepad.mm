@@ -258,7 +258,7 @@ namespace Reflex
 
 	static id disconnect_observer = nil;
 
-	void
+	static void
 	init_gamepad (Application* app)
 	{
 		if (connect_observer || disconnect_observer)
@@ -280,7 +280,7 @@ namespace Reflex
 			add_gamepad(app, c);
 	}
 
-	void
+	static void
 	fin_gamepad (Application* app)
 	{
 		if (!connect_observer || !disconnect_observer)
@@ -297,13 +297,13 @@ namespace Reflex
 	}
 
 	void
-	Gamepad_init (Application* app)
+	Gamepad_init_native (Application* app)
 	{
 		init_gamepad(app);
 	}
 
 	void
-	Gamepad_fin (Application* app)
+	Gamepad_fin_native (Application* app)
 	{
 		fin_gamepad(app);
 

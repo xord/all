@@ -56,6 +56,7 @@ void Init_reflex_color_picker ();
 
 void Init_reflex_device ();
 void Init_reflex_midi ();
+void Init_reflex_gamepad ();
 
 void Init_reflex_image_view ();
 
@@ -122,6 +123,7 @@ Init_reflex_ext ()
 
 	Init_reflex_device();
 	Init_reflex_midi();
+	Init_reflex_gamepad();
 
 	Init_reflex_image_view();
 

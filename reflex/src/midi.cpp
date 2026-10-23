@@ -324,8 +324,10 @@ namespace Reflex
 		return;
 #endif
 
-		if (manager)
-			invalid_state_error(__FILE__, __LINE__);
+		if (!app)
+			argument_error(__FILE__, __LINE__);
+
+		if (manager) return;
 
 		manager.reset(new MIDIDeviceManager());
 	}
@@ -333,12 +335,10 @@ namespace Reflex
 	void
 	MIDI_fin (Application* app)
 	{
-#ifdef WASM
-		return;
-#endif
+		if (!app)
+			argument_error(__FILE__, __LINE__);
 
-		if (!manager)
-			invalid_state_error(__FILE__, __LINE__);
+		if (!manager) return;
 
 		midis.clear();
 		manager.reset();
@@ -355,6 +355,16 @@ namespace Reflex
 			manager->update();
 			prev_time = Xot::time();
 		}
+	}
+
+	void
+	enable_midi ()
+	{
+		Application* app_ = app();
+		if (!app_)
+			invalid_state_error(__FILE__, __LINE__);
+
+		MIDI_init(app_);
 	}
 
 

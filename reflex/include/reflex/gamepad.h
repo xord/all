@@ -169,6 +169,9 @@ namespace Reflex
 	};// Gamepad
 
 
+	void enable_gamepad ();
+
+
 }// Reflex
 
 
