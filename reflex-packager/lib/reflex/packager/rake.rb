@@ -44,11 +44,13 @@ module Reflex
           end
         end
 
-        desc "release the application on GitHub, by the tag #{tag}"
-        task :release => archive_path do
+        desc "release the application archived or packaged on GitHub, by the tag #{tag}"
+        task :release do
           ref = ENV['GITHUB_REF_NAME']
           raise "#{ref} is not the tag of the version, #{tag}" if ref && ref != tag
-          release_on_github archive_path, tag: tag, notes: release_notes(tag)
+          paths = [archive_path, *platform.store_package_paths.values].select {File.file? _1}
+          raise 'nothing to release, archive or package the application first' if paths.empty?
+          release_on_github(*paths, tag: tag, notes: release_notes(tag))
         end
 
         namespace :upload do

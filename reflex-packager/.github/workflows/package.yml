@@ -212,6 +212,12 @@ jobs:
           path: ${{ runner.temp }}/xcarchive.tar
           retention-days: 1
 
+      - name: release pkg
+        if: inputs.macos-appstore && github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bundle exec rake release
+
       - name: upload to App Store Connect
         if: inputs.macos-appstore && github.ref_type == 'tag'
         env:

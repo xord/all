@@ -254,6 +254,15 @@ $ reflex package --pack --notarize --appstore . # the generic one too
 
 The app in the sandbox keeps its data in a container of its own, `~/Library/Containers/<bundle_id>/`, apart from the generic one.
 
+### Releasing on GitHub
+
+`rake release` makes the release of the tag of the version on GitHub by `gh`, with the changes of the version in `ChangeLog.md`, and attaches the zip of the app and the package for the Mac App Store, the ones made, or adds them to the release made already. It makes neither, as the jobs on CI make them apart, so archive or package the app first to release it by hand:
+
+```bash
+$ rake archive release
+$ rake archive package:appstore release # the one for the Mac App Store too
+```
+
 ### Uploading to App Store Connect
 
 `rake upload:appstore` uploads the package for the Mac App Store, packaged if not yet, to App Store Connect by `altool` of Xcode, by the API key of App Store Connect in the environment variables above, which App Store Connect tells the app and the build of by the package. The app has to be made in App Store Connect beforehand, by its bundle ID, and the build is chosen for a version there to submit it for review:
@@ -299,7 +308,7 @@ $ base64 -i DeveloperID.p12 | pbcopy
 
 With `APPLE_TEAM_ID` but no `APPLE_CODESIGN_P12`, the workflow fails. Without the secrets, the app is packaged with no notarization, signed as the config tells.
 
-With the input `macos-appstore: true` and the secrets to notarize, the app for the Mac App Store is packaged too, in the job that submits the notarized one, and uploaded to App Store Connect by `rake upload:appstore` on a tag. It is signed by the certificate Apple manages, through the API key, which has to be of the Admin role to make the certificate and the profile, so `APPLE_CODESIGN_P12` needs no more than Developer ID. A failure of it fails the job, and the notarization with it. With the input but no `APPLE_TEAM_ID`, the workflow fails at first.
+With the input `macos-appstore: true` and the secrets to notarize, the app for the Mac App Store is packaged too, in the job that submits the notarized one, and on a tag, attached to the release by `rake release`, then uploaded to App Store Connect by `rake upload:appstore`. It is signed by the certificate Apple manages, through the API key, which has to be of the Admin role to make the certificate and the profile, so `APPLE_CODESIGN_P12` needs no more than Developer ID. A failure of it fails the job, and the notarization with it. With the input but no `APPLE_TEAM_ID`, the workflow fails at first.
 
 With `BUTLER_API_KEY` in the secrets too, the app released by a tag is uploaded to itch.io by `rake upload:itchio`, after it is released on GitHub, unless the input `itchio` is `false`.
 

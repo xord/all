@@ -41,7 +41,7 @@ class TestPackagerRake < Test::Unit::TestCase
       assert_equal [app],     ::Rake::Task['package'].prerequisites
       assert_equal [archive], ::Rake::Task['archive'].prerequisites
       assert_equal [app],     ::Rake::Task[archive].prerequisites
-      assert_equal [archive], ::Rake::Task['release'].prerequisites
+      assert_equal [],        ::Rake::Task['release'].prerequisites # made apart on CI
       assert_equal %w[lib/a/b.rb main.rb reflex.yml VERSION].sort,
         ::Rake::Task[app].prerequisites.sort # the files of the app, not lib/a
       assert_include ::Rake::Task['package'].comment, 'dist/adhoc/My Game.app'
@@ -59,6 +59,39 @@ class TestPackagerRake < Test::Unit::TestCase
         package_application
       end
       assert_false ::Rake::Task.task_defined?('package:appstore') # only on macos
+    end
+  end
+
+  def test_release()
+    application do |dir|
+      archive  = File.join dir, 'dist/adhoc/MyGame-1.2.3-macos-universal.zip'
+      pkg      = File.join dir, 'dist/appstore/MyGame-1.2.3.pkg'
+      releases = []
+      define_singleton_method(:release_on_github) {|*args, **kwargs| releases << [args, kwargs]}
+      stub Gem, :win_platform?, false do
+        package_application
+      end
+      release = -> *paths do
+        paths.each {FileUtils.mkdir_p File.dirname(_1); FileUtils.touch _1}
+        stub(self, :release_notes, 'notes') {::Rake::Task['release'].execute}
+      ensure
+        FileUtils.rm_f paths
+      end
+
+      with_env 'GITHUB_REF_NAME' => nil do
+        error = assert_raise(RuntimeError) {release.call}
+        assert_include error.message, 'nothing to release'
+        release.call archive
+        release.call pkg
+        release.call archive, pkg
+      end
+      notes = {tag: 'v1.2.3', notes: 'notes'}
+      assert_equal [[[archive], notes], [[pkg], notes], [[archive, pkg], notes]], releases
+
+      with_env 'GITHUB_REF_NAME' => 'v9.9.9' do
+        error = assert_raise(RuntimeError) {release.call archive}
+        assert_include error.message, 'not the tag of the version'
+      end
     end
   end
 
