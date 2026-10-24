@@ -254,6 +254,8 @@ $ reflex package --pack --notarize --appstore . # the generic one too
 
 The app in the sandbox keeps its data in a container of its own, `~/Library/Containers/<bundle_id>/`, apart from the generic one.
 
+Info.plist of the app has `ITSAppUsesNonExemptEncryption` of `false`, which tells Apple that it uses no encryption but the exempt one, as of HTTPS. The config has no way to change it yet, so an app with an encryption of its own is not to be packaged so.
+
 ### Releasing on GitHub
 
 `rake release` makes the release of the tag of the version on GitHub by `gh`, with the changes of the version in `ChangeLog.md`, and attaches the zip of the app and the package for the Mac App Store, the ones made, or adds them to the release made already. It makes neither, as the jobs on CI make them apart, so archive or package the app first to release it by hand:
