@@ -70,7 +70,7 @@ class TestPackagerCLI < Test::Unit::TestCase
         ENV['CRUBY_PATH'] = saved
       end
       %w[project.yml src/main.mm app/main.rb].each do |f|
-        assert File.exist?("myapp/.build/macos/#{f}"), "missing #{f}"
+        assert File.exist?("myapp/.build/macos/project/#{f}"), "missing #{f}"
       end
     end
 
@@ -95,6 +95,15 @@ class TestPackagerCLI < Test::Unit::TestCase
         cli.package ['--notarize-submit', '--notarize-export', 'myapp']
       end
       assert_include error.message, 'only one of'
+
+      error = assert_raise(RP::Error) do
+        cli.package ['--notarize-wait', 'ID', '--appstore', 'myapp']
+      end
+      assert_include error.message, '--notarize-wait'
+      error = assert_raise(RP::Error) do
+        cli.package ['--platform', 'windows', '--appstore', 'myapp']
+      end
+      assert_include error.message, 'only for macos'
     end
   end
 

@@ -25,7 +25,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
   end
 
   def read(dir, path)
-    File.read File.join(dir, '.build', 'macos', path)
+    File.read File.join(dir, '.build', 'macos', 'project', path)
   end
 
   # --- generate ----------------------------------------------------------
@@ -39,11 +39,11 @@ class TestPackagerMacOS < Test::Unit::TestCase
         Bundles/reflex.bundle/Contents/Resources/VERSION
         Bundles/CRuby.bundle/Contents/Resources/lib/ruby/4.0.0/set.rb
       ].each do |f|
-        assert File.exist?(File.join dir, '.build/macos', f), "missing #{f}"
+        assert File.exist?(File.join dir, '.build/macos/project', f), "missing #{f}"
       end
       assert_empty Dir.glob('*.bundle/**/lib/**/*.{bundle,so,o,a}',
-        base: File.join(dir, '.build/macos/Bundles'))
-      assert_empty Dir.glob('src/*.lproj', base: File.join(dir, '.build/macos')) # in english only
+        base: File.join(dir, '.build/macos/project/Bundles'))
+      assert_empty Dir.glob('src/*.lproj', base: File.join(dir, '.build/macos/project')) # in english only
     end
   end
 
@@ -64,9 +64,9 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_raise(RP::Error) {pkg.package generate_only: true} # it has to be built
 
       pkg.generate
-      app = File.join dir, '.build/macos/app'
+      app = File.join dir, '.build/macos/project/app'
       assert_equal %w[data.txt], Dir.children(app) # the data file is written when built
-      loader = File.join dir, '.build/macos/Bundles/reflex.bundle/Contents/Resources/lib/reflex/packager'
+      loader = File.join dir, '.build/macos/project/Bundles/reflex.bundle/Contents/Resources/lib/reflex/packager'
       assert_equal %w[data_file.rb data_loader.rb], Dir.children(loader).sort
       boot = read dir, 'boot.rb'
       assert_include boot, 'DataLoader.setup'
@@ -93,7 +93,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager "files: [data]", files: %w[main.rb data/x.png] do |pkg, dir|
       pkg.generate
       pkg.generate # regenerating must not nest a previous .build/ into app/
-      app = File.join dir, '.build/macos/app'
+      app = File.join dir, '.build/macos/project/app'
       assert  File.exist?(File.join app, 'data/x.png')
       assert !File.exist?(File.join app, '.build')
     end
@@ -103,7 +103,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager "files: ['lib/**/*']", files: files do |pkg, dir|
       pkg.generate
       assert_equal %w[lib/a lib/a/b lib/a/b/y.yml lib/a/x.rb],
-        Dir.glob('lib/**/*', base: File.join(dir, '.build/macos/app')).sort
+        Dir.glob('lib/**/*', base: File.join(dir, '.build/macos/project/app')).sort
     end
   end
 
@@ -117,7 +117,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
         ja: {name: 'マイ"アプリ'}
     YML
     packager yaml do |pkg, dir|
-      FileUtils.mkdir_p File.join(dir, '.build/macos/src/fr.lproj') # of a previous build
+      FileUtils.mkdir_p File.join(dir, '.build/macos/project/src/fr.lproj') # of a previous build
       pkg.generate
       str  = read dir, 'project.yml'
       yml  = YAML.safe_load str
@@ -133,7 +133,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include     str, 'GCC_WARN_INHIBIT_ALL_WARNINGS: YES'
       assert_not_include str, 'DEVELOPMENT_TEAM'
       assert_not_include str, 'ENABLE_HARDENED_RUNTIME'
-      assert !File.exist?(File.join dir, '.build/macos/ExportOptions.plist')
+      assert !File.exist?(File.join dir, '.build/macos/generic/ExportOptions.plist')
 
       reflex, cruby = pkg.libraries.find {_1.name == 'reflex'}.root, ENV['CRUBY_PATH']
       assert_include base['HEADER_SEARCH_PATHS'],        "#{reflex}/include"
@@ -155,6 +155,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_equal '1.2.3.4',   info['CFBundleVersion']
       assert_equal '© 2026 Me', info['NSHumanReadableCopyright']
       assert_equal true,        info['LSHasLocalizedDisplayName']
+      assert_equal false,       info['ITSAppUsesNonExemptEncryption']
+      assert_not_include info, 'LSApplicationCategoryType'
 
       assert_equal <<~'STRINGS', read(dir, 'src/ja.lproj/InfoPlist.strings')
         "CFBundleName"             = "マイ\"アプリ";
@@ -162,7 +164,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
         "NSHumanReadableCopyright" = "© 2026 Me";
       STRINGS
       assert_include read(dir, 'src/en.lproj/InfoPlist.strings'), '"CFBundleName"             = "My App";'
-      assert !File.exist?(File.join dir, '.build/macos/src/fr.lproj')
+      assert !File.exist?(File.join dir, '.build/macos/project/src/fr.lproj')
 
       deps = target['dependencies']
       assert_include deps, {'framework' => "#{cruby}/CRuby/CRuby.xcframework", 'embed' => false}
@@ -191,7 +193,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager files: %w[main.rb Gemfile] do |pkg, dir|
       File.write File.join(dir, 'Gemfile'), gemfile
       pkg.generate
-      bundles = File.join dir, '.build/macos/Bundles'
+      bundles = File.join dir, '.build/macos/project/Bundles'
       assert File.exist?(File.join bundles, 'test-unit.bundle/Contents/Resources/lib/test/unit.rb')
       assert File.exist?(File.join bundles, 'power_assert.bundle/Contents/Resources/lib/power_assert.rb')
       assert !File.exist?(File.join bundles, 'rake.bundle')
@@ -253,6 +255,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
     yaml = <<~YML
       icon: icon.png
       macos:
+        category: public.app-category.games
         codesign: {team_id: ABCDE12345}
     YML
     packager yaml, files: %w[main.rb icon.png] do |pkg, dir|
@@ -260,6 +263,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       str = pkg.__send__ :render, 'project.yml.erb'
       assert_include     str, 'CFBundleIconFile: AppIcon'
       assert_include     str, 'path: AppIcon.icns'
+      assert_include     str, 'LSApplicationCategoryType: public.app-category.games'
       assert_include     str, 'DEVELOPMENT_TEAM: ABCDE12345'
       assert_include     str, 'ENABLE_HARDENED_RUNTIME: YES'
       assert_not_include str, 'NSHumanReadableCopyright'
@@ -292,6 +296,11 @@ class TestPackagerMacOS < Test::Unit::TestCase
       verbose = MacOS.new pkg.config, verbose: true
       assert_match     (/^2$/), stdout.call {verbose.__send__ :run, *cmd, chdir: dir, quiet: true}
       assert_raise(RP::Error) {stdout.call {pkg.__send__ :run, RbConfig.ruby, '-e', 'exit 1', chdir: dir}}
+
+      script = File.join dir, 'My App'
+      File.write script, "#!/bin/sh\necho 3\n"
+      File.chmod 0755, script
+      assert_match     (/^3$/), stdout.call {pkg.__send__ :run, script, chdir: dir}
     end
   end
 
@@ -439,11 +448,13 @@ class TestPackagerMacOS < Test::Unit::TestCase
     packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
       assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>ABCDE12345</string>'
       assert_include pkg.__send__(:render, 'ExportOptions.plist.erb'), '<string>export</string>'
+      pkg.generate
+      assert File.exist?(File.join dir, '.build/macos/generic/ExportOptions.plist')
 
       commands, copied = build.call pkg
       assert_equal 1, commands.grep(/ archive -archivePath .*\/#{pkg.target}\.xcarchive$/).size
       assert_equal 1, commands.grep(/-exportArchive .*-allowProvisioningUpdates$/).size
-      assert_equal [File.join(dir, ".build/macos/Export/#{pkg.target}.app")], copied
+      assert_equal [File.join(dir, ".build/macos/generic/export/#{pkg.target}.app")], copied
     end
 
     env = {
@@ -471,7 +482,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       commands, copied = build.call pkg
       assert_equal 1, commands.grep(/ archive -archivePath /).size
       assert_equal 1, commands.grep(/-exportArchive /).size
-      assert_equal [File.join(dir, ".build/macos/Export/#{pkg.target}.app")], copied
+      assert_equal [File.join(dir, ".build/macos/generic/export/#{pkg.target}.app")], copied
     end
 
     # the certificate of Developer ID by the environment variables, as on CI,
@@ -537,7 +548,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
 
     packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
-      notarized = File.join dir, ".build/macos/Notarized/#{pkg.target}.app"
+      notarized = File.join dir, ".build/macos/generic/notarized/#{pkg.target}.app"
       outs      = -> {[
         ['error: Archive "a" is processing and not ready for distribution.', false],
         ['error: Ticket not found.', false],
@@ -551,11 +562,11 @@ class TestPackagerMacOS < Test::Unit::TestCase
       # no archive sent yet
       error = assert_raise(RP::Error) {build.call pkg.config, %i[export]}
       assert_include error.message, 'no archive sent'
-      FileUtils.mkdir_p File.join(dir, ".build/macos/#{pkg.target}.xcarchive/Submissions/ABC-123")
+      FileUtils.mkdir_p File.join(dir, ".build/macos/generic/#{pkg.target}.xcarchive/Submissions/ABC-123")
 
       commands, captured, copied = build.call pkg.config, all, outs.call
       assert_equal 1, commands.grep(/-exportArchive/).size
-      assert_equal 3, captured.grep(/-exportNotarizedApp .* -exportPath .*\/Notarized$/).size
+      assert_equal 3, captured.grep(/-exportNotarizedApp .* -exportPath .*\/generic\/notarized$/).size
       assert_equal [notarized], copied
 
       commands, captured, copied, printed = build.call pkg.config, %i[submit]
@@ -584,7 +595,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_include error.message, 'no archive sent'
     end
     packager "macos: {codesign: {identity: Developer ID Application, team_id: ABCDE12345}}" do |pkg, dir|
-      FileUtils.mkdir_p File.join(dir, ".build/macos/#{pkg.target}.xcarchive/Submissions/ABC-123")
+      FileUtils.mkdir_p File.join(dir, ".build/macos/generic/#{pkg.target}.xcarchive/Submissions/ABC-123")
       commands, _, _, printed = build.call pkg.config, %i[submit]
       assert_equal 1, commands.grep(/-exportArchive/).size
       assert_include printed, 'Submitted for the notarization: abc-123'
@@ -615,6 +626,97 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_build_for_appstore()
+    # with the commands captured, and what is copied into dist/
+    build = -> config, **options do
+      mac              = MacOS.new config, **options
+      commands, copied = [], []
+      mac.define_singleton_method(:check_tools) {|*|}
+      mac.define_singleton_method(:run)         {|*cmd, **| commands << cmd.join(' ')}
+      mac.define_singleton_method(:puts)        {|*|}
+      mac.define_singleton_method(:copy_app)    {|app = nil| copied << app}
+      mac.define_singleton_method(:copy_pkg)    {|pkg, dist| copied << [pkg, dist]}
+      mac.build
+      [commands, copied]
+    end
+
+    yaml = "name: My App\nmacos: {category: public.app-category.games, codesign: {team_id: ABCDE12345}}"
+    packager yaml do |pkg, dir|
+      appstore = File.join dir, '.build/macos/appstore'
+      generic  = File.join dir, '.build/macos/generic'
+      mac      = MacOS.new pkg.config, appstore: true
+      mac.generate
+      assert_include File.read("#{appstore}/AppStore.entitlements"),
+        "<key>com.apple.security.app-sandbox</key>\n\t<true/>"
+      options = File.read "#{appstore}/ExportOptions.plist"
+      assert_include options, '<string>app-store-connect</string>'
+      assert_include options, '<string>automatic</string>'
+      assert_include options, '<string>ABCDE12345</string>'
+      assert_equal File.join(dir, "dist/appstore/#{pkg.target}-#{pkg.config.version}.pkg"),
+        mac.appstore_pkg_path
+
+      # only the one for the App Store, archived in the sandbox
+      commands, copied = build.call pkg.config, appstore: true
+      assert_equal [
+        "#{appstore}/MyApp.xcarchive CODE_SIGN_ENTITLEMENTS=#{appstore}/AppStore.entitlements"
+      ], commands.grep(/ archive /).map {_1[/(?<=-archivePath ).*/]}
+      assert_equal 1, commands.grep(
+        %r{-exportArchive -archivePath #{appstore}/\S+ -exportOptionsPlist #{appstore}/ExportOptions\.plist -exportPath #{appstore}/export -allowProvisioningUpdates$}).size
+      # the package named after the name of the app, not the target
+      assert_equal [["#{appstore}/export/My App.pkg", mac.appstore_pkg_path]], copied
+
+      # the generic one too, archived out of the sandbox, with nothing left of
+      # the exports before
+      stales = ["#{generic}/export/My App.app", "#{appstore}/export/My App.pkg"]
+      stales.each {FileUtils.mkdir_p _1}
+      commands, copied = build.call pkg.config, generic: true, appstore: true
+      stales.each {assert_false File.exist?(_1)}
+      assert_equal ["#{generic}/#{pkg.target}.xcarchive", "#{appstore}/#{pkg.target}.xcarchive"],
+        commands.grep(/ archive /).map {_1[/(?<=-archivePath )\S+/]}
+      assert_equal "#{generic}/export/My App.app", copied.first
+
+      # notarized, which only the generic one is
+      FileUtils.mkdir_p "#{generic}/#{pkg.target}.xcarchive/Submissions/ABC-123"
+      commands, copied = build.call pkg.config, notarize: %i[submit], appstore: true
+      assert_equal 2, commands.grep(/ archive /).size
+      assert_equal [["#{appstore}/export/My App.pkg", mac.appstore_pkg_path]], copied
+
+      [
+        [{appstore: true}, {generate_only: true}, 'built on macos'],
+        [{appstore: true, notarize: %i[export]}, {}, 'only exporting the notarized app']
+      ].each do |options, package_options, message|
+        error = assert_raise(RP::Error) {MacOS.new(pkg.config, **options).package(**package_options)}
+        assert_include error.message, message
+      end
+    end
+
+    packager do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, appstore: true).package}
+      assert_include error.message, 'APPLE_TEAM_ID'
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, generic: true).package}
+      assert_include error.message, 'Developer ID Application'
+    end
+    packager "macos: {codesign: {team_id: ABCDE12345}}" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, appstore: true).package}
+      assert_include error.message, 'macos.category'
+    end
+    packager "macos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, generic: true).package}
+      assert_include error.message, 'Developer ID Application'
+    end
+
+    # the API key, refused to sign with Developer ID, but not the generic one
+    api = {'APPLE_API_ISSUER_ID' => 'ISSUER', 'APPLE_API_KEY_ID' => 'KEY', 'APPLE_API_KEY_P8' => 'P8'}
+    packager yaml, env: api do |pkg, _|
+      mac = MacOS.new pkg.config, appstore: true
+      mac.define_singleton_method(:generate) {}
+      mac.define_singleton_method(:build)    {}
+      assert_nothing_raised {mac.package}
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, generic: true, appstore: true).package}
+      assert_include error.message, 'APPLE_CODESIGN_P12'
+    end
+  end
+
   def test_copy_app_without_build_product_raises()
     packager do |pkg, _|
       # nothing was built, so the .app is not under DerivedData
@@ -634,11 +736,22 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
   def test_dist_paths()
     packager "name: My App\nversion: 1.2.3" do |pkg, dir|
-      dist = File.join dir, 'dist'
-      assert_equal "#{dist}/MyApp.app",                       pkg.dist_path
+      dist = File.join dir, 'dist/adhoc'
+      # the app by its name with the spaces, the zip by the target
+      assert_equal "#{dist}/My App.app",                      pkg.dist_path
       assert_equal "#{dist}/MyApp-1.2.3-macos-universal.zip", pkg.archive_path
       assert_equal ['ditto', '-c', '-k', '--keepParent', pkg.dist_path, pkg.archive_path],
         pkg.archive_command
+
+      # notarized, which needs no team to only be exported
+      assert_equal File.join(dir, 'dist/generic/My App.app'),
+        MacOS.new(pkg.config, notarize: %i[export]).dist_path
+    end
+    packager "name: My App\nmacos: {codesign: {team_id: ABCDE12345}}" do |pkg, dir|
+      assert_equal File.join(dir, 'dist/generic/My App.app'), pkg.dist_path
+    end
+    packager "name: My App\nmacos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, dir|
+      assert_equal File.join(dir, 'dist/adhoc/My App.app'), pkg.dist_path
     end
     packager("macos: {archs: [arm64]}") {|pkg, _| assert_equal 'macos-arm64', pkg.archive_platform}
   end
@@ -674,12 +787,13 @@ class TestPackagerMacOS < Test::Unit::TestCase
         compile_scripts pkg if pack
         # boot.rb is beside app/ and the bundles in the resources of the app,
         # as here, and CRuby has the lib of each bundle on the load path
-        FileUtils.cp_r File.join(dir, '.build/macos/Bundles/reflex.bundle'), File.join(dir, '.build/macos')
-        lib = File.join dir, '.build/macos/reflex.bundle/Contents/Resources/lib'
+        FileUtils.cp_r File.join(dir, '.build/macos/project/Bundles/reflex.bundle'),
+          File.join(dir, '.build/macos/project')
+        lib = File.join dir, '.build/macos/project/reflex.bundle/Contents/Resources/lib'
         tty = "$stderr.define_singleton_method(:tty?) {#{tty}}"
         _, err, status = Open3.capture3 RbConfig.ruby, '-I', lib, '-e', "#{tty}; load ARGV[0]",
-          File.join(dir, '.build/macos/boot.rb')
-        alert = File.exist?(File.join dir, '.build/macos/alert') ? read(dir, 'alert') : nil
+          File.join(dir, '.build/macos/project/boot.rb')
+        alert = File.exist?(File.join dir, '.build/macos/project/alert') ? read(dir, 'alert') : nil
         return [status.exitstatus, alert, err]
       end
     }

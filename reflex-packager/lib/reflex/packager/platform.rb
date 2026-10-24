@@ -1,6 +1,7 @@
 require 'erb'
 require 'fileutils'
 require 'open3'
+require 'shellwords'
 
 
 module Reflex
@@ -40,8 +41,11 @@ module Reflex
 
       end# self
 
-      def initialize(config, verbose: false, pack: false, notarize: [])
+      def initialize(
+        config, verbose: false, pack: false, notarize: [], generic: false, appstore: false)
+
         @config, @verbose, @pack, @notarize = config, verbose, pack, notarize || []
+        @generic, @appstore                 = generic, appstore
       end
 
       attr_reader :config
@@ -74,6 +78,20 @@ module Reflex
         !@notarize.empty?
       end
 
+      # Whether to package the generic app, for no store in particular: when
+      # asked, or notarized, which only the generic one is, or when no store
+      # is asked for.
+      #
+      def generic?()
+        @generic || notarize? || !appstore?
+      end
+
+      # Whether to package the app for the Mac App Store.
+      #
+      def appstore?()
+        @appstore
+      end
+
       # Package the application as a distributable bundle.
       #
       # @param [Boolean] generate_only generate the project files but do
@@ -96,18 +114,42 @@ module Reflex
         raise "#{self.class} must implement #{__method__}"
       end
 
-      def build_dir()
+      # The directory of what the packager makes for the platform.
+      #
+      def platform_dir()
         File.join config.dir, '.build', platform_name
       end
 
-      def dist_dir()
-        File.join config.dir, 'dist'
+      # The directory the app is generated and built in.
+      #
+      def build_dir()
+        platform_dir
+      end
+
+      # The variant of the package, which the directory of the package is
+      # named after: generic, for no store in particular.
+      #
+      def variant()
+        'generic'
+      end
+
+      # The directory of the package of the variant, in dist/.
+      #
+      def dist_dir(variant = self.variant)
+        File.join config.dir, 'dist', variant
       end
 
       # The packaged app in dist_dir.
       #
       def dist_path()
         File.join dist_dir, target
+      end
+
+      # The packages of the app for the stores, as {store => path}, each of
+      # which --<store> packages, in the dist directory of the store.
+      #
+      def store_package_paths()
+        {}
       end
 
       # The command to zip the packaged app into archive_path.
@@ -230,7 +272,7 @@ module Reflex
       end
 
       def write(path, content)
-        path = File.join build_dir, path
+        path = File.expand_path path, build_dir
         FileUtils.mkdir_p File.dirname(path)
         File.write path, content
       end
@@ -253,13 +295,14 @@ module Reflex
       end
 
       # Runs +cmd+, dropping what it prints if +quiet+ unless verbose, though
-      # not the errors it tells.
+      # not the errors it tells. The command is run as it is, not split by
+      # spaces even if it is only a path, as of the app named with spaces.
       #
       def run(*cmd, chdir:, env: {}, quiet: false)
-        puts "==> #{cmd.join ' '}"
+        puts "==> #{cmd.shelljoin}"
         out = quiet && !verbose? ? {out: File::NULL} : {}
-        return if system env, *cmd, chdir: chdir, **out
-        raise Error, "command failed: #{cmd.join ' '}"
+        return if system env, [cmd.first, cmd.first], *cmd.drop(1), chdir: chdir, **out
+        raise Error, "command failed: #{cmd.shelljoin}"
       end
 
       # Runs +cmd+, returning what it prints and whether it succeeded, for

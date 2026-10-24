@@ -108,6 +108,8 @@ class TestPackagerWindows < Test::Unit::TestCase
 
         error = assert_raise(RP::Error) {Windows.new(pkg.config, notarize: %i[submit]).package}
         assert_include error.message, 'only for macos'
+        error = assert_raise(RP::Error) {Windows.new(pkg.config, appstore: true).package}
+        assert_include error.message, 'only for macos'
       end
     end
   end
@@ -595,7 +597,7 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_dist_paths()
     packager "name: My App\nversion: 1.2.3" do |pkg, dir|
-      dist = File.join dir, 'dist'
+      dist = File.join dir, 'dist/generic'
       assert_equal "#{dist}/MyApp", pkg.dist_path
       assert_match %r{^#{dist}/MyApp-1\.2\.3-windows-(x64|arm64)\.zip$}, pkg.archive_path
       assert_equal 'windows-x64',   pkg.archive_platform('host_cpu' => 'x86_64')

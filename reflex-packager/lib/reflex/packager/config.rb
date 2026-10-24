@@ -199,6 +199,9 @@ module Reflex
       VERSION_FORMAT = /\A\d+(\.\d+)*\z/
 
       def validate()
+        # the name of the .app on macos, which can not have a path separator
+        raise Error, "invalid name: '#{@name}'" if @name.strip.empty? || @name =~ %r{[/:]}
+
         raise Error, "invalid bundle_id: '#{@bundle_id}'" if
           @bundle_id !~ /\A[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+\z/
 
@@ -232,6 +235,7 @@ module Reflex
           deployment_target: '11.0',
           archs:             %w[arm64 x86_64],
           cruby:             nil,
+          category:          nil,
           codesign: {
             identity: '-',
             team_id:  nil
@@ -242,11 +246,12 @@ module Reflex
       def initialize(hash)
         codesign = hash[:codesign].merge CODESIGN_ENV_KEYS.transform_values {env _1}.compact
 
-        @deployment_target = hash[:deployment_target]  .to_s
-        @archs             = Array(hash[:archs]).map  &:to_s
+        @deployment_target = hash[:deployment_target] .to_s
+        @archs             = Array(hash[:archs]).map &:to_s
         @cruby             = hash[:cruby]            &.to_s
-        @codesign_identity = codesign[:identity]       .to_s
-        @codesign_team_id  = codesign[:team_id]       &.to_s
+        @category          = hash[:category]         &.to_s
+        @codesign_identity = codesign[:identity]      .to_s
+        @codesign_team_id  = codesign[:team_id]      &.to_s
         validate
       end
 
@@ -257,6 +262,11 @@ module Reflex
 
       attr_reader :deployment_target, :archs
 
+      # The category of the app in its Info.plist, as public.app-category.games,
+      # which Finder groups apps by and the App Store requires.
+      #
+      attr_reader :category
+
       # The identity and the team to sign the app with, which
       # APPLE_CODESIGN_IDENTITY and APPLE_TEAM_ID override, for the name of
       # the developer in the identity not to be in the config.
@@ -265,6 +275,8 @@ module Reflex
 
       def validate()
         raise Error, "invalid archs: '#{@archs}'" if @archs.empty?
+        raise Error, "invalid category: '#{@category}'" if
+          @category && @category !~ /\Apublic\.app-category\.[a-z\-]+\z/
       end
 
       private

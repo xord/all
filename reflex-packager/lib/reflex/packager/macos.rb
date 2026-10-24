@@ -51,26 +51,33 @@ module Reflex
       }
 
       # A packed app compiles its scripts when built, and a notarized one is
-      # sent to Apple when exported, so they have to be built; the app only
+      # sent to Apple when exported, as the one for the Mac App Store is
+      # exported from its archive, so they have to be built; the app only
       # exported after its notarization is not built, but taken from the
       # archive sent.
       #
       def package(generate_only: false)
         case
-        when pack?     && generate_only
-          'a packed app has to be built on macos'
-        when notarize? && generate_only
-          'a notarized app has to be built on macos'
-        when notarize.include?(:submit) && !config.macos.codesign_team_id
-          'notarizing needs the team to sign with, by macos.codesign.team_id' +
-            " or #{MacOSConfig::CODESIGN_ENV_KEYS[:team_id]}"
-        when codesign_p12 && !config.macos.codesign_team_id
-          "signing by #{CODESIGN_P12_ENV_KEYS[:p12]} needs the team of the certificate," +
+        # what can not be done together
+        when generate_only && (pack? || notarize? || appstore?)
+          'a packed, notarized or Mac App Store app has to be built on macos'
+        when appstore? && notarize == [:export]
+          'only exporting the notarized app, which is the generic one, makes no app' +
+            ' for the Mac App Store'
+        # what the config lacks
+        when !config.macos.codesign_team_id &&
+          (notarize.include?(:submit) || appstore? || codesign_p12)
+          'notarizing, the Mac App Store and the certificate by' +
+            " #{CODESIGN_P12_ENV_KEYS[:p12]} need the team to sign with," +
             " by macos.codesign.team_id or #{MacOSConfig::CODESIGN_ENV_KEYS[:team_id]}"
-        when notarize.include?(:submit) && !signing_to_distribute?
-          'notarizing is only for the app signed with Developer ID, by the certificate' +
-            " Apple manages, with no identity to sign with, or by #{DEVELOPER_ID}"
-        when notarize != [:export] && !generate_only &&
+        when appstore? && !config.macos.category
+          'the Mac App Store needs the category of the app, by macos.category'
+        # how the app is signed
+        when (notarize.include?(:submit) || @generic) && !signing_to_distribute?
+          'notarizing and --generic are only for the app signed with Developer ID,' +
+            ' by the certificate Apple manages, with no identity to sign with,' +
+            " or by #{DEVELOPER_ID}"
+        when generic? && notarize != [:export] && !generate_only &&
           cloud_signing? && AppStoreConnect.credentials
           # FB16835802 of Apple, which may be fixed some day
           'the API key is refused to sign with the certificate Apple manages,' +
@@ -84,33 +91,60 @@ module Reflex
         copy_bundles
         copy_app_files
         generate_icon if config.icon
-        write 'project.yml',         render('project.yml.erb')
-        write 'src/main.mm',         render('main.mm.erb')
-        write 'boot.rb',             render('boot.rb.erb')
-        write 'ExportOptions.plist', render('ExportOptions.plist.erb') if signing_to_distribute?
+        write 'project.yml',       render('project.yml.erb')
+        write 'src/main.mm',       render('main.mm.erb')
+        write 'boot.rb',           render('boot.rb.erb')
+        write export_options_path, render('ExportOptions.plist.erb') if signing_to_distribute?
+        if appstore?
+          write appstore_entitlements_path,   render('AppStore.entitlements.erb')
+          write appstore_export_options_path, render('AppStoreExportOptions.plist.erb')
+        end
         write_localizations
       end
 
       def build()
         check_tools TOOLS
         run 'xcodegen', 'generate', *('--quiet' unless verbose?), chdir: build_dir
-        compile_scripts if pack?
-        case
-        when !signing_to_distribute?
-          xcodebuild
-          copy_app
-        when !notarize?
-          export_app
-          copy_app exported_app_path
-        else
-          export_app
-          puts "Submitted for the notarization: #{submission_id}"
-          export_notarized_app if notarize.include? :export
-        end
+        compile_scripts     if pack?
+        build_generic       if generic?
+        export_appstore_pkg if appstore?
+      end
+
+      # The Xcode project, with what it is made of and what it builds, apart
+      # from the archives of the app in platform_dir.
+      #
+      def build_dir()
+        File.join platform_dir, 'project'
+      end
+
+      # The generic one is signed with Developer ID, to be handed out, and
+      # the one signed otherwise is adhoc, only to be run where it is built.
+      #
+      def variant()
+        signing_to_distribute? || notarize? ? super : 'adhoc'
+      end
+
+      # The name of the .app and its executable, which Finder, the Dock and
+      # /Applications show: the name of the app as it is, with spaces, as Mac
+      # apps are named, unlike the target.
+      #
+      def app_name()
+        config.name
       end
 
       def dist_path()
-        "#{super}.app"
+        File.join dist_dir, "#{app_name}.app"
+      end
+
+      # The installer package of the app for the Mac App Store, to upload to
+      # App Store Connect.
+      #
+      def appstore_pkg_path()
+        File.join dist_dir('appstore'), "#{target}-#{config.version}.pkg"
+      end
+
+      def store_package_paths()
+        {appstore: appstore_pkg_path}
       end
 
       # The command to zip the packaged app into archive_path, by ditto,
@@ -283,6 +317,24 @@ module Reflex
         keychain_signing? || cloud_signing?
       end
 
+      # Builds the generic app into the dist directory: as it is built, or
+      # exported signed with Developer ID, or notarized too.
+      #
+      def build_generic()
+        case
+        when !signing_to_distribute?
+          xcodebuild
+          copy_app
+        when !notarize?
+          export_app
+          copy_app exported_app_path
+        else
+          export_app
+          puts "Submitted for the notarization: #{submission_id}"
+          export_notarized_app if notarize.include? :export
+        end
+      end
+
       # Archives the app and exports it signed with Developer ID, by the
       # account of Xcode, or by the API key of App Store Connect that
       # APPLE_API_ISSUER_ID, APPLE_API_KEY_ID and APPLE_API_KEY_P8 or
@@ -290,13 +342,14 @@ module Reflex
       #
       def export_app()
         xcodebuild 'archive', '-archivePath', xcarchive_path
+        FileUtils.rm_rf File.dirname(exported_app_path)
         with_codesign_keychain do
           with_auth_options do |auth|
             run 'xcodebuild', *('-quiet' unless verbose?),
               '-exportArchive',
               '-archivePath',        xcarchive_path,
-              '-exportOptionsPlist', 'ExportOptions.plist',
-              '-exportPath',         'Export',
+              '-exportOptionsPlist', export_options_path,
+              '-exportPath',         File.dirname(exported_app_path),
               '-allowProvisioningUpdates',
               *auth,
               chdir: build_dir
@@ -342,6 +395,30 @@ module Reflex
           end
         end
         copy_app notarized_app_path
+      end
+
+      # Archives the app in the sandbox, which the Mac App Store needs, and
+      # exports it into the installer package to upload, signed by the
+      # certificates of the team that Apple manages, as the profile too.
+      #
+      # The archive is of its own, apart from the generic one out of the
+      # sandbox, which shares its data with the ones of the other stores.
+      #
+      def export_appstore_pkg()
+        xcodebuild 'archive', '-archivePath', appstore_xcarchive_path,
+          "CODE_SIGN_ENTITLEMENTS=#{appstore_entitlements_path}"
+        FileUtils.rm_rf File.dirname(appstore_exported_pkg_path)
+        with_auth_options do |auth|
+          run 'xcodebuild', *('-quiet' unless verbose?),
+            '-exportArchive',
+            '-archivePath',        appstore_xcarchive_path,
+            '-exportOptionsPlist', appstore_export_options_path,
+            '-exportPath',         File.dirname(appstore_exported_pkg_path),
+            '-allowProvisioningUpdates',
+            *auth,
+            chdir: build_dir
+        end
+        copy_pkg appstore_exported_pkg_path, appstore_pkg_path
       end
 
       # Calls the block with the certificate APPLE_CODESIGN_P12 gives in a
@@ -391,11 +468,7 @@ module Reflex
         creds = AppStoreConnect.credentials
         return block.call [] unless creds
 
-        Dir.mktmpdir do |dir|
-          path = creds[:key_path]&.then {File.expand_path _1} ||
-            File.join(dir, "AuthKey_#{creds[:key_id]}.p8").tap {
-              File.write _1, creds[:key_p8], perm: 0600
-            }
+        AppStoreConnect.new(creds).with_key_path do |path|
           block.call [
             '-authenticationKeyIssuerID', creds[:issuer_id],
             '-authenticationKeyID',       creds[:key_id],
@@ -405,19 +478,52 @@ module Reflex
       end
 
       def built_app_path()
-        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{target}.app"
+        File.join build_dir, 'DerivedData', 'Build', 'Products', 'Release', "#{app_name}.app"
+      end
+
+      # The directory of the app archived and exported for no store in
+      # particular, apart from the ones for a store.
+      #
+      def generic_dir()
+        File.join platform_dir, 'generic'
       end
 
       def xcarchive_path()
-        File.join build_dir, "#{target}.xcarchive"
+        File.join generic_dir, "#{target}.xcarchive"
+      end
+
+      def export_options_path()
+        File.join generic_dir, 'ExportOptions.plist'
       end
 
       def exported_app_path()
-        File.join build_dir, 'Export', "#{target}.app"
+        File.join generic_dir, 'export', "#{app_name}.app"
       end
 
       def notarized_app_path()
-        File.join build_dir, 'Notarized', "#{target}.app"
+        File.join generic_dir, 'notarized', "#{app_name}.app"
+      end
+
+      # The directory of the app archived and exported for the Mac App Store.
+      #
+      def appstore_dir()
+        File.join platform_dir, 'appstore'
+      end
+
+      def appstore_xcarchive_path()
+        File.join appstore_dir, "#{target}.xcarchive"
+      end
+
+      def appstore_entitlements_path()
+        File.join appstore_dir, 'AppStore.entitlements'
+      end
+
+      def appstore_export_options_path()
+        File.join appstore_dir, 'ExportOptions.plist'
+      end
+
+      def appstore_exported_pkg_path()
+        File.join appstore_dir, 'export', "#{app_name}.pkg"
       end
 
       # Has the app write its data file with its scripts compiled by the
@@ -437,7 +543,7 @@ module Reflex
         env = ENV.keys.grep(/\A(BUNDLER?_|GEM_)/)
           .then {[*_1, 'RUBYOPT', 'RUBYLIB']}
           .to_h {[_1, nil]}
-        run File.join(built_app_path, 'Contents', 'MacOS', target), chdir: build_dir, env: env
+        run File.join(built_app_path, 'Contents', 'MacOS', app_name), chdir: build_dir, env: env
       ensure
         File.write boot, orig if orig
       end
@@ -492,14 +598,14 @@ module Reflex
       end
 
       def fetch_cruby(version)
-        dir = File.join build_dir, 'cruby', version
+        dir = File.join platform_dir, 'cruby', version
         return dir if File.directory? File.join(dir, 'CRuby', 'include')
 
         FileUtils.rm_rf dir
         FileUtils.mkdir_p File.dirname(dir)
         run 'git', 'clone', '-q', '-c', 'advice.detachedHead=false',
           '--depth', '1', '--branch', "v#{version}", CRUBY_GIT, dir,
-          chdir: build_dir
+          chdir: File.dirname(dir)
         # cruby has a Gemfile of its own, the one of the app must not be used
         bundler       = ENV.keys.grep(/\ABUNDLER?_/).to_h {[_1, nil]}
         # the ones before 4.0.701 have no task to download only
@@ -560,6 +666,14 @@ module Reflex
         FileUtils.rm_rf dist
         FileUtils.mkdir_p dist_dir
         FileUtils.cp_r app, dist
+        puts "Created #{dist}"
+      end
+
+      def copy_pkg(pkg, dist)
+        raise Error, "installer package not found: '#{pkg}'" unless File.file? pkg
+
+        FileUtils.mkdir_p File.dirname(dist)
+        FileUtils.cp pkg, dist
         puts "Created #{dist}"
       end
 

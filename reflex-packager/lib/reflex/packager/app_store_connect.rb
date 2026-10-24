@@ -1,6 +1,7 @@
 require 'json'
 require 'net/http'
 require 'openssl'
+require 'tmpdir'
 
 
 module Reflex
@@ -58,6 +59,26 @@ module Reflex
       def initialize(credentials = self.class.credentials)
         @credentials = credentials ||
           raise(Error, "no API key by #{AUTH_ENV_KEYS.values.join ', '}")
+      end
+
+      # The credentials of the API key, which the tools of Xcode, as
+      # xcodebuild and altool, are given too.
+      #
+      attr_reader :credentials
+
+      # The path to the private key file of the API key, for the tools of
+      # Xcode, written only while the block runs if only the content of it is
+      # given, as a secret of CI.
+      #
+      def with_key_path(&block)
+        creds = @credentials
+        return block.call File.expand_path(creds[:key_path]) if creds[:key_path]
+
+        Dir.mktmpdir do |dir|
+          path = File.join dir, "AuthKey_#{creds[:key_id]}.p8"
+          File.write path, creds[:key_p8], perm: 0600
+          block.call path
+        end
       end
 
       # Waits until the app is notarized by +id+, raising the issues Apple

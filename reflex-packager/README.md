@@ -72,8 +72,10 @@ $ reflex package .
 
 The app is packaged for the platform the packager runs on, as each one builds only on itself, and placed in `dist/`:
 
-- macOS: `dist/<name>.app`
-- Windows: `dist/<name>/`, with `<name>.exe`, and the DLLs it loads, the standard library, the libraries, the gems and the app in `lib/`
+- macOS: `dist/generic/<app name>.app` signed with Developer ID, or `dist/adhoc/<app name>.app` signed otherwise, only to be run where it is built, and `dist/appstore/<name>-<version>.pkg` for the Mac App Store
+- Windows: `dist/generic/<name>/`, with `<name>.exe`, and the DLLs it loads, the standard library, the libraries, the gems and the app in `lib/`
+
+The zip of the app is put beside it. `<name>` is the name of the app with no spaces or symbols, as `MyApp`, and `<app name>` is the name as it is, as `My App`, which Finder and the Dock show.
 
 ### CLI options
 
@@ -98,6 +100,8 @@ reflex package [options] [DIR]
   --config PATH         config file path (default: DIR/reflex.yml)
   --generate-only       generate project files but do not build
   --pack                put the files of the app together in a data file, for a release
+  --generic             package the app signed with Developer ID, also with --appstore
+  --appstore            package the app for the Mac App Store, only it unless --generic
   --notarize            have Apple check the app with Developer ID, on macos
   --notarize-submit     only submit the app to be notarized, not waiting
   --notarize-wait ID    only wait for the notarization ID, by the API key
@@ -123,6 +127,7 @@ icon: icon.png
 # macos:
 #   deployment_target: "11.0"
 #   archs: [arm64, x86_64]
+#   category: public.app-category.games
 #   codesign:
 #     identity: "-"
 #     team_id: XXXXXXXXXX
@@ -152,6 +157,7 @@ icon: icon.png
 | `macos.deployment_target` | `11.0` | Minimum macOS version |
 | `macos.archs` | `[arm64, x86_64]` | Target architectures |
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |
+| `macos.category` | none | [Category](https://developer.apple.com/documentation/bundleresources/information-property-list/lsapplicationcategorytype) of the app in Info.plist, as `public.app-category.games`, which the App Store requires |
 | `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`, and `Developer ID Application` by the certificate in the keychain; `APPLE_CODESIGN_IDENTITY` overrides it |
 | `macos.codesign.team_id` | none | Development team ID; `APPLE_TEAM_ID` overrides it |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
@@ -221,7 +227,7 @@ Where no account of Xcode is, as on CI, Apple is asked by an API key of App Stor
 
 The team ID can be given by `APPLE_TEAM_ID` in place of the config, as the identity by `APPLE_CODESIGN_IDENTITY`, to keep them out of the repository of the app.
 
-With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/` with the ticket of the notarization stapled, which macOS sees with no network:
+With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/generic/` with the ticket of the notarization stapled, which macOS sees with no network:
 
 ```bash
 $ export APPLE_TEAM_ID=XXXXXXXXXX
@@ -230,9 +236,46 @@ $ reflex package --pack --notarize .
 
 The notarization can be split into the steps, so as not to keep a Mac waiting, as on CI:
 
-1. `--notarize-submit` builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/<name>.xcarchive`
+1. `--notarize-submit` builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/generic/<name>.xcarchive`
 2. `--notarize-wait <ID>` waits for Apple to check the app, by the API key, on any system
 3. `--notarize-export` exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
+
+`--generic` makes sure the app is signed with Developer ID, failing if not, as with no team.
+
+### Packaging for the Mac App Store
+
+With `--appstore`, the app is archived in the sandbox, which the Mac App Store needs, and exported into `dist/appstore/<name>-<version>.pkg` to upload to App Store Connect, signed by the certificates of the team that Apple manages, as the profile. It needs the team and `macos.category` in the config, and makes only the one for the App Store, unless `--generic` or `--notarize` asks for the generic one too, archived apart out of the sandbox. `rake package:appstore` packs and packages it so:
+
+```bash
+$ export APPLE_TEAM_ID=XXXXXXXXXX
+$ reflex package --pack --appstore .
+$ reflex package --pack --notarize --appstore . # the generic one too
+```
+
+The app in the sandbox keeps its data in a container of its own, `~/Library/Containers/<bundle_id>/`, apart from the generic one.
+
+Info.plist of the app has `ITSAppUsesNonExemptEncryption` of `false`, which tells Apple that it uses no encryption but the exempt one, as of HTTPS. The config has no way to change it yet, so an app with an encryption of its own is not to be packaged so.
+
+### Releasing on GitHub
+
+`rake release` makes the release of the tag of the version on GitHub by `gh`, with the changes of the version in `ChangeLog.md`, and attaches the zip of the app and the package for the Mac App Store, the ones made, or adds them to the release made already. It makes neither, as the jobs on CI make them apart, so archive or package the app first to release it by hand:
+
+```bash
+$ rake archive release
+$ rake archive package:appstore release # the one for the Mac App Store too
+```
+
+### Uploading to App Store Connect
+
+`rake upload:appstore` uploads the package for the Mac App Store, packaged if not yet, to App Store Connect by `altool` of Xcode, by the API key of App Store Connect in the environment variables above, which App Store Connect tells the app and the build of by the package. The app has to be made in App Store Connect beforehand, by its bundle ID, and the build is chosen for a version there to submit it for review:
+
+```bash
+$ export APPLE_TEAM_ID=XXXXXXXXXX
+$ export APPLE_API_ISSUER_ID=... APPLE_API_KEY_ID=... APPLE_API_KEY_PATH=~/AuthKey_XXXXXXXXXX.p8
+$ rake upload:appstore
+```
+
+A build can not be uploaded twice by the same number, so raise the fourth number of `version` to upload it again by the same version.
 
 ### Uploading to itch.io
 
@@ -267,7 +310,9 @@ $ base64 -i DeveloperID.p12 | pbcopy
 
 With `APPLE_TEAM_ID` but no `APPLE_CODESIGN_P12`, the workflow fails. Without the secrets, the app is packaged with no notarization, signed as the config tells.
 
-With `BUTLER_API_KEY` in the secrets too, the app released by a tag is uploaded to itch.io by `rake upload:itchio`, after it is released on GitHub.
+With the input `macos-appstore: true` and the secrets to notarize, the app for the Mac App Store is packaged too, in the job that submits the notarized one, and on a tag, attached to the release by `rake release`, then uploaded to App Store Connect by `rake upload:appstore`. It is signed by the certificate Apple manages, through the API key, which has to be of the Admin role to make the certificate and the profile, so `APPLE_CODESIGN_P12` needs no more than Developer ID. A failure of it fails the job, and the notarization with it. With the input but no `APPLE_TEAM_ID`, the workflow fails at first.
+
+With `BUTLER_API_KEY` in the secrets too, the app released by a tag is uploaded to itch.io by `rake upload:itchio`, after it is released on GitHub, unless the input `itchio` is `false`.
 
 ### CRuby
 

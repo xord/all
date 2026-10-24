@@ -78,6 +78,8 @@ module Reflex
           on '--config PATH',      "config file path (default: DIR/#{profile.config_files.first})"
           on '--generate-only',    'generate project files but do not build'
           on '--pack',             'put the files of the app together in a data file, for a release'
+          on '--generic',          'package the app signed with Developer ID, also with --appstore'
+          on '--appstore',         'package the app for the Mac App Store, only it unless --generic'
           on '--notarize',         'have Apple check the app with Developer ID, on macos'
           on '--notarize-submit',  'only submit the app to be notarized, not waiting'
           on '--notarize-wait ID', 'only wait for the notarization ID, by the API key'
@@ -90,14 +92,22 @@ module Reflex
           notarize.size > 1
 
         id = params[:'notarize-wait']
+        raise Error, '--notarize-wait packages nothing, not with --appstore' if
+          id && params[:appstore]
         return AppStoreConnect.new.wait_until_notarized id if id
 
         dir      = argv.shift || '.'
         platform = (params[:platform] || platform).to_sym
         klass    = PLATFORMS[platform] || raise(Error, "unknown platform: '#{platform}'")
         config   = Config.load profile, dir, params[:config]
-        klass.new(config, verbose: params[:verbose], pack: params[:pack], notarize: notarize.first)
-          .package generate_only: params[:'generate-only']
+        klass.new(
+          config,
+          verbose:  params[:verbose],
+          pack:     params[:pack],
+          notarize: notarize.first,
+          generic:  params[:generic],
+          appstore: params[:appstore]
+        ).package generate_only: params[:'generate-only']
       end
 
       private

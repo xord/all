@@ -38,7 +38,8 @@ module Reflex
       ICON_SIZES = [16, 32, 48, 256]
 
       def package(generate_only: false)
-        raise Error, 'notarizing is only for macos' if notarize?
+        raise Error, 'notarizing is only for macos'        if notarize?
+        raise Error, 'the Mac App Store is only for macos' if appstore?
         super
       end
 
