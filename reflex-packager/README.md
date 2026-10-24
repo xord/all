@@ -301,6 +301,8 @@ With `APPLE_TEAM_ID` but no `APPLE_CODESIGN_P12`, the workflow fails. Without th
 
 With `BUTLER_API_KEY` in the secrets too, the app released by a tag is uploaded to itch.io by `rake upload:itchio`, after it is released on GitHub.
 
+With the input `mac-appstore: true` and the secrets to notarize, the app for the Mac App Store is packaged too, in the job that submits the notarized one, and uploaded to App Store Connect by `rake upload:appstore` on a tag. It is signed by the certificate Apple manages, through the API key, which has to be of the Admin role to make the certificate and the profile, so `APPLE_CODESIGN_P12` needs no more than Developer ID. A failure of it fails the job, and the notarization with it.
+
 ### CRuby
 
 By default the packager clones the [cruby](https://github.com/xord/cruby) repository at the tag of its CRuby version into `.build/macos/cruby/<version>`, and downloads the prebuilt CRuby there. To use a local checkout instead, set its path as `macos.cruby` in the config, or via the `CRUBY_PATH` environment variable, which overrides the config:

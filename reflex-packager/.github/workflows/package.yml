@@ -17,9 +17,13 @@ on:
         type: string
         default: xot rucy beeps rays reflex reflex-packager
       retention-days:
-        description: 'days to keep the zip of a run not of a tag, 0 to upload none'
+        description: 'days to keep the zip, and the pkg for the Mac App Store, of a run not of a tag, 0 to upload none'
         type: number
         default: 0
+      mac-appstore:
+        description: 'package the app for the Mac App Store too, with the notarized one, and upload it to App Store Connect on a tag'
+        type: boolean
+        default: false
     secrets:
       # to sign the app with Developer ID and to notarize it, none for neither
       APPLE_TEAM_ID:
@@ -162,11 +166,23 @@ jobs:
           APPLE_CODESIGN_P12:          ${{ secrets.APPLE_CODESIGN_P12 }}
           APPLE_CODESIGN_P12_PASSWORD: ${{ secrets.APPLE_CODESIGN_P12_PASSWORD }}
           APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}
+          APPSTORE:                    ${{ inputs.mac-appstore && '--appstore' || '' }}
         shell: bash # with pipefail, not to let tee hide the failure
         run: |
-          bundle exec reflex package --pack --notarize-submit . | tee "$RUNNER_TEMP/submit.log"
+          bundle exec reflex package --pack --notarize-submit $APPSTORE . |
+            tee "$RUNNER_TEMP/submit.log"
           echo "id=$(sed -n 's/^Submitted for the notarization: //p' "$RUNNER_TEMP/submit.log")" \
             >> "$GITHUB_OUTPUT"
+          [ -z "$APPSTORE" ] || echo "pkg=$(basename dist/appstore/*.pkg .pkg)" >> "$GITHUB_OUTPUT"
+
+      - name: upload pkg
+        if: steps.notarize.outputs.notarize == 'true' && inputs.mac-appstore &&
+          github.ref_type != 'tag' && inputs.retention-days > 0
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.submit.outputs.pkg }}
+          path: dist/appstore/*.pkg
+          retention-days: ${{ inputs.retention-days }}
 
       - name: tar xcarchive for notarization
         if: steps.notarize.outputs.notarize == 'true'
@@ -180,6 +196,13 @@ jobs:
           name: xcarchive
           path: ${{ runner.temp }}/xcarchive.tar
           retention-days: 1
+
+      - name: upload to App Store Connect
+        if: steps.notarize.outputs.notarize == 'true' && inputs.mac-appstore &&
+          github.ref_type == 'tag'
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: bundle exec rake upload:appstore
 
   macos-wait:
     needs: [prepare, macos-package]
