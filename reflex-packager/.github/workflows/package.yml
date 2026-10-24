@@ -20,7 +20,7 @@ on:
         description: 'days to keep the zip, and the pkg for the Mac App Store, of a run not of a tag, 0 to upload none'
         type: number
         default: 0
-      mac-appstore:
+      macos-appstore:
         description: 'package the app for the Mac App Store too, with the notarized one, and upload it to App Store Connect on a tag'
         type: boolean
         default: false
@@ -55,10 +55,27 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
+      apple-team:      ${{ steps.apple-team.outputs.team }}
+      notarize:        ${{ steps.apple-team.outputs.notarize }}
       # for all the jobs to take the same commit, even if all-ref moves on
       monorepo-commit: ${{ steps.monorepo-commit.outputs.commit }}
 
     steps:
+      - name: apple team?
+        id: apple-team
+        # with the team, the app is signed with Developer ID and notarized,
+        # or else signed as the config tells
+        env:
+          TEAM:     ${{ env.APPLE_TEAM_ID != '' }}
+          APPSTORE: ${{ contains(inputs.platforms, 'macos') && inputs.macos-appstore }}
+        run: |
+          if [ "$APPSTORE" = true ] && [ "$TEAM" != true ]; then
+            echo '::error::the input macos-appstore needs APPLE_TEAM_ID in the secrets'
+            exit 1
+          fi
+          echo "team=$TEAM"     >> "$GITHUB_OUTPUT"
+          echo "notarize=$TEAM" >> "$GITHUB_OUTPUT"
+
       - name: monorepo commit
         id: monorepo-commit
         if: inputs.all-ref
@@ -74,7 +91,6 @@ jobs:
     runs-on: macos-latest
 
     outputs:
-      notarize:      ${{ steps.notarize.outputs.notarize }}
       submission-id: ${{ steps.submit.outputs.id }}
 
     steps:
@@ -108,26 +124,22 @@ jobs:
           BUNDLE_FROZEN: ${{ hashFiles('Gemfile.lock') != '' && !inputs.all-ref }}
         run: bundle install
 
-      - name: notarize?
-        id: notarize
-        run: echo "notarize=${{ env.APPLE_TEAM_ID != '' }}" >> "$GITHUB_OUTPUT"
-
       - &package
         name: package
-        if: steps.notarize.outputs.notarize != 'true'
+        if: needs.prepare.outputs.apple-team != 'true' || github.job != 'macos-package'
         run: bundle exec rake package
 
       - &archive
         name: archive
         id: archive
-        if: steps.notarize.outputs.notarize != 'true' || github.job != 'macos-package'
+        if: needs.prepare.outputs.apple-team != 'true' || github.job != 'macos-package'
         run: |
           bundle exec rake archive
           echo "name=$(basename dist/*/*.zip .zip)" >> "$GITHUB_OUTPUT"
 
       - &upload
         name: upload
-        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'macos-package') &&
+        if: (needs.prepare.outputs.apple-team != 'true' || github.job != 'macos-package') &&
           github.ref_type != 'tag' && inputs.retention-days > 0
         uses: actions/upload-artifact@v4
         with:
@@ -137,7 +149,7 @@ jobs:
 
       - &release
         name: release
-        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'macos-package') &&
+        if: (needs.prepare.outputs.apple-team != 'true' || github.job != 'macos-package') &&
           github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -145,7 +157,7 @@ jobs:
 
       - &upload-itchio
         name: upload to itch.io
-        if: (steps.notarize.outputs.notarize != 'true' || github.job != 'macos-package') &&
+        if: (needs.prepare.outputs.apple-team != 'true' || github.job != 'macos-package') &&
           github.ref_type == 'tag'
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
@@ -161,12 +173,12 @@ jobs:
 
       - name: submit for notarization
         id: submit
-        if: steps.notarize.outputs.notarize == 'true'
+        if: needs.prepare.outputs.notarize == 'true'
         env:
           APPLE_CODESIGN_P12:          ${{ secrets.APPLE_CODESIGN_P12 }}
           APPLE_CODESIGN_P12_PASSWORD: ${{ secrets.APPLE_CODESIGN_P12_PASSWORD }}
           APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}
-          APPSTORE:                    ${{ inputs.mac-appstore && '--appstore' || '' }}
+          APPSTORE:                    ${{ inputs.macos-appstore && '--appstore' || '' }}
         shell: bash # with pipefail, not to let tee hide the failure
         run: |
           bundle exec reflex package --pack --notarize-submit $APPSTORE . |
@@ -176,8 +188,7 @@ jobs:
           [ -z "$APPSTORE" ] || echo "pkg=$(basename dist/appstore/*.pkg .pkg)" >> "$GITHUB_OUTPUT"
 
       - name: upload pkg
-        if: steps.notarize.outputs.notarize == 'true' && inputs.mac-appstore &&
-          github.ref_type != 'tag' && inputs.retention-days > 0
+        if: inputs.macos-appstore && github.ref_type != 'tag' && inputs.retention-days > 0
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.submit.outputs.pkg }}
@@ -185,12 +196,12 @@ jobs:
           retention-days: ${{ inputs.retention-days }}
 
       - name: tar xcarchive for notarization
-        if: steps.notarize.outputs.notarize == 'true'
+        if: needs.prepare.outputs.notarize == 'true'
         # by tar, as an artifact keeps no permission of the files nor symlink
         run: cd .build/macos && tar cf "$RUNNER_TEMP/xcarchive.tar" generic/*.xcarchive
 
       - name: upload xcarchive for notarization
-        if: steps.notarize.outputs.notarize == 'true'
+        if: needs.prepare.outputs.notarize == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: xcarchive
@@ -198,15 +209,14 @@ jobs:
           retention-days: 1
 
       - name: upload to App Store Connect
-        if: steps.notarize.outputs.notarize == 'true' && inputs.mac-appstore &&
-          github.ref_type == 'tag'
+        if: inputs.macos-appstore && github.ref_type == 'tag'
         env:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
         run: bundle exec rake upload:appstore
 
   macos-wait:
     needs: [prepare, macos-package]
-    if: needs.macos-package.outputs.notarize == 'true'
+    if: needs.prepare.outputs.notarize == 'true'
     runs-on: ubuntu-latest # cheaper than macos
 
     steps:

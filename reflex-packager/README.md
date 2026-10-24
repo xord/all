@@ -301,7 +301,7 @@ With `APPLE_TEAM_ID` but no `APPLE_CODESIGN_P12`, the workflow fails. Without th
 
 With `BUTLER_API_KEY` in the secrets too, the app released by a tag is uploaded to itch.io by `rake upload:itchio`, after it is released on GitHub.
 
-With the input `mac-appstore: true` and the secrets to notarize, the app for the Mac App Store is packaged too, in the job that submits the notarized one, and uploaded to App Store Connect by `rake upload:appstore` on a tag. It is signed by the certificate Apple manages, through the API key, which has to be of the Admin role to make the certificate and the profile, so `APPLE_CODESIGN_P12` needs no more than Developer ID. A failure of it fails the job, and the notarization with it.
+With the input `macos-appstore: true` and the secrets to notarize, the app for the Mac App Store is packaged too, in the job that submits the notarized one, and uploaded to App Store Connect by `rake upload:appstore` on a tag. It is signed by the certificate Apple manages, through the API key, which has to be of the Admin role to make the certificate and the profile, so `APPLE_CODESIGN_P12` needs no more than Developer ID. A failure of it fails the job, and the notarization with it. With the input but no `APPLE_TEAM_ID`, the workflow fails at first.
 
 ### CRuby
 
