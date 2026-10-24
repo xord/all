@@ -139,7 +139,9 @@ jobs:
         if: needs.prepare.outputs.apple-team != 'true' || github.job != 'macos-package'
         run: |
           bundle exec rake archive
-          echo "name=$(basename dist/*/*.zip .zip)" >> "$GITHUB_OUTPUT"
+          zip=$(ls dist/*/*.zip)
+          echo "name=$(basename "$zip" .zip)" >> "$GITHUB_OUTPUT"
+          echo "path=$zip"                    >> "$GITHUB_OUTPUT"
 
       - &upload
         name: upload
@@ -148,7 +150,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.archive.outputs.name }}
-          path: dist/*/*.zip
+          path: ${{ steps.archive.outputs.path }}
           retention-days: ${{ inputs.retention-days }}
 
       - &release
