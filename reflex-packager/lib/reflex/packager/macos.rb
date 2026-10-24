@@ -385,7 +385,7 @@ module Reflex
           ]
           deadline = Time.now + AppStoreConnect::NOTARIZATION_TIMEOUT
           loop do
-            out, ok = capture(*cmd, chdir: build_dir)
+            out, ok = capture(*cmd)
             break if ok
             raise Error, "failed to export the notarized app:\n#{out}" unless
               out.match?(/processing and not ready|Ticket not found/)
@@ -455,7 +455,7 @@ module Reflex
       # Runs the security command, not printing it with the passwords.
       #
       def security(*args)
-        out, ok = capture 'security', *args, chdir: config.dir
+        out, ok = capture 'security', *args
         raise Error, "failed to run security #{args.first}:\n#{out}" unless ok
         out
       end

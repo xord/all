@@ -301,6 +301,13 @@ class TestPackagerMacOS < Test::Unit::TestCase
       File.write script, "#!/bin/sh\necho 3\n"
       File.chmod 0755, script
       assert_match     (/^3$/), stdout.call {pkg.__send__ :run, script, chdir: dir}
+
+      # with no chdir, in a temporary directory, which is removed after
+      pwd = [RbConfig.ruby, '-e', 'puts Dir.pwd']
+      assert_equal "#{File.realpath dir}\n", pkg.__send__(:capture, *pwd, chdir: dir).first
+      assert_false File.exist?(pkg.__send__(:capture, *pwd).first.chomp)
+      assert_false File.exist?(stdout.call {pkg.__send__ :run, *pwd}.lines.last.chomp)
+      assert_equal ['', false], pkg.__send__(:capture, RbConfig.ruby, '-e', 'exit 1')
     end
   end
 
@@ -542,7 +549,13 @@ class TestPackagerMacOS < Test::Unit::TestCase
       pkg.define_singleton_method(:sleep)       {|*|}
       pkg.define_singleton_method(:puts)        {|str| printed << str}
       pkg.define_singleton_method(:copy_app)    {|app = nil| copied << app}
-      pkg.define_singleton_method(:capture) {|*cmd, **| captured << cmd.join(' '); outs.shift}
+      pkg.define_singleton_method(:capture) do |*cmd, **opts|
+        captured << cmd.join(' ')
+        # in no directory of the project, which is not there when only
+        # exporting on CI
+        raise "chdir to #{opts[:chdir]}" if opts[:chdir]
+        outs.shift
+      end
       notarize == %i[export] ? pkg.package : pkg.build
       [commands, captured, copied, printed]
     end

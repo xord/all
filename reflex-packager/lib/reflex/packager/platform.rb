@@ -2,6 +2,7 @@ require 'erb'
 require 'fileutils'
 require 'open3'
 require 'shellwords'
+require 'tmpdir'
 
 
 module Reflex
@@ -298,19 +299,28 @@ module Reflex
       # not the errors it tells. The command is run as it is, not split by
       # spaces even if it is only a path, as of the app named with spaces.
       #
-      def run(*cmd, chdir:, env: {}, quiet: false)
+      def run(*cmd, chdir: nil, env: {}, quiet: false)
         puts "==> #{cmd.shelljoin}"
         out = quiet && !verbose? ? {out: File::NULL} : {}
-        return if system env, [cmd.first, cmd.first], *cmd.drop(1), chdir: chdir, **out
+        ok  = with_dir(chdir) {system env, [cmd.first, cmd.first], *cmd.drop(1), chdir: _1, **out}
+        return if ok
         raise Error, "command failed: #{cmd.shelljoin}"
       end
 
       # Runs +cmd+, returning what it prints and whether it succeeded, for
       # the caller to tell what failed.
       #
-      def capture(*cmd, chdir:)
-        out, status = Open3.capture2e(*cmd, chdir: chdir)
+      def capture(*cmd, chdir: nil)
+        out, status = with_dir(chdir) {Open3.capture2e(*cmd, chdir: _1)}
         [out, status.success?]
+      end
+
+      # Calls the block with +dir+ for a command to run in, or with no +dir+,
+      # a temporary directory removed after, not for the command to depend
+      # on where the packager is run from.
+      #
+      def with_dir(dir, &block)
+        dir ? block.call(dir) : Dir.mktmpdir(&block)
       end
 
       def check_tools(tools)
