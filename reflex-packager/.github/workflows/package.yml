@@ -24,6 +24,10 @@ on:
         description: 'package the app for the Mac App Store too, with the notarized one, and upload it to App Store Connect on a tag'
         type: boolean
         default: false
+      itchio:
+        description: 'upload the app to itch.io on a tag, with BUTLER_API_KEY, to upload.itchio.project of the config'
+        type: boolean
+        default: true
     secrets:
       # to sign the app with Developer ID and to notarize it, none for neither
       APPLE_TEAM_ID:
@@ -158,7 +162,7 @@ jobs:
       - &upload-itchio
         name: upload to itch.io
         if: (needs.prepare.outputs.apple-team != 'true' || github.job != 'macos-package') &&
-          github.ref_type == 'tag'
+          github.ref_type == 'tag' && inputs.itchio
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
