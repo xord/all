@@ -117,7 +117,6 @@ The project is configured via `reflex.yml` (or `reflex.yaml`) in the project dir
 name: MyApp
 bundle_id: com.example.myapp
 version: 1.0.0
-# build: 1.0.0
 # copyright: © 2026 Example
 icon: icon.png
 # main: main.rb
@@ -149,7 +148,6 @@ icon: icon.png
 | `name` | directory name | Application name |
 | `bundle_id` | `org.xord.reflex.<name>` | macOS bundle identifier |
 | `version` | the `VERSION` file, or `0.1.0` | Application version |
-| `build` | `version` | Build version |
 | `copyright` | none | Copyright notice, shown in the About panel on macOS and in the properties of the executable on Windows |
 | `main` | `main.rb` | Entry point script |
 | `icon` | none | Path to an icon image (PNG) |
@@ -166,17 +164,16 @@ icon: icon.png
 
 ### Versions
 
-`version` is the version to show, and `build` the one to tell builds apart with. Both are numbers separated by dots:
+`version` is the version to show, and the one to tell builds apart with, of numbers separated by dots:
 
 | | Shown (`CFBundleShortVersionString`, `ProductVersion`) | Build (`CFBundleVersion`, `FileVersion`) |
 |-----|-----|-----|
 | `version: 1.2.3` | `1.2.3` | `1.2.3` |
 | `version: 1.2.3.4` | `1.2.3` | `1.2.3.4` |
-| `version: 1.2.3` and `build: 456` | `1.2.3` | `456` |
 
 Without `version`, the version is read from the `VERSION` file in the directory of the app, if there is one, so that the file can be the only place to keep it in, as the gems do.
 
-A fourth number of `version` tells a build apart from another of the same version, but not on macOS, where the build has to be of three numbers at most, as `CFBundleVersion`. On Windows, each number has to be 65535 or less. Quote a version or a build of two numbers, as `'1.10'`, which YAML reads as the number 1.1 otherwise.
+A fourth number of `version` tells a build apart from another of the same version, but not on macOS, where the build has to be of three numbers at most, as `CFBundleVersion`. On Windows, each number has to be 65535 or less. Quote a version of two numbers, as `'1.10'`, which YAML reads as the number 1.1 otherwise.
 
 ### Localizations
 

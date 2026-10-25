@@ -288,18 +288,18 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include rc, %(VALUE "FileDescription",  "ア""プ\\\\リ")
         assert_include rc, %(VALUE "ProductName",      "ア""プ\\\\リ")
       end
-      packager "version: '2.3'\nbuild: 20" do |pkg, dir|
+      packager "version: '2.3'" do |pkg, dir|
         pkg.generate
         rc = read dir, 'src/app.rc'
-        assert_include     rc, 'FILEVERSION    20,0,0,0'
+        assert_include     rc, 'FILEVERSION    2,3,0,0'
         assert_include     rc, 'PRODUCTVERSION 2,3,0,0'
-        assert_include     rc, %(VALUE "FileVersion",      "20")
+        assert_include     rc, %(VALUE "FileVersion",      "2.3")
         assert_include     rc, %(VALUE "ProductVersion",   "2.3")
         assert_not_include rc, 'LegalCopyright'
         assert_include     rc, %(BLOCK "040904B0")
         assert_include     rc, %(VALUE "Translation", 0x409, 1200)
       end
-      packager "build: 65536" do |pkg, _|
+      packager "version: 1.2.65536" do |pkg, _|
         assert_raise(RP::Error) {pkg.file_version}
       end
       packager do |pkg, _|

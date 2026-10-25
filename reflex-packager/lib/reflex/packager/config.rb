@@ -21,7 +21,6 @@ module Reflex
           name:      name,
           bundle_id: hash[:bundle_id] || default_bundle_id(profile, name),
           version:   (hash[:version].nil? && version_file(dir)) || '0.1.0',
-          build:     nil,
           copyright: nil,
           main:      profile.main,
           icon:      nil,
@@ -58,15 +57,12 @@ module Reflex
         hash          = validate_input hash, Config.defaults(profile, @dir, hash), stderr: stderr
 
         # YAML reads 1.10 as a number, the same as 1.1
-        %i[version build].each do |key|
-          raise Error, "#{key} #{hash[key]} is read as a number, quote it" if
-            hash[key].is_a? Float
-        end
+        raise Error, "version #{hash[:version]} is read as a number, quote it" if
+          hash[:version].is_a? Float
 
         @name      = hash[:name]      .to_s
         @bundle_id = hash[:bundle_id] .to_s
         @version   = hash[:version]   .to_s
-        @build     = hash[:build]    &.to_s
         @copyright = hash[:copyright]&.to_s
         @main      = hash[:main]      .to_s
         @icon      = hash[:icon]     &.to_s
@@ -79,7 +75,7 @@ module Reflex
         validate
       end
 
-      attr_reader :profile, :dir, :name, :bundle_id, :version, :build, :copyright,
+      attr_reader :profile, :dir, :name, :bundle_id, :version, :copyright,
         :main, :icon, :files, :macos, :windows, :upload
 
       # The values that differ by language, in English, the language of the
@@ -96,12 +92,11 @@ module Reflex
         @version.split('.').first(3).join('.')
       end
 
-      # The version to tell builds apart with: the build, or else the
-      # version, a fourth number of which tells a build apart from another of
-      # the same version.
+      # The version to tell builds apart with: the version, a fourth number
+      # of which tells a build apart from another of the same version.
       #
       def build_version()
-        @build || @version
+        @version
       end
 
       # Returns paths to be bundled into the application, relative to the
@@ -206,7 +201,6 @@ module Reflex
           @bundle_id !~ /\A[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+\z/
 
         raise Error, "invalid version: '#{@version}'" if @version !~ VERSION_FORMAT
-        raise Error, "invalid build: '#{@build}'"     if @build && @build !~ VERSION_FORMAT
 
         raise Error, "main script not found: '#{@main}'" if
           !File.file?(File.join @dir, @main)
