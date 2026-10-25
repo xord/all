@@ -64,6 +64,10 @@ module Reflex
         when appstore? && notarize == [:export]
           'only exporting the notarized app, which is the generic one, makes no app' +
             ' for the Mac App Store'
+        # what macos does not take
+        when config.build_version.split('.').size > 3
+          'macos takes three numbers at most for the build version, as' +
+            " CFBundleVersion: '#{config.build_version}'"
         # what the config lacks
         when !config.macos.codesign_team_id &&
           (notarize.include?(:submit) || appstore? || codesign_p12)

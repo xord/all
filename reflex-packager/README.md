@@ -176,7 +176,7 @@ icon: icon.png
 
 Without `version`, the version is read from the `VERSION` file in the directory of the app, if there is one, so that the file can be the only place to keep it in, as the gems do.
 
-A fourth number of `version` tells a build apart from another of the same version, as one uploaded again for a review. On Windows, each number has to be 65535 or less. Quote a version or a build of two numbers, as `'1.10'`, which YAML reads as the number 1.1 otherwise.
+A fourth number of `version` tells a build apart from another of the same version, but not on macOS, where the build has to be of three numbers at most, as `CFBundleVersion`. On Windows, each number has to be 65535 or less. Quote a version or a build of two numbers, as `'1.10'`, which YAML reads as the number 1.1 otherwise.
 
 ### Localizations
 
@@ -275,7 +275,7 @@ $ export APPLE_API_ISSUER_ID=... APPLE_API_KEY_ID=... APPLE_API_KEY_PATH=~/AuthK
 $ rake upload:appstore
 ```
 
-A build can not be uploaded twice by the same number, so raise the fourth number of `version` to upload it again by the same version.
+A build can not be uploaded twice by the same number, so raise `version` to upload it again.
 
 ### Uploading to itch.io
 

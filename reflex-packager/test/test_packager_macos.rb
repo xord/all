@@ -713,6 +713,10 @@ class TestPackagerMacOS < Test::Unit::TestCase
       error = assert_raise(RP::Error) {MacOS.new(pkg.config, appstore: true).package}
       assert_include error.message, 'macos.category'
     end
+    packager "version: 1.2.3.4" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config).package}
+      assert_include error.message, 'CFBundleVersion'
+    end
     packager "macos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, _|
       error = assert_raise(RP::Error) {MacOS.new(pkg.config, generic: true).package}
       assert_include error.message, 'Developer ID Application'
