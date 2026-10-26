@@ -71,12 +71,18 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
   end
 
   def localization(locale, **attrs)
-    {'attributes' => {'locale' => locale, **attrs.transform_keys(&:to_s)}}
+    {'id' => "L-#{locale}", 'attributes' => {'locale' => locale, **attrs.transform_keys(&:to_s)}}
+  end
+
+  def screenshot(file_name)
+    {'attributes' => {'fileName' => file_name, 'imageAsset' => {
+      'templateUrl' => "https://cdn/#{file_name}/{w}x{h}bb.{f}", 'width' => 2880, 'height' => 1800
+    }}}
   end
 
   def test_download_metadata()
     answers = {
-      '/v1/apps' => {'data' => [{'id' => 'APP'}]},
+      '/v1/apps' => {'data' => [{'id' => 'APP', 'attributes' => {'primaryLocale' => 'en-US'}}]},
       '/v1/apps/APP/appInfos' => {'data' => [
         {'id' => 'LIVE', 'attributes' => {'state' => 'READY_FOR_DISTRIBUTION'}},
         {'id' => 'INFO', 'attributes' => {'state' => 'PREPARE_FOR_SUBMISSION'}, 'relationships' => {
@@ -97,29 +103,74 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       '/v1/appStoreVersions/VER/appStoreVersionLocalizations' => {'data' => [
         localization('en-US', description: "Line 1\nLine 2", keywords: 'a,b', whatsNew: "- Fix\n"),
         localization('fr',    description: 'Jeu')
-      ]}
+      ]},
+      '/v1/appStoreVersionLocalizations/L-en-US/appScreenshotSets' => {'data' => [
+        {'id' => 'DESKTOP',  'attributes' => {'screenshotDisplayType' => 'APP_DESKTOP'}},
+        {'id' => 'IMESSAGE', 'attributes' => {'screenshotDisplayType' => 'IMESSAGE_APP_IPHONE_67'}}
+      ]},
+      '/v1/appScreenshotSets/DESKTOP/appScreenshots' => {'data' => [
+        screenshot('a.JPEG'), screenshot('b.png')
+      ]},
+      '/v1/appStoreVersionLocalizations/L-fr/appScreenshotSets' => {'data' => []}
     }
     app_store = RP::Stores::AppStore.new asc(answers)
-    app_store.define_singleton_method(:puts) {|*|}
+    app_store.define_singleton_method(:puts)     {|*|}
+    app_store.define_singleton_method(:download) {|url| "IMAGE #{url}"}
     Dir.mktmpdir do |dir|
+      # the ones of a previous download, taken the place of
+      %w[
+        en-US/desktop/screenshot_01.png en-US/desktop/screenshot_03.jpg en-US/desktop/other.png
+        fr/desktop/screenshot_01.png
+      ]
+        .each {FileUtils.mkdir_p File.dirname(File.join dir, _1); File.write File.join(dir, _1), ''}
+
       app_store.download_metadata dir, bundle_id: 'com.example.app', platform: :macos
-      assert_equal %w[app.yml en-US/info.yml fr/info.yml ja/info.yml],
-        Dir.glob('**/*', base: dir).select {File.file? File.join(dir, _1)}.sort
+      assert_equal %w[
+        app.yml
+        en-US/app.yml en-US/desktop/other.png
+        en-US/desktop/screenshot_01.jpg en-US/desktop/screenshot_02.png
+        en-US/version.yml
+        fr/app.yml    fr/version.yml
+        ja/app.yml    ja/version.yml
+      ], Dir.glob('**/*', base: dir).select {File.file? File.join(dir, _1)}.sort
+      assert_false File.exist?(File.join dir, 'fr/desktop')
+      assert_equal 'IMAGE https://cdn/a.JPEG/2880x1800bb.jpg',
+        File.binread(File.join dir, 'en-US/desktop/screenshot_01.jpg')
+      assert_equal 'IMAGE https://cdn/b.png/2880x1800bb.png',
+        File.binread(File.join dir, 'en-US/desktop/screenshot_02.png')
 
       read = -> path {File.read File.join(dir, path)}
-      assert_equal "primaryCategory: GAMES\nprimarySubcategoryOne: GAMES_SPORTS\n", read['app.yml']
-      assert_equal <<~YAML, read['en-US/info.yml']
+      load = -> path {YAML.safe_load read[path]}
+      assert_equal <<~YAML, read['app.yml']
+        primaryLocale: en-US
+        primaryCategory: GAMES
+        primarySubcategoryOne: GAMES_SPORTS
+        primarySubcategoryTwo:
+        secondaryCategory:
+        secondarySubcategoryOne:
+        secondarySubcategoryTwo:
+      YAML
+      assert_equal <<~YAML, read['en-US/app.yml']
         name: My Game
+        subtitle:
         privacyPolicyUrl: https://a
+        privacyChoicesUrl:
+      YAML
+      assert_equal <<~YAML, read['en-US/version.yml']
         description: |-
           Line 1
           Line 2
         keywords: a,b
+        promotionalText:
+        supportUrl:
+        marketingUrl:
         whatsNew: |
           - Fix
       YAML
-      assert_equal "name: マイゲーム\n", read['ja/info.yml']
-      assert_equal "description: Jeu\n",  read['fr/info.yml']
+      assert_equal 'マイゲーム', load['ja/app.yml']['name']
+      assert_equal [nil],        load['ja/version.yml'].values.uniq
+      assert_equal 'Jeu',        load['fr/version.yml']['description']
+      assert_equal [nil],        load['fr/app.yml'].values.uniq
     end
 
     error = assert_raise(RP::Error) do
@@ -138,7 +189,10 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       assert_equal hash, YAML.safe_load(RP::Stores::AppStore.yaml hash), value.inspect
     end
     assert_equal "key: |-\n  a\n\n  b\n", RP::Stores::AppStore.yaml('key' => "a\n\nb")
-    assert_equal '', RP::Stores::AppStore.yaml('a' => nil, 'b' => '')
+    assert_equal "a:\nb:\n",            RP::Stores::AppStore.yaml('a' => nil, 'b' => '')
+
+    long = 'a ' * 100
+    assert_equal "key: #{long.strip}\n", RP::Stores::AppStore.yaml('key' => long.strip) # not folded
   end
 
 end# TestPackagerStoresAppStore

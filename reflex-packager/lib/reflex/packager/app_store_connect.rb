@@ -1,7 +1,7 @@
-require 'json'
-require 'net/http'
-require 'openssl'
 require 'tmpdir'
+require 'net/http'
+require 'json'
+require 'openssl'
 
 
 module Reflex
