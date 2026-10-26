@@ -74,6 +74,18 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     end
   end
 
+  def test_api()
+    asc  = ASC.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
+    gets = []
+    asc.define_singleton_method(:get) {|path, host:| gets << [host, path]; {}}
+    asc.api '/v1/apps'
+    asc.api '/v1/apps', 'filter[bundleId]': 'com.example.app', limit: 2
+    assert_equal [
+      [ASC::API_HOST, '/v1/apps'],
+      [ASC::API_HOST, '/v1/apps?filter%5BbundleId%5D=com.example.app&limit=2']
+    ], gets
+  end
+
   def test_wait_until_notarized()
     statuses = [status('In Progress'), status('Accepted')]
     asc 'submissions/abc' => -> {statuses.shift} do |asc, _|

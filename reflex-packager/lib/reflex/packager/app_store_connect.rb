@@ -34,10 +34,11 @@ module Reflex
       NOTARIZATION_TIMEOUT  = 60 * 60
       NOTARIZATION_INTERVAL = 30
 
-      # The host of the notary service, not of the other APIs of App Store
-      # Connect, which is api.appstoreconnect.apple.com.
+      # The hosts of the notary service, and of the other APIs of App Store
+      # Connect.
       #
-      HOST = 'https://appstoreconnect.apple.com'
+      HOST     = 'https://appstoreconnect.apple.com'
+      API_HOST = 'https://api.appstoreconnect.apple.com'
 
       # The credentials of the API key the environment variables tell, as
       # {issuer_id:, key_id:, key_p8:, key_path:} with either of key_p8 and
@@ -119,12 +120,20 @@ module Reflex
         (log['issues'] || []).map {"#{_1['path']}: #{_1['message']}"}
       end
 
+      # The JSON the API of App Store Connect answers to GET of +path+ with
+      # +query+, as /v1/apps with 'filter[bundleId]': 'com.example.app'.
+      #
+      def api(path, **query)
+        path += "?#{URI.encode_www_form query}" unless query.empty?
+        get path, host: API_HOST
+      end
+
       private
 
-      def get(path)
-        uri = URI HOST + path
+      def get(path, host: HOST)
+        uri = URI host + path
         res = Net::HTTP.start uri.host, uri.port, use_ssl: true do |http|
-          http.get uri.path, 'Authorization' => "Bearer #{token}"
+          http.get uri.request_uri, 'Authorization' => "Bearer #{token}"
         end
         raise Error, "failed to ask App Store Connect: #{res.code} #{res.body}" unless
           res.is_a? Net::HTTPSuccess

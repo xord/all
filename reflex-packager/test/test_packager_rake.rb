@@ -157,6 +157,16 @@ class TestPackagerRake < Test::Unit::TestCase
       end
       assert_equal [[[pkg], {platform: 'macos'}]], uploads
 
+      downloads  = []
+      downloader = Object.new
+      downloader.define_singleton_method(:download_metadata) {|*args, **kwargs| downloads << [args, kwargs]}
+      assert_include ::Rake::Task['download:appstore:metadata'].comment, 'store/appstore'
+      stub Reflex::Packager::Stores::AppStore, :new, downloader do
+        ::Rake::Task['download:appstore:metadata'].execute
+      end
+      bundle_id = Reflex::Packager::Config.load(Reflex::Packager::REFLEX, dir).bundle_id
+      assert_equal [[["#{dir}/store/appstore"], {bundle_id: bundle_id, platform: :macos}]], downloads
+
       ::Rake::Task.clear
       stub Gem, :win_platform?, true do
         package_application

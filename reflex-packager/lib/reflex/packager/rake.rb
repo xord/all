@@ -12,6 +12,10 @@ module Reflex
 
     module Rake
 
+      # The metadata of the app for the App Store, in the directory of the app.
+      #
+      APPSTORE_METADATA_DIR = 'store/appstore'
+
       # Defines the tasks to package and release the app, by +profile+,
       # which the rake file of the gem of another profile gives.
       #
@@ -85,6 +89,16 @@ module Reflex
           paths = [archive_path, *platform.store_package_paths.values].select {File.file? _1}
           raise 'nothing to release, archive or package the application first' if paths.empty?
           release_on_github(*paths, tag: tag, notes: release_notes(tag))
+        end
+
+        namespace :download do
+          namespace :appstore do
+            desc "download the metadata of the app in App Store Connect into #{APPSTORE_METADATA_DIR}"
+            task :metadata do
+              Stores::AppStore.new.download_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
+                bundle_id: config.bundle_id, platform: :macos
+            end
+          end
         end
 
         namespace :upload do
