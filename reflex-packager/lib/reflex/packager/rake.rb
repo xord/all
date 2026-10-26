@@ -127,6 +127,10 @@ module Reflex
           end
         end
 
+        task :hooks do
+          install_hooks File.join(__dir__, 'hooks')
+        end
+
         task :clean do
           rm_rf File.dirname(platform.dist_dir)
         end

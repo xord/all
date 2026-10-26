@@ -238,6 +238,64 @@ class TestPackagerRake < Test::Unit::TestCase
     end
   end
 
+  def test_hooks()
+    git_env = {
+      'GIT_CONFIG_GLOBAL'   => File::NULL,
+      'GIT_CONFIG_NOSYSTEM' => '1',
+      'GIT_AUTHOR_NAME'     => 'test',
+      'GIT_AUTHOR_EMAIL'    => 'test@example.com',
+      'GIT_COMMITTER_NAME'  => 'test',
+      'GIT_COMMITTER_EMAIL' => 'test@example.com'
+    }
+    git = -> *args {system 'git', *args, out: File::NULL, err: File::NULL}
+    application do
+      with_env git_env do
+        %w[en-US ja].each {FileUtils.mkdir_p "store/appstore/#{_1}"}
+        File.write 'ChangeLog.md', "# My Game ChangeLog\n\n\n## [v1.2.3] - 2026-10-13\n\n- Add a\n"
+        File.write 'store/appstore/en-US/version.yml',
+          "description: |-\n  A\n\n  B\nwhatsNew: |-\n  - Add a\n\n  - Add b\n\nkeywords: a\n"
+        File.write 'store/appstore/ja/version.yml', "description: あ\nwhatsNew:\n"
+        git['init', '-q']
+        git['add', '-A']
+        git['commit', '-q', '-m', 'Start']
+
+        stub Gem, :win_platform?, false do
+          automate_release
+          package_application
+        end
+        ::Rake::Task['hooks'].invoke
+        assert File.file?('.git/hooks/pre-commit')
+        assert File.file?('.git/hooks/pre-commit.d/appstore-whats-new.rb')
+
+        File.write 'ChangeLog.md', File.read('ChangeLog.md').sub(
+          "\n\n\n", "\n\n\n## [v1.2.4] - 2026-10-14\n\n- Fix b\n- Fix c\n\n\n")
+        git['add', 'ChangeLog.md']
+        assert git['commit', '-q', '-m', 'Update ChangeLog']
+        assert_equal '1.2.4', File.read('VERSION')
+        assert_equal "description: |-\n  A\n\n  B\nwhatsNew: |-\n  - Fix b\n  - Fix c\n\nkeywords: a\n",
+          IO.popen(%w[git show HEAD:store/appstore/en-US/version.yml], &:read)
+        assert_equal "description: あ\nwhatsNew: |-\n  - Fix b\n  - Fix c\n",
+          IO.popen(%w[git show HEAD:store/appstore/ja/version.yml], &:read)
+        assert_empty IO.popen(%w[git status --porcelain], &:read)
+
+        # not to overwrite the changes not to be committed
+        File.write 'ChangeLog.md', File.read('ChangeLog.md').sub(
+          "\n\n\n", "\n\n\n## [v1.2.5] - 2026-10-15\n\n- Fix d\n\n\n")
+        File.write 'store/appstore/ja/version.yml', "description: い\nwhatsNew:\n"
+        git['add', 'ChangeLog.md']
+        assert_false git['commit', '-q', '-m', 'Update ChangeLog']
+
+        # not to write any, if one of them is not the YAML of whatsNew expected
+        en = File.read 'store/appstore/en-US/version.yml'
+        File.write 'store/appstore/ja/version.yml', "{description: い}\n"
+        git['add', 'store/appstore/ja/version.yml']
+        assert_false git['commit', '-q', '-m', 'Update ChangeLog']
+        assert_equal en,                    File.read('store/appstore/en-US/version.yml')
+        assert_equal "{description: い}\n", File.read('store/appstore/ja/version.yml')
+      end
+    end
+  end
+
   def test_release_notes()
     application do
       File.write 'ChangeLog.md', "# My Game ChangeLog\n\n\n## [v1.2.3] - 2026-10-13\n\n- Add a\n"

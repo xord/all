@@ -1,10 +1,14 @@
 #!/usr/bin/env ruby
 
 # Writes the version of the section added to a ChangeLog.md in the commit
-# into the VERSION beside it, and adds it to the commit.
+# into the VERSION beside it, and adds it to the commit, then runs the Ruby
+# scripts in pre-commit.d of the hooks, as the libraries on xot install.
 #
 # Copied into .git/hooks by 'rake hooks' of xot as it is, so that it runs
-# with any ruby, requiring nothing.
+# with any ruby, requiring nothing but the standard libraries.
+
+
+require 'rbconfig'
 
 
 def git(*args)
@@ -29,4 +33,10 @@ git('ls-files').lines(chomp: true)
 
     File.write version, ver
     system 'git', 'add', version, exception: true
+  end
+
+Dir.glob(File.join git('rev-parse', '--git-path', 'hooks').strip, 'pre-commit.d', '*.rb')
+  .sort
+  .each do |hook|
+    abort "pre-commit: #{File.basename hook} failed" unless system RbConfig.ruby, hook
   end
