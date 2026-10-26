@@ -125,6 +125,16 @@ module Reflex
               task(:appstore) {no_upload[:appstore]}
             end
           end
+
+          namespace :appstore do
+            desc "upload the metadata in #{APPSTORE_METADATA_DIR} to App Store Connect," +
+              ' only showing the changes by dryrun=1'
+            task :metadata do
+              Stores::AppStore.new.upload_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
+                bundle_id: config.bundle_id, platform: :macos,
+                dry_run: get_env_bool(:dryrun)
+            end
+          end
         end
 
         task :hooks do

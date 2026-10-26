@@ -51,12 +51,15 @@ module GitRepo
     system 'git', *args, exception: true, out: File::NULL, err: File::NULL
   end
 
-  def with_env(env, &block)
-    saved = env.to_h {|key, _| [key, ENV[key]]}
-    env.each {|key, value| ENV[key] = value}
-    block.call
-  ensure
-    saved.each {|key, value| ENV[key] = value}
-  end
-
 end# GitRepo
+
+
+# Runs the block with the environment variables of +env+, nil to unset.
+#
+def with_env(env, &block)
+  saved = env.to_h {|key, _| [key, ENV[key]]}
+  env.each {|key, value| ENV[key] = value}
+  block.call
+ensure
+  saved.each {|key, value| ENV[key] = value}
+end

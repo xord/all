@@ -36,6 +36,11 @@ module Xot
       val
     end
 
+    def get_env_bool(name, defval = false)
+      val = get_env! name, defval
+      val.kind_of?(String) ? %w[1 true yes].include?(val.downcase) : !!val
+    end
+
     def append_env(name, *args)
       ENV[name] = (ENV[name] || '') + " #{args.flatten.join ' '}"
     end

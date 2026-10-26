@@ -35,7 +35,7 @@ namespace :example do
     libs  = %w[xot rucy beeps rays reflex reflex-packager].map {File.expand_path "../#{_1}/lib", __dir__}
     envs  = {'RUBYLIB' => libs.join(File::PATH_SEPARATOR)}
     opts  = ENV['platform']&.then {['--platform', _1]} || []
-    opts << '--pack' if %w[1 true yes].include? ENV['pack']
+    opts << '--pack' if get_env_bool :pack
     sh(envs, RbConfig.ruby, File.expand_path('bin/reflex', __dir__), 'package', *opts, dir)
   end
 
