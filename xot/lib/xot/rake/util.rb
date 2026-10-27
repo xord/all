@@ -195,7 +195,7 @@ module Xot
       s << " -arch arm64"                       if osx? && arm64?
       s << " -std=#{std}"                       if clang? || gcc? || emcc?
       s << " -stdlib=#{stdlib}"                 if clang? && stdlib
-      s << ' -mmacosx-version-min=10.10'        if clang? && osx?
+      s << ' -mmacosx-version-min=11.0'         if clang? && osx?
       s << ' ' + RbConfig::CONFIG['debugflags'] if debug?
       s.gsub!(/-O\d?\w*/, '-O0')                if debug?
       s << warn_opts.map {|s| " -W#{s}"}.join
