@@ -55,9 +55,9 @@ encoded key and mouse events.
 
 - macOS, Linux or Windows
 - Ruby 3.0+
-- [Zig](https://ziglang.org/) **0.16.0** — required to build libghostty-vt
+- [Zig](https://ziglang.org/) **0.17.0** — required to build libghostty-vt
   from source into `vendor/ghostty/`. On macOS `rake packages` installs it
-  through Homebrew; elsewhere take the 0.16.0 build for your platform from
+  through Homebrew; elsewhere take the 0.17.0 build for your platform from
   the [downloads page](https://ziglang.org/download/) and put it on `PATH`,
   since packaged versions rarely match the one the pinned ghostty commit
   asks for.

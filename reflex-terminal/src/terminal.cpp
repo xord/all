@@ -128,7 +128,8 @@ namespace Reflex
 		// and the child that was told they are four columns wide disagree
 		// about where the next character goes.
 		// a reset clears the modes, so this has to be said again after one
-		ghostty_terminal_mode_set(terminal, GHOSTTY_MODE_GRAPHEME_CLUSTER, true);
+		GhosttyTerminalModeConfig mode = {GHOSTTY_MODE_GRAPHEME_CLUSTER, true};
+		ghostty_terminal_set(terminal, GHOSTTY_TERMINAL_OPT_MODE, &mode);
 	}
 
 	static void
@@ -764,16 +765,19 @@ namespace Reflex
 				__FILE__, __LINE__, "invalid terminal size: %dx%d", columns, rows);
 		}
 
-		GhosttyTerminalOptions options = {};
-		options.cols                   = (uint16_t) columns;
-		options.rows                   = (uint16_t) rows;
-		options.max_scrollback         = scrollback_bytes;
-		if (ghostty_terminal_new(NULL, &self->terminal, options) != GHOSTTY_SUCCESS)
+		if (ghostty_terminal_new(
+			NULL, &self->terminal, (uint16_t) columns, (uint16_t) rows) != GHOSTTY_SUCCESS)
+		{
 			system_error(__FILE__, __LINE__, "failed to create a terminal");
+		}
+
+		ghostty_terminal_set(
+			self->terminal, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES, &scrollback_bytes);
 
 		// register the cell pixel size (required right after creation)
 		ghostty_terminal_resize(
-			self->terminal, options.cols, options.rows, self->cell_width, self->cell_height);
+			self->terminal, (uint16_t) columns, (uint16_t) rows,
+			self->cell_width, self->cell_height);
 
 		set_default_modes(self->terminal);
 
@@ -1094,8 +1098,9 @@ namespace Reflex
 		if (!*this)
 			invalid_state_error(__FILE__, __LINE__);
 
-		bool bracketed = false;
-		ghostty_terminal_mode_get(self->terminal, GHOSTTY_MODE_BRACKETED_PASTE, &bracketed);
+		GhosttyTerminalModeConfig mode = {GHOSTTY_MODE_BRACKETED_PASTE, false};
+		ghostty_terminal_get(self->terminal, GHOSTTY_TERMINAL_DATA_MODE, &mode);
+		bool bracketed = mode.value;
 
 		// ghostty sanitizes the text in place
 		String input(text, size);
