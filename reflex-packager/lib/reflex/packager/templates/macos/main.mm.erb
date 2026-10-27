@@ -1,6 +1,7 @@
 // -*- mode: objc -*-
 #import <Cocoa/Cocoa.h>
 #import <CRuby.h>
+#include <locale.h>
 
 
 extern "C"
@@ -14,6 +15,9 @@ extern "C"
 int
 main (int argc, const char* argv[])
 {
+	// for non-ASCII paths, before initializing CRuby
+	setlocale(LC_CTYPE, "UTF-8");
+
 	@autoreleasepool
 	{
 <%- extensions.each do |ext| -%>
@@ -24,6 +28,9 @@ main (int argc, const char* argv[])
 			[CRuby addLibrary:lib bundle:NSBundle.mainBundle];
 
 		NSString* boot = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"boot.rb"];
-		return [CRuby start:boot rescue:^(CRBValue* exception) {}];
+		return [CRuby start:boot rescue:^(CRBValue* exception) {
+			CRBValue* message = [exception call:@"full_message" rescue:^(CRBValue* e) {}];
+			NSLog(@"%@", (message ?: [exception call:@"class"]).toString);
+		}];
 	}
 }
