@@ -119,6 +119,13 @@ namespace Reflex
 	}
 
 	static void
+	set_option (GhosttyTerminal terminal, GhosttyTerminalOption option, const void* value)
+	{
+		if (ghostty_terminal_set(terminal, option, value) != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to set the terminal option %d", (int) option);
+	}
+
+	static void
 	set_default_modes (GhosttyTerminal terminal)
 	{
 		// ghostty turns this on itself (grapheme-width-method defaults to
@@ -129,7 +136,7 @@ namespace Reflex
 		// about where the next character goes.
 		// a reset clears the modes, so this has to be said again after one
 		GhosttyTerminalModeConfig mode = {GHOSTTY_MODE_GRAPHEME_CLUSTER, true};
-		ghostty_terminal_set(terminal, GHOSTTY_TERMINAL_OPT_MODE, &mode);
+		set_option(terminal, GHOSTTY_TERMINAL_OPT_MODE, &mode);
 	}
 
 	static void
@@ -211,7 +218,7 @@ namespace Reflex
 	static void
 	set_palette (GhosttyTerminal terminal, const GhosttyColorRgb* palette)
 	{
-		ghostty_terminal_set(terminal, GHOSTTY_TERMINAL_OPT_COLOR_PALETTE, palette);
+		set_option(terminal, GHOSTTY_TERMINAL_OPT_COLOR_PALETTE, palette);
 	}
 
 	static int
@@ -771,21 +778,22 @@ namespace Reflex
 			system_error(__FILE__, __LINE__, "failed to create a terminal");
 		}
 
-		ghostty_terminal_set(
-			self->terminal, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES, &scrollback_bytes);
+		set_option(self->terminal, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES, &scrollback_bytes);
 
 		// register the cell pixel size (required right after creation)
-		ghostty_terminal_resize(
+		if (ghostty_terminal_resize(
 			self->terminal, (uint16_t) columns, (uint16_t) rows,
-			self->cell_width, self->cell_height);
+			self->cell_width, self->cell_height) != GHOSTTY_SUCCESS)
+		{
+			system_error(__FILE__, __LINE__, "failed to resize a terminal");
+		}
 
 		set_default_modes(self->terminal);
 
-		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_USERDATA, self.get());
-		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY, (const void*) write_pty);
-		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_BELL,      (const void*) bell_rang);
-		ghostty_terminal_set(
-			self->terminal, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED, (const void*) title_changed);
+		set_option(self->terminal, GHOSTTY_TERMINAL_OPT_USERDATA,      self.get());
+		set_option(self->terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY,     (const void*) write_pty);
+		set_option(self->terminal, GHOSTTY_TERMINAL_OPT_BELL,          (const void*) bell_rang);
+		set_option(self->terminal, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED, (const void*) title_changed);
 		if (
 			ghostty_render_state_new(NULL, &self->render_state)              != GHOSTTY_SUCCESS ||
 			ghostty_render_state_row_iterator_new(NULL, &self->row_iterator) != GHOSTTY_SUCCESS ||
@@ -851,13 +859,22 @@ namespace Reflex
 			system_error(__FILE__, __LINE__, "failed to update a render state");
 
 		uint16_t columns = 0, rows = 0;
-		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_COLS, &columns);
-		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_ROWS, &rows);
+		result = ghostty_render_state_get(
+			self->render_state, GHOSTTY_RENDER_STATE_DATA_COLS, &columns);
+		if (result != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to get the columns of a render state");
+		result = ghostty_render_state_get(
+			self->render_state, GHOSTTY_RENDER_STATE_DATA_ROWS, &rows);
+		if (result != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to get the rows of a render state");
 		if (columns > 0) self->columns = columns;
 		if (rows    > 0) self->rows    = rows;
 
 		GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
-		ghostty_render_state_get(self->render_state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &dirty);
+		result = ghostty_render_state_get(
+			self->render_state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &dirty);
+		if (result != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to get the dirty state of a render state");
 
 		Cursor cursor     = this->cursor();
 		bool cursor_moved = cursor != self->last_cursor;
@@ -869,7 +886,10 @@ namespace Reflex
 		rebuild_spans(self.get());
 
 		GhosttyRenderStateDirty clean = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
-		ghostty_render_state_set(self->render_state, GHOSTTY_RENDER_STATE_OPTION_DIRTY, &clean);
+		result = ghostty_render_state_set(
+			self->render_state, GHOSTTY_RENDER_STATE_OPTION_DIRTY, &clean);
+		if (result != GHOSTTY_SUCCESS)
+			system_error(__FILE__, __LINE__, "failed to clear the dirty state of a render state");
 
 		return true;
 	}
@@ -1137,9 +1157,10 @@ namespace Reflex
 	{
 		if (!*this) return false;
 
-		bool tracking = false;
-		ghostty_terminal_get(self->terminal, GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING, &tracking);
-		return tracking;
+		bool tracking        = false;
+		GhosttyResult result =
+			ghostty_terminal_get(self->terminal, GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING, &tracking);
+		return result == GHOSTTY_SUCCESS && tracking;
 	}
 
 	static GhosttyTerminalScrollbar
@@ -1171,7 +1192,7 @@ namespace Reflex
 	{
 		// the terminal copies it and takes to tracking the text it covers,
 		// so the snapshot is ours to drop once this returns
-		ghostty_terminal_set(self->terminal, GHOSTTY_TERMINAL_OPT_SELECTION, selection);
+		set_option(self->terminal, GHOSTTY_TERMINAL_OPT_SELECTION, selection);
 	}
 
 	static void
@@ -1484,7 +1505,7 @@ namespace Reflex
 			set_palette(self->terminal, palette);
 		}
 		else
-			ghostty_terminal_set(self->terminal, to_color_option(index), &rgb);
+			set_option(self->terminal, to_color_option(index), &rgb);
 	}
 
 	void
@@ -1505,7 +1526,7 @@ namespace Reflex
 			set_palette(self->terminal, palette);
 		}
 		else
-			ghostty_terminal_set(self->terminal, to_color_option(index), NULL);
+			set_option(self->terminal, to_color_option(index), NULL);
 	}
 
 	bool
