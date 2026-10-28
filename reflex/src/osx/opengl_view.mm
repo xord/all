@@ -63,7 +63,7 @@
 		[self setOpenGLContext: context];
 
 		GLint swapInterval = 1;
-		[context setValues: &swapInterval forParameter: NSOpenGLCPSwapInterval];
+		[context setValues: &swapInterval forParameter: NSOpenGLContextParameterSwapInterval];
 	}
 
 	- (void) activateContext
@@ -71,15 +71,21 @@
 		[self setupContext];
 
 		NSOpenGLContext* context = self.openGLContext;
-		BOOL moved               = context.view != self;
+
+		// these have no replacement but Metal
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+		BOOL moved = context.view != self;
 		if (moved) [context setView: self];
+		#pragma GCC diagnostic pop
+
 		[context makeCurrentContext];
 
 		GLint opacity = !self.window || self.window.isOpaque ? 1 : 0;
 		if (moved || opacity != surface_opacity)
 		{
 			surface_opacity = opacity;
-			[context setValues: &opacity forParameter: NSOpenGLCPSurfaceOpacity];
+			[context setValues: &opacity forParameter: NSOpenGLContextParameterSurfaceOpacity];
 		}
 	}
 
@@ -300,7 +306,7 @@
 		// event (candidate window, emoji palette, dictation), has no key to
 		// report, so a key event is synthesized for it.
 		// otherwise, let keyDown: deliver the original key event.
-		BOOL synthesize = was_marked || NSApp.currentEvent.type != NSKeyDown;
+		BOOL synthesize = was_marked || NSApp.currentEvent.type != NSEventTypeKeyDown;
 		consumed_by_ime = synthesize;
 
 		[self clearMarkedText];

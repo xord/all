@@ -20,7 +20,7 @@ default_style_mask ()
 {
 	return Reflex::Window_make_style_mask(
 		Reflex::Window_default_flags(),
-		NSTitledWindowMask | NSTexturedBackgroundWindowMask);
+		NSWindowStyleMaskTitled);
 }
 
 static void

@@ -158,16 +158,19 @@ module Xot
       a  = defs.dup
       a << (debug? ? '_DEBUG' : 'NDEBUG')
       a << target_name.gsub('-', '_').upcase
-      a << $~[0].upcase        if RUBY_PLATFORM =~ /mswin|mingw|cygwin|darwin/i
-      a << 'WIN32'             if win32?
-      a << 'OSX'               if osx?
-      a << 'IOS'               if ios?
-      a << 'LINUX'             if linux?
-      a << 'WASM'              if wasm?
-      a << 'GCC'               if gcc?
-      a << 'CLANG'             if clang?
-      a << '_USE_MATH_DEFINES' if gcc?
-      a << '_THREAD_SAFE'      if linux?
+      a << $~[0].upcase               if RUBY_PLATFORM =~ /mswin|mingw|cygwin|darwin/i
+      a << 'WIN32'                    if win32?
+      a << 'OSX'                      if osx?
+      a << 'IOS'                      if ios?
+      a << 'LINUX'                    if linux?
+      a << 'WASM'                     if wasm?
+      a << 'GCC'                      if gcc?
+      a << 'CLANG'                    if clang?
+      a << '_USE_MATH_DEFINES'        if gcc?
+      a << '_THREAD_SAFE'             if linux?
+      a << 'GL_SILENCE_DEPRECATION'   if osx?
+      a << 'GLES_SILENCE_DEPRECATION' if ios?
+      a << 'OPENAL_DEPRECATED='       if osx? || ios?
       a
     end
 

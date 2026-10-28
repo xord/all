@@ -18,14 +18,14 @@ namespace Reflex
 	{
 		NSUInteger flags = event ? event.modifierFlags : NSEvent.modifierFlags;
 		return
-			(flags & NSAlphaShiftKeyMask ? MOD_CAPS     : 0) |
-			(flags & NSShiftKeyMask      ? MOD_SHIFT    : 0) |
-			(flags & NSControlKeyMask    ? MOD_CONTROL  : 0) |
-			(flags & NSAlternateKeyMask  ? MOD_OPTION   : 0) |
-			(flags & NSCommandKeyMask    ? MOD_COMMAND  : 0) |
-			(flags & NSNumericPadKeyMask ? MOD_NUMPAD   : 0) |
-			(flags & NSHelpKeyMask       ? MOD_HELP     : 0) |
-			(flags & NSFunctionKeyMask   ? MOD_FUNCTION : 0);
+			(flags & NSEventModifierFlagCapsLock   ? MOD_CAPS     : 0) |
+			(flags & NSEventModifierFlagShift      ? MOD_SHIFT    : 0) |
+			(flags & NSEventModifierFlagControl    ? MOD_CONTROL  : 0) |
+			(flags & NSEventModifierFlagOption     ? MOD_OPTION   : 0) |
+			(flags & NSEventModifierFlagCommand    ? MOD_COMMAND  : 0) |
+			(flags & NSEventModifierFlagNumericPad ? MOD_NUMPAD   : 0) |
+			(flags & NSEventModifierFlagHelp       ? MOD_HELP     : 0) |
+			(flags & NSEventModifierFlagFunction   ? MOD_FUNCTION : 0);
 	}
 
 	static Point
@@ -73,15 +73,15 @@ namespace Reflex
 		switch ([e keyCode])
 		{
 			case kVK_Shift:
-			case kVK_RightShift:   return NSShiftKeyMask;
+			case kVK_RightShift:   return NSEventModifierFlagShift;
 			case kVK_Control:
-			case kVK_RightControl: return NSControlKeyMask;
+			case kVK_RightControl: return NSEventModifierFlagControl;
 			case kVK_Option:
-			case kVK_RightOption:  return NSAlternateKeyMask;
+			case kVK_RightOption:  return NSEventModifierFlagOption;
 			case kVK_Command:
-			case kVK_RightCommand: return NSCommandKeyMask;
-			case kVK_CapsLock:     return NSAlphaShiftKeyMask;
-			case kVK_Function:     return NSFunctionKeyMask;
+			case kVK_RightCommand: return NSEventModifierFlagCommand;
+			case kVK_CapsLock:     return NSEventModifierFlagCapsLock;
+			case kVK_Function:     return NSEventModifierFlagFunction;
 		}
 		return 0;
 	}
@@ -152,9 +152,9 @@ namespace Reflex
 	is_pointer_dragging (NSEvent* e)
 	{
 		return
-			[e type] == NSLeftMouseDragged  ||
-			[e type] == NSRightMouseDragged ||
-			[e type] == NSOtherMouseDragged;
+			[e type] == NSEventTypeLeftMouseDragged  ||
+			[e type] == NSEventTypeRightMouseDragged ||
+			[e type] == NSEventTypeOtherMouseDragged;
 	}
 
 	static uint
@@ -173,24 +173,24 @@ namespace Reflex
 	{
 		switch ([e type])
 		{
-			case NSLeftMouseDown:
-			case NSLeftMouseUp:
-			case NSLeftMouseDragged:
+			case NSEventTypeLeftMouseDown:
+			case NSEventTypeLeftMouseUp:
+			case NSEventTypeLeftMouseDragged:
 				return Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_LEFT;
 
-			case NSRightMouseDown:
-			case NSRightMouseUp:
-			case NSRightMouseDragged:
+			case NSEventTypeRightMouseDown:
+			case NSEventTypeRightMouseUp:
+			case NSEventTypeRightMouseDragged:
 				return Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_RIGHT;
 
-			case NSOtherMouseDown:
-			case NSOtherMouseUp:
-			case NSOtherMouseDragged:
+			case NSEventTypeOtherMouseDown:
+			case NSEventTypeOtherMouseUp:
+			case NSEventTypeOtherMouseDragged:
 				return Reflex::Pointer::MOUSE | Reflex::Pointer::MOUSE_MIDDLE;
 
-			case NSMouseMoved:
-			case NSMouseEntered:
-			case NSMouseExited:
+			case NSEventTypeMouseMoved:
+			case NSEventTypeMouseEntered:
+			case NSEventTypeMouseExited:
 				return Reflex::Pointer::MOUSE | get_current_pointer_type();
 
 			default:
