@@ -5,8 +5,10 @@
 
 
 #include <stdint.h>
+#include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#include <exception>
 #include <functional>
 #include <xot/defs.h>
 #include <xot/time.h>
@@ -135,7 +137,21 @@ namespace Xot
 	}
 
 
-	void call_and_log_errors (const std::function<void()>& fun);
+	template <typename E = std::exception>
+	inline bool
+	call_and_log_errors (const std::function<void()>& fun)
+	{
+		try
+		{
+			fun();
+			return true;
+		}
+		catch (const E& e)
+		{
+			fprintf(stderr, "%s\n", e.what());
+			return false;
+		}
+	}
 
 
 #if defined(OSX) || defined(IOS)
