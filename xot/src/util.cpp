@@ -1,9 +1,7 @@
 #include "xot/util.h"
 
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <exception>
 
 #if defined(OSX) || defined(IOS)
 #import <CoreFoundation/CFBase.h>
@@ -52,20 +50,6 @@ namespace Xot
 		if (max_ != 1) n *= max_;
 		if (min_ != 0) n += min_;
 		return n;
-	}
-
-
-	void
-	call_and_log_errors (const std::function<void()>& fun)
-	{
-		try
-		{
-			fun();
-		}
-		catch (const std::exception& e)
-		{
-			fprintf(stderr, "%s\n", e.what());
-		}
 	}
 
 
