@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <assert.h>
+#include <functional>
 #include <xot/defs.h>
 #include <xot/time.h>
 
@@ -132,6 +133,9 @@ namespace Xot
 		const uintptr_t& intval = *(uintptr_t*) &pointer;
 		return intval & POINTER_FLAG;
 	}
+
+
+	void call_and_log_errors (const std::function<void()>& fun);
 
 
 #if defined(OSX) || defined(IOS)

@@ -2,6 +2,7 @@
 
 
 #include <assert.h>
+#include <algorithm>
 #include "beeps/exception.h"
 #include "beeps/debug.h"
 #include "sound.h"
@@ -14,9 +15,11 @@ namespace Beeps
 	namespace global
 	{
 
-		static ALCdevice* device   = NULL;
+		static ALCdevice* device        = NULL;
 
-		static ALCcontext* context = NULL;
+		static ALCcontext* context      = NULL;
+
+		static uint max_playing_sources = 0;
 
 	}// global
 
@@ -39,6 +42,21 @@ namespace Beeps
 		}
 	}
 
+	static uint
+	get_max_playing_sources ()
+	{
+#if defined(OSX) || defined(IOS)
+		typedef ALint (*GetMaxBusses) ();
+
+		auto get_max_busses =
+			(GetMaxBusses) alcGetProcAddress(NULL, "alcMacOSXGetMixerMaxiumumBusses");
+		if (get_max_busses)
+			return (uint) std::max(get_max_busses(), 0);
+#endif
+
+		return 0;
+	}
+
 	void
 	OpenAL_init ()
 	{
@@ -56,6 +74,7 @@ namespace Beeps
 		if (!alcMakeContextCurrent(global::context))
 			goto FAILED;
 
+		global::max_playing_sources = get_max_playing_sources();
 		return;
 
 	FAILED:
@@ -78,22 +97,43 @@ namespace Beeps
 		return global::context;
 	}
 
-	ALCenum
+	uint
+	OpenAL_get_max_playing_sources ()
+	{
+		return global::max_playing_sources;
+	}
+
+	ALenum
 	OpenAL_get_error ()
 	{
-		assert(global::device);
+		assert(global::context);
 
-		return alcGetError(global::device);
+		return alGetError();
 	}
 
 	bool
 	OpenAL_no_error ()
 	{
-		return OpenAL_get_error() == ALC_NO_ERROR;
+		return OpenAL_get_error() == AL_NO_ERROR;
 	}
 
 	static String
 	get_error_name (ALenum error)
+	{
+		switch (error)
+		{
+			case AL_NO_ERROR:          return "AL_NO_ERROR";
+			case AL_INVALID_NAME:      return "AL_INVALID_NAME";
+			case AL_INVALID_ENUM:      return "AL_INVALID_ENUM";
+			case AL_INVALID_VALUE:     return "AL_INVALID_VALUE";
+			case AL_INVALID_OPERATION: return "AL_INVALID_OPERATION";
+			case AL_OUT_OF_MEMORY:     return "AL_OUT_OF_MEMORY";
+			default:                   return "UNKNOWN ERROR";
+		}
+	}
+
+	static String
+	get_device_error_name (ALCenum error)
 	{
 		switch (error)
 		{
@@ -110,9 +150,27 @@ namespace Beeps
 	void
 	OpenAL_check_error (const char* file, int line)
 	{
-		ALCenum e = OpenAL_get_error();
+		ALenum e = OpenAL_get_error();
+		if (e != AL_NO_ERROR)
+		{
+			openal_error(
+				file, line, "OpenAL error %s (0x%x)",
+				get_error_name(e).c_str(), (uint) e);
+		}
+	}
+
+	void
+	OpenAL_check_error (ALCdevice* device, const char* file, int line)
+	{
+		assert(device);
+
+		ALCenum e = alcGetError(device);
 		if (e != ALC_NO_ERROR)
-			openal_error(file, line, "OpenAL error %s", get_error_name(e).c_str());
+		{
+			openal_error(
+				file, line, "OpenAL error %s (0x%x)",
+				get_device_error_name(e).c_str(), (uint) e);
+		}
 	}
 
 
