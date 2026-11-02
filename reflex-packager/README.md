@@ -122,6 +122,8 @@ icon: icon.png
 # main: main.rb
 # files:
 #   - "lib/**/*.rb"
+# excludes:
+#   - lib/debug.rb
 
 # macos:
 #   deployment_target: "11.0"
@@ -151,7 +153,8 @@ icon: icon.png
 | `copyright` | none | Copyright notice, shown in the About panel on macOS and in the properties of the executable on Windows |
 | `main` | `main.rb` | Entry point script |
 | `icon` | none | Path to an icon image (PNG) |
-| `files` | none | Additional files to bundle (glob patterns) |
+| `files` | none | Additional files to bundle (glob patterns); the dotfiles in a directory are bundled only by their own names |
+| `excludes` | none | Files not to bundle out of `files` (glob patterns), such as the ones only for development |
 | `macos.deployment_target` | `11.0` | Minimum macOS version |
 | `macos.archs` | `[arm64, x86_64]` | Target architectures |
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |

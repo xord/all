@@ -19,7 +19,7 @@ module Reflex
         archive_path = platform.archive_path
         tag          = "v#{config.version}"
         srcs         = [
-          *application_files(config),
+          *config.app_files,
           *REFLEX.config_files,
           'VERSION',
           'Gemfile.lock'
@@ -94,10 +94,6 @@ module Reflex
       end
 
       private
-
-      def application_files(config)
-        config.app_files.flat_map {File.directory?(_1) ? Dir.glob("#{_1}/**/*") : _1}
-      end
 
       def release_notes(tag)
         commit = git('-C', Reflex::Extension.root_dir, 'rev-parse', 'HEAD', err: File::NULL).strip

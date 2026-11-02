@@ -1,3 +1,4 @@
+require 'pathname'
 require 'yaml'
 
 
@@ -25,6 +26,7 @@ module Reflex
           main:      profile.main,
           icon:      nil,
           files:     nil,
+          excludes:  nil,
           macos:   MacOSConfig.defaults,
           windows: WindowsConfig.defaults,
           upload:  UploadConfig.defaults
@@ -67,6 +69,7 @@ module Reflex
         @main      = hash[:main]      .to_s
         @icon      = hash[:icon]     &.to_s
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
+        @excludes  = glob_patterns hash[:excludes], :excludes
         @macos     = MacOSConfig.new   hash[:macos]
         @windows   = WindowsConfig.new hash[:windows]
         @upload    = UploadConfig.new  hash[:upload]
@@ -76,7 +79,7 @@ module Reflex
       end
 
       attr_reader :profile, :dir, :name, :bundle_id, :version, :copyright,
-        :main, :icon, :files, :macos, :windows, :upload
+        :main, :icon, :files, :excludes, :macos, :windows, :upload
 
       # The values that differ by language, in English, the language of the
       # ones out of localizations, and in each language of the localizations
@@ -100,17 +103,14 @@ module Reflex
       end
 
       # Returns paths to be bundled into the application, relative to the
-      # project directory.
+      # project directory: the files only, with the ones in the directories
+      # matched, for excludes to take out a file in them.
       #
       # @return [Array<String>] relative paths
       #
       def app_files()
-        excludes = EXCLUDES + @profile.config_files
-        [@main, *@files]
-          .flat_map {Dir.glob _1, base: @dir}
-          .reject {_1.start_with?('.') || excludes.include?(_1)}
-          .uniq
-          .sort
+        excluded = glob_files [*EXCLUDES, *@profile.config_files, *@excludes]
+        (glob_files([@main, *@files]) - excluded).reject {_1.start_with? '.'}.sort
       end
 
       EXCLUDES = %w[dist]
@@ -189,6 +189,31 @@ module Reflex
         end
       end
 
+      def glob_patterns(patterns, key)
+        return nil if patterns.nil?
+        Array(patterns).map do |pattern|
+          raise Error, "not a glob pattern in '/#{key}': #{pattern.inspect}" if
+            pattern.is_a?(Hash) || pattern.is_a?(Array) || pattern.to_s.strip.empty?
+          pattern.to_s
+        end
+      end
+
+      # The files matched by +patterns+ in the project directory, and the
+      # ones in the directories matched but the dotfiles, as lib/a.rb for
+      # ./lib/a.rb too, for the excludes to be compared with.
+      #
+      def glob_files(patterns)
+        patterns
+          .flat_map {Dir.glob _1, base: @dir}
+          .map {Pathname(_1).cleanpath.to_s}
+          .flat_map {|path|
+            # by base:, not to take the name of the directory as a pattern
+            [path, *Dir.glob('**/*', base: File.join(@dir, path)).map {File.join path, _1}]
+          }
+          .reject {File.directory? File.join(@dir, _1)}
+          .uniq
+      end
+
       # Numbers only, which macOS and Windows compare versions by.
       #
       VERSION_FORMAT = /\A\d+(\.\d+)*\z/
@@ -204,6 +229,9 @@ module Reflex
 
         raise Error, "main script not found: '#{@main}'" if
           !File.file?(File.join @dir, @main)
+
+        raise Error, "main script excluded: '#{@main}'" if
+          @excludes && (glob_files([@main]) - glob_files(@excludes)).empty?
 
         raise Error, "icon not found: '#{@icon}'" if
           @icon && !File.file?(File.join @dir, @icon)

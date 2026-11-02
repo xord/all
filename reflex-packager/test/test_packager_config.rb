@@ -92,7 +92,7 @@ class TestPackagerConfig < Test::Unit::TestCase
       assert_equal 'app.rb',                                       c.main
       assert_equal 'icon.png',                                     c.icon
       assert_equal %w[*.rb data],                                  c.files
-      assert_equal %w[1.rb app.rb data],                           c.app_files
+      assert_equal %w[1.rb app.rb data/2.json],                    c.app_files
       assert_equal '12.0',                                         c.macos.deployment_target
       assert_equal %w[arm64 x86_64],                               c.macos.archs
       assert_equal '4.0.600',                                      c.macos.cruby
@@ -205,6 +205,19 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_equal %w[a b],       config(files: %w[a b])    .files
   end
 
+  def test_excludes()
+    assert_nil                  config()                     .excludes
+    assert_equal %w[helper.rb], config(excludes: 'helper.rb').excludes
+    assert_equal %w[a b],       config(excludes: %w[a b])    .excludes
+    assert_raise(RP::Error)    {config excludes: {a: 1}}
+    assert_raise(RP::Error)    {config excludes: [{a: 1}]}
+    assert_raise(RP::Error)    {config excludes: [%w[a]]}
+    assert_raise(RP::Error)    {config excludes: [nil]}
+    assert_raise(RP::Error)    {config excludes: ['']}
+    assert_raise(RP::Error)    {config excludes: MAIN}
+    assert_raise(RP::Error)    {config excludes: "./#{MAIN}"}
+  end
+
   def test_app_files()
     tmpdir                      do |dir|
       touch 'x.rb'
@@ -221,6 +234,26 @@ class TestPackagerConfig < Test::Unit::TestCase
       touch '.build/1.rb'
       touch 'dist/2.rb'
       assert_equal %w[main.rb],      load_config(dir).app_files
+    end
+
+    tmpdir yaml: "files: ['lib/**/*', res]\nexcludes: [lib/a/debug.rb, 'res/*.wav']" do |dir|
+      %w[lib/a/b.rb lib/a/debug.rb res/c.png res/d.wav].each {touch _1}
+      assert_equal %w[lib/a/b.rb main.rb res/c.png], load_config(dir).app_files
+    end
+
+    tmpdir yaml: "files: [lib, ./res]\nexcludes: [./lib/a/debug.rb, res/d.wav]" do |dir|
+      %w[lib/a/b.rb lib/a/debug.rb res/c.png res/d.wav].each {touch _1}
+      assert_equal %w[lib/a/b.rb main.rb res/c.png], load_config(dir).app_files
+    end
+
+    tmpdir yaml: "files: ['*']" do |dir|
+      touch 'a[1]/b.png'
+      assert_equal %w[a[1]/b.png main.rb], load_config(dir).app_files
+    end
+
+    tmpdir yaml: "files: [res, res/.b]" do |dir|
+      %w[res/.a res/.b res/.c/d res/e].each {touch _1}
+      assert_equal %w[main.rb res/.b res/e], load_config(dir).app_files
     end
 
     tmpdir yaml_path: 'a.yaml', yaml: <<~YAML, main_path: 'b.rb' do |dir|
