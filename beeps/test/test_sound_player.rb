@@ -1,3 +1,4 @@
+require 'tempfile'
 require_relative 'helper'
 
 
@@ -5,23 +6,20 @@ class TestSoundPlayer < Test::Unit::TestCase
 
   B = Beeps
 
-  PATH = 'test.wav'
-
   def sound(seconds = 0.1, processor: B::Oscillator.new, **kwargs)
     B::Sound.new processor >> B::Gain.new(gain: 0), seconds, **kwargs
   end
 
-  def stream_sound(**kwargs)
-    sound 0, processor: B::FileIn.new(PATH), **kwargs
-  end
-
-  def setup()
-    sound.save PATH
+  def stream_sound(seconds = 0.1, **kwargs)
+    Tempfile.create ['stream', '.wav'] do |file|
+      file.close
+      sound(seconds).save file.path
+      sound 0, processor: B::FileIn.new(file.path), **kwargs
+    end
   end
 
   def teardown()
     B::SoundPlayer.stop_all
-    File.delete PATH if File.exist?(PATH)
   end
 
   def test_initialize()
@@ -66,7 +64,7 @@ class TestSoundPlayer < Test::Unit::TestCase
     sleep sec * 2
     assert_equal :stopped, p.state
 
-    s = stream_sound
+    s = stream_sound sec
     p = s.play
     assert_equal :playing, p.state
     sleep sec * 2
@@ -179,7 +177,7 @@ class TestSoundPlayer < Test::Unit::TestCase
     assert_equal :playing, p.state
     assert_operator p.position, :>=, 22050
 
-    p = stream_sound.play
+    p = stream_sound(1).play
     p.stop
     p.position = 1000
     assert_equal 1000, p.position
