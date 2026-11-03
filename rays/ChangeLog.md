@@ -1,6 +1,27 @@
 # rays ChangeLog
 
 
+## [v0.5.0] - 2026-11-04
+
+- [BREAKING] Store and blend alpha premultiplied on the GPU, so a fragment shader sees premultiplied samples and must emit premultiplied color
+- [BREAKING] Bitmap#pixels exchanges straight alpha, not premultiplied
+- [BREAKING] Size fonts in pixels on Windows, as on the other platforms
+- [BREAKING] Font#name returns the name asked for, and Font#name(true) the name of the face the platform picked
+- Add weight and italic to Font
+- Add Font#italic? and #smooth?, and Image#smooth?
+- Handle non-ASCII text and file paths on Windows
+- Support High DPI on Windows
+- Draw BGRA bitmaps on every platform
+- Make a paint session that draws nothing cost almost nothing, and stop waiting for the GPU at its end
+
+- Fix Font.new with no arguments sharing the default font, so that changing it changed every default font
+- Fix text drawn off its baseline at a pixel density other than 1
+- Fix a crash on the error paths, as loading a GIF from a missing file, on macOS
+- Fix a crash in Font.families when the GC runs
+- Fix an overflow of a font name longer than 31 characters on Windows
+- Fix linking the extension statically on macOS
+
+
 ## [v0.4.0] - 2026-08-04
 
 - [BREAKING] Rename COLORSPACE_UNKNOWN to COLORSPACE_NONE

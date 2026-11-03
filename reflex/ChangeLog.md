@@ -1,6 +1,60 @@
 # reflex ChangeLog
 
 
+## [v0.7.0] - 2026-11-04
+
+- [BREAKING] Rename View#cache to View#draw_cache
+- [BREAKING] Rename Window#hidden to Window#hidden?
+- [BREAKING] Make Menu#shortcut_key a key symbol, not a string
+- [BREAKING] Return only the shortcut modifiers from #modifiers by default
+- [BREAKING] Report wheel deltas in pixels, in the same direction, on every platform
+- [BREAKING] Make the window frame the client rect on Windows, as it is the content rect on macOS
+- [BREAKING] Open gamepads and MIDI only when Gamepad.enable / MIDI.enable is called
+- [BREAKING] Return from Reflex.start on quit on macOS too, and raise the exception of a callback from it
+- [BREAKING] Raise the deployment targets to macOS 11.0 and iOS 14.0
+- Add TextEvent, on_text_preedit and on_text_commit to take text from an input method
+- Add HasTextPreedit for views taking text input
+- Add FileDialog to open the file dialog of the platform
+- Add ColorPicker to open the color picker of the platform
+- Add Reflex.alert to show a message and wait for it to be closed
+- Add Application#background for an app with no dock icon, with its menu in the menu bar or the tray
+- Add Window#transparent= and #shadow=
+- Add the :buttons and :background flags to Window#titlebar to hide the parts of the titlebar
+- Add Window#always_on_top and #always_on_bottom
+- Add Window::FLAG_POINTER_THROUGH and Window#pointer_through_alpha to let pointers go through a window
+- Add Window#unlisted= to keep a window out of Mission Control, the taskbar and alt-tab
+- Add Screen.all, Screen#name and #pixel_density
+- Add Reflex::KEYS and Reflex.get_key_symbol!
+- Add ControlChangeEvent#inspect
+- Handle non-ASCII text on Windows
+- Support High DPI on Windows
+- Deliver MIDI events to every window, also while the app is in the background
+- End every pointer press with an up or a cancel, also when a menu pops up or the pointer leaves the window
+- Decide the enter and leave of a window from where the pointer is
+- Stop hover moves at the edge of a window on macOS, as on the other platforms
+- Let handlers add and remove views while events are dispatched
+- Name an application by the name the system has for it by default
+- Give windows the icon of the executable on Windows
+- Keep the caption on screen when placing a window on Windows
+- Leave the time a popup menu is open on Windows out of the next dt
+- Make Window#close do nothing on a window already closed
+- Let Window#titlebar and #orientations be called as universal accessors
+
+- Fix menu shortcuts never firing on macOS and Windows
+- Fix closable, minimizable and resizable doing nothing on Windows
+- Fix the window flags taking effect one change late on macOS
+- Fix a block given to Window.new or Reflex.start being lost when on(:show) or on(:start) is hooked
+- Fix views added to a window already shown never being drawn
+- Fix a drag not working on Windows right after a popup menu
+- Fix MIDI.all returning true for each device
+- Fix the MIDI input thread corrupting the heap
+- Fix a crash when removing two or more gamepads
+- Fix RtMidi running the event loop of the app on macOS
+- Fix the extension failing to load on Windows without the DirectX redistributable
+- Fix linking the extension statically on macOS
+- Fix the build for iOS
+
+
 ## [v0.6.0] - 2026-08-04
 
 - [BREAKING] Read modifiers as symbols from every event that carries them

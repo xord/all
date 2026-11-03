@@ -1,6 +1,20 @@
 # beeps ChangeLog
 
 
+## [v0.5.0] - 2026-11-04
+
+- [BREAKING] SoundPlayer#state returns :none instead of :unknown for a player with nothing to play
+- Let a stopped sound player play again, also from a position set while it is stopped
+- Stop the oldest sound when too many sounds play at once
+- Write a log instead of raising when no sound can stop to make room for a new one
+- Raise ArgumentError for a position over the length of a sound
+- Read files of 24 and 32 bits, and of floats, on Windows
+
+- Fix FileIn on Windows reading 16-bit samples as unsigned
+- Fix a leak of the buffers of finished sound players, which stopped every sound after 1024 of them on macOS
+- Fix the errors of OpenAL never being caught
+
+
 ## [v0.4.0] - 2026-08-04
 
 - Support dup on value classes, reject it on stateful ones

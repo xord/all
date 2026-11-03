@@ -1,6 +1,26 @@
 # xot ChangeLog
 
 
+## [v0.5.0] - 2026-11-04
+
+- [BREAKING] Remove the hint_memory_usage callback
+- [BREAKING] Raise ArgumentError instead of RuntimeError for an unknown bit flag
+- [BREAKING] Raise the deployment targets to macOS 11.0 and iOS 14.0
+- Return symbols in declaration order from BitFlag#bits2symbols
+- Add Xot::update_flag to set or clear a flag by a bool
+- Add Xot::call_and_log_errors to write an error to stderr instead of throwing it
+- Add Xot::ChangeLog and automate_release for the tasks to release by VERSION and ChangeLog.md
+- Add package_application for the tasks to package and release an app
+- Make the workflows of xot callable from other repositories, to test, tag, release and package an app
+- Take Ruby 3.3 as the oldest for the workflows
+- Install the git hooks before the changelog tasks
+- Declare rake and ostruct, which xot requires, as dependencies
+- Silence the deprecation warnings of OpenGL and OpenAL on macOS
+
+- Fix universal_accessor ignoring keyword-only calls
+- Fix remove_flag clearing the upper bits of a 64-bit value
+
+
 ## [v0.4.0] - 2026-08-04
 
 - [BREAKING] Rework String conversions to std::wstring and CFString

@@ -1,6 +1,21 @@
 # rays-video ChangeLog
 
 
+## [v0.3.0] - 2026-11-04
+
+- [BREAKING] Make the frames of a video read-only views sharing one decoded frame, and take a writable copy by Image#dup
+- [BREAKING] Reject frames whose size or pixel density differs from the video's
+- Decode video files sequentially with AVAssetReader, which is many times faster
+- Add Video#get and #set, as #[] and #[]=
+- Add Video#push and #<< as aliases of #append, which returns self now
+- Show the last frame for an index past the estimated last one
+
+- Fix Video#insert crashing on an index past the end, and raise IndexError
+- Fix a crash on the error paths, as saving a GIF to a path that cannot be written
+- Fix linking the extension statically on macOS
+- Fix the build for iOS
+
+
 ## [v0.2.0] - 2026-08-04
 
 - Update dependencies

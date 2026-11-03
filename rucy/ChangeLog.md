@@ -1,6 +1,20 @@
 # rucy ChangeLog
 
 
+## [v0.5.0] - 2026-11-04
+
+- [BREAKING] Rename RUCY_CHECK_OBJ to RUCY_CHECK_PTR and RUCY_CHECK_OBJECT to RUCY_CHECK_OBJ
+- [BREAKING] Take signed char instead of char in value_to
+- [BREAKING] Remove the hint_memory_usage callback
+- Tag the strings handed over from C++ as UTF-8, not as ASCII-8BIT
+- Add Value::freeze, Value::is_frozen and Value::check_frozen
+- Keep a Ruby exception alive while it is thrown and caught in C++
+- Put the name and reason of an Objective-C exception into NativeError
+
+- Fix a crash when a C++ object outlives its Ruby object
+- Fix a crash when the GC runs while an array is made from C++ values
+
+
 ## [v0.4.0] - 2026-08-04
 
 - Add Rucy::yield and route extension block yields through it
