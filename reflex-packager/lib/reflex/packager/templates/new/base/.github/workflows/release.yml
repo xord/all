@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]*']
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'the platforms to package the app for'
+        type: choice
+        options: [macos windows, macos, windows]
+        default: macos windows
+      retention-days:
+        description: 'days to keep the zip and the pkg, as artifacts; run not by a tag, it releases none'
+        type: number
+        default: 1
+      macos-appstore:
+        description: 'package the app for the Mac App Store, and upload it to App Store Connect if run by a tag'
+        type: boolean
+        default: false
+      itchio:
+        description: 'upload the app to itch.io if run by a tag'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: xord/reflex-packager/.github/workflows/package.yml@master
+    with:
+      platforms:      ${{ inputs.platforms || 'macos windows' }}
+      retention-days: ${{ fromJSON(inputs.retention-days || '0') }}
+      # not by the push of a tag until the app is in the store, which then
+      # does by: github.event_name == 'push' || inputs.macos-appstore
+      macos-appstore: ${{ inputs.macos-appstore == true }}
+      itchio:         ${{ inputs.itchio == true }}
+    # to sign the app with Developer ID and to have it notarized, and to
+    # upload it to App Store Connect and itch.io
+    secrets:
+      APPLE_TEAM_ID:               ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_CODESIGN_P12:          ${{ secrets.APPLE_CODESIGN_P12 }}
+      APPLE_CODESIGN_P12_PASSWORD: ${{ secrets.APPLE_CODESIGN_P12_PASSWORD }}
+      APPLE_API_ISSUER_ID:         ${{ secrets.APPLE_API_ISSUER_ID }}
+      APPLE_API_KEY_ID:            ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}
+      BUTLER_API_KEY:              ${{ secrets.BUTLER_API_KEY }}

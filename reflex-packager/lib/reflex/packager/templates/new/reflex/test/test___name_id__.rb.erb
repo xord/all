@@ -1,0 +1,8 @@
+require 'test/unit'
+require '<%= name_id %>'
+
+class Test<%= module_name %> < Test::Unit::TestCase
+  def test_version
+    assert_match(/\A\d+(\.\d+)*\z/, <%= module_name %>.version)
+  end
+end

@@ -12,23 +12,25 @@ module Reflex
 
     module Rake
 
-      def package_application()
-        config       = Config.load REFLEX, '.'
+      # Defines the tasks to package and release the app, by +profile+,
+      # which the rake file of the gem of another profile gives.
+      #
+      def package_application(profile = REFLEX)
+        config       = Config.load profile, '.'
         platform     = PLATFORMS[Packager.default_platform].new config, pack: true
         app_path     = platform.dist_path
         archive_path = platform.archive_path
         tag          = "v#{config.version}"
         srcs         = [
           *config.app_files,
-          *REFLEX.config_files,
+          *profile.config_files,
           'VERSION',
           'Gemfile.lock'
         ].select {File.file? _1}
 
         relative       = -> path {path.delete_prefix "#{config.dir}/"}
         reflex_package = -> *args do
-          reflex = File.expand_path '../../../bin/reflex', __dir__
-          sh RbConfig.ruby, reflex, 'package', '--pack', *args, '.'
+          sh RbConfig.ruby, profile.executable, 'package', '--pack', *args, '.'
         end
 
         desc "package the application into #{relative[app_path]}"
@@ -57,7 +59,7 @@ module Reflex
           desc "upload #{relative[archive_path]} to itch.io"
           task :itchio => archive_path do
             project = config.upload.itchio_project ||
-              raise("no upload.itchio.project in #{REFLEX.config_files.first}")
+              raise("no upload.itchio.project in #{profile.config_files.first}")
             Stores::Itchio.new(project).upload archive_path,
               channel: Packager.default_platform.to_s, version: config.version
           end
@@ -93,6 +95,13 @@ module Reflex
         end
       end
 
+      # Defines the task test, running test/**/test_*.rb with lib/ on the
+      # load path.
+      #
+      def test_application()
+        test_ruby_extension
+      end
+
       private
 
       def release_notes(tag)
@@ -114,3 +123,6 @@ end# Reflex
 
 
 include Reflex::Packager::Rake
+
+# for the task verbose, which the workflows run rake with
+default_tasks

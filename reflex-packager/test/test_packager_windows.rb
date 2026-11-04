@@ -60,7 +60,7 @@ class TestPackagerWindows < Test::Unit::TestCase
     RP::Profile.new(
       extension:    FakeExtension,
       config_files: %w[reflex.yml],
-      templates:    {'main.rb': ''},
+      templates:    TEST_PROFILE.templates,
       boot:         boot
     ).tap {|profile| profile.define_singleton_method(:libraries) {libs}}
   end
@@ -252,7 +252,7 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_main_cpp_manifest_and_rc()
     fake_libs do
-      packager "version: 1.2.3.4.5\ncopyright: © 2026 Me\nlocalizations: {ja: {name: アプリ}}" do |pkg, dir|
+      packager "version: 1.2.3.4.5\ndeveloper: 開発者\nbundle_id: com.example.app\ncopyright: © 2026 Me\nlocalizations: {ja: {name: アプリ}}" do |pkg, dir|
         stub(RP::Windows, :lcid, 0x0411) {pkg.generate}
         str = read dir, 'src/main.cpp'
         assert_include str, 'void Init_fakenative_ext ();'
@@ -277,6 +277,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include     rc, %(VALUE "ProductVersion",   "1.2.3")
         assert_include     rc, %(VALUE "OriginalFilename", "#{pkg.target}.exe")
         assert_include     rc, %(VALUE "LegalCopyright",   "© 2026 Me")
+        assert_include     rc, %(VALUE "CompanyName",      "開発者")
         assert_include     rc, %(BLOCK "041104B0")
         assert_include     rc, %(VALUE "ProductName",      "アプリ")
         assert_include     rc, %(VALUE "Translation", 0x409, 1200, 0x411, 1200)
@@ -296,6 +297,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include     rc, %(VALUE "FileVersion",      "2.3")
         assert_include     rc, %(VALUE "ProductVersion",   "2.3")
         assert_not_include rc, 'LegalCopyright'
+        assert_not_include rc, 'CompanyName'
         assert_include     rc, %(BLOCK "040904B0")
         assert_include     rc, %(VALUE "Translation", 0x409, 1200)
       end

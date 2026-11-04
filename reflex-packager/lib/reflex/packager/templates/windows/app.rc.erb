@@ -19,6 +19,9 @@ BEGIN
 <%- config.localizations.each do |lang, values| -%>
     BLOCK "<%= "%04X04B0" % langid(lang) %>"// <%= lang %>, Unicode
     BEGIN
+<%-   if config.developer -%>
+      VALUE "CompanyName",      <%= rc_string config.developer %>
+<%-   end -%>
       VALUE "FileDescription",  <%= rc_string values[:name] %>
       VALUE "FileVersion",      <%= rc_string config.build_version %>
       VALUE "InternalName",     <%= rc_string target %>

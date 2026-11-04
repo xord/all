@@ -1,0 +1,19 @@
+module <%= module_name %>
+  class App
+    def start
+      view = Reflex::View.new
+      def view.on_draw(e)
+        e.painter.font nil, 48
+        e.painter.text 'hello, world!', 100, 100
+      end
+
+      win = Reflex::Window.new
+      win.title = <%= name.inspect %>
+      win.frame = [100, 100, 400, 300]
+      win.add view
+      win.show
+
+      Reflex.start
+    end
+  end
+end

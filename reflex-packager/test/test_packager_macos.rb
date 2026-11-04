@@ -28,6 +28,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
     File.read File.join(dir, '.build', 'macos', 'project', path)
   end
 
+  def test_ruby_version()
+    assert_equal '4.0.7', RP::MacOS.ruby_version('4.0.701')
+    assert_equal '4.0.6', RP::MacOS.ruby_version('4.0.600')
+    assert_equal '4.1.0', RP::MacOS.ruby_version('4.1.001')
+  end
+
   # --- generate ----------------------------------------------------------
 
   def test_generate_creates_files()

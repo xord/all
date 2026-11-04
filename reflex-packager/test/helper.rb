@@ -5,6 +5,7 @@
 require 'xot/test'
 require 'reflex/extension'
 require 'reflex/packager'
+require 'reflex/packager/profiles/reflex'
 
 require 'test/unit'
 require 'tempfile'
@@ -55,15 +56,8 @@ end
 TEST_PROFILE = Reflex::Packager::Profile.new(
   extension:    Reflex::Extension,
   config_files: %w[reflex.yml reflex.yaml],
-  templates:    {'main.rb': <<~MAIN, 'reflex.yml': <<~CONFIG})
-    require 'reflex'
-
-    Reflex.start do
-      Reflex::Window.new(title: '{{name}}', frame: [100, 100, 400, 300]).show
-    end
-  MAIN
-    name: myapp
-  CONFIG
+  templates:    Reflex::Packager::REFLEX.templates,
+  rake:         'reflex/packager/rake')
 
 # The environment variables to sign with, to unset by with_env for the tests
 # not to take the ones of the developer.

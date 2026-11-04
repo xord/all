@@ -1,3 +1,7 @@
+require 'shellwords'
+require 'json'
+require 'erb'
+require 'etc'
 require 'optparse'
 require 'fileutils'
 require 'xot/block_util'
@@ -50,21 +54,27 @@ module Reflex
       end
 
       def create(argv)
-        argv, = parse argv, "Usage: #{@profile.command} new NAME"
+        argv, params = parse argv, "Usage: #{@profile.command} new [options] NAME" do
+          on '--developer NAME', 'developer in the bundle_id (default: a hash of the login name)'
+        end
 
         name = argv.shift
         raise Error, 'project name required' unless name
         raise Error, "'#{name}' already exists" if File.exist? name
 
+        files = new_files name, params[:developer]
         FileUtils.mkdir_p name
-        @profile.templates.each do |path, content|
-          File.write File.join(name, path.to_s), gsub_template(content, name)
+        files.each do |path, content|
+          path = File.join name, path
+          FileUtils.mkdir_p File.dirname(path)
+          File.write path, content
         end
 
         puts "Created #{name}/"
+        dir   = name.shellescape
         hints = [
-          ["cd #{name} && ruby #{@profile.templates.keys.first}", "run the application"],
-          ["cd #{name} && #{@profile.command} package .",         "package as an application"]
+          ["cd #{dir} && #{@profile.run}",               "run the application"],
+          ["cd #{dir} && #{@profile.command} package .", "package as an application"]
         ]
         max = hints.map {|cmd,| cmd.length}.max
         hints.each {|cmd, desc| puts "  #{cmd.ljust max}  # #{desc}"}
@@ -135,14 +145,47 @@ module Reflex
         return argv, params
       end
 
-      def gsub_template(str, name)
+      # The files of the new project +name+, as {path => content}: the
+      # templates of the profile on the base ones, rendered.
+      #
+      def new_files(name, developer)
+        vars = template_vars name, developer
+        [File.join(TEMPLATES_DIR, 'new', 'base'), @profile.templates]
+          .each.with_object({}) do |dir, files|
+            Dir.glob('**/*', File::FNM_DOTMATCH, base: dir).each do |path|
+              src = File.join dir, path
+              next unless File.file? src
+              content = File.read src
+              content = ERB.new(content, trim_mode: '-').result_with_hash vars if
+                path.end_with? '.erb'
+              files[path.delete_suffix('.erb').gsub('__name_id__', vars[:name_id])] = content
+            end
+          end
+      end
+
+      def template_vars(name, developer)
+        module_name = name.scan(/[A-Za-z0-9]+/).map {_1[0].upcase + _1[1..]}.join
+        raise Error, "name must start with a letter: '#{name}'"   if module_name !~ /\A[A-Z]/
+        raise Error, "module '#{module_name}' is defined already" if Object.const_defined? module_name
+
+        developer = nil if developer&.strip&.empty?
+
+        # the name, not the hash of the developer below, holds the copyright
+        copyright_holder = developer || 'Your Name'
+
+        # not to put the login name into the bundle_id, which is made public
+        developer_id = Config.developer2id(developer) || Config.name2hash(Etc.getlogin.to_s)
         {
-          name:    name,
-          name_id: Config.name2id(name)
-        }.each do |from, to|
-          str = str.gsub "{{#{from}}}", to
-        end
-        str
+          name:             name,
+          name_id:          Config.name2id(name),
+          developer:        developer,
+          developer_id:     developer_id,
+          copyright_holder: copyright_holder,
+          module_name:      module_name,
+          ruby_version:     MacOS.ruby_version,
+          run:              @profile.run,
+          rake:             @profile.rake
+        }
       end
 
     end# CLI

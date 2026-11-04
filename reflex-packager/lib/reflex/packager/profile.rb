@@ -16,21 +16,33 @@ module Reflex
     #
     class Profile
 
-      # @param [Module]               extension    Extension of the gem (e.g. Reflex::Extension)
-      # @param [Array<String>]        config_files config file names, preferred first
-      # @param [Hash{String=>String}] templates    'new' scaffold files ({filename => content})
-      # @param [String, nil]          command      CLI command name (default: the name in lower case)
-      # @param [String, nil]          boot         boot script overrides config main (default: nil)
+      # @param [Module]        extension    Extension of the gem (e.g. Reflex::Extension)
+      # @param [Array<String>] config_files config file names, preferred first
+      # @param [String]        templates    directory of the 'new' scaffold files, on the base ones
+      # @param [String, nil]   rake         file for the Rakefile to require for the tasks
+      # @param [String, nil]   command      CLI command name (default: the name in lower case)
+      # @param [String, nil]   executable   path of the command, for rake to package by
+      # @param [String, nil]   main         main script of a project (default: main.rb)
+      # @param [String, nil]   run          command to run a project by (default: ruby MAIN)
+      # @param [String, nil]   boot         boot script overrides config main (default: nil)
       #
-      def initialize(extension:, config_files:, templates:, command: nil, boot: nil)
+      def initialize(
+        extension:, config_files:, templates:, rake: nil,
+        command: nil, executable: nil, main: nil, run: nil, boot: nil)
+
         @extension    = extension
         @config_files = config_files
         @templates    = templates
-        @command      = command
+        @rake         = rake
+        @command      = command || extension.name.downcase
+        @executable   = executable
+        @main         = main    || 'main.rb'
+        @run          = run     || "ruby #{@main}"
         @boot         = boot
       end
 
-      attr_reader :extension, :config_files, :templates, :boot
+      attr_reader :extension, :config_files, :templates, :rake,
+        :command, :executable, :main, :run, :boot
 
       # The name of the gem (e.g. 'Reflex').
       #
@@ -55,14 +67,6 @@ module Reflex
       #
       def extensions()
         libraries.filter_map(&:extension)
-      end
-
-      def command()
-        @command || name.downcase
-      end
-
-      def main()
-        templates.keys.first
       end
 
       def boot_main()

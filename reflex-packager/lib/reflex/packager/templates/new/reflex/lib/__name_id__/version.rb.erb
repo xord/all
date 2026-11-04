@@ -1,0 +1,10 @@
+module <%= module_name %>
+  # The version of the app, from the VERSION file at the top of the
+  # repository, which the packager takes too and puts in the app as well.
+  #
+  def self.version
+    @version ||= File
+      .read(File.expand_path('../../VERSION', __dir__), encoding: 'bom|utf-8')
+      .strip
+  end
+end

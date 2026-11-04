@@ -86,19 +86,19 @@ class TestPackagerConfig < Test::Unit::TestCase
       touch '1.rb'
       touch 'data/2.json'
       c = load_config dir
-      assert_equal 'My App',                                       c.name
-      assert_equal 'com.example.myapp',                            c.bundle_id
-      assert_equal '1.2.3',                                        c.version
-      assert_equal 'app.rb',                                       c.main
-      assert_equal 'icon.png',                                     c.icon
-      assert_equal %w[*.rb data],                                  c.files
-      assert_equal %w[1.rb app.rb data/2.json],                    c.app_files
-      assert_equal '12.0',                                         c.macos.deployment_target
-      assert_equal %w[arm64 x86_64],                               c.macos.archs
-      assert_equal '4.0.600',                                      c.macos.cruby
-      assert_equal 'public.app-category.games',                    c.macos.category
-      assert_equal 'Developer ID',                                 c.macos.codesign_identity
-      assert_equal 'ABCDE12345',                                   c.macos.codesign_team_id
+      assert_equal 'My App',                    c.name
+      assert_equal 'com.example.myapp',         c.bundle_id
+      assert_equal '1.2.3',                     c.version
+      assert_equal 'app.rb',                    c.main
+      assert_equal 'icon.png',                  c.icon
+      assert_equal %w[*.rb data],               c.files
+      assert_equal %w[1.rb app.rb data/2.json], c.app_files
+      assert_equal '12.0',                      c.macos.deployment_target
+      assert_equal %w[arm64 x86_64],            c.macos.archs
+      assert_equal '4.0.600',                   c.macos.cruby
+      assert_equal 'public.app-category.games', c.macos.category
+      assert_equal 'Developer ID',              c.macos.codesign_identity
+      assert_equal 'ABCDE12345',                c.macos.codesign_team_id
     end
   end
 
@@ -121,6 +121,24 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error)               {config bundle_id: 'a'}
     assert_raise(RP::Error)               {config bundle_id: 'a.'}
     assert_raise(RP::Error)               {config name: 'アプリ'}
+
+    assert_equal 'org.xord.reflex.my-game',     config(name: 'MyGame')     .bundle_id
+    assert_equal 'org.xord.reflex.my-game',     config(name: 'My Game')    .bundle_id
+    assert_equal 'org.xord.reflex.my-game',     config(name: ' my__game! ').bundle_id
+    assert_equal 'org.xord.reflex.http-server', config(name: 'HTTPServer') .bundle_id
+    assert_equal 'org.xord.reflex.game2d',      config(name: 'Game2D')     .bundle_id
+    assert_equal 'org.xord.reflex.a-b',         config(name: 'a.b')        .bundle_id
+
+    assert_equal 'org.xord.reflex.some-one.test', config(developer: 'Some One')                  .bundle_id
+    assert_equal 'org.xord.reflex.some-one.test', config(developer: 'SomeOne')                   .bundle_id
+    assert_equal 'org.xord.reflex.1234.test',     config(developer: 1234)                        .bundle_id
+    assert_equal 'org.xord.reflex.test.test',     config(developer: 'test')                      .bundle_id
+    assert_equal 'org.xord.reflex.7be0c00e.test', config(developer: '開発者')                    .bundle_id
+    assert_equal 'a.b',                           config(developer: 'Some One', bundle_id: 'a.b').bundle_id
+    assert_equal 'Some One',                      config(developer: 'Some One')                  .developer
+    assert_nil                                    config()                                       .developer
+    assert_nil                                    config(developer: ' ')                         .developer
+    assert_equal 'org.xord.reflex.test',          config(developer: ' ')                         .bundle_id
   end
 
   def test_version()

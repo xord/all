@@ -1,0 +1,14 @@
+name: Test
+
+# only for a release, or by hand, the tests of each change being run
+# locally, to save the minutes of the runners; the tag and the release
+# follow the tests of a release
+on:
+  push:
+    branches: [main]
+    paths: [VERSION]
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: xord/reflex-packager/.github/workflows/test.yml@master

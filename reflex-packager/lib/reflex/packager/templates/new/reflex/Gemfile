@@ -1,0 +1,12 @@
+source 'https://rubygems.org'
+
+gem 'reflexion'
+
+group :development do
+  gem 'rake'
+  gem 'test-unit'
+
+  # for the tasks to package and release the app, see the Rakefile; not in
+  # the default group, whose gems the packager puts in the app
+  gem 'reflex-packager'
+end

@@ -1,4 +1,5 @@
 require 'pathname'
+require 'digest'
 require 'yaml'
 
 
@@ -17,10 +18,12 @@ module Reflex
     class Config
 
       def self.defaults(profile, dir, hash)
-        name = hash[:name]&.to_s || File.basename(dir)
+        name      = hash[:name]&.to_s || File.basename(dir)
+        developer = hash[:developer]&.to_s
         {
           name:      name,
-          bundle_id: hash[:bundle_id] || default_bundle_id(profile, name),
+          developer: nil,
+          bundle_id: hash[:bundle_id] || default_bundle_id(profile, name, developer),
           version:   (hash[:version].nil? && version_file(dir)) || '0.1.0',
           copyright: nil,
           main:      profile.main,
@@ -56,6 +59,7 @@ module Reflex
         @dir          = File.expand_path dir
         hash          = symbolize_keys hash || {}
         localizations = hash.delete :localizations
+        hash.delete :developer if hash[:developer].to_s.strip.empty?
         hash          = validate_input hash, Config.defaults(profile, @dir, hash), stderr: stderr
 
         # YAML reads 1.10 as a number, the same as 1.1
@@ -63,6 +67,7 @@ module Reflex
           hash[:version].is_a? Float
 
         @name      = hash[:name]      .to_s
+        @developer = hash[:developer]&.to_s
         @bundle_id = hash[:bundle_id] .to_s
         @version   = hash[:version]   .to_s
         @copyright = hash[:copyright]&.to_s
@@ -78,7 +83,7 @@ module Reflex
         validate
       end
 
-      attr_reader :profile, :dir, :name, :bundle_id, :version, :copyright,
+      attr_reader :profile, :dir, :name, :developer, :bundle_id, :version, :copyright,
         :main, :icon, :files, :excludes, :macos, :windows, :upload
 
       # The values that differ by language, in English, the language of the
@@ -115,19 +120,45 @@ module Reflex
 
       EXCLUDES = %w[dist]
 
-      private
-
+      # The id of +name+, in lower case, with hyphens between the words, as
+      # my-game of MyGame or My Game.
+      #
       def self.name2id(name)
-        name.downcase.gsub(/[^a-z0-9\-]+/, '')
+        name
+          .gsub(/([A-Z]+)([A-Z][a-z])/, '\1-\2')
+          .gsub(/([a-z])([A-Z])/,       '\1-\2')
+          .downcase
+          .gsub(/[^a-z0-9]+/, '-')
+          .gsub(/\A-+|-+\z/,  '')
       end
 
-      def self.default_bundle_id(profile, name)
+      # The hash of +name+, as an id of the name not to be made public.
+      #
+      def self.name2hash(name)
+        Digest::SHA256.hexdigest(name)[0, 8]
+      end
+
+      # The id of +developer+, or the hash of it if the name gives none, as
+      # the one in Japanese, and nil if no developer.
+      #
+      def self.developer2id(developer)
+        return nil unless developer
+        id = name2id developer
+        id.empty? ? name2hash(developer) : id
+      end
+
+      private
+
+      # The bundle_id of the prefix of the profile, the developer if any and
+      # the name, as org.xord.reflex.developer.name.
+      #
+      def self.default_bundle_id(profile, name, developer = nil)
         id = name2id name
         if id.empty?
           raise Error, "cannot derive a bundle_id from name '#{name}', " +
             "set 'bundle_id' in #{profile.config_files.first}"
         end
-        "#{profile.bundle_id_prefix}.#{id}"
+        [profile.bundle_id_prefix, developer2id(developer), id].compact.join '.'
       end
 
       # The version in the VERSION file of the app, which the config may leave

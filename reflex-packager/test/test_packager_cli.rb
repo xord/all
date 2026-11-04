@@ -27,6 +27,14 @@ class TestPackagerCLI < Test::Unit::TestCase
     CLI.new TEST_PROFILE
   end
 
+  # Creates the project +name+ to package, without the Gemfile, the gems of
+  # which are not installed for the tests.
+  #
+  def create(name)
+    capture {cli.create [name]}
+    FileUtils.rm File.join(name, 'Gemfile')
+  end
+
   def test_run()
     out, = capture {cli.run []}
     assert_include out, 'Usage: reflex'
@@ -39,17 +47,76 @@ class TestPackagerCLI < Test::Unit::TestCase
 
   def test_new()
     tmpdir do
-      capture {cli.create ['myapp']}
-      assert_true File.file?('myapp/main.rb')
-      assert_true File.file?('myapp/reflex.yml')
+      out, = stub(Etc, :getlogin, 'someone') {capture {cli.create ['my-game']}}
+      assert_include out, 'cd my-game && ruby main.rb'
+      assert_equal %w[
+        .github/workflows/release.yml .github/workflows/tag.yml .github/workflows/test.yml
+        .gitignore .ruby-version ChangeLog.md Gemfile Rakefile VERSION
+        lib/my-game.rb lib/my-game/app.rb lib/my-game/version.rb
+        main.rb reflex.yml test/test_my-game.rb
+      ].sort, Dir.glob('**/*', File::FNM_DOTMATCH, base: 'my-game')
+        .select {File.file? File.join('my-game', _1)}.sort
 
-      main = File.read('myapp/main.rb')
-      assert_include main, "require 'reflex'"
-      assert_include main, 'Reflex.start'
+      read = -> path {File.read File.join('my-game', path)}
+      assert_equal "#{RP::MacOS.ruby_version}\n", read['.ruby-version']
+      assert_equal "# my-game ChangeLog\n",       read['ChangeLog.md']
+      assert_include read['Rakefile'],             "require 'reflex/packager/rake'"
+      assert_include read['Rakefile'],             "sh 'ruby main.rb'"
+      assert_include read['main.rb'],              "require 'my-game'"
+      assert_include read['main.rb'],              'MyGame::App.new.start'
+      assert_include read['lib/my-game.rb'],       "require 'my-game/app'"
+      assert_include read['lib/my-game/app.rb'],   'class App'
+      assert_include read['test/test_my-game.rb'], 'class TestMyGame'
+      assert_include read['reflex.yml'],           '#developer: Your Name'
+      assert_include read['reflex.yml'],           "© #{Time.now.year} Your Name"
+      Dir.glob('my-game/**/*.rb').each do |rb|
+        assert_true system(RbConfig.ruby, '-c', rb, out: File::NULL), rb
+      end
 
-      config = RP::Config.load TEST_PROFILE, 'myapp'
-      assert_equal 'myapp',   config.name
+      config = RP::Config.load TEST_PROFILE, 'my-game'
+      assert_equal 'my-game', config.name
+      assert_equal '0.1.0',   config.version
       assert_equal 'main.rb', config.main
+      assert_equal %w[
+        VERSION lib/my-game.rb lib/my-game/app.rb lib/my-game/version.rb main.rb
+      ], config.app_files
+      assert_equal 'org.xord.reflex.2a59d59e.my-game', config.bundle_id
+    end
+
+    tmpdir do
+      capture {cli.create ['--developer', 'Some One', 'my-game']}
+      config = RP::Config.load TEST_PROFILE, 'my-game'
+      assert_equal 'Some One',                         config.developer
+      assert_equal 'org.xord.reflex.some-one.my-game', config.bundle_id
+      assert_include File.read('my-game/reflex.yml'), "© #{Time.now.year} Some One"
+    end
+
+    tmpdir do
+      capture {cli.create ['--developer', '開発者', 'my-game']}
+      config = RP::Config.load TEST_PROFILE, 'my-game'
+      assert_equal '開発者',                           config.developer
+      assert_equal 'org.xord.reflex.7be0c00e.my-game', config.bundle_id
+    end
+
+    tmpdir do
+      stub(Etc, :getlogin, 'someone') {capture {cli.create ['--developer', ' ', 'my-game']}}
+      assert_include File.read('my-game/reflex.yml'), '#developer: Your Name'
+      assert_equal 'org.xord.reflex.2a59d59e.my-game',
+        RP::Config.load(TEST_PROFILE, 'my-game').bundle_id
+    end
+
+    tmpdir do
+      out, = capture {cli.create ["Bob's Game #1"]}
+      assert_include out, %q(cd Bob\'s\ Game\ \#1 && ruby main.rb)
+      assert_equal "Bob's Game #1", RP::Config.load(TEST_PROFILE, "Bob's Game #1").name
+      assert_true system(RbConfig.ruby, '-c', "Bob's Game #1/lib/bob-s-game-1/app.rb", out: File::NULL)
+    end
+
+    tmpdir do
+      assert_raise(RP::Error) {cli.create ['2d']}
+      assert_raise(RP::Error) {cli.create ['string']}
+      assert_raise(RP::Error) {cli.create ['reflex']}
+      assert_equal [], Dir.children('.')
     end
 
     tmpdir do
@@ -62,7 +129,7 @@ class TestPackagerCLI < Test::Unit::TestCase
 
   def test_package()
     tmpdir do
-      capture {cli.create ['myapp']}
+      create 'myapp'
       Dir.mktmpdir do |cruby|
         saved, ENV['CRUBY_PATH'] = ENV['CRUBY_PATH'], fake_cruby(cruby)
         cli.package ['--generate-only', '--platform', 'macos', 'myapp']
@@ -75,7 +142,7 @@ class TestPackagerCLI < Test::Unit::TestCase
     end
 
     tmpdir do
-      capture {cli.create ['myapp']}
+      create 'myapp'
       cli.package ['--generate-only', '--platform', 'windows', 'myapp']
       %w[src/main.cpp src/app.manifest lib/boot.rb lib/app/main.rb lib/reflex/lib/reflex.rb].each do |f|
         assert File.exist?("myapp/.build/windows/#{f}"), "missing #{f}"
@@ -87,7 +154,7 @@ class TestPackagerCLI < Test::Unit::TestCase
     end
 
     tmpdir do
-      capture {cli.create ['myapp']}
+      create 'myapp'
       assert_raise(RP::Error) do
         cli.package ['--generate-only', '--platform', 'unknown', 'myapp']
       end

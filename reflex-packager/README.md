@@ -61,7 +61,7 @@ $ cd myapp
 $ ruby main.rb          # run the application directly
 ```
 
-This generates a project directory with `main.rb` and `reflex.yml`.
+This generates a project directory from the templates.
 
 ### Package as an app
 
@@ -91,6 +91,14 @@ Options:
   --version      show version
 ```
 
+New command options:
+
+```
+reflex new [options] NAME
+
+  --developer NAME      developer in the bundle_id (default: a hash of the login name)
+```
+
 Package command options:
 
 ```
@@ -115,9 +123,10 @@ The project is configured via `reflex.yml` (or `reflex.yaml`) in the project dir
 
 ```yaml
 name: MyApp
+# developer: MyName
 bundle_id: com.example.myapp
 version: 1.0.0
-# copyright: © 2026 Example
+# copyright: © 2026 MyName
 icon: icon.png
 # main: main.rb
 # files:
@@ -148,7 +157,8 @@ icon: icon.png
 | Key | Default | Description |
 |-----|---------|-------------|
 | `name` | directory name | Application name |
-| `bundle_id` | `org.xord.reflex.<name>` | macOS bundle identifier |
+| `developer` | none | Developer, put in the default `bundle_id` not to be the same as the one of another's app of the same name |
+| `bundle_id` | `org.xord.reflex.<developer>.<name>` | macOS bundle identifier, to be set once the app is out, not to change with the name |
 | `version` | the `VERSION` file, or `0.1.0` | Application version |
 | `copyright` | none | Copyright notice, shown in the About panel on macOS and in the properties of the executable on Windows |
 | `main` | `main.rb` | Entry point script |

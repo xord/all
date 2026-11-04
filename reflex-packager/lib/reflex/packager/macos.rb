@@ -30,6 +30,14 @@ module Reflex
       #
       CRUBY_VERSION = '4.0.701'
 
+      # The version of Ruby a CRuby is of, as 4.0.7 of 4.0.701, the last
+      # number of which is the one of Ruby and two digits of its rebuilds.
+      #
+      def self.ruby_version(cruby_version = CRUBY_VERSION)
+        *ruby, rebuild = cruby_version.split('.').map(&:to_i)
+        [*ruby, rebuild / 100].join('.')
+      end
+
       # The identity of the certificate of Developer ID in the keychain, which
       # the full name of the certificate starts with.
       #
