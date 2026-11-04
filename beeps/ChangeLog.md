@@ -1,6 +1,13 @@
 # beeps ChangeLog
 
 
+## [v0.5.1] - 2026-11-04
+
+- Release the changes of v0.5.0, whose gem was not released
+
+- Fix a test of SoundPlayer failing on a slow machine
+
+
 ## [v0.5.0] - 2026-11-04
 
 - [BREAKING] SoundPlayer#state returns :none instead of :unknown for a player with nothing to play
