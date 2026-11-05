@@ -28,6 +28,7 @@ runs:
         echo "commit=$commit"                           >> "$GITHUB_OUTPUT"
         echo "dir=$dir"                                 >> "$GITHUB_OUTPUT"
         echo "cache-key=monorepo-$commit-$LIBS-$prefix" >> "$GITHUB_OUTPUT"
+        echo "MONOREPO_COMMIT=$commit"                  >> "$GITHUB_ENV"
 
     - name: cache monorepo
       uses: actions/cache@v4

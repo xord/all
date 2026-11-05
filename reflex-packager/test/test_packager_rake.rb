@@ -152,12 +152,19 @@ class TestPackagerRake < Test::Unit::TestCase
   def test_release_notes()
     application do
       File.write 'ChangeLog.md', "# My Game ChangeLog\n\n\n## [v1.2.3] - 2026-10-13\n\n- Add a\n"
-      stub self, :git, "abc\n" do
-        assert_equal "- Add a\n\nBuilt with xord/all@abc.", release_notes('v1.2.3')
-        assert_equal 'Built with xord/all@abc.',           release_notes('v9.9.9')
+      with_env 'MONOREPO_COMMIT' => nil do
+        stub self, :git, "abc\n" do
+          assert_equal "- Add a\n\nBuilt with xord/all@abc.", release_notes('v1.2.3')
+          assert_equal 'Built with xord/all@abc.',            release_notes('v9.9.9')
+        end
+        stub self, :git, '' do # the libraries of no checkout
+          assert_equal '- Add a', release_notes('v1.2.3')
+        end
       end
-      stub self, :git, '' do # the libraries of no checkout
-        assert_equal '- Add a', release_notes('v1.2.3')
+      with_env 'MONOREPO_COMMIT' => 'def' do
+        stub self, :git, "abc\n" do
+          assert_equal "- Add a\n\nBuilt with xord/all@def.", release_notes('v1.2.3')
+        end
       end
     end
   end

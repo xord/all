@@ -96,7 +96,8 @@ module Reflex
       private
 
       def release_notes(tag)
-        commit = git('-C', Reflex::Extension.root_dir, 'rev-parse', 'HEAD', err: File::NULL).strip
+        commit = ENV['MONOREPO_COMMIT'] ||
+          git('-C', Reflex::Extension.root_dir, 'rev-parse', 'HEAD', err: File::NULL).strip
         [
           Xot::ChangeLog.new.changes(tag),
           ("Built with xord/all@#{commit}." unless commit.empty?)
