@@ -237,18 +237,19 @@ Where no account of Xcode is, as on CI, Apple is asked by an API key of App Stor
 
 The team ID can be given by `APPLE_TEAM_ID` in place of the config, as the identity by `APPLE_CODESIGN_IDENTITY`, to keep them out of the repository of the app.
 
-With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/generic/` with the ticket of the notarization stapled, which macOS sees with no network:
+With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/generic/` with the ticket of the notarization stapled, which macOS sees with no network. `rake notarize` does the same, and with `appstore=true` also packages the app for the Mac App Store:
 
 ```bash
 $ export APPLE_TEAM_ID=XXXXXXXXXX
-$ reflex package --pack --notarize .
+$ rake notarize
+$ reflex package --pack --notarize . # the same
 ```
 
 The notarization can be split into the steps, so as not to keep a Mac waiting, as on CI:
 
-1. `--notarize-submit` builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/generic/<name>.xcarchive`
-2. `--notarize-wait <ID>` waits for Apple to check the app, by the API key, on any system
-3. `--notarize-export` exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
+1. `rake notarize:submit`, or `--notarize-submit`, builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/generic/<name>.xcarchive`
+2. `rake notarize:wait id=<ID>`, or `--notarize-wait <ID>`, waits for Apple to check the app, by the API key, on any system
+3. `rake notarize:export`, or `--notarize-export`, exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
 
 `--generic` makes sure the app is signed with Developer ID, failing if not, as with no team.
 
@@ -297,7 +298,7 @@ $ rake upload:itchio
 
 ### Packaging on GitHub Actions
 
-The workflow `.github/workflows/package.yml` of this repository packages the app on GitHub Actions, called by the workflow of the app, and releases it when run by a tag. It packages the app for macOS and Windows, or the ones in its input `platforms`, as `platforms: macos`. With the secrets below, the app for macOS is notarized: a job on macOS submits it, one on Linux, which is cheaper, waits for it, and one on macOS again exports it. The app for Windows is not signed.
+The workflow `.github/workflows/package.yml` of this repository packages the app on GitHub Actions, called by the workflow of the app, and releases it when run by a tag. It packages the app for macOS and Windows, or the ones in its input `platforms`, as `platforms: macos`. With the secrets below, the app for macOS is notarized: a job on macOS submits it by `rake notarize:submit`, one on Linux, which is cheaper, waits for it by `rake notarize:wait`, and one on macOS again exports it by `rake notarize:export`. The tasks run the command of the profile of the app, as `r8` of Reight, which the Rakefile of the app gives. The app for Windows is not signed.
 
 ```yaml
 jobs:

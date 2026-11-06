@@ -149,6 +149,54 @@ class TestPackagerRake < Test::Unit::TestCase
     end
   end
 
+  def test_notarize()
+    application do
+      cmds = []
+      define_singleton_method(:sh) {|*args| cmds << args}
+      stub Gem, :win_platform?, false do
+        package_application
+      end
+      reflex = [RbConfig.ruby, Reflex::Packager::REFLEX.executable, 'package']
+      run    = -> (task, env = {}) do
+        cmds.clear
+        with_env(env) {::Rake::Task[task].execute}
+        cmds
+      end
+
+      assert_equal(
+        [[*reflex, '--pack', '--notarize', '.']],
+        run[                   'notarize'])
+      assert_equal(
+        [[*reflex, '--pack', '--notarize', '--appstore', '.']],
+        run[                   'notarize',   'appstore' => 'true'])
+      assert_equal(
+        [[*reflex, '--pack', '--notarize-submit', '.']],
+        run[                   'notarize:submit'])
+      assert_equal(
+        [[*reflex, '--pack', '--notarize-submit', '--appstore', '.']],
+        run[                   'notarize:submit',   'appstore' => 'true'])
+      assert_equal(
+        [[*reflex, '--notarize-wait',         'abc']],
+        run[         'notarize:wait', 'id' => 'abc'])
+      assert_equal(
+        [[*reflex, '--pack', '--notarize-export', '.']],
+        run[                   'notarize:export'])
+
+      [nil, ''].each do |id|
+        error = assert_raise(RuntimeError) {run['notarize:wait', 'id' => id]}
+        assert_include error.message, 'id=ID'
+      end
+    end
+
+    ::Rake::Task.clear
+    application do
+      stub Gem, :win_platform?, true do
+        package_application
+      end
+      assert_false ::Rake::Task.task_defined?('notarize') # only on macos
+    end
+  end
+
   def test_release_notes()
     application do
       File.write 'ChangeLog.md', "# My Game ChangeLog\n\n\n## [v1.2.3] - 2026-10-13\n\n- Add a\n"

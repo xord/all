@@ -30,8 +30,9 @@ module Reflex
 
         relative       = -> path {path.delete_prefix "#{config.dir}/"}
         reflex_package = -> *args do
-          sh RbConfig.ruby, profile.executable, 'package', '--pack', *args, '.'
+          sh RbConfig.ruby, profile.executable, 'package', *args
         end
+        appstore       = -> {'--appstore' if get_env :appstore, false}
 
         desc "package the application into #{relative[app_path]}"
         alias_task :package => app_path
@@ -43,6 +44,34 @@ module Reflex
           platform.store_package_paths.each do |store, path|
             desc "package the application for #{store} into #{relative[path]}"
             alias_task store => path
+          end
+        end
+
+        if Packager.default_platform == :macos
+          desc 'notarize the application, waiting for Apple to check it, ' +
+            'and package it for the Mac App Store too by appstore=true'
+          task :notarize do
+            reflex_package.call '--pack', '--notarize', *appstore.call, '.'
+          end
+
+          namespace :notarize do
+            desc 'submit the application to be notarized, not waiting for it, ' +
+              'and package it for the Mac App Store too by appstore=true'
+            task :submit do
+              reflex_package.call '--pack', '--notarize-submit', *appstore.call, '.'
+            end
+
+            desc 'wait for the notarization of id=ID, by the API key'
+            task :wait do
+              id = ENV['id'].then {_1 unless _1.to_s.empty?} ||
+                raise('no id=ID of the notarization to wait for')
+              reflex_package.call '--notarize-wait', id
+            end
+
+            desc 'export the application notarized, waiting for the notarization'
+            task :export do
+              reflex_package.call '--pack', '--notarize-export', '.'
+            end
           end
         end
 
@@ -81,7 +110,7 @@ module Reflex
         end
 
         file app_path => srcs do
-          reflex_package.call
+          reflex_package.call '--pack', '.'
         end
 
         file archive_path => app_path do
@@ -90,7 +119,7 @@ module Reflex
 
         platform.store_package_paths.each do |store, path|
           file path => srcs do
-            reflex_package.call "--#{store}"
+            reflex_package.call '--pack', "--#{store}", '.'
           end
         end
       end

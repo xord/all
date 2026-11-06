@@ -184,14 +184,13 @@ jobs:
           APPLE_CODESIGN_P12:          ${{ secrets.APPLE_CODESIGN_P12 }}
           APPLE_CODESIGN_P12_PASSWORD: ${{ secrets.APPLE_CODESIGN_P12_PASSWORD }}
           APPLE_API_KEY_P8:            ${{ secrets.APPLE_API_KEY_P8 }}
-          APPSTORE:                    ${{ inputs.macos-appstore && '--appstore' || '' }}
+          APPSTORE:                    ${{ inputs.macos-appstore }}
         shell: bash # with pipefail, not to let tee hide the failure
         run: |
-          bundle exec reflex package --pack --notarize-submit $APPSTORE . |
-            tee "$RUNNER_TEMP/submit.log"
+          bundle exec rake notarize:submit appstore="$APPSTORE" | tee "$RUNNER_TEMP/submit.log"
           echo "id=$(sed -n 's/^Submitted for the notarization: //p' "$RUNNER_TEMP/submit.log")" \
             >> "$GITHUB_OUTPUT"
-          [ -z "$APPSTORE" ] || echo "pkg=$(basename dist/appstore/*.pkg .pkg)" >> "$GITHUB_OUTPUT"
+          [ "$APPSTORE" != true ] || echo "pkg=$(basename dist/appstore/*.pkg .pkg)" >> "$GITHUB_OUTPUT"
 
       - name: upload pkg
         if: inputs.macos-appstore && github.ref_type != 'tag' && inputs.retention-days > 0
@@ -248,7 +247,7 @@ jobs:
         env:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
           ID:               ${{ needs.macos-package.outputs.submission-id }}
-        run: bundle exec reflex package --notarize-wait "$ID"
+        run: bundle exec rake notarize:wait id="$ID"
 
   macos-export:
     needs: [prepare, macos-package, macos-wait]
@@ -272,7 +271,7 @@ jobs:
       - name: export
         env:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
-        run: bundle exec reflex package --notarize-export .
+        run: bundle exec rake notarize:export
 
       - *archive
       - *upload
