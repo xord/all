@@ -15,11 +15,11 @@ on:
         type: number
         default: 1
       macos-appstore:
-        description: 'package the app for the Mac App Store, and upload it to App Store Connect if run by a tag'
+        description: 'package the app for the Mac App Store by upload.appstore of the config, and upload it to App Store Connect if run by a tag'
         type: boolean
         default: false
       itchio:
-        description: 'upload the app to itch.io if run by a tag'
+        description: 'upload the app to itch.io by upload.itchio of the config, if run by a tag'
         type: boolean
         default: false
 
@@ -32,10 +32,9 @@ jobs:
     with:
       platforms:      ${{ inputs.platforms || 'macos windows' }}
       retention-days: ${{ fromJSON(inputs.retention-days || '0') }}
-      # not by the push of a tag until the app is in the store, which then
-      # does by: github.event_name == 'push' || inputs.macos-appstore
-      macos-appstore: ${{ inputs.macos-appstore == true }}
-      itchio:         ${{ inputs.itchio == true }}
+      # by the push of a tag, to the stores in upload of the config
+      macos-appstore: ${{ github.event_name == 'push' || inputs.macos-appstore }}
+      itchio:         ${{ github.event_name == 'push' || inputs.itchio }}
     # to sign the app with Developer ID and to have it notarized, and to
     # upload it to App Store Connect and itch.io
     secrets:

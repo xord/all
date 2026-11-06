@@ -32,7 +32,10 @@ module Reflex
         reflex_package = -> *args do
           sh RbConfig.ruby, profile.executable, 'package', *args
         end
-        appstore       = -> {'--appstore' if get_env :appstore, false}
+        appstore       = -> {'--appstore' if config.upload.appstore? && get_env(:appstore, false)}
+        no_upload      = -> key do
+          puts "not uploading, by upload.#{key} of #{profile.config_files.first}"
+        end
 
         desc "package the application into #{relative[app_path]}"
         alias_task :package => app_path
@@ -49,14 +52,14 @@ module Reflex
 
         if Packager.default_platform == :macos
           desc 'notarize the application, waiting for Apple to check it, ' +
-            'and package it for the Mac App Store too by appstore=true'
+            'and package it for the Mac App Store too by appstore=true, with upload.appstore'
           task :notarize do
             reflex_package.call '--pack', '--notarize', *appstore.call, '.'
           end
 
           namespace :notarize do
             desc 'submit the application to be notarized, not waiting for it, ' +
-              'and package it for the Mac App Store too by appstore=true'
+              'and package it for the Mac App Store too by appstore=true, with upload.appstore'
             task :submit do
               reflex_package.call '--pack', '--notarize-submit', *appstore.call, '.'
             end
@@ -85,18 +88,27 @@ module Reflex
         end
 
         namespace :upload do
-          desc "upload #{relative[archive_path]} to itch.io"
-          task :itchio => archive_path do
-            project = config.upload.itchio_project ||
-              raise("no upload.itchio.project in #{profile.config_files.first}")
-            Stores::Itchio.new(project).upload archive_path,
-              channel: Packager.default_platform.to_s, version: config.version
+          desc "upload #{relative[archive_path]} to itch.io, by upload.itchio"
+          if config.upload.itchio?
+            task :itchio => archive_path do
+              # on CI, where butler can not be logged in
+              raise 'no BUTLER_API_KEY to upload to itch.io' if
+                ENV['GITHUB_ACTIONS'] && ENV['BUTLER_API_KEY'].to_s.empty?
+              Stores::Itchio.new(config.upload.itchio_project).upload archive_path,
+                channel: Packager.default_platform.to_s, version: config.version
+            end
+          else
+            task(:itchio) {no_upload[:itchio]}
           end
 
           platform.store_package_paths[:appstore]&.then do |pkg_path|
-            desc "upload #{relative[pkg_path]} to App Store Connect"
-            task :appstore => pkg_path do
-              Stores::AppStore.new.upload pkg_path, platform: Packager.default_platform.to_s
+            desc "upload #{relative[pkg_path]} to App Store Connect, by upload.appstore"
+            if config.upload.appstore?
+              task :appstore => pkg_path do
+                Stores::AppStore.new.upload pkg_path, platform: Packager.default_platform.to_s
+              end
+            else
+              task(:appstore) {no_upload[:appstore]}
             end
           end
         end

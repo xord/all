@@ -101,11 +101,10 @@ class TestPackagerRake < Test::Unit::TestCase
       stub Gem, :win_platform?, false do
         package_application
       end
-      assert_equal [archive], ::Rake::Task['upload:itchio'].prerequisites
+      assert_equal [], ::Rake::Task['upload:itchio'].prerequisites
       assert_include ::Rake::Task['upload:itchio'].comment, 'itch.io'
-      # only the actions of the task, not building the zip it takes
-      error = assert_raise(RuntimeError) {::Rake::Task['upload:itchio'].execute}
-      assert_include error.message, 'upload.itchio.project'
+      out, = capture_output {::Rake::Task['upload:itchio'].execute}
+      assert_include out, 'by upload.itchio'
 
       ::Rake::Task.clear
       File.write 'reflex.yml', "name: My Game\nupload: {itchio: {project: user/game}}\n"
@@ -114,9 +113,17 @@ class TestPackagerRake < Test::Unit::TestCase
       uploader.define_singleton_method(:upload) {|*args, **kwargs| uploads << [args, kwargs]}
       stub Gem, :win_platform?, false do
         package_application
-        stub Reflex::Packager::Stores::Itchio, :new, uploader do
-          ::Rake::Task['upload:itchio'].execute
+      end
+      assert_equal [archive], ::Rake::Task['upload:itchio'].prerequisites
+      stub Reflex::Packager::Stores::Itchio, :new, uploader do
+        # only the actions of the task, not building the zip it takes
+        ::Rake::Task['upload:itchio'].execute
+        error = assert_raise(RuntimeError) do
+          with_env('GITHUB_ACTIONS' => 'true', 'BUTLER_API_KEY' => nil) do
+            ::Rake::Task['upload:itchio'].execute
+          end
         end
+        assert_include error.message, 'BUTLER_API_KEY'
       end
       assert_equal [[[archive], {channel: 'macos', version: '1.2.3'}]], uploads
     end
@@ -127,8 +134,17 @@ class TestPackagerRake < Test::Unit::TestCase
       stub Gem, :win_platform?, false do
         package_application
       end
-      assert_equal [pkg], ::Rake::Task['upload:appstore'].prerequisites
+      assert_equal [], ::Rake::Task['upload:appstore'].prerequisites
       assert_include ::Rake::Task['upload:appstore'].comment, 'App Store Connect'
+      out, = capture_output {::Rake::Task['upload:appstore'].execute}
+      assert_include out, 'by upload.appstore'
+
+      ::Rake::Task.clear
+      File.write 'reflex.yml', "name: My Game\nupload: {appstore: true}\n"
+      stub Gem, :win_platform?, false do
+        package_application
+      end
+      assert_equal [pkg], ::Rake::Task['upload:appstore'].prerequisites
       # only the actions of the task, not building the package it takes
       error = assert_raise(Reflex::Packager::Error) {::Rake::Task['upload:appstore'].execute}
       assert_include error.message, 'no API key'
@@ -167,14 +183,11 @@ class TestPackagerRake < Test::Unit::TestCase
         [[*reflex, '--pack', '--notarize', '.']],
         run[                   'notarize'])
       assert_equal(
-        [[*reflex, '--pack', '--notarize', '--appstore', '.']],
-        run[                   'notarize',   'appstore' => 'true'])
+        [[*reflex, '--pack', '--notarize', '.']],
+        run[                   'notarize', 'appstore' => 'true']) # no upload.appstore
       assert_equal(
         [[*reflex, '--pack', '--notarize-submit', '.']],
         run[                   'notarize:submit'])
-      assert_equal(
-        [[*reflex, '--pack', '--notarize-submit', '--appstore', '.']],
-        run[                   'notarize:submit',   'appstore' => 'true'])
       assert_equal(
         [[*reflex, '--notarize-wait',         'abc']],
         run[         'notarize:wait', 'id' => 'abc'])
@@ -186,6 +199,24 @@ class TestPackagerRake < Test::Unit::TestCase
         error = assert_raise(RuntimeError) {run['notarize:wait', 'id' => id]}
         assert_include error.message, 'id=ID'
       end
+
+      ::Rake::Task.clear
+      File.write 'reflex.yml', "name: My Game\nupload: {appstore: true}\n"
+      stub Gem, :win_platform?, false do
+        package_application
+      end
+      assert_equal(
+        [[*reflex, '--pack', '--notarize', '.']],
+        run[                   'notarize'])
+      assert_equal(
+        [[*reflex, '--pack', '--notarize', '--appstore', '.']],
+        run[                   'notarize', 'appstore' => 'true'])
+      assert_equal(
+        [[*reflex, '--pack', '--notarize-submit', '.']],
+        run[                   'notarize:submit', 'appstore' => 'false'])
+      assert_equal(
+        [[*reflex, '--pack', '--notarize-submit', '--appstore', '.']],
+        run[                   'notarize:submit', 'appstore' => 'true'])
     end
 
     ::Rake::Task.clear

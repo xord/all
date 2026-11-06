@@ -30,7 +30,7 @@ module Reflex
           excludes:  nil,
           macos:   MacOSConfig.defaults,
           windows: WindowsConfig.defaults,
-          upload:  UploadConfig.defaults
+          upload:  UploadConfig.defaults(hash[:upload])
         }
       end
 
@@ -365,21 +365,41 @@ module Reflex
     end# WindowsConfig
 
 
-    # Configuration of the stores to upload the app to.
+    # Configuration of the stores to upload the app to, each of which the app
+    # is uploaded to only if the config has it.
     #
     class UploadConfig
 
-      def self.defaults()
+      # +hash+ is the one in the config, by which itchio is left nil or false
+      # if it has none, for the app not to be uploaded to itch.io.
+      #
+      def self.defaults(hash)
+        itchio = hash.is_a?(Hash) && hash[:itchio]
         {
-          itchio: {
-            project: nil
-          }
+          appstore: false,
+          itchio:   (itchio ? {project: nil} : nil)
         }
       end
 
       def initialize(hash)
-        @itchio_project = hash[:itchio][:project]&.to_s
+        @appstore       = hash[:appstore]
+        itchio          = hash[:itchio] || nil
+        @itchio         = !!itchio
+        @itchio_project = itchio&.dig(:project)&.to_s
         validate
+      end
+
+      # Whether the app is uploaded to App Store Connect, for the Mac App
+      # Store.
+      #
+      def appstore?()
+        @appstore
+      end
+
+      # Whether the app is uploaded to itch.io.
+      #
+      def itchio?()
+        @itchio
       end
 
       # The project of itch.io to upload the app to, as user/game of
@@ -388,6 +408,9 @@ module Reflex
       attr_reader :itchio_project
 
       def validate()
+        raise Error, "invalid upload.appstore: '#{@appstore}'" unless
+          [true, false].include? @appstore
+        raise Error, 'upload.itchio needs project' if @itchio && !@itchio_project
         raise Error, "invalid upload.itchio.project: '#{@itchio_project}'" if
           @itchio_project && @itchio_project !~ %r{\A[a-z0-9_\-]+/[a-z0-9_\-]+\z}
       end

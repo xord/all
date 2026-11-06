@@ -21,11 +21,11 @@ on:
         type: number
         default: 0
       macos-appstore:
-        description: 'package the app for the Mac App Store too, with the notarized one, and upload it to App Store Connect on a tag'
+        description: 'package the app for the Mac App Store too, with the notarized one, and upload it to App Store Connect on a tag, by upload.appstore of the config; false for neither'
         type: boolean
-        default: false
+        default: true
       itchio:
-        description: 'upload the app to itch.io on a tag, with BUTLER_API_KEY, to upload.itchio.project of the config'
+        description: 'upload the app to itch.io on a tag, with BUTLER_API_KEY, by upload.itchio of the config; false not to'
         type: boolean
         default: true
     secrets:
@@ -70,13 +70,8 @@ jobs:
         # with the team, the app is signed with Developer ID and notarized,
         # or else signed as the config tells
         env:
-          TEAM:     ${{ env.APPLE_TEAM_ID != '' }}
-          APPSTORE: ${{ contains(inputs.platforms, 'macos') && inputs.macos-appstore }}
+          TEAM: ${{ env.APPLE_TEAM_ID != '' }}
         run: |
-          if [ "$APPSTORE" = true ] && [ "$TEAM" != true ]; then
-            echo '::error::the input macos-appstore needs APPLE_TEAM_ID in the secrets'
-            exit 1
-          fi
           echo "team=$TEAM"     >> "$GITHUB_OUTPUT"
           echo "notarize=$TEAM" >> "$GITHUB_OUTPUT"
 
@@ -168,7 +163,6 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
-          [ -n "$BUTLER_API_KEY" ] || exit 0 # not to upload with no key
           os=$([ "$RUNNER_OS" = Windows ] && echo windows || echo darwin)
           arch=$(uname -m | sed 's/x86_64/amd64/')
           dir=$(cd "$RUNNER_TEMP" && pwd)/butler # as /d/a/_temp on Windows, for PATH
@@ -190,10 +184,13 @@ jobs:
           bundle exec rake notarize:submit appstore="$APPSTORE" | tee "$RUNNER_TEMP/submit.log"
           echo "id=$(sed -n 's/^Submitted for the notarization: //p' "$RUNNER_TEMP/submit.log")" \
             >> "$GITHUB_OUTPUT"
-          [ "$APPSTORE" != true ] || echo "pkg=$(basename dist/appstore/*.pkg .pkg)" >> "$GITHUB_OUTPUT"
+          # the pkg only if packaged, by upload.appstore of the config
+          for pkg in dist/appstore/*.pkg; do
+            [ ! -f "$pkg" ] || echo "pkg=$(basename "$pkg" .pkg)" >> "$GITHUB_OUTPUT"
+          done
 
       - name: upload pkg
-        if: inputs.macos-appstore && github.ref_type != 'tag' && inputs.retention-days > 0
+        if: steps.submit.outputs.pkg && github.ref_type != 'tag' && inputs.retention-days > 0
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.submit.outputs.pkg }}
@@ -214,12 +211,14 @@ jobs:
           retention-days: 1
 
       - name: release pkg
-        if: inputs.macos-appstore && github.ref_type == 'tag'
+        if: steps.submit.outputs.pkg && github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bundle exec rake release
 
       - name: upload to App Store Connect
+        # by the input, not by the pkg submitted, for upload.appstore with
+        # no team to fail, to be run again with the team
         if: inputs.macos-appstore && github.ref_type == 'tag'
         env:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}

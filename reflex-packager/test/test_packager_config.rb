@@ -367,11 +367,24 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config(windows: {console: {}})}
   end
 
-  def test_upload_itchio_project()
+  def test_upload_appstore()
+    assert_false             config()                           .upload.appstore?
+    assert_false             config(upload: {})                 .upload.appstore?
+    assert_false             config(upload: {appstore: false})  .upload.appstore?
+    assert_true              config(upload: {appstore: true})   .upload.appstore?
+    assert_raise(RP::Error) {config(upload: {appstore: 'yes'})}
+    assert_raise(RP::Error) {config(upload: {appstore: {}})}
+  end
+
+  def test_upload_itchio()
+    assert_false             config()                                      .upload.itchio?
+    assert_false             config(upload: {})                            .upload.itchio?
+    assert_false             config(upload: {itchio: nil})                 .upload.itchio?
+    assert_false             config(upload: {itchio: false})               .upload.itchio?
+    assert_true              config(upload: {itchio: {project: 'a/b'}})    .upload.itchio?
     assert_nil               config()                                      .upload.itchio_project
-    assert_nil               config(upload: {})                            .upload.itchio_project
-    assert_nil               config(upload: {itchio: {}})                  .upload.itchio_project
     assert_equal 'a/b-c_1',  config(upload: {itchio: {project: 'a/b-c_1'}}).upload.itchio_project
+    assert_raise(RP::Error) {config(upload: {itchio: {}})}
     assert_raise(RP::Error) {config(upload: {itchio: 'a/b'})}
     assert_raise(RP::Error) {config(upload: {itchio: {project: 'a'}})}
     assert_raise(RP::Error) {config(upload: {itchio: {project: 'a/b/c'}})}

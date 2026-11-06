@@ -146,6 +146,7 @@ macos:
 #   console: false
 
 # upload:
+#   appstore: true
 #   itchio:
 #     project: user/game
 
@@ -172,7 +173,8 @@ macos:
 | `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`, and `Developer ID Application` by the certificate in the keychain; `APPLE_CODESIGN_IDENTITY` overrides it |
 | `macos.codesign.team_id` | none | Development team ID; `APPLE_TEAM_ID` overrides it |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |
-| `upload.itchio.project` | none | Project of itch.io to upload the app to, as `user/game` of `https://user.itch.io/game` |
+| `upload.appstore` | `false` | Upload the package for the Mac App Store to App Store Connect, by `rake upload:appstore` and the workflow |
+| `upload.itchio.project` | none | Project of itch.io to upload the app to, as `user/game` of `https://user.itch.io/game`; with no `upload.itchio`, the app is not uploaded to itch.io |
 | `localizations` | none | `name` and `copyright` in other languages than English |
 
 ### Versions
@@ -237,7 +239,7 @@ Where no account of Xcode is, as on CI, Apple is asked by an API key of App Stor
 
 The team ID can be given by `APPLE_TEAM_ID` in place of the config, as the identity by `APPLE_CODESIGN_IDENTITY`, to keep them out of the repository of the app.
 
-With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/generic/` with the ticket of the notarization stapled, which macOS sees with no network. `rake notarize` does the same, and with `appstore=true` also packages the app for the Mac App Store:
+With `--notarize`, the app is sent to Apple to be notarized, which takes some minutes, and exported to `dist/generic/` with the ticket of the notarization stapled, which macOS sees with no network. `rake notarize` does the same:
 
 ```bash
 $ export APPLE_TEAM_ID=XXXXXXXXXX
@@ -247,9 +249,9 @@ $ reflex package --pack --notarize . # the same
 
 The notarization can be split into the steps, so as not to keep a Mac waiting, as on CI:
 
-1. `rake notarize:submit`, or `--notarize-submit`, builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/generic/<name>.xcarchive`
-2. `rake notarize:wait id=<ID>`, or `--notarize-wait <ID>`, waits for Apple to check the app, by the API key, on any system
-3. `rake notarize:export`, or `--notarize-export`, exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
+1. `--notarize-submit` builds the app and sends it, printing `Submitted for the notarization: <ID>`; the archive sent is `.build/macos/generic/<name>.xcarchive`
+2. `--notarize-wait <ID>` waits for Apple to check the app, by the API key, on any system
+3. `--notarize-export` exports the app notarized from the archive, waiting for the notarization if not finished yet, on macOS
 
 `--generic` makes sure the app is signed with Developer ID, failing if not, as with no team.
 
@@ -269,7 +271,7 @@ Info.plist of the app has `ITSAppUsesNonExemptEncryption` of `false`, which tell
 
 ### Releasing on GitHub
 
-`rake release` makes the release of the tag of the version on GitHub by `gh`, with the changes of the version in `ChangeLog.md`, and attaches the zip of the app and the package for the Mac App Store, the ones made, or adds them to the release made already. It makes neither, as the jobs on CI make them apart, so archive or package the app first to release it by hand:
+`rake release` makes the release of the tag of the version on GitHub by `gh`, with the changes of the version in `ChangeLog.md`, and attaches the zip of the app and the package for the Mac App Store, the ones made, or adds them to the release made already. It makes neither, so archive or package the app first:
 
 ```bash
 $ rake archive release
@@ -278,7 +280,7 @@ $ rake archive package:appstore release # the one for the Mac App Store too
 
 ### Uploading to App Store Connect
 
-`rake upload:appstore` uploads the package for the Mac App Store, packaged if not yet, to App Store Connect by `altool` of Xcode, by the API key of App Store Connect in the environment variables above, which App Store Connect tells the app and the build of by the package. The app has to be made in App Store Connect beforehand, by its bundle ID, and the build is chosen for a version there to submit it for review:
+With `upload.appstore: true` in the config, `rake upload:appstore` uploads the package for the Mac App Store, packaged if not yet, to App Store Connect by `altool` of Xcode, by the API key of App Store Connect in the environment variables above, which App Store Connect tells the app and the build of by the package. The app has to be made in App Store Connect beforehand, by its bundle ID, and the build is chosen for a version there to submit it for review:
 
 ```bash
 $ export APPLE_TEAM_ID=XXXXXXXXXX
@@ -298,7 +300,7 @@ $ rake upload:itchio
 
 ### Packaging on GitHub Actions
 
-The workflow `.github/workflows/package.yml` of this repository packages the app on GitHub Actions, called by the workflow of the app, and releases it when run by a tag. It packages the app for macOS and Windows, or the ones in its input `platforms`, as `platforms: macos`. With the secrets below, the app for macOS is notarized: a job on macOS submits it by `rake notarize:submit`, one on Linux, which is cheaper, waits for it by `rake notarize:wait`, and one on macOS again exports it by `rake notarize:export`. The tasks run the command of the profile of the app, as `r8` of Reight, which the Rakefile of the app gives. The app for Windows is not signed.
+The workflow `.github/workflows/package.yml` of this repository packages the app on GitHub Actions, called by the workflow of the app, and releases it when run by a tag. It packages the app for macOS and Windows, or the ones in its input `platforms`, as `platforms: macos`. With the secrets below, the app for macOS is notarized: a job on macOS submits it, one on Linux, which is cheaper, waits for it, and one on macOS again exports it. The app for Windows is not signed.
 
 ```yaml
 jobs:
@@ -321,9 +323,11 @@ $ base64 -i DeveloperID.p12 | pbcopy
 
 With `APPLE_TEAM_ID` but no `APPLE_CODESIGN_P12`, the workflow fails. Without the secrets, the app is packaged with no notarization, signed as the config tells.
 
-With the input `macos-appstore: true` and the secrets to notarize, the app for the Mac App Store is packaged too, in the job that submits the notarized one, and on a tag, attached to the release by `rake release`, then uploaded to App Store Connect by `rake upload:appstore`. It is signed by the certificate Apple manages, through the API key, which has to be of the Admin role to make the certificate and the profile, so `APPLE_CODESIGN_P12` needs no more than Developer ID. A failure of it fails the job, and the notarization with it. With the input but no `APPLE_TEAM_ID`, the workflow fails at first.
+With `upload.appstore: true` in the config and the secrets to notarize, the app for the Mac App Store is packaged too, in the job that submits the notarized one, and on a tag, attached to the release by `rake release`, then uploaded to App Store Connect by `rake upload:appstore`. It is signed by the certificate Apple manages, through the API key, which has to be of the Admin role to make the certificate and the profile, so `APPLE_CODESIGN_P12` needs no more than Developer ID. A failure of it fails the job, and the notarization with it. With it but no `APPLE_TEAM_ID`, the job fails at the upload, after the release on GitHub and the upload to itch.io, to be run again with the team.
 
-With `BUTLER_API_KEY` in the secrets too, the app released by a tag is uploaded to itch.io by `rake upload:itchio`, after it is released on GitHub, unless the input `itchio` is `false`.
+With `upload.itchio` in the config, the app released by a tag is uploaded to itch.io by `rake upload:itchio`, after it is released on GitHub, by `BUTLER_API_KEY` in the secrets, failing without it.
+
+The inputs `macos-appstore` and `itchio`, `true` by default, are to stop them with `false`, as the workflow of `reflex new` does unless run by a tag.
 
 ### CRuby
 
