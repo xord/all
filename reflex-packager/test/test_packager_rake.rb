@@ -164,7 +164,7 @@ class TestPackagerRake < Test::Unit::TestCase
       stub Reflex::Packager::Stores::AppStore, :new, appstore do
         ::Rake::Task['download:appstore:metadata'].execute
       end
-      bundle_id = Reflex::Packager::Config.load(Reflex::Packager::REFLEX, dir).bundle_id
+      bundle_id = Reflex::Packager::Config.load(Reflex::Packager::REFLEX, dir).macos.bundle_id
       assert_equal [[["#{dir}/store/appstore"], {bundle_id: bundle_id, platform: :macos}]], downloads
 
       uploads = []

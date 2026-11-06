@@ -96,7 +96,7 @@ module Reflex
             desc "download the metadata of the app in App Store Connect into #{APPSTORE_METADATA_DIR}"
             task :metadata do
               Stores::AppStore.new.download_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
-                bundle_id: config.bundle_id, platform: :macos
+                bundle_id: config.macos.bundle_id, platform: :macos
             end
           end
         end
@@ -131,7 +131,7 @@ module Reflex
               ' only showing the changes by dryrun=1'
             task :metadata do
               Stores::AppStore.new.upload_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
-                bundle_id: config.bundle_id, platform: :macos,
+                bundle_id: config.macos.bundle_id, platform: :macos,
                 dry_run: get_env_bool(:dryrun)
             end
           end
