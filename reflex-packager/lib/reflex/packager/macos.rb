@@ -77,6 +77,8 @@ module Reflex
           'macos takes three numbers at most for the build version, as' +
             " CFBundleVersion: '#{config.build_version}'"
         # what the config lacks
+        when !config.macos.bundle_id
+          "macos needs the bundle identifier of the app, by macos.bundle_id, such as #{bundle_id_example}"
         when !config.macos.codesign_team_id &&
           (notarize.include?(:submit) || appstore? || codesign_p12)
           'notarizing, the Mac App Store and the certificate by' +
@@ -286,6 +288,17 @@ module Reflex
           '-derivedDataPath', 'DerivedData',
           action, *args,
           chdir: build_dir
+      end
+
+      # The bundle_id to suggest when the config has none, as reflex new makes.
+      #
+      def bundle_id_example()
+        name = Config.name2id config.name
+        [
+          config.profile.app_id_prefix,
+          Config.developer2id(config.developer),
+          name.empty? ? 'app' : name
+        ].compact.join '.'
       end
 
       # The identity to sign with, which is of Developer ID by the certificate

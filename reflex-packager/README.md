@@ -124,7 +124,6 @@ The project is configured via `reflex.yml` (or `reflex.yaml`) in the project dir
 ```yaml
 name: MyApp
 # developer: MyName
-bundle_id: com.example.myapp
 version: 1.0.0
 # copyright: © 2026 MyName
 icon: icon.png
@@ -134,13 +133,14 @@ icon: icon.png
 # excludes:
 #   - lib/debug.rb
 
-# macos:
-#   deployment_target: "11.0"
-#   archs: [arm64, x86_64]
-#   category: public.app-category.games
-#   codesign:
-#     identity: "-"
-#     team_id: XXXXXXXXXX
+macos:
+  bundle_id: com.example.myapp
+  # deployment_target: "11.0"
+  # archs: [arm64, x86_64]
+  # category: public.app-category.games
+  # codesign:
+  #   identity: "-"
+  #   team_id: XXXXXXXXXX
 
 # windows:
 #   console: false
@@ -157,14 +157,14 @@ icon: icon.png
 | Key | Default | Description |
 |-----|---------|-------------|
 | `name` | directory name | Application name |
-| `developer` | none | Developer, put in the default `bundle_id` not to be the same as the one of another's app of the same name |
-| `bundle_id` | `org.xord.reflex.<developer>.<name>` | macOS bundle identifier, to be set once the app is out, not to change with the name |
+| `developer` | none | Developer, as the company name of the executable on Windows |
 | `version` | the `VERSION` file, or `0.1.0` | Application version |
 | `copyright` | none | Copyright notice, shown in the About panel on macOS and in the properties of the executable on Windows |
 | `main` | `main.rb` | Entry point script |
 | `icon` | none | Path to an icon image (PNG) |
 | `files` | none | Additional files to bundle (glob patterns); the dotfiles in a directory are bundled only by their own names |
 | `excludes` | none | Files not to bundle out of `files` (glob patterns), such as the ones only for development |
+| `macos.bundle_id` | none | Bundle identifier, which macOS needs and tells the app by, not to be changed once the app is out; `reflex new` writes one |
 | `macos.deployment_target` | `11.0` | Minimum macOS version |
 | `macos.archs` | `[arm64, x86_64]` | Target architectures |
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |

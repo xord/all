@@ -68,7 +68,7 @@ class TestPackagerCLI < Test::Unit::TestCase
       assert_include read['lib/my-game/app.rb'],   'class App'
       assert_include read['test/test_my-game.rb'], 'class TestMyGame'
       assert_include read['reflex.yml'],           '#developer: Your Name'
-      assert_include read['reflex.yml'],           "© #{Time.now.year} Your Name"
+      assert_include read['reflex.yml'],           "#copyright: © #{Time.now.year} Your Name"
       Dir.glob('my-game/**/*.rb').each do |rb|
         assert_true system(RbConfig.ruby, '-c', rb, out: File::NULL), rb
       end
@@ -80,29 +80,29 @@ class TestPackagerCLI < Test::Unit::TestCase
       assert_equal %w[
         VERSION lib/my-game.rb lib/my-game/app.rb lib/my-game/version.rb main.rb
       ], config.app_files
-      assert_equal 'org.xord.reflex.2a59d59e.my-game', config.bundle_id
+      assert_equal 'org.xord.reflex.2a59d59e.my-game', config.macos.bundle_id
     end
 
     tmpdir do
       capture {cli.create ['--developer', 'Some One', 'my-game']}
       config = RP::Config.load TEST_PROFILE, 'my-game'
       assert_equal 'Some One',                         config.developer
-      assert_equal 'org.xord.reflex.some-one.my-game', config.bundle_id
-      assert_include File.read('my-game/reflex.yml'), "© #{Time.now.year} Some One"
+      assert_equal "© #{Time.now.year} Some One",      config.copyright
+      assert_equal 'org.xord.reflex.some-one.my-game', config.macos.bundle_id
     end
 
     tmpdir do
       capture {cli.create ['--developer', '開発者', 'my-game']}
       config = RP::Config.load TEST_PROFILE, 'my-game'
       assert_equal '開発者',                           config.developer
-      assert_equal 'org.xord.reflex.7be0c00e.my-game', config.bundle_id
+      assert_equal 'org.xord.reflex.7be0c00e.my-game', config.macos.bundle_id
     end
 
     tmpdir do
       stub(Etc, :getlogin, 'someone') {capture {cli.create ['--developer', ' ', 'my-game']}}
       assert_include File.read('my-game/reflex.yml'), '#developer: Your Name'
       assert_equal 'org.xord.reflex.2a59d59e.my-game',
-        RP::Config.load(TEST_PROFILE, 'my-game').bundle_id
+        RP::Config.load(TEST_PROFILE, 'my-game').macos.bundle_id
     end
 
     tmpdir do

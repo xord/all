@@ -18,12 +18,10 @@ module Reflex
     class Config
 
       def self.defaults(profile, dir, hash)
-        name      = hash[:name]&.to_s || File.basename(dir)
-        developer = hash[:developer]&.to_s
+        name = hash[:name]&.to_s || File.basename(dir)
         {
           name:      name,
           developer: nil,
-          bundle_id: hash[:bundle_id] || default_bundle_id(profile, name, developer),
           version:   (hash[:version].nil? && version_file(dir)) || '0.1.0',
           copyright: nil,
           main:      profile.main,
@@ -68,7 +66,6 @@ module Reflex
 
         @name      = hash[:name]      .to_s
         @developer = hash[:developer]&.to_s
-        @bundle_id = hash[:bundle_id] .to_s
         @version   = hash[:version]   .to_s
         @copyright = hash[:copyright]&.to_s
         @main      = hash[:main]      .to_s
@@ -83,7 +80,7 @@ module Reflex
         validate
       end
 
-      attr_reader :profile, :dir, :name, :developer, :bundle_id, :version, :copyright,
+      attr_reader :profile, :dir, :name, :developer, :version, :copyright,
         :main, :icon, :files, :excludes, :macos, :windows, :upload
 
       # The values that differ by language, in English, the language of the
@@ -148,18 +145,6 @@ module Reflex
       end
 
       private
-
-      # The bundle_id of the prefix of the profile, the developer if any and
-      # the name, as org.xord.reflex.developer.name.
-      #
-      def self.default_bundle_id(profile, name, developer = nil)
-        id = name2id name
-        if id.empty?
-          raise Error, "cannot derive a bundle_id from name '#{name}', " +
-            "set 'bundle_id' in #{profile.config_files.first}"
-        end
-        [profile.bundle_id_prefix, developer2id(developer), id].compact.join '.'
-      end
 
       # The version in the VERSION file of the app, which the config may leave
       # it to, as the gems have theirs in one.
@@ -253,9 +238,6 @@ module Reflex
         # the name of the .app on macos, which can not have a path separator
         raise Error, "invalid name: '#{@name}'" if @name.strip.empty? || @name =~ %r{[/:]}
 
-        raise Error, "invalid bundle_id: '#{@bundle_id}'" if
-          @bundle_id !~ /\A[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+\z/
-
         raise Error, "invalid version: '#{@version}'" if @version !~ VERSION_FORMAT
 
         raise Error, "main script not found: '#{@main}'" if
@@ -285,6 +267,7 @@ module Reflex
 
       def self.defaults()
         {
+          bundle_id:         nil,
           deployment_target: '11.0',
           archs:             %w[arm64 x86_64],
           cruby:             nil,
@@ -299,6 +282,7 @@ module Reflex
       def initialize(hash)
         codesign = hash[:codesign].merge CODESIGN_ENV_KEYS.transform_values {env _1}.compact
 
+        @bundle_id         = hash[:bundle_id]        &.to_s
         @deployment_target = hash[:deployment_target] .to_s
         @archs             = Array(hash[:archs]).map &:to_s
         @cruby             = hash[:cruby]            &.to_s
@@ -307,6 +291,11 @@ module Reflex
         @codesign_team_id  = codesign[:team_id]      &.to_s
         validate
       end
+
+      # The bundle identifier of the app, which macos needs, set in the config
+      # not to change with the name or the developer.
+      #
+      attr_reader :bundle_id
 
       # The version of CRuby, or the path of a checkout of the cruby
       # repository, to embed.
@@ -327,6 +316,8 @@ module Reflex
       attr_reader :codesign_identity, :codesign_team_id
 
       def validate()
+        raise Error, "invalid macos.bundle_id: '#{@bundle_id}'" if
+          @bundle_id && @bundle_id !~ /\A[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+\z/
         raise Error, "invalid archs: '#{@archs}'" if @archs.empty?
         raise Error, "invalid category: '#{@category}'" if
           @category && @category !~ /\Apublic\.app-category\.[a-z\-]+\z/

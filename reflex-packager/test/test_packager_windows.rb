@@ -252,7 +252,7 @@ class TestPackagerWindows < Test::Unit::TestCase
 
   def test_main_cpp_manifest_and_rc()
     fake_libs do
-      packager "version: 1.2.3.4.5\ndeveloper: 開発者\nbundle_id: com.example.app\ncopyright: © 2026 Me\nlocalizations: {ja: {name: アプリ}}" do |pkg, dir|
+      packager "version: 1.2.3.4.5\ndeveloper: 開発者\ncopyright: © 2026 Me\nlocalizations: {ja: {name: アプリ}}" do |pkg, dir|
         stub(RP::Windows, :lcid, 0x0411) {pkg.generate}
         str = read dir, 'src/main.cpp'
         assert_include str, 'void Init_fakenative_ext ();'
@@ -283,7 +283,7 @@ class TestPackagerWindows < Test::Unit::TestCase
         assert_include     rc, %(VALUE "Translation", 0x409, 1200, 0x411, 1200)
         assert_equal 2, rc.scan(%(VALUE "LegalCopyright",   "© 2026 Me")).size # in both of the languages
       end
-      packager %(name: 'ア"プ\\リ'\nbundle_id: com.example.app) do |pkg, dir|
+      packager %(name: 'ア"プ\\リ') do |pkg, dir|
         pkg.generate
         rc = read dir, 'src/app.rc'
         assert_include rc, %(VALUE "FileDescription",  "ア""プ\\\\リ")

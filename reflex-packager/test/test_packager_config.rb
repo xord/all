@@ -70,12 +70,12 @@ class TestPackagerConfig < Test::Unit::TestCase
   def test_load_full_config()
     tmpdir yaml: <<~YAML, main_path: 'app.rb' do |dir|
       name:      My App
-      bundle_id: com.example.myapp
       version:   1.2.3
       main:      app.rb
       icon:      icon.png
       files:     ['*.rb', data]
       macos:
+        bundle_id: com.example.myapp
         deployment_target: '12.0'
         archs: [arm64, x86_64]
         cruby: 4.0.600
@@ -87,12 +87,12 @@ class TestPackagerConfig < Test::Unit::TestCase
       touch 'data/2.json'
       c = load_config dir
       assert_equal 'My App',                    c.name
-      assert_equal 'com.example.myapp',         c.bundle_id
       assert_equal '1.2.3',                     c.version
       assert_equal 'app.rb',                    c.main
       assert_equal 'icon.png',                  c.icon
       assert_equal %w[*.rb data],               c.files
       assert_equal %w[1.rb app.rb data/2.json], c.app_files
+      assert_equal 'com.example.myapp',         c.macos.bundle_id
       assert_equal '12.0',                      c.macos.deployment_target
       assert_equal %w[arm64 x86_64],            c.macos.archs
       assert_equal '4.0.600',                   c.macos.cruby
@@ -103,42 +103,46 @@ class TestPackagerConfig < Test::Unit::TestCase
   end
 
   def test_name()
-    assert_equal 'test', config()         .name
-    assert_equal '1',    config(name: 1)  .name
-    assert_equal 'test', config(name: nil).name
-    assert_raise(RP::Error) {config name: '',    bundle_id: 'a.b'}
-    assert_raise(RP::Error) {config name: ' ',   bundle_id: 'a.b'}
-    assert_raise(RP::Error) {config name: 'A/B', bundle_id: 'a.b'}
-    assert_raise(RP::Error) {config name: 'A:B', bundle_id: 'a.b'}
+    assert_equal 'test',     config()              .name
+    assert_equal '1',        config(name: 1)       .name
+    assert_equal 'test',     config(name: nil)     .name
+    assert_equal 'アプリ',   config(name: 'アプリ').name
+    assert_raise(RP::Error) {config name: ''}
+    assert_raise(RP::Error) {config name: ' '}
+    assert_raise(RP::Error) {config name: 'A/B'}
+    assert_raise(RP::Error) {config name: 'A:B'}
   end
 
-  def test_bundle_id()
-    assert_equal 'org.xord.reflex.test',   config()                  .bundle_id
-    assert_equal 'a.b',                    config(bundle_id: 'a.b')  .bundle_id
-    assert_equal 'org.xord.reflex.name-1', config( name:    'Name-1').bundle_id
-    assert_equal 'org.xord.reflex.name-2', config('name' => 'Name-2').bundle_id
-    assert_raise(RP::Error)               {config bundle_id: ''}
-    assert_raise(RP::Error)               {config bundle_id: 'a'}
-    assert_raise(RP::Error)               {config bundle_id: 'a.'}
-    assert_raise(RP::Error)               {config name: 'アプリ'}
+  def test_developer()
+    assert_equal 'Some One', config(developer: 'Some One').developer
+    assert_equal '1234',     config(developer: 1234)      .developer
+    assert_nil               config()                     .developer
+    assert_nil               config(developer: ' ')       .developer
+  end
 
-    assert_equal 'org.xord.reflex.my-game',     config(name: 'MyGame')     .bundle_id
-    assert_equal 'org.xord.reflex.my-game',     config(name: 'My Game')    .bundle_id
-    assert_equal 'org.xord.reflex.my-game',     config(name: ' my__game! ').bundle_id
-    assert_equal 'org.xord.reflex.http-server', config(name: 'HTTPServer') .bundle_id
-    assert_equal 'org.xord.reflex.game2d',      config(name: 'Game2D')     .bundle_id
-    assert_equal 'org.xord.reflex.a-b',         config(name: 'a.b')        .bundle_id
+  def test_name2id()
+    assert_equal 'my-game',     Config.name2id('MyGame')
+    assert_equal 'my-game',     Config.name2id('My Game')
+    assert_equal 'my-game',     Config.name2id(' my__game! ')
+    assert_equal 'http-server', Config.name2id('HTTPServer')
+    assert_equal 'game2d',      Config.name2id('Game2D')
+    assert_equal 'a-b',         Config.name2id('a.b')
+    assert_equal '',            Config.name2id('アプリ')
+  end
 
-    assert_equal 'org.xord.reflex.some-one.test', config(developer: 'Some One')                  .bundle_id
-    assert_equal 'org.xord.reflex.some-one.test', config(developer: 'SomeOne')                   .bundle_id
-    assert_equal 'org.xord.reflex.1234.test',     config(developer: 1234)                        .bundle_id
-    assert_equal 'org.xord.reflex.test.test',     config(developer: 'test')                      .bundle_id
-    assert_equal 'org.xord.reflex.7be0c00e.test', config(developer: '開発者')                    .bundle_id
-    assert_equal 'a.b',                           config(developer: 'Some One', bundle_id: 'a.b').bundle_id
-    assert_equal 'Some One',                      config(developer: 'Some One')                  .developer
-    assert_nil                                    config()                                       .developer
-    assert_nil                                    config(developer: ' ')                         .developer
-    assert_equal 'org.xord.reflex.test',          config(developer: ' ')                         .bundle_id
+  def test_developer2id()
+    assert_equal 'some-one', Config.developer2id('Some One')
+    assert_equal 'some-one', Config.developer2id('SomeOne')
+    assert_equal '7be0c00e', Config.developer2id('開発者')
+    assert_nil               Config.developer2id(nil)
+  end
+
+  def test_macos_bundle_id()
+    assert_nil               config()                         .macos.bundle_id
+    assert_equal 'a.b',      config(macos: {bundle_id: 'a.b'}).macos.bundle_id
+    assert_raise(RP::Error) {config macos: {bundle_id: ''}}
+    assert_raise(RP::Error) {config macos: {bundle_id: 'a'}}
+    assert_raise(RP::Error) {config macos: {bundle_id: 'a.'}}
   end
 
   def test_version()

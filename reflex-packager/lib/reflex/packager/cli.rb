@@ -170,21 +170,18 @@ module Reflex
 
         developer = nil if developer&.strip&.empty?
 
-        # the name, not the hash of the developer below, holds the copyright
-        copyright_holder = developer || 'Your Name'
-
         # not to put the login name into the bundle_id, which is made public
         developer_id = Config.developer2id(developer) || Config.name2hash(Etc.getlogin.to_s)
         {
-          name:             name,
-          name_id:          Config.name2id(name),
-          developer:        developer,
-          developer_id:     developer_id,
-          copyright_holder: copyright_holder,
-          module_name:      module_name,
-          ruby_version:     MacOS.ruby_version,
-          run:              @profile.run,
-          rake:             @profile.rake
+          name:          name,
+          name_id:       Config.name2id(name),
+          developer:     developer,
+          developer_id:  developer_id,
+          app_id_prefix: @profile.app_id_prefix,
+          module_name:   module_name,
+          ruby_version:  MacOS.ruby_version,
+          run:           @profile.run,
+          rake:          @profile.rake
         }
       end
 

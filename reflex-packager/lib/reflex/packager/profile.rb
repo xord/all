@@ -73,7 +73,10 @@ module Reflex
         @boot ? '__reflex_main__.rb' : nil
       end
 
-      def bundle_id_prefix()
+      # The prefix of the ids of an app, as the bundle_id, which reflex new
+      # makes, as org.xord.reflex.
+      #
+      def app_id_prefix()
         "org.xord.#{name.downcase}"
       end
 

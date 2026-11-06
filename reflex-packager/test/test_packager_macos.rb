@@ -7,14 +7,21 @@ class TestPackagerMacOS < Test::Unit::TestCase
   RP    = Reflex::Packager
   MacOS = RP::MacOS
 
-  def packager(yaml = nil, files: ['main.rb'], env: {}, &block)
+  # Packages the app of +yaml+, with +bundle_id+ in it unless it has one.
+  #
+  def packager(
+    yaml = nil, files: ['main.rb'], env: {}, bundle_id: 'com.example.app', &block)
+
+    hash  = YAML.safe_load(yaml || '') || {}
+    macos = hash['macos'] ||= {}
+    macos['bundle_id'] ||= bundle_id if bundle_id
     Dir.mktmpdir do |dir|
       files.each do |f|
         path = File.join dir, f
         FileUtils.mkdir_p File.dirname(path)
         FileUtils.touch path
       end
-      File.write File.join(dir, 'reflex.yml'), yaml if yaml
+      File.write File.join(dir, 'reflex.yml'), YAML.dump(hash)
       Dir.mktmpdir do |cruby|
         with_env({'CRUBY_PATH' => fake_cruby(cruby), **ENV_TO_SIGN}.merge(env)) do
           config = RP::Config.load TEST_PROFILE, dir
@@ -116,9 +123,10 @@ class TestPackagerMacOS < Test::Unit::TestCase
   def test_project_yml()
     yaml = <<~YML
       name: My App
-      bundle_id: com.example.myapp
       version: 1.2.3.4
       copyright: © 2026 Me
+      macos:
+        bundle_id: com.example.myapp
       localizations:
         ja: {name: 'マイ"アプリ'}
     YML
@@ -719,6 +727,14 @@ class TestPackagerMacOS < Test::Unit::TestCase
       error = assert_raise(RP::Error) {MacOS.new(pkg.config, appstore: true).package}
       assert_include error.message, 'macos.category'
     end
+    packager "name: My App", bundle_id: nil do |pkg, _|
+      error = assert_raise(RP::Error) {pkg.package}
+      assert_include error.message, 'macos.bundle_id, such as org.xord.reflex.my-app'
+    end
+    packager "name: アプリ\ndeveloper: Some One", bundle_id: nil do |pkg, _|
+      error = assert_raise(RP::Error) {pkg.package}
+      assert_include error.message, 'such as org.xord.reflex.some-one.app'
+    end
     packager "version: 1.2.3.4" do |pkg, _|
       error = assert_raise(RP::Error) {MacOS.new(pkg.config).package}
       assert_include error.message, 'CFBundleVersion'
@@ -751,10 +767,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
   # --- target ------------------------------------------------------------
 
   def test_target_strips_unsafe_chars()
-    # a non-ascii name needs an explicit bundle_id (one cannot be derived),
-    # so set it here to keep the focus on target-name normalization
-    packager("name: My App!")                            {|pkg, _| assert_equal 'MyApp', pkg.target}
-    packager("name: アプリ\nbundle_id: com.example.app") {|pkg, _| assert_equal 'App',   pkg.target}
+    packager("name: My App!") {|pkg, _| assert_equal 'MyApp', pkg.target}
+    packager("name: アプリ")  {|pkg, _| assert_equal 'App',   pkg.target}
   end
 
   def test_dist_paths()
