@@ -40,6 +40,9 @@ module Reflex
         no_upload      = -> key do
           puts "not uploading, by upload.#{key} of #{profile.config_files.first}"
         end
+        bundle_id      = -> do
+          config.macos.bundle_id || raise("no macos.bundle_id in #{profile.config_files.first}")
+        end
 
         desc "package the application into #{relative[app_path]}"
         alias_task :package => app_path
@@ -95,8 +98,9 @@ module Reflex
           namespace :appstore do
             desc "download the metadata of the app in App Store Connect into #{APPSTORE_METADATA_DIR}"
             task :metadata do
+              id = bundle_id.call
               Stores::AppStore.new.download_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
-                bundle_id: config.macos.bundle_id, platform: :macos
+                bundle_id: id, platform: :macos
             end
           end
         end
@@ -130,8 +134,9 @@ module Reflex
             desc "upload the metadata in #{APPSTORE_METADATA_DIR} to App Store Connect," +
               ' only showing the changes by dryrun=1'
             task :metadata do
+              id = bundle_id.call
               Stores::AppStore.new.upload_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
-                bundle_id: config.macos.bundle_id, platform: :macos,
+                bundle_id: id, platform: :macos,
                 dry_run: get_env_bool(:dryrun)
             end
           end

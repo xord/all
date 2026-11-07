@@ -8,11 +8,11 @@ class TestPackagerRake < Test::Unit::TestCase
   include Xot::Rake
   include Reflex::Packager::Rake
 
-  def application(&block)
+  def application(yaml = '', &block)
     Dir.mktmpdir do |dir|
       Dir.chdir dir do
         {
-          'reflex.yml' => "name: My Game\nfiles: ['lib/**/*']\n",
+          'reflex.yml' => "name: My Game\nfiles: ['lib/**/*']\n#{yaml}",
           'main.rb'    => '',
           'VERSION'    => '1.2.3',
           'lib/a/b.rb' => ''
@@ -157,34 +157,48 @@ class TestPackagerRake < Test::Unit::TestCase
       end
       assert_equal [[[pkg], {platform: 'macos'}]], uploads
 
-      downloads = []
-      appstore  = Object.new
-      appstore.define_singleton_method(:download_metadata) {|*args, **kwargs| downloads << [args, kwargs]}
-      assert_include ::Rake::Task['download:appstore:metadata'].comment, 'store/appstore'
-      stub Reflex::Packager::Stores::AppStore, :new, appstore do
-        ::Rake::Task['download:appstore:metadata'].execute
-      end
-      bundle_id = Reflex::Packager::Config.load(Reflex::Packager::REFLEX, dir).macos.bundle_id
-      assert_equal [[["#{dir}/store/appstore"], {bundle_id: bundle_id, platform: :macos}]], downloads
-
-      uploads = []
-      appstore.define_singleton_method(:upload_metadata) {|*args, **kwargs| uploads << [args, kwargs]}
-      assert_include ::Rake::Task['upload:appstore:metadata'].comment, 'store/appstore'
-      stub Reflex::Packager::Stores::AppStore, :new, appstore do
-        [nil, '0', '1'].each do |dryrun|
-          with_env('dryrun' => dryrun) {::Rake::Task['upload:appstore:metadata'].execute}
-        end
-      end
-      metadata = {bundle_id: bundle_id, platform: :macos}
-      assert_equal [false, false, true].map {
-        [["#{dir}/store/appstore"], {**metadata, dry_run: _1}]
-      }, uploads
-
       ::Rake::Task.clear
       stub Gem, :win_platform?, true do
         package_application
       end
       assert_false ::Rake::Task.task_defined?('upload:appstore') # only on macos
+    end
+  end
+
+  def test_metadata()
+    calls    = nil
+    appstore = Object.new
+    appstore.define_singleton_method(:download_metadata) {|*args, **kwargs| calls << [:download, args, kwargs]}
+    appstore.define_singleton_method(:upload_metadata)   {|*args, **kwargs| calls << [:upload,   args, kwargs]}
+    run = -> (task, env = {}) do
+      calls = []
+      stub(Reflex::Packager::Stores::AppStore, :new, appstore) {with_env(env) {::Rake::Task[task].execute}}
+      calls
+    end
+
+    application do
+      package_application
+      %w[download:appstore:metadata upload:appstore:metadata].each do |task|
+        assert_include ::Rake::Task[task].comment, 'store/appstore'
+        # not by the stub, to fail before the API key is checked
+        error = assert_raise(RuntimeError) {::Rake::Task[task].execute}
+        assert_include error.message, 'macos.bundle_id'
+      end
+    end
+
+    ::Rake::Task.clear
+    application "macos: {bundle_id: com.example.game}\n" do |dir|
+      package_application
+      path     = "#{dir}/store/appstore"
+      metadata = {bundle_id: 'com.example.game', platform: :macos}
+      assert_equal [[:download, [path], metadata]],
+        run['download:appstore:metadata']
+      assert_equal [[:upload, [path], {**metadata, dry_run: false}]],
+        run['upload:appstore:metadata', 'dryrun' => nil]
+      assert_equal [[:upload, [path], {**metadata, dry_run: false}]],
+        run['upload:appstore:metadata', 'dryrun' => '0']
+      assert_equal [[:upload, [path], {**metadata, dry_run: true}]],
+        run['upload:appstore:metadata', 'dryrun' => '1']
     end
   end
 
