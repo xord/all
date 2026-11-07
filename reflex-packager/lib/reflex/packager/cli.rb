@@ -71,10 +71,12 @@ module Reflex
         end
 
         puts "Created #{name}/"
-        dir   = name.shellescape
+        puts "  cd #{name.shellescape}"
         hints = [
-          ["cd #{dir} && #{@profile.run}",               "run the application"],
-          ["cd #{dir} && #{@profile.command} package .", "package as an application"]
+          ['bundle install',           'install the gems to develop the application'],
+          ['bundle exec rake',         'run the application'],
+          ['bundle exec rake test',    'run the tests'],
+          ['bundle exec rake package', 'package as an application']
         ]
         max = hints.map {|cmd,| cmd.length}.max
         hints.each {|cmd, desc| puts "  #{cmd.ljust max}  # #{desc}"}

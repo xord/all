@@ -48,7 +48,8 @@ class TestPackagerCLI < Test::Unit::TestCase
   def test_new()
     tmpdir do
       out, = stub(Etc, :getlogin, 'someone') {capture {cli.create ['my-game']}}
-      assert_include out, 'cd my-game && ruby main.rb'
+      assert_include out, 'cd my-game'
+      assert_include out, 'bundle exec rake package'
       assert_equal %w[
         .github/workflows/release.yml .github/workflows/tag.yml .github/workflows/test.yml
         .gitignore .ruby-version ChangeLog.md Gemfile Rakefile VERSION
@@ -107,7 +108,7 @@ class TestPackagerCLI < Test::Unit::TestCase
 
     tmpdir do
       out, = capture {cli.create ["Bob's Game #1"]}
-      assert_include out, %q(cd Bob\'s\ Game\ \#1 && ruby main.rb)
+      assert_include out, %q(cd Bob\'s\ Game\ \#1)
       assert_equal "Bob's Game #1", RP::Config.load(TEST_PROFILE, "Bob's Game #1").name
       assert_true system(RbConfig.ruby, '-c', "Bob's Game #1/lib/bob-s-game-1/app.rb", out: File::NULL)
     end

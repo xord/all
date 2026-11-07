@@ -58,7 +58,10 @@ $ gem install reflex-packager
 ```bash
 $ reflex new myapp
 $ cd myapp
-$ ruby main.rb          # run the application directly
+$ bundle install            # install the gems to develop the application
+$ bundle exec rake          # run the application
+$ bundle exec rake test     # run the tests
+$ bundle exec rake package  # package as an application
 ```
 
 This generates a project directory from the templates.
