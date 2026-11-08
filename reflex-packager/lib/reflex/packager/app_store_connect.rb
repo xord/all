@@ -28,17 +28,17 @@ module Reflex
         key_path:  'APPLE_API_KEY_PATH'
       }
 
+      # The hosts of the API of App Store Connect, and of the notary service,
+      # which is not under the host of the others.
+      #
+      HOST          = 'https://api.appstoreconnect.apple.com'
+      HOST_NOTARIZE = 'https://appstoreconnect.apple.com'
+
       # Seconds to wait for the notarization in all, and between the tries
       # to see whether it finished.
       #
       NOTARIZATION_TIMEOUT  = 60 * 60
       NOTARIZATION_INTERVAL = 30
-
-      # The hosts of the notary service, and of the other APIs of App Store
-      # Connect.
-      #
-      HOST     = 'https://appstoreconnect.apple.com'
-      API_HOST = 'https://api.appstoreconnect.apple.com'
 
       # The credentials of the API key the environment variables tell, as
       # {issuer_id:, key_id:, key_p8:, key_path:} with either of key_p8 and
@@ -82,6 +82,55 @@ module Reflex
         end
       end
 
+      # The app of +bundle_id+.
+      #
+      def get_app(bundle_id)
+        get('/v1/apps', 'filter[bundleId]': bundle_id)['data'].first ||
+          raise(Error, "no app of '#{bundle_id}' in App Store Connect")
+      end
+
+      # The infos of +app+, with the relationships of +include+, as
+      # primaryCategory.
+      #
+      def get_app_infos(app, include:)
+        get("/v1/apps/#{app['id']}/appInfos", include: include.join(','))['data']
+      end
+
+      # The versions of +app+ for +platform+, as MAC_OS.
+      #
+      def get_versions(app, platform:)
+        get(
+          "/v1/apps/#{app['id']}/appStoreVersions",
+          'filter[platform]': platform, limit: 200)['data']
+      end
+
+      # The localizations of +info+, the app info, in all the languages.
+      #
+      def get_app_info_localizations(info)
+        get("/v1/appInfos/#{info['id']}/appInfoLocalizations", limit: 200)['data']
+      end
+
+      # The localizations of +version+ in all the languages.
+      #
+      def get_version_localizations(version)
+        get("/v1/appStoreVersions/#{version['id']}/appStoreVersionLocalizations", limit: 200)['data']
+      end
+
+      # The screenshot sets of +localization+ of a version, one for each
+      # display type, as APP_DESKTOP.
+      #
+      def get_screenshot_sets(localization)
+        get(
+          "/v1/appStoreVersionLocalizations/#{localization['id']}/appScreenshotSets",
+          limit: 200)['data']
+      end
+
+      # The screenshots in +set+, in the order of them.
+      #
+      def get_screenshots(set)
+        get("/v1/appScreenshotSets/#{set['id']}/appScreenshots", limit: 200)['data']
+      end
+
       # Waits until the app is notarized by +id+, raising the issues Apple
       # found unless it accepted the app.
       #
@@ -108,36 +157,43 @@ module Reflex
       # In Progress, Accepted, Invalid or Rejected.
       #
       def notarization_status(id)
-        get("/notary/v2/submissions/#{id.downcase}").dig 'data', 'attributes', 'status'
+        request(:get, "/notary/v2/submissions/#{id.downcase}", host: HOST_NOTARIZE)
+          .dig 'data', 'attributes', 'status'
       end
 
       # The issues Apple found in the app, in the log of the notarization.
       #
       def notarization_issues(id)
-        url = get("/notary/v2/submissions/#{id.downcase}/logs")
+        url = request(:get, "/notary/v2/submissions/#{id.downcase}/logs", host: HOST_NOTARIZE)
           .dig 'data', 'attributes', 'developerLogUrl'
         log = JSON.parse Net::HTTP.get(URI url)
         (log['issues'] || []).map {"#{_1['path']}: #{_1['message']}"}
       end
 
+      private
+
       # The JSON the API of App Store Connect answers to GET of +path+ with
       # +query+, as /v1/apps with 'filter[bundleId]': 'com.example.app'.
       #
-      def api(path, **query)
+      def get(path, **query)
         path += "?#{URI.encode_www_form query}" unless query.empty?
-        get path, host: API_HOST
+        request :get, path
       end
 
-      private
-
-      def get(path, host: HOST)
+      # The JSON answered to +method+ of +path+ with +data+, which the API
+      # takes in {data: ...}, or nil for no content.
+      #
+      def request(method, path, data = nil, host: HOST)
         uri = URI host + path
-        res = Net::HTTP.start uri.host, uri.port, use_ssl: true do |http|
-          http.get uri.request_uri, 'Authorization' => "Bearer #{token}"
+        req = Net::HTTP.const_get(method.capitalize).new uri, 'Authorization' => "Bearer #{token}"
+        if data
+          req.content_type = 'application/json'
+          req.body         = {data: data}.to_json
         end
-        raise Error, "failed to ask App Store Connect: #{res.code} #{res.body}" unless
+        res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) {|http| http.request req}
+        raise Error, "failed to #{method} #{path} of App Store Connect: #{res.code} #{res.body}" unless
           res.is_a? Net::HTTPSuccess
-        JSON.parse res.body
+        JSON.parse res.body unless res.body.to_s.empty?
       end
 
       # The JSON Web Token of App Store Connect, signed by ES256, whose

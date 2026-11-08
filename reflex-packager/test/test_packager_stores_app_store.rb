@@ -65,8 +65,8 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
 
   # App Store Connect answering the requests by +answers+ of the paths.
   def asc(answers)
-    asc = Object.new
-    asc.define_singleton_method(:api) {|path, **| answers.fetch path}
+    asc = RP::AppStoreConnect.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
+    asc.define_singleton_method(:get) {|path, **| answers.fetch path}
     asc
   end
 

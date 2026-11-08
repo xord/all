@@ -105,20 +105,18 @@ module Reflex
         # for APP_DESKTOP.
         #
         def download_metadata(dir, bundle_id:, platform:)
-          asc                = @app_store_connect
-          app, info, version = get_app asc, bundle_id, platform
+          app, info, version = get_app bundle_id, platform
 
           write_yaml File.join(dir, 'app.yml'),     app_metadata(app, info)
           write_yaml File.join(dir, 'version.yml'), version_metadata(version)
 
-          infos    = localizations asc, "/v1/appInfos/#{info['id']}/appInfoLocalizations"
-          versions = localizations asc, "/v1/appStoreVersions/#{version['id']}/appStoreVersionLocalizations"
+          infos, versions = localizations info, version
           (infos.keys | versions.keys).each do |locale|
             write_yaml File.join(dir, locale, 'app.yml'),
               APP_INFO_KEYS.to_h {[_1, infos.dig(locale, 'attributes', _1)]}
             write_yaml File.join(dir, locale, 'version.yml'),
               VERSION_KEYS.to_h {[_1, versions.dig(locale, 'attributes', _1)]}
-            download_screenshots asc, File.join(dir, locale), versions.dig(locale, 'id')
+            download_screenshots File.join(dir, locale), versions[locale]
           end
         end
 
@@ -127,13 +125,12 @@ module Reflex
         # only shows them for now, with +dry_run+ or not.
         #
         def upload_metadata(dir, bundle_id:, platform:, dry_run: false)
-          asc                          = @app_store_connect
-          app, info, version, versions = get_app asc, bundle_id, platform
+          app, info, version, versions = get_app bundle_id, platform
           puts "App Store Connect: #{app.dig 'attributes', 'name'} (#{bundle_id})," +
             " #{platform} #{version.dig 'attributes', 'versionString'} (#{state version})"
 
           info_changes, version_changes = metadata_changes(
-            asc, dir, app, info, version, first: versions.last.equal?(version))
+            dir, app, info, version, first: versions.last.equal?(version))
           errors = []
           errors << "the app info is #{state info}, which can not be edited" if
             !info_changes.empty? && !editable?(info)
@@ -178,16 +175,12 @@ module Reflex
         # +platform+, of the last not on the store, or else of the last one,
         # and all the versions for +platform+, from the last.
         #
-        def get_app(asc, bundle_id, platform)
-          app = asc.api('/v1/apps', 'filter[bundleId]': bundle_id)['data'].first ||
-            raise(Error, "no app of '#{bundle_id}' in App Store Connect")
-
-          info     = editable asc.api(
-            "/v1/apps/#{app['id']}/appInfos", include: CATEGORIES.join(','))['data']
-          versions = asc.api(
-            "/v1/apps/#{app['id']}/appStoreVersions",
-            'filter[platform]': PLATFORMS.fetch(platform), limit: 200)['data']
-              .sort_by {_1.dig('attributes', 'createdDate').to_s}.reverse
+        def get_app(bundle_id, platform)
+          asc      = @app_store_connect
+          app      = asc.get_app bundle_id
+          info     = editable asc.get_app_infos(app, include: CATEGORIES)
+          versions = asc.get_versions(app, platform: PLATFORMS.fetch(platform))
+            .sort_by {_1.dig('attributes', 'createdDate').to_s}.reverse
           version  = editable(versions) ||
             raise(Error, "no version for #{platform} in App Store Connect")
           return app, info, version, versions
@@ -219,40 +212,42 @@ module Reflex
           {'copyright' => version.dig('attributes', 'copyright')}
         end
 
-        def localizations(asc, path)
-          asc.api(path, limit: 200)['data'].to_h {[_1.dig('attributes', 'locale'), _1]}
+        # The localizations of the app info and of the version, by the
+        # locales.
+        #
+        def localizations(info, version)
+          asc = @app_store_connect
+          [asc.get_app_info_localizations(info), asc.get_version_localizations(version)]
+            .map {|locs| locs.to_h {[_1.dig('attributes', 'locale'), _1]}}
         end
 
-        # The screenshots of the version in a language, of +localization_id+,
-        # as {'desktop' => [the screenshots]} for APP_DESKTOP, skipping the
-        # ones not for the apps, as IMESSAGE_*.
+        # The screenshots of +localization+ of the version in a language, as
+        # {'desktop' => [the screenshots]} for APP_DESKTOP, skipping the ones
+        # not for the apps, as IMESSAGE_*.
         #
-        def screenshots(asc, localization_id)
-          sets = asc.api(
-            "/v1/appStoreVersionLocalizations/#{localization_id}/appScreenshotSets",
-            limit: 200)['data']
-          sets.each_with_object({}) do |set, hash|
+        def screenshots(localization)
+          asc = @app_store_connect
+          asc.get_screenshot_sets(localization).each_with_object({}) do |set, hash|
             type = set.dig 'attributes', 'screenshotDisplayType'
             next puts "skipped the screenshots for #{type}" unless type.start_with? 'APP_'
 
-            hash[type.delete_prefix('APP_').downcase] =
-              asc.api("/v1/appScreenshotSets/#{set['id']}/appScreenshots", limit: 200)['data']
+            hash[type.delete_prefix('APP_').downcase] = asc.get_screenshots set
           end
         end
 
-        # Writes the screenshots of the version in a language, of
-        # +localization_id+, into the directories of the display types in
+        # Writes the screenshots of +localization+ of the version in a
+        # language, or nil, into the directories of the display types in
         # +dir+, as desktop/ for APP_DESKTOP, taking the place of the ones
         # there, which are removed even with no screenshot of the language;
         # in JPEG for the ones uploaded so, or else in PNG.
         #
-        def download_screenshots(asc, dir, localization_id)
+        def download_screenshots(dir, localization)
           olds = Dir.glob File.join(dir, '*', 'screenshot_*.{png,jpg,jpeg}')
           FileUtils.rm_f olds
           olds.map {File.dirname _1}.uniq.each {Dir.rmdir _1 if Dir.empty? _1}
-          return unless localization_id
+          return unless localization
 
-          screenshots(asc, localization_id).each do |name, shots|
+          screenshots(localization).each do |name, shots|
             shots.each.with_index 1 do |shot, index|
               asset = shot.dig('attributes', 'imageAsset') ||
                 raise(Error, "no image of the screenshot #{index} for #{name}, not processed yet?")
@@ -283,7 +278,7 @@ module Reflex
         # same as in +dir+, skipping whatsNew of the +first+ version of the
         # app, which App Store Connect does not take.
         #
-        def metadata_changes(asc, dir, app, info, version, first:)
+        def metadata_changes(dir, app, info, version, first:)
           app_yml     = read_yaml(File.join(dir, 'app.yml'), app_metadata(app, info).keys) ||
             raise(Error, "no app.yml in #{dir}")
           version_yml = read_yaml(File.join(dir, 'version.yml'), version_metadata(version).keys) ||
@@ -300,8 +295,7 @@ module Reflex
               !read_yaml(File.join(dir, _1, 'version.yml'), VERSION_KEYS)&.dig('whatsNew').to_s.empty?
             }
 
-          infos    = localizations asc, "/v1/appInfos/#{info['id']}/appInfoLocalizations"
-          versions = localizations asc, "/v1/appStoreVersions/#{version['id']}/appStoreVersionLocalizations"
+          infos, versions = localizations info, version
 
           info_changes    = key_changes 'app.yml', app_metadata(app, info), app_yml
           version_changes = key_changes 'version.yml', version_metadata(version), version_yml
@@ -313,7 +307,7 @@ module Reflex
               dir, File.join(locale, 'version.yml'), versions[locale], VERSION_KEYS, keys)
             version_changes.concat screenshot_changes(
               locale,
-              versions.dig(locale, 'id')&.then {screenshots asc, _1} || {},
+              versions[locale]&.then {screenshots _1} || {},
               local_screenshots(File.join dir, locale))
           end
           return info_changes, version_changes

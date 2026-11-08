@@ -13,7 +13,9 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
       path = File.join dir, 'AuthKey.p8'
       File.write path, OpenSSL::PKey::EC.generate('prime256v1').to_pem
       asc = ASC.new issuer_id: 'ISSUER', key_id: 'KEY', key_path: path
-      asc.define_singleton_method(:get) do |path|
+      asc.define_singleton_method(:request) do |method, path, host:|
+        raise "not to the notary service: #{method} #{host}" if
+          method != :get || host != ASC::HOST_NOTARIZE
         answers.fetch(path.delete_prefix '/notary/v2/').then {_1.is_a?(Proc) ? _1.call : _1}
       end
       asc.define_singleton_method(:sleep) {|*|}
@@ -74,16 +76,89 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     end
   end
 
-  def test_api()
+  def test_request()
+    asc = ASC.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
+    asc.define_singleton_method(:token) {'TOKEN'}
+    # the requests sent while the block runs, answered by +code+ with +body+
+    send = -> (code, body = nil, &block) do
+      reqs = []
+      res  = Net::HTTPResponse::CODE_TO_OBJ[code].new '1.1', code, ''
+      res.define_singleton_method(:body) {body}
+      http = Object.new
+      http.define_singleton_method(:request) {|req| reqs << req; res}
+      stub(Net::HTTP, :start, nil) do
+        # by the block, which the stub does not call
+        Net::HTTP.singleton_class.remove_method :start
+        Net::HTTP.define_singleton_method(:start) {|*, **, &b| b.call http}
+        block.call
+      end
+      reqs.map do |req|
+        [req.method, req.uri.to_s, req['Authorization'], req.content_type, req.body]
+      end
+    end
+    data = {type: 'apps', id: 'APP'}
+
+    assert_equal [
+      ['GET', "#{ASC::HOST}/v1/apps", 'Bearer TOKEN', nil, nil],
+      ['GET', "#{ASC::HOST}/v1/apps?filter%5BbundleId%5D=com.example.app&limit=2", 'Bearer TOKEN', nil, nil]
+    ], send.('200', '{"data":[]}') {
+      assert_equal({'data' => []}, asc.__send__(:get, '/v1/apps'))
+      asc.__send__ :get, '/v1/apps', 'filter[bundleId]': 'com.example.app', limit: 2
+    }
+    assert_equal [
+      ['POST',  "#{ASC::HOST}/v1/apps",     'Bearer TOKEN', 'application/json', {data:}.to_json],
+      ['PATCH', "#{ASC::HOST}/v1/apps/APP", 'Bearer TOKEN', 'application/json', {data:}.to_json]
+    ], send.('200', {data:}.to_json) {
+      assert_equal({'data' => {'type' => 'apps', 'id' => 'APP'}},
+        asc.__send__(:request, :post, '/v1/apps', data))
+      asc.__send__ :request, :patch, '/v1/apps/APP', data
+    }
+    assert_equal [
+      ['DELETE', "#{ASC::HOST}/v1/apps/APP", 'Bearer TOKEN', nil, nil]
+    ], send.('204') {
+      assert_nil asc.__send__(:request, :delete, '/v1/apps/APP')
+    }
+
+    send.('409', 'ENTITY_ERROR') do
+      error = assert_raise(RP::Error) {asc.__send__ :request, :patch, '/v1/apps/APP', data}
+      assert_include error.message, 'patch /v1/apps/APP'
+      assert_include error.message, '409 ENTITY_ERROR'
+    end
+  end
+
+  def test_get()
     asc  = ASC.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
     gets = []
-    asc.define_singleton_method(:get) {|path, host:| gets << [host, path]; {}}
-    asc.api '/v1/apps'
-    asc.api '/v1/apps', 'filter[bundleId]': 'com.example.app', limit: 2
+    data = []
+    asc.define_singleton_method(:get) {|path, **query| gets << [path, query]; {'data' => data}}
+    get  = -> &block {gets.clear; block.call; gets}
+
+    error = assert_raise(RP::Error) {asc.get_app 'com.example.app'}
+    assert_include error.message, "no app of 'com.example.app'"
+
+    app, info, version = {'id' => 'APP'}, {'id' => 'INFO'}, {'id' => 'VER'}
+    loc, set           = {'id' => 'LOC'}, {'id' => 'SET'}
+    data               = [app]
+    assert_equal app,  asc.get_app('com.example.app')
+    assert_equal data, asc.get_versions(app, platform: 'MAC_OS')
+
+    assert_equal [['/v1/apps', {'filter[bundleId]': 'com.example.app'}]],
+      get.() {asc.get_app 'com.example.app'}
     assert_equal [
-      [ASC::API_HOST, '/v1/apps'],
-      [ASC::API_HOST, '/v1/apps?filter%5BbundleId%5D=com.example.app&limit=2']
-    ], gets
+      ['/v1/apps/APP/appInfos',                                  {include: 'a,b'}],
+      ['/v1/apps/APP/appStoreVersions',                          {'filter[platform]': 'MAC_OS', limit: 200}],
+      ['/v1/appInfos/INFO/appInfoLocalizations',                 {limit: 200}],
+      ['/v1/appStoreVersions/VER/appStoreVersionLocalizations',  {limit: 200}],
+      ['/v1/appStoreVersionLocalizations/LOC/appScreenshotSets', {limit: 200}],
+      ['/v1/appScreenshotSets/SET/appScreenshots',               {limit: 200}]
+    ], get.() {
+      asc.get_app_infos app, include: %w[a b]
+      asc.get_versions app, platform: 'MAC_OS'
+      asc.get_app_info_localizations info
+      asc.get_version_localizations version
+      asc.get_screenshot_sets loc
+      asc.get_screenshots set
+    }
   end
 
   def test_wait_until_notarized()
