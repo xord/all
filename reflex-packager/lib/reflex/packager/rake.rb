@@ -136,7 +136,7 @@ module Reflex
             task :metadata do
               id = bundle_id.call
               Stores::AppStore.new.upload_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
-                bundle_id: id, platform: :macos,
+                bundle_id: id, platform: :macos, version_string: config.display_version,
                 dry_run: get_env_bool(:dryrun)
             end
           end

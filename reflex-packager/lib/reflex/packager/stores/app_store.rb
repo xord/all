@@ -126,12 +126,13 @@ module Reflex
         end
 
         # Makes the metadata of the app in App Store Connect the same as in
-        # +dir+, which download_metadata writes, showing the changes first,
-        # and uploading them unless +dry_run+, but deleting the languages and
-        # the screenshots, done by hand for now.
+        # +dir+, which download_metadata writes, for the version of
+        # +version_string+, as 1.0, showing the changes first, and uploading
+        # them unless +dry_run+, but deleting the languages and the
+        # screenshots, done by hand for now.
         #
-        def upload_metadata(dir, bundle_id:, platform:, dry_run: false)
-          app, info, version, versions = get_app bundle_id, platform
+        def upload_metadata(dir, bundle_id:, platform:, version_string:, dry_run: false)
+          app, info, version, versions = get_app bundle_id, platform, version_string
           puts "App Store Connect: #{app.dig 'attributes', 'name'} (#{bundle_id})," +
             " #{platform} #{version.dig 'attributes', 'versionString'} (#{state version})"
 
@@ -180,17 +181,25 @@ module Reflex
         private
 
         # The app of +bundle_id+, the info of it and the version for
-        # +platform+, of the last not on the store, or else of the last one,
-        # and all the versions for +platform+, from the last.
+        # +platform+, of +version_string+, as 1.0, which is to be created on
+        # the web first, not to be made by mistake; or else of the last not
+        # on the store, or of the last one; and all the versions for
+        # +platform+, from the last.
         #
-        def get_app(bundle_id, platform)
+        def get_app(bundle_id, platform, version_string = nil)
           asc      = @app_store_connect
           app      = asc.get_app bundle_id
           info     = editable asc.get_app_infos(app, include: CATEGORIES)
           versions = asc.get_versions(app, platform: PLATFORMS.fetch(platform))
             .sort_by {_1.dig('attributes', 'createdDate').to_s}.reverse
-          version  = editable(versions) ||
-            raise(Error, "no version for #{platform} in App Store Connect")
+          version  =
+            if version_string
+              versions.find {_1.dig('attributes', 'versionString') == version_string} ||
+                raise(Error, "no version #{version_string} for #{platform} in App Store Connect," +
+                  ' to be created on the web first')
+            else
+              editable(versions) || raise(Error, "no version for #{platform} in App Store Connect")
+            end
           return app, info, version, versions
         end
 

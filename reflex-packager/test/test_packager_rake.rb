@@ -195,11 +195,12 @@ class TestPackagerRake < Test::Unit::TestCase
       metadata = {bundle_id: 'com.example.game', platform: :macos}
       assert_equal [[:download, [path], metadata]],
         run['download:appstore:metadata']
-      assert_equal [[:upload, [path], {**metadata, dry_run: false}]],
+      # to the version of the app
+      assert_equal [[:upload, [path], {**metadata, version_string: '1.2.3', dry_run: false}]],
         run['upload:appstore:metadata', 'dryrun' => nil]
-      assert_equal [[:upload, [path], {**metadata, dry_run: false}]],
+      assert_equal [[:upload, [path], {**metadata, version_string: '1.2.3', dry_run: false}]],
         run['upload:appstore:metadata', 'dryrun' => '0']
-      assert_equal [[:upload, [path], {**metadata, dry_run: true}]],
+      assert_equal [[:upload, [path], {**metadata, version_string: '1.2.3', dry_run: true}]],
         run['upload:appstore:metadata', 'dryrun' => '1']
     end
   end
