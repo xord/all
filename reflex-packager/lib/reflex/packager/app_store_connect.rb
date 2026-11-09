@@ -131,6 +131,45 @@ module Reflex
         get("/v1/appScreenshotSets/#{set['id']}/appScreenshots", limit: 200)['data']
       end
 
+      # Creates the localization of +parent+, the app info or the version, in
+      # +locale+, by +attributes+.
+      #
+      def create_localization(parent, locale, attributes)
+        relation = {'appInfos' => 'appInfo', 'appStoreVersions' => 'appStoreVersion'}
+          .fetch parent['type']
+        type     = "#{relation}Localizations"
+        request :post, "/v1/#{type}", {
+          type:          type,
+          attributes:    {locale: locale, **attributes},
+          relationships: {relation => {data: {type: parent['type'], id: parent['id']}}}
+        }
+      end
+
+      # Updates +resource+, as the app, the version or a localization, by
+      # +attributes+, of which nil empties the value.
+      #
+      def update(resource, attributes)
+        type, id = resource.values_at 'type', 'id'
+        request :patch, "/v1/#{type}/#{id}", {type: type, id: id, attributes: attributes}
+      end
+
+      # Updates the categories of +info+, the app info, by +categories+, as
+      # {'primaryCategory' => 'GAMES'}, of which nil removes the category.
+      #
+      def update_categories(info, categories)
+        request :patch, "/v1/appInfos/#{info['id']}", {
+          type:          'appInfos',
+          id:            info['id'],
+          relationships: categories.transform_values {{data: _1 && {type: 'appCategories', id: _1}}}
+        }
+      end
+
+      # Deletes +localization+ of the app info or of the version.
+      #
+      def delete_localization(localization)
+        request :delete, "/v1/#{localization['type']}/#{localization['id']}"
+      end
+
       # Waits until the app is notarized by +id+, raising the issues Apple
       # found unless it accepted the app.
       #

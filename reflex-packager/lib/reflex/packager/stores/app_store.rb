@@ -52,7 +52,8 @@ module Reflex
 
         # A change of the metadata in App Store Connect, by +op+ as A, M or D
         # of git status --short, of +path+ in the metadata, as en-US/app.yml,
-        # and of +key+ in it, from +from+ to +to+.
+        # and of +key+ in it, from +from+ to +to+, or to +to+ of the values
+        # in the file added.
         #
         Change = Struct.new :op, :path, :key, :from, :to do
           def to_s(width = 0)
@@ -121,16 +122,17 @@ module Reflex
         end
 
         # Makes the metadata of the app in App Store Connect the same as in
-        # +dir+, which download_metadata writes, showing the changes first;
-        # only shows them for now, with +dry_run+ or not.
+        # +dir+, which download_metadata writes, showing the changes first,
+        # and uploading them unless +dry_run+, but the screenshots, uploaded
+        # by hand for now.
         #
         def upload_metadata(dir, bundle_id:, platform:, dry_run: false)
           app, info, version, versions = get_app bundle_id, platform
           puts "App Store Connect: #{app.dig 'attributes', 'name'} (#{bundle_id})," +
             " #{platform} #{version.dig 'attributes', 'versionString'} (#{state version})"
 
-          info_changes, version_changes = metadata_changes(
-            dir, app, info, version, first: versions.last.equal?(version))
+          info_changes, version_changes, info_localizations, version_localizations =
+            metadata_changes(dir, app, info, version, first: versions.last.equal?(version))
           errors = []
           errors << "the app info is #{state info}, which can not be edited" if
             !info_changes.empty? && !editable?(info)
@@ -145,7 +147,7 @@ module Reflex
           return puts 'dry run, nothing uploaded' if dry_run
 
           raise Error, errors.join(', ') unless errors.empty?
-          raise Error, 'uploading the metadata is not supported yet, but the dry run'
+          upload_changes changes, app, info, version, info_localizations, version_localizations
         end
 
         # YAML of +hash+ with the strings as they are, of lines as the literal
@@ -262,21 +264,10 @@ module Reflex
           end
         end
 
-        def download(url)
-          res = Net::HTTP.get_response URI(url)
-          raise Error, "failed to download '#{url}': #{res.code}" unless res.is_a? Net::HTTPSuccess
-          res.body
-        end
-
-        def write_yaml(path, hash)
-          FileUtils.mkdir_p File.dirname(path)
-          File.write path, AppStore.yaml(hash)
-          puts "wrote #{path}"
-        end
-
         # The changes of the app info and of the version, to make them the
         # same as in +dir+, skipping whatsNew of the +first+ version of the
-        # app, which App Store Connect does not take.
+        # app, which App Store Connect does not take, and the localizations
+        # of them by the locales.
         #
         def metadata_changes(dir, app, info, version, first:)
           app_yml     = read_yaml(File.join(dir, 'app.yml'), app_metadata(app, info).keys) ||
@@ -310,7 +301,7 @@ module Reflex
               versions[locale]&.then {screenshots _1} || {},
               local_screenshots(File.join dir, locale))
           end
-          return info_changes, version_changes
+          return info_changes, version_changes, infos, versions
         end
 
         # The changes of +path+ in the metadata, of the localization
@@ -325,7 +316,8 @@ module Reflex
           when !remote
             raise Error, "no name in #{File.join dir, path}, which App Store Connect needs" if
               keys.include?('name') && local['name'].to_s.empty?
-            [Change.new('A', path)]
+            [Change.new('A', path, nil, nil,
+              local.slice(*keys).transform_values(&:to_s).reject {_2.empty?})]
           else
             key_changes path, remote['attributes'].slice(*keys), local.slice(*keys)
           end
@@ -377,6 +369,61 @@ module Reflex
           Dir.glob(File.join dir, '*', 'screenshot_*.{png,jpg,jpeg}')
             .sort_by {File.basename(_1)[/\d+/].to_i}
             .group_by {File.basename File.dirname(_1)}
+        end
+
+        # Uploads +changes+ of the texts, the ones of a file at once, to the
+        # localizations in +infos+ and +versions+ by the locales, in the order
+        # of adding, modifying and deleting, for the primary language to be
+        # changed to one added, and from one deleted; skips the screenshots,
+        # uploaded by hand for now.
+        #
+        def upload_changes(changes, app, info, version, infos, versions)
+          asc          = @app_store_connect
+          texts, shots = changes.partition {%w[app.yml version.yml].include? File.basename(_1.path)}
+          texts
+            .group_by {[_1.op, _1.path]}
+            .sort_by.with_index {|((op, _), _), i| ['AMD'.index(op), i]}
+            .each do |(op, path), group|
+              values = op == 'A' ? group.first.to : group.to_h {[_1.key, _1.to]}
+              case path
+              when 'app.yml'
+                primary, categories = values.partition {|key,| key == 'primaryLocale'}.map(&:to_h)
+                asc.update            app,  primary    unless primary.empty?
+                asc.update_categories info, categories unless categories.empty?
+              when 'version.yml'
+                asc.update version, values
+              when %r{/app\.yml\z} then upload_localization op, path, values, info,    infos
+              else                      upload_localization op, path, values, version, versions
+              end
+              puts "uploaded #{op} #{path}"
+            end
+          puts 'skipped the screenshots, which are to be uploaded by hand' unless shots.empty?
+        end
+
+        # Uploads the change +op+ of +path+, as fr/app.yml, by +values+, to
+        # the localization of +parent+, the app info or the version, in
+        # +localizations+ by the locales.
+        #
+        def upload_localization(op, path, values, parent, localizations)
+          asc    = @app_store_connect
+          locale = File.dirname path
+          case op
+          when 'A' then asc.create_localization parent, locale, values
+          when 'M' then asc.update              localizations[locale], values
+          when 'D' then asc.delete_localization localizations[locale]
+          end
+        end
+
+        def download(url)
+          res = Net::HTTP.get_response URI(url)
+          raise Error, "failed to download '#{url}': #{res.code}" unless res.is_a? Net::HTTPSuccess
+          res.body
+        end
+
+        def write_yaml(path, hash)
+          FileUtils.mkdir_p File.dirname(path)
+          File.write path, AppStore.yaml(hash)
+          puts "wrote #{path}"
         end
 
         # The YAML in +path+ as a hash, or nil without the file, raising for

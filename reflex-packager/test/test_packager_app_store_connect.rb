@@ -161,6 +161,48 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     }
   end
 
+  def test_update()
+    asc  = ASC.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
+    reqs = []
+    asc.define_singleton_method(:request) {|*args| reqs << args; nil}
+    info, version = {'type' => 'appInfos', 'id' => 'INFO'}, {'type' => 'appStoreVersions', 'id' => 'VER'}
+    loc           = {'type' => 'appInfoLocalizations', 'id' => 'LOC'}
+
+    asc.create_localization info,    'ja', {'name' => 'ゲーム'}
+    asc.create_localization version, 'ja', {'description' => 'あ'}
+    asc.update loc, {'name' => 'ゲーム', 'subtitle' => nil}
+    asc.update_categories info, {'primaryCategory' => 'GAMES', 'secondaryCategory' => nil}
+    asc.delete_localization loc
+    assert_equal [
+      [:post, '/v1/appInfoLocalizations', {
+        type:          'appInfoLocalizations',
+        attributes:    {locale: 'ja', 'name' => 'ゲーム'},
+        relationships: {'appInfo' => {data: {type: 'appInfos', id: 'INFO'}}}
+      }],
+      [:post, '/v1/appStoreVersionLocalizations', {
+        type:          'appStoreVersionLocalizations',
+        attributes:    {locale: 'ja', 'description' => 'あ'},
+        relationships: {'appStoreVersion' => {data: {type: 'appStoreVersions', id: 'VER'}}}
+      }],
+      [:patch, '/v1/appInfoLocalizations/LOC', {
+        type:       'appInfoLocalizations',
+        id:         'LOC',
+        attributes: {'name' => 'ゲーム', 'subtitle' => nil}
+      }],
+      [:patch, '/v1/appInfos/INFO', {
+        type:          'appInfos',
+        id:            'INFO',
+        relationships: {
+          'primaryCategory'   => {data: {type: 'appCategories', id: 'GAMES'}},
+          'secondaryCategory' => {data: nil}
+        }
+      }],
+      [:delete, '/v1/appInfoLocalizations/LOC']
+    ], reqs
+
+    assert_raise(KeyError) {asc.create_localization loc, 'ja', {}}
+  end
+
   def test_wait_until_notarized()
     statuses = [status('In Progress'), status('Accepted')]
     asc 'submissions/abc' => -> {statuses.shift} do |asc, _|

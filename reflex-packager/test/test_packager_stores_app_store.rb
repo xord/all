@@ -63,15 +63,22 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
     end
   end
 
-  # App Store Connect answering the requests by +answers+ of the paths.
-  def asc(answers)
+  # App Store Connect answering GET by +answers+ of the paths, and putting
+  # the other requests into +requests+.
+  def asc(answers, requests = [])
     asc = RP::AppStoreConnect.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
-    asc.define_singleton_method(:get) {|path, **| answers.fetch path}
+    asc.define_singleton_method(:get)     {|path, **| answers.fetch path}
+    asc.define_singleton_method(:request) {|*args| requests << args; nil}
     asc
   end
 
-  def localization(locale, **attrs)
-    {'id' => "L-#{locale}", 'attributes' => {'locale' => locale, **attrs.transform_keys(&:to_s)}}
+  # The localization of +parent+, as appInfo, in +locale+.
+  def localization(parent, locale, **attrs)
+    {
+      'type'       => "#{parent}Localizations",
+      'id'         => "L-#{locale}",
+      'attributes' => {'locale' => locale, **attrs.transform_keys(&:to_s)}
+    }
   end
 
   def screenshot(file_name)
@@ -99,12 +106,12 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         }}
       ]},
       '/v1/appInfos/INFO/appInfoLocalizations' => {'data' => [
-        localization('en-US', name: 'My Game', subtitle: nil, privacyPolicyUrl: 'https://a'),
-        localization('ja',    name: 'マイゲーム')
+        localization('appInfo', 'en-US', name: 'My Game', subtitle: nil, privacyPolicyUrl: 'https://a'),
+        localization('appInfo', 'ja',    name: 'マイゲーム')
       ]},
       '/v1/appStoreVersions/VER/appStoreVersionLocalizations' => {'data' => [
-        localization('en-US', description: "Line 1\nLine 2", keywords: 'a,b', whatsNew: "- Fix\n"),
-        localization('fr',    description: 'Jeu')
+        localization('appStoreVersion', 'en-US', description: "Line 1\nLine 2", keywords: 'a,b', whatsNew: "- Fix\n"),
+        localization('appStoreVersion', 'fr',    description: 'Jeu')
       ]},
       '/v1/appStoreVersionLocalizations/L-en-US/appScreenshotSets' => {'data' => [
         {'id' => 'DESKTOP',  'attributes' => {'screenshotDisplayType' => 'APP_DESKTOP'}},
@@ -189,27 +196,29 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
     shot    = -> name, s {{'attributes' => {'fileName' => name, 'sourceFileChecksum' => md5[s]}}}
     answers = -> state: 'PREPARE_FOR_SUBMISSION', versions: 2 {{
       '/v1/apps' => {'data' => [
-        {'id' => 'APP', 'attributes' => {'name' => 'My Game', 'primaryLocale' => 'en-US'}}
+        {'type' => 'apps', 'id' => 'APP', 'attributes' => {'name' => 'My Game', 'primaryLocale' => 'en-US'}}
       ]},
       '/v1/apps/APP/appInfos' => {'data' => [
-        {'id' => 'INFO', 'attributes' => {'state' => state}, 'relationships' => {
+        {'type' => 'appInfos', 'id' => 'INFO', 'attributes' => {'state' => state}, 'relationships' => {
           'primaryCategory' => {'data' => {'id' => 'GAMES'}}
         }}
       ]},
       '/v1/apps/APP/appStoreVersions' => {'data' => [
-        {'id' => 'OLD', 'attributes' => {'appStoreState' => 'READY_FOR_SALE', 'createdDate' => '2026-01-01'}},
-        {'id' => 'VER', 'attributes' => {
+        {'type' => 'appStoreVersions', 'id' => 'OLD', 'attributes' => {
+          'appStoreState' => 'READY_FOR_SALE', 'createdDate' => '2026-01-01'
+        }},
+        {'type' => 'appStoreVersions', 'id' => 'VER', 'attributes' => {
           'appStoreState' => state, 'createdDate' => '2026-10-01',
           'versionString' => '1.1.0', 'copyright' => '2026 a'
         }}
       ].last(versions)},
       '/v1/appInfos/INFO/appInfoLocalizations' => {'data' => [
-        localization('en-US', name: 'My Game', subtitle: 'Old'),
-        localization('fr',    name: 'Jeu')
+        localization('appInfo', 'en-US', name: 'My Game', subtitle: 'Old'),
+        localization('appInfo', 'fr',    name: 'Jeu')
       ]},
       '/v1/appStoreVersions/VER/appStoreVersionLocalizations' => {'data' => [
-        localization('en-US', description: "A\nB", whatsNew: 'Fix a'),
-        localization('fr',    description: 'Jeu')
+        localization('appStoreVersion', 'en-US', description: "A\nB", whatsNew: 'Fix a'),
+        localization('appStoreVersion', 'fr',    description: 'Jeu')
       ]},
       '/v1/appStoreVersionLocalizations/L-en-US/appScreenshotSets' => {'data' => [
         {'id' => 'DESKTOP', 'attributes' => {'screenshotDisplayType' => 'APP_DESKTOP'}}
@@ -222,9 +231,11 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       ]},
       '/v1/appScreenshotSets/FR/appScreenshots' => {'data' => [shot['x.png', '1']]}
     }}
-    upload = -> dir, dry_run: true, **kwargs do
+    requests = []
+    upload   = -> dir, dry_run: true, **kwargs do
       lines     = []
-      app_store = RP::Stores::AppStore.new asc(answers[**kwargs])
+      requests.clear
+      app_store = RP::Stores::AppStore.new asc(answers[**kwargs], requests)
       app_store.define_singleton_method(:puts) {|s = ''| lines << s.squeeze(' ')}
       app_store.upload_metadata dir,
         bundle_id: 'com.example.app', platform: :macos, dry_run: dry_run
@@ -265,6 +276,63 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         ' M version.yml copyright: "2026 a" -> "2026 b"',
         'dry run, nothing uploaded'
       ], upload[dir]
+      assert_empty requests
+
+      # adding, modifying and deleting, for the primary language to be
+      # changed to one added and from one deleted, but the screenshots
+      assert_equal [
+        'uploaded A ja/app.yml',
+        'uploaded A ja/version.yml',
+        'uploaded M app.yml',
+        'uploaded M en-US/app.yml',
+        'uploaded M en-US/version.yml',
+        'uploaded M version.yml',
+        'uploaded D fr/app.yml',
+        'uploaded D fr/version.yml',
+        'skipped the screenshots, which are to be uploaded by hand'
+      ], upload[dir, dry_run: false].last(9)
+      assert_equal [
+        [:post, '/v1/appInfoLocalizations', {
+          type:          'appInfoLocalizations',
+          attributes:    {locale: 'ja', 'name' => 'マイゲーム'},
+          relationships: {'appInfo' => {data: {type: 'appInfos', id: 'INFO'}}}
+        }],
+        [:post, '/v1/appStoreVersionLocalizations', {
+          type:          'appStoreVersionLocalizations',
+          attributes:    {locale: 'ja', 'description' => 'あ'},
+          relationships: {'appStoreVersion' => {data: {type: 'appStoreVersions', id: 'VER'}}}
+        }],
+        [:patch, '/v1/appInfos/INFO', {
+          type:          'appInfos',
+          id:            'INFO',
+          relationships: {'primaryCategory' => {data: {type: 'appCategories', id: 'ENTERTAINMENT'}}}
+        }],
+        [:patch, '/v1/appInfoLocalizations/L-en-US', {
+          type:       'appInfoLocalizations',
+          id:         'L-en-US',
+          attributes: {'subtitle' => 'New'}
+        }],
+        [:patch, '/v1/appStoreVersionLocalizations/L-en-US', {
+          type:       'appStoreVersionLocalizations',
+          id:         'L-en-US',
+          attributes: {'description' => "A\nC", 'whatsNew' => 'Fix b'}
+        }],
+        [:patch, '/v1/appStoreVersions/VER', {
+          type:       'appStoreVersions',
+          id:         'VER',
+          attributes: {'copyright' => '2026 b'}
+        }],
+        [:delete, '/v1/appInfoLocalizations/L-fr'],
+        [:delete, '/v1/appStoreVersionLocalizations/L-fr']
+      ], requests
+
+      # to the language added, before the categories
+      File.write File.join(dir, 'app.yml'), "primaryLocale: ja\nprimaryCategory: ENTERTAINMENT\n"
+      upload[dir, dry_run: false]
+      assert_equal [:patch, '/v1/apps/APP', {type: 'apps', id: 'APP', attributes: {'primaryLocale' => 'ja'}}],
+        requests[2]
+      assert_equal [:patch, '/v1/appInfos/INFO'], requests[3].first(2)
+      File.write File.join(dir, 'app.yml'), "primaryLocale: en-US\nprimaryCategory: ENTERTAINMENT\n"
 
       # not editable, and whatsNew of the first version skipped
       lines = upload[dir, state: 'WAITING_FOR_REVIEW', versions: 1]
@@ -274,8 +342,7 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       assert_include     lines, ' ! the version is WAITING_FOR_REVIEW, which can not be edited'
       error = assert_raise(RP::Error) {upload[dir, state: 'WAITING_FOR_REVIEW', dry_run: false]}
       assert_include error.message, 'which can not be edited'
-      error = assert_raise(RP::Error) {upload[dir, dry_run: false]}
-      assert_include error.message, 'not supported yet'
+      assert_empty requests
 
       # nothing to tell skipped without whatsNew
       File.write File.join(dir, 'en-US/version.yml'), "description: |-\n  A\n  C\n"
