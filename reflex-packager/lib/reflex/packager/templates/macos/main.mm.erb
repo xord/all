@@ -27,6 +27,14 @@ main (int argc, const char* argv[])
 		for (NSString* lib in @[<%= lib_names.reverse.map {"@\"#{_1}\""}.join ', ' %>])
 			[CRuby addLibrary:lib bundle:NSBundle.mainBundle];
 
+		// the arguments of the command line, as ARGV of the app, as on Windows,
+		// once CRuby is set up by the first evaluation
+		if (argc > 1)
+		{
+			[CRuby evaluate:@"nil"];
+			ruby_set_argv(argc - 1, (char**) argv + 1);
+		}
+
 		NSString* boot = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"boot.rb"];
 		return [CRuby start:boot rescue:^(CRBValue* exception) {
 			CRBValue* message = [exception call:@"full_message" rescue:^(CRBValue* e) {}];
