@@ -35,6 +35,26 @@ class TestRakeUtil < Test::Unit::TestCase
       assert !system('git', 'commit', '-q', '-m', 'Update ChangeLog', out: File::NULL, err: File::NULL)
       assert_equal '9.9.9', File.read('VERSION')
     end
+
+    # the hooks of the others in pre-commit.d, run after VERSION is written
+    repo do |dir|
+      others = File.join dir, '.others'
+      FileUtils.mkdir_p File.join(others, 'pre-commit.d')
+      File.write File.join(others, 'pre-commit.d/a.rb'), "File.write '.ran', File.read('VERSION')"
+      install_hooks
+      install_hooks others
+      assert File.file?('.git/hooks/pre-commit.d/a.rb')
+
+      ChangeLog.new.add '0.2.0', ['Add a'], date: Time.new(2026, 10, 12)
+      git! 'add', 'ChangeLog.md'
+      git! 'commit', '-q', '-m', 'Update ChangeLog'
+      assert_equal '0.2.0', File.read('.ran')
+
+      File.write '.git/hooks/pre-commit.d/b.rb', 'exit 1'
+      File.write 'a.txt', ''
+      git! 'add', 'a.txt'
+      assert !system('git', 'commit', '-q', '-m', 'Add a', out: File::NULL, err: File::NULL)
+    end
   end
 
   def test_version_changes()

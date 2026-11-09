@@ -252,12 +252,17 @@ module Xot
       flags
     end
 
-    def install_hooks()
-      dir = git('rev-parse', '--git-path', 'hooks').strip
-      FileUtils.mkdir_p dir
-      Dir.glob(File.join __dir__, 'hooks', '*').each do |hook|
-        FileUtils.cp hook, dir
-        FileUtils.chmod 0755, File.join(dir, File.basename(hook))
+    # Copies the hooks in +dir+ into the hooks of git, with the directories
+    # in it, as pre-commit.d of the hooks the pre-commit of xot runs.
+    #
+    def install_hooks(dir = File.join(__dir__, 'hooks'))
+      hooks = git('rev-parse', '--git-path', 'hooks').strip
+      Dir.glob('**/*', base: dir).each do |path|
+        next if File.directory? File.join(dir, path)
+        to = File.join hooks, path
+        FileUtils.mkdir_p File.dirname(to)
+        FileUtils.cp File.join(dir, path), to
+        FileUtils.chmod 0755, to
       end
     end
 

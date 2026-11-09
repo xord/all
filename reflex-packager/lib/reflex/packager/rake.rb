@@ -12,6 +12,10 @@ module Reflex
 
     module Rake
 
+      # The metadata of the app for the App Store, in the directory of the app.
+      #
+      APPSTORE_METADATA_DIR = 'store/appstore'
+
       # Defines the tasks to package and release the app, by +profile+,
       # which the rake file of the gem of another profile gives.
       #
@@ -35,6 +39,9 @@ module Reflex
         appstore       = -> {'--appstore' if config.upload.appstore? && get_env(:appstore, false)}
         no_upload      = -> key do
           puts "not uploading, by upload.#{key} of #{profile.config_files.first}"
+        end
+        bundle_id      = -> do
+          config.macos.bundle_id || raise("no macos.bundle_id in #{profile.config_files.first}")
         end
 
         desc "package the application into #{relative[app_path]}"
@@ -87,6 +94,17 @@ module Reflex
           release_on_github(*paths, tag: tag, notes: release_notes(tag))
         end
 
+        namespace :download do
+          namespace :appstore do
+            desc "download the metadata of the app in App Store Connect into #{APPSTORE_METADATA_DIR}"
+            task :metadata do
+              id = bundle_id.call
+              Stores::AppStore.new.download_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
+                bundle_id: id, platform: :macos
+            end
+          end
+        end
+
         namespace :upload do
           desc "upload #{relative[archive_path]} to itch.io, by upload.itchio"
           if config.upload.itchio?
@@ -111,6 +129,21 @@ module Reflex
               task(:appstore) {no_upload[:appstore]}
             end
           end
+
+          namespace :appstore do
+            desc "upload the metadata in #{APPSTORE_METADATA_DIR} to App Store Connect," +
+              ' only showing the changes by dryrun=1'
+            task :metadata do
+              id = bundle_id.call
+              Stores::AppStore.new.upload_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
+                bundle_id: id, platform: :macos,
+                dry_run: get_env_bool(:dryrun)
+            end
+          end
+        end
+
+        task :hooks do
+          install_hooks File.join(__dir__, 'hooks')
         end
 
         task :clean do

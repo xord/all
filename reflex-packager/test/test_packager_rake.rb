@@ -8,11 +8,11 @@ class TestPackagerRake < Test::Unit::TestCase
   include Xot::Rake
   include Reflex::Packager::Rake
 
-  def application(&block)
+  def application(yaml = '', &block)
     Dir.mktmpdir do |dir|
       Dir.chdir dir do
         {
-          'reflex.yml' => "name: My Game\nfiles: ['lib/**/*']\n",
+          'reflex.yml' => "name: My Game\nfiles: ['lib/**/*']\n#{yaml}",
           'main.rb'    => '',
           'VERSION'    => '1.2.3',
           'lib/a/b.rb' => ''
@@ -165,6 +165,43 @@ class TestPackagerRake < Test::Unit::TestCase
     end
   end
 
+  def test_metadata()
+    calls    = nil
+    appstore = Object.new
+    appstore.define_singleton_method(:download_metadata) {|*args, **kwargs| calls << [:download, args, kwargs]}
+    appstore.define_singleton_method(:upload_metadata)   {|*args, **kwargs| calls << [:upload,   args, kwargs]}
+    run = -> (task, env = {}) do
+      calls = []
+      stub(Reflex::Packager::Stores::AppStore, :new, appstore) {with_env(env) {::Rake::Task[task].execute}}
+      calls
+    end
+
+    application do
+      package_application
+      %w[download:appstore:metadata upload:appstore:metadata].each do |task|
+        assert_include ::Rake::Task[task].comment, 'store/appstore'
+        # not by the stub, to fail before the API key is checked
+        error = assert_raise(RuntimeError) {::Rake::Task[task].execute}
+        assert_include error.message, 'macos.bundle_id'
+      end
+    end
+
+    ::Rake::Task.clear
+    application "macos: {bundle_id: com.example.game}\n" do |dir|
+      package_application
+      path     = "#{dir}/store/appstore"
+      metadata = {bundle_id: 'com.example.game', platform: :macos}
+      assert_equal [[:download, [path], metadata]],
+        run['download:appstore:metadata']
+      assert_equal [[:upload, [path], {**metadata, dry_run: false}]],
+        run['upload:appstore:metadata', 'dryrun' => nil]
+      assert_equal [[:upload, [path], {**metadata, dry_run: false}]],
+        run['upload:appstore:metadata', 'dryrun' => '0']
+      assert_equal [[:upload, [path], {**metadata, dry_run: true}]],
+        run['upload:appstore:metadata', 'dryrun' => '1']
+    end
+  end
+
   def test_notarize()
     application do
       cmds = []
@@ -225,6 +262,64 @@ class TestPackagerRake < Test::Unit::TestCase
         package_application
       end
       assert_false ::Rake::Task.task_defined?('notarize') # only on macos
+    end
+  end
+
+  def test_hooks()
+    git_env = {
+      'GIT_CONFIG_GLOBAL'   => File::NULL,
+      'GIT_CONFIG_NOSYSTEM' => '1',
+      'GIT_AUTHOR_NAME'     => 'test',
+      'GIT_AUTHOR_EMAIL'    => 'test@example.com',
+      'GIT_COMMITTER_NAME'  => 'test',
+      'GIT_COMMITTER_EMAIL' => 'test@example.com'
+    }
+    git = -> *args {system 'git', *args, out: File::NULL, err: File::NULL}
+    application do
+      with_env git_env do
+        %w[en-US ja].each {FileUtils.mkdir_p "store/appstore/#{_1}"}
+        File.write 'ChangeLog.md', "# My Game ChangeLog\n\n\n## [v1.2.3] - 2026-10-13\n\n- Add a\n"
+        File.write 'store/appstore/en-US/version.yml',
+          "description: |-\n  A\n\n  B\nwhatsNew: |-\n  - Add a\n\n  - Add b\n\nkeywords: a\n"
+        File.write 'store/appstore/ja/version.yml', "description: あ\nwhatsNew:\n"
+        git['init', '-q']
+        git['add', '-A']
+        git['commit', '-q', '-m', 'Start']
+
+        stub Gem, :win_platform?, false do
+          automate_release
+          package_application
+        end
+        ::Rake::Task['hooks'].invoke
+        assert File.file?('.git/hooks/pre-commit')
+        assert File.file?('.git/hooks/pre-commit.d/appstore-whats-new.rb')
+
+        File.write 'ChangeLog.md', File.read('ChangeLog.md').sub(
+          "\n\n\n", "\n\n\n## [v1.2.4] - 2026-10-14\n\n- Fix b\n- Fix c\n\n\n")
+        git['add', 'ChangeLog.md']
+        assert git['commit', '-q', '-m', 'Update ChangeLog']
+        assert_equal '1.2.4', File.read('VERSION')
+        assert_equal "description: |-\n  A\n\n  B\nwhatsNew: |-\n  - Fix b\n  - Fix c\n\nkeywords: a\n",
+          IO.popen(%w[git show HEAD:store/appstore/en-US/version.yml], &:read)
+        assert_equal "description: あ\nwhatsNew: |-\n  - Fix b\n  - Fix c\n",
+          IO.popen(%w[git show HEAD:store/appstore/ja/version.yml], &:read)
+        assert_empty IO.popen(%w[git status --porcelain], &:read)
+
+        # not to overwrite the changes not to be committed
+        File.write 'ChangeLog.md', File.read('ChangeLog.md').sub(
+          "\n\n\n", "\n\n\n## [v1.2.5] - 2026-10-15\n\n- Fix d\n\n\n")
+        File.write 'store/appstore/ja/version.yml', "description: い\nwhatsNew:\n"
+        git['add', 'ChangeLog.md']
+        assert_false git['commit', '-q', '-m', 'Update ChangeLog']
+
+        # not to write any, if one of them is not the YAML of whatsNew expected
+        en = File.read 'store/appstore/en-US/version.yml'
+        File.write 'store/appstore/ja/version.yml', "{description: い}\n"
+        git['add', 'store/appstore/ja/version.yml']
+        assert_false git['commit', '-q', '-m', 'Update ChangeLog']
+        assert_equal en,                    File.read('store/appstore/en-US/version.yml')
+        assert_equal "{description: い}\n", File.read('store/appstore/ja/version.yml')
+      end
     end
   end
 
