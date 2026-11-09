@@ -132,10 +132,16 @@ module Reflex
 
           namespace :appstore do
             desc "upload the metadata in #{APPSTORE_METADATA_DIR} to App Store Connect," +
-              ' only showing the changes by dryrun=1'
+              ' by upload.appstore, only showing the changes by dryrun=1'
             task :metadata do
+              dir = File.join config.dir, APPSTORE_METADATA_DIR
+              # nothing for an app not on the store, or not keeping the
+              # metadata, as on CI, by a tag of any app
+              next no_upload[:appstore] unless config.upload.appstore?
+              next puts "not uploading, with no #{APPSTORE_METADATA_DIR}" unless File.directory? dir
+
               id = bundle_id.call
-              Stores::AppStore.new.upload_metadata File.join(config.dir, APPSTORE_METADATA_DIR),
+              Stores::AppStore.new.upload_metadata dir,
                 bundle_id: id, platform: :macos, version_string: config.display_version,
                 dry_run: get_env_bool(:dryrun)
             end

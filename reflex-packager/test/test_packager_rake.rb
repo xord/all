@@ -182,17 +182,34 @@ class TestPackagerRake < Test::Unit::TestCase
       package_application
       %w[download:appstore:metadata upload:appstore:metadata].each do |task|
         assert_include ::Rake::Task[task].comment, 'store/appstore'
-        # not by the stub, to fail before the API key is checked
-        error = assert_raise(RuntimeError) {::Rake::Task[task].execute}
-        assert_include error.message, 'macos.bundle_id'
       end
+      # not by the stub, to fail before the API key is checked
+      error = assert_raise(RuntimeError) {::Rake::Task['download:appstore:metadata'].execute}
+      assert_include error.message, 'macos.bundle_id'
+
+      # nothing uploaded for an app not on the store, as on CI by a tag
+      out, = capture_output {::Rake::Task['upload:appstore:metadata'].execute}
+      assert_include out, 'by upload.appstore'
     end
 
     ::Rake::Task.clear
-    application "macos: {bundle_id: com.example.game}\n" do |dir|
+    application "upload: {appstore: true}\n" do |dir|
+      package_application
+      # nor for an app not keeping the metadata
+      out, = capture_output {::Rake::Task['upload:appstore:metadata'].execute}
+      assert_include out, 'with no store/appstore'
+
+      FileUtils.mkdir_p File.join(dir, 'store/appstore')
+      error = assert_raise(RuntimeError) {::Rake::Task['upload:appstore:metadata'].execute}
+      assert_include error.message, 'macos.bundle_id'
+    end
+
+    ::Rake::Task.clear
+    application "macos: {bundle_id: com.example.game}\nupload: {appstore: true}\n" do |dir|
       package_application
       path     = "#{dir}/store/appstore"
       metadata = {bundle_id: 'com.example.game', platform: :macos}
+      FileUtils.mkdir_p path
       assert_equal [[:download, [path], metadata]],
         run['download:appstore:metadata']
       # to the version of the app
