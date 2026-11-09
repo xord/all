@@ -235,8 +235,9 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     asc.define_singleton_method(:upload_part) {|op, bytes| parts << [op['url'], bytes]}
     asc.define_singleton_method(:get) {|path, **| {'data' => gets.shift}}
     asc.define_singleton_method(:sleep) {|*|}
-    shot  = -> state, errors = nil {{
-      'id' => 'SHOT', 'attributes' => {
+    asc.define_singleton_method(:puts)  {|*|}
+    shot  = -> state, id = 'SHOT', errors = nil {{
+      'id' => id, 'attributes' => {
         'fileName' => 'a.png', 'assetDeliveryState' => {'state' => state, 'errors' => errors}
       }
     }}
@@ -246,18 +247,23 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     Dir.mktmpdir do |dir|
       path = File.join dir, 'a.png'
       File.binwrite path, 'abcd'
-      gets.push shot['UPLOAD_COMPLETE'], shot['COMPLETE']
-      assert_equal shot['COMPLETE'], asc.upload_screenshot(set, path)
-      assert_empty gets # until processed
+      assert_equal 'SHOT', asc.upload_screenshot(set, path)['id'] # not waiting
       assert_equal [['https://up/0', 'ab'], ['https://up/2', 'cd']], parts
-
-      gets.push shot['FAILED', [{'description' => 'too large'}]]
-      error = assert_raise(RP::Error) {asc.upload_screenshot set, path}
-      assert_include error.message, 'a.png: too large'
     end
-    gets.push shot['UPLOAD_COMPLETE']
-    error = assert_raise(RP::Error) {asc.__send__ :wait_until_processed, shot[nil], timeout: -1}
-    assert_include error.message, 'timed out'
+
+    # all at once, the ones processed not asked again
+    a, b = shot['UPLOAD_COMPLETE', 'A'], shot['UPLOAD_COMPLETE', 'B']
+    gets.push a, b, shot['COMPLETE', 'A'], b, shot['COMPLETE', 'B']
+    assert_equal [shot['COMPLETE', 'A'], shot['COMPLETE', 'B']], asc.wait_until_processed([a, b])
+    assert_empty gets
+
+    gets.push shot['FAILED', 'A', [{'description' => 'too large'}]]
+    error = assert_raise(RP::Error) {asc.wait_until_processed [a]}
+    assert_include error.message, 'a.png: too large'
+
+    gets.push b
+    error = assert_raise(RP::Error) {asc.wait_until_processed [b], timeout: -1}
+    assert_include error.message, 'timed out waiting for 1 screenshot to be processed'
     asc.delete_screenshot 'id' => 'SHOT'
     asc.order_screenshots set, [{'id' => 'B'}, {'id' => 'A'}]
     assert_equal [
@@ -278,7 +284,6 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
         id:         'SHOT',
         attributes: {uploaded: true, sourceFileChecksum: Digest::MD5.hexdigest('abcd')}
       }],
-      *reqs[3, 2], # failed to be processed
       [:delete, '/v1/appScreenshots/SHOT'],
       [:patch, '/v1/appScreenshotSets/SET/relationships/appScreenshots', [
         {type: 'appScreenshots', id: 'B'},

@@ -35,11 +35,13 @@ module Reflex
       HOST          = 'https://api.appstoreconnect.apple.com'
       HOST_NOTARIZE = 'https://appstoreconnect.apple.com'
 
-      # Seconds to wait for a screenshot uploaded to be processed in all, and
-      # between the tries to see whether it finished.
+      # Seconds to wait for the screenshots uploaded to be processed in all,
+      # between the tries to see whether they finished, and between telling
+      # it is waiting.
       #
-      SCREENSHOT_TIMEOUT  = 5 * 60
-      SCREENSHOT_INTERVAL = 2
+      SCREENSHOT_TIMEOUT  = 10 * 60
+      SCREENSHOT_INTERVAL = 5
+      SCREENSHOT_TELLING  = 10
 
       # Seconds to wait for the notarization in all, and between the tries
       # to see whether it finished.
@@ -185,7 +187,9 @@ module Reflex
       end
 
       # Uploads the image in +path+ into +set+, at the end of the
-      # screenshots in it, waiting until it is processed.
+      # screenshots in it, not waiting for it to be processed, see
+      # #wait_until_processed, for the ones uploaded to be waited for at
+      # once.
       #
       def upload_screenshot(set, path)
         data = File.binread path
@@ -202,7 +206,44 @@ module Reflex
           id:         shot['id'],
           attributes: {uploaded: true, sourceFileChecksum: Digest::MD5.hexdigest(data)}
         }
-        wait_until_processed shot
+        shot
+      end
+
+      # The screenshots +shots+ uploaded, once App Store Connect processed
+      # all of them, raising the errors it found.
+      #
+      def wait_until_processed(
+        shots, timeout: SCREENSHOT_TIMEOUT, interval: SCREENSHOT_INTERVAL)
+
+        deadline = Time.now + timeout
+        done     = {}
+        told     = nil
+        loop do
+          shots.reject {done[_1['id']]}.each do |shot|
+            shot  = get("/v1/appScreenshots/#{shot['id']}")['data']
+            state = shot.dig 'attributes', 'assetDeliveryState'
+            name  = shot.dig 'attributes', 'fileName'
+            case state&.[]('state')
+            when 'COMPLETE'
+              done[shot['id']] = shot
+            when 'FAILED'
+              errors = (state['errors'] || []).map {_1['description']}
+              raise Error, "failed to process the screenshot #{name}: #{errors.join ', '}"
+            end
+          end
+          left = shots.size - done.size
+          return shots.map {done[_1['id']]} if left == 0
+
+          waiting = "#{left} screenshot#{'s' if left > 1}"
+          raise Error, "timed out waiting for #{waiting} to be processed," +
+            ' which may be in the media manager of App Store Connect, to be chosen by hand' if
+            Time.now > deadline
+          if !told || Time.now - told >= SCREENSHOT_TELLING
+            puts "waiting for #{waiting} to be processed..."
+            told = Time.now
+          end
+          sleep interval
+        end
       end
 
       def delete_screenshot(shot)
@@ -292,30 +333,6 @@ module Reflex
         res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') {|http| http.request req}
         raise Error, "failed to upload a part of the file: #{res.code} #{res.body}" unless
           res.is_a? Net::HTTPSuccess
-      end
-
-      # The screenshot +shot+ once App Store Connect processed it, raising
-      # the errors it found.
-      #
-      def wait_until_processed(
-        shot, timeout: SCREENSHOT_TIMEOUT, interval: SCREENSHOT_INTERVAL)
-
-        deadline = Time.now + timeout
-        loop do
-          shot  = get("/v1/appScreenshots/#{shot['id']}")['data']
-          state = shot.dig 'attributes', 'assetDeliveryState'
-          name  = shot.dig 'attributes', 'fileName'
-          case state&.[]('state')
-          when 'COMPLETE'
-            return shot
-          when 'FAILED'
-            errors = (state['errors'] || []).map {_1['description']}
-            raise Error, "failed to process the screenshot #{name}: #{errors.join ', '}"
-          end
-          raise Error, "timed out waiting for the screenshot #{name} to be processed" if
-            Time.now > deadline
-          sleep interval
-        end
       end
 
       # The JSON Web Token of App Store Connect, signed by ES256, whose

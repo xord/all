@@ -427,10 +427,14 @@ module Reflex
               infos, versions = localizations info, version if op == 'A'
               puts "uploaded #{op} #{path}"
             end
-          shots.map {_1.key ? _1.path : File.dirname(_1.path)}.uniq.each do |path|
+          sets  = shots.map {_1.key ? _1.path : File.dirname(_1.path)}.uniq.filter_map do |path|
             locale, name = File.split path
             upload_screenshots dir, locale, name, versions[locale]
           end
+          # all at once, which App Store Connect processes side by side
+          added = sets.flat_map {_1[:added]}
+          asc.wait_until_processed added unless added.empty?
+          sets.each {put_screenshots_in_order(**_1)}
           puts "skipped deleting the languages #{deletes.map {File.dirname _1.path}.uniq.join ', '}," +
             ' which are to be deleted by hand' unless deletes.empty?
         end
@@ -455,19 +459,22 @@ module Reflex
           end
         end
 
-        # Makes the screenshots of +localization+ of the version in +locale+
-        # for the display type +name+, as desktop for APP_DESKTOP, the same as
-        # the ones in the directory of it in +dir+: deleting first, for no more
-        # than App Store Connect takes in a set to be there, adding, and
-        # putting them in the order; skips deleting all of them, which losing
-        # the directory by mistake would do, done by hand.
+        # Uploads the screenshots in the directory of the display type +name+,
+        # as desktop for APP_DESKTOP, in +dir+ into the set of +localization+
+        # of the version in +locale+, deleting the others first, for no more
+        # than App Store Connect takes in a set to be there; and returns what
+        # #put_screenshots_in_order takes, once the ones added are processed.
+        # Skips deleting all of them, which losing the directory by mistake
+        # would do, done by hand.
         #
         def upload_screenshots(dir, locale, name, localization)
           asc   = @app_store_connect
           path  = File.join locale, name
           paths = local_screenshots(File.join dir, locale)[name]
-          return puts "skipped deleting the screenshots of #{path}, which are to be deleted by hand" unless
-            paths
+          unless paths
+            puts "skipped deleting the screenshots of #{path}, which are to be deleted by hand"
+            return nil
+          end
 
           type       = "APP_#{name.upcase}"
           set        = asc.get_screenshot_sets(localization)
@@ -483,10 +490,17 @@ module Reflex
             next if old
             asc.upload_screenshot(set, file).tap {puts "uploaded A #{File.join path, File.basename(file)}"}
           end
+          {path: path, set: set, olds: olds, kept: kept, added: added}
+        end
 
+        # Puts the screenshots of the set uploaded, see #upload_screenshots,
+        # in the order of the files, unless they are so.
+        #
+        def put_screenshots_in_order(path:, set:, olds:, kept:, added:)
           # the ones added are after the ones kept, in the order of them
           return if kept == kept.compact.sort + kept.select(&:nil?)
-          asc.order_screenshots set, kept.map {_1 ? olds[_1] : added.shift}
+          added = added.dup
+          @app_store_connect.order_screenshots set, kept.map {_1 ? olds[_1] : added.shift}
           puts "uploaded M #{path} order"
         end
 

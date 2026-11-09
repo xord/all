@@ -66,7 +66,8 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
   # App Store Connect answering GET by +answers+ of the paths, or by the
   # procs of them, and putting the other requests into +requests+, with the
   # screenshots uploaded as [:upload_screenshot, the set, the file name],
-  # whose ids are the file names.
+  # whose ids are the file names, and waited for to be processed as
+  # [:wait_until_processed, the ids].
   def asc(answers, requests = [])
     asc = RP::AppStoreConnect.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
     asc.define_singleton_method(:get) do |path, **|
@@ -76,6 +77,10 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
     asc.define_singleton_method(:upload_screenshot) do |set, path|
       requests << [:upload_screenshot, set['id'], File.basename(path)]
       {'id' => File.basename(path)}
+    end
+    asc.define_singleton_method(:wait_until_processed) do |shots|
+      requests << [:wait_until_processed, shots.map {_1['id']}]
+      shots
     end
     asc
   end
@@ -291,7 +296,8 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
 
       # adding and modifying, for the primary language to be changed to one
       # added, then the screenshots, deleting first for no more than a set
-      # takes; but deleting the languages, and all the screenshots of a type
+      # takes, and ordering them once all are processed; but deleting the
+      # languages, and all the screenshots of a type
       assert_equal [
         'uploaded A ja/app.yml',
         'uploaded A ja/version.yml',
@@ -301,8 +307,8 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         'uploaded M version.yml',
         'uploaded D en-US/desktop/c.png',
         'uploaded A en-US/desktop/screenshot_10.png',
-        'uploaded M en-US/desktop order',
         'skipped deleting the screenshots of fr/desktop, which are to be deleted by hand',
+        'uploaded M en-US/desktop order',
         'skipped deleting the languages fr, which are to be deleted by hand'
       ], upload[dir, dry_run: false].last(11)
       assert_equal [
@@ -338,6 +344,7 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         }],
         [:delete, '/v1/appScreenshots/c.png'],
         [:upload_screenshot, 'DESKTOP', 'screenshot_10.png'],
+        [:wait_until_processed, ['screenshot_10.png']],
         [:patch, '/v1/appScreenshotSets/DESKTOP/relationships/appScreenshots', [
           {type: 'appScreenshots', id: 'b.png'},
           {type: 'appScreenshots', id: 'a.png'},
