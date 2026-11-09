@@ -232,7 +232,8 @@ jobs:
     steps:
       - *checkout
 
-      - name: setup packages
+      - &setup-packages
+        name: setup packages
         # the ones of install_packages of beeps, rays and reflex, to build them
         run: |
           sudo apt-get update
@@ -276,6 +277,25 @@ jobs:
       - *upload
       - *release
       - *upload-itchio
+
+  macos-metadata:
+    # once the pkg is uploaded to App Store Connect, by the input on a tag,
+    # to the version of it, created on the web first
+    needs: [prepare, macos-package]
+    if: inputs.macos-appstore && github.ref_type == 'tag'
+    runs-on: ubuntu-latest # cheaper than macos
+
+    steps:
+      - *checkout
+      - *setup-packages
+      - *setup-ruby
+      - *setup-monorepo
+      - *setup-gems
+
+      - name: upload metadata
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: bundle exec rake upload:appstore:metadata
 
   windows-package:
     needs: prepare

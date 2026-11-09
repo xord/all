@@ -237,13 +237,13 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       ]},
       '/v1/appScreenshotSets/FR/appScreenshots' => {'data' => [shot['x.png', '1']]}
     }}
-    upload = -> dir, dry_run: true, **kwargs do
+    upload = -> dir, dry_run: true, version: '1.1.0', **kwargs do
       lines     = []
       requests.clear
       app_store = RP::Stores::AppStore.new asc(answers[**kwargs], requests)
       app_store.define_singleton_method(:puts) {|s = ''| lines << s.squeeze(' ')}
       app_store.upload_metadata dir,
-        bundle_id: 'com.example.app', platform: :macos, dry_run: dry_run
+        bundle_id: 'com.example.app', platform: :macos, version_string: version, dry_run: dry_run
       lines
     end
 
@@ -353,6 +353,10 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       error = assert_raise(RP::Error) {upload[dir, state: 'WAITING_FOR_REVIEW', dry_run: false]}
       assert_include error.message, 'which can not be edited'
       assert_empty requests
+
+      # to the version of the app alone, created on the web first
+      error = assert_raise(RP::Error) {upload[dir, version: '1.2.0']}
+      assert_include error.message, 'no version 1.2.0 for macos in App Store Connect'
 
       # not editable but deleting the languages, done by hand
       Dir.mktmpdir do |dir2|
