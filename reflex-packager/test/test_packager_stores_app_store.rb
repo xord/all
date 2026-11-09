@@ -63,11 +63,13 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
     end
   end
 
-  # App Store Connect answering GET by +answers+ of the paths, and putting
-  # the other requests into +requests+.
+  # App Store Connect answering GET by +answers+ of the paths, or by the
+  # procs of them, and putting the other requests into +requests+.
   def asc(answers, requests = [])
     asc = RP::AppStoreConnect.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
-    asc.define_singleton_method(:get)     {|path, **| answers.fetch path}
+    asc.define_singleton_method(:get) do |path, **|
+      answers.fetch(path).then {_1.is_a?(Proc) ? _1.call : _1}
+    end
     asc.define_singleton_method(:request) {|*args| requests << args; nil}
     asc
   end
@@ -192,9 +194,10 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
   end
 
   def test_upload_metadata()
-    md5     = -> s {Digest::MD5.hexdigest s}
-    shot    = -> name, s {{'attributes' => {'fileName' => name, 'sourceFileChecksum' => md5[s]}}}
-    answers = -> state: 'PREPARE_FOR_SUBMISSION', versions: 2 {{
+    md5      = -> s {Digest::MD5.hexdigest s}
+    shot     = -> name, s {{'attributes' => {'fileName' => name, 'sourceFileChecksum' => md5[s]}}}
+    requests = []
+    answers  = -> state: 'PREPARE_FOR_SUBMISSION', versions: 2, linked: false {{
       '/v1/apps' => {'data' => [
         {'type' => 'apps', 'id' => 'APP', 'attributes' => {'name' => 'My Game', 'primaryLocale' => 'en-US'}}
       ]},
@@ -216,10 +219,18 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         localization('appInfo', 'en-US', name: 'My Game', subtitle: 'Old'),
         localization('appInfo', 'fr',    name: 'Jeu')
       ]},
-      '/v1/appStoreVersions/VER/appStoreVersionLocalizations' => {'data' => [
+      '/v1/appStoreVersions/VER/appStoreVersionLocalizations' => -> {{'data' => [
         localization('appStoreVersion', 'en-US', description: "A\nB", whatsNew: 'Fix a'),
-        localization('appStoreVersion', 'fr',    description: 'Jeu')
-      ]},
+        localization('appStoreVersion', 'fr',    description: 'Jeu'),
+        localization('appStoreVersion', 'ja')
+      ].select {
+        # added and deleted with the ones of the app info by App Store Connect, if +linked+
+        case _1['id']
+        when 'L-ja' then  linked && requests.any? {|r| r.first(2) == [:post, '/v1/appInfoLocalizations']}
+        when 'L-fr' then !linked || !requests.include?([:delete, '/v1/appInfoLocalizations/L-fr'])
+        else true
+        end
+      }}},
       '/v1/appStoreVersionLocalizations/L-en-US/appScreenshotSets' => {'data' => [
         {'id' => 'DESKTOP', 'attributes' => {'screenshotDisplayType' => 'APP_DESKTOP'}}
       ]},
@@ -231,8 +242,7 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       ]},
       '/v1/appScreenshotSets/FR/appScreenshots' => {'data' => [shot['x.png', '1']]}
     }}
-    requests = []
-    upload   = -> dir, dry_run: true, **kwargs do
+    upload = -> dir, dry_run: true, **kwargs do
       lines     = []
       requests.clear
       app_store = RP::Stores::AppStore.new asc(answers[**kwargs], requests)
@@ -326,6 +336,16 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         [:delete, '/v1/appStoreVersionLocalizations/L-fr']
       ], requests
 
+      # to the localizations of the version added and deleted with the ones
+      # of the app info
+      upload[dir, dry_run: false, linked: true]
+      assert_equal [:patch, '/v1/appStoreVersionLocalizations/L-ja', {
+        type:       'appStoreVersionLocalizations',
+        id:         'L-ja',
+        attributes: {'description' => 'あ'}
+      }], requests[1]
+      assert_equal [[:delete, '/v1/appInfoLocalizations/L-fr']], requests.select {_1.first == :delete}
+
       # to the language added, before the categories
       File.write File.join(dir, 'app.yml'), "primaryLocale: ja\nprimaryCategory: ENTERTAINMENT\n"
       upload[dir, dry_run: false]
@@ -353,6 +373,12 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       error = assert_raise(RP::Error) {upload[dir]}
       assert_include error.message, 'no en-US/app.yml'
       File.rename File.join(dir, 'en-US/app.yml.bak'), File.join(dir, 'en-US/app.yml')
+
+      FileUtils.mkdir_p File.join(dir, 'ko')
+      File.write File.join(dir, 'ko/version.yml'), "description: 골프\n"
+      error = assert_raise(RP::Error) {upload[dir]}
+      assert_include error.message, "no app.yml or version.yml in #{File.join dir, 'ko'}"
+      FileUtils.rm_r File.join(dir, 'ko')
 
       File.write File.join(dir, 'ja/app.yml'), "subtitle: サブ\n"
       error = assert_raise(RP::Error) {upload[dir]}

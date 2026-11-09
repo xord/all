@@ -280,6 +280,9 @@ module Reflex
             File.file? File.join(dir, primary, 'app.yml')
 
           locales = Dir.glob('*/{app,version}.yml', base: dir).map {File.dirname _1}
+          singles = locales.tally.filter_map {|locale, count| File.join dir, locale if count < 2}
+          raise Error, "no app.yml or version.yml in #{singles.join ', '}, which a language needs both of" unless
+            singles.empty?
           keys    = first ? VERSION_KEYS - ['whatsNew'] : VERSION_KEYS
           puts 'skipped whatsNew, which the first version of the app can not have' if
             first && locales.any? {
@@ -395,6 +398,8 @@ module Reflex
               when %r{/app\.yml\z} then upload_localization op, path, values, info,    infos
               else                      upload_localization op, path, values, version, versions
               end
+              # as App Store Connect adds the localization of the version with the one of the app info
+              infos, versions = localizations info, version unless op == 'M'
               puts "uploaded #{op} #{path}"
             end
           puts 'skipped the screenshots, which are to be uploaded by hand' unless shots.empty?
@@ -402,15 +407,23 @@ module Reflex
 
         # Uploads the change +op+ of +path+, as fr/app.yml, by +values+, to
         # the localization of +parent+, the app info or the version, in
-        # +localizations+ by the locales.
+        # +localizations+ by the locales, updating the one added already
+        # with the other of the app info and the version, and not deleting
+        # the one deleted already.
         #
         def upload_localization(op, path, values, parent, localizations)
-          asc    = @app_store_connect
-          locale = File.dirname path
+          asc          = @app_store_connect
+          locale       = File.dirname path
+          localization = localizations[locale]
           case op
-          when 'A' then asc.create_localization parent, locale, values
-          when 'M' then asc.update              localizations[locale], values
-          when 'D' then asc.delete_localization localizations[locale]
+          when 'A'
+            if localization
+              asc.update localization, values
+            else
+              asc.create_localization parent, locale, values
+            end
+          when 'M' then asc.update localization, values
+          when 'D' then asc.delete_localization localization if localization
           end
         end
 
