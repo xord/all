@@ -128,8 +128,8 @@ module Reflex
         # Makes the metadata of the app in App Store Connect the same as in
         # +dir+, which download_metadata writes, for the version of
         # +version_string+, as 1.0, showing the changes first, and uploading
-        # them unless +dry_run+, but deleting the languages and the
-        # screenshots, done by hand for now.
+        # them unless +dry_run+, but deleting the languages, and all the
+        # screenshots of a display type, done by hand.
         #
         def upload_metadata(dir, bundle_id:, platform:, version_string:, dry_run: false)
           app, info, version, versions = get_app bundle_id, platform, version_string
@@ -154,7 +154,7 @@ module Reflex
           return puts 'dry run, nothing uploaded' if dry_run
 
           raise Error, errors.join(', ') unless errors.empty?
-          upload_changes changes, app, info, version, info_localizations, version_localizations
+          upload_changes dir, changes, app, info, version, info_localizations, version_localizations
         end
 
         # YAML of +hash+ with the strings as they are, of lines as the literal
@@ -359,14 +359,9 @@ module Reflex
         #
         def screenshot_changes(locale, remote, local)
           (remote.keys | local.keys).sort.flat_map do |name|
-            dir   = File.join locale, name
-            olds  = (remote[name] || []).map {_1['attributes']}
-            paths = local[name] || []
-            left  = olds.each_index.to_a
-            kept  = paths.map do |path|
-              sum = Digest::MD5.file(path).hexdigest
-              left.find {olds[_1]['sourceFileChecksum'] == sum}.tap {left.delete _1}
-            end
+            dir         = File.join locale, name
+            olds, paths = remote[name] || [], local[name] || []
+            kept, left  = match_screenshots olds, paths
             # the ones added are after the ones kept, in the order of them
             ordered = kept == kept.compact.sort + kept.select(&:nil?)
 
@@ -374,10 +369,23 @@ module Reflex
               *paths.zip(kept).filter_map {|path, old|
                 Change.new 'A', File.join(dir, File.basename(path)) unless old
               },
-              *left.map {Change.new 'D', File.join(dir, olds[_1]['fileName'].to_s)},
+              *left.map {Change.new 'D', File.join(dir, olds[_1].dig('attributes', 'fileName').to_s)},
               *([Change.new('M', dir, 'order')] unless ordered)
             ]
           end
+        end
+
+        # The indexes in +olds+, the screenshots in App Store Connect, of the
+        # ones of the same checksums as the images in +paths+, or nil for the
+        # ones to be added; and the indexes of the others, to be deleted.
+        #
+        def match_screenshots(olds, paths)
+          left = olds.each_index.to_a
+          kept = paths.map do |path|
+            sum = Digest::MD5.file(path).hexdigest
+            left.find {olds[_1].dig('attributes', 'sourceFileChecksum') == sum}.tap {left.delete _1}
+          end
+          return kept, left
         end
 
         # The screenshots in the directories of the display types in +dir+,
@@ -392,10 +400,11 @@ module Reflex
         # Uploads +changes+ of the texts, the ones of a file at once, to the
         # localizations in +infos+ and +versions+ by the locales, in the order
         # of adding and modifying, for the primary language to be changed to
-        # one added; skips deleting the languages, which losing the files by
-        # mistake would do, and the screenshots, done by hand for now.
+        # one added; and then the screenshots in +dir+, of the display types
+        # changed; skips deleting the languages, which losing the files by
+        # mistake would do, done by hand.
         #
-        def upload_changes(changes, app, info, version, infos, versions)
+        def upload_changes(dir, changes, app, info, version, infos, versions)
           asc            = @app_store_connect
           texts, shots   = changes.partition {%w[app.yml version.yml].include? File.basename(_1.path)}
           deletes, texts = texts.partition(&:language_deleted?)
@@ -418,9 +427,12 @@ module Reflex
               infos, versions = localizations info, version if op == 'A'
               puts "uploaded #{op} #{path}"
             end
+          shots.map {_1.key ? _1.path : File.dirname(_1.path)}.uniq.each do |path|
+            locale, name = File.split path
+            upload_screenshots dir, locale, name, versions[locale]
+          end
           puts "skipped deleting the languages #{deletes.map {File.dirname _1.path}.uniq.join ', '}," +
             ' which are to be deleted by hand' unless deletes.empty?
-          puts 'skipped the screenshots, which are to be uploaded by hand' unless shots.empty?
         end
 
         # Uploads the change +op+ of +path+, as fr/app.yml, by +values+, to
@@ -441,6 +453,41 @@ module Reflex
             end
           when 'M' then asc.update localization, values
           end
+        end
+
+        # Makes the screenshots of +localization+ of the version in +locale+
+        # for the display type +name+, as desktop for APP_DESKTOP, the same as
+        # the ones in the directory of it in +dir+: deleting first, for no more
+        # than App Store Connect takes in a set to be there, adding, and
+        # putting them in the order; skips deleting all of them, which losing
+        # the directory by mistake would do, done by hand.
+        #
+        def upload_screenshots(dir, locale, name, localization)
+          asc   = @app_store_connect
+          path  = File.join locale, name
+          paths = local_screenshots(File.join dir, locale)[name]
+          return puts "skipped deleting the screenshots of #{path}, which are to be deleted by hand" unless
+            paths
+
+          type       = "APP_#{name.upcase}"
+          set        = asc.get_screenshot_sets(localization)
+            .find {_1.dig('attributes', 'screenshotDisplayType') == type}
+          set      ||= asc.create_screenshot_set localization, type
+          olds       = asc.get_screenshots set
+          kept, left = match_screenshots olds, paths
+          left.each do
+            asc.delete_screenshot olds[_1]
+            puts "uploaded D #{File.join path, olds[_1].dig('attributes', 'fileName').to_s}"
+          end
+          added = paths.zip(kept).filter_map do |file, old|
+            next if old
+            asc.upload_screenshot(set, file).tap {puts "uploaded A #{File.join path, File.basename(file)}"}
+          end
+
+          # the ones added are after the ones kept, in the order of them
+          return if kept == kept.compact.sort + kept.select(&:nil?)
+          asc.order_screenshots set, kept.map {_1 ? olds[_1] : added.shift}
+          puts "uploaded M #{path} order"
         end
 
         def download(url)

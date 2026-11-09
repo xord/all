@@ -124,6 +124,20 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
       assert_include error.message, 'patch /v1/apps/APP'
       assert_include error.message, '409 ENTITY_ERROR'
     end
+
+    # a part of a file uploaded, with no token
+    op = {
+      'method'         => 'PUT',
+      'url'            => 'https://upload.example.com/a',
+      'requestHeaders' => [{'name' => 'Content-Type', 'value' => 'image/png'}]
+    }
+    assert_equal [
+      ['PUT', 'https://upload.example.com/a', nil, 'image/png', 'ab']
+    ], send.('200') {asc.__send__ :upload_part, op, 'ab'}
+    send.('500', 'ERROR') do
+      error = assert_raise(RP::Error) {asc.__send__ :upload_part, op, 'ab'}
+      assert_include error.message, '500 ERROR'
+    end
   end
 
   def test_get()
@@ -199,6 +213,78 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     ], reqs
 
     assert_raise(KeyError) {asc.create_localization loc, 'ja', {}}
+  end
+
+  def test_screenshots()
+    asc   = ASC.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
+    reqs  = []
+    parts = []
+    gets  = []
+    asc.define_singleton_method(:request) do |*args|
+      reqs << args
+      case args.first(2)
+      in [:post, '/v1/appScreenshotSets'] then {'data' => {'id' => 'SET'}}
+      in [:post, '/v1/appScreenshots']
+        {'data' => {'id' => 'SHOT', 'attributes' => {'uploadOperations' => [0, 2].map {
+          {'method' => 'PUT', 'url' => "https://up/#{_1}", 'offset' => _1, 'length' => 2,
+            'requestHeaders' => [{'name' => 'Content-Type', 'value' => 'image/png'}]}
+        }}}}
+      else nil
+      end
+    end
+    asc.define_singleton_method(:upload_part) {|op, bytes| parts << [op['url'], bytes]}
+    asc.define_singleton_method(:get) {|path, **| {'data' => gets.shift}}
+    asc.define_singleton_method(:sleep) {|*|}
+    shot  = -> state, errors = nil {{
+      'id' => 'SHOT', 'attributes' => {
+        'fileName' => 'a.png', 'assetDeliveryState' => {'state' => state, 'errors' => errors}
+      }
+    }}
+    loc, set = {'id' => 'LOC'}, {'id' => 'SET'}
+
+    assert_equal({'id' => 'SET'}, asc.create_screenshot_set(loc, 'APP_DESKTOP'))
+    Dir.mktmpdir do |dir|
+      path = File.join dir, 'a.png'
+      File.binwrite path, 'abcd'
+      gets.push shot['UPLOAD_COMPLETE'], shot['COMPLETE']
+      assert_equal shot['COMPLETE'], asc.upload_screenshot(set, path)
+      assert_empty gets # until processed
+      assert_equal [['https://up/0', 'ab'], ['https://up/2', 'cd']], parts
+
+      gets.push shot['FAILED', [{'description' => 'too large'}]]
+      error = assert_raise(RP::Error) {asc.upload_screenshot set, path}
+      assert_include error.message, 'a.png: too large'
+    end
+    gets.push shot['UPLOAD_COMPLETE']
+    error = assert_raise(RP::Error) {asc.__send__ :wait_until_processed, shot[nil], timeout: -1}
+    assert_include error.message, 'timed out'
+    asc.delete_screenshot 'id' => 'SHOT'
+    asc.order_screenshots set, [{'id' => 'B'}, {'id' => 'A'}]
+    assert_equal [
+      [:post, '/v1/appScreenshotSets', {
+        type:          'appScreenshotSets',
+        attributes:    {screenshotDisplayType: 'APP_DESKTOP'},
+        relationships: {appStoreVersionLocalization: {
+          data: {type: 'appStoreVersionLocalizations', id: 'LOC'}
+        }}
+      }],
+      [:post, '/v1/appScreenshots', {
+        type:          'appScreenshots',
+        attributes:    {fileName: 'a.png', fileSize: 4},
+        relationships: {appScreenshotSet: {data: {type: 'appScreenshotSets', id: 'SET'}}}
+      }],
+      [:patch, '/v1/appScreenshots/SHOT', {
+        type:       'appScreenshots',
+        id:         'SHOT',
+        attributes: {uploaded: true, sourceFileChecksum: Digest::MD5.hexdigest('abcd')}
+      }],
+      *reqs[3, 2], # failed to be processed
+      [:delete, '/v1/appScreenshots/SHOT'],
+      [:patch, '/v1/appScreenshotSets/SET/relationships/appScreenshots', [
+        {type: 'appScreenshots', id: 'B'},
+        {type: 'appScreenshots', id: 'A'}
+      ]]
+    ], reqs
   end
 
   def test_wait_until_notarized()

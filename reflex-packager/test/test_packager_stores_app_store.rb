@@ -64,13 +64,19 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
   end
 
   # App Store Connect answering GET by +answers+ of the paths, or by the
-  # procs of them, and putting the other requests into +requests+.
+  # procs of them, and putting the other requests into +requests+, with the
+  # screenshots uploaded as [:upload_screenshot, the set, the file name],
+  # whose ids are the file names.
   def asc(answers, requests = [])
     asc = RP::AppStoreConnect.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
     asc.define_singleton_method(:get) do |path, **|
       answers.fetch(path).then {_1.is_a?(Proc) ? _1.call : _1}
     end
     asc.define_singleton_method(:request) {|*args| requests << args; nil}
+    asc.define_singleton_method(:upload_screenshot) do |set, path|
+      requests << [:upload_screenshot, set['id'], File.basename(path)]
+      {'id' => File.basename(path)}
+    end
     asc
   end
 
@@ -195,7 +201,7 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
 
   def test_upload_metadata()
     md5      = -> s {Digest::MD5.hexdigest s}
-    shot     = -> name, s {{'attributes' => {'fileName' => name, 'sourceFileChecksum' => md5[s]}}}
+    shot     = -> name, s {{'id' => name, 'attributes' => {'fileName' => name, 'sourceFileChecksum' => md5[s]}}}
     requests = []
     answers  = -> state: 'PREPARE_FOR_SUBMISSION', versions: 2, linked: false {{
       '/v1/apps' => {'data' => [
@@ -284,7 +290,8 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       assert_empty requests
 
       # adding and modifying, for the primary language to be changed to one
-      # added, but deleting the languages and the screenshots
+      # added, then the screenshots, deleting first for no more than a set
+      # takes; but deleting the languages, and all the screenshots of a type
       assert_equal [
         'uploaded A ja/app.yml',
         'uploaded A ja/version.yml',
@@ -292,9 +299,12 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         'uploaded M en-US/app.yml',
         'uploaded M en-US/version.yml',
         'uploaded M version.yml',
-        'skipped deleting the languages fr, which are to be deleted by hand',
-        'skipped the screenshots, which are to be uploaded by hand'
-      ], upload[dir, dry_run: false].last(8)
+        'uploaded D en-US/desktop/c.png',
+        'uploaded A en-US/desktop/screenshot_10.png',
+        'uploaded M en-US/desktop order',
+        'skipped deleting the screenshots of fr/desktop, which are to be deleted by hand',
+        'skipped deleting the languages fr, which are to be deleted by hand'
+      ], upload[dir, dry_run: false].last(11)
       assert_equal [
         [:post, '/v1/appInfoLocalizations', {
           type:          'appInfoLocalizations',
@@ -325,7 +335,14 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
           type:       'appStoreVersions',
           id:         'VER',
           attributes: {'copyright' => '2026 b'}
-        }]
+        }],
+        [:delete, '/v1/appScreenshots/c.png'],
+        [:upload_screenshot, 'DESKTOP', 'screenshot_10.png'],
+        [:patch, '/v1/appScreenshotSets/DESKTOP/relationships/appScreenshots', [
+          {type: 'appScreenshots', id: 'b.png'},
+          {type: 'appScreenshots', id: 'a.png'},
+          {type: 'appScreenshots', id: 'screenshot_10.png'}
+        ]]
       ], requests
 
       # to the localization of the version added with the one of the app info
