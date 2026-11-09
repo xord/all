@@ -96,8 +96,7 @@ class TestPackagerRake < Test::Unit::TestCase
   end
 
   def test_upload()
-    application do |dir|
-      archive = File.join dir, 'dist/adhoc/MyGame-1.2.3-macos-universal.zip'
+    application do
       stub Gem, :win_platform?, false do
         package_application
       end
@@ -105,9 +104,11 @@ class TestPackagerRake < Test::Unit::TestCase
       assert_include ::Rake::Task['upload:itchio'].comment, 'itch.io'
       out, = capture_output {::Rake::Task['upload:itchio'].execute}
       assert_include out, 'by upload.itchio'
+    end
 
-      ::Rake::Task.clear
-      File.write 'reflex.yml', "name: My Game\nupload: {itchio: {project: user/game}}\n"
+    ::Rake::Task.clear
+    application "upload: {itchio: {project: user/game}}\n" do |dir|
+      archive  = File.join dir, 'dist/adhoc/MyGame-1.2.3-macos-universal.zip'
       uploads  = []
       uploader = Object.new
       uploader.define_singleton_method(:upload) {|*args, **kwargs| uploads << [args, kwargs]}
@@ -129,8 +130,7 @@ class TestPackagerRake < Test::Unit::TestCase
     end
 
     ::Rake::Task.clear
-    application do |dir|
-      pkg = File.join dir, 'dist/appstore/MyGame-1.2.3.pkg'
+    application do
       stub Gem, :win_platform?, false do
         package_application
       end
@@ -138,9 +138,11 @@ class TestPackagerRake < Test::Unit::TestCase
       assert_include ::Rake::Task['upload:appstore'].comment, 'App Store Connect'
       out, = capture_output {::Rake::Task['upload:appstore'].execute}
       assert_include out, 'by upload.appstore'
+    end
 
-      ::Rake::Task.clear
-      File.write 'reflex.yml', "name: My Game\nupload: {appstore: true}\n"
+    ::Rake::Task.clear
+    application "upload: {appstore: true}\n" do |dir|
+      pkg = File.join dir, 'dist/appstore/MyGame-1.2.3.pkg'
       stub Gem, :win_platform?, false do
         package_application
       end
@@ -203,19 +205,19 @@ class TestPackagerRake < Test::Unit::TestCase
   end
 
   def test_notarize()
+    cmds = []
+    define_singleton_method(:sh) {|*args| cmds << args}
+    reflex = [RbConfig.ruby, Reflex::Packager::REFLEX.executable, 'package']
+    run    = -> (task, env = {}) do
+      cmds.clear
+      with_env(env) {::Rake::Task[task].execute}
+      cmds
+    end
+
     application do
-      cmds = []
-      define_singleton_method(:sh) {|*args| cmds << args}
       stub Gem, :win_platform?, false do
         package_application
       end
-      reflex = [RbConfig.ruby, Reflex::Packager::REFLEX.executable, 'package']
-      run    = -> (task, env = {}) do
-        cmds.clear
-        with_env(env) {::Rake::Task[task].execute}
-        cmds
-      end
-
       assert_equal(
         [[*reflex, '--pack', '--notarize', '.']],
         run[                   'notarize'])
@@ -236,9 +238,10 @@ class TestPackagerRake < Test::Unit::TestCase
         error = assert_raise(RuntimeError) {run['notarize:wait', 'id' => id]}
         assert_include error.message, 'id=ID'
       end
+    end
 
-      ::Rake::Task.clear
-      File.write 'reflex.yml', "name: My Game\nupload: {appstore: true}\n"
+    ::Rake::Task.clear
+    application "upload: {appstore: true}\n" do
       stub Gem, :win_platform?, false do
         package_application
       end
