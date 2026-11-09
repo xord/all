@@ -56,6 +56,10 @@ module Reflex
         # in the file added.
         #
         Change = Struct.new :op, :path, :key, :from, :to do
+          def language_deleted?()
+            op == 'D' && path.end_with?('.yml')
+          end
+
           def to_s(width = 0)
             line = "#{op} #{path.ljust width}"
             return line.rstrip unless key
@@ -123,8 +127,8 @@ module Reflex
 
         # Makes the metadata of the app in App Store Connect the same as in
         # +dir+, which download_metadata writes, showing the changes first,
-        # and uploading them unless +dry_run+, but the screenshots, uploaded
-        # by hand for now.
+        # and uploading them unless +dry_run+, but deleting the languages and
+        # the screenshots, done by hand for now.
         #
         def upload_metadata(dir, bundle_id:, platform:, dry_run: false)
           app, info, version, versions = get_app bundle_id, platform
@@ -133,11 +137,13 @@ module Reflex
 
           info_changes, version_changes, info_localizations, version_localizations =
             metadata_changes(dir, app, info, version, first: versions.last.equal?(version))
+          # the changes to edit, but deleting the languages, done by hand
+          edited = -> changes {!changes.all?(&:language_deleted?)}
           errors = []
           errors << "the app info is #{state info}, which can not be edited" if
-            !info_changes.empty? && !editable?(info)
+            edited[info_changes] && !editable?(info)
           errors << "the version is #{state version}, which can not be edited" if
-            !version_changes.empty? && !editable?(version)
+            edited[version_changes] && !editable?(version)
 
           changes = (info_changes + version_changes).sort_by.with_index {[_1.path, _2]}
           width   = changes.select(&:key).map {_1.path.size}.max || 0
@@ -376,16 +382,17 @@ module Reflex
 
         # Uploads +changes+ of the texts, the ones of a file at once, to the
         # localizations in +infos+ and +versions+ by the locales, in the order
-        # of adding, modifying and deleting, for the primary language to be
-        # changed to one added, and from one deleted; skips the screenshots,
-        # uploaded by hand for now.
+        # of adding and modifying, for the primary language to be changed to
+        # one added; skips deleting the languages, which losing the files by
+        # mistake would do, and the screenshots, done by hand for now.
         #
         def upload_changes(changes, app, info, version, infos, versions)
-          asc          = @app_store_connect
-          texts, shots = changes.partition {%w[app.yml version.yml].include? File.basename(_1.path)}
+          asc            = @app_store_connect
+          texts, shots   = changes.partition {%w[app.yml version.yml].include? File.basename(_1.path)}
+          deletes, texts = texts.partition(&:language_deleted?)
           texts
             .group_by {[_1.op, _1.path]}
-            .sort_by.with_index {|((op, _), _), i| ['AMD'.index(op), i]}
+            .sort_by.with_index {|((op, _), _), i| ['AM'.index(op), i]}
             .each do |(op, path), group|
               values = op == 'A' ? group.first.to : group.to_h {[_1.key, _1.to]}
               case path
@@ -399,17 +406,18 @@ module Reflex
               else                      upload_localization op, path, values, version, versions
               end
               # as App Store Connect adds the localization of the version with the one of the app info
-              infos, versions = localizations info, version unless op == 'M'
+              infos, versions = localizations info, version if op == 'A'
               puts "uploaded #{op} #{path}"
             end
+          puts "skipped deleting the languages #{deletes.map {File.dirname _1.path}.uniq.join ', '}," +
+            ' which are to be deleted by hand' unless deletes.empty?
           puts 'skipped the screenshots, which are to be uploaded by hand' unless shots.empty?
         end
 
         # Uploads the change +op+ of +path+, as fr/app.yml, by +values+, to
         # the localization of +parent+, the app info or the version, in
         # +localizations+ by the locales, updating the one added already
-        # with the other of the app info and the version, and not deleting
-        # the one deleted already.
+        # with the other of the app info and the version.
         #
         def upload_localization(op, path, values, parent, localizations)
           asc          = @app_store_connect
@@ -423,7 +431,6 @@ module Reflex
               asc.create_localization parent, locale, values
             end
           when 'M' then asc.update localization, values
-          when 'D' then asc.delete_localization localization if localization
           end
         end
 

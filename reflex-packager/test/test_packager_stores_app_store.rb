@@ -222,15 +222,10 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       '/v1/appStoreVersions/VER/appStoreVersionLocalizations' => -> {{'data' => [
         localization('appStoreVersion', 'en-US', description: "A\nB", whatsNew: 'Fix a'),
         localization('appStoreVersion', 'fr',    description: 'Jeu'),
-        localization('appStoreVersion', 'ja')
-      ].select {
-        # added and deleted with the ones of the app info by App Store Connect, if +linked+
-        case _1['id']
-        when 'L-ja' then  linked && requests.any? {|r| r.first(2) == [:post, '/v1/appInfoLocalizations']}
-        when 'L-fr' then !linked || !requests.include?([:delete, '/v1/appInfoLocalizations/L-fr'])
-        else true
-        end
-      }}},
+        # added with the one of the app info by App Store Connect, if +linked+
+        (localization('appStoreVersion', 'ja') if
+          linked && requests.any? {_1.first(2) == [:post, '/v1/appInfoLocalizations']})
+      ].compact}},
       '/v1/appStoreVersionLocalizations/L-en-US/appScreenshotSets' => {'data' => [
         {'id' => 'DESKTOP', 'attributes' => {'screenshotDisplayType' => 'APP_DESKTOP'}}
       ]},
@@ -288,8 +283,8 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       ], upload[dir]
       assert_empty requests
 
-      # adding, modifying and deleting, for the primary language to be
-      # changed to one added and from one deleted, but the screenshots
+      # adding and modifying, for the primary language to be changed to one
+      # added, but deleting the languages and the screenshots
       assert_equal [
         'uploaded A ja/app.yml',
         'uploaded A ja/version.yml',
@@ -297,10 +292,9 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         'uploaded M en-US/app.yml',
         'uploaded M en-US/version.yml',
         'uploaded M version.yml',
-        'uploaded D fr/app.yml',
-        'uploaded D fr/version.yml',
+        'skipped deleting the languages fr, which are to be deleted by hand',
         'skipped the screenshots, which are to be uploaded by hand'
-      ], upload[dir, dry_run: false].last(9)
+      ], upload[dir, dry_run: false].last(8)
       assert_equal [
         [:post, '/v1/appInfoLocalizations', {
           type:          'appInfoLocalizations',
@@ -331,20 +325,16 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
           type:       'appStoreVersions',
           id:         'VER',
           attributes: {'copyright' => '2026 b'}
-        }],
-        [:delete, '/v1/appInfoLocalizations/L-fr'],
-        [:delete, '/v1/appStoreVersionLocalizations/L-fr']
+        }]
       ], requests
 
-      # to the localizations of the version added and deleted with the ones
-      # of the app info
+      # to the localization of the version added with the one of the app info
       upload[dir, dry_run: false, linked: true]
       assert_equal [:patch, '/v1/appStoreVersionLocalizations/L-ja', {
         type:       'appStoreVersionLocalizations',
         id:         'L-ja',
         attributes: {'description' => 'あ'}
       }], requests[1]
-      assert_equal [[:delete, '/v1/appInfoLocalizations/L-fr']], requests.select {_1.first == :delete}
 
       # to the language added, before the categories
       File.write File.join(dir, 'app.yml'), "primaryLocale: ja\nprimaryCategory: ENTERTAINMENT\n"
@@ -363,6 +353,22 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       error = assert_raise(RP::Error) {upload[dir, state: 'WAITING_FOR_REVIEW', dry_run: false]}
       assert_include error.message, 'which can not be edited'
       assert_empty requests
+
+      # not editable but deleting the languages, done by hand
+      Dir.mktmpdir do |dir2|
+        {
+          'app.yml'           => "primaryLocale: en-US\nprimaryCategory: GAMES\n",
+          'version.yml'       => "copyright: 2026 a\n",
+          'en-US/app.yml'     => "name: My Game\nsubtitle: Old\n",
+          'en-US/version.yml' => "description: |-\n  A\n  B\nwhatsNew: Fix a\n"
+        }.each do |path, text|
+          FileUtils.mkdir_p File.dirname(File.join dir2, path)
+          File.write File.join(dir2, path), text
+        end
+        lines = upload[dir2, state: 'WAITING_FOR_REVIEW']
+        assert_include     lines, ' D fr/app.yml'
+        assert_not_include lines, ' ! the app info is WAITING_FOR_REVIEW, which can not be edited'
+      end
 
       # nothing to tell skipped without whatsNew
       File.write File.join(dir, 'en-US/version.yml'), "description: |-\n  A\n  C\n"

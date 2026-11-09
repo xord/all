@@ -172,7 +172,6 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
     asc.create_localization version, 'ja', {'description' => 'あ'}
     asc.update loc, {'name' => 'ゲーム', 'subtitle' => nil}
     asc.update_categories info, {'primaryCategory' => 'GAMES', 'secondaryCategory' => nil}
-    asc.delete_localization loc
     assert_equal [
       [:post, '/v1/appInfoLocalizations', {
         type:          'appInfoLocalizations',
@@ -196,8 +195,7 @@ class TestPackagerAppStoreConnect < Test::Unit::TestCase
           'primaryCategory'   => {data: {type: 'appCategories', id: 'GAMES'}},
           'secondaryCategory' => {data: nil}
         }
-      }],
-      [:delete, '/v1/appInfoLocalizations/LOC']
+      }]
     ], reqs
 
     assert_raise(KeyError) {asc.create_localization loc, 'ja', {}}

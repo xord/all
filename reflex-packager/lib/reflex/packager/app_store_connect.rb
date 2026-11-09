@@ -164,12 +164,6 @@ module Reflex
         }
       end
 
-      # Deletes +localization+ of the app info or of the version.
-      #
-      def delete_localization(localization)
-        request :delete, "/v1/#{localization['type']}/#{localization['id']}"
-      end
-
       # Waits until the app is notarized by +id+, raising the issues Apple
       # found unless it accepted the app.
       #
