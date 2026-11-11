@@ -332,9 +332,10 @@ module Reflex
       attr_reader :codesign_identity, :codesign_team_id
 
       # What only the app for the Mac App Store has: the glob patterns of the
-      # sources to compile into it, as of Swift, the Swift packages to link
-      # with it, as {name => {url:, minorVersion:, products: [...]}}, and the
-      # entitlements to add to the sandbox.
+      # files to build into it, the sources compiled and the others as
+      # resources, the Swift packages to link with it, as
+      # {name => {url:, minorVersion:, products: [...]}}, and the entitlements
+      # to add to the sandbox.
       #
       attr_reader :appstore_sources, :appstore_packages, :appstore_entitlements
 
