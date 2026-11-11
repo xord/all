@@ -105,20 +105,24 @@ module Reflex
         copy_bundles
         copy_app_files
         generate_icon if config.icon
-        write 'project.yml',       render('project.yml.erb')
+        write 'project.yml',       project_yml
         write 'src/main.mm',       render('main.mm.erb')
         write 'boot.rb',           render('boot.rb.erb')
         write export_options_path, render('ExportOptions.plist.erb') if signing_to_distribute?
         if appstore?
-          write appstore_entitlements_path,   render('AppStore.entitlements.erb')
-          write appstore_export_options_path, render('AppStoreExportOptions.plist.erb')
+          write 'project-appstore.yml',       project_yml(appstore: true)
+          write appstore_entitlements_path,   render('appstore.entitlements.erb')
+          write appstore_export_options_path, render('ExportOptions-appstore.plist.erb')
         end
         write_localizations
       end
 
       def build()
         check_tools TOOLS
-        run 'xcodegen', 'generate', *('--quiet' unless verbose?), chdir: build_dir
+        quiet = '--quiet' unless verbose?
+        run 'xcodegen', 'generate', *quiet, chdir: build_dir
+        run 'xcodegen', 'generate', *quiet, '--spec', 'project-appstore.yml', chdir: build_dir if
+          appstore?
         compile_scripts     if pack?
         build_generic       if generic?
         export_appstore_pkg if appstore?
@@ -207,6 +211,47 @@ module Reflex
         end.uniq
       end
 
+      # The spec of xcodegen for the project, or for the one of the app for
+      # the Mac App Store, with its own sources and packages; next to the
+      # other, as the paths in them are of the directory of the project.
+      #
+      def project_yml(appstore: false)
+        render 'project.yml.erb',
+          project:  appstore ? appstore_project               : target,
+          sources:  appstore ? appstore_sources               : [],
+          packages: appstore ? config.macos.appstore_packages : {}
+      end
+
+      def appstore_project()
+        "#{target}-appstore"
+      end
+
+      # The files of macos.appstore.sources of the config, with absolute paths.
+      #
+      def appstore_sources()
+        config.macos.appstore_sources.flat_map do |pattern|
+          files = Dir.glob(pattern, base: config.dir).select {File.file? File.join(config.dir, _1)}
+          raise Error, "no file of '#{pattern}' in macos.appstore.sources" if files.empty?
+          files.sort.map {File.join config.dir, _1}
+        end.uniq
+      end
+
+      # The entitlements of the app for the Mac App Store: the sandbox, and the
+      # ones macos.appstore.entitlements of the config adds.
+      #
+      def appstore_entitlements()
+        {'com.apple.security.app-sandbox' => true, **config.macos.appstore_entitlements}
+      end
+
+      def plist_value(value)
+        case value
+        when true, false then "<#{value}/>"
+        when Integer     then "<integer>#{value}</integer>"
+        when Array       then "<array>#{value.map {plist_value _1}.join}</array>"
+        else                  "<string>#{value.to_s.encode xml: :text}</string>"
+        end
+      end
+
       # The names in the -framework options of the ldflags of a Makefile mkmf
       # writes.
       #
@@ -279,9 +324,9 @@ module Reflex
         false
       end
 
-      def xcodebuild(action = 'build', *args)
+      def xcodebuild(action = 'build', *args, project: "#{target}.xcodeproj")
         run 'xcodebuild', *('-quiet' unless verbose?),
-          '-project',         "#{target}.xcodeproj",
+          '-project',         project,
           '-scheme',          target,
           '-configuration',   'Release',
           '-destination',     'generic/platform=macOS',
@@ -427,11 +472,14 @@ module Reflex
       # certificates of the team that Apple manages, as the profile too.
       #
       # The archive is of its own, apart from the generic one out of the
-      # sandbox, which shares its data with the ones of the other stores.
+      # sandbox, which shares its data with the ones of the other stores,
+      # and so is the project, with what only this app has, as macos.appstore
+      # of the config tells.
       #
       def export_appstore_pkg()
         xcodebuild 'archive', '-archivePath', appstore_xcarchive_path,
-          "CODE_SIGN_ENTITLEMENTS=#{appstore_entitlements_path}"
+          "CODE_SIGN_ENTITLEMENTS=#{appstore_entitlements_path}",
+          project: "#{appstore_project}.xcodeproj"
         FileUtils.rm_rf File.dirname(appstore_exported_pkg_path)
         with_auth_options do |auth|
           run 'xcodebuild', *('-quiet' unless verbose?),
@@ -540,7 +588,7 @@ module Reflex
       end
 
       def appstore_entitlements_path()
-        File.join appstore_dir, 'AppStore.entitlements'
+        File.join appstore_dir, 'appstore.entitlements'
       end
 
       def appstore_export_options_path()

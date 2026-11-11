@@ -274,7 +274,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
     YML
     packager yaml, files: %w[main.rb icon.png] do |pkg, dir|
       # render only: a full generate would shell out to sips / iconutil
-      str = pkg.__send__ :render, 'project.yml.erb'
+      str = pkg.__send__ :project_yml
       assert_include     str, 'CFBundleIconFile: AppIcon'
       assert_include     str, 'path: AppIcon.icns'
       assert_include     str, 'LSApplicationCategoryType: public.app-category.games'
@@ -283,7 +283,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       assert_not_include str, 'NSHumanReadableCopyright'
       assert_not_include str, 'LSHasLocalizedDisplayName'
 
-      str = MacOS.new(pkg.config, verbose: true).__send__ :render, 'project.yml.erb'
+      str = MacOS.new(pkg.config, verbose: true).__send__ :project_yml
       assert_not_include str, 'GCC_WARN_INHIBIT_ALL_WARNINGS'
     end
   end
@@ -498,7 +498,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       options = pkg.__send__(:render, 'ExportOptions.plist.erb')
       assert_include options, '<string>manual</string>'
       assert_include options, "<key>signingCertificate</key>\n\t<string>Developer ID Application</string>"
-      assert_include pkg.__send__(:render, 'project.yml.erb'), 'CODE_SIGN_IDENTITY: "-"'
+      assert_include pkg.__send__(:project_yml), 'CODE_SIGN_IDENTITY: "-"'
 
       commands, copied = build.call pkg
       assert_equal 1, commands.grep(/ archive -archivePath /).size
@@ -541,7 +541,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
     # the other identities in the keychain, not archived
     packager "macos: {codesign: {identity: Apple Development, team_id: ABCDE12345}}" do |pkg, _|
-      assert_include pkg.__send__(:render, 'project.yml.erb'), 'CODE_SIGN_IDENTITY: "Apple Development"'
+      assert_include pkg.__send__(:project_yml), 'CODE_SIGN_IDENTITY: "Apple Development"'
 
       commands, copied = build.call pkg
       assert_empty commands.grep(/archive/i)
@@ -653,6 +653,67 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_appstore_project()
+    yaml = <<~YML
+      macos:
+        category: public.app-category.games
+        codesign: {team_id: ABCDE12345}
+        appstore:
+          sources: ['src/macos/appstore/*.swift']
+          packages:
+            Firebase: {url: 'https://a/b', from: 13.0.0, products: [A, B]}
+            Other:    {path: ../other}
+          entitlements:
+            com.apple.security.network.client: true
+            a.b: [c&d, 1]
+    YML
+    files = %w[main.rb src/macos/appstore/a.swift src/macos/appstore/b.swift]
+    packager yaml, files: files do |pkg, dir|
+      mac = MacOS.new pkg.config, appstore: true
+      mac.generate
+
+      # the extras of the app for the Mac App Store, only in its own project
+      yml    = YAML.safe_load read(dir, 'project-appstore.yml')
+      base   = yml.dig 'settings', 'base'
+      target = yml.dig 'targets', pkg.target
+      assert_equal "#{pkg.target}-appstore", yml['name']
+      assert_equal(
+        {'Firebase' => {'url' => 'https://a/b', 'from' => '13.0.0'}, 'Other' => {'path' => '../other'}},
+        yml['packages'])
+      assert_equal %w[-lz -lffi -ObjC], base['OTHER_LDFLAGS']
+      assert_equal '5.0',               base['SWIFT_VERSION']
+      assert_equal %w[a b].map {"#{pkg.config.dir}/src/macos/appstore/#{_1}.swift"},
+        target['sources'].map {_1['path']}.grep(/\.swift\z/)
+      assert_equal [
+        {'package' => 'Firebase', 'product' => 'A'},
+        {'package' => 'Firebase', 'product' => 'B'},
+        {'package' => 'Other',    'product' => 'Other'}
+      ], target['dependencies'].select {_1['package']}
+
+      yml = YAML.safe_load read(dir, 'project.yml')
+      assert_not_include yml, 'packages'
+      assert_equal %w[-lz -lffi], yml.dig('settings', 'base', 'OTHER_LDFLAGS')
+      assert_not_include yml.dig('settings', 'base'), 'SWIFT_VERSION'
+      assert_empty yml.dig('targets', pkg.target, 'sources').map {_1['path']}.grep(/\.swift\z/)
+
+      assert_include File.read(mac.__send__ :appstore_entitlements_path), [
+        "<dict>",
+        "\t<key>com.apple.security.app-sandbox</key>",
+        "\t<true/>",
+        "\t<key>com.apple.security.network.client</key>",
+        "\t<true/>",
+        "\t<key>a.b</key>",
+        "\t<array><string>c&amp;d</string><integer>1</integer></array>",
+        "</dict>"
+      ].join("\n")
+    end
+
+    packager "macos: {appstore: {sources: ['src/*.swift']}}" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config, appstore: true).generate}
+      assert_include error.message, "no file of 'src/*.swift'"
+    end
+  end
+
   def test_build_for_appstore()
     # with the commands captured, and what is copied into dist/
     build = -> config, **options do
@@ -673,7 +734,7 @@ class TestPackagerMacOS < Test::Unit::TestCase
       generic  = File.join dir, '.build/macos/generic'
       mac      = MacOS.new pkg.config, appstore: true
       mac.generate
-      assert_include File.read("#{appstore}/AppStore.entitlements"),
+      assert_include File.read("#{appstore}/appstore.entitlements"),
         "<key>com.apple.security.app-sandbox</key>\n\t<true/>"
       options = File.read "#{appstore}/ExportOptions.plist"
       assert_include options, '<string>app-store-connect</string>'
@@ -685,8 +746,12 @@ class TestPackagerMacOS < Test::Unit::TestCase
       # only the one for the App Store, archived in the sandbox
       commands, copied = build.call pkg.config, appstore: true
       assert_equal [
-        "#{appstore}/MyApp.xcarchive CODE_SIGN_ENTITLEMENTS=#{appstore}/AppStore.entitlements"
+        "#{appstore}/MyApp.xcarchive CODE_SIGN_ENTITLEMENTS=#{appstore}/appstore.entitlements"
       ], commands.grep(/ archive /).map {_1[/(?<=-archivePath ).*/]}
+      # by its own project
+      assert_include commands, "xcodegen generate --quiet --spec project-appstore.yml"
+      assert_equal ["MyApp-appstore.xcodeproj"],
+        commands.grep(/ archive /).map {_1[/(?<=-project )\S+/]}
       assert_equal 1, commands.grep(
         %r{-exportArchive -archivePath #{appstore}/\S+ -exportOptionsPlist #{appstore}/ExportOptions\.plist -exportPath #{appstore}/export -allowProvisioningUpdates$}).size
       # the package named after the name of the app, not the target

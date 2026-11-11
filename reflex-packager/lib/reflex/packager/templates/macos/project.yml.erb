@@ -1,4 +1,4 @@
-name: <%= target %>
+name: <%= project %>
 
 options:
   deploymentTarget:
@@ -28,7 +28,18 @@ settings:
 <%- end -%>
     HEADER_SEARCH_PATHS: <%= header_search_paths.to_json %>
     SYSTEM_HEADER_SEARCH_PATHS: <%= system_header_search_paths.to_json %>
-    OTHER_LDFLAGS: [-lz, -lffi]
+    # -ObjC for the Objective-C classes of the packages, which nothing names
+    OTHER_LDFLAGS: [-lz, -lffi<%= ', -ObjC' unless packages.empty? %>]
+<%- if sources.any? {_1.end_with? '.swift'} -%>
+    SWIFT_VERSION: "5.0"
+<%- end -%>
+<%- unless packages.empty? -%>
+
+packages:
+<%-   packages.each do |name, package| -%>
+  <%= name.to_json %>: <%= package.except('products').to_json %>
+<%-   end -%>
+<%- end -%>
 
 targets:
   <%= target %>:
@@ -51,6 +62,9 @@ targets:
 <%- end -%>
       - path: <%= File.join(cruby_dir, 'src').to_json %>
         name: CRuby
+<%- sources.each do |source| -%>
+      - path: <%= source.to_json %>
+<%- end -%>
 <%- build_infos.each do |lib, info| -%>
 <%-   root  = lib.root -%>
 <%-   flags = info[:defs].map {"-D#{_1}"}.join ' ' -%>
@@ -72,6 +86,12 @@ targets:
         embed: false
 <%- frameworks.each do |framework| -%>
       - sdk: <%= framework %>.framework
+<%- end -%>
+<%- packages.each do |name, package| -%>
+<%-   Array(package['products'] || name).each do |product| -%>
+      - package: <%= name.to_json %>
+        product: <%= product.to_s.to_json %>
+<%-   end -%>
 <%- end -%>
     info:
       path: src/Info.plist

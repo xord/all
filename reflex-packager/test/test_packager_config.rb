@@ -308,6 +308,35 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config(macos: {archs: {}})}
   end
 
+  def test_macos_appstore()
+    c = config
+    assert_equal [], c.macos.appstore_sources
+    assert_equal({}, c.macos.appstore_packages)
+    assert_equal({}, c.macos.appstore_entitlements)
+
+    c = config 'macos' => {'appstore' => {
+      'sources'      => 'src/*.swift',
+      'packages'     => {'Firebase' => {'url' => 'https://a/b', 'from' => '13.0.0', 'products' => ['A']}},
+      'entitlements' => {'com.apple.security.network.client' => true, 'a.b' => ['c', 1]}
+    }}
+    assert_equal ['src/*.swift'], c.macos.appstore_sources
+    assert_equal(
+      {'Firebase' => {'url' => 'https://a/b', 'from' => '13.0.0', 'products' => ['A']}},
+      c.macos.appstore_packages)
+    assert_equal(
+      {'com.apple.security.network.client' => true, 'a.b' => ['c', 1]},
+      c.macos.appstore_entitlements)
+    assert_equal({'P' => {'path' => '../p'}},
+      config(macos: {appstore: {packages: {P: {path: '../p'}}}}).macos.appstore_packages)
+
+    assert_raise(RP::Error) {config macos: {appstore: {packages:     []}}}
+    assert_raise(RP::Error) {config macos: {appstore: {packages:     {P: 'url'}}}}
+    assert_raise(RP::Error) {config macos: {appstore: {packages:     {P: {from: '1.0.0'}}}}}
+    assert_raise(RP::Error) {config macos: {appstore: {entitlements: [:a]}}}
+    assert_raise(RP::Error) {config macos: {appstore: {entitlements: {a: {b: true}}}}}
+    assert_raise(RP::Error) {config macos: {appstore: {entitlements: {a: nil}}}}
+  end
+
   def test_macos_cruby()
     assert_nil               config()                           .macos.cruby
     assert_nil               config(macos: {})                  .macos.cruby

@@ -189,14 +189,17 @@ module Reflex
       end
 
       def validate_input(hash, defaults, parent: '', stderr: nil)
-        return defaults.dup if hash.nil?
+        hash ||= {}
         raise Error, "not a Hash: '#{parent}'" unless hash.is_a? Hash
         hash.each_key {stderr&.puts "unknown key '#{parent}/#{_1}'" unless defaults.key? _1}
 
         defaults.each.with_object({}) do |(key, defval), result|
           value       = hash[key]
           result[key] =
-            if defval.is_a? Hash
+            if defval == Hash # of any keys
+              raise Error, "not a Hash: '#{parent}/#{key}'" unless value.nil? || value.is_a?(Hash)
+              value || {}
+            elsif defval.is_a? Hash
               validate_input value, defval, parent: "#{parent}/#{key}", stderr: stderr
             else
               raise Error, "unexpected Hash: '#{parent}/#{key}'" if value.is_a? Hash
@@ -275,12 +278,18 @@ module Reflex
           codesign: {
             identity: '-',
             team_id:  nil
+          },
+          appstore: {
+            sources:      nil,
+            packages:     Hash,
+            entitlements: Hash
           }
         }
       end
 
       def initialize(hash)
         codesign = hash[:codesign].merge CODESIGN_ENV_KEYS.transform_values {env _1}.compact
+        appstore = hash[:appstore]
 
         @bundle_id         = hash[:bundle_id]        &.to_s
         @deployment_target = hash[:deployment_target] .to_s
@@ -289,6 +298,13 @@ module Reflex
         @category          = hash[:category]         &.to_s
         @codesign_identity = codesign[:identity]      .to_s
         @codesign_team_id  = codesign[:team_id]      &.to_s
+
+        @appstore_sources      = Array(appstore[:sources]).map &:to_s
+        @appstore_packages     = appstore[:packages].to_h do |name, package|
+          raise Error, "not a Hash: '/macos/appstore/packages/#{name}'" unless package.is_a? Hash
+          [name.to_s, package.to_h {[_1.to_s, _2]}]
+        end
+        @appstore_entitlements = appstore[:entitlements].to_h {[_1.to_s, _2]}
         validate
       end
 
@@ -315,12 +331,27 @@ module Reflex
       #
       attr_reader :codesign_identity, :codesign_team_id
 
+      # What only the app for the Mac App Store has: the glob patterns of the
+      # sources to compile into it, as of Swift, the Swift packages to link
+      # with it, as {name => {url:, minorVersion:, products: [...]}}, and the
+      # entitlements to add to the sandbox.
+      #
+      attr_reader :appstore_sources, :appstore_packages, :appstore_entitlements
+
       def validate()
         raise Error, "invalid macos.bundle_id: '#{@bundle_id}'" if
           @bundle_id && @bundle_id !~ /\A[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+\z/
         raise Error, "invalid archs: '#{@archs}'" if @archs.empty?
         raise Error, "invalid category: '#{@category}'" if
           @category && @category !~ /\Apublic\.app-category\.[a-z\-]+\z/
+        @appstore_packages.each do |name, package|
+          raise Error, "no url or path of the package '#{name}'" unless
+            package['url'] || package['path']
+        end
+        @appstore_entitlements.each do |key, value|
+          raise Error, "invalid value of the entitlement '#{key}': #{value.inspect}" unless
+            plist_value? value
+        end
       end
 
       private
@@ -330,6 +361,14 @@ module Reflex
       #
       def env(name)
         ENV[name].then {_1 unless _1.to_s.empty?}
+      end
+
+      def plist_value?(value)
+        case value
+        when true, false, Integer, String then true
+        when Array                        then value.all? {plist_value? _1}
+        else                                   false
+        end
       end
 
     end# MacOSConfig
