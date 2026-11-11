@@ -66,15 +66,25 @@ module Reflex
         # A change of the metadata in App Store Connect, by +op+ as A, M or D
         # of git status --short, of +path+ in the metadata, as en-US/app.yml,
         # and of +key+ in it, from +from+ to +to+, or to +to+ of the values
-        # in the file added.
+        # in the file added; or of deleting a language, or all the screenshots
+        # of a display type, as en-US/desktop, which are done by hand.
         #
         Change = Struct.new :op, :path, :key, :from, :to do
           def language_deleted?()
             op == 'D' && path.end_with?('.yml')
           end
 
+          def screenshots_deleted?()
+            op == 'D' && !path.end_with?('.yml') && path.count('/') == 1
+          end
+
+          def by_hand?()
+            language_deleted? || screenshots_deleted?
+          end
+
           def to_s(width = 0)
             line = "#{op} #{path.ljust width}"
+            return "#{line}  (by hand)" if by_hand?
             return line.rstrip unless key
             return "#{line}  #{key}" if
               [from, to].all?(&:nil?) || [from, to].any? {_1.to_s.include? "\n"}
@@ -158,8 +168,8 @@ module Reflex
 
           info_changes, version_changes, info_localizations, version_localizations =
             metadata_changes(dir, app, info, version, first: versions.last.equal?(version))
-          # the changes to edit, but deleting the languages, done by hand
-          edited = -> changes {!changes.all?(&:language_deleted?)}
+          # the changes to edit, but the ones done by hand
+          edited = -> changes {!changes.all?(&:by_hand?)}
           errors = []
           errors << "the app info is #{state info}, which can not be edited" if
             edited[info_changes] && !editable?(info)
@@ -375,13 +385,16 @@ module Reflex
         # The changes of the screenshots of +locale+, from +remote+ to
         # +local+, of {directory name => the screenshots}, keeping the ones of
         # the same checksum, and changing the order of them if it differs
-        # after the others are deleted and added.
+        # after the others are deleted and added; or deleting all of them,
+        # done by hand, as a change of the directory.
         #
         def screenshot_changes(locale, remote, local)
           (remote.keys | local.keys).sort.flat_map do |name|
             dir         = File.join locale, name
             olds, shots = remote[name] || [], local[name] || []
-            kept, left  = match_screenshots olds, shots
+            next [Change.new('D', dir)] if shots.empty? && !olds.empty?
+
+            kept, left = match_screenshots olds, shots
             # the ones added are after the ones kept, in the order of them
             ordered = kept == kept.compact.sort + kept.select(&:nil?)
 
@@ -469,13 +482,14 @@ module Reflex
         # localizations in +infos+ and +versions+ by the locales, in the order
         # of adding and modifying, for the primary language to be changed to
         # one added; and then the screenshots in +dir+, of the display types
-        # changed; skips deleting the languages, which losing the files by
-        # mistake would do, done by hand.
+        # changed; skips the ones done by hand, deleting the languages, and
+        # all the screenshots of a display type, which losing the files by
+        # mistake would do.
         #
         def upload_changes(dir, changes, app, info, version, infos, versions)
-          asc            = @app_store_connect
-          texts, shots   = changes.partition {%w[app.yml version.yml].include? File.basename(_1.path)}
-          deletes, texts = texts.partition(&:language_deleted?)
+          asc               = @app_store_connect
+          by_hands, changes = changes.partition(&:by_hand?)
+          texts, shots      = changes.partition {%w[app.yml version.yml].include? File.basename(_1.path)}
           texts
             .group_by {[_1.op, _1.path]}
             .sort_by.with_index {|((op, _), _), i| ['AM'.index(op), i]}
@@ -495,7 +509,7 @@ module Reflex
               infos, versions = localizations info, version if op == 'A'
               puts "uploaded #{op} #{path}"
             end
-          sets  = shots.map {_1.key ? _1.path : File.dirname(_1.path)}.uniq.filter_map do |path|
+          sets  = shots.map {_1.key ? _1.path : File.dirname(_1.path)}.uniq.map do |path|
             locale, name = File.split path
             upload_screenshots dir, locale, name, versions[locale]
           end
@@ -506,8 +520,12 @@ module Reflex
             puts "processed #{added.size} screenshot#{'s' if added.size > 1}"
           end
           sets.each {put_screenshots_in_order(**_1)}
-          puts "skipped deleting the languages #{deletes.map {File.dirname _1.path}.uniq.join ', '}," +
-            ' which are to be deleted by hand' unless deletes.empty?
+          languages = by_hands.select(&:language_deleted?).map {File.dirname _1.path}.uniq
+          puts "skipped deleting the languages #{languages.join ', '}," +
+            ' which are to be deleted by hand' unless languages.empty?
+          by_hands.select(&:screenshots_deleted?).each do
+            puts "skipped deleting the screenshots of #{_1.path}, which are to be deleted by hand"
+          end
         end
 
         # Uploads the change +op+ of +path+, as fr/app.yml, by +values+, to
@@ -535,17 +553,11 @@ module Reflex
         # of the version in +locale+, deleting the others first, for no more
         # than App Store Connect takes in a set to be there; and returns what
         # #put_screenshots_in_order takes, once the ones added are processed.
-        # Skips deleting all of them, which losing the directory by mistake
-        # would do, done by hand.
         #
         def upload_screenshots(dir, locale, name, localization)
           asc   = @app_store_connect
           path  = File.join locale, name
           shots = local_screenshots(File.join dir, locale)[name]
-          unless shots
-            puts "skipped deleting the screenshots of #{path}, which are to be deleted by hand"
-            return nil
-          end
 
           type       = "APP_#{name.upcase}"
           set        = asc.get_screenshot_sets(localization)

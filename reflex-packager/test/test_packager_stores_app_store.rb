@@ -286,9 +286,9 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         ' A en-US/desktop/screenshot_10.png',
         ' M en-US/version.yml description',
         ' M en-US/version.yml whatsNew: "Fix a" -> "Fix b"',
-        ' D fr/app.yml',
-        ' D fr/desktop/x.png',
-        ' D fr/version.yml',
+        ' D fr/app.yml (by hand)',
+        ' D fr/desktop (by hand)',
+        ' D fr/version.yml (by hand)',
         ' A ja/app.yml',
         ' A ja/version.yml',
         ' M version.yml copyright: "2026 a" -> "2026 b"',
@@ -309,10 +309,10 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         'uploaded M version.yml',
         'uploaded D en-US/desktop/c.png',
         'uploaded A en-US/desktop/screenshot_10.png',
-        'skipped deleting the screenshots of fr/desktop, which are to be deleted by hand',
         'processed 1 screenshot',
         'uploaded M en-US/desktop order',
-        'skipped deleting the languages fr, which are to be deleted by hand'
+        'skipped deleting the languages fr, which are to be deleted by hand',
+        'skipped deleting the screenshots of fr/desktop, which are to be deleted by hand'
       ], upload[dir, dry_run: false].last(12)
       assert_equal [
         [:post, '/v1/appInfoLocalizations', {
@@ -385,7 +385,7 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       error = assert_raise(RP::Error) {upload[dir, version: '1.2.0']}
       assert_include error.message, 'no version 1.2.0 for macos in App Store Connect'
 
-      # not editable but deleting the languages, done by hand
+      # not editable but deleting the languages and the screenshots, done by hand
       Dir.mktmpdir do |dir2|
         {
           'app.yml'           => "primaryLocale: en-US\nprimaryCategory: GAMES\n",
@@ -397,8 +397,10 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
           File.write File.join(dir2, path), text
         end
         lines = upload[dir2, state: 'WAITING_FOR_REVIEW']
-        assert_include     lines, ' D fr/app.yml'
+        assert_include     lines, ' D fr/app.yml (by hand)'
+        assert_include     lines, ' D fr/desktop (by hand)'
         assert_not_include lines, ' ! the app info is WAITING_FOR_REVIEW, which can not be edited'
+        assert_not_include lines, ' ! the version is WAITING_FOR_REVIEW, which can not be edited'
       end
 
       # nothing to tell skipped without whatsNew
