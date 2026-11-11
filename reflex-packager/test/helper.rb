@@ -26,7 +26,8 @@ def fake_cruby(dir)
   dir
 end
 
-# Runs the block with the method +name+ of +obj+ returning +value+.
+# Runs the block with the method +name+ of +obj+ returning +value+, or what
+# it returns if a proc, called each time.
 #
 def stub(obj, name, value, &block)
   # removed before defined again, which warns on overwriting
@@ -34,7 +35,7 @@ def stub(obj, name, value, &block)
   hidden = klass.private_method_defined? name, false
   saved  = klass.instance_method name if hidden || klass.method_defined?(name, false)
   klass.remove_method name if saved
-  klass.define_method(name) {|*| value}
+  klass.define_method(name) {|*| value.is_a?(Proc) ? value.call : value}
   block.call
 ensure
   klass.remove_method name

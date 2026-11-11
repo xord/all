@@ -1,6 +1,7 @@
 require 'tmpdir'
 require 'net/http'
 require 'json'
+require 'digest/md5'
 require 'openssl'
 
 
@@ -33,6 +34,14 @@ module Reflex
       #
       HOST          = 'https://api.appstoreconnect.apple.com'
       HOST_NOTARIZE = 'https://appstoreconnect.apple.com'
+
+      # Seconds to wait for the screenshots uploaded to be processed in all,
+      # between the tries to see whether they finished, and between telling
+      # it is waiting.
+      #
+      SCREENSHOT_TIMEOUT  = 15 * 60
+      SCREENSHOT_INTERVAL = 5
+      SCREENSHOT_TELLING  = 10
 
       # Seconds to wait for the notarization in all, and between the tries
       # to see whether it finished.
@@ -164,6 +173,90 @@ module Reflex
         }
       end
 
+      # Creates the screenshot set of +localization+ of a version for
+      # +display_type+, as APP_DESKTOP.
+      #
+      def create_screenshot_set(localization, display_type)
+        request(:post, '/v1/appScreenshotSets', {
+          type:          'appScreenshotSets',
+          attributes:    {screenshotDisplayType: display_type},
+          relationships: {appStoreVersionLocalization: {
+            data: {type: 'appStoreVersionLocalizations', id: localization['id']}
+          }}
+        })['data']
+      end
+
+      # Uploads the image in +path+, or +data+ of it named by +path+, into
+      # +set+, at the end of the screenshots in it, not waiting for it to be
+      # processed, see #wait_until_processed, for the ones uploaded to be
+      # waited for at once.
+      #
+      def upload_screenshot(set, path, data = File.binread(path))
+        shot = request(:post, '/v1/appScreenshots', {
+          type:          'appScreenshots',
+          attributes:    {fileName: File.basename(path), fileSize: data.bytesize},
+          relationships: {appScreenshotSet: {data: {type: 'appScreenshotSets', id: set['id']}}}
+        })['data']
+        shot.dig('attributes', 'uploadOperations').each do |operation|
+          upload_part operation, data.byteslice(operation['offset'], operation['length'])
+        end
+        request :patch, "/v1/appScreenshots/#{shot['id']}", {
+          type:       'appScreenshots',
+          id:         shot['id'],
+          attributes: {uploaded: true, sourceFileChecksum: Digest::MD5.hexdigest(data)}
+        }
+        shot
+      end
+
+      # The screenshots +shots+ uploaded, once App Store Connect processed
+      # all of them, raising the errors it found.
+      #
+      def wait_until_processed(
+        shots, timeout: SCREENSHOT_TIMEOUT, interval: SCREENSHOT_INTERVAL)
+
+        deadline = Time.now + timeout
+        done     = {}
+        told     = nil
+        loop do
+          shots.reject {done[_1['id']]}.each do |shot|
+            shot  = get("/v1/appScreenshots/#{shot['id']}")['data']
+            state = shot.dig 'attributes', 'assetDeliveryState'
+            name  = shot.dig 'attributes', 'fileName'
+            case state&.[]('state')
+            when 'COMPLETE'
+              done[shot['id']] = shot
+            when 'FAILED'
+              errors = (state['errors'] || []).map {_1['description']}
+              raise Error, "failed to process the screenshot #{name}: #{errors.join ', '}"
+            end
+          end
+          left = shots.size - done.size
+          return shots.map {done[_1['id']]} if left == 0
+
+          waiting = "#{left} screenshot#{'s' if left > 1}"
+          raise Error, "timed out waiting for #{waiting} to be processed," +
+            ' which may be in the media manager of App Store Connect, to be chosen by hand,' +
+            ' or uploaded again by running it again' if
+            Time.now > deadline
+          if !told || Time.now - told >= SCREENSHOT_TELLING
+            puts "waiting for #{waiting} to be processed..."
+            told = Time.now
+          end
+          sleep interval
+        end
+      end
+
+      def delete_screenshot(shot)
+        request :delete, "/v1/appScreenshots/#{shot['id']}"
+      end
+
+      # Puts the screenshots in +set+ in the order of +shots+.
+      #
+      def order_screenshots(set, shots)
+        request :patch, "/v1/appScreenshotSets/#{set['id']}/relationships/appScreenshots",
+          shots.map {{type: 'appScreenshots', id: _1['id']}}
+      end
+
       # Waits until the app is notarized by +id+, raising the issues Apple
       # found unless it accepted the app.
       #
@@ -227,6 +320,19 @@ module Reflex
         raise Error, "failed to #{method} #{path} of App Store Connect: #{res.code} #{res.body}" unless
           res.is_a? Net::HTTPSuccess
         JSON.parse res.body unless res.body.to_s.empty?
+      end
+
+      # Sends +bytes+, a part of a file, by +operation+, one of the upload
+      # operations App Store Connect answered, to the URL of it with no token.
+      #
+      def upload_part(operation, bytes)
+        uri = URI operation['url']
+        req = Net::HTTP.const_get(operation['method'].capitalize).new uri,
+          operation['requestHeaders'].to_h {[_1['name'], _1['value']]}
+        req.body = bytes
+        res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') {|http| http.request req}
+        raise Error, "failed to upload a part of the file: #{res.code} #{res.body}" unless
+          res.is_a? Net::HTTPSuccess
       end
 
       # The JSON Web Token of App Store Connect, signed by ES256, whose
