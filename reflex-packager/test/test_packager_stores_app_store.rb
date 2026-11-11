@@ -65,17 +65,17 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
 
   # App Store Connect answering GET by +answers+ of the paths, or by the
   # procs of them, and putting the other requests into +requests+, with the
-  # screenshots uploaded as [:upload_screenshot, the set, the file name],
-  # whose ids are the file names, and waited for to be processed as
-  # [:wait_until_processed, the ids].
+  # screenshots uploaded as [:upload_screenshot, the set, the file name,
+  # the image], whose ids are the file names, and waited for to be
+  # processed as [:wait_until_processed, the ids].
   def asc(answers, requests = [])
     asc = RP::AppStoreConnect.new issuer_id: 'ISSUER', key_id: 'KEY', key_p8: 'P8'
     asc.define_singleton_method(:get) do |path, **|
       answers.fetch(path).then {_1.is_a?(Proc) ? _1.call : _1}
     end
     asc.define_singleton_method(:request) {|*args| requests << args; nil}
-    asc.define_singleton_method(:upload_screenshot) do |set, path|
-      requests << [:upload_screenshot, set['id'], File.basename(path)]
+    asc.define_singleton_method(:upload_screenshot) do |set, path, data|
+      requests << [:upload_screenshot, set['id'], File.basename(path), data]
       {'id' => File.basename(path)}
     end
     asc.define_singleton_method(:wait_until_processed) do |shots|
@@ -207,8 +207,9 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
   def test_upload_metadata()
     md5      = -> s {Digest::MD5.hexdigest s}
     shot     = -> name, s {{'id' => name, 'attributes' => {'fileName' => name, 'sourceFileChecksum' => md5[s]}}}
-    requests = []
-    answers  = -> state: 'PREPARE_FOR_SUBMISSION', versions: 2, linked: false {{
+    requests  = []
+    downloads = {}
+    answers   = -> state: 'PREPARE_FOR_SUBMISSION', versions: 2, linked: false {{
       '/v1/apps' => {'data' => [
         {'type' => 'apps', 'id' => 'APP', 'attributes' => {'name' => 'My Game', 'primaryLocale' => 'en-US'}}
       ]},
@@ -252,7 +253,8 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       lines     = []
       requests.clear
       app_store = RP::Stores::AppStore.new asc(answers[**kwargs], requests)
-      app_store.define_singleton_method(:puts) {|s = ''| lines << s.squeeze(' ')}
+      app_store.define_singleton_method(:puts)     {|s = ''| lines << s.squeeze(' ')}
+      app_store.define_singleton_method(:download) {|url| downloads.fetch url}
       app_store.upload_metadata dir,
         bundle_id: 'com.example.app', platform: :macos, version_string: version, dry_run: dry_run
       lines
@@ -308,9 +310,10 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         'uploaded D en-US/desktop/c.png',
         'uploaded A en-US/desktop/screenshot_10.png',
         'skipped deleting the screenshots of fr/desktop, which are to be deleted by hand',
+        'processed 1 screenshot',
         'uploaded M en-US/desktop order',
         'skipped deleting the languages fr, which are to be deleted by hand'
-      ], upload[dir, dry_run: false].last(11)
+      ], upload[dir, dry_run: false].last(12)
       assert_equal [
         [:post, '/v1/appInfoLocalizations', {
           type:          'appInfoLocalizations',
@@ -343,7 +346,7 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
           attributes: {'copyright' => '2026 b'}
         }],
         [:delete, '/v1/appScreenshots/c.png'],
-        [:upload_screenshot, 'DESKTOP', 'screenshot_10.png'],
+        [:upload_screenshot, 'DESKTOP', 'screenshot_10.png', '4'],
         [:wait_until_processed, ['screenshot_10.png']],
         [:patch, '/v1/appScreenshotSets/DESKTOP/relationships/appScreenshots', [
           {type: 'appScreenshots', id: 'b.png'},
@@ -440,6 +443,122 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         File.write File.join(dir, path), text
       end
       assert_equal 'nothing to upload', upload[dir].last
+
+      # the ones listed, not in the repository, downloaded unless in the
+      # directory, as captured; the others in it raising, not to upload the
+      # ones not listed by mistake
+      FileUtils.rm_r File.join(dir, 'en-US/desktop')
+      yml    = File.join dir, 'en-US/screenshots.yml'
+      write  = -> list {File.write yml, list.to_yaml}
+      listed = -> name, s {{'path' => name, 'url' => "https://shots/en-US/#{name}", 'md5' => md5[s]}}
+      write[[
+        listed['desktop/screenshot_01.png', '2'],
+        listed['desktop/screenshot_02.png', '1'],
+        listed['desktop/screenshot_03.png', '4']
+      ]]
+      assert_equal [
+        ' M en-US/desktop order',
+        ' D en-US/desktop/c.png',
+        ' A en-US/desktop/screenshot_03.png'
+      ], upload[dir][1..-2]
+      assert_empty requests
+
+      # in the order of the list, not of the numbers
+      write[[
+        listed['desktop/screenshot_02.png', '1'],
+        listed['desktop/screenshot_01.png', '2'],
+        listed['desktop/screenshot_03.png', '4']
+      ]]
+      assert_not_include upload[dir], ' M en-US/desktop order'
+      write[[
+        listed['desktop/screenshot_01.png', '2'],
+        listed['desktop/screenshot_02.png', '1'],
+        listed['desktop/screenshot_03.png', '4']
+      ]]
+
+      downloads['https://shots/en-US/desktop/screenshot_03.png'] = '4'
+      upload[dir, dry_run: false]
+      assert_include requests, [:upload_screenshot, 'DESKTOP', 'screenshot_03.png', '4']
+
+      downloads['https://shots/en-US/desktop/screenshot_03.png'] = '5'
+      error = assert_raise(RP::Error) {upload[dir, dry_run: false]}
+      assert_include error.message, 'not the screenshot listed'
+      downloads.clear
+
+      local = -> path, s {
+        FileUtils.mkdir_p File.dirname(File.join dir, path)
+        File.write File.join(dir, path), s
+      }
+      local['en-US/desktop/screenshot_03.png', '4']
+      upload[dir, dry_run: false]
+      assert_include requests, [:upload_screenshot, 'DESKTOP', 'screenshot_03.png', '4']
+      File.delete File.join(dir, 'en-US/desktop/screenshot_03.png')
+
+      [
+        ['en-US/desktop/screenshot_03.png', '5'], # captured again
+        ['en-US/desktop/screenshot_04.png', '4']  # not listed
+      ].each do |path, s|
+        local[path, s]
+        error = assert_raise(RP::Error) {upload[dir]}
+        assert_include error.message, "screenshots not as #{yml} lists: #{File.join dir, path}"
+        File.delete File.join(dir, path)
+      end
+
+      one = listed['desktop/screenshot_01.png', '1']
+      [
+        [one,                                   'not an array of the screenshots'],
+        [['desktop/screenshot_01.png'],         'not a screenshot of a display type'],
+        [[listed['screenshot_01.png', '1']],    'not a screenshot of a display type'],
+        [[listed['desktop/a.png', '1']],        'not a screenshot of a display type'],
+        [[listed['../screenshot_01.png', '1']], 'not a screenshot of a display type'],
+        [[one.except('url')],                   'no url or md5'],
+        [[one.except('md5')],                   'no url or md5'],
+        [[one, one.dup],                        'screenshots listed twice']
+      ].each do |list, message|
+        write[list]
+        error = assert_raise(RP::Error) {upload[dir]}
+        assert_include error.message, message
+      end
+    end
+  end
+
+  def test_download()
+    app_store = RP::Stores::AppStore.new asc({})
+    sleeps    = []
+    app_store.define_singleton_method(:sleep) {|s| sleeps << s}
+    ok = Net::HTTPOK.new('1.1', '200', 'OK').tap do
+      _1.instance_variable_set :@body, 'IMAGE'
+      _1.instance_variable_set :@read, true
+    end
+    stub Net::HTTP, :get_response, ok do
+      assert_equal 'IMAGE', app_store.send(:download, 'https://a/b.png')
+    end
+    assert_empty sleeps
+
+    # tried again while busy
+    [
+      [Net::HTTPTooManyRequests.new('1.1', '429', ''),    RP::Stores::AppStore::DOWNLOAD_TRIES - 1],
+      [Net::HTTPServiceUnavailable.new('1.1', '503', ''), RP::Stores::AppStore::DOWNLOAD_TRIES - 1],
+      [Net::HTTPNotFound.new('1.1', '404', ''),           0]
+    ].each do |res, count|
+      sleeps.clear
+      stub Net::HTTP, :get_response, res do
+        error = assert_raise(RP::Error) {app_store.send :download, 'https://a/b.png'}
+        assert_include error.message, "failed to download 'https://a/b.png': #{res.code}"
+      end
+      assert_equal count, sleeps.size
+    end
+
+    # and while the network fails, as ok after
+    sleeps.clear
+    fails = 1
+    stub Net::HTTP, :get_response, -> {(fails -= 1) >= 0 ? raise(Net::OpenTimeout, 'timed out') : ok} do
+      assert_equal 'IMAGE', app_store.send(:download, 'https://a/b.png')
+    end
+    assert_equal 1, sleeps.size
+    stub Net::HTTP, :get_response, -> {raise Errno::ECONNRESET} do
+      error = assert_raise(RP::Error) {app_store.send :download, 'https://a/b.png'}
+      assert_include error.message, 'Connection reset'
     end
   end
 

@@ -50,6 +50,19 @@ module Reflex
           PREPARE_FOR_SUBMISSION DEVELOPER_REJECTED REJECTED METADATA_REJECTED INVALID_BINARY
         ]
 
+        # The file in the directory of a language listing the screenshots,
+        # for them to be kept out of the repository of the app, to be
+        # downloaded from the URLs it lists when not in the directory.
+        #
+        SCREENSHOTS_YML = 'screenshots.yml'
+
+        # The tries to download, as a server busy answers 429 or 5xx, or the
+        # network fails by the errors, and seconds to wait between them.
+        #
+        DOWNLOAD_TRIES    = 3
+        DOWNLOAD_INTERVAL = 5
+        DOWNLOAD_ERRORS   = [Timeout::Error, SocketError, SystemCallError, EOFError, OpenSSL::SSL::SSLError]
+
         # A change of the metadata in App Store Connect, by +op+ as A, M or D
         # of git status --short, of +path+ in the metadata, as en-US/app.yml,
         # and of +key+ in it, from +from+ to +to+, or to +to+ of the values
@@ -68,6 +81,12 @@ module Reflex
             "#{line}  #{key}: #{from.inspect} -> #{to.inspect}"
           end
         end
+
+        # A screenshot to upload, in +path+, as ja/desktop/screenshot_01.jpg
+        # in the metadata, of +checksum+, the MD5 of it, or else at +url+ of
+        # SCREENSHOTS_YML.
+        #
+        Screenshot = Struct.new :path, :checksum, :url
 
         def initialize(app_store_connect = AppStoreConnect.new)
           @app_store_connect = app_store_connect
@@ -129,7 +148,8 @@ module Reflex
         # +dir+, which download_metadata writes, for the version of
         # +version_string+, as 1.0, showing the changes first, and uploading
         # them unless +dry_run+, but deleting the languages, and all the
-        # screenshots of a display type, done by hand.
+        # screenshots of a display type, done by hand. The screenshots of a
+        # language are the ones SCREENSHOTS_YML lists, if it is there.
         #
         def upload_metadata(dir, bundle_id:, platform:, version_string:, dry_run: false)
           app, info, version, versions = get_app bundle_id, platform, version_string
@@ -360,14 +380,14 @@ module Reflex
         def screenshot_changes(locale, remote, local)
           (remote.keys | local.keys).sort.flat_map do |name|
             dir         = File.join locale, name
-            olds, paths = remote[name] || [], local[name] || []
-            kept, left  = match_screenshots olds, paths
+            olds, shots = remote[name] || [], local[name] || []
+            kept, left  = match_screenshots olds, shots
             # the ones added are after the ones kept, in the order of them
             ordered = kept == kept.compact.sort + kept.select(&:nil?)
 
             [
-              *paths.zip(kept).filter_map {|path, old|
-                Change.new 'A', File.join(dir, File.basename(path)) unless old
+              *shots.zip(kept).filter_map {|shot, old|
+                Change.new 'A', File.join(dir, File.basename(shot.path)) unless old
               },
               *left.map {Change.new 'D', File.join(dir, olds[_1].dig('attributes', 'fileName').to_s)},
               *([Change.new('M', dir, 'order')] unless ordered)
@@ -376,25 +396,73 @@ module Reflex
         end
 
         # The indexes in +olds+, the screenshots in App Store Connect, of the
-        # ones of the same checksums as the images in +paths+, or nil for the
-        # ones to be added; and the indexes of the others, to be deleted.
+        # ones of the same checksums as +shots+, or nil for the ones to be
+        # added; and the indexes of the others, to be deleted.
         #
-        def match_screenshots(olds, paths)
+        def match_screenshots(olds, shots)
           left = olds.each_index.to_a
-          kept = paths.map do |path|
-            sum = Digest::MD5.file(path).hexdigest
-            left.find {olds[_1].dig('attributes', 'sourceFileChecksum') == sum}.tap {left.delete _1}
+          kept = shots.map do |shot|
+            left.find {olds[_1].dig('attributes', 'sourceFileChecksum') == shot.checksum}
+              .tap {left.delete _1}
           end
           return kept, left
         end
 
-        # The screenshots in the directories of the display types in +dir+,
-        # as {'desktop' => [the paths]}, in the order of the numbers of them.
+        # The screenshots SCREENSHOTS_YML in +dir+ lists, in the order of it,
+        # or else the ones in the directories of the display types in it, in
+        # the order of the numbers of them, as {'desktop' => [the
+        # screenshots]}.
         #
         def local_screenshots(dir)
-          Dir.glob(File.join dir, '*', 'screenshot_*.{png,jpg,jpeg}')
-            .sort_by {File.basename(_1)[/\d+/].to_i}
-            .group_by {File.basename File.dirname(_1)}
+          files = Dir.glob File.join(dir, '*', 'screenshot_*.{png,jpg,jpeg}')
+          shots = listed_screenshots(dir, files) ||
+            files
+              .map {Screenshot.new _1, Digest::MD5.file(_1).hexdigest}
+              .sort_by {File.basename(_1.path)[/\d+/].to_i}
+          shots.group_by {File.basename File.dirname(_1.path)}
+        end
+
+        # The screenshots SCREENSHOTS_YML in +dir+ lists, or nil without it,
+        # raising for +files+, the screenshots in the directories, not as it
+        # lists, as the ones captured again, or downloaded from App Store
+        # Connect, for none to be uploaded by mistake:
+        #
+        #   - path: desktop/screenshot_01.jpg
+        #     url:  https://example.com/screenshots/ja/desktop/screenshot_01.jpg
+        #     md5:  0123456789abcdef0123456789abcdef
+        #
+        def listed_screenshots(dir, files)
+          path = File.join dir, SCREENSHOTS_YML
+          return nil unless File.file? path
+
+          list  = YAML.safe_load(File.read path) || []
+          raise Error, "not an array of the screenshots in #{path}" unless list.is_a? Array
+          shots = list.map do |attrs|
+            name, url, md5 = attrs.values_at 'path', 'url', 'md5' if attrs.is_a? Hash
+            raise Error, "not a screenshot of a display type in #{path}: #{name}" unless
+              name.to_s =~ %r{\A[\w-]+/screenshot_\d+\.(png|jpe?g)\z}
+            raise Error, "no url or md5 of #{name} in #{path}" if [url, md5].any? {_1.to_s.empty?}
+            Screenshot.new File.join(dir, name), md5.to_s.downcase, url
+          end
+          dups = shots.map(&:path).tally.filter_map {|p, count| p if count > 1}
+          raise Error, "screenshots listed twice in #{path}: #{dups.join ', '}" unless dups.empty?
+
+          checksums = shots.to_h {[_1.path, _1.checksum]}
+          others    = files.reject {checksums[_1] == Digest::MD5.file(_1).hexdigest}
+          raise Error, "screenshots not as #{path} lists: #{others.join ', '}," +
+            " to list them again, or delete them" unless others.empty?
+          shots
+        end
+
+        # The image of +shot+, from the file, which is as listed, or from the
+        # URL of it, checked by the checksum.
+        #
+        def screenshot_data(shot)
+          return File.binread shot.path if File.file? shot.path
+          data = download shot.url
+          raise Error, "not the screenshot listed, of another checksum: #{shot.url}" unless
+            Digest::MD5.hexdigest(data) == shot.checksum
+          data
         end
 
         # Uploads +changes+ of the texts, the ones of a file at once, to the
@@ -433,7 +501,10 @@ module Reflex
           end
           # all at once, which App Store Connect processes side by side
           added = sets.flat_map {_1[:added]}
-          asc.wait_until_processed added unless added.empty?
+          unless added.empty?
+            asc.wait_until_processed added
+            puts "processed #{added.size} screenshot#{'s' if added.size > 1}"
+          end
           sets.each {put_screenshots_in_order(**_1)}
           puts "skipped deleting the languages #{deletes.map {File.dirname _1.path}.uniq.join ', '}," +
             ' which are to be deleted by hand' unless deletes.empty?
@@ -470,8 +541,8 @@ module Reflex
         def upload_screenshots(dir, locale, name, localization)
           asc   = @app_store_connect
           path  = File.join locale, name
-          paths = local_screenshots(File.join dir, locale)[name]
-          unless paths
+          shots = local_screenshots(File.join dir, locale)[name]
+          unless shots
             puts "skipped deleting the screenshots of #{path}, which are to be deleted by hand"
             return nil
           end
@@ -481,14 +552,15 @@ module Reflex
             .find {_1.dig('attributes', 'screenshotDisplayType') == type}
           set      ||= asc.create_screenshot_set localization, type
           olds       = asc.get_screenshots set
-          kept, left = match_screenshots olds, paths
+          kept, left = match_screenshots olds, shots
           left.each do
             asc.delete_screenshot olds[_1]
             puts "uploaded D #{File.join path, olds[_1].dig('attributes', 'fileName').to_s}"
           end
-          added = paths.zip(kept).filter_map do |file, old|
+          added = shots.zip(kept).filter_map do |shot, old|
             next if old
-            asc.upload_screenshot(set, file).tap {puts "uploaded A #{File.join path, File.basename(file)}"}
+            asc.upload_screenshot(set, shot.path, screenshot_data(shot))
+              .tap {puts "uploaded A #{File.join path, File.basename(shot.path)}"}
           end
           {path: path, set: set, olds: olds, kept: kept, added: added}
         end
@@ -505,9 +577,19 @@ module Reflex
         end
 
         def download(url)
-          res = Net::HTTP.get_response URI(url)
-          raise Error, "failed to download '#{url}': #{res.code}" unless res.is_a? Net::HTTPSuccess
-          res.body
+          tries = 0
+          loop do
+            begin
+              res = Net::HTTP.get_response URI(url)
+              return res.body if res.is_a? Net::HTTPSuccess
+              error, busy = res.code, res.code == '429' || res.is_a?(Net::HTTPServerError)
+            rescue *DOWNLOAD_ERRORS => e
+              error, busy = e.message, true
+            end
+            raise Error, "failed to download '#{url}': #{error}" unless
+              busy && (tries += 1) < DOWNLOAD_TRIES
+            sleep DOWNLOAD_INTERVAL
+          end
         end
 
         def write_yaml(path, hash)

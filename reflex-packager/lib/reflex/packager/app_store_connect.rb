@@ -39,7 +39,7 @@ module Reflex
       # between the tries to see whether they finished, and between telling
       # it is waiting.
       #
-      SCREENSHOT_TIMEOUT  = 10 * 60
+      SCREENSHOT_TIMEOUT  = 15 * 60
       SCREENSHOT_INTERVAL = 5
       SCREENSHOT_TELLING  = 10
 
@@ -186,13 +186,12 @@ module Reflex
         })['data']
       end
 
-      # Uploads the image in +path+ into +set+, at the end of the
-      # screenshots in it, not waiting for it to be processed, see
-      # #wait_until_processed, for the ones uploaded to be waited for at
-      # once.
+      # Uploads the image in +path+, or +data+ of it named by +path+, into
+      # +set+, at the end of the screenshots in it, not waiting for it to be
+      # processed, see #wait_until_processed, for the ones uploaded to be
+      # waited for at once.
       #
-      def upload_screenshot(set, path)
-        data = File.binread path
+      def upload_screenshot(set, path, data = File.binread(path))
         shot = request(:post, '/v1/appScreenshots', {
           type:          'appScreenshots',
           attributes:    {fileName: File.basename(path), fileSize: data.bytesize},
