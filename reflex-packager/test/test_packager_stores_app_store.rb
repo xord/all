@@ -206,10 +206,14 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
 
   def test_upload_metadata()
     md5      = -> s {Digest::MD5.hexdigest s}
-    shot     = -> name, s {{'id' => name, 'attributes' => {'fileName' => name, 'sourceFileChecksum' => md5[s]}}}
+    shot     = -> name, s, state = 'COMPLETE' {{'id' => name, 'attributes' => {
+      'fileName'           => name,
+      'sourceFileChecksum' => md5[s],
+      'assetDeliveryState' => {'state' => state}
+    }}}
     requests  = []
     downloads = {}
-    answers   = -> state: 'PREPARE_FOR_SUBMISSION', versions: 2, linked: false {{
+    answers   = -> state: 'PREPARE_FOR_SUBMISSION', versions: 2, linked: false, processed: true {{
       '/v1/apps' => {'data' => [
         {'type' => 'apps', 'id' => 'APP', 'attributes' => {'name' => 'My Game', 'primaryLocale' => 'en-US'}}
       ]},
@@ -242,7 +246,9 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         {'id' => 'DESKTOP', 'attributes' => {'screenshotDisplayType' => 'APP_DESKTOP'}}
       ]},
       '/v1/appScreenshotSets/DESKTOP/appScreenshots' => {'data' => [
-        shot['a.png', '1'], shot['b.png', '2'], shot['c.png', '3']
+        shot['a.png', '1'],
+        shot['b.png', '2', processed ? 'COMPLETE' : 'UPLOAD_COMPLETE'],
+        shot['c.png', '3']
       ]},
       '/v1/appStoreVersionLocalizations/L-fr/appScreenshotSets' => {'data' => [
         {'id' => 'FR', 'attributes' => {'screenshotDisplayType' => 'APP_DESKTOP'}}
@@ -445,6 +451,13 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
         File.write File.join(dir, path), text
       end
       assert_equal 'nothing to upload', upload[dir].last
+
+      # one not processed, as timed out, uploaded again
+      assert_equal [
+        ' M en-US/desktop order',
+        ' D en-US/desktop/b.png',
+        ' A en-US/desktop/screenshot_02.png'
+      ], upload[dir, processed: false][1..-2]
 
       # the ones listed, not in the repository, downloaded unless in the
       # directory, as captured; the others in it raising, not to upload the

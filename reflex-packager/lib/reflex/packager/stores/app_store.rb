@@ -410,13 +410,18 @@ module Reflex
 
         # The indexes in +olds+, the screenshots in App Store Connect, of the
         # ones of the same checksums as +shots+, or nil for the ones to be
-        # added; and the indexes of the others, to be deleted.
+        # added; and the indexes of the others, to be deleted. The ones not
+        # processed are of the others, to be uploaded again, as one which
+        # timed out.
         #
         def match_screenshots(olds, shots)
           left = olds.each_index.to_a
           kept = shots.map do |shot|
-            left.find {olds[_1].dig('attributes', 'sourceFileChecksum') == shot.checksum}
-              .tap {left.delete _1}
+            left.find {
+              attrs = olds[_1]['attributes']
+              attrs['sourceFileChecksum'] == shot.checksum &&
+                attrs.dig('assetDeliveryState', 'state') == 'COMPLETE'
+            }.tap {left.delete _1}
           end
           return kept, left
         end

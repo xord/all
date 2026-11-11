@@ -235,7 +235,8 @@ module Reflex
 
           waiting = "#{left} screenshot#{'s' if left > 1}"
           raise Error, "timed out waiting for #{waiting} to be processed," +
-            ' which may be in the media manager of App Store Connect, to be chosen by hand' if
+            ' which may be in the media manager of App Store Connect, to be chosen by hand,' +
+            ' or uploaded again by running it again' if
             Time.now > deadline
           if !told || Time.now - told >= SCREENSHOT_TELLING
             puts "waiting for #{waiting} to be processed..."
