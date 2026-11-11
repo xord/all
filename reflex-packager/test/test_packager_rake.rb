@@ -118,7 +118,7 @@ class TestPackagerRake < Test::Unit::TestCase
       assert_equal [archive], ::Rake::Task['upload:itchio'].prerequisites
       stub Reflex::Packager::Stores::Itchio, :new, uploader do
         # only the actions of the task, not building the zip it takes
-        ::Rake::Task['upload:itchio'].execute
+        with_env('GITHUB_ACTIONS' => nil) {::Rake::Task['upload:itchio'].execute}
         error = assert_raise(RuntimeError) do
           with_env('GITHUB_ACTIONS' => 'true', 'BUTLER_API_KEY' => nil) do
             ::Rake::Task['upload:itchio'].execute
