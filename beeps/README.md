@@ -161,13 +161,18 @@ sound.save 'square.wav'
 ```ruby
 require 'beeps'
 
-mic      = Beeps::MicIn.new(1)            # 1 channel
-analyser = Beeps::Analyser.new(1024, mic) # 1024-point FFT
-mic.start
+mic      = Beeps::MicIn.new.tap(&:start) # valid once started
+analyser = Beeps::Analyser.new(fft_size: 1024)
+
+# the analyser sees only the samples pulled through it, so play them silently
+Beeps::Sound.new(mic >> analyser, gain: 0).play
 
 loop do
+  Beeps.process_streams! # capture and stream them
+  spectrum = analyser.each_spectrum.to_a
+  peak     = spectrum.index spectrum.max
+  puts "the loudest: #{(peak * analyser.resolution).round} Hz"
   sleep 0.1
-  puts analyser.spectrum.first(8).map {|v| v.round 3 }.inspect
 end
 ```
 
