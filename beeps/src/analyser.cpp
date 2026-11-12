@@ -53,10 +53,21 @@ namespace Beeps
 		{
 			if (size == fft_size) return;
 
+			if (size == 0 || size % 32 != 0)
+				argument_error(__FILE__, __LINE__, "fft_size must be a multiple of 32");
+
+			std::unique_ptr<PFFFT_Setup, PFFFTDestroySetup> setup(
+				pffft_new_setup(size, PFFFT_REAL));
+			if (!setup)
+			{
+				argument_error(
+					__FILE__, __LINE__, "fft_size must have no prime factors but 2, 3, and 5");
+			}
+
 			clear();
 
 			signals   = Signals(std::min(size, (uint) Beeps::sample_rate()));
-			pffft     .reset(pffft_new_setup(size, PFFFT_REAL));
+			pffft     = std::move(setup);
 			fft_buffer.reset((float*) pffft_aligned_malloc(sizeof(float) * size));
 			fft_size  = size;
 		}
@@ -90,27 +101,9 @@ namespace Beeps
 	{
 	}
 
-	static bool
-	is_valid_fft_size (uint size)
-	{
-		if (size < 32) return false;
-
-		while (size > 1)
-		{
-			     if (size % 2 == 0) size /= 2;
-			else if (size % 3 == 0) size /= 3;
-			else if (size % 5 == 0) size /= 5;
-			else break;
-		}
-		return size == 1;
-	}
-
 	void
 	Analyser::set_fft_size (uint size)
 	{
-		if (!is_valid_fft_size(size))
-			beeps_error(__FILE__, __LINE__, "fft_size must be divisible by 2, 3, or 5");
-
 		self->setup(size);
 	}
 
@@ -134,6 +127,13 @@ namespace Beeps
 	}
 
 	static void
+	apply_hann_window (float* buffer, uint nsamples)
+	{
+		for (uint i = 0; i < nsamples; ++i)
+			buffer[i] *= 0.5 * (1 - cos(2 * M_PI * i / nsamples));
+	}
+
+	static uint
 	copy_signals_to_fft_buffer (float* buffer, uint size, const Signals& signals)
 	{
 		const double* samples = signals.samples();
@@ -155,22 +155,37 @@ namespace Beeps
 				beeps_error(__FILE__, __LINE__);
 		}
 
+		apply_hann_window(buffer, nsamples);
+
 		for (uint i = nsamples; i < size; ++i)
 			buffer[i] = 0;
+
+		return nsamples;
 	}
 
 	static void
-	update_spectrum (Analyser::Spectrum* spectrum, float* buffer, uint buffer_size)
+	update_spectrum (
+		Analyser::Spectrum* spectrum, const float* buffer, uint buffer_size,
+		uint nsamples)
 	{
 		assert(spectrum && spectrum->empty() && buffer && (buffer_size % 2) == 0);
 
-		uint size  = buffer_size / 2;
-		float div = 1.0 / size;
-		float* p  = buffer;
-
+		uint size = buffer_size / 2;
 		spectrum->reserve(size);
-		for (uint i = 0; i < size; ++i, p += 2)
-			spectrum->push_back(sqrt(p[0] * p[0] + p[1] * p[1]) * div);
+
+		if (nsamples == 0)
+			return spectrum->resize(size, 0);
+
+		// doubled back, as the Hann window halves the amplitudes
+		float div = 2.0 / nsamples;
+
+		// buffer[0] and [1] are the real DC and Nyquist, not a complex pair
+		spectrum->push_back(fabs(buffer[0]) * div);
+		for (uint i = 1; i < size; ++i)
+		{
+			const float* p = buffer + i * 2;
+			spectrum->push_back(sqrt(p[0] * p[0] + p[1] * p[1]) * div * 2);
+		}
 	}
 
 	const Analyser::Spectrum&
@@ -178,10 +193,10 @@ namespace Beeps
 	{
 		if (self->spectrum.empty() && *this)
 		{
-			float* p = &self->fft_buffer[0];
-			copy_signals_to_fft_buffer(p, self->fft_size, self->signals);
+			float* p      = &self->fft_buffer[0];
+			uint nsamples = copy_signals_to_fft_buffer(p, self->fft_size, self->signals);
 			pffft_transform_ordered(self->pffft.get(), p, p, NULL, PFFFT_FORWARD);
-			update_spectrum(&self->spectrum, p, self->fft_size);
+			update_spectrum(&self->spectrum, p, self->fft_size, nsamples);
 		}
 		return self->spectrum;
 	}
@@ -222,13 +237,12 @@ namespace Beeps
 	append (Signals* to, const Signals& from)
 	{
 		assert(to->nchannels() == from.nchannels());
-		assert(to->nsamples() + from.nsamples() <= to->capacity());
 
 		uint nchannels       =  to->nchannels();
 		uint nsamples        = std::min(from.nsamples(), to->capacity() - to->nsamples());
 		uint size            = nsamples * nchannels;
 		      Sample*   to_p = Signals_at(to,   to->nsamples());
-		const Sample* from_p = Signals_at(from, 0);
+		const Sample* from_p = Signals_at(from, from.nsamples() - nsamples);
 		for (uint i = 0; i < size; ++i)
 			*to_p++ = *from_p++;
 
