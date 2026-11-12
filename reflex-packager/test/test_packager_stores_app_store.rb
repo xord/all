@@ -387,9 +387,35 @@ class TestPackagerStoresAppStore < Test::Unit::TestCase
       assert_include error.message, 'which can not be edited'
       assert_empty requests
 
-      # to the version of the app alone, created on the web first
-      error = assert_raise(RP::Error) {upload[dir, version: '1.2.0']}
-      assert_include error.message, 'no version 1.2.0 for macos in App Store Connect'
+      # to the one not submitted yet of a lower number, renamed, with the others of version.yml
+      lines = upload[dir, version: '1.2.0']
+      assert_include lines, 'App Store Connect: My Game (com.example.app), macos 1.1.0 (PREPARE_FOR_SUBMISSION)'
+      assert_include lines, ' M version.yml versionString: "1.1.0" -> "1.2.0"'
+      assert_include lines, ' M version.yml copyright: "2026 a" -> "2026 b"'
+      upload[dir, version: '1.2.0', dry_run: false]
+      assert_include requests, [:patch, '/v1/appStoreVersions/VER', {
+        type:       'appStoreVersions',
+        id:         'VER',
+        attributes: {'versionString' => '1.2.0', 'copyright' => '2026 b'}
+      }]
+
+      # to the version of the app alone, created on the web first, not
+      # renaming one submitted, nor one of a higher number, by an older tag,
+      # nor by a number not to be compared
+      [
+        ['1.2.0', 'WAITING_FOR_REVIEW'],
+        ['1.0.0', 'PREPARE_FOR_SUBMISSION'],
+        ['beta',  'PREPARE_FOR_SUBMISSION']
+      ].each do |version, state|
+        error = assert_raise(RP::Error) {upload[dir, version: version, state: state]}
+        assert_include error.message, "no version #{version} for macos in App Store Connect"
+      end
+
+      # to the same number written apart, renamed as written in VERSION, but
+      # not editing one submitted
+      assert_include upload[dir, version: '1.1'], ' M version.yml versionString: "1.1.0" -> "1.1"'
+      assert_include upload[dir, version: '1.1', state: 'WAITING_FOR_REVIEW'],
+        ' ! the version is WAITING_FOR_REVIEW, which can not be edited'
 
       # not editable but deleting the languages and the screenshots, done by hand
       Dir.mktmpdir do |dir2|

@@ -156,18 +156,23 @@ module Reflex
 
         # Makes the metadata of the app in App Store Connect the same as in
         # +dir+, which download_metadata writes, for the version of
-        # +version_string+, as 1.0, showing the changes first, and uploading
-        # them unless +dry_run+, but deleting the languages, and all the
-        # screenshots of a display type, done by hand. The screenshots of a
-        # language are the ones SCREENSHOTS_YML lists, if it is there.
+        # +version_string+, as 1.0, or of the same number written apart, or of
+        # the last one to be edited, as not submitted yet, renamed to it,
+        # showing the changes first, and uploading them unless +dry_run+, but
+        # deleting the languages, and all the screenshots of a display type,
+        # done by hand. The screenshots of a language are the ones
+        # SCREENSHOTS_YML lists, if it is there.
         #
         def upload_metadata(dir, bundle_id:, platform:, version_string:, dry_run: false)
           app, info, version, versions = get_app bundle_id, platform, version_string
+          current                      = version.dig 'attributes', 'versionString'
           puts "App Store Connect: #{app.dig 'attributes', 'name'} (#{bundle_id})," +
-            " #{platform} #{version.dig 'attributes', 'versionString'} (#{state version})"
+            " #{platform} #{current} (#{state version})"
 
           info_changes, version_changes, info_localizations, version_localizations =
             metadata_changes(dir, app, info, version, first: versions.last.equal?(version))
+          version_changes.unshift Change.new('M', 'version.yml', 'versionString', current, version_string) if
+            current != version_string
           # the changes to edit, but the ones done by hand
           edited = -> changes {!changes.all?(&:by_hand?)}
           errors = []
@@ -211,10 +216,13 @@ module Reflex
         private
 
         # The app of +bundle_id+, the info of it and the version for
-        # +platform+, of +version_string+, as 1.0, which is to be created on
-        # the web first, not to be made by mistake; or else of the last not
-        # on the store, or of the last one; and all the versions for
-        # +platform+, from the last.
+        # +platform+, of +version_string+, as 1.0, or of the same number
+        # written apart, as 1.0.0, or else the last one to be edited, as not
+        # submitted yet, of a lower number, to be renamed to it, as written
+        # in VERSION, as none is to be created here, not to be made by
+        # mistake, nor to be renamed back by an older tag; or else, with no
+        # +version_string+, of the last not on the store, or of the last one;
+        # and all the versions for +platform+, from the last.
         #
         def get_app(bundle_id, platform, version_string = nil)
           asc      = @app_store_connect
@@ -225,8 +233,10 @@ module Reflex
           version  =
             if version_string
               versions.find {_1.dig('attributes', 'versionString') == version_string} ||
+                versions.find {compare_versions(_1, version_string) == 0} ||
+                versions.find {editable?(_1) && compare_versions(_1, version_string) == -1} ||
                 raise(Error, "no version #{version_string} for #{platform} in App Store Connect," +
-                  ' to be created on the web first')
+                  ' nor any of a lower number to be edited, to be created on the web first')
             else
               editable(versions) || raise(Error, "no version for #{platform} in App Store Connect")
             end
@@ -244,6 +254,17 @@ module Reflex
 
         def editable?(data)
           EDITABLE_STATES.include? state(data)
+        end
+
+        # -1, 0 or 1, as the number of +version+ is lower than, the same as,
+        # or higher than +version_string+, or nil, not to be compared.
+        #
+        def compare_versions(version, version_string)
+          string = version.dig 'attributes', 'versionString'
+          return nil unless string # not as 0 by Gem::Version
+          Gem::Version.new(string) <=> Gem::Version.new(version_string)
+        rescue ArgumentError
+          nil
         end
 
         # The metadata in app.yml.

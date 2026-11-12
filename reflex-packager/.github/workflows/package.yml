@@ -280,7 +280,8 @@ jobs:
 
   macos-metadata:
     # once the pkg is uploaded to App Store Connect, by the input on a tag,
-    # to the version of it, created on the web first
+    # to the version of it, created on the web first, or to the one not
+    # submitted yet, renamed to it
     needs: [prepare, macos-package]
     if: inputs.macos-appstore && github.ref_type == 'tag'
     runs-on: ubuntu-latest # cheaper than macos
