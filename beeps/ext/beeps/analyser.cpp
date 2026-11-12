@@ -64,17 +64,18 @@ RUCY_DEF1(each_signal, nsamples_)
 	const double* samples = sig.samples();
 	uint nchannels        = sig.nchannels();
 	uint start            = (sig.nsamples() - nsamples) * nchannels;
+	uint end              = start + nsamples * nchannels;
 	switch (nchannels)
 	{
 		case 1:
-			for (uint i = start; i < nsamples; ++i)
+			for (uint i = start; i < end; ++i)
 				yield(value(samples[i]));
 			break;
 
 		case 2:
 			Value values[2];
 			Value args(2, values);
-			for (uint i = start; i < nsamples; i += 2)
+			for (uint i = start; i < end; i += 2)
 			{
 				args.set(0, value(samples[i + 0]));
 				args.set(1, value(samples[i + 1]));
