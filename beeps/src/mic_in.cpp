@@ -269,6 +269,10 @@ namespace Beeps
 		Super::generate(context, signals, offset);
 
 		self->mic.get_signals(signals, offset);
+		if (!self->mic.is_started()) return;
+
+		uint nsamples = signals->nsamples();
+		Signals_fill(signals, signals->capacity() - nsamples, 0, nsamples);
 	}
 
 
