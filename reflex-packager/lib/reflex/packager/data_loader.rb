@@ -52,11 +52,7 @@ module Reflex
           return script(File.expand_path feature) if
             File.absolute_path?(feature) || feature.start_with?('./', '../')
 
-          $LOAD_PATH.each do |load_path|
-            name = script File.expand_path(feature, load_path.to_s)
-            return name if name
-          end
-          nil
+          scripts_by_feature[feature]
         end
 
         # The name of the script in the data file at +path+, or nil.
@@ -88,6 +84,42 @@ module Reflex
 
         def load_script(name)
           RubyVM::InstructionSequence.load_from_binary(@data.read name).eval
+        end
+
+        private
+
+        # The names of the scripts in the data file by the features, kept
+        # until the load path or the current directory changes, which its
+        # relative paths are expanded from: File.expand_path asks the file
+        # system on Windows, too slow to be called on every require.
+        #
+        # A feature is looked for in the directories of the load path the
+        # app directory is in, or which are in it, as no other leads to a
+        # script of the app; but one with .., which may lead there from any.
+        #
+        def scripts_by_feature()
+          pwd = Dir.pwd
+          if @pwd != pwd || @load_path != $LOAD_PATH
+            load_path = $LOAD_PATH.map(&:dup)
+            all       = load_path.map {File.expand_path _1.to_s}
+            dirs      = all.select {in_dir?(_1, @dir) || in_dir?(@dir, _1)}
+
+            @scripts_by_feature = Hash.new do |hash, feature|
+              hash[feature] = (feature.match?(%r{(\A|/)\.\.(/|\z)}) ? all : dirs)
+                .lazy.filter_map {script File.expand_path(feature, _1)}.first
+            end
+
+            # after the hash, for another thread not to take it before it is made
+            @pwd, @load_path = pwd, load_path
+          end
+          @scripts_by_feature
+        end
+
+        # Whether +path+ is +dir+ or in it; +dir+ may end with a slash, as a
+        # root does.
+        #
+        def in_dir?(path, dir)
+          path == dir || path.start_with?(dir.end_with?('/') ? dir : "#{dir}/")
         end
 
       end# self

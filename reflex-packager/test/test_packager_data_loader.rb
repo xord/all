@@ -85,6 +85,70 @@ class TestPackagerDataLoader < Test::Unit::TestCase
     ], log
   end
 
+  def test_require_after_load_path_changed()
+    files = {
+      'main.rb' => <<~RUBY,
+        r = []
+        begin
+          require 'qux'
+        rescue LoadError
+          r << :no_qux # not found yet, which is forgotten once the load path changes
+        end
+        $LOAD_PATH.unshift File.join(Dir.pwd, 'sub')
+        r << require('qux')
+        r << require('qux')
+        p r
+      RUBY
+      'sub/qux.rb' => ''
+    }
+    assert_equal [:no_qux, true, false], eval(run_app files)
+  end
+
+  def test_require_from_load_path_above_app()
+    files = {
+      'main.rb' => <<~RUBY,
+        r = []
+        $LOAD_PATH.unshift File.dirname(Dir.pwd)
+        r << require("\#{File.basename Dir.pwd}/sub/qux")
+        $LOAD_PATH.unshift '/' # the root, ending with a slash
+        r << require("\#{Dir.pwd.sub %r{\\A(\\w:)?/}, ''}/sub/quux")
+        p r
+      RUBY
+      'sub/qux.rb'  => '',
+      'sub/quux.rb' => ''
+    }
+    assert_equal [true, true], eval(run_app files)
+  end
+
+  def test_require_with_dots_from_load_path_out_of_app()
+    files = {
+      'main.rb' => <<~RUBY,
+        # beside the app, the only one of the load path the feature leads to the app from
+        $LOAD_PATH.unshift File.join(File.dirname(Dir.pwd), 'other/lib')
+        p require("x/../../../\#{File.basename Dir.pwd}/sub/qux")
+      RUBY
+      'sub/qux.rb' => ''
+    }
+    assert_equal true, eval(run_app files)
+  end
+
+  def test_require_library_again()
+    files = {
+      'main.rb' => <<~RUBY,
+        require 'shellwords'
+        $LOAD_PATH.concat 50.times.map {"/no/such/lib/\#{_1}"} # as the libraries
+        count = 0
+        File.singleton_class.prepend(Module.new {
+          define_method(:expand_path) {|*args| count += 1; super(*args)}
+        })
+        r = 100.times.map {require 'shellwords'}.uniq
+        # each directory once, as the load path changed, not on every require
+        p [r, count < $LOAD_PATH.size * 2]
+      RUBY
+    }
+    assert_equal [[false], true], eval(run_app files)
+  end
+
   def test_files()
     files = {
       'main.rb' => <<~RUBY,
