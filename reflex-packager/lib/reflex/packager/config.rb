@@ -72,7 +72,7 @@ module Reflex
         @icon      = hash[:icon]     &.to_s
         @files     = hash[:files]&.then {Array(_1).map(&:to_s)}
         @excludes  = glob_patterns hash[:excludes], :excludes
-        @macos     = MacOSConfig.new   hash[:macos]
+        @macos     = MacOSConfig.new   hash[:macos], @dir
         @windows   = WindowsConfig.new hash[:windows]
         @upload    = UploadConfig.new  hash[:upload]
 
@@ -275,6 +275,7 @@ module Reflex
           archs:             %w[arm64 x86_64],
           cruby:             nil,
           category:          nil,
+          icon:              nil,
           codesign: {
             identity: '-',
             team_id:  nil
@@ -287,7 +288,7 @@ module Reflex
         }
       end
 
-      def initialize(hash)
+      def initialize(hash, dir)
         codesign = hash[:codesign].merge CODESIGN_ENV_KEYS.transform_values {env _1}.compact
         appstore = hash[:appstore]
 
@@ -296,6 +297,7 @@ module Reflex
         @archs             = Array(hash[:archs]).map &:to_s
         @cruby             = hash[:cruby]            &.to_s
         @category          = hash[:category]         &.to_s
+        @icon              = hash[:icon]             &.to_s
         @codesign_identity = codesign[:identity]      .to_s
         @codesign_team_id  = codesign[:team_id]      &.to_s
 
@@ -305,7 +307,7 @@ module Reflex
           [name.to_s, package.to_h {[_1.to_s, _2]}]
         end
         @appstore_entitlements = appstore[:entitlements].to_h {[_1.to_s, _2]}
-        validate
+        validate dir
       end
 
       # The bundle identifier of the app, which macos needs, set in the config
@@ -325,6 +327,17 @@ module Reflex
       #
       attr_reader :category
 
+      # The icon of the app on macos, in place of the one of the config: an
+      # image, or a .icon of Icon Composer.
+      #
+      attr_reader :icon
+
+      # Whether the icon is a .icon of Icon Composer, a directory, not an image.
+      #
+      def composed_icon?(path = @icon)
+        File.extname(path.to_s) == '.icon'
+      end
+
       # The identity and the team to sign the app with, which
       # APPLE_CODESIGN_IDENTITY and APPLE_TEAM_ID override, for the name of
       # the developer in the identity not to be in the config.
@@ -339,23 +352,35 @@ module Reflex
       #
       attr_reader :appstore_sources, :appstore_packages, :appstore_entitlements
 
-      def validate()
+      private
+
+      # +dir+ is the directory of the project, which the icon is in.
+      #
+      def validate(dir)
         raise Error, "invalid macos.bundle_id: '#{@bundle_id}'" if
           @bundle_id && @bundle_id !~ /\A[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+\z/
+
         raise Error, "invalid archs: '#{@archs}'" if @archs.empty?
+
         raise Error, "invalid category: '#{@category}'" if
           @category && @category !~ /\Apublic\.app-category\.[a-z\-]+\z/
+
         @appstore_packages.each do |name, package|
           raise Error, "no url or path of the package '#{name}'" unless
             package['url'] || package['path']
         end
+
+        if @icon
+          # a .icon is a directory, of icon.json and the images
+          path = File.join dir, @icon, *('icon.json' if composed_icon?)
+          raise Error, "icon not found: '#{@icon}'" unless File.file? path
+        end
+
         @appstore_entitlements.each do |key, value|
           raise Error, "invalid value of the entitlement '#{key}': #{value.inspect}" unless
             plist_value? value
         end
       end
-
-      private
 
       # The environment variable +name+, or nil if empty, as a secret of
       # GitHub Actions not set is.
@@ -396,6 +421,8 @@ module Reflex
       def console?()
         @console
       end
+
+      private
 
       def validate()
         raise Error, "invalid console: '#{@console}'" unless
@@ -446,6 +473,8 @@ module Reflex
       # https://user.itch.io/game, which butler takes.
       #
       attr_reader :itchio_project
+
+      private
 
       def validate()
         raise Error, "invalid upload.appstore: '#{@appstore}'" unless

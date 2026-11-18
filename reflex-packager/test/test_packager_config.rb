@@ -221,6 +221,27 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error)  {config icon: 'nofile.png'}
   end
 
+  def test_macos_icon()
+    assert_nil                config()                         .macos.icon
+    assert_false              config()                         .macos.composed_icon?
+    assert_equal 'helper.rb', config(macos: {icon: 'helper.rb'}).macos.icon
+    assert_false              config(macos: {icon: 'helper.rb'}).macos.composed_icon?
+    assert_raise(RP::Error)  {config macos: {icon: 'nofile.png'}}
+
+    Dir.mktmpdir do |dir|
+      FileUtils.touch File.join(dir, 'main.rb')
+      FileUtils.mkdir File.join(dir, 'app.icon')
+      new = -> **opts {config dir: dir, main: 'main.rb', **opts}
+      assert_raise(RP::Error) {new.call macos: {icon: 'app.icon'}} # no icon.json
+      FileUtils.touch File.join(dir, 'app.icon', 'icon.json')
+      assert_equal 'app.icon', new.call(macos: {icon: 'app.icon'}).macos.icon
+      assert_true              new.call(macos: {icon: 'app.icon'}).macos.composed_icon?
+
+      # only for macos: the icon of the config is an image
+      assert_raise(RP::Error) {new.call icon: 'app.icon'}
+    end
+  end
+
   def test_files()
     assert_nil                  config()                  .files
     assert_equal %w[helper.rb], config(files: 'helper.rb').files

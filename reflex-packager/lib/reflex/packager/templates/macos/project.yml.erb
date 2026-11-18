@@ -30,6 +30,9 @@ settings:
     SYSTEM_HEADER_SEARCH_PATHS: <%= system_header_search_paths.to_json %>
     # -ObjC for the Objective-C classes of the packages, which nothing names
     OTHER_LDFLAGS: [-lz, -lffi<%= ', -ObjC' unless packages.empty? %>]
+<%- if config.macos.composed_icon? -%>
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+<%- end -%>
 <%- if sources.any? {_1.end_with? '.swift'} -%>
     SWIFT_VERSION: "5.0"
 <%- end -%>
@@ -56,7 +59,11 @@ targets:
       - path: Bundles/<%= bundle %>
         buildPhase: resources
 <%- end -%>
-<%- if config.icon -%>
+<%- if config.macos.composed_icon? -%>
+      - path: AppIcon.icon
+        type: file
+        buildPhase: resources
+<%- elsif app_icon -%>
       - path: AppIcon.icns
         buildPhase: resources
 <%- end -%>
@@ -112,6 +119,6 @@ targets:
 <%- if config.localizations.size > 1 -%>
         LSHasLocalizedDisplayName: true
 <%- end -%>
-<%- if config.icon -%>
+<%- if app_icon && !config.macos.composed_icon? -%>
         CFBundleIconFile: AppIcon
 <%- end -%>

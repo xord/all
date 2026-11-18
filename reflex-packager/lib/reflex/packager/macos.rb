@@ -2,6 +2,7 @@ require 'json'
 require 'rbconfig'
 require 'securerandom'
 require 'tmpdir'
+require 'xot/util'
 require 'reflex/packager/platform'
 require 'reflex/packager/gems'
 require 'reflex/packager/app_store_connect'
@@ -58,6 +59,10 @@ module Reflex
         xcodebuild: 'install Xcode and run: sudo xcode-select --switch /Applications/Xcode.app'
       }
 
+      # The first Xcode to compile a .icon of Icon Composer.
+      #
+      COMPOSED_ICON_XCODE = '26'
+
       # A packed app compiles its scripts when built, and a notarized one is
       # sent to Apple when exported, as the one for the Mac App Store is
       # exported from its archive, so they have to be built; the app only
@@ -104,7 +109,7 @@ module Reflex
         # the bundles first, which what reads the data file is copied into
         copy_bundles
         copy_app_files
-        generate_icon if config.icon
+        copy_app_icon
         write 'project.yml',       project_yml
         write 'src/main.mm',       render('main.mm.erb')
         write 'boot.rb',           render('boot.rb.erb')
@@ -148,6 +153,10 @@ module Reflex
       #
       def app_name()
         config.name
+      end
+
+      def app_icon()
+        config.macos.icon || config.icon
       end
 
       def dist_path()
@@ -722,14 +731,32 @@ module Reflex
         File.join dir, "#{name}.bundle", 'Contents', 'Resources'
       end
 
-      def generate_icon()
+      def copy_app_icon()
+        icon = app_icon || return
+        config.macos.composed_icon?(icon) ? copy_composed_icon(icon) : generate_icon(icon)
+      end
+
+      def generate_icon(path)
         iconset = File.join build_dir, 'AppIcon.iconset'
         FileUtils.rm_rf iconset
         FileUtils.mkdir_p iconset
-        icon_commands(File.join(config.dir, config.icon), iconset)
-          .each {|cmd| run(*cmd, chdir: build_dir, quiet: true)}
-        run 'iconutil', '-c', 'icns', 'AppIcon.iconset', '-o', 'AppIcon.icns',
-          chdir: build_dir
+        icon_commands(File.join(config.dir, path), iconset).each do |cmd|
+          run(*cmd, chdir: build_dir, quiet: true)
+        end
+        run 'iconutil', '-c', 'icns', 'AppIcon.iconset', '-o', 'AppIcon.icns', chdir: build_dir
+      end
+
+      # The .icon of Icon Composer, which Xcode compiles into the icons, the
+      # .icns for the systems before macOS 26 too.
+      #
+      def copy_composed_icon(path)
+        ver = Xot.xcode_version
+        raise Error, "'#{path}' needs Xcode #{COMPOSED_ICON_XCODE} or later" unless
+          ver && Gem::Version.new(ver) >= Gem::Version.new(COMPOSED_ICON_XCODE)
+
+        dst = File.join build_dir, 'AppIcon.icon'
+        FileUtils.rm_rf dst
+        FileUtils.cp_r File.join(config.dir, path), dst
       end
 
       def copy_app(app = built_app_path)

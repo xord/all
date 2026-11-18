@@ -35,6 +35,15 @@ class TestPackagerMacOS < Test::Unit::TestCase
     File.read File.join(dir, '.build', 'macos', 'project', path)
   end
 
+  # Runs the block as with the Xcode of +version+, or without one by nil.
+  #
+  def with_xcode_version(version, &block)
+    Xot.define_singleton_method(:xcode_version) {version}
+    block.call
+  ensure
+    Xot.singleton_class.remove_method :xcode_version # back to the one of Xot::Util
+  end
+
   def test_ruby_version()
     assert_equal '4.0.7', RP::MacOS.ruby_version('4.0.701')
     assert_equal '4.0.6', RP::MacOS.ruby_version('4.0.600')
@@ -285,6 +294,54 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
       str = MacOS.new(pkg.config, verbose: true).__send__ :project_yml
       assert_not_include str, 'GCC_WARN_INHIBIT_ALL_WARNINGS'
+    end
+  end
+
+  def test_project_yml_with_composed_icon()
+    # over the icon of the config, which is for the other platforms
+    yaml  = "icon: icon.png\nmacos: {icon: app.icon}"
+    files = %w[main.rb icon.png app.icon/icon.json app.icon/Assets/a.png]
+    packager yaml, files: files do |pkg, dir|
+      str = pkg.__send__ :project_yml
+      assert_include     str, 'path: AppIcon.icon'
+      assert_include     str, 'ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon'
+      assert_not_include str, 'AppIcon.icns'
+      assert_not_include str, 'CFBundleIconFile'
+    end
+  end
+
+  def test_copy_app_icon()
+    copy = -> yaml, files {
+      packager yaml, files: files do |pkg, _|
+        called = []
+        pkg.define_singleton_method(:generate_icon) {|path| called << path}
+        FileUtils.mkdir_p pkg.build_dir
+        pkg.__send__ :copy_app_icon
+        [called, Dir.glob('AppIcon.icon/**/*', base: pkg.build_dir).sort]
+      end
+    }
+    assert_equal [[],             []], copy[nil,              %w[main.rb]]
+    assert_equal [%w[icon.png],   []], copy['icon: icon.png', %w[main.rb icon.png]]
+    # the icon of macos over the one of the config
+    assert_equal [%w[mac.png],    []],
+      copy["icon: icon.png\nmacos: {icon: mac.png}", %w[main.rb icon.png mac.png]]
+
+    # a .icon is copied as it is, for Xcode, new enough, to compile
+    yaml   = "icon: icon.png\nmacos: {icon: app.icon}"
+    files  = %w[main.rb icon.png app.icon/icon.json app.icon/Assets/a.png]
+    copied = %w[AppIcon.icon/Assets AppIcon.icon/Assets/a.png AppIcon.icon/icon.json]
+    with_xcode_version '26.2' do
+      assert_equal [[], copied], copy[yaml, files]
+    end
+    with_xcode_version '26' do
+      assert_equal [[], copied], copy[yaml, files]
+    end
+    with_xcode_version '16.4' do
+      error = assert_raise(RP::Error) {copy[yaml, files]}
+      assert_include error.message, 'Xcode 26'
+    end
+    with_xcode_version nil do
+      assert_raise(RP::Error) {copy[yaml, files]}
     end
   end
 
