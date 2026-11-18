@@ -377,6 +377,24 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config(macos: {category: {}})}
   end
 
+  def test_macos_info()
+    assert_equal({}, config()             .macos.info)
+    assert_equal({}, config(macos: {})    .macos.info)
+    assert_equal(
+      {'LSUIElement' => true, 'A' => 'b', 'C' => ['d', 1]},
+      config(macos: {info: {LSUIElement: true, A: 'b', C: ['d', 1]}}).macos.info)
+    # the real numbers and the dictionaries too, as the types of the
+    # documents an app opens
+    assert_equal(
+      {'A' => {'b' => true}, 'C' => [{'d' => ['e', 1.5]}]},
+      config(macos: {info: {A: {b: true}, C: [{'d' => ['e', 1.5]}]}}).macos.info)
+
+    assert_raise(RP::Error) {config macos: {info: [:a]}}
+    assert_raise(RP::Error) {config macos: {info: {a: nil}}}
+    assert_raise(RP::Error) {config macos: {info: {a: {b: nil}}}}
+    assert_raise(RP::Error) {config macos: {info: {a: [{b: :c}]}}}
+  end
+
   def test_macos_codesign_identity()
     assert_equal '-',        config()                                  .macos.codesign_identity
     assert_equal '-',        config(macos: {})                         .macos.codesign_identity

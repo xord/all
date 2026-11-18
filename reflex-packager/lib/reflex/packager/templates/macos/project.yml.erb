@@ -122,3 +122,6 @@ targets:
 <%- if app_icon && !config.macos.composed_icon? -%>
         CFBundleIconFile: AppIcon
 <%- end -%>
+<%- config.macos.info.each do |key, value| -%>
+        <%= key.to_json %>: <%= value.to_json %>
+<%- end -%>

@@ -297,6 +297,30 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_project_yml_with_info()
+    packager do |pkg, _|
+      assert_not_include pkg.__send__(:project_yml), 'LSUIElement'
+    end
+
+    yaml = <<~YML
+      macos:
+        info:
+          LSUIElement: true
+          NSHighResolutionCapable: false
+          Names: [a, 1]
+          Types: [{Name: Text, Extensions: [txt]}]
+    YML
+    packager yaml do |pkg, _|
+      props = YAML.safe_load(pkg.__send__ :project_yml)
+        .dig('targets', pkg.target, 'info', 'properties')
+      assert_equal true,     props['LSUIElement']
+      assert_equal ['a', 1], props['Names']
+      assert_equal [{'Name' => 'Text', 'Extensions' => ['txt']}], props['Types']
+      # over what the packager writes, as the last of the same key is taken
+      assert_equal false,    props['NSHighResolutionCapable']
+    end
+  end
+
   def test_project_yml_with_composed_icon()
     # over the icon of the config, which is for the other platforms
     yaml  = "icon: icon.png\nmacos: {icon: app.icon}"

@@ -276,6 +276,7 @@ module Reflex
           cruby:             nil,
           category:          nil,
           icon:              nil,
+          info:              Hash,
           codesign: {
             identity: '-',
             team_id:  nil
@@ -298,6 +299,7 @@ module Reflex
         @cruby             = hash[:cruby]            &.to_s
         @category          = hash[:category]         &.to_s
         @icon              = hash[:icon]             &.to_s
+        @info              = stringify_keys hash[:info]
         @codesign_identity = codesign[:identity]      .to_s
         @codesign_team_id  = codesign[:team_id]      &.to_s
 
@@ -338,6 +340,11 @@ module Reflex
         File.extname(path.to_s) == '.icon'
       end
 
+      # What to add to the Info.plist of the app, over what the packager
+      # writes, as LSUIElement: true for the app to stay out of the Dock.
+      #
+      attr_reader :info
+
       # The identity and the team to sign the app with, which
       # APPLE_CODESIGN_IDENTITY and APPLE_TEAM_ID override, for the name of
       # the developer in the identity not to be in the config.
@@ -376,6 +383,11 @@ module Reflex
           raise Error, "icon not found: '#{@icon}'" unless File.file? path
         end
 
+        @info.each do |key, value|
+          raise Error, "invalid value of '#{key}' of macos.info: #{value.inspect}" unless
+            plist_value? value, info: true
+        end
+
         @appstore_entitlements.each do |key, value|
           raise Error, "invalid value of the entitlement '#{key}': #{value.inspect}" unless
             plist_value? value
@@ -389,11 +401,27 @@ module Reflex
         ENV[name].then {_1 unless _1.to_s.empty?}
       end
 
-      def plist_value?(value)
+      # +info+ is for the real numbers and the dictionaries, which Info.plist
+      # has and the entitlements do not.
+      #
+      def plist_value?(value, info: false)
         case value
         when true, false, Integer, String then true
-        when Array                        then value.all? {plist_value? _1}
-        else                                   false
+        when Array then value.all? {plist_value? _1, info: info}
+        when Float then info
+        when Hash  then info && value.all? {|_, v| plist_value? v, info: info}
+        else            false
+        end
+      end
+
+      # The keys of the hashes in +value+ as strings, the ones in the arrays
+      # too.
+      #
+      def stringify_keys(value)
+        case value
+        when Hash  then value.to_h {[_1.to_s, stringify_keys(_2)]}
+        when Array then value.map {stringify_keys _1}
+        else            value
         end
       end
 

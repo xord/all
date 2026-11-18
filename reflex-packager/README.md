@@ -142,6 +142,8 @@ macos:
   # archs: [arm64, x86_64]
   # category: public.app-category.games
   # icon: app.icon
+  # info:
+  #   LSUIElement: true
   # codesign:
   #   identity: "-"
   #   team_id: XXXXXXXXXX
@@ -185,6 +187,7 @@ macos:
 | `macos.cruby` | the packager's | CRuby version, or a path to a cruby checkout |
 | `macos.category` | none | [Category](https://developer.apple.com/documentation/bundleresources/information-property-list/lsapplicationcategorytype) of the app in Info.plist, as `public.app-category.games`, which the App Store requires |
 | `macos.icon` | none | Path to the icon of the app on macOS, in place of `icon`: an image (PNG), or a `.icon` of Icon Composer, which needs Xcode 26 or later |
+| `macos.info` | none | Keys to add to the Info.plist of the app, over the ones the packager writes, as `LSUIElement: true` for the app to stay out of the Dock |
 | `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`, and `Developer ID Application` by the certificate in the keychain; `APPLE_CODESIGN_IDENTITY` overrides it |
 | `macos.codesign.team_id` | none | Development team ID; `APPLE_TEAM_ID` overrides it |
 | `macos.appstore.sources` | none | Files to build only into the app for the Mac App Store (glob patterns): the sources compiled, as of Swift, and the others put at the top of its resources by their types, as `GoogleService-Info.plist` of Firebase |
