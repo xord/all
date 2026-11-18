@@ -251,6 +251,7 @@ namespace Rays
 		return cs.has_alpha() ? bmp.dup(true) : bmp;
 	}
 
+
 	HBITMAP
 	Bitmap_get_hbitmap (const Bitmap& bmp)
 	{

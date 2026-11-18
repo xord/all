@@ -20,8 +20,6 @@ namespace Rays
 		Bitmap* bitmap, int w, int h, const ColorSpace& cs,
 		const void* pixels = NULL, bool clear_pixels = true);
 
-	Bitmap Bitmap_from (const Texture& texture);
-
 	void Bitmap_draw_string (
 		Bitmap* bitmap, const RawFont& font,
 		const char* str, coord x, coord y, bool smooth);
@@ -33,6 +31,9 @@ namespace Rays
 	void Bitmap_save (const Bitmap& bitmap, const char* path);
 
 	Bitmap Bitmap_load (const char* path);
+
+
+	Bitmap Bitmap_from (const Texture& texture);
 
 
 }// Rays

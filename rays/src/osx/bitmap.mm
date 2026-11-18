@@ -160,29 +160,6 @@ namespace Rays
 	}
 
 	void
-	Bitmap_draw_image (
-		Bitmap* bitmap, CGImageRef image,
-		coord x, coord y, coord width, coord height)
-	{
-		if (width == 0 || height == 0) return;
-
-		if (!bitmap)
-			argument_error(__FILE__, __LINE__);
-		if (!image)
-			argument_error(__FILE__, __LINE__);
-
-		CGContextRef context = bitmap->self->get_context();
-		if (!context)
-			rays_error(__FILE__, __LINE__, "getting CGContext failed.");
-
-		if (width  < 0) width  = (coord) CGImageGetWidth(image);
-		if (height < 0) height = (coord) CGImageGetHeight(image);
-		CGContextDrawImage(context, CGRectMake(x, y, width, height), image);
-
-		Bitmap_set_modified(bitmap);
-	}
-
-	void
 	Bitmap_draw_string (
 		Bitmap* bitmap, const RawFont& font,
 		const char* str, coord x, coord y, bool smooth)
@@ -297,6 +274,29 @@ namespace Rays
 		return [[[NSImage alloc]
 			initWithCGImage: cgimage.get() size: size]
 			autorelease];
+	}
+
+	void
+	Bitmap_draw_image (
+		Bitmap* bitmap, CGImageRef image,
+		coord x, coord y, coord width, coord height)
+	{
+		if (width == 0 || height == 0) return;
+
+		if (!bitmap)
+			argument_error(__FILE__, __LINE__);
+		if (!image)
+			argument_error(__FILE__, __LINE__);
+
+		CGContextRef context = bitmap->self->get_context();
+		if (!context)
+			rays_error(__FILE__, __LINE__, "getting CGContext failed.");
+
+		if (width  < 0) width  = (coord) CGImageGetWidth(image);
+		if (height < 0) height = (coord) CGImageGetHeight(image);
+		CGContextDrawImage(context, CGRectMake(x, y, width, height), image);
+
+		Bitmap_set_modified(bitmap);
 	}
 
 
