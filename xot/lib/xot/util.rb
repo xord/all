@@ -128,6 +128,12 @@ module Xot
 
     alias ci? github_actions?
 
+    def xcode_version()
+      IO.popen(%w[xcodebuild -version], err: File::NULL, &:read)[/^Xcode ([\d.]+)/, 1]
+    rescue SystemCallError
+      nil
+    end
+
     self
 
   end# Util

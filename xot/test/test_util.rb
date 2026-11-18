@@ -45,4 +45,9 @@ class TestUtil < Test::Unit::TestCase
     end
   end
 
+  def test_xcode_version()
+    omit 'only for macOS' unless osx?
+    assert_match(/^[\d\.]+$/, util.xcode_version)
+  end
+
 end# TestUtil
