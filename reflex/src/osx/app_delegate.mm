@@ -180,8 +180,9 @@ create_window_menu ()
 					retain];
 		}
 
-		NSImage* image =
-			menu->image() ? Rays::Bitmap_get_nsimage(menu->image().bitmap()) : nil;
+		NSImage* image = menu->image()
+			?	Rays::Bitmap_get_nsimage(menu->image().bitmap(), &menu->image())
+			:	nil;
 		[image setTemplate: YES];
 
 		NSString* title = @"";

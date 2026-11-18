@@ -5,6 +5,7 @@
 #import <Cocoa/Cocoa.h>
 #include <xot/util.h>
 #include "rays/exception.h"
+#include "rays/image.h"
 #include "../font.h"
 #include "../texture.h"
 
@@ -282,14 +283,19 @@ namespace Rays
 		return bmp;
 	}
 
+
 	NSImage*
-	Bitmap_get_nsimage (const Bitmap& bmp)
+	Bitmap_get_nsimage (const Bitmap& bmp, const Image* owner)
 	{
 		if (!bmp) return NULL;
 
 		std::shared_ptr<CGImage> cgimage(bmp.self->get_image(), CGImageRelease);
+		NSSize size = owner
+			?	NSMakeSize(owner->width(), owner->height())
+			:	NSZeroSize;
+
 		return [[[NSImage alloc]
-			initWithCGImage: cgimage.get() size: NSZeroSize]
+			initWithCGImage: cgimage.get() size: size]
 			autorelease];
 	}
 

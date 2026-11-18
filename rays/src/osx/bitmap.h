@@ -8,9 +8,17 @@
 #include "../bitmap.h"
 
 
+@class NSImage;
+
+
 namespace Rays
 {
 
+
+	class Image;
+
+
+	NSImage* Bitmap_get_nsimage (const Bitmap& bitmap, const Image* owner = NULL);
 
 	void Bitmap_draw_image (
 		Bitmap* bitmap, CGImageRef image,

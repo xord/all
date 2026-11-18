@@ -4,9 +4,7 @@
 #define __REFLEX_SRC_RAYS_H__
 
 
-#include <rays/color.h>
-#include <rays/bitmap.h>
-#include <rays/painter.h>
+#include <rays/defs.h>
 
 #if defined(OSX) && defined(__OBJC__)
 	@class NSImage;
@@ -19,12 +17,18 @@ namespace Rays
 {
 
 
+	struct Color;
+	class Bitmap;
+	class Image;
+	class Painter;
+
+
 	bool Painter_get_pixel (Color* color, Painter* painter, coord x, coord y);
 
 
 #if defined(OSX) && defined(__OBJC__)
 
-	NSImage* Bitmap_get_nsimage (const Bitmap& bitmap);
+	NSImage* Bitmap_get_nsimage (const Bitmap& bitmap, const Image* owner = NULL);
 
 #endif
 

@@ -313,7 +313,9 @@ namespace Reflex
 		[self.nsitem setState: menu->is_checked() ? NSControlStateValueOn : NSControlStateValueOff];
 		[self.nsitem setKeyEquivalent: get_keyequivalent_string(menu->shortcut_key())];
 		[self.nsitem setKeyEquivalentModifierMask: modifiers2mask(menu->shortcut_modifiers())];
-		[self.nsitem setImage: menu->image() ? Rays::Bitmap_get_nsimage(menu->image().bitmap()) : nil];
+		[self.nsitem setImage: menu->image()
+			?	Rays::Bitmap_get_nsimage(menu->image().bitmap(), &menu->image())
+			:	nil];
 		[self.nsitem setSubmenu: menu->empty() ? nil : self.nssubmenu];
 	}
 
