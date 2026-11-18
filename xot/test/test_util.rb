@@ -21,6 +21,15 @@ class TestUtil < Test::Unit::TestCase
     assert_equal "x\nx\n", capture_stderr {u.warn "x"; u.warn "x"}
   end
 
+  def test_warn_uniq()
+    u = util
+    assert_equal "x\ny\n", capture_stderr {
+      u.warn "x", uniq: true
+      u.warn "x", uniq: true
+      u.warn "y", uniq: true
+    }
+  end
+
   def test_get_env_bool()
     u = util
     {
@@ -34,15 +43,6 @@ class TestUtil < Test::Unit::TestCase
       assert_false u.get_env_bool(:XOT_TEST_BOOL)
       assert_true  u.get_env_bool(:XOT_TEST_BOOL, true)
     end
-  end
-
-  def test_warn_uniq()
-    u = util
-    assert_equal "x\ny\n", capture_stderr {
-      u.warn "x", uniq: true
-      u.warn "x", uniq: true
-      u.warn "y", uniq: true
-    }
   end
 
 end# TestUtil
