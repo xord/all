@@ -795,6 +795,61 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_entitlements()
+    plist = -> entitlements {
+      entitlements.map {|key, value| "\t<key>#{key}</key>\n\t#{value}"}.join("\n")
+    }
+    sandbox = 'com.apple.security.app-sandbox'
+    network = 'com.apple.security.network.client'
+    jit     = 'com.apple.security.cs.allow-jit'
+    generate = -> yaml, &block {
+      yaml = "macos: {category: public.app-category.games, codesign: {team_id: ABCDE12345}, #{yaml}}"
+      packager yaml do |pkg, dir|
+        mac = MacOS.new pkg.config, appstore: true
+        mac.generate
+        file      = File.join dir, '.build/macos/project/app.entitlements'
+        project   = YAML.safe_load(read dir, 'project.yml')            .dig('settings', 'base')
+        appstore  = YAML.safe_load(read dir, 'project-appstore.yml').dig('settings', 'base')
+        block.call(
+          (File.read file if File.exist? file),
+          project.slice('CODE_SIGN_ENTITLEMENTS', 'CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION'),
+          File.read(mac.__send__ :appstore_entitlements_path),
+          appstore['CODE_SIGN_ENTITLEMENTS'])
+      end
+    }
+
+    # none: the app for the Mac App Store has only the sandbox
+    generate.call '' do |file, setting, appstore, appstore_setting|
+      assert_nil file
+      assert_equal({}, setting)
+      assert_include appstore, plist[sandbox => '<true/>']
+      assert_not_include appstore, network
+      assert_nil appstore_setting # given to xcodebuild
+    end
+
+    # of macos, taken by the app for the Mac App Store too
+    generate.call "entitlements: {#{jit}: true, #{network}: true}" do |file, setting, appstore, _|
+      assert_include file, plist[jit => '<true/>', network => '<true/>']
+      assert_not_include file, sandbox
+      assert_equal({'CODE_SIGN_ENTITLEMENTS' => 'app.entitlements'}, setting)
+      assert_include appstore, plist[sandbox => '<true/>', jit => '<true/>', network => '<true/>']
+    end
+
+    # of macos.appstore, in place of the ones of macos, whole
+    generate.call "entitlements: {#{jit}: true, #{network}: true}, " +
+      "appstore: {entitlements: {#{network}: true}}" do |file, _, appstore, _|
+      assert_include file, jit
+      assert_include appstore, plist[sandbox => '<true/>', network => '<true/>']
+      assert_not_include appstore, jit
+    end
+
+    # empty, not to take the ones of macos
+    generate.call "entitlements: {#{jit}: true}, appstore: {entitlements: {}}" do |_, _, appstore, _|
+      assert_include appstore, plist[sandbox => '<true/>']
+      assert_not_include appstore, jit
+    end
+  end
+
   def test_build_for_appstore()
     # with the commands captured, and what is copied into dist/
     build = -> config, **options do

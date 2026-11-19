@@ -63,6 +63,10 @@ module Reflex
       #
       COMPOSED_ICON_XCODE = '26'
 
+      # The file of macos.entitlements of the config, in the project.
+      #
+      ENTITLEMENTS = 'app.entitlements'
+
       # A packed app compiles its scripts when built, and a notarized one is
       # sent to Apple when exported, as the one for the Mac App Store is
       # exported from its archive, so they have to be built; the app only
@@ -114,9 +118,11 @@ module Reflex
         write 'src/main.mm',       render('main.mm.erb')
         write 'boot.rb',           render('boot.rb.erb')
         write export_options_path, render('ExportOptions.plist.erb') if signing_to_distribute?
+        write ENTITLEMENTS, entitlements_plist(config.macos.entitlements) unless
+          config.macos.entitlements.empty?
         if appstore?
           write 'project-appstore.yml',       project_yml(appstore: true)
-          write appstore_entitlements_path,   render('appstore.entitlements.erb')
+          write appstore_entitlements_path,   entitlements_plist(appstore_entitlements)
           write appstore_export_options_path, render('ExportOptions-appstore.plist.erb')
         end
         write_localizations
@@ -228,7 +234,11 @@ module Reflex
         render 'project.yml.erb',
           project:  appstore ? appstore_project               : target,
           sources:  appstore ? appstore_sources               : [],
-          packages: appstore ? config.macos.appstore_packages : {}
+          packages: appstore ? config.macos.appstore_packages : {},
+          # none for the Mac App Store, whose entitlements are given to xcodebuild
+          # by CODE_SIGN_ENTITLEMENTS in export_appstore_pkg
+          entitlements:
+            (appstore || config.macos.entitlements.empty?) ? nil : ENTITLEMENTS
       end
 
       def appstore_project()
@@ -245,11 +255,20 @@ module Reflex
         end.uniq
       end
 
-      # The entitlements of the app for the Mac App Store: the sandbox, and the
-      # ones macos.appstore.entitlements of the config adds.
+      # The entitlements of the app for the Mac App Store: the sandbox, and
+      # macos.appstore.entitlements of the config, or macos.entitlements if it
+      # has none, as macos.icon is taken in place of icon.
       #
       def appstore_entitlements()
-        {'com.apple.security.app-sandbox' => true, **config.macos.appstore_entitlements}
+        macos = config.macos
+        {
+          'com.apple.security.app-sandbox' => true,
+          **(macos.appstore_entitlements || macos.entitlements)
+        }
+      end
+
+      def entitlements_plist(entitlements)
+        render 'entitlements.erb', entitlements: entitlements
       end
 
       def plist_value(value)

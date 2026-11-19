@@ -17,6 +17,11 @@ module Reflex
     #
     class Config
 
+      # The default of a Hash of any keys, as Hash is, but nil if the config
+      # has none, not an empty Hash, to tell none from an empty one.
+      #
+      HASH_OR_NIL = :hash_or_nil
+
       def self.defaults(profile, dir, hash)
         name = hash[:name]&.to_s || File.basename(dir)
         {
@@ -196,9 +201,9 @@ module Reflex
         defaults.each.with_object({}) do |(key, defval), result|
           value       = hash[key]
           result[key] =
-            if defval == Hash # of any keys
+            if defval == Hash || defval == HASH_OR_NIL # of any keys
               raise Error, "not a Hash: '#{parent}/#{key}'" unless value.nil? || value.is_a?(Hash)
-              value || {}
+              value || (defval == Hash ? {} : nil)
             elsif defval.is_a? Hash
               validate_input value, defval, parent: "#{parent}/#{key}", stderr: stderr
             else
@@ -277,6 +282,7 @@ module Reflex
           category:          nil,
           icon:              nil,
           info:              Hash,
+          entitlements:      Hash,
           codesign: {
             identity: '-',
             team_id:  nil
@@ -284,7 +290,7 @@ module Reflex
           appstore: {
             sources:      nil,
             packages:     Hash,
-            entitlements: Hash
+            entitlements: Config::HASH_OR_NIL
           }
         }
       end
@@ -300,6 +306,7 @@ module Reflex
         @category          = hash[:category]         &.to_s
         @icon              = hash[:icon]             &.to_s
         @info              = stringify_keys hash[:info]
+        @entitlements      = hash[:entitlements].to_h {[_1.to_s, _2]}
         @codesign_identity = codesign[:identity]      .to_s
         @codesign_team_id  = codesign[:team_id]      &.to_s
 
@@ -308,7 +315,7 @@ module Reflex
           raise Error, "not a Hash: '/macos/appstore/packages/#{name}'" unless package.is_a? Hash
           [name.to_s, package.to_h {[_1.to_s, _2]}]
         end
-        @appstore_entitlements = appstore[:entitlements].to_h {[_1.to_s, _2]}
+        @appstore_entitlements = appstore[:entitlements]&.to_h {[_1.to_s, _2]}
         validate dir
       end
 
@@ -345,6 +352,12 @@ module Reflex
       #
       attr_reader :info
 
+      # The entitlements of the app, as com.apple.security.app-sandbox: true
+      # for the sandbox, which the app for the Mac App Store takes too, unless
+      # macos.appstore.entitlements is in the config.
+      #
+      attr_reader :entitlements
+
       # The identity and the team to sign the app with, which
       # APPLE_CODESIGN_IDENTITY and APPLE_TEAM_ID override, for the name of
       # the developer in the identity not to be in the config.
@@ -355,7 +368,8 @@ module Reflex
       # files to build into it, the sources compiled and the others as
       # resources, the Swift packages to link with it, as
       # {name => {url:, minorVersion:, products: [...]}}, and the entitlements
-      # to add to the sandbox.
+      # to add to the sandbox in place of macos.entitlements, which is nil if
+      # the config has none, for macos.entitlements to be taken.
       #
       attr_reader :appstore_sources, :appstore_packages, :appstore_entitlements
 
@@ -388,7 +402,7 @@ module Reflex
             plist_value? value, info: true
         end
 
-        @appstore_entitlements.each do |key, value|
+        [*@entitlements, *@appstore_entitlements].each do |key, value|
           raise Error, "invalid value of the entitlement '#{key}': #{value.inspect}" unless
             plist_value? value
         end

@@ -333,7 +333,8 @@ class TestPackagerConfig < Test::Unit::TestCase
     c = config
     assert_equal [], c.macos.appstore_sources
     assert_equal({}, c.macos.appstore_packages)
-    assert_equal({}, c.macos.appstore_entitlements)
+    assert_nil       c.macos.appstore_entitlements # to take macos.entitlements
+    assert_equal({}, config(macos: {appstore: {entitlements: {}}}).macos.appstore_entitlements)
 
     c = config 'macos' => {'appstore' => {
       'sources'      => 'src/*.swift',
@@ -375,6 +376,19 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config(macos: {category: 'games'})}
     assert_raise(RP::Error) {config(macos: {category: 'public.app-category.Games'})}
     assert_raise(RP::Error) {config(macos: {category: {}})}
+  end
+
+  def test_macos_entitlements()
+    assert_equal({}, config().macos.entitlements)
+    assert_equal(
+      {'com.apple.security.app-sandbox' => true, 'a.b' => ['c', 1]},
+      config(macos: {entitlements: {'com.apple.security.app-sandbox' => true, 'a.b' => ['c', 1]}})
+        .macos.entitlements)
+
+    assert_raise(RP::Error) {config macos: {entitlements: [:a]}}
+    assert_raise(RP::Error) {config macos: {entitlements: {a: {b: true}}}}
+    assert_raise(RP::Error) {config macos: {entitlements: {a: nil}}}
+    assert_raise(RP::Error) {config macos: {entitlements: {a: 1.5}}}
   end
 
   def test_macos_info()

@@ -33,6 +33,9 @@ settings:
 <%- if config.macos.composed_icon? -%>
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 <%- end -%>
+<%- if entitlements -%>
+    CODE_SIGN_ENTITLEMENTS: <%= entitlements.to_json %>
+<%- end -%>
 <%- if sources.any? {_1.end_with? '.swift'} -%>
     SWIFT_VERSION: "5.0"
 <%- end -%>
