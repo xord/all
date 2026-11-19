@@ -831,7 +831,11 @@ class TestPackagerMacOS < Test::Unit::TestCase
     generate.call "entitlements: {#{jit}: true, #{network}: true}" do |file, setting, appstore, _|
       assert_include file, plist[jit => '<true/>', network => '<true/>']
       assert_not_include file, sandbox
-      assert_equal({'CODE_SIGN_ENTITLEMENTS' => 'app.entitlements'}, setting)
+      # written before every build, not to fail the build as modified
+      assert_equal(
+        {'CODE_SIGN_ENTITLEMENTS' => 'app.entitlements',
+         'CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION' => true},
+        setting)
       assert_include appstore, plist[sandbox => '<true/>', jit => '<true/>', network => '<true/>']
     end
 
@@ -882,7 +886,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
       # only the one for the App Store, archived in the sandbox
       commands, copied = build.call pkg.config, appstore: true
       assert_equal [
-        "#{appstore}/MyApp.xcarchive CODE_SIGN_ENTITLEMENTS=#{appstore}/appstore.entitlements"
+        "#{appstore}/MyApp.xcarchive CODE_SIGN_ENTITLEMENTS=#{appstore}/appstore.entitlements " +
+        'CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION=YES'
       ], commands.grep(/ archive /).map {_1[/(?<=-archivePath ).*/]}
       # by its own project
       assert_include commands, "xcodegen generate --quiet --spec project-appstore.yml"

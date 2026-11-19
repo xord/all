@@ -507,6 +507,8 @@ module Reflex
       def export_appstore_pkg()
         xcodebuild 'archive', '-archivePath', appstore_xcarchive_path,
           "CODE_SIGN_ENTITLEMENTS=#{appstore_entitlements_path}",
+          # written before every build, as the ones in project.yml
+          'CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION=YES',
           project: "#{appstore_project}.xcodeproj"
         FileUtils.rm_rf File.dirname(appstore_exported_pkg_path)
         with_auth_options do |auth|

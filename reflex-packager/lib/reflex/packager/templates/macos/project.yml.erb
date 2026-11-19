@@ -35,6 +35,9 @@ settings:
 <%- end -%>
 <%- if entitlements -%>
     CODE_SIGN_ENTITLEMENTS: <%= entitlements.to_json %>
+    # written before every build, which Xcode takes for being modified during
+    # the build once it is, and fails on until the build is cleaned
+    CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
 <%- end -%>
 <%- if sources.any? {_1.end_with? '.swift'} -%>
     SWIFT_VERSION: "5.0"
