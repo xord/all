@@ -90,6 +90,17 @@ namespace Reflex
 		UIWindow* win            = get_window();
 		ReflexViewController* vc = get_vc(window);
 
+		// shown already, as the root, pushed or presented, or by a show_fun
+		// of the app, not to be shown again
+		if (
+			win.rootViewController == vc ||
+			vc.parentViewController      ||
+			vc.presentingViewController  ||
+			vc.viewIfLoaded.window)
+		{
+			return;
+		}
+
 		if (!win.rootViewController)
 			win.rootViewController = vc;
 		else

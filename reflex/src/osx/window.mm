@@ -90,6 +90,7 @@ namespace Reflex
 	void
 	Window_show (Window* window)
 	{
+		[NSApp activateIgnoringOtherApps: YES];
 		[get_native(window) makeKeyAndOrderFront: nil];
 	}
 

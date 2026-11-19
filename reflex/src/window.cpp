@@ -1406,9 +1406,9 @@ namespace Reflex
 			Event e;
 			on_show(&e);
 			if (e.is_blocked()) return;
-
-			Window_show(this);
 		}
+		if (new_count <= 0)
+			Window_show(this);
 
 		self->hide_count = new_count;
 	}
