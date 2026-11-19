@@ -640,7 +640,9 @@ module Reflex
           compiler: File.expand_path('data_compiler.rb', __dir__),
           app_dir:  app_dir,
           path:     File.join(build_dir, 'app', DataLoader::DATA_FILE))
-        xcodebuild
+        # with no entitlements, out of the sandbox, which keeps the app from
+        # reading the compiler of the packager, out of the app
+        xcodebuild 'build', 'CODE_SIGN_ENTITLEMENTS='
         # with nothing of the Ruby running this, as bundle exec sets, which
         # would have the CRuby in the app load the gems of it
         env = ENV.keys.grep(/\A(BUNDLER?_|GEM_)/)

@@ -71,13 +71,18 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
   # Has the app write its data file as the build does, with the ruby here
   # running the boot script in place of the app built with CRuby.
+  #
+  # @return [Array] the arguments of xcodebuild
+  #
   def compile_scripts(pkg)
-    pkg.define_singleton_method(:xcodebuild) {}
+    built = nil
+    pkg.define_singleton_method(:xcodebuild) {|*args, **| built = args}
     pkg.define_singleton_method :run do |*, chdir:, env: {}|
       system env, RbConfig.ruby, File.join(chdir, 'boot.rb'), err: File::NULL or
         raise RP::Error, 'failed to compile'
     end
     pkg.__send__ :compile_scripts
+    built
   end
 
   def test_pack()
@@ -95,7 +100,8 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
       # under bundle exec, whose RUBYOPT the app would fail with
       with_env 'RUBYOPT' => '-rno_such_lib' do
-        compile_scripts pkg
+        # built with no entitlements, to read the compiler out of the sandbox
+        assert_equal ['build', 'CODE_SIGN_ENTITLEMENTS='], compile_scripts(pkg)
       end
       RP::DataFile.open File.join(app, 'data.bin') do |data|
         assert_equal %w[.ruby-version main.rbc sub.rbc], data.names.sort
