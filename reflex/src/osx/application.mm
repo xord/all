@@ -176,6 +176,7 @@ namespace Reflex
 	void
 	Application::on_about (Event* e)
 	{
+		[NSApp activateIgnoringOtherApps: YES];
 		[NSApp orderFrontStandardAboutPanel: nil];
 	}
 

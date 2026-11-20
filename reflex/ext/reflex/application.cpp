@@ -42,6 +42,15 @@ RUCY_DEF0(quit)
 RUCY_END
 
 static
+RUCY_DEF0(show_about)
+{
+	CHECK;
+	CALL(show_about());
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF1(set_name, name)
 {
 	CHECK;
@@ -197,6 +206,7 @@ Init_reflex_application ()
 	cApplication.define_alloc_func(alloc);
 	cApplication.define_method("start", start);
 	cApplication.define_method("quit",  quit);
+	cApplication.define_method("show_about", show_about);
 	cApplication.define_method("name=", set_name);
 	cApplication.define_method("name",  get_name);
 	cApplication.define_method("menu=", set_menu);

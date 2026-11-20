@@ -47,6 +47,15 @@ namespace Reflex
 					return Super::quit();
 			}
 
+			virtual void show_about ()
+			{
+				RUCY_SYM(show_about);
+				if (this->is_overridable())
+					this->value.call(show_about);
+				else
+					return Super::show_about();
+			}
+
 			virtual void on_start (Event* e)
 			{
 				if (this->is_overridable())

@@ -193,6 +193,13 @@ namespace Reflex
 	}
 
 	void
+	Application::show_about ()
+	{
+		Event e;
+		Application_call_about_event(this, &e);
+	}
+
+	void
 	Application::set_name (const char* name)
 	{
 		if (!name)

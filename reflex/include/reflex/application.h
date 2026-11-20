@@ -40,6 +40,8 @@ namespace Reflex
 
 			virtual void quit ();
 
+			virtual void show_about ();
+
 			virtual void    set_name (const char* name);
 
 			virtual const char* name () const;
