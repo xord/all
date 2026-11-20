@@ -331,9 +331,10 @@ class TestPackagerConfig < Test::Unit::TestCase
 
   def test_macos_appstore()
     c = config
-    assert_equal [], c.macos.appstore_sources
+    assert_nil       c.macos.appstore_sources      # to take macos.sources
     assert_equal({}, c.macos.appstore_packages)
     assert_nil       c.macos.appstore_entitlements # to take macos.entitlements
+    assert_equal [], config(macos: {appstore: {sources: []}}).macos.appstore_sources
     assert_equal({}, config(macos: {appstore: {entitlements: {}}}).macos.appstore_entitlements)
 
     c = config 'macos' => {'appstore' => {
@@ -407,6 +408,13 @@ class TestPackagerConfig < Test::Unit::TestCase
     assert_raise(RP::Error) {config macos: {info: {a: nil}}}
     assert_raise(RP::Error) {config macos: {info: {a: {b: nil}}}}
     assert_raise(RP::Error) {config macos: {info: {a: [{b: :c}]}}}
+  end
+
+  def test_macos_sources()
+    assert_equal [],                     config.macos.sources
+    assert_equal ['Credits.rtf'],        config(macos: {sources: 'Credits.rtf'}).macos.sources
+    assert_equal ['a.rtf', 'src/*.swift'],
+      config(macos: {sources: ['a.rtf', 'src/*.swift']}).macos.sources
   end
 
   def test_macos_codesign_identity()

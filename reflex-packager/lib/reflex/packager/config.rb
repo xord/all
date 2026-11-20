@@ -283,6 +283,7 @@ module Reflex
           icon:              nil,
           info:              Hash,
           entitlements:      Hash,
+          sources:           nil,
           codesign: {
             identity: '-',
             team_id:  nil
@@ -307,10 +308,11 @@ module Reflex
         @icon              = hash[:icon]             &.to_s
         @info              = stringify_keys hash[:info]
         @entitlements      = hash[:entitlements].to_h {[_1.to_s, _2]}
+        @sources           = Array(hash[:sources]).map &:to_s
         @codesign_identity = codesign[:identity]      .to_s
         @codesign_team_id  = codesign[:team_id]      &.to_s
 
-        @appstore_sources      = Array(appstore[:sources]).map &:to_s
+        @appstore_sources      = appstore[:sources]&.then {Array(_1).map &:to_s}
         @appstore_packages     = appstore[:packages].to_h do |name, package|
           raise Error, "not a Hash: '/macos/appstore/packages/#{name}'" unless package.is_a? Hash
           [name.to_s, package.to_h {[_1.to_s, _2]}]
@@ -358,6 +360,13 @@ module Reflex
       #
       attr_reader :entitlements
 
+      # The glob patterns of the files to build into the app, the sources
+      # compiled and the others as resources, as Credits.rtf for the about
+      # panel, which the app for the Mac App Store takes too, unless
+      # macos.appstore.sources is in the config.
+      #
+      attr_reader :sources
+
       # The identity and the team to sign the app with, which
       # APPLE_CODESIGN_IDENTITY and APPLE_TEAM_ID override, for the name of
       # the developer in the identity not to be in the config.
@@ -365,11 +374,11 @@ module Reflex
       attr_reader :codesign_identity, :codesign_team_id
 
       # What only the app for the Mac App Store has: the glob patterns of the
-      # files to build into it, the sources compiled and the others as
-      # resources, the Swift packages to link with it, as
-      # {name => {url:, minorVersion:, products: [...]}}, and the entitlements
-      # to add to the sandbox in place of macos.entitlements, which is nil if
-      # the config has none, for macos.entitlements to be taken.
+      # files to build into it in place of macos.sources, the Swift packages
+      # to link with it, as {name => {url:, minorVersion:, products: [...]}},
+      # and the entitlements to add to the sandbox in place of
+      # macos.entitlements; the sources and the entitlements are nil if the
+      # config has none, for the ones of macos to be taken.
       #
       attr_reader :appstore_sources, :appstore_packages, :appstore_entitlements
 

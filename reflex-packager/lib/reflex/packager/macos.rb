@@ -233,7 +233,7 @@ module Reflex
       def project_yml(appstore: false)
         render 'project.yml.erb',
           project:  appstore ? appstore_project               : target,
-          sources:  appstore ? appstore_sources               : [],
+          sources:  source_files(appstore: appstore),
           packages: appstore ? config.macos.appstore_packages : {},
           # none for the Mac App Store, whose entitlements are given to xcodebuild
           # by CODE_SIGN_ENTITLEMENTS in export_appstore_pkg
@@ -245,12 +245,20 @@ module Reflex
         "#{target}-appstore"
       end
 
-      # The files of macos.appstore.sources of the config, with absolute paths.
+      # The files of macos.sources of the config, or of macos.appstore.sources
+      # in place of them for the app for the Mac App Store, with absolute
+      # paths, as macos.appstore.entitlements is taken.
       #
-      def appstore_sources()
-        config.macos.appstore_sources.flat_map do |pattern|
+      def source_files(appstore: false)
+        patterns, key =
+          if appstore && config.macos.appstore_sources
+            [config.macos.appstore_sources, 'macos.appstore.sources']
+          else
+            [config.macos.sources, 'macos.sources']
+          end
+        patterns.flat_map do |pattern|
           files = Dir.glob(pattern, base: config.dir).select {File.file? File.join(config.dir, _1)}
-          raise Error, "no file of '#{pattern}' in macos.appstore.sources" if files.empty?
+          raise Error, "no file of '#{pattern}' in #{key}" if files.empty?
           files.sort.map {File.join config.dir, _1}
         end.uniq
       end

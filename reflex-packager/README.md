@@ -146,6 +146,8 @@ macos:
   #   LSUIElement: true
   # entitlements:
   #   com.apple.security.app-sandbox: true
+  # sources:
+  #   - Credits.rtf
   # codesign:
   #   identity: "-"
   #   team_id: XXXXXXXXXX
@@ -191,9 +193,10 @@ macos:
 | `macos.icon` | none | Path to the icon of the app on macOS, in place of `icon`: an image (PNG), or a `.icon` of Icon Composer, which needs Xcode 26 or later |
 | `macos.info` | none | Keys to add to the Info.plist of the app, over the ones the packager writes, as `LSUIElement: true` for the app to stay out of the Dock |
 | `macos.entitlements` | none | Entitlements of the app, as `com.apple.security.app-sandbox: true` for the sandbox, which the app for the Mac App Store takes too unless `macos.appstore.entitlements` is in the config |
+| `macos.sources` | none | Files to build into the app (glob patterns): the sources compiled, and the others put at the top of its resources by their types, as `Credits.rtf` for the about panel, which the app for the Mac App Store takes too unless `macos.appstore.sources` is in the config |
 | `macos.codesign.identity` | `-` | Code signing identity, `-` to sign ad hoc, or by the certificate Apple manages with `team_id`, and `Developer ID Application` by the certificate in the keychain; `APPLE_CODESIGN_IDENTITY` overrides it |
 | `macos.codesign.team_id` | none | Development team ID; `APPLE_TEAM_ID` overrides it |
-| `macos.appstore.sources` | none | Files to build only into the app for the Mac App Store (glob patterns): the sources compiled, as of Swift, and the others put at the top of its resources by their types, as `GoogleService-Info.plist` of Firebase |
+| `macos.appstore.sources` | `macos.sources` | Files to build into the app for the Mac App Store (glob patterns) in place of the whole of `macos.sources`, as `macos.appstore.entitlements` is taken: the sources compiled, as of Swift, and the others put at the top of its resources by their types, as `GoogleService-Info.plist` of Firebase |
 | `macos.appstore.packages` | none | Swift packages to link only with the app for the Mac App Store, by their names, each with `url` or `path`, the version as xcodegen takes it, as `minorVersion` for the fixes of the version, and `products`, the name of the package if none |
 | `macos.appstore.entitlements` | `macos.entitlements` | Entitlements to add to the sandbox of the app for the Mac App Store, as `com.apple.security.network.client: true` to connect to a server, in place of the whole of `macos.entitlements`, as `macos.icon` is taken in place of `icon`; `{}` takes none of them |
 | `windows.console` | `false` | Keep a console window, which shows what the app prints and the error it dies of |

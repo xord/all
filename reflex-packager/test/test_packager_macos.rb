@@ -797,7 +797,49 @@ class TestPackagerMacOS < Test::Unit::TestCase
 
     packager "macos: {appstore: {sources: ['src/*.swift']}}" do |pkg, _|
       error = assert_raise(RP::Error) {MacOS.new(pkg.config, appstore: true).generate}
-      assert_include error.message, "no file of 'src/*.swift'"
+      assert_include error.message, "no file of 'src/*.swift' in macos.appstore.sources"
+    end
+  end
+
+  def test_sources()
+    generate = -> yaml, &block {
+      yaml = "macos: {category: public.app-category.games, codesign: {team_id: ABCDE12345}, #{yaml}}"
+      packager yaml, files: %w[main.rb Credits.rtf src/a.swift] do |pkg, dir|
+        MacOS.new(pkg.config, appstore: true).generate
+        paths = -> name {
+          YAML.safe_load(read dir, name).dig('targets', pkg.target, 'sources').map {_1['path']}
+        }
+        block.call(
+          *%w[project.yml project-appstore.yml].map {paths[_1]},
+          *%w[Credits.rtf src/a.swift].map {File.join pkg.config.dir, _1})
+      end
+    }
+
+    # in both apps
+    generate.call "sources: [Credits.rtf]" do |app, appstore, credits, swift|
+      assert_include     app,      credits
+      assert_include     appstore, credits
+      assert_not_include appstore, swift
+    end
+
+    # macos.appstore.sources in place of macos.sources, not with them
+    generate.call "sources: [Credits.rtf], appstore: {sources: ['src/*.swift']}" do
+      |app, appstore, credits, swift|
+      assert_include     app,      credits
+      assert_not_include app,      swift
+      assert_not_include appstore, credits
+      assert_include     appstore, swift
+    end
+
+    # none for the Mac App Store
+    generate.call "sources: [Credits.rtf], appstore: {sources: []}" do |app, appstore, credits, _|
+      assert_include     app,      credits
+      assert_not_include appstore, credits
+    end
+
+    packager "macos: {sources: ['Credits.rtf']}" do |pkg, _|
+      error = assert_raise(RP::Error) {MacOS.new(pkg.config).generate}
+      assert_include error.message, "no file of 'Credits.rtf' in macos.sources"
     end
   end
 
