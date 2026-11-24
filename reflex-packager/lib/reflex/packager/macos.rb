@@ -5,6 +5,7 @@ require 'tmpdir'
 require 'xot/util'
 require 'reflex/packager/platform'
 require 'reflex/packager/gems'
+require 'reflex/packager/licenses'
 require 'reflex/packager/app_store_connect'
 
 
@@ -24,12 +25,13 @@ module Reflex
     class MacOS < Platform
 
       include Gems
+      include Licenses
 
       CRUBY_GIT = 'https://github.com/xord/cruby'
 
       # The CRuby used unless the config or CRUBY_PATH names another one.
       #
-      CRUBY_VERSION = '4.0.701'
+      CRUBY_VERSION = '4.0.702'
 
       # The version of Ruby a CRuby is of, as 4.0.7 of 4.0.701, the last
       # number of which is the one of Ruby and two digits of its rebuilds.
@@ -117,6 +119,7 @@ module Reflex
         write 'project.yml',       project_yml
         write 'src/main.mm',       render('main.mm.erb')
         write 'boot.rb',           render('boot.rb.erb')
+        write_licenses
         write export_options_path, render('ExportOptions.plist.erb') if signing_to_distribute?
         write ENTITLEMENTS, entitlements_plist(config.macos.entitlements) unless
           config.macos.entitlements.empty?
@@ -695,6 +698,30 @@ module Reflex
 
       def vendor?(dir)
         dir.include? '/vendor/'
+      end
+
+      # The licenses of Ruby and what it is built with, as OpenSSL, in
+      # CRuby/licenses/<name>/ of the cruby checkout; none in the prebuilt
+      # ones before 4.0.702.
+      #
+      def runtime_licenses()
+        dir = File.join cruby_dir, 'CRuby', 'licenses'
+        return {} unless File.directory? dir
+        Dir.children(dir).sort.map {File.join dir, _1}.select {File.directory? _1}
+          .to_h {[File.basename(_1), license_of(_1)]}
+      end
+
+      # The directories under vendor/ of the native libraries, which they
+      # compile the sources of, or include the headers of, as GLM; by the
+      # root of each, as the gem may be under a vendor/ itself, as of bundler.
+      #
+      def vendor_dirs()
+        build_infos.flat_map {|lib, info|
+          vendor = File.join lib.root, 'vendor', ''
+          [*info[:vendor_srcs], *info[:incdirs]]
+            .select {_1.start_with? vendor}
+            .map {vendor + _1.delete_prefix(vendor)[%r{\A[^/]+}]}
+        }.uniq
       end
 
       def version?(str)

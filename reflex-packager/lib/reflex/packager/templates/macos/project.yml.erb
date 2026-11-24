@@ -61,6 +61,8 @@ targets:
         buildPhase: resources
       - path: boot.rb
         buildPhase: resources
+      - path: <%= Licenses::FILE %>
+        buildPhase: resources
 <%- Dir.glob('*.bundle', base: File.join(build_dir, 'Bundles')).sort.each do |bundle| -%>
       - path: Bundles/<%= bundle %>
         buildPhase: resources

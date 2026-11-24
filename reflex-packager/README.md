@@ -377,6 +377,16 @@ The gems in the default group of the `Gemfile` of the app are shipped with it, w
 - On macOS, a gem with a native extension is refused, as the extension is built for the Ruby running the packager rather than for CRuby.
 - On Windows, the standard gems which were default gems once, as `csv` and `fiddle`, are shipped too; CRuby has them in its standard library on macOS.
 
+### Licenses
+
+On macOS, the licenses of what the app is built of are put in its resources as `licenses.json`, of `{name => text}`, for it to show them:
+
+- Ruby and what CRuby is built with, as OpenSSL, by the files in `CRuby/licenses/<name>/` of the cruby checkout, which the prebuilt ones before 4.0.702 do not have
+- The libraries, and what their native sources take from their `vendor/<name>/`, as Box2D, by their files of `LICENSE`, `COPYING` and the like, of any case
+- The gems of the `Gemfile` but the ones Ruby comes with, as `ostruct`, which the license of Ruby covers
+
+A directory with no license file to be found fails the packaging.
+
 ## :wrench: How it works
 
 On macOS:

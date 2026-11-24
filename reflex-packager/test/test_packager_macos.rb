@@ -69,6 +69,47 @@ class TestPackagerMacOS < Test::Unit::TestCase
     end
   end
 
+  def test_licenses()
+    packager do |pkg, dir|
+      licenses = File.join ENV['CRUBY_PATH'], 'CRuby', 'licenses'
+      %w[ruby/COPYING ruby/BSDL openssl/LICENSE.txt].each do |path|
+        FileUtils.mkdir_p File.join(licenses, File.dirname(path))
+        File.write File.join(licenses, path), "license of #{path}\n"
+      end
+      pkg.generate
+
+      json = JSON.parse read(dir, RP::Licenses::FILE)
+      # of the Ruby, by its directories, with all their files, first
+      assert_equal %w[openssl ruby], json.keys.first(2)
+      assert_equal "license of ruby/BSDL\n\nlicense of ruby/COPYING", json['ruby']
+      # of the libraries, and what they have in vendor/, by the sources and
+      # by the headers only, as GLM, of copying.txt
+      assert_empty %w[xot rucy rays reflex box2d glm] - json.keys
+      assert_match(/MIT License/, json['glm'])
+
+      sources = YAML.safe_load(read dir, 'project.yml').dig('targets', pkg.target, 'sources')
+      assert_include sources.map {_1['path']}, RP::Licenses::FILE
+    end
+
+    Dir.mktmpdir do |dir|
+      pkg = Object.new.extend RP::Licenses
+      error = assert_raise(RP::Error) {pkg.__send__ :license_of, dir}
+      assert_include error.message, "no license file in '#{dir}'"
+    end
+
+    # by the root of the library, which may be under a vendor/ itself, as
+    # of bundler, taking only what is in its own vendor/
+    packager do |pkg, _|
+      root = '/app/vendor/bundle/gems/rays'
+      info = {
+        vendor_srcs: ["#{root}/vendor/clipper/cpp/clipper.cpp"],
+        incdirs:     ["#{root}/include", "#{root}/vendor/glm", "#{root}/vendor/clipper/cpp"]
+      }
+      pkg.define_singleton_method(:build_infos) {{RP::Library.new('rays', root) => info}}
+      assert_equal %w[clipper glm].map {"#{root}/vendor/#{_1}"}, pkg.__send__(:vendor_dirs)
+    end
+  end
+
   # Has the app write its data file as the build does, with the ruby here
   # running the boot script in place of the app built with CRuby.
   #
