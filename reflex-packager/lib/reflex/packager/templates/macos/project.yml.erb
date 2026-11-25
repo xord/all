@@ -99,6 +99,10 @@ targets:
     dependencies:
       - framework: <%= File.join(cruby_dir, 'CRuby', 'CRuby.xcframework').to_json %>
         embed: false
+<%- xcframeworks.each do |xcframework| -%>
+      - framework: <%= xcframework.to_json %>
+        embed: false
+<%- end -%>
 <%- frameworks.each do |framework| -%>
       - sdk: <%= framework %>.framework
 <%- end -%>

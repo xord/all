@@ -248,6 +248,11 @@ class TestPackagerMacOS < Test::Unit::TestCase
         assert_include deps, {'sdk' => 'AppKit.framework'}
         assert_include deps, {'sdk' => 'CoreMIDI.framework'}
       end
+
+      stub pkg, :xcframeworks, ['/v/a.xcframework'] do
+        stubbed = YAML.safe_load(pkg.__send__ :project_yml).dig 'targets', 'MyApp', 'dependencies'
+        assert_include stubbed, {'framework' => '/v/a.xcframework', 'embed' => false}
+      end
     end
   end
 
@@ -460,6 +465,13 @@ class TestPackagerMacOS < Test::Unit::TestCase
     MAKEFILE
     assert_equal [], MacOS.makefile_frameworks("ldflags  = -L.\n")
     assert_equal [], MacOS.makefile_frameworks('')
+
+    assert_equal %w[/v/a.xcframework], MacOS.makefile_xcframeworks(<<~MAKEFILE)
+      LIBPATH = -L. -L/v/b.xcframework/macos-arm64_x86_64
+      ldflags  = -L. -L/v/lib -L/v/a.xcframework/macos-arm64_x86_64 -framework Cocoa
+    MAKEFILE
+    assert_equal [], MacOS.makefile_xcframeworks("ldflags  = -L. -L/v/lib\n")
+    assert_equal [], MacOS.makefile_xcframeworks('')
 
     # libraries whose gems are not built: no Makefiles next to the extconf.rbs
     packager do |pkg, dir|

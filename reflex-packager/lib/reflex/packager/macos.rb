@@ -218,15 +218,14 @@ module Reflex
       # leave have them.
       #
       def frameworks()
-        native_libraries.flat_map do |lib|
-          makefile = File.join lib.root, 'ext', lib.name, 'Makefile'
-          unless File.file? makefile
-            raise Error, "no Makefile of '#{lib}' in '#{lib.root}' (was the gem built?)" if
-              lib.extension
-            next [] # xot and rucy build their extensions only for their tests
-          end
-          MacOS.makefile_frameworks File.read(makefile)
-        end.uniq
+        makefiles.flat_map {MacOS.makefile_frameworks _1}.uniq
+      end
+
+      # The XCFrameworks the extensions link a library of, by the -L options
+      # of their Makefiles, as reflex-terminal does the one of ghostty.
+      #
+      def xcframeworks()
+        makefiles.flat_map {MacOS.makefile_xcframeworks _1}.uniq
       end
 
       # The spec of xcodegen for the project, or for the one of the app for
@@ -297,6 +296,14 @@ module Reflex
       def self.makefile_frameworks(makefile)
         line = makefile.lines.find {_1.start_with? 'ldflags'} or return []
         line.scan(/-framework\s+(\S+)/).flatten
+      end
+
+      # The .xcframework directories the -L options of the ldflags of a
+      # Makefile mkmf writes are in.
+      #
+      def self.makefile_xcframeworks(makefile)
+        line = makefile.lines.find {_1.start_with? 'ldflags'} or return []
+        line.scan(%r{-L(\S+\.xcframework)/}).flatten
       end
 
       def header_search_paths()
@@ -693,6 +700,20 @@ module Reflex
         # the last line, as the Rakefile may print something when loaded
         JSON.parse(out.lines.last.to_s, symbolize_names: true).to_h do |key, value|
           [key, key == :defs ? value : value.map {File.expand_path _1, root}]
+        end
+      end
+
+      # The Makefiles of the native libraries, as their gems leave them built.
+      #
+      def makefiles()
+        native_libraries.filter_map do |lib|
+          makefile = File.join lib.root, 'ext', lib.name, 'Makefile'
+          unless File.file? makefile
+            raise Error, "no Makefile of '#{lib}' in '#{lib.root}' (was the gem built?)" if
+              lib.extension
+            next # xot and rucy build their extensions only for their tests
+          end
+          File.read makefile
         end
       end
 
