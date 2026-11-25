@@ -30,9 +30,11 @@ use_external_library 'https://github.com/ghostty-org/ghostty',
   defs:    'GHOSTTY_STATIC',
   &proc {
     opts  = '-Demit-lib-vt -Doptimize=ReleaseFast'
+    opts += ' -Demit-xcframework=true'     if osx?
     opts += ' -Dtarget=x86_64-windows-gnu' if win32?
     sh %( zig build #{opts} )
-    sh %( mv zig-out/lib/libghostty-vt.a zig-out/lib/libghostty-vt-static.a ) unless win32?
+    lib   = 'zig-out/lib/libghostty-vt'
+    sh %( mv #{lib}.a #{lib}-static.a )    if !win32? && !osx?
   }
 
 default_tasks :ext

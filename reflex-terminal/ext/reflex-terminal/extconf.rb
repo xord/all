@@ -18,10 +18,15 @@ Xot::ExtConf.new Xot, Rucy, Rays, Reflex, ReflexTerminal do
     headers    << 'ruby.h'
     defs       << 'GHOSTTY_STATIC'
     inc_dirs   << "#{vendor}/zig-out/include"
-    lib_dirs   << "#{vendor}/zig-out/lib"
     local_libs << 'util'  if linux?
     local_libs << 'ntdll' if win32?
-    local_libs << 'ghostty-vt-static'
+    if osx?
+      lib_dirs   << "#{vendor}/zig-out/lib/ghostty-vt.xcframework/macos-arm64_x86_64"
+      local_libs << 'ghostty-vt'
+    else
+      lib_dirs   << "#{vendor}/zig-out/lib"
+      local_libs << 'ghostty-vt-static'
+    end
     $LDFLAGS   << ' -Wl,--out-implib=libreflex-terminal.dll.a' if mingw? || cygwin?
   end
 
