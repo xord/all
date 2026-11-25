@@ -94,7 +94,7 @@ class TestMenu < Test::Unit::TestCase
   def test_label_changes_separator()
     m       = menu :File
     assert_false m.separator?
-    m.label = '-'
+    m.label = '---'
     assert_true  m.separator?
     m.label = :Edit
     assert_false m.separator?
@@ -185,10 +185,15 @@ class TestMenu < Test::Unit::TestCase
   end
 
   def test_separator()
-    assert_false menu(:File).separator?
-    assert_true  menu('-').separator?
-    assert_true  menu('---').separator?
-    assert_false menu('').separator?
+    assert_false menu('-')      .separator?
+    assert_false menu('--')     .separator?
+    assert_true  menu('---')    .separator?
+    assert_true  menu('-----')  .separator?
+    assert_true  menu('-' * 100).separator?
+
+    assert_false menu(:File)    .separator?
+    assert_false menu('')       .separator?
+    assert_false menu('--- ')   .separator?
   end
 
   def test_parent()

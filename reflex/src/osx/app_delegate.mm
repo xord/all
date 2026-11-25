@@ -26,7 +26,7 @@ create_menu (
 static Reflex::Menu::Ref
 create_sep ()
 {
-	return new Reflex::Menu("-");
+	return new Reflex::Menu("---");
 }
 
 static Reflex::Menu::Ref

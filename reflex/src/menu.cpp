@@ -197,10 +197,11 @@ namespace Reflex
 	static bool
 	is_separator_label (const char* s)
 	{
-		if (!s || !*s) return false;
-		for (const char* p = s; *p; ++p)
+		if (!s) return false;
+		int count = 0;
+		for (const char* p = s; *p; ++p, ++count)
 			if (*p != '-') return false;
-		return true;
+		return count >= 3;
 	}
 
 	void

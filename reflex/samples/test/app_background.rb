@@ -44,7 +44,7 @@ Reflex.start name: 'BackgroundApp' do
   self.background_menu = Reflex::Menu.new('BG', image: icon) do
     add settings
     add toggle
-    add Reflex::Menu.new('-')
+    add Reflex::Menu.new('---')
     add quit
   end
   self.background = true
