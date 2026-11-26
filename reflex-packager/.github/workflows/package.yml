@@ -103,7 +103,7 @@ jobs:
         with:
           ruby-version: ${{ inputs.ruby-version ||
             (hashFiles('.ruby-version') != '' && 'default') ||
-            '4.0.7' }}
+            '4.0.10' }}
 
       - name: setup xcodegen
         run: brew install xcodegen

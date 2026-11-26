@@ -45,9 +45,10 @@ class TestPackagerMacOS < Test::Unit::TestCase
   end
 
   def test_ruby_version()
-    assert_equal '4.0.7', RP::MacOS.ruby_version('4.0.701')
-    assert_equal '4.0.6', RP::MacOS.ruby_version('4.0.600')
-    assert_equal '4.1.0', RP::MacOS.ruby_version('4.1.001')
+    assert_equal '4.0.10', RP::MacOS.ruby_version('4.0.1000')
+    assert_equal '4.0.7',  RP::MacOS.ruby_version('4.0.701')
+    assert_equal '4.0.6',  RP::MacOS.ruby_version('4.0.600')
+    assert_equal '4.1.0',  RP::MacOS.ruby_version('4.1.001')
   end
 
   # --- generate ----------------------------------------------------------

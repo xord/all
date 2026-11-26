@@ -31,7 +31,7 @@ module Reflex
 
       # The CRuby used unless the config or CRUBY_PATH names another one.
       #
-      CRUBY_VERSION = '4.0.702'
+      CRUBY_VERSION = '4.0.1000'
 
       # The version of Ruby a CRuby is of, as 4.0.7 of 4.0.701, the last
       # number of which is the one of Ruby and two digits of its rebuilds.
