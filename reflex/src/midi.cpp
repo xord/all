@@ -199,36 +199,42 @@ namespace Reflex
 	}
 
 	static void
-	open_midi (MIDI* midi, uint port, const char* name)
+	each_port (RtMidi& rtmidi, std::function<void(int, const std::string&)> fun)
+	{
+		uint size = rtmidi.getPortCount();
+		for (uint i = 0; i < size; ++i)
+			fun(i, rtmidi.getPortName(i));
+	}
+
+	static int
+	find_port (RtMidi& rtmidi, const char* name)
+	{
+		int port = -1;
+		each_port(rtmidi, [&](int i, const std::string& port_name)
+		{
+			if (port < 0 && port_name == name) port = i;
+		});
+		return port;
+	}
+
+	static void
+	open_midi (MIDI* midi, const char* name)
 	{
 		MIDI::Data* self = midi->self.get();
-
-		if (port >= self->input.getPortCount())
-			argument_error(__FILE__, __LINE__);
-
-		self->input.setCallback(event_callback, midi);
-		self->input.setErrorCallback(error_callback, midi);
-		self->input.openPort(port, name);
-		self->input.ignoreTypes(false, false, false);
 		self->name = name;
 
-		uint count = self->output.getPortCount();
-		for (uint i = 0; i < count; ++i)
+		int input = find_port(self->input, name);
+		if (input >= 0)
 		{
-			// the output of the same device is found by the name
-			if (self->output.getPortName(i) == name)
-			{
-				try
-				{
-					self->output.openPort(i, name);
-				}
-				catch (const RtMidiError&)
-				{
-					// RtMidi has printed the error already
-				}
-				break;
-			}
+			self->input.setCallback(event_callback, midi);
+			self->input.setErrorCallback(error_callback, midi);
+			self->input.openPort(input, name);
+			self->input.ignoreTypes(false, false, false);
 		}
+
+		int output = find_port(self->output, name);
+		if (output >= 0)
+			self->output.openPort(output, name);
 	}
 
 	static void
@@ -253,9 +259,11 @@ namespace Reflex
 	struct MIDIDeviceManager
 	{
 
-		RtMidiIn manager;
+		RtMidiIn inputs;
 
-		uint duplicated_port_name_count = 0;
+		RtMidiOut outputs;
+
+		uint ninputs = 0, noutputs = 0;
 
 		MIDIDeviceManager ()
 		{
@@ -270,35 +278,23 @@ namespace Reflex
 
 		void update ()
 		{
-			uint count = manager.getPortCount() - duplicated_port_name_count;
-			if (count > midis.size())
-				on_connect();
-			else if (count < midis.size())
-				on_disconnect();
-		}
+			uint nin = inputs.getPortCount(), nout = outputs.getPortCount();
+			if (nin == ninputs && nout == noutputs)
+				return;
 
-		void on_connect ()
-		{
-			std::set<String> names;
-			for (auto& midi : midis)
-				names.emplace(midi->self->name);
+			ninputs  = nin;
+			noutputs = nout;
 
-			each_port([&](int port, const std::string& name)
-			{
-				if (names.contains(name)) return;
-
-				MIDI::Ref midi = create_midi();
-				open_midi(midi, port, name.c_str());
-				add_midi(midi);
-			});
-
-			update_duplicated_port_name_count();
-		}
-
-		void on_disconnect ()
-		{
+			// a MIDI is the input and the output of the same name
 			std::set<String> port_names;
-			get_port_names(&port_names);
+			std::vector<String> names_in_order;
+			auto add_name = [&](int, const std::string& name)
+			{
+				if (port_names.emplace(name).second)
+					names_in_order.emplace_back(name);
+			};
+			each_port(inputs,  add_name);
+			each_port(outputs, add_name);
 
 			while (true)
 			{
@@ -310,28 +306,18 @@ namespace Reflex
 				remove_midi(*it);
 			}
 
-			update_duplicated_port_name_count();
-		}
+			std::set<String> opened_names;
+			for (auto& midi : midis)
+				opened_names.emplace(midi->self->name);
 
-		void update_duplicated_port_name_count ()
-		{
-			std::set<String> port_names;
-			get_port_names(&port_names);
+			for (auto& name : names_in_order)
+			{
+				if (opened_names.contains(name)) continue;
 
-			duplicated_port_name_count =
-				manager.getPortCount() - (uint) port_names.size();
-		}
-
-		void get_port_names (std::set<String>* names)
-		{
-			each_port([&](int, const std::string& name) {names->emplace(name);});
-		}
-
-		void each_port (std::function<void(int, const std::string&)> fun)
-		{
-			uint size = manager.getPortCount();
-			for (uint i = 0; i < size; ++i)
-				fun(i, manager.getPortName(i));
+				MIDI::Ref midi = create_midi();
+				open_midi(midi, name);
+				add_midi(midi);
+			}
 		}
 
 	};// MIDIDeviceManager
@@ -455,6 +441,18 @@ namespace Reflex
 		return self->name;
 	}
 
+	bool
+	MIDI::has_input () const
+	{
+		return self->input.isPortOpen();
+	}
+
+	bool
+	MIDI::has_output () const
+	{
+		return self->output.isPortOpen();
+	}
+
 	void
 	MIDI::on_midi (MIDIEvent* e)
 	{
@@ -482,7 +480,7 @@ namespace Reflex
 
 	MIDI::operator bool () const
 	{
-		return self->input.isPortOpen();
+		return has_input() || has_output();
 	}
 
 	const MIDI::List&

@@ -50,6 +50,22 @@ RUCY_DEF3(control_change, controller, value, channel)
 RUCY_END
 
 static
+RUCY_DEF0(has_input)
+{
+	CHECK;
+	return value(THIS->has_input());
+}
+RUCY_END
+
+static
+RUCY_DEF0(has_output)
+{
+	CHECK;
+	return value(THIS->has_output());
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_midi, event)
 {
 	CHECK;
@@ -118,6 +134,8 @@ Init_reflex_midi ()
 	cMIDI.define_method("note_on!",        note_on);
 	cMIDI.define_method("note_off!",       note_off);
 	cMIDI.define_method("control_change!", control_change);
+	cMIDI.define_method("input?",  has_input);
+	cMIDI.define_method("output?", has_output);
 	cMIDI.define_method("on_midi",           on_midi);
 	cMIDI.define_method("on_note",           on_note);
 	cMIDI.define_method("on_note_on",        on_note_on);

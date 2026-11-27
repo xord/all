@@ -36,6 +36,10 @@ namespace Reflex
 
 			virtual const char* name () const;
 
+			bool has_input () const;
+
+			bool has_output () const;
+
 			virtual void on_midi (MIDIEvent* e);
 
 			virtual void on_note     (NoteEvent* e);

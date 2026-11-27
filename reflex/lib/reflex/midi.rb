@@ -6,6 +6,14 @@ module Reflex
 
   class MIDI
 
+    def self.inputs()
+      all.select(&:input?)
+    end
+
+    def self.outputs()
+      all.select(&:output?)
+    end
+
     def note_on(note, velocity, channel: 0)
       note_on! note, velocity, channel
     end
