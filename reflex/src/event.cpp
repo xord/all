@@ -1279,9 +1279,7 @@ namespace Reflex
 		if (a != MIDIEvent::NOTE_ON && a != MIDIEvent::NOTE_OFF)
 			return false;
 
-		*result = NoteEvent(
-			a == MIDIEvent::NOTE_ON && event.data2() > 0 ? NoteEvent::ON : NoteEvent::OFF,
-			event.channel(), event.data1(), event.data2() / 127.f, event.time());
+		*result = NoteEvent(event);
 		return true;
 	}
 
@@ -1292,8 +1290,7 @@ namespace Reflex
 		if (event.action() != MIDIEvent::CONTROL_CHANGE)
 			return false;
 
-		*result = ControlChangeEvent(
-			event.channel(), event.data1(), event.data2() / 127.f, event.time());
+		*result = ControlChangeEvent(event);
 		return true;
 	}
 
@@ -1381,15 +1378,9 @@ namespace Reflex
 	struct NoteEvent::Data
 	{
 
-		Action action  = ACTION_NONE;
+		MIDIEvent source;
 
-		int channel    = 0;
-
-		int note       = 0;
-
-		float velocity = 0;
-
-		bool captured  = false;
+		bool captured = false;
 
 	};// NoteEvent::Data
 
@@ -1405,14 +1396,14 @@ namespace Reflex
 	{
 	}
 
-	NoteEvent::NoteEvent (
-		Action action, int channel, int note, float velocity, double time)
-	:	Event(time)
+	NoteEvent::NoteEvent (const MIDIEvent& source)
+	:	Event(source.time())
 	{
-		self->action   = action;
-		self->channel  = channel;
-		self->note     = note;
-		self->velocity = velocity;
+		auto a = source.action();
+		if (a != MIDIEvent::NOTE_ON && a != MIDIEvent::NOTE_OFF)
+			argument_error(__FILE__, __LINE__, "not a note event.");
+
+		self->source = source.dup();
 	}
 
 	NoteEvent::NoteEvent (const NoteEvent* src)
@@ -1426,22 +1417,40 @@ namespace Reflex
 		return NoteEvent(this);
 	}
 
+	const MIDIEvent&
+	NoteEvent::source () const
+	{
+		return self->source;
+	}
+
+	MIDI*
+	NoteEvent::midi () const
+	{
+		return self->source.midi();
+	}
+
 	NoteEvent::Action
 	NoteEvent::action () const
 	{
-		return self->action;
+		switch (self->source.action())
+		{
+			// a note on of velocity 0 means a note off in the MIDI spec
+			case MIDIEvent::NOTE_ON:  return self->source.data2() > 0 ? ON : OFF;
+			case MIDIEvent::NOTE_OFF: return OFF;
+			default:                  return ACTION_NONE;
+		}
 	}
 
 	int
 	NoteEvent::channel () const
 	{
-		return self->channel;
+		return self->source.channel();
 	}
 
 	int
 	NoteEvent::note () const
 	{
-		return self->note;
+		return self->source.data1();
 	}
 
 	float
@@ -1454,7 +1463,7 @@ namespace Reflex
 	float
 	NoteEvent::velocity () const
 	{
-		return self->velocity;
+		return self->source.data2() / 127.f;
 	}
 
 	bool
@@ -1467,13 +1476,9 @@ namespace Reflex
 	struct ControlChangeEvent::Data
 	{
 
-		int channel    = 0;
+		MIDIEvent source;
 
-		int controller = 0;
-
-		float value    = 0;
-
-		bool captured  = false;
+		bool captured = false;
 
 	};// ControlChangeEvent::Data
 
@@ -1489,13 +1494,13 @@ namespace Reflex
 	{
 	}
 
-	ControlChangeEvent::ControlChangeEvent (
-		int channel, int controller, float value, double time)
-	:	Event(time)
+	ControlChangeEvent::ControlChangeEvent (const MIDIEvent& source)
+	:	Event(source.time())
 	{
-		self->channel    = channel;
-		self->controller = controller;
-		self->value      = value;
+		if (source.action() != MIDIEvent::CONTROL_CHANGE)
+			argument_error(__FILE__, __LINE__, "not a control change event.");
+
+		self->source = source.dup();
 	}
 
 	ControlChangeEvent::ControlChangeEvent (const ControlChangeEvent* src)
@@ -1509,22 +1514,34 @@ namespace Reflex
 		return ControlChangeEvent(this);
 	}
 
+	const MIDIEvent&
+	ControlChangeEvent::source () const
+	{
+		return self->source;
+	}
+
+	MIDI*
+	ControlChangeEvent::midi () const
+	{
+		return self->source.midi();
+	}
+
 	int
 	ControlChangeEvent::channel () const
 	{
-		return self->channel;
+		return self->source.channel();
 	}
 
 	int
 	ControlChangeEvent::controller () const
 	{
-		return self->controller;
+		return self->source.data1();
 	}
 
 	float
 	ControlChangeEvent::value () const
 	{
-		return self->value;
+		return self->source.data2() / 127.f;
 	}
 
 	bool

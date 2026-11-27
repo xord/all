@@ -631,10 +631,13 @@ namespace Reflex
 
 			NoteEvent ();
 
-			NoteEvent (
-				Action action, int channel, int note, float velocity, double time);
+			NoteEvent (const MIDIEvent& source);
 
 			NoteEvent dup () const;
+
+			const MIDIEvent& source () const;
+
+			MIDI* midi () const;
 
 			Action action () const;
 
@@ -666,10 +669,13 @@ namespace Reflex
 
 			ControlChangeEvent ();
 
-			ControlChangeEvent (
-				int channel, int controller, float value, double time);
+			ControlChangeEvent (const MIDIEvent& source);
 
 			ControlChangeEvent dup () const;
+
+			const MIDIEvent& source () const;
+
+			MIDI* midi () const;
 
 			int channel () const;
 

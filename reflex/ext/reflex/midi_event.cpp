@@ -49,6 +49,14 @@ RUCY_DEF1(initialize_copy, obj)
 RUCY_END
 
 static
+RUCY_DEF0(get_midi)
+{
+	CHECK;
+	return value(THIS->midi());
+}
+RUCY_END
+
+static
 RUCY_DEF0(get_action)
 {
 	CHECK;
@@ -100,6 +108,7 @@ Init_reflex_midi_event ()
 	cMIDIEvent.define_alloc_func(alloc);
 	cMIDIEvent.define_private_method("initialize",      initialize);
 	cMIDIEvent.define_private_method("initialize_copy", initialize_copy);
+	cMIDIEvent.define_method("midi",      get_midi);
 	cMIDIEvent.define_method("action",    get_action);
 	cMIDIEvent.define_method("channel",   get_channel);
 	cMIDIEvent.define_method("data1",     get_data1);

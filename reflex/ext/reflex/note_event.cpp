@@ -1,6 +1,7 @@
 #include "reflex/ruby/event.h"
 
 
+#include "reflex/ruby/midi.h"
 #include "defs.h"
 
 
@@ -19,17 +20,10 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF5(initialize, action, channel, note, velocity, time)
+RUCY_DEF1(initialize, source)
 {
 	CHECK;
-
-	*THIS = Reflex::NoteEvent(
-		(Reflex::NoteEvent::Action) to<uint>(action),
-		to<int>(channel),
-		to<int>(note),
-		to<float>(velocity),
-		to<double>(time));
-
+	*THIS = Reflex::NoteEvent(to<Reflex::MIDIEvent&>(source));
 	return rb_call_super(0, NULL);
 }
 RUCY_END
@@ -40,6 +34,22 @@ RUCY_DEF1(initialize_copy, obj)
 	CHECK;
 	*THIS = to<Reflex::NoteEvent&>(obj).dup();
 	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_source)
+{
+	CHECK;
+	return value(THIS->source());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_midi)
+{
+	CHECK;
+	return value(THIS->midi());
 }
 RUCY_END
 
@@ -103,6 +113,8 @@ Init_reflex_note_event ()
 	cNoteEvent.define_alloc_func(alloc);
 	cNoteEvent.define_private_method("initialize",      initialize);
 	cNoteEvent.define_private_method("initialize_copy", initialize_copy);
+	cNoteEvent.define_method("source",    get_source);
+	cNoteEvent.define_method("midi",      get_midi);
 	cNoteEvent.define_method("action",    get_action);
 	cNoteEvent.define_method("channel",   get_channel);
 	cNoteEvent.define_method("note",      get_note);

@@ -1,6 +1,7 @@
 #include "reflex/ruby/event.h"
 
 
+#include "reflex/ruby/midi.h"
 #include "defs.h"
 
 
@@ -19,16 +20,10 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
-RUCY_DEF4(initialize, channel, controller, value, time)
+RUCY_DEF1(initialize, source)
 {
 	CHECK;
-
-	*THIS = Reflex::ControlChangeEvent(
-		to<int>(channel),
-		to<int>(controller),
-		to<float>(value),
-		to<double>(time));
-
+	*THIS = Reflex::ControlChangeEvent(to<Reflex::MIDIEvent&>(source));
 	return rb_call_super(0, NULL);
 }
 RUCY_END
@@ -39,6 +34,22 @@ RUCY_DEF1(initialize_copy, obj)
 	CHECK;
 	*THIS = to<Reflex::ControlChangeEvent&>(obj).dup();
 	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_source)
+{
+	CHECK;
+	return value(THIS->source());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_midi)
+{
+	CHECK;
+	return value(THIS->midi());
 }
 RUCY_END
 
@@ -87,6 +98,8 @@ Init_reflex_control_change_event ()
 	cControlChangeEvent.define_alloc_func(alloc);
 	cControlChangeEvent.define_private_method("initialize",      initialize);
 	cControlChangeEvent.define_private_method("initialize_copy", initialize_copy);
+	cControlChangeEvent.define_method("source",     get_source);
+	cControlChangeEvent.define_method("midi",       get_midi);
 	cControlChangeEvent.define_method("channel",    get_channel);
 	cControlChangeEvent.define_method("controller", get_controller);
 	cControlChangeEvent.define_method("value",      get_value);

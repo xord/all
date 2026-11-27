@@ -14,6 +14,7 @@ class TestMIDIEvent < Test::Unit::TestCase
     assert_equal 2,        e.data1
     assert_equal 3,        e.data2
     assert_equal 4,        e.time
+    assert_nil             e.midi
     assert_false           e.captured?
 
     assert_raise {event 0x90, 256,   0, 0}
