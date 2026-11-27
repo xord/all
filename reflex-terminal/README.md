@@ -14,7 +14,8 @@ reflex-terminal provides a terminal emulator for the
   feeds keyboard / mouse input into it.
 
 Full-screen programs work: emacs and mouse-driven terminal multiplexers run
-in it, with colors, CJK text, reflow on resize and scrollback.
+in it, with colors, CJK text typed through the input method, reflow on
+resize and scrollback.
 
 ## Usage
 
@@ -76,9 +77,6 @@ $ rake test
 
 ## Limitations
 
-- No input method support, so Japanese and other composed text cannot be
-  typed. Reflex hands key events straight to the view without going through
-  the platform's input context, which is where composition would start.
 - On Linux, `TerminalView` needs a font handed to it (`font:` with a
   `Rays::Font` or a path). Rays cannot look one up by name there, so the
   default font name does not resolve.
@@ -87,7 +85,8 @@ $ rake test
   backslash escaping that the command line is built with. Pass the command
   as separate arguments instead.
 - No image protocols (Kitty graphics, Sixel).
-- No selection or copy UI. `#each_line` and `#selected_text` return the text.
+- No copy UI. Text is selected by a drag, a double or a triple click, and
+  `#selected_text` returns it, for the application to copy.
 
 ## Updating the vendored libghostty-vt
 
