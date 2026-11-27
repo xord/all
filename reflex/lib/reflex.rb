@@ -67,6 +67,7 @@ require 'reflex/screen'
 require 'reflex/clipboard'
 require 'reflex/file_dialog'
 require 'reflex/color_picker'
+require 'reflex/midi'
 
 require 'reflex/button'
 require 'reflex/text_view'

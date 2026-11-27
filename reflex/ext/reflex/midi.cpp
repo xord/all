@@ -23,6 +23,33 @@ RUCY_DEF_ALLOC(alloc, klass)
 RUCY_END
 
 static
+RUCY_DEF3(note_on, note, velocity, channel)
+{
+	CHECK;
+	THIS->note_on(to<int>(note), to<float>(velocity), to<int>(channel));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF3(note_off, note, velocity, channel)
+{
+	CHECK;
+	THIS->note_off(to<int>(note), to<float>(velocity), to<int>(channel));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF3(control_change, controller, value, channel)
+{
+	CHECK;
+	THIS->control_change(to<int>(controller), to<float>(value), to<int>(channel));
+	return self;
+}
+RUCY_END
+
+static
 RUCY_DEF1(on_midi, event)
 {
 	CHECK;
@@ -88,6 +115,9 @@ Init_reflex_midi ()
 
 	cMIDI = mReflex.define_class("MIDI", Reflex::device_class());
 	cMIDI.define_alloc_func(alloc);
+	cMIDI.define_method("note_on!",        note_on);
+	cMIDI.define_method("note_off!",       note_off);
+	cMIDI.define_method("control_change!", control_change);
 	cMIDI.define_method("on_midi",           on_midi);
 	cMIDI.define_method("on_note",           on_note);
 	cMIDI.define_method("on_note_on",        on_note_on);

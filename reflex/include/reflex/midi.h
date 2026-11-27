@@ -28,6 +28,12 @@ namespace Reflex
 
 			virtual ~MIDI ();
 
+			void note_on  (int note, float velocity,     int channel = 0);
+
+			void note_off (int note, float velocity = 0, int channel = 0);
+
+			void control_change (int controller, float value, int channel = 0);
+
 			virtual const char* name () const;
 
 			virtual void on_midi (MIDIEvent* e);

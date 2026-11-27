@@ -1,6 +1,7 @@
 #include "midi.h"
 
 
+#include <math.h>
 #include <algorithm>
 #include <RtMidi.h>
 #include <xot/time.h>
@@ -21,6 +22,8 @@ namespace Reflex
 
 		RtMidiIn input;
 
+		RtMidiOut output;
+
 		String name;
 
 		double time = 0;
@@ -28,6 +31,7 @@ namespace Reflex
 		~Data ()
 		{
 			input.closePort();
+			output.closePort();
 		}
 
 	};// MIDI::Data
@@ -207,6 +211,24 @@ namespace Reflex
 		self->input.openPort(port, name);
 		self->input.ignoreTypes(false, false, false);
 		self->name = name;
+
+		uint count = self->output.getPortCount();
+		for (uint i = 0; i < count; ++i)
+		{
+			// the output of the same device is found by the name
+			if (self->output.getPortName(i) == name)
+			{
+				try
+				{
+					self->output.openPort(i, name);
+				}
+				catch (const RtMidiError&)
+				{
+					// RtMidi has printed the error already
+				}
+				break;
+			}
+		}
 	}
 
 	static void
@@ -374,6 +396,57 @@ namespace Reflex
 
 	MIDI::~MIDI ()
 	{
+	}
+
+	static void
+	send_message (MIDI* midi, uchar status, int channel, int data1, float data2)
+	{
+		if (channel < 0 || 15 < channel)
+			argument_error(__FILE__, __LINE__, "invalid channel: %d", channel);
+
+		RtMidiOut& output = midi->self->output;
+		if (!output.isPortOpen())
+			invalid_state_error(__FILE__, __LINE__, "'%s' has no output port.", midi->name());
+
+		uchar bytes[] = {
+			(uchar) (status | channel),
+			(uchar) data1,
+			(uchar) round(data2 * 127)
+		};
+		output.sendMessage(bytes, sizeof(bytes));
+	}
+
+	void
+	MIDI::note_on (int note, float velocity, int channel)
+	{
+		if (note < 0 || 127 < note)
+			argument_error(__FILE__, __LINE__, "invalid note: %d", note);
+		if (velocity < 0 || 1 < velocity)
+			argument_error(__FILE__, __LINE__, "invalid velocity: %f", velocity);
+
+		send_message(this, 0x90, channel, note, velocity);
+	}
+
+	void
+	MIDI::note_off (int note, float velocity, int channel)
+	{
+		if (note < 0 || 127 < note)
+			argument_error(__FILE__, __LINE__, "invalid note: %d", note);
+		if (velocity < 0 || 1 < velocity)
+			argument_error(__FILE__, __LINE__, "invalid velocity: %f", velocity);
+
+		send_message(this, 0x80, channel, note, velocity);
+	}
+
+	void
+	MIDI::control_change (int controller, float value, int channel)
+	{
+		if (controller < 0 || 127 < controller)
+			argument_error(__FILE__, __LINE__, "invalid controller: %d", controller);
+		if (value < 0 || 1 < value)
+			argument_error(__FILE__, __LINE__, "invalid value: %f", value);
+
+		send_message(this, 0xB0, channel, controller, value);
 	}
 
 	const char*
