@@ -1280,7 +1280,7 @@ namespace Reflex
 			return false;
 
 		*result = NoteEvent(
-			a == MIDIEvent::NOTE_ON ? NoteEvent::ON : NoteEvent::OFF,
+			a == MIDIEvent::NOTE_ON && event.data2() > 0 ? NoteEvent::ON : NoteEvent::OFF,
 			event.channel(), event.data1(), event.data2() / 127.f, event.time());
 		return true;
 	}
