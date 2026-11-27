@@ -18,6 +18,8 @@ namespace Reflex
 
 	void MIDI_fin  (Application* app);
 
+	void MIDI_open_virtual (MIDI* midi, const char* name);
+
 	void MIDI_process_events ();
 
 

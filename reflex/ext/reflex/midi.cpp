@@ -3,6 +3,7 @@
 
 #include <ranges>
 #include "reflex/ruby/device.h"
+#include "../../src/midi.h"
 #include "defs.h"
 
 
@@ -10,7 +11,7 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDI)
 
 #define THIS      to<Reflex::MIDI*>(self)
 
-#define CHECK     RUCY_CHECK_OBJ(Reflex::MIDI, self)
+#define CHECK     RUCY_CHECK_PTR(Reflex::MIDI, self)
 
 #define CALL(fun) RUCY_CALL_SUPER(THIS, fun)
 
@@ -18,7 +19,25 @@ RUCY_DEFINE_WRAPPER_VALUE_FROM_TO(REFLEX_EXPORT, Reflex::MIDI)
 static
 RUCY_DEF_ALLOC(alloc, klass)
 {
-	Reflex::reflex_error(__FILE__, __LINE__, "can not instantiate MIDI class.");
+	return value(new Reflex::RubyMIDI<Reflex::MIDI>, klass);
+}
+RUCY_END
+
+static
+RUCY_DEF1(initialize, name)
+{
+	CHECK;
+	Reflex::MIDI_open_virtual(THIS, to<const char*>(name));
+	return self;
+}
+RUCY_END
+
+static
+RUCY_DEF0(close)
+{
+	CHECK;
+	THIS->close();
+	return self;
 }
 RUCY_END
 
@@ -131,6 +150,8 @@ Init_reflex_midi ()
 
 	cMIDI = mReflex.define_class("MIDI", Reflex::device_class());
 	cMIDI.define_alloc_func(alloc);
+	cMIDI.define_private_method("initialize", initialize);
+	cMIDI.define_method("close", close);
 	cMIDI.define_method("note_on!",        note_on);
 	cMIDI.define_method("note_off!",       note_off);
 	cMIDI.define_method("control_change!", control_change);

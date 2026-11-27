@@ -26,7 +26,11 @@ namespace Reflex
 
 			MIDI ();
 
+			MIDI (const char* name);
+
 			virtual ~MIDI ();
+
+			void close ();
 
 			void note_on  (int note, float velocity,     int channel = 0);
 

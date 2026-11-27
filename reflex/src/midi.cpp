@@ -26,12 +26,20 @@ namespace Reflex
 
 		String name;
 
-		double time = 0;
+		double time   = 0;
+
+		bool virtual_ = false;
 
 		~Data ()
 		{
+			close();
+		}
+
+		void close ()
+		{
 			input.closePort();
 			output.closePort();
+			virtual_ = false;
 		}
 
 	};// MIDI::Data
@@ -218,6 +226,15 @@ namespace Reflex
 	}
 
 	static void
+	set_input_callbacks (MIDI* midi)
+	{
+		RtMidiIn& input = midi->self->input;
+		input.setCallback(event_callback, midi);
+		input.setErrorCallback(error_callback, midi);
+		input.ignoreTypes(false, false, false);
+	}
+
+	static void
 	open_midi (MIDI* midi, const char* name)
 	{
 		MIDI::Data* self = midi->self.get();
@@ -226,10 +243,8 @@ namespace Reflex
 		int input = find_port(self->input, name);
 		if (input >= 0)
 		{
-			self->input.setCallback(event_callback, midi);
-			self->input.setErrorCallback(error_callback, midi);
+			set_input_callbacks(midi);
 			self->input.openPort(input, name);
-			self->input.ignoreTypes(false, false, false);
 		}
 
 		int output = find_port(self->output, name);
@@ -241,7 +256,8 @@ namespace Reflex
 	add_midi (MIDI* midi)
 	{
 		midis.emplace_back(midi);
-		Application_call_device_connect_event(app(), midi);
+
+		if (app()) Application_call_device_connect_event(app(), midi);
 	}
 
 	static void
@@ -252,7 +268,7 @@ namespace Reflex
 		if (it == midis.end()) return;
 
 		midis.erase(it);
-		Application_call_device_disconnect_event(app(), ref);
+		if (app()) Application_call_device_disconnect_event(app(), ref);
 	}
 
 
@@ -346,10 +362,34 @@ namespace Reflex
 		if (!app)
 			argument_error(__FILE__, __LINE__);
 
-		if (!manager) return;
+		for (auto& midi : midis)
+			midi->self->close();
 
 		midis.clear();
 		manager.reset();
+	}
+
+	void
+	MIDI_open_virtual (MIDI* midi, const char* name)
+	{
+		if (!midi)
+			argument_error(__FILE__, __LINE__);
+		if (!name || *name == '\0')
+			argument_error(__FILE__, __LINE__, "empty name.");
+		if (*midi)
+			invalid_state_error(__FILE__, __LINE__, "'%s' is opened already.", midi->name());
+
+		MIDI::Data* self = midi->self.get();
+
+		if (self->output.getCurrentApi() == RtMidi::WINDOWS_MM)
+			not_implemented_error(__FILE__, __LINE__);
+
+		set_input_callbacks(midi);
+		self->input.openVirtualPort(name);
+		self->output.openVirtualPort(name);
+		self->name     = name;
+		self->virtual_ = true;
+		add_midi(midi);
 	}
 
 	void
@@ -380,8 +420,23 @@ namespace Reflex
 	{
 	}
 
+	MIDI::MIDI (const char* name)
+	{
+		MIDI_open_virtual(this, name);
+	}
+
 	MIDI::~MIDI ()
 	{
+	}
+
+	void
+	MIDI::close ()
+	{
+		if (!self->virtual_)
+			invalid_state_error(__FILE__, __LINE__, "only an opened virtual MIDI can be closed.");
+
+		remove_midi(this);
+		self->close();
 	}
 
 	static void
@@ -390,8 +445,7 @@ namespace Reflex
 		if (channel < 0 || 15 < channel)
 			argument_error(__FILE__, __LINE__, "invalid channel: %d", channel);
 
-		RtMidiOut& output = midi->self->output;
-		if (!output.isPortOpen())
+		if (!midi->has_output())
 			invalid_state_error(__FILE__, __LINE__, "'%s' has no output port.", midi->name());
 
 		uchar bytes[] = {
@@ -399,7 +453,7 @@ namespace Reflex
 			(uchar) data1,
 			(uchar) round(data2 * 127)
 		};
-		output.sendMessage(bytes, sizeof(bytes));
+		midi->self->output.sendMessage(bytes, sizeof(bytes));
 	}
 
 	void
@@ -444,13 +498,13 @@ namespace Reflex
 	bool
 	MIDI::has_input () const
 	{
-		return self->input.isPortOpen();
+		return self->input.isPortOpen() || self->virtual_;
 	}
 
 	bool
 	MIDI::has_output () const
 	{
-		return self->output.isPortOpen();
+		return self->output.isPortOpen() || self->virtual_;
 	}
 
 	void
