@@ -231,15 +231,17 @@ namespace Reflex
 
 			const char* title () const;
 
-			StringList lines () const;
+			StringList      active_lines () const;
 
-			int            history_rows () const;
+			StringList    viewport_lines () const;
 
 			StringList get_history_lines (int offset, int size) const;
 
-			longlong bells () const;
+			int            history_rows () const;
 
 			const RowList& spans () const;
+
+			longlong bells () const;
 
 			operator bool () const;
 

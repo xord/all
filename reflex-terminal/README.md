@@ -42,9 +42,13 @@ session — with its colors and cursor motion applied:
 ```ruby
 t = Reflex::Terminal.new 120, 40
 t.feed File.binread('build.log')
-t.update
-puts t.lines
+t.each_line {puts _1}
 ```
+
+`#each_line` yields all of the text, the scrollback and then the active
+screen, where what is fed goes; `#active_lines` is that screen alone, and
+`#viewport_lines` the rows shown where it is scrolled to, as of the last
+`#update`.
 
 Driving an interactive program over your own transport takes one more call:
 `#read_pending_input` hands back the bytes the terminal wants to send
@@ -83,7 +87,7 @@ $ rake test
   backslash escaping that the command line is built with. Pass the command
   as separate arguments instead.
 - No image protocols (Kitty graphics, Sixel).
-- No selection or copy UI. `#lines` and `#each_history_line` return the text.
+- No selection or copy UI. `#each_line` and `#selected_text` return the text.
 
 ## Updating the vendored libghostty-vt
 

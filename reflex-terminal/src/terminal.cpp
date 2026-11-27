@@ -1547,60 +1547,15 @@ namespace Reflex
 		return self->title.c_str();
 	}
 
-	StringList
-	Terminal::lines () const
+	static StringList
+	read_rows (const Terminal::Data* self, GhosttyPointTag tag, int offset, int size)
 	{
-		StringList result;
-		result.reserve(self->spans.size());
-
-		for (const SpanList& spans : self->spans)
-		{
-			String line;
-			int width = 0;
-			for (const Span& span : spans)
-			{
-				if (span.x > width) line.append(span.x - width, ' ');
-				line += span.text;
-				width = span.x + span.width;
-			}
-
-			size_t end = line.find_last_not_of(' ');
-			result.push_back(end == String::npos ? String() : line.substr(0, end + 1));
-		}
-		return result;
-	}
-
-	int
-	Terminal::history_rows () const
-	{
-		if (!*this) return 0;
-
-		return (int) bottom_offset(get_scrollbar(self.get()));
-	}
-
-	StringList
-	Terminal::get_history_lines (int offset, int size) const
-	{
-		if (offset < 0)
-			argument_error(__FILE__, __LINE__, "offset is negative");
-		if (size < 0)
-			argument_error(__FILE__, __LINE__, "size is negative");
-		if (!*this)
-			invalid_state_error(__FILE__, __LINE__);
-
 		StringList lines;
-		if (size == 0) return lines;
-
-		int rows = history_rows();
-		if (offset >= rows)
-			return lines;
-
-		if (size > rows - offset)
-			size = rows - offset;
+		if (size <= 0) return lines;
 
 		GhosttyResult result;
 		GhosttyPoint point = {};
-		point.tag          = GHOSTTY_POINT_TAG_HISTORY;
+		point.tag          = tag;
 
 		GhosttySelection selection = init_sized<GhosttySelection>();
 		point.value.coordinate.x   = 0;
@@ -1644,7 +1599,76 @@ namespace Reflex
 		}
 		ghostty_formatter_free(formatter);
 
+		while (lines.size() < (size_t) size)
+			lines.emplace_back();
+
 		return lines;
+	}
+
+	StringList
+	Terminal::active_lines () const
+	{
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		return read_rows(self.get(), GHOSTTY_POINT_TAG_ACTIVE, 0, self->rows);
+	}
+
+	StringList
+	Terminal::viewport_lines () const
+	{
+		StringList result;
+		result.reserve(self->spans.size());
+
+		for (const SpanList& spans : self->spans)
+		{
+			String line;
+			int width = 0;
+			for (const Span& span : spans)
+			{
+				if (span.x > width) line.append(span.x - width, ' ');
+				line += span.text;
+				width = span.x + span.width;
+			}
+
+			size_t end = line.find_last_not_of(' ');
+			result.push_back(end == String::npos ? String() : line.substr(0, end + 1));
+		}
+		return result;
+	}
+
+	StringList
+	Terminal::get_history_lines (int offset, int size) const
+	{
+		if (offset < 0)
+			argument_error(__FILE__, __LINE__, "offset is negative");
+		if (size < 0)
+			argument_error(__FILE__, __LINE__, "size is negative");
+		if (!*this)
+			invalid_state_error(__FILE__, __LINE__);
+
+		int rows = history_rows();
+		if (offset >= rows)
+			return StringList();
+
+		if (size > rows - offset)
+			size = rows - offset;
+
+		return read_rows(self.get(), GHOSTTY_POINT_TAG_HISTORY, offset, size);
+	}
+
+	int
+	Terminal::history_rows () const
+	{
+		if (!*this) return 0;
+
+		return (int) bottom_offset(get_scrollbar(self.get()));
+	}
+
+	const Terminal::RowList&
+	Terminal::spans () const
+	{
+		return self->spans;
 	}
 
 	longlong
@@ -1656,12 +1680,6 @@ namespace Reflex
 		// nor update() can drop one on the way
 
 		return self->bells;
-	}
-
-	const Terminal::RowList&
-	Terminal::spans () const
-	{
-		return self->spans;
 	}
 
 	Terminal::operator bool () const

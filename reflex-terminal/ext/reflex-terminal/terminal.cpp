@@ -297,40 +297,6 @@ RUCY_DEF0(get_scroll)
 RUCY_END
 
 static
-RUCY_DEF0(each_line)
-{
-	CHECK;
-
-	for (const auto& line : THIS->lines())
-		yield(value(line.c_str(), line.size()));
-	return self;
-}
-RUCY_END
-
-static
-RUCY_DEF0(each_span)
-{
-	CHECK;
-
-	const auto& rows = THIS->spans();
-	for (size_t y = 0; y < rows.size(); ++y)
-	{
-		for (const auto& span : rows[y])
-		{
-			yield(
-				value(span.x), value((int) y), value(span.width),
-				value(span.text.c_str(), span.text.size()),
-				span.fg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.fg),
-				span.bg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.bg),
-				span.ul == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.ul),
-				value(span.attribs));
-		}
-	}
-	return self;
-}
-RUCY_END
-
-static
 RUCY_DEF1(set_option_as_alt, state)
 {
 	CHECK;
@@ -435,6 +401,39 @@ RUCY_DEF0(get_title)
 }
 RUCY_END
 
+static Value
+to_array (const Reflex::StringList& lines)
+{
+	Value result = array(NULL, 0);// a std::vector<Value> would be invisible to the gc
+	for (const auto& line : lines)
+		result.push(value(line.c_str(), line.size()));
+	return result;
+}
+
+static
+RUCY_DEF0(get_active_lines)
+{
+	CHECK;
+	return to_array(THIS->active_lines());
+}
+RUCY_END
+
+static
+RUCY_DEF0(get_viewport_lines)
+{
+	CHECK;
+	return to_array(THIS->viewport_lines());
+}
+RUCY_END
+
+static
+RUCY_DEF2(get_history_lines, offset, size)
+{
+	CHECK;
+	return to_array(THIS->get_history_lines(to<int>(offset), to<int>(size)));
+}
+RUCY_END
+
 static
 RUCY_DEF0(get_history_rows)
 {
@@ -444,14 +443,25 @@ RUCY_DEF0(get_history_rows)
 RUCY_END
 
 static
-RUCY_DEF2(get_history_lines, offset, size)
+RUCY_DEF0(each_span)
 {
 	CHECK;
 
-	Value result = array(NULL, 0);// a std::vector<Value> would be invisible to the gc
-	for (const auto& line : THIS->get_history_lines(to<int>(offset), to<int>(size)))
-		result.push(value(line.c_str(), line.size()));
-	return result;
+	const auto& rows = THIS->spans();
+	for (size_t y = 0; y < rows.size(); ++y)
+	{
+		for (const auto& span : rows[y])
+		{
+			yield(
+				value(span.x), value((int) y), value(span.width),
+				value(span.text.c_str(), span.text.size()),
+				span.fg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.fg),
+				span.bg == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.bg),
+				span.ul == Reflex::Terminal::Span::COLOR_NONE ? nil() : value(span.ul),
+				value(span.attribs));
+		}
+	}
+	return self;
 }
 RUCY_END
 
@@ -500,8 +510,6 @@ Init_reflex_terminal ()
 	cTerminal.define_method("scroll_to",  scroll_to);
 	cTerminal.define_method("scroll_by",  scroll_by);
 	cTerminal.define_method("scroll", get_scroll);
-	cTerminal.define_private_method("each_line!", each_line);
-	cTerminal.define_private_method("each_span!", each_span);
 	cTerminal.define_method("option_as_alt=", set_option_as_alt);
 	cTerminal.define_method("option_as_alt",  get_option_as_alt);
 	cTerminal.define_method("columns", get_columns);
@@ -512,8 +520,11 @@ Init_reflex_terminal ()
 	cTerminal.define_private_method(  "get_default_color!",   get_default_color);
 	cTerminal.define_private_method(          "get_color!",           get_color);
 	cTerminal.define_method("title",   get_title);
-	cTerminal.define_method(            "history_rows",   get_history_rows);
-	cTerminal.define_private_method("get_history_lines!", get_history_lines);
+	cTerminal.define_private_method(  "get_active_lines!",   get_active_lines);
+	cTerminal.define_private_method("get_viewport_lines!", get_viewport_lines);
+	cTerminal.define_private_method( "get_history_lines!",  get_history_lines);
+	cTerminal.define_method(             "history_rows",    get_history_rows);
+	cTerminal.define_private_method("each_span!", each_span);
 	cTerminal.define_method("bells", get_bells);
 
 	cTerminal.define_const("BOLD",            Reflex::Terminal::Span::BOLD);

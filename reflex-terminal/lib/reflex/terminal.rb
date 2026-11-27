@@ -46,55 +46,6 @@ module Reflex
       spawn! args, envs
     end
 
-    # Yields each style span of the visible screen.
-    #
-    # @yield [x, y, width, text, fg, bg, ul, flags] a run of cells sharing
-    #   the same style; x, y and width are in cells, and fg/bg are
-    #   0xRRGGBB or nil for the terminal's default color. ul is the
-    #   underline color (SGR 58), 0xRRGGBB or nil to draw with fg
-    #
-    # @return [Enumerator] when no block is given
-    #
-    def each_span(&block)
-      return enum_for :each_span unless block
-      each_span!(&block)
-    end
-
-    # Yields each line of the visible screen.
-    #
-    # @yield [line] a row of the screen, without its trailing spaces and
-    #   without a newline of its own
-    #
-    # @return [Enumerator] when no block is given
-    #
-    def each_line(&block)
-      return enum_for :each_line unless block
-      each_line!(&block)
-    end
-
-    # @return [Array<String>] the visible screen, one string per row
-    #
-    def lines()
-      each_line.to_a
-    end
-
-    # Yields each line of the scrollback, oldest first.
-    #
-    # The history is walked in chunks rather than handed over at once,
-    # since it can hold far more than fits in memory.
-    #
-    # @yield [line] a line of the history, without its trailing spaces
-    #
-    # @return [Enumerator] when no block is given
-    #
-    def each_history_line(&block)
-      return enum_for :each_history_line unless block
-      (0...history_rows).step HISTORY_CHUNK_SIZE do |row|
-        get_history_lines!(row, HISTORY_CHUNK_SIZE).each(&block)
-      end
-      self
-    end
-
     const_symbol_accessor :option_as_alt, **{
       off:   OPTION_AS_ALT_OFF,
       on:    OPTION_AS_ALT_ON,
@@ -139,6 +90,112 @@ module Reflex
     universal_accessor :default_foreground_color, :default_background_color,
       :default_cursor_color
 
+    # Yields each line of all the text: the scrollback, oldest first, and
+    # then the active screen, as each_history_line and each_active_line do.
+    #
+    # There is no array of them, as the scrollback can hold far more than
+    # fits in memory.
+    #
+    # @param include_trailing_blank_lines [Boolean] whether to yield the
+    #   blank rows at the end of the active screen, under what is written
+    #
+    # @yield [line] a row, without its trailing spaces and without a
+    #   newline of its own
+    #
+    # @return [Enumerator] when no block is given
+    #
+    def each_line(include_trailing_blank_lines: false, &block)
+      return enum_for __method__, include_trailing_blank_lines: include_trailing_blank_lines unless
+        block
+      each_history_line(&block)
+      each_active_line(include_trailing_blank_lines: include_trailing_blank_lines, &block)
+    end
+
+    # Yields each line of the active screen: the rows after the scrollback,
+    # where what is written goes, as it is now, with no update, and
+    # wherever the viewport is scrolled to.
+    #
+    # @param include_trailing_blank_lines [Boolean] whether to yield the
+    #   blank rows at the end, under what is written, for all the rows
+    #
+    # @yield [line] a row, without its trailing spaces and without a
+    #   newline of its own
+    #
+    # @return [Enumerator] when no block is given
+    #
+    def each_active_line(include_trailing_blank_lines: false, &block)
+      return enum_for __method__, include_trailing_blank_lines: include_trailing_blank_lines unless
+        block
+      trim_trailing_blank_lines(get_active_lines!, include_trailing_blank_lines).each(&block)
+      self
+    end
+
+    # @return [Array<String>] the lines of the active screen
+    #
+    # @see #each_active_line
+    #
+    def active_lines(include_trailing_blank_lines: false)
+      each_active_line(include_trailing_blank_lines: include_trailing_blank_lines).to_a
+    end
+
+    # Yields each line of the viewport: the rows shown where it is scrolled
+    # to by scroll_to and scroll_by, of the scrollback while scrolled back,
+    # as they were at the last update.
+    #
+    # @param include_trailing_blank_lines [Boolean] whether to yield the
+    #   blank rows at the end, for all the rows
+    #
+    # @yield [line] a row, without its trailing spaces and without a
+    #   newline of its own
+    #
+    # @return [Enumerator] when no block is given
+    #
+    def each_viewport_line(include_trailing_blank_lines: false, &block)
+      return enum_for __method__, include_trailing_blank_lines: include_trailing_blank_lines unless
+        block
+      trim_trailing_blank_lines(get_viewport_lines!, include_trailing_blank_lines).each(&block)
+      self
+    end
+
+    # @return [Array<String>] the lines of the viewport
+    #
+    # @see #each_viewport_line
+    #
+    def viewport_lines(include_trailing_blank_lines: false)
+      each_viewport_line(include_trailing_blank_lines: include_trailing_blank_lines).to_a
+    end
+
+    # Yields each line of the scrollback, oldest first.
+    #
+    # The history is walked in chunks rather than handed over at once,
+    # since it can hold far more than fits in memory.
+    #
+    # @yield [line] a line of the history, without its trailing spaces
+    #
+    # @return [Enumerator] when no block is given
+    #
+    def each_history_line(&block)
+      return enum_for __method__ unless block
+      (0...history_rows).step HISTORY_CHUNK_SIZE do |row|
+        get_history_lines!(row, HISTORY_CHUNK_SIZE).each(&block)
+      end
+      self
+    end
+
+    # Yields each style span of the viewport.
+    #
+    # @yield [x, y, width, text, fg, bg, ul, flags] a run of cells sharing
+    #   the same style; x, y and width are in cells, and fg/bg are
+    #   0xRRGGBB or nil for the terminal's default color. ul is the
+    #   underline color (SGR 58), 0xRRGGBB or nil to draw with fg
+    #
+    # @return [Enumerator] when no block is given
+    #
+    def each_span(&block)
+      return enum_for __method__ unless block
+      each_span!(&block)
+    end
+
     private
 
     def shell_command(command)
@@ -161,6 +218,14 @@ module Reflex
       raise IndexError, "palette index out of range: #{index}" unless
         PALETTE_RANGE.include? index
       COLOR_PALETTE_FIRST + index
+    end
+
+    # The lines with the blank ones at the end, or with none of them.
+    #
+    def trim_trailing_blank_lines(lines, include_trailing_blank_lines)
+      return lines if include_trailing_blank_lines
+      last = lines.rindex {!_1.empty?}
+      last ? lines[0..last] : []
     end
 
   end# Terminal

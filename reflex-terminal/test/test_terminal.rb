@@ -15,7 +15,7 @@ class TestTerminal < Test::Unit::TestCase
   EOF_KEY = win32? ? "\x1a\r" : "\x04"
 
   def text(t)
-    t.lines.join "\n"
+    t.viewport_lines(include_trailing_blank_lines: true).join "\n"
   end
 
   def ruby(script)
@@ -194,7 +194,8 @@ class TestTerminal < Test::Unit::TestCase
 
     assert_equal Encoding::UTF_8, t.each_span.first[3].encoding
     assert_equal 'タイトル',       t.title
-    assert_equal Encoding::UTF_8, t.lines.first.encoding
+    assert_equal Encoding::UTF_8, t.active_lines.first.encoding
+    assert_equal Encoding::UTF_8, t.viewport_lines.first.encoding
 
     t.feed "\e[c"
     assert_equal Encoding::ASCII_8BIT, t.read_pending_input.encoding
@@ -280,15 +281,70 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal '', t.read_pending_input
   end
 
-  def test_lines()
+  def test_each_line()
+    t = terminal 20, 3, scrollback_bytes: 64 * 1024
+    10.times {|i| t.feed "line#{i}\r\n"}
+    # the history and then the active screen, all of the text
+    assert_equal (0..9).map {"line#{_1}"}, t.each_line.to_a
+    assert_equal [*(0..9).map {"line#{_1}"}, ''],
+      t.each_line(include_trailing_blank_lines: true).to_a
+
+    # wherever the viewport is
+    t.update
+    t.scroll_to(-5)
+    t.update
+    assert_equal (0..9).map {"line#{_1}"}, t.each_line.to_a
+
+    assert_equal [], terminal(20, 3).each_line.to_a
+  end
+
+  def test_active_lines()
     t = terminal 10, 4
     t.feed "aaaaabbbbbccccc"
-    t.update
-    assert_equal ['aaaaabbbbb', 'ccccc'], t.lines[0, 2]
+    # of the terminal itself, with no update
+    assert_equal ['aaaaabbbbb', 'ccccc'], t.active_lines
+    assert_equal ['aaaaabbbbb', 'ccccc', '', ''],
+      t.active_lines(include_trailing_blank_lines: true)
+    assert_equal t.active_lines, t.each_active_line.to_a
 
     t.resize 20, 4
+    assert_equal ['aaaaabbbbbccccc'], t.active_lines
+  end
+
+  def test_active_lines_with_blank_lines()
+    t = terminal 10, 4
+    t.feed "a\r\n\r\nb  \r\n"
+    assert_equal ['a', '', 'b'],     t.active_lines # trailing spaces trimmed
+    assert_equal ['a', '', 'b', ''], t.active_lines(include_trailing_blank_lines: true)
+
+    assert_equal [],                 terminal(10, 4).active_lines
+    assert_equal ['', '', '', ''],   terminal(10, 4).active_lines(include_trailing_blank_lines: true)
+  end
+
+  def test_active_lines_scrolled_back()
+    t = terminal 20, 3, scrollback_bytes: 64 * 1024
+    10.times {|i| t.feed "line#{i}\r\n"}
     t.update
-    assert_equal 'aaaaabbbbbccccc', t.lines.first
+    t.scroll_to(-5)
+    t.update
+    # the rows after the history, wherever the viewport is
+    assert_equal %w[line8 line9], t.active_lines
+  end
+
+  def test_viewport_lines()
+    t = terminal 20, 3, scrollback_bytes: 64 * 1024
+    10.times {|i| t.feed "line#{i}\r\n"}
+    assert_equal [], t.viewport_lines # none before an update
+    t.update
+    assert_equal %w[line8 line9],     t.viewport_lines
+    assert_equal ['line8', 'line9', ''],
+      t.viewport_lines(include_trailing_blank_lines: true)
+
+    # of the history while scrolled back
+    t.scroll_to(-5)
+    t.update
+    assert_equal %w[line3 line4 line5], t.viewport_lines
+    assert_equal t.viewport_lines, t.each_viewport_line.to_a
   end
 
   def test_resize_with_invalid_size()
@@ -700,7 +756,7 @@ class TestTerminal < Test::Unit::TestCase
     t = terminal 10, 4
     t.feed 'aaaaabbbbbccccc'# wraps onto a second row
     t.update
-    assert_equal ['aaaaabbbbb', 'ccccc'], t.lines[0, 2]
+    assert_equal ['aaaaabbbbb', 'ccccc'], t.active_lines
 
     t.select_line 0
     assert_equal 'aaaaabbbbbccccc', t.selected_text
@@ -746,11 +802,11 @@ class TestTerminal < Test::Unit::TestCase
     # viewport starts at line28 and two rows back is line26
     t.scroll_to(-2)
     t.update
-    assert_equal 'line26', t.lines.first
+    assert_equal 'line26', t.viewport_lines.first
 
     t.scroll_to(-10000)# further back than the history goes
     t.update
-    assert_equal 'line0', t.lines.first
+    assert_equal 'line0', t.viewport_lines.first
     top = t.scroll
     assert_operator top, :<, 0
 
@@ -795,6 +851,16 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal t.history_rows, lines.size
     assert_equal 'line0', lines.first
     assert_equal "line#{rows - 3}", lines.last# the last 2 rows are still on screen
+  end
+
+  # blank lines at the end of the history too, which the formatter leaves
+  # out of what it reads
+  def test_history_with_blank_lines()
+    t = terminal 20, 3, scrollback_bytes: 64 * 1024
+    t.feed "a\r\nb\r\n\r\n\r\nc\r\nd\r\n"
+    assert_equal 4,                            t.history_rows
+    assert_equal ['a', 'b', '', ''],           t.each_history_line.to_a
+    assert_equal ['a', 'b', '', '', 'c', 'd'], t.each_line.to_a
   end
 
   def test_history_without_scrollback()
