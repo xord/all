@@ -9,13 +9,16 @@ on:
         default: macos windows
       ruby-version:
         type: string
+      zig:
+        description: 'set up Zig for the gems to build by it, as reflex-terminal'
+        type: boolean
+        default: false
       all-ref:
         description: 'branch, tag or commit of xord/all for an app to take'
         type: string
       libraries:
-        description: 'the libraries of xord/all for all-ref, by the order to build'
+        description: 'the libraries of xord/all for all-ref to build after the base ones, as beeps and reflex-terminal'
         type: string
-        default: xot rucy beeps rays reflex reflex-packager
       retention-days:
         description: 'days to keep the zip, and the pkg for the Mac App Store, of a run not of a tag, 0 to upload none'
         type: number
@@ -105,6 +108,13 @@ jobs:
             (hashFiles('.ruby-version') != '' && 'default') ||
             '4.0.10' }}
 
+      - &setup-zig
+        name: setup zig
+        if: inputs.zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+
       - name: setup xcodegen
         run: brew install xcodegen
 
@@ -114,7 +124,7 @@ jobs:
         uses: xord/xot/.github/actions/setup-monorepo@master
         with:
           ref:       ${{ needs.prepare.outputs.monorepo-commit }}
-          libraries: ${{ inputs.libraries }}
+          libraries: xot rucy rays reflex reflex-packager ${{ inputs.libraries }}
 
       - &setup-gems
         name: setup gems
@@ -231,6 +241,8 @@ jobs:
 
     steps:
       - *checkout
+      - *setup-ruby
+      - *setup-zig
 
       - &setup-packages
         name: setup packages
@@ -239,7 +251,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y -qq libopenal-dev libglew-dev libsdl2-dev libsdl2-ttf-dev
 
-      - *setup-ruby
       - *setup-monorepo
       - *setup-gems
 
@@ -256,6 +267,7 @@ jobs:
     steps:
       - *checkout
       - *setup-ruby
+      - *setup-zig
       - *setup-monorepo
       - *setup-gems
 
@@ -288,8 +300,9 @@ jobs:
 
     steps:
       - *checkout
-      - *setup-packages
       - *setup-ruby
+      - *setup-zig
+      - *setup-packages
       - *setup-monorepo
       - *setup-gems
 
@@ -310,6 +323,7 @@ jobs:
     steps:
       - *checkout
       - *setup-ruby
+      - *setup-zig
 
       - name: setup packages
         run: |
