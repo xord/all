@@ -12,6 +12,7 @@ class TestMIDI < Test::Unit::TestCase
   end
 
   def midi(name = 'TestMIDI')
+    omit 'no virtual MIDI by the Windows MM API' if win32?
     Reflex::MIDI.new(name).tap {@midis << _1}
   end
 
