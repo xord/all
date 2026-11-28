@@ -124,14 +124,17 @@ jobs:
         uses: xord/xot/.github/actions/setup-monorepo@master
         with:
           ref:       ${{ needs.prepare.outputs.monorepo-commit }}
-          libraries: xot rucy rays reflex reflex-packager ${{ inputs.libraries }}
+          libraries: xot rucy rays reflex reflex-packager
+            ${{ !env.PACKAGER_TASKS_ONLY && inputs.libraries || '' }}
 
       - &setup-gems
         name: setup gems
         env:
           # not for all-ref, as the Gemfile takes the gems of the monorepo then
           BUNDLE_FROZEN: ${{ hashFiles('Gemfile.lock') != '' && !inputs.all-ref }}
-        run: bundle install
+        run: |
+          [ "$PACKAGER_TASKS_ONLY" != true ] || bundle config set --local only development
+          bundle install
 
       - &package
         name: package
@@ -239,17 +242,19 @@ jobs:
     if: needs.prepare.outputs.notarize == 'true'
     runs-on: ubuntu-latest # cheaper than macos
 
+    env: &packager-tasks-only
+      PACKAGER_TASKS_ONLY: true
+
     steps:
       - *checkout
       - *setup-ruby
-      - *setup-zig
 
-      - &setup-packages
-        name: setup packages
-        # the ones of install_packages of beeps, rays and reflex, to build them
+      - &setup-packages-for-tasks
+        name: setup packages for the packager tasks
+        # the ones of install_packages of rays and reflex, which the packager depends on
         run: |
           sudo apt-get update
-          sudo apt-get install -y -qq libopenal-dev libglew-dev libsdl2-dev libsdl2-ttf-dev
+          sudo apt-get install -y -qq libglew-dev libsdl2-dev libsdl2-ttf-dev
 
       - *setup-monorepo
       - *setup-gems
@@ -264,10 +269,11 @@ jobs:
     needs: [prepare, macos-package, macos-wait]
     runs-on: macos-latest
 
+    env: *packager-tasks-only
+
     steps:
       - *checkout
       - *setup-ruby
-      - *setup-zig
       - *setup-monorepo
       - *setup-gems
 
@@ -298,11 +304,12 @@ jobs:
     if: inputs.macos-appstore && github.ref_type == 'tag'
     runs-on: ubuntu-latest # cheaper than macos
 
+    env: *packager-tasks-only
+
     steps:
       - *checkout
       - *setup-ruby
-      - *setup-zig
-      - *setup-packages
+      - *setup-packages-for-tasks
       - *setup-monorepo
       - *setup-gems
 
